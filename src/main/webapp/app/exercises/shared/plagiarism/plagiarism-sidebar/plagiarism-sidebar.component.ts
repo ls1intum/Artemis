@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 
 @Component({
     selector: 'jhi-plagiarism-sidebar',
@@ -16,6 +17,9 @@ export class PlagiarismSidebarComponent implements OnChanges {
     @Output() showRunDetailsChange = new EventEmitter<boolean>();
 
     @Output() selectIndex = new EventEmitter<number>();
+
+    readonly CONFIRMED = PlagiarismStatus.CONFIRMED;
+    readonly DENIED = PlagiarismStatus.DENIED;
 
     /**
      * Index of the currently selected result page.

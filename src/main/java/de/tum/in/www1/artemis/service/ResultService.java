@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -36,13 +37,13 @@ public class ResultService {
 
     private final ObjectMapper objectMapper;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
     private final RatingRepository ratingRepository;
+
+    private final FeedbackRepository feedbackRepository;
 
     private final SubmissionRepository submissionRepository;
 
@@ -55,71 +56,12 @@ public class ResultService {
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.objectMapper = objectMapper;
-        this.feedbackRepository = feedbackRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.feedbackRepository = feedbackRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
-    }
-
-    /**
-     * Get a result from the database by its id,
-     *
-     * @param id the id of the result to load from the database
-     * @return the result
-     */
-    public Result findOne(long id) {
-        log.debug("Request to get Result: {}", id);
-        return resultRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
-    }
-
-    /**
-     * Get a result from the database by its id together with the associated submission and the list of feedback items.
-     *
-     * @param resultId the id of the result to load from the database
-     * @return the result with submission and feedback list
-     */
-    public Result findOneWithEagerSubmissionAndFeedback(long resultId) {
-        log.debug("Request to get Result: {}", resultId);
-        return resultRepository.findWithEagerSubmissionAndFeedbackById(resultId)
-                .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
-    }
-
-    /**
-     * Get the latest result from the database by participation id together with the list of feedback items.
-     *
-     * @param participationId the id of the participation to load from the database
-     * @param withSubmission determines whether the submission should also be fetched
-     * @return an optional result (might exist or not).
-     */
-    public Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
-        if (withSubmission) {
-            return resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
-        }
-        else {
-            return resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
-        }
-    }
-
-    /**
-     * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
-     *
-     * @param exerciseId the id of the exercise to load from the database
-     * @return an list of results.
-     */
-    public List<Result> findLatestAutomaticResultsWithFeedbacksForExercise(Long exerciseId) {
-        return resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
-    }
-
-    /**
-     * Check if there is a result for the given participation.
-     *
-     * @param participationId the id of the participation for which to check if there is a result.
-     * @return true if there is a result for the given participation, otherwise not.
-     */
-    public Boolean existsByParticipationId(Long participationId) {
-        return resultRepository.existsByParticipationId(participationId);
     }
 
     /**
@@ -131,29 +73,6 @@ public class ResultService {
     public void setAssessor(Result result) {
         User currentUser = userRepository.getUser();
         result.setAssessor(currentUser);
-    }
-
-    /**
-     * Update a manual result of a programming exercise.
-     * Makes sure that the feedback items are persisted correctly, taking care of the OrderingColumn attribute of result.feedbacks.
-     * See https://stackoverflow.com/questions/6763329/ordercolumn-onetomany-null-index-column-for-collection and inline doc for reference.
-     *
-     * Also informs the client using a websocket about the updated result.
-     *
-     * @param result Result.
-     * @return updated result with eagerly loaded Submission and Feedback items.
-     */
-    public Result updateManualProgrammingExerciseResult(Result result) {
-        // This is a workaround for saving a result with new feedbacks.
-        // The issue seems to be that result.feedbacks is both a OneToMany relationship + has a the OrderColumn annotation.
-        // Without this a 'null index column for collection' error is triggered when trying to save the result.
-        if (result.getId() != null) {
-            // This creates a null value in the feedbacks_order column, when the result is saved below, it is filled with the next available number (e.g. last item was 2, next is
-            // 3).
-            List<Feedback> savedFeedbackItems = feedbackRepository.saveAll(result.getFeedbacks());
-            result.setFeedbacks(savedFeedbackItems);
-        }
-        return createNewRatedManualResult(result, true);
     }
 
     /**
@@ -186,7 +105,7 @@ public class ResultService {
         // this call should cascade all feedback relevant changed and save them accordingly
         var savedResult = resultRepository.save(result);
         // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        savedResult = findOneWithEagerSubmissionAndFeedback(result.getId());
+        savedResult = resultRepository.findOneWithEagerSubmissionAndFeedback(result.getId());
 
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
@@ -215,16 +134,6 @@ public class ResultService {
         complaintRepository.deleteByResult_Id(resultId);
         ratingRepository.deleteByResult_Id(resultId);
         resultRepository.deleteById(resultId);
-    }
-
-    /**
-     * Get a course from the database by its id.
-     *
-     * @param courseId the id of the course to load from the database
-     * @return the course
-     */
-    public List<Result> findByCourseId(Long courseId) {
-        return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
     }
 
     /**
@@ -259,14 +168,6 @@ public class ResultService {
         return objectMapper.writeValueAsString(resultCopy);
     }
 
-    public void notifyUserAboutNewResult(Result result, Participation participation) {
-        notifyNewResult(result, participation);
-    }
-
-    private void notifyNewResult(Result result, Participation participation) {
-        websocketMessagingService.broadcastNewResult(participation, result);
-    }
-
     /**
      * Create a new example result for the provided submission ID.
      *
@@ -285,5 +186,71 @@ public class ResultService {
         newResult.setSubmission(submission);
         newResult.setExampleResult(true);
         return createNewRatedManualResult(newResult, isProgrammingExerciseWithFeedback);
+    }
+
+    /**
+     * Store the given feedback to the passed result (by replacing all existing feedback) with a workaround for Hibernate exceptions.
+     * <p>
+     * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
+     * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
+     *
+     * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
+     *
+     * @param result           the result with should be saved with the given feedback
+     * @param feedbackList     new feedback items which replace the existing feedback
+     * @param shouldSave       whether the result should be saved or not
+     * @return the updated (and potentially saved) result
+     */
+    public Result storeFeedbackInResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+        var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+        result.setFeedbacks(savedFeedbacks);
+        return shouldSaveResult(result, shouldSave);
+    }
+
+    /**
+     * Add the feedback to the passed result with a workaround for Hibernate exceptions.
+     * <p>
+     * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
+     * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
+     *
+     * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
+     *
+     * @param result           the result with should be saved with the given feedback
+     * @param feedbackList     new feedback items which should be added to the feedback
+     * @param shouldSave       whether the result should be saved or not
+     * @return the updated (and potentially saved) result
+     */
+    @NotNull
+    public Result addFeedbackToResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+        List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+        result.addFeedbacks(savedFeedbacks);
+        return shouldSaveResult(result, shouldSave);
+    }
+
+    @NotNull
+    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
+        // Avoid hibernate exception
+        List<Feedback> savedFeedbacks = new ArrayList<>();
+        feedbackList.forEach(feedback -> {
+            // cut association to parent object
+            feedback.setResult(null);
+            // persist the child object without an association to the parent object.
+            feedback = feedbackRepository.saveAndFlush(feedback);
+            // restore the association to the parent object
+            feedback.setResult(result);
+            savedFeedbacks.add(feedback);
+        });
+        return savedFeedbacks;
+    }
+
+    @NotNull
+    private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
+        if (shouldSave) {
+            // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
+            return resultRepository.save(result);
+        }
+        else {
+            return result;
+        }
     }
 }

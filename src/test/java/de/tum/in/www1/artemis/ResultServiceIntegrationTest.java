@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,10 +26,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -36,67 +36,56 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.FeedbackService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ResultService resultService;
+    private FeedbackRepository feedbackRepository;
 
     @Autowired
-    FeedbackService feedbackService;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    ModelingExerciseRepository modelingExerciseRepository;
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    FileUploadExerciseRepository fileUploadExerciseRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    TextExerciseRepository textExerciseRepository;
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    SubmissionRepository submissionRepository;
-
-    @Autowired
-    ProgrammingExerciseGradingService gradingService;
+    private ExamRepository examRepository;
 
     private Course course;
 
     private ProgrammingExercise programmingExercise;
 
     private ModelingExercise modelingExercise;
+
+    private ModelingExercise examModelingExercise;
 
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
@@ -106,9 +95,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void reset() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
@@ -121,7 +110,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
 
-        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
+        Exam exam = database.addExamWithExerciseGroup(this.course, true);
+        this.examModelingExercise = new ModelingExercise();
+        this.examModelingExercise.setMaxPoints(100D);
+        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
+        this.modelingExerciseRepository.save(this.examModelingExercise);
+        this.examRepository.save(exam);
+
+        Result result = ModelFactory.generateResult(true, 200D).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -148,7 +144,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 issue.setFilePath(pathWithoutWorkingDir);
             }
         }
-        var staticCodeAnalysisFeedback1 = feedbackService
+        var staticCodeAnalysisFeedback1 = feedbackRepository
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback1) {
@@ -174,12 +170,12 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 }
             }
         }
-        final var staticCodeAnalysisFeedback2 = feedbackService
+        final var staticCodeAnalysisFeedback2 = feedbackRepository
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(FeedbackService.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
+            assertThat(FeedbackRepository.DEFAULT_FILEPATH).isEqualTo(issueJSON.get("filePath"));
         }
     }
 
@@ -206,6 +202,23 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnOnlyAutomaticFeedbackForAProgrammingExerciseStudentParticipationBeforeAssessDueDate() throws Exception {
+        Result result = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation);
+        Feedback feedback1 = new Feedback().detailText("automatic1").type(FeedbackType.AUTOMATIC);
+        Feedback feedback2 = new Feedback().detailText("automatic2").type(FeedbackType.AUTOMATIC);
+        Feedback feedback3 = new Feedback().detailText("manual1").type(FeedbackType.MANUAL);
+        result = database.addFeedbackToResult(feedback1, result);
+        result = database.addFeedbackToResult(feedback2, result);
+        result = database.addFeedbackToResult(feedback3, result);
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks).isEqualTo(result.getFeedbacks().stream().filter(f -> f.getType().equals(FeedbackType.AUTOMATIC)).collect(Collectors.toList()));
+        assertThat(feedbacks.size()).isEqualTo(2);
+    }
+
+    @Test
     @WithMockUser(value = "student2", roles = "USER")
     public void shouldReturnTheResultDetailsForAStudentParticipation() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
@@ -214,6 +227,59 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
         assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+    }
+
+    @ValueSource(booleans = { false, true })
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(value = "student2", roles = "USER")
+    public void shouldReturnTheResultDetailsForAStudentParticipationWithSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+
+        if (isAfterDueDate) {
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().minusHours(10));
+        }
+        else {
+            // Set programming exercise due date in future.
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
+        }
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks.stream().filter(Feedback::isInvisible)).hasSize(0);
+
+        if (isAfterDueDate) {
+            assertThat(feedbacks.size()).isEqualTo(4);
+            assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(1);
+        }
+        else {
+            assertThat(feedbacks.size()).isEqualTo(3);
+            assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(0);
+        }
+    }
+
+    @ValueSource(booleans = { false, true })
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered(boolean isAfterDueDate) throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+
+        if (isAfterDueDate) {
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().minusHours(10));
+        }
+        else {
+            // Set programming exercise due date in future.
+            database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
+        }
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+
+        assertThat(feedbacks.stream().filter(Feedback::isInvisible)).hasSize(1);
+        assertThat(feedbacks.size()).isEqualTo(5);
+        assertThat(feedbacks.stream().filter(Feedback::isAfterDueDate)).hasSize(1);
     }
 
     @Test
@@ -241,7 +307,19 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         request.getList("/api/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
     }
 
-    @ParameterizedTest
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldNotFilterVisibilityNeverForInstructor() throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        result = database.addVariousVisibilityFeedbackToResults(result);
+
+        List<Feedback> feedbacks = request.getList("/api/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
+        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.NEVER)).hasSize(1);
+        assertThat(feedbacks.stream().filter(f -> f.getVisibility() == Visibility.AFTER_DUE_DATE)).hasSize(1);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
@@ -293,10 +371,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             programmingSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(programmingExercise, programmingSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 10L, true);
+                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20L, true);
+                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
             }
         }
 
@@ -320,10 +398,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             quizSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(quizExercise, quizSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10L, true);
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20L, true);
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
             }
         }
 
@@ -343,10 +421,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             modelingSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(modelingExercise, modelingSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20L, true);
+                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20D, true);
             }
         }
 
@@ -370,10 +448,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             textSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(textExercise, textSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20L, true);
+                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20D, true);
             }
         }
 
@@ -396,10 +474,10 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             fileUploadSubmission.submissionDate(now.minusHours(3));
             database.addSubmission(fileUploadExercise, fileUploadSubmission, "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 20L, true);
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 20D, true);
             }
         }
 
@@ -423,6 +501,38 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     public void getResult_asStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         request.get("/api/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetResultsForExamExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        for (int i = 1; i <= 5; i++) {
+            ModelingSubmission modelingSubmission = new ModelingSubmission();
+            modelingSubmission.model("Testingsubmission");
+            modelingSubmission.submitted(true);
+            modelingSubmission.submissionDate(now.minusHours(2));
+            database.addSubmission(this.examModelingExercise, modelingSubmission, "student" + i);
+            database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 12D, true);
+        }
+
+        // empty participation with submission
+        StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(null);
+        participation.setExercise(this.examModelingExercise);
+        studentParticipationRepository.save(participation);
+        ModelingSubmission modelingSubmission = new ModelingSubmission();
+        modelingSubmission.model("Text");
+        modelingSubmission.submitted(true);
+        modelingSubmission.submissionDate(now.minusHours(3));
+        participation.addSubmission(modelingSubmission);
+        modelingSubmission.setParticipation(participation);
+        submissionRepository.save(modelingSubmission);
+        studentParticipationRepository.save(participation);
+
+        List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        assertThat(results).hasSize(5);
     }
 
     @Test
@@ -458,6 +568,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void deleteResultStudent() throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        request.delete("/api/results/" + result.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getResultForSubmission() throws Exception {
         var now = ZonedDateTime.now();
@@ -486,7 +604,30 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission() throws Exception {
         Result result = new Result().rated(false);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class, HttpStatus.CREATED);
+        var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
+                HttpStatus.CREATED);
+        assertThat(createdResult).isNotNull();
+        assertThat(createdResult.isRated()).isFalse();
+        // TODO: we should assert that the result has been created with all corresponding objects in the database
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createResultForExternalSubmission_programmingExercise() throws Exception {
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        var studentLogin = "student1";
+        User user = userRepository.findOneByLogin(studentLogin).orElseThrow();
+        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+        final var repositorySlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
+        bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, programmingExercise.getProjectKey(), Set.of(user));
+        Result result = new Result().rated(false);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
+        programmingExerciseRepository.save(programmingExercise);
+        var createdResult = request.postWithResponseBody(externalResultPath(programmingExercise.getId(), studentLogin), result, Result.class, HttpStatus.CREATED);
+        assertThat(createdResult).isNotNull();
+        assertThat(createdResult.isRated()).isFalse();
+        // TODO: we should assert that the result has been created with all corresponding objects in the database
     }
 
     @Test
@@ -497,15 +638,26 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         course.addExercises(quizExercise);
         quizExerciseRepository.save(quizExercise);
         Result result = new Result().rated(false);
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(externalResultPath(quizExercise.getId(), "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_studentNotInTheCourse() throws Exception {
         Result result = new Result().rated(false);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student11", result, Result.class,
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student11"), result, Result.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createResultForExternalSubmissionExam() throws Exception {
+        Result result = new Result().rated(false);
+        request.postWithResponseBody("/api/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    private String externalResultPath(long exerciseId, String studentLogin) {
+        return "/api/exercises/" + exerciseId + "/external-submission-results?studentLogin=" + studentLogin;
     }
 
     @Test
@@ -514,8 +666,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(modelingExercise);
         Result result = new Result().rated(false);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -527,8 +678,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExerciseRepository.save(modelingExercise);
         var participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         var result = database.addResultToParticipation(null, null, participation);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -551,26 +701,26 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textSubmission = submissionRepository.save(textSubmission);
 
         // result 1
-        Result r1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 1", "instructor1", new ArrayList<>());
-        r1.setRated(true);
-        r1 = database.addFeedbackToResults(r1);
-        r1.setSubmission(textSubmission);
+        var result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 1", "instructor1", new ArrayList<>());
+        result1.setRated(true);
+        result1 = database.addFeedbackToResults(result1);
+        result1.setSubmission(textSubmission);
 
         // result 2
-        Result r2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 2", "tutor1", new ArrayList<>());
-        r2.setRated(true);
-        r2 = database.addFeedbackToResults(r2);
-        r2.setSubmission(textSubmission);
+        var result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 2", "tutor1", new ArrayList<>());
+        result2.setRated(true);
+        result2 = database.addFeedbackToResults(result2);
+        result2.setSubmission(textSubmission);
 
-        textSubmission.addResult(r1);
+        textSubmission.addResult(result1);
         textSubmission = submissionRepository.save(textSubmission);
 
-        textSubmission.addResult(r2);
+        textSubmission.addResult(result2);
         submissionRepository.save(textSubmission);
 
-        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(textExercise, 2);
-        assertThat(assessments[0].getInTime()).isEqualTo(1);    // correction round 1
-        assertThat(assessments[1].getInTime()).isEqualTo(1);    // correction round 2
+        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(textExercise, 2);
+        assertThat(assessments[0].inTime()).isEqualTo(1);    // correction round 1
+        assertThat(assessments[1].inTime()).isEqualTo(1);    // correction round 2
     }
 
     @Test
@@ -614,8 +764,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         programmingSubmission.addResult(r2);
         submissionRepository.save(programmingSubmission);
 
-        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRound(programmingExercise, 2);
-        assertThat(assessments[0].getInTime()).isEqualTo(1);    // correction round 1
-        assertThat(assessments[1].getInTime()).isEqualTo(1);    // correction round 2
+        var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(programmingExercise, 2);
+        assertThat(assessments[0].inTime()).isEqualTo(1);    // correction round 1
+        assertThat(assessments[1].inTime()).isEqualTo(1);    // correction round 2
     }
 }

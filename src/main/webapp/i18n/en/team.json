@@ -34,6 +34,10 @@
                 "label": "Name",
                 "minlength": "The name must be at least 3 characters long."
             },
+            "teamName": {
+                "missingTeamName": "Team name must be provided for each student.",
+                "pattern": "The team name must start with a letter."
+            },
             "shortName": {
                 "label": "Short Name",
                 "tooltip": "The short name of the team can NOT be edited after creating the team! It is used as a unique identifier for the repositories and build plans.",
@@ -52,6 +56,7 @@
                 "all": "All teams",
                 "own": "Own teams"
             },
+            "missingUserNameOrId": "Students must have either a username or registration number.",
             "noStudentsAddedYet": "No students added yet.",
             "addStudentToTeam": "Add a student to the team (by searching for login or name)",
             "studentSearch": {
@@ -64,7 +69,8 @@
                 "registrationNumbersNotFound": "Students with following registration numbers could not be found: {{ registrationNumbers }}",
                 "loginsNotFound": "Students with following usernames could not be found: {{ logins }}",
                 "studentsWithoutRegistrationNumbers": "Following students do not have registration numbers: {{ students }}",
-                "studentsAppearMultipleTimes": "Following students appear multiple times in imported teams: {{ students }}"
+                "studentsAppearMultipleTimes": "Following students appear multiple times in imported teams: {{ students }}",
+                "importFailed": "Import Teams Failed! Invalid teams file."
             },
             "selectOwnerForTeam": "Select tutor (by searching for login or name)",
             "ownerSearch": {

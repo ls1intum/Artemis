@@ -19,30 +19,24 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    StudentParticipationRepository participationRepo;
+    private ParticipationTeamWebsocketService participationTeamWebsocketService;
 
-    @Autowired
-    ParticipationTeamWebsocketService participationTeamWebsocketService;
+    private StudentParticipation participation;
 
-    ModelingExercise modelingExercise;
-
-    StudentParticipation participation;
-
-    static String websocketTopic(Participation participation) {
+    private static String websocketTopic(Participation participation) {
         return "/topic/participations/" + participation.getId() + "/team";
     }
 
     @BeforeEach
     void init() {
-        database.addUsers(3, 0, 0);
+        database.addUsers(3, 0, 0, 0);
         Course course = database.addCourseWithOneModelingExercise();
-        modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
 
         MockitoAnnotations.openMocks(this);

@@ -1,8 +1,9 @@
 import { SimpleChanges } from '@angular/core';
-import { getExercise, InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { getExercise, Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { findLatestResult } from 'app/shared/util/utils';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 /**
  * Check if the participation has changed.
@@ -60,11 +61,7 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
         return false;
     }
     const exercise = getExercise(participation);
-    return (
-        participation.initializationState === InitializationState.FINISHED &&
-        exercise &&
-        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD)
-    );
+    return exercise && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD);
 };
 
 /**
@@ -105,4 +102,18 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
 
     // If the submission has no submissionDate set, the submission cannot be in time.
     return false;
+};
+
+/**
+ * Removes the login from the repositoryURL and saves it as a helper attribute
+ */
+export const addUserIndependentRepositoryUrl = (participation: ProgrammingExerciseStudentParticipation) => {
+    let adjustedRepositoryURL = participation.repositoryUrl || '';
+    if (participation.student && participation.repositoryUrl) {
+        const userName = participation.student.login + '@';
+        if (participation.repositoryUrl.includes(userName)) {
+            adjustedRepositoryURL = participation.repositoryUrl.replace(userName, '');
+        }
+    }
+    participation.userIndependentRepositoryUrl = adjustedRepositoryURL;
 };

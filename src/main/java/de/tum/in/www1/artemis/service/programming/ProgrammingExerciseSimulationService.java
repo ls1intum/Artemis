@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
 import java.util.Optional;
 
@@ -137,7 +136,7 @@ public class ProgrammingExerciseSimulationService {
         templateResult.setRated(true);
         templateResult.resultString("0 of 13 passed");
         templateResult.setAssessmentType(AssessmentType.AUTOMATIC);
-        templateResult.score(0L);
+        templateResult.setScore(0D);
         templateResult.setCompletionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
         resultRepository.save(templateResult);
 
@@ -154,7 +153,7 @@ public class ProgrammingExerciseSimulationService {
         solutionResult.setSubmission(solutionProgrammingSubmission);
         solutionResult.setRated(true);
         solutionResult.resultString("13 of 13 passed");
-        solutionResult.score(100L);
+        solutionResult.setScore(100D);
         solutionResult.setAssessmentType(AssessmentType.AUTOMATIC);
         solutionResult.setCompletionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
         resultRepository.save(solutionResult);

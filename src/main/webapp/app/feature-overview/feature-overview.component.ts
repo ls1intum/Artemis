@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -328,10 +329,10 @@ class Feature {
     imageOne?: string;
     imageTwo?: string;
     firstImageLeft = false;
-    icon: string;
+    icon: IconProp;
     id: string;
 
-    constructor(title: string, shortDescription: string, descriptionTextOne: string, icon: string, descriptionTextTwo?: string, imageOne?: string, imageTwo?: string) {
+    constructor(title: string, shortDescription: string, descriptionTextOne: string, icon: IconProp, descriptionTextTwo?: string, imageOne?: string, imageTwo?: string) {
         this.title = title;
         this.shortDescription = shortDescription;
         this.descriptionTextOne = descriptionTextOne;

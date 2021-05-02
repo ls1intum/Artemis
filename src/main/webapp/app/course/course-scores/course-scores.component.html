@@ -58,13 +58,16 @@
                     <th></th>
                     <th>
                         {{ getLocaleConversionService().toLocaleString(averageNumberOfParticipatedExercises) }} ({{
-                            getLocaleConversionService().toLocaleString((averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
-                        }}
-                        %)
+                            getLocaleConversionService().toLocaleString(
+                                round((averageNumberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
+                            )
+                        }}%)
                     </th>
                     <th>
                         {{ getLocaleConversionService().toLocaleString(averageNumberOfSuccessfulExercises) }} ({{
-                            getLocaleConversionService().toLocaleString((averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
+                            getLocaleConversionService().toLocaleString(
+                                round((averageNumberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
+                            )
                         }}
                         %)
                     </th>
@@ -73,16 +76,15 @@
                             {{ getLocaleConversionService().toLocaleString(averageNumberOfPointsPerExerciseTypes.get(exerciseType)!) }}
                             ({{
                                 getLocaleConversionService().toLocaleString(
-                                    (averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100
+                                    round((averageNumberOfPointsPerExerciseTypes.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100)
                                 )
                             }}%)
                         </th>
                     </ng-container>
                     <th>
                         {{ getLocaleConversionService().toLocaleString(averageNumberOfOverallPoints) }} ({{
-                            getLocaleConversionService().toLocaleString((averageNumberOfOverallPoints / maxNumberOfOverallPoints) * 100)
-                        }}
-                        %)
+                            getLocaleConversionService().toLocaleString(round((averageNumberOfOverallPoints / maxNumberOfOverallPoints) * 100))
+                        }}%)
                     </th>
                 </tr>
             </thead>
@@ -92,30 +94,33 @@
                     <td>{{ student.user.login }}</td>
                     <td>
                         {{ student.numberOfParticipatedExercises }} ({{
-                            getLocaleConversionService().toLocaleString((student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
-                        }}
-                        %)
+                            getLocaleConversionService().toLocaleString(
+                                round((student.numberOfParticipatedExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
+                            )
+                        }}%)
                     </td>
                     <td>
                         {{ student.numberOfSuccessfulExercises }}
-                        ({{ getLocaleConversionService().toLocaleString((student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100) }}
-                        %)
+                        ({{
+                            getLocaleConversionService().toLocaleString(
+                                round((student.numberOfSuccessfulExercises / exercisesOfCourseThatAreIncludedInScoreCalculation.length) * 100)
+                            )
+                        }}%)
                     </td>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">
                             {{ getLocaleConversionService().toLocaleString(student.sumPointsPerExerciseType.get(exerciseType)!) }}
                             ({{
                                 getLocaleConversionService().toLocaleString(
-                                    (student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100
+                                    round((student.sumPointsPerExerciseType.get(exerciseType)! / maxNumberOfPointsPerExerciseType.get(exerciseType)!) * 100)
                                 )
                             }}%)
                         </td>
                     </ng-container>
                     <td>
                         {{ getLocaleConversionService().toLocaleString(student.overallPoints) }} ({{
-                            getLocaleConversionService().toLocaleString((student.overallPoints / maxNumberOfOverallPoints) * 100)
-                        }}
-                        %)
+                            getLocaleConversionService().toLocaleString(round((student.overallPoints / maxNumberOfOverallPoints) * 100))
+                        }}%)
                     </td>
                 </tr>
             </tbody>

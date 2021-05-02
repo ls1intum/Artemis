@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -13,6 +15,7 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private int successful;
@@ -25,11 +28,11 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private String fullName;
 
-    private List<CommitDTO> commits;
+    private List<CommitDTO> commits = new ArrayList<>();
 
-    private List<TestsuiteDTO> results;
+    private List<TestsuiteDTO> results = new ArrayList<>();
 
-    private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+    private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
     private ZonedDateTime runDate;
 
@@ -100,22 +103,24 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return firstCommit.map(CommitDTO::getHash);
     }
 
-    @Override
-    public boolean isBuildSuccessful() {
-        final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
-        return getSuccessful() == testSum;
+    private int getSum() {
+        return getSkipped() + getFailures() + getErrors() + getSuccessful();
     }
 
     @Override
-    public Long getBuildScore() {
-        final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
-        return (long) (((1.0 * getSuccessful()) / testSum) * 100);
+    public boolean isBuildSuccessful() {
+        return getSuccessful() == getSum();
+    }
+
+    @Override
+    public Double getBuildScore() {
+        final var testSum = getSum();
+        return testSum == 0 ? 0D : ((double) getSuccessful() / testSum) * 100D;
     }
 
     @Override
     public String getTestsPassedString() {
-        final var testSum = getSkipped() + getFailures() + getErrors() + getSuccessful();
-        return String.format("%d of %d passed", getSuccessful(), testSum);
+        return String.format("%d of %d passed", getSuccessful(), getSum());
     }
 
     public void setRunDate(ZonedDateTime runDate) {

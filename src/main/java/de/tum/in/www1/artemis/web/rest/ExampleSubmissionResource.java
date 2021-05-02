@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -38,10 +39,14 @@ public class ExampleSubmissionResource {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
+
     private final AuthorizationCheckService authCheckService;
 
-    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, AuthorizationCheckService authCheckService) {
+    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
+            AuthorizationCheckService authCheckService) {
         this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -53,7 +58,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/example-submissions")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -73,7 +78,7 @@ public class ExampleSubmissionResource {
      *         status 500 (Internal Server Error) if the exampleSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/example-submissions")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() == null) {
@@ -85,7 +90,7 @@ public class ExampleSubmissionResource {
 
     @NotNull
     private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
-        if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.getExercise())) {
+        if (!authCheckService.isAtLeastEditorForExercise(exampleSubmission.getExercise())) {
             return forbidden();
         }
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
@@ -102,10 +107,10 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exampleSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/example-submissions/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to get ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
 
         if (exampleSubmission.isPresent()) {
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exampleSubmission.get().getExercise())) {
@@ -123,16 +128,16 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
      */
     @DeleteMapping("/example-submissions/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to delete ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
 
         if (exampleSubmission.isEmpty()) {
             throw new EntityNotFoundException("ExampleSubmission with " + id + " was not found!");
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.get().getExercise())) {
+        if (!authCheckService.isAtLeastEditorForExercise(exampleSubmission.get().getExercise())) {
             return forbidden();
         }
 

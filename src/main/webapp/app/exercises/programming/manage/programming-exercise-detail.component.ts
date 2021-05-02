@@ -41,7 +41,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    checkPlagiarismInProgress: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -61,15 +60,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
 
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
+            this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
-
-            if (this.programmingExercise.categories) {
-                this.programmingExercise.categories = this.programmingExercise.categories.map((category) => JSON.parse(category));
-            }
 
             if (this.programmingExercise.templateParticipation) {
                 this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
-                this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id!).subscribe((results) => {
+                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.templateParticipation.id!).subscribe((results) => {
                     this.programmingExercise.templateParticipation!.results = results;
                     this.loadingTemplateParticipationResults = false;
                 });
@@ -78,7 +74,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (this.programmingExercise.solutionParticipation) {
                 this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
 
-                this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id!).subscribe((results) => {
+                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.solutionParticipation.id!).subscribe((results) => {
                     this.programmingExercise.solutionParticipation!.results = results;
                     this.loadingSolutionParticipationResults = false;
                 });
@@ -95,8 +91,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param participationId of the given participation.
      * @return an empty array if there is no result or an array with the single latest result.
      */
-    private loadLatestResultWithFeedback(participationId: number): Observable<Result[]> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId).pipe(
+    private loadLatestResultWithFeedbackAndSubmission(participationId: number): Observable<Result[]> {
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId, true).pipe(
             catchError(() => of(null)),
             map((result: Result | null) => {
                 return result ? [result] : [];

@@ -19,21 +19,21 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    TextUnitRepository textUnitRepository;
+    private TextUnitRepository textUnitRepository;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
-    Lecture lecture1;
+    private Lecture lecture1;
 
-    TextUnit textUnit;
+    private TextUnit textUnit;
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        this.database.addUsers(1, 1, 1);
+        this.database.addUsers(1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.textUnit = new TextUnit();
         this.textUnit.setName("LoremIpsum");

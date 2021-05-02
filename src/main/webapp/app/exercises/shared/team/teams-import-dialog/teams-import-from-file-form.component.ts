@@ -1,7 +1,9 @@
 import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { StudentWithTeam } from 'app/entities/team.model';
 import { Team } from 'app/entities/team.model';
+import { shortNamePattern } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-teams-import-from-file-form',
@@ -16,7 +18,7 @@ export class TeamsImportFromFileFormComponent {
     importFileName: string;
     loading: boolean;
 
-    constructor(private changeDetector: ChangeDetectorRef) {}
+    constructor(private changeDetector: ChangeDetectorRef, private translate: TranslateService) {}
 
     /**
      * Move file reader creation to separate function to be able to mock
@@ -46,7 +48,8 @@ export class TeamsImportFromFileFormComponent {
             }
         } catch (e) {
             this.loading = false;
-            alert(`Import Teams Failed! Invalid teams file. ${e}`);
+            const message = `${this.translate.instant('artemisApp.team.errors.importFailed')} ${e}`;
+            alert(message);
         }
     }
 
@@ -83,19 +86,24 @@ export class TeamsImportFromFileFormComponent {
             newStudent.login = student.username;
 
             if ((typeof student.username !== 'string' || !student.username.trim()) && (typeof student.registrationNumber !== 'string' || !student.registrationNumber.trim())) {
-                throw new Error('Students must have either username or registration number');
+                throw new Error(this.translate.instant('artemisApp.team.missingUserNameOrId'));
             }
 
             if (typeof student.teamName !== 'string' || !student.teamName.trim()) {
-                throw new Error('Team name must be provided for each student');
+                throw new Error(this.translate.instant('artemisApp.team.teamName.missingTeamName'));
             }
 
-            newStudent.name = `${newStudent.firstName} ${newStudent.lastName}`;
+            const shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
+            if (!shortName.match(shortNamePattern)) {
+                throw new Error(this.translate.instant('artemisApp.team.teamName.pattern'));
+            }
+
+            newStudent.name = `${newStudent.firstName} ${newStudent.lastName}`.trim();
             const index = teams.findIndex((team) => team.name === student.teamName);
             if (index === -1) {
                 const newTeam = new Team();
                 newTeam.name = student.teamName;
-                newTeam.shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
+                newTeam.shortName = shortName;
                 newTeam.students = [newStudent];
                 teams.push(newTeam);
             } else {

@@ -1,18 +1,20 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -35,25 +37,28 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    StudentParticipationRepository participationRepo;
+    private StudentParticipationRepository participationRepo;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    FeatureToggleService featureToggleService;
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private TeamRepository teamRepository;
 
     private Course course;
 
@@ -65,7 +70,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
 
         // Add users that are not in the course/exercise
         userRepo.save(ModelFactory.generateActivatedUser("student3"));
@@ -109,7 +114,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(modelingExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student1");
-        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
+        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
         assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
@@ -123,7 +128,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student2");
-        Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
+        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
         assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
     }
@@ -133,7 +138,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void participateTwiceInModelingExercise_sameParticipation() throws Exception {
         var participation1 = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
         var participation2 = request.post("/api/courses/" + course.getId() + "/exercises/" + modelingExercise.getId() + "/participations", null, HttpStatus.CREATED);
-        assertThat(participation1.equals(participation2));
+        assertThat(participation1).isEqualTo(participation2);
     }
 
     @Test
@@ -141,7 +146,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void participateTwiceInTextExercise_sameParticipation() throws Exception {
         var participation1 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
         var participation2 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
-        assertThat(participation1.equals(participation2));
+        assertThat(participation1).isEqualTo(participation2);
     }
 
     @Test
@@ -188,7 +193,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
-        Submission submissionWithoutResult = database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
+        database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
         Long participationId = submissionWithResult.getParticipation().getId();
         database.addResultToSubmission(submissionWithResult, null);
 
@@ -297,7 +302,18 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
         participationRepo.save(participation);
         request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/10000/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.BAD_REQUEST);
+                HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void resumeProgrammingExerciseParticipation_forbidden() throws Exception {
+        var exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), course);
+        exercise = exerciseRepo.save(exercise);
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise, database.getUserByLogin("student1"));
+        participationRepo.save(participation);
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -317,7 +333,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         database.createAndSaveParticipationForExercise(textExercise, "student1");
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student2");
         database.addResultToParticipation(null, null, participation);
-        var result = ModelFactory.generateResult(true, 70).participation(participation);
+        var result = ModelFactory.generateResult(true, 70D).participation(participation);
         resultRepository.save(result);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
@@ -436,7 +452,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getParticipationWithLatestResult() throws Exception {
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.addResultToParticipation(null, null, participation);
-        var result = ModelFactory.generateResult(true, 70);
+        var result = ModelFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
         var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
@@ -470,7 +486,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void cleanupBuildPlan() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId());
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
         assertThat(actualParticipation).isEqualTo(participation);
     }
@@ -480,6 +496,31 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getParticipation() throws Exception {
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         var actualParticipation = request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationForTeamExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        var exercise = ModelFactory.generateTextExercise(now.minusDays(2), now.plusDays(2), now.plusDays(4), course);
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise = exerciseRepo.save(exercise);
+
+        var student = database.getUserByLogin("student1");
+
+        var team = new Team();
+        team.addStudents(student);
+        team.setExercise(exercise);
+        team = teamRepository.save(team);
+
+        var teams = new HashSet<Team>();
+        teams.add(team);
+        exercise.setTeams(teams);
+        exercise = exerciseRepo.save(exercise);
+
+        var participation = database.addTeamParticipationForExercise(exercise, team.getId());
+        var actualParticipation = request.get("/api/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 

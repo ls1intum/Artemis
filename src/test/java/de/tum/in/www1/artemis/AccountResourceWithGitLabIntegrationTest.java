@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import de.tum.in.www1.artemis.connector.gitlab.GitlabRequestMockProvider;
+import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -22,16 +22,13 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
-    RequestUtilService request;
+    private RequestUtilService request;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    UserService userService;
-
-    @Autowired
-    DatabaseUtilService database;
+    private DatabaseUtilService database;
 
     @Autowired
     private GitlabRequestMockProvider gitlabRequestMockProvider;
@@ -39,6 +36,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     @BeforeEach
     public void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
     }
 
     @AfterEach
@@ -71,6 +69,10 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
         // Simulate creation of GitLab user
         gitlabRequestMockProvider.mockCreationOfUser(user.getLogin());
+
+        SecurityUtils.setAuthorizationObject();
+        jenkinsRequestMockProvider.mockDeleteUser(user, true, false);
+        jenkinsRequestMockProvider.mockCreateUser(user, false, false, false);
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -19,8 +19,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     textExercise: TextExercise;
     isExamExercise: boolean;
-    checkPlagiarismInProgress: boolean;
-
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
@@ -59,31 +57,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.sampleSolution);
-            if (this.textExercise.categories) {
-                this.textExercise.categories = this.textExercise.categories.map((category) => JSON.parse(category));
-            }
         });
-    }
-
-    /**
-     * Returns the route for editing the exercise. Exam and course exercises have different routes.
-     */
-    getEditRoute() {
-        if (this.isExamExercise) {
-            return [
-                '/course-management',
-                this.textExercise.exerciseGroup?.exam?.course?.id,
-                'exams',
-                this.textExercise.exerciseGroup?.exam?.id,
-                'exercise-groups',
-                this.textExercise.exerciseGroup?.id,
-                'text-exercises',
-                this.textExercise.id,
-                'edit',
-            ];
-        } else {
-            return ['/course-management', this.textExercise.course?.id, 'text-exercises', this.textExercise.id, 'edit'];
-        }
     }
 
     /**

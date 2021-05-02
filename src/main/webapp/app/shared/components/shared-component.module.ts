@@ -7,11 +7,21 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ClipboardModule } from 'ngx-clipboard';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
+    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule, ArtemisMarkdownModule],
     entryComponents: [ConfirmAutofocusModalComponent],
-    declarations: [ButtonComponent, HelpIconComponent, ConfirmAutofocusButtonComponent, ConfirmAutofocusModalComponent, CloneRepoButtonComponent, ExerciseActionButtonComponent],
-    exports: [ButtonComponent, HelpIconComponent, ConfirmAutofocusButtonComponent, CloneRepoButtonComponent, ExerciseActionButtonComponent],
+    declarations: [
+        ButtonComponent,
+        HelpIconComponent,
+        ConfirmAutofocusButtonComponent,
+        ConfirmAutofocusModalComponent,
+        CloneRepoButtonComponent,
+        ExerciseActionButtonComponent,
+        CourseExamArchiveButtonComponent,
+    ],
+    exports: [ButtonComponent, HelpIconComponent, ConfirmAutofocusButtonComponent, CloneRepoButtonComponent, ExerciseActionButtonComponent, CourseExamArchiveButtonComponent],
 })
 export class ArtemisSharedComponentModule {}

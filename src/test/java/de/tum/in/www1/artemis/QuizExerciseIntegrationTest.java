@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.byLessThan;
+import static org.assertj.core.api.Assertions.*;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,13 +13,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -33,28 +30,28 @@ import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    QuizScheduleService quizScheduleService;
+    private QuizScheduleService quizScheduleService;
 
     @Autowired
-    QuizExerciseService quizExerciseService;
+    private QuizExerciseService quizExerciseService;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
+    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
-    QuizSubmissionRepository quizSubmissionRepository;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
-    SubmittedAnswerRepository submittedAnswerRepository;
+    private SubmittedAnswerRepository submittedAnswerRepository;
 
     private QuizExercise quizExercise;
 
@@ -85,7 +82,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void init() {
-        database.addUsers(15, 5, 1);
+        database.addUsers(15, 5, 0, 1);
         quizScheduleService.startSchedule(5 * 1000);
     }
 
@@ -498,7 +495,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
-
+        assertThat(quizExerciseDatabase).isNotNull();
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
 
@@ -529,7 +526,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
-
+        assertThat(quizExerciseDatabase).isNotNull();
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
 
@@ -573,7 +570,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var username = "student1";
         final Principal principal = () -> username;
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Quiz submissions are not yet in database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
@@ -657,8 +657,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
         quizExercise.setDueDate(ZonedDateTime.now().plusMinutes(1)); // total 6min = 360s
         quizExercise = quizExerciseService.save(quizExercise);
-        assertThat(quizExercise.isSubmissionAllowed());
-        assertThat(quizExercise.isStarted());
+        assertThat(quizExercise.isSubmissionAllowed()).isTrue();
+        assertThat(quizExercise.isStarted()).isTrue();
 
         QuizExercise quizExerciseForStudent_Started = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Started);
@@ -668,8 +668,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(2));
         quizExercise.setDuration(180);
         quizExercise = quizExerciseService.save(quizExercise);
-        assertThat(!quizExercise.isSubmissionAllowed());
-        assertThat(quizExercise.isStarted());
+        assertThat(quizExercise.isSubmissionAllowed()).isFalse();
+        assertThat(quizExercise.isStarted()).isTrue();
 
         QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Finished);
@@ -680,10 +680,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testGetQuizExercisesForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
         var examId = quizExercise.getExerciseGroup().getExam().getId();
-        List<LinkedHashMap<String, Object>> quizExercises = request.get("/api/" + examId + "/quiz-exercises", HttpStatus.OK, List.class);
+        List<QuizExercise> quizExercises = request.getList("/api/" + examId + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
         assertThat(quizExercises).as("Quiz exercise was retrieved").isNotNull();
         assertThat(quizExercises.size()).as("Quiz exercise was retrieved").isEqualTo(1L);
-        assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(Long.valueOf((Integer) quizExercises.get(0).get("id")));
+        assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercises.get(0).getId());
     }
 
     @Test

@@ -4,9 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -16,17 +14,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -54,16 +51,16 @@ public class LectureResource {
 
     private final UserRepository userRepository;
 
-    private final CourseResource courseResource;
+    private final ExerciseService exerciseService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, CourseResource courseResource) {
+            AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-        this.courseResource = courseResource;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -74,7 +71,7 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
@@ -98,7 +95,7 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
@@ -127,7 +124,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping(value = "/courses/{courseId}/lectures")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
@@ -139,10 +136,10 @@ public class LectureResource {
 
         Set<Lecture> lectures;
         if (withLectureUnits) {
-            lectures = lectureService.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+            lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
         }
         else {
-            lectures = lectureService.findAllByCourseIdWithAttachments(courseId);
+            lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         }
 
         return ResponseEntity.ok().body(lectures);
@@ -155,7 +152,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
@@ -171,17 +168,43 @@ public class LectureResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             return forbidden();
         }
+        lecture = filterLectureContentForUser(lecture, user);
+
+        return ResponseEntity.ok(lecture);
+    }
+
+    /**
+     * GET /lectures/:lectureId/title : Returns the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
+     */
+    @GetMapping(value = "/lectures/{lectureId}/title")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
+        final var title = lectureRepository.getLectureTitle(lectureId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    private Lecture filterLectureContentForUser(Lecture lecture, User user) {
         lecture = lectureService.filterActiveAttachments(lecture, user);
 
-        // to make sure that the information provided for lecture units is equal to the one in the course dashboard
-        // ToDo Improve performance by constructing a more precise call
-        course = this.courseResource.getCourseForDashboard(course.getId());
-        Set<Exercise> exercisesUserIsAllowedToSee = course.getExercises();
+        // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
+        // hibernate sometimes adds nulls into the list of lecture units to keep the order
+        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
 
-        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().parallelStream().filter(lectureUnit -> {
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(relatedExercises, user);
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
+
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> {
+            if (lectureUnit == null) {
+                return false;
+            }
             if (lectureUnit instanceof ExerciseUnit) {
                 return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                        && exercisesUserIsAllowedToSee.contains(((ExerciseUnit) lectureUnit).getExercise());
+                        && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
             }
             else if (lectureUnit instanceof AttachmentUnit) {
                 return ((AttachmentUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
@@ -189,17 +212,16 @@ public class LectureResource {
             else {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
-        }).map(lectureUnit -> {
+        }).peek(lectureUnit -> {
             if (lectureUnit instanceof ExerciseUnit) {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
-                exercisesUserIsAllowedToSee.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                // we replace the exercise with one that contains all the information needed for correct display
+                exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
             }
-            return lectureUnit;
         }).collect(Collectors.toList());
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
-
-        return ResponseEntity.ok(lecture);
+        return lecture;
     }
 
     /**
@@ -209,7 +231,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lectures/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);

@@ -1,18 +1,20 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo.dto;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
     private String secret;
@@ -76,9 +78,9 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     @Override
-    public Long getBuildScore() {
+    public Double getBuildScore() {
         // the real score is calculated in the grading service
-        return 0L;
+        return 0D;
     }
 
     @Override
@@ -304,7 +306,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private String repositoryName;
 
-        private List<BambooCommitDTO> commits;
+        private List<BambooCommitDTO> commits = new ArrayList<>();
 
         public String getId() {
             return id;
@@ -360,13 +362,13 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private int id;
 
-        private List<BambooTestJobDTO> failedTests;
+        private List<BambooTestJobDTO> failedTests = new ArrayList<>();
 
-        private List<BambooTestJobDTO> successfulTests;
+        private List<BambooTestJobDTO> successfulTests = new ArrayList<>();
 
-        private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
+        private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
-        private List<BambooBuildLogDTO> logs;
+        private List<BambooBuildLogDTO> logs = new ArrayList<>();
 
         public List<BambooTestJobDTO> getSuccessfulTests() {
             return successfulTests;
@@ -418,7 +420,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private String className;
 
-        private List<String> errors;
+        private List<String> errors = new ArrayList<>();
 
         public String getName() {
             return name;

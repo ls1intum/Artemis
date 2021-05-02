@@ -2,11 +2,12 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component.ts';
 import * as chai from 'chai';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { restore, SinonSpy, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
@@ -33,7 +34,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             TestBed.configureTestingModule({
                 imports: [],
                 declarations: [TeamsImportFromFileFormComponent, MockComponent(HelpIconComponent), MockComponent(FaIconComponent)],
-                providers: [],
+                providers: [MockProvider(TranslateService)],
             }).compileComponents();
         }),
     );
@@ -132,6 +133,21 @@ describe('TeamsImportFromFileFormComponent', () => {
         });
         it('should convert file teams correctly', () => {
             expect(comp.convertTeams(mockFileStudents)).to.deep.equal(mockFileTeamsConverted);
+        });
+    });
+
+    describe('Invalid team name throws exception', () => {
+        beforeEach(() => {
+            resetComponent();
+        });
+        it('should throw error', () => {
+            const invalidFileStudents = [...mockFileStudents];
+            invalidFileStudents[0].teamName = '1invalidTeamName';
+            try {
+                comp.convertTeams(invalidFileStudents);
+            } catch (e) {
+                expect(e.stack).to.not.be.null;
+            }
         });
     });
 });

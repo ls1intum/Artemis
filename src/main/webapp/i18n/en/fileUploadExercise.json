@@ -21,7 +21,7 @@
             "submitSuccessful": "Your answer was submitted successfully! You can still submit again or wait for your feedback.",
             "submitDeadlineMissed": "Your answer was submitted successfully! You can still submit again or  wait for your feedback. As you missed the deadline the score will not be counted.",
             "error": "An error occurred. Please try again later.",
-            "assessedSubmission": "Your assessed submission",
+            "assessedSubmission": "Your Assessment",
             "supportedFileExtensions": "Supported file extensions: "
         }
     }

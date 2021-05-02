@@ -20,24 +20,16 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
-import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService;
 
 class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
-
-    @Autowired
-    StudentParticipationRepository participationRepo;
-
-    @Autowired
-    ParticipationTeamWebsocketService participationTeamWebsocketService;
+    private ExerciseRepository exerciseRepo;
 
     private ModelingExercise modelingExercise;
 
@@ -58,7 +50,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @BeforeEach
     void init() {
-        database.addUsers(3, 1, 1);
+        database.addUsers(3, 1, 0, 1);
         Course course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {

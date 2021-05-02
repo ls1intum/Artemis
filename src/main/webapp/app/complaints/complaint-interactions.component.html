@@ -1,15 +1,15 @@
 <div *ngIf="(isExamMode && !noValidComplaintWasSubmittedWithinTheStudentReviewPeriod) || course?.complaintsEnabled || course?.requestMoreFeedbackEnabled">
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && isCurrentUserSubmissionAuthor && !hasRequestMoreFeedback">
         <button
-            *ngIf="isExamMode || course?.maxComplaints > 0"
+            *ngIf="isExamMode || (course?.maxComplaints && course?.maxComplaints! > 0)"
             class="btn btn-primary"
             [class.not-allowed]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
             (click)="toggleComplaintForm()"
             [disabled]="(!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid"
             e
-            title="{{ (!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | translate) : '' }}"
+            title="{{ (!isExamMode && numberOfAllowedComplaints <= 0) || !isTimeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate) : '' }}"
         >
-            {{ 'artemisApp.complaint.moreInfo' | translate }}
+            {{ 'artemisApp.complaint.moreInfo' | artemisTranslate }}
         </button>
         <button
             *ngIf="!isExamMode && course?.requestMoreFeedbackEnabled"
@@ -17,18 +17,19 @@
             [class.not-allowed]="!isTimeOfFeedbackRequestValid"
             (click)="toggleRequestMoreFeedbackForm()"
             [disabled]="!isTimeOfFeedbackRequestValid"
-            title="{{ !isTimeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | translate) : '' }}"
+            title="{{ !isTimeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
         >
-            {{ 'artemisApp.moreFeedback.button' | translate }}
+            {{ 'artemisApp.moreFeedback.button' | artemisTranslate }}
         </button>
     </div>
 
     <div class="row" *ngIf="showComplaintForm || hasComplaint">
         <jhi-complaint-form
+            *ngIf="result"
             class="flex-grow-1"
             [exercise]="exercise"
-            [resultId]="result?.id"
-            [examId]="exam?.id"
+            [resultId]="result.id!"
+            [examId]="exam?.id!"
             [allowedComplaints]="numberOfAllowedComplaints"
             [maxComplaintsPerCourse]="calculateMaxComplaints()"
             [complaintType]="ComplaintType.COMPLAINT"
@@ -38,9 +39,10 @@
     </div>
     <div class="row" *ngIf="showRequestMoreFeedbackForm || hasRequestMoreFeedback">
         <jhi-complaint-form
+            *ngIf="result"
             class="flex-grow-1"
             [exercise]="exercise"
-            [resultId]="result?.id"
+            [resultId]="result.id!"
             [complaintType]="ComplaintType.MORE_FEEDBACK"
             [isCurrentUserSubmissionAuthor]="isCurrentUserSubmissionAuthor"
             (submit)="hasRequestMoreFeedback = true"

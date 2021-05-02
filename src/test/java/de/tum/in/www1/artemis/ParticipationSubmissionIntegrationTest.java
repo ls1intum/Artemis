@@ -12,26 +12,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
-
-    @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     private TextExercise textExercise;
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
         Course course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
     }

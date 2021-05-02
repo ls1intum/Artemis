@@ -316,11 +316,11 @@ public class QuizExercise extends Exercise {
      * @param quizSubmission the submission that should be evaluated
      * @return the resulting score
      */
-    public Long getScoreForSubmission(QuizSubmission quizSubmission) {
+    public Double getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = getScoreInPointsForSubmission(quizSubmission);
         double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxPoints);
+        return 100.0 * score / maxPoints;
     }
 
     /**
@@ -654,6 +654,47 @@ public class QuizExercise extends Exercise {
         for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getId() != null) {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
+            }
+        }
+    }
+
+    /**
+     * add Result to all Statistics of the given QuizExercise
+     *
+     * @param result       the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
+     */
+    public void addResultToAllStatistics(Result result) {
+
+        // update QuizPointStatistic with the result
+        if (result != null) {
+            // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
+            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+            getQuizPointStatistic().addResult(result.getScore(), result.isRated());
+            for (QuizQuestion quizQuestion : getQuizQuestions()) {
+                // update QuestionStatistics with the result
+                if (quizQuestion.getQuizQuestionStatistic() != null && quizSubmission != null) {
+                    quizQuestion.getQuizQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
+                }
+            }
+        }
+    }
+
+    /**
+     * remove Result from all Statistics of the given QuizExercise
+     *
+     * @param result       the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
+     */
+    public void removeResultFromAllStatistics(Result result) {
+        // update QuizPointStatistic with the result
+        if (result != null) {
+            // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
+            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+            getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
+            for (QuizQuestion quizQuestion : getQuizQuestions()) {
+                // update QuestionStatistics with the result
+                if (quizQuestion.getQuizQuestionStatistic() != null) {
+                    quizQuestion.getQuizQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
+                }
             }
         }
     }

@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -30,19 +28,19 @@ public class Exam extends DomainObject {
     /**
      * student can see the exam in the UI from this date onwards
      */
-    @Column(name = "visible_date")
+    @Column(name = "visible_date", nullable = false)
     private ZonedDateTime visibleDate;
 
     /**
      * student can start working on exam from this date onwards
      */
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private ZonedDateTime startDate;
 
     /**
      * student can work on exam until this date
      */
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private ZonedDateTime endDate;
 
     @Column(name = "publish_results_date")
@@ -116,6 +114,9 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties("exam")
     private Set<StudentExam> studentExams = new HashSet<>();
 
+    @Column(name = "exam_archive_path")
+    private String examArchivePath;
+
     // Unidirectional
     @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -133,27 +134,30 @@ public class Exam extends DomainObject {
         this.title = title;
     }
 
+    @NotNull
     public ZonedDateTime getVisibleDate() {
         return visibleDate;
     }
 
-    public void setVisibleDate(ZonedDateTime visibleDate) {
+    public void setVisibleDate(@NotNull ZonedDateTime visibleDate) {
         this.visibleDate = visibleDate;
     }
 
+    @NotNull
     public ZonedDateTime getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(ZonedDateTime startDate) {
+    public void setStartDate(@NotNull ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
+    @NotNull
     public ZonedDateTime getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(ZonedDateTime endDate) {
+    public void setEndDate(@NotNull ZonedDateTime endDate) {
         this.endDate = endDate;
     }
 
@@ -380,5 +384,17 @@ public class Exam extends DomainObject {
             return false;
         }
         return publishResultsDate.isBefore(ZonedDateTime.now());
+    }
+
+    public boolean hasExamArchive() {
+        return examArchivePath != null && !examArchivePath.isEmpty();
+    }
+
+    public String getExamArchivePath() {
+        return examArchivePath;
+    }
+
+    public void setExamArchivePath(String examArchivePath) {
+        this.examArchivePath = examArchivePath;
     }
 }

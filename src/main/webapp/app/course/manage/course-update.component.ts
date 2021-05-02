@@ -16,6 +16,11 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import * as moment from 'moment';
 import { navigateBack } from 'app/utils/navigation.utils';
+import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { Organization } from 'app/entities/organization.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 
 @Component({
     selector: 'jhi-course-update',
@@ -40,9 +45,8 @@ export class CourseUpdateComponent implements OnInit {
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
-
-    shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]{2,}$/; // must start with a letter and cannot contain special characters, at least 3 characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
+    courseOrganizations: Organization[];
 
     constructor(
         private courseService: CourseManagementService,
@@ -51,6 +55,8 @@ export class CourseUpdateComponent implements OnInit {
         private fileUploaderService: FileUploaderService,
         private jhiAlertService: JhiAlertService,
         private profileService: ProfileService,
+        private organizationService: OrganizationManagementService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -60,6 +66,10 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
+                this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
+                    this.courseOrganizations = organizations;
+                });
+
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
@@ -81,6 +91,9 @@ export class CourseUpdateComponent implements OnInit {
                     if (!this.course.teachingAssistantGroupName) {
                         this.course.teachingAssistantGroupName = 'artemis-dev';
                     }
+                    if (!this.course.editorGroupName) {
+                        this.course.editorGroupName = 'artemis-dev';
+                    }
                     if (!this.course.instructorGroupName) {
                         this.course.instructorGroupName = 'artemis-dev';
                     }
@@ -93,15 +106,17 @@ export class CourseUpdateComponent implements OnInit {
                 id: new FormControl(this.course.id),
                 title: new FormControl(this.course.title, [Validators.required]),
                 shortName: new FormControl(this.course.shortName, {
-                    validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
+                    validators: [Validators.required, Validators.minLength(3), regexValidator(shortNamePattern)],
                     updateOn: 'blur',
                 }),
                 // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
                 customizeGroupNames: new FormControl(this.customizeGroupNames),
                 studentGroupName: new FormControl(this.course.studentGroupName),
                 teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
+                editorGroupName: new FormControl(this.course.editorGroupName),
                 instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
+                organizations: new FormControl(this.courseOrganizations),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
@@ -159,6 +174,9 @@ export class CourseUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
+        if (this.courseForm.controls['organizations'] !== undefined) {
+            this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
+        }
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
         } else {
@@ -339,11 +357,13 @@ export class CourseUpdateComponent implements OnInit {
             this.customizeGroupNames = true;
             this.courseForm.controls['studentGroupName'].setValue('artemis-dev');
             this.courseForm.controls['teachingAssistantGroupName'].setValue('artemis-dev');
+            this.courseForm.controls['editorGroupName'].setValue('artemis-dev');
             this.courseForm.controls['instructorGroupName'].setValue('artemis-dev');
         } else {
             this.customizeGroupNames = false;
             this.courseForm.controls['studentGroupName'].setValue(undefined);
             this.courseForm.controls['teachingAssistantGroupName'].setValue(undefined);
+            this.courseForm.controls['editorGroupName'].setValue(undefined);
             this.courseForm.controls['instructorGroupName'].setValue(undefined);
         }
     }
@@ -368,6 +388,38 @@ export class CourseUpdateComponent implements OnInit {
             semesters[2 * i + 2] = 'WS' + (18 + i) + '/' + (19 + i);
         }
         return semesters;
+    }
+
+    /**
+     * Opens the organizations modal used to select an organization to add
+     */
+    openOrganizationsModal() {
+        const modalRef = this.modalService.open(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
+        modalRef.componentInstance.organizations = this.courseOrganizations;
+        modalRef.closed.subscribe((organization) => {
+            if (organization !== undefined) {
+                if (this.courseOrganizations === undefined) {
+                    this.courseOrganizations = [];
+                }
+                this.courseOrganizations.push(organization);
+            }
+        });
+    }
+
+    /**
+     * Removes an organization from the course
+     * @param organization to remove
+     */
+    removeOrganizationFromCourse(organization: Organization) {
+        this.courseOrganizations = this.courseOrganizations.filter((o) => o.id !== organization.id);
+    }
+
+    /**
+     * Updates registrationConfirmationMessage on markdown change
+     * @param message new registrationConfirmationMessage
+     */
+    updateRegistrationConfirmationMessage(message: string) {
+        this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
     }
 }
 

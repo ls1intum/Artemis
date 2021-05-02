@@ -1,14 +1,13 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
-import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
-import { take, tap } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 import { of, zip, forkJoin } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
@@ -69,6 +68,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     isLoading: boolean;
 
+    isAdmin = false;
+
     constructor(
         private route: ActivatedRoute,
         private momentDiff: DifferencePipe,
@@ -99,14 +100,44 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                zip(this.getResults(), this.loadAndCacheProgrammingExerciseSubmissionState())
+                zip(this.resultService.getResults(this.exercise), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
-                    .subscribe(() => (this.isLoading = false));
+                    .subscribe((results) => {
+                        this.results = results[0].body || [];
+                        this.isLoading = false;
+                    });
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
+                this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+                this.isAdmin = this.accountService.isAdmin();
             });
         });
+    }
+
+    getExerciseParticipationsLink(participationId: number): string[] {
+        return !!this.exercise.exerciseGroup
+            ? [
+                  '/course-management',
+                  this.course.id!.toString(),
+                  'exams',
+                  this.exercise.exerciseGroup!.exam!.id!.toString(),
+                  'exercise-groups',
+                  this.exercise.exerciseGroup!.id!.toString(),
+                  this.exercise.type + '-exercises',
+                  this.exercise.id!.toString(),
+                  'participations',
+                  participationId.toString(),
+              ]
+            : [
+                  '/course-management',
+                  this.course.id!.toString(),
+                  this.exercise.type + '-exercises',
+                  this.exercise.id!.toString(),
+                  'participations',
+                  participationId.toString(),
+                  'submissions',
+              ];
     }
 
     /**
@@ -117,33 +148,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         // TODO: this is deactivated because of performance reasons as it would lead quickly to thousands of subscribed websocket topics
         // return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(undefined);
         return of(undefined);
-    }
-
-    /**
-     * Fetches all results for an exercise and assigns them to the results in this component
-     */
-    getResults() {
-        return this.resultService
-            .getResultsForExercise(this.exercise.id!, {
-                withSubmissions: this.exercise.type === ExerciseType.MODELING,
-            })
-            .pipe(
-                tap((res: HttpResponse<Result[]>) => {
-                    this.results = res.body!.map((result) => {
-                        result.participation!.results = [result];
-                        (result.participation! as StudentParticipation).exercise = this.exercise;
-                        result.durationInMinutes = this.durationInMinutes(
-                            result.completionDate!,
-                            result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
-                        );
-                        // Nest submission into participation so that it is available for the result component
-                        if (result.participation && result.submission) {
-                            result.participation.submissions = [result.submission];
-                        }
-                        return result;
-                    });
-                }),
-            );
     }
 
     /**
@@ -162,15 +166,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Predicate used to filter results by the current filter prop setting
      * @param result Result for which to evaluate the predicate
      */
-    filterResultByProp = (result: Result) => {
+    filterResultByProp = (result: Result): boolean => {
         switch (this.resultCriteria.filterProp) {
             case FilterProp.SUCCESSFUL:
-                return result.successful;
+                return !!result.successful;
             case FilterProp.UNSUCCESSFUL:
                 return !result.successful;
             case FilterProp.BUILD_FAILED:
                 return (
-                    result.submission && result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (result.submission as ProgrammingSubmission).buildFailed
+                    !!result.submission &&
+                    result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING &&
+                    !!(result.submission as ProgrammingSubmission).buildFailed
                 );
             case FilterProp.MANUAL:
                 return Result.isManualResult(result);
@@ -189,10 +195,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     handleResultsSizeChange = (filteredResultsSize: number) => {
         this.filteredResultsSize = filteredResultsSize;
     };
-
-    private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
-        return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
-    }
 
     /**
      * Returns the build plan id for a result
@@ -214,7 +216,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result Result for which to get the link for
      */
     getRepositoryLink(result: Result) {
-        return (result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        return (result.participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
     }
 
     /**
@@ -236,51 +238,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName!);
                 }
             });
-            const csvContent = rows.join('\n');
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'results-names.csv');
-            document.body.appendChild(link); // Required for FF
-            link.click();
-        }
-    }
-
-    /**
-     * Exports the exercise results as a csv file
-     */
-    exportResults() {
-        if (this.results.length > 0) {
-            const rows: string[] = [];
-            this.results.forEach((result, index) => {
-                const studentParticipation = result.participation! as StudentParticipation;
-                const { participantName, participantIdentifier } = studentParticipation;
-                const score = result.score;
-
-                if (index === 0) {
-                    const nameAndUserNameColumnHeaders = studentParticipation.team ? 'Team Name,Team Short Name' : 'Name,Username';
-                    const optionalStudentsColumnHeader = studentParticipation.team ? ',Students' : '';
-                    if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                        rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score${optionalStudentsColumnHeader}`);
-                    } else {
-                        rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score,Repo Link${optionalStudentsColumnHeader}`);
-                    }
-                }
-                const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team?.students?.map((s) => s.name).join(', ')}"` : '';
-                if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                    rows.push(`${participantName},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
-                } else {
-                    const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-                    rows.push(`${participantName},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
-                }
-            });
-            const csvContent = rows.join('\n');
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'results-scores.csv');
-            document.body.appendChild(link); // Required for FF
-            link.click();
+            this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
         }
     }
 
@@ -289,7 +247,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      *
      * @param result
      */
-    searchResultFormatter = (result: Result) => {
+    searchResultFormatter = (result: Result): string => {
         const participation = result.participation as StudentParticipation;
         if (participation.student) {
             const { login, name } = participation.student;
@@ -297,6 +255,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         } else if (participation.team) {
             return formatTeamAsSearchResult(participation.team);
         }
+        return '';
     };
 
     /**
@@ -315,7 +274,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     refresh() {
         this.isLoading = true;
         this.results = [];
-        this.getResults().subscribe(() => (this.isLoading = false));
+        this.resultService.getResults(this.exercise).subscribe((results) => {
+            this.results = results.body || [];
+            this.isLoading = false;
+        });
     }
 
     /**

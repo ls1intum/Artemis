@@ -7,6 +7,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { Exam } from 'app/entities/exam.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Organization } from 'app/entities/organization.model';
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -15,6 +16,7 @@ export class Course implements BaseEntity {
     public shortName?: string;
     public studentGroupName?: string;
     public teachingAssistantGroupName?: string;
+    public editorGroupName?: string;
     public instructorGroupName?: string;
     public startDate?: Moment;
     public endDate?: Moment;
@@ -38,6 +40,7 @@ export class Course implements BaseEntity {
     // the following values are only used in course administration
     public numberOfStudents?: number;
     public numberOfTeachingAssistants?: number;
+    public numberOfEditors?: number;
     public numberOfInstructors?: number;
 
     public exercises?: Exercise[];
@@ -45,9 +48,11 @@ export class Course implements BaseEntity {
     public learningGoals?: LearningGoal[];
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
+    public organizations?: Organization[];
 
     // helper attributes
     public isAtLeastTutor?: boolean;
+    public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
     public relativeScore?: number;
     public absoluteScore?: number;
@@ -58,6 +63,7 @@ export class Course implements BaseEntity {
     constructor() {
         this.onlineCourse = false; // default value
         this.isAtLeastTutor = false; // default value
+        this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
 
         this.registrationEnabled = false; // default value
@@ -92,7 +98,8 @@ export class Course implements BaseEntity {
 export const enum CourseGroup {
     STUDENTS = 'students',
     TUTORS = 'tutors',
+    EDITORS = 'editors',
     INSTRUCTORS = 'instructors',
 }
 
-export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.INSTRUCTORS];
+export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.EDITORS, CourseGroup.INSTRUCTORS];

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { filter, map, tap } from 'rxjs/operators';
+
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import * as moment from 'moment';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Exam } from 'app/entities/exam.model';
@@ -13,6 +14,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -62,6 +65,16 @@ export class ExamManagementService {
     }
 
     /**
+     * Fetches the title of the exam with the given id
+     *
+     * @param examId the id of the exam
+     * @return the title of the exam in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(examId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`api/exams/${examId}/title`, { observe: 'response', responseType: 'text' });
+    }
+
+    /**
      * Find all scores of an exam.
      * @param courseId The id of the course.
      * @param examId The id of the exam.
@@ -77,6 +90,15 @@ export class ExamManagementService {
      */
     getExamStatistics(courseId: number, examId: number): Observable<HttpResponse<ExamChecklist>> {
         return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics`, { observe: 'response' });
+    }
+
+    /**
+     * returns the stats of the exam with the provided unique identifiers for the assessment dashboard
+     * @param courseId - the id of the course
+     * @param examId   - the id of the exam
+     */
+    getStatsForExamAssessmentDashboard(courseId: number, examId: number): Observable<HttpResponse<StatsForDashboard>> {
+        return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/exams/${examId}/stats-for-exam-assessment-dashboard`, { observe: 'response' });
     }
 
     /**
@@ -153,8 +175,8 @@ export class ExamManagementService {
      * @param examId The id of the exam to which to add the student
      * @param studentLogin Login of the student
      */
-    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, { observe: 'response' });
+    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<StudentDTO>> {
+        return this.http.post<StudentDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, undefined, { observe: 'response' });
     }
 
     /**
@@ -165,7 +187,7 @@ export class ExamManagementService {
      * @return studentDtos of students that were not found in the system
      */
     addStudentsToExam(courseId: number, examId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
+        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
     /**
@@ -177,8 +199,9 @@ export class ExamManagementService {
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<StudentDTO[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
     }
+
     /**
-     * Remove a student to the registered users for an exam
+     * Remove a student from the registered users for an exam
      * @param courseId The course id
      * @param examId The id of the exam from which to remove the student
      * @param studentLogin Login of the student
@@ -187,6 +210,20 @@ export class ExamManagementService {
     removeStudentFromExam(courseId: number, examId: number, studentLogin: string, withParticipationsAndSubmission = false): Observable<HttpResponse<any>> {
         const options = createRequestOption({ withParticipationsAndSubmission });
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, {
+            params: options,
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Remove all students from an exam
+     * @param courseId The course id
+     * @param examId The id of the exam from which to remove the student
+     * @param withParticipationsAndSubmission if participations and Submissions should also be removed
+     */
+    removeAllStudentsFromExam(courseId: number, examId: number, withParticipationsAndSubmission = false) {
+        const options = createRequestOption({ withParticipationsAndSubmission });
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, {
             params: options,
             observe: 'response',
         });
@@ -337,5 +374,47 @@ export class ExamManagementService {
             });
         }
         return res;
+    }
+
+    findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
+        return this.http
+            .get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' })
+            .pipe(
+                filter((res) => !!res.body),
+                tap((res) =>
+                    res.body!.forEach((submission: Submission) => {
+                        // reconnect some associations
+                        const latestResult = getLatestSubmissionResult(submission);
+                        if (latestResult) {
+                            latestResult.submission = submission;
+                            latestResult.participation = submission.participation;
+                            submission.participation!.results = [latestResult!];
+                            setLatestSubmissionResult(submission, latestResult);
+                        }
+                    }),
+                ),
+            );
+    }
+
+    /**
+     * Downloads the exam archive of the specified examId. Returns an error
+     * if the archive does not exist.
+     * @param courseId
+     * @param examId The id of the exam
+     */
+    downloadExamArchive(courseId: number, examId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/exams/${examId}/download-archive`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
+     * Archives the exam of the specified examId.
+     * @param courseId the id of the course of the exam
+     * @param examId The id of the exam to archive
+     */
+    archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
+        return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
     }
 }

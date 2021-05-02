@@ -4,8 +4,6 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -15,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 /**
  * A ShortAnswerSubmittedText.
@@ -82,6 +81,14 @@ public class ShortAnswerSubmittedText extends DomainObject {
      * @return boolean true if submittedText fits the restrictions above, false when not
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
+        if (Objects.equals(submittedText, solution)) {
+            // when both values are identical, we can return early
+            return true;
+        }
+        if (submittedText == null) {
+            // prevent null pointer exceptions
+            return false;
+        }
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) submittedAnswer.getQuizQuestion();
         int similarityValue = Objects.requireNonNullElse(saQuestion.getSimilarityValue(), 85); // default value
         if (Boolean.TRUE.equals(saQuestion.matchLetterCase())) {

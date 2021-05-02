@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 import { now } from 'moment';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,6 +35,11 @@ import { diff_match_patch } from 'diff-match-patch';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
+import { round } from 'app/shared/util/utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { Observable } from 'rxjs';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { SubmissionType } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -44,6 +49,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
+    SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
     readonly dmp = new diff_match_patch();
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -53,7 +59,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exercise: ProgrammingExercise;
     submission?: ProgrammingSubmission;
     manualResult?: Result;
-    automaticResult?: Result;
     userId: number;
     // for assessment-layout
     isTestRun = false;
@@ -71,14 +76,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
-    adjustedRepositoryURL: string;
     correctionRound: number;
+    courseId: number;
+    examId = 0;
+    exerciseId: number;
+    exerciseGroupId: number;
+    exerciseDashboardLink: string[];
+    loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     private get course(): Course | undefined {
         return this.exercise?.course || this.exercise?.exerciseGroup?.exam?.course;
     }
 
-    generalFeedback = new Feedback();
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
@@ -126,61 +136,35 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
 
-            let participationId;
-            if (!params['participationId']) {
-                // Check if error is thrown and show info about error
-                const response = this.route.snapshot.data.studentParticipationId;
-                if (response?.error?.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.lockLimitReached = true;
-                    return;
-                } else if (response?.error?.status === 404) {
-                    // there are no unassessed submission, nothing we have to worry about
-                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                    return;
-                } else if (response?.error) {
-                    this.onError(response?.error?.detail || 'Not Found');
-                    return;
-                }
-                participationId = Number(response);
-                // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${participationId}`);
-                this.location.go(newUrl);
-            } else {
-                participationId = Number(params['participationId']);
+            this.courseId = Number(params['courseId']);
+            this.exerciseId = Number(params['exerciseId']);
+            const examId = params['examId'];
+            if (examId) {
+                this.examId = Number(examId);
+                this.exerciseGroupId = Number(params['exerciseGroupId']);
             }
 
-            this.programmingExerciseParticipationService
-                .getStudentParticipationWithResultOfCorrectionRound(participationId, this.correctionRound)
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+
+            const submissionId = params['submissionId'];
+            const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
+            submissionObservable
                 .pipe(
                     tap(
-                        (participationWithResult: ProgrammingExerciseStudentParticipation) => {
-                            // Set domain to make file editor work properly
-                            this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResult]);
-                            this.participation = participationWithResult;
-                            this.manualResult = this.participation.results![0];
-
-                            // Either submission from latest manual or automatic result
-                            this.submission = this.manualResult.submission as ProgrammingSubmission;
-                            this.submission.participation = this.participation;
-                            this.exercise = this.participation.exercise as ProgrammingExercise;
-                            this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
-
-                            this.checkPermissions();
-                            this.handleFeedback();
-
-                            if (this.manualResult && this.manualResult.hasComplaint) {
-                                this.getComplaint();
+                        (submission: ProgrammingSubmission) => {
+                            this.handleReceivedSubmission(submission);
+                            if (submissionId === 'new') {
+                                // Update the url with the new id, without reloading the page, to make the history consistent
+                                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
+                                this.location.go(newUrl);
                             }
-                            this.createAdjustedRepositoryUrl();
                         },
                         (error: HttpErrorResponse) => {
-                            this.participationCouldNotBeFetched = true;
-                            if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                                this.lockLimitReached = true;
-                            }
+                            this.handleErrorResponse(error);
                         },
                         () => (this.loadingParticipation = false),
                     ),
+                    // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!)),
                     tap((programmingExercise) => (this.templateParticipation = programmingExercise.body!.templateParticipation!)),
                     switchMap(() => {
@@ -207,6 +191,45 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
+        }
+    }
+
+    private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
+        return this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound);
+    }
+
+    private loadSubmission(submissionId: number): Observable<ProgrammingSubmission> {
+        return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound);
+    }
+
+    private handleReceivedSubmission(submission: ProgrammingSubmission) {
+        this.loadingInitialSubmission = false;
+
+        // Set domain to correctly fetch data
+        this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
+        this.submission = submission;
+        this.manualResult = getLatestSubmissionResult(this.submission);
+        this.participation = submission.participation!;
+        this.exercise = this.participation.exercise as ProgrammingExercise;
+        this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
+
+        this.checkPermissions();
+        this.handleFeedback();
+
+        if (this.manualResult?.hasComplaint) {
+            this.getComplaint();
+        }
+    }
+
+    private handleErrorResponse(error: HttpErrorResponse): void {
+        this.loadingInitialSubmission = false;
+        this.participationCouldNotBeFetched = true;
+        if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
+            this.lockLimitReached = true;
+        } else if (error?.error?.status === 404) {
+            // there are no unassessed submission, nothing we have to worry about
+        } else if (error?.error) {
+            this.onError(error?.error?.detail || 'Not Found');
         }
     }
 
@@ -300,20 +323,26 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
+        this.loadingParticipation = true;
+        this.submission = undefined;
         this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe(
             (response: ProgrammingSubmission) => {
-                const unassessedSubmission = response;
-                this.router.onSameUrlNavigation = 'reload';
+                this.loadingParticipation = false;
+
                 // navigate to the new assessment page to trigger re-initialization of the components
-                let url = `/course-management/${this.course!.id}/programming-exercises/${this.exercise.id}/code-editor/${unassessedSubmission.participation?.id}/assessment`;
-                url += `?correction-round=${this.correctionRound}`;
-                this.router.navigateByUrl(url, {});
+                this.router.onSameUrlNavigation = 'reload';
+
+                const url = getLinkToSubmissionAssessment(ExerciseType.PROGRAMMING, this.courseId, this.exerciseId, response.id!, this.examId, this.exerciseGroupId);
+                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
             (error: HttpErrorResponse) => {
+                // there are no unassessed submission, nothing we have to worry about
                 if (error.status === 404) {
-                    // there are no unassessed submission, nothing we have to worry about
-                    this.onError('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    return;
+                }
+
+                this.loadingParticipation = false;
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
                     this.onError('artemisApp.submission.lockedSubmissionsLimitReached');
                 } else {
@@ -331,7 +360,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.setFeedbacksForManualResult();
-        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.manualResult!.submission!.id!).subscribe(
+        this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe(
             (result: Result) => {
                 this.participation.results![0] = this.manualResult = result;
                 this.jhiAlertService.clear();
@@ -409,11 +438,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     validateFeedback(): void {
         this.calculateTotalScore();
-        const hasReferencedFeedback = Feedback.haveCreditsAndComments(this.referencedFeedback);
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
-        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = ((hasReferencedFeedback || hasGeneralFeedback) && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
+        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
     }
 
     /**
@@ -423,20 +451,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return !this.isAtLeastInstructor && !!this.complaint && this.isAssessor;
     }
 
-    /**
-     * Removes the login from the repositoryURL
-     */
-    private createAdjustedRepositoryUrl() {
-        this.adjustedRepositoryURL = this.participation.repositoryUrl || '';
-        if (this.participation.student && this.participation.repositoryUrl) {
-            const userName = this.participation.student.login + '@';
-            if (this.participation.repositoryUrl.includes(userName)) {
-                this.adjustedRepositoryURL = this.participation.repositoryUrl.replace(userName, '');
-            }
-        }
-    }
-
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+        if (!this.participation.results) {
+            this.participation.results = [];
+        }
         this.participation.results![0] = this.manualResult = response.body!;
         this.jhiAlertService.clear();
         this.jhiAlertService.success(translationKey);
@@ -483,28 +501,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
-        const generalFeedbackIndex = feedbacks.findIndex(
-            (feedbackElement) =>
-                feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED && feedbackElement.type !== FeedbackType.AUTOMATIC,
-        );
-        if (generalFeedbackIndex !== -1) {
-            this.generalFeedback = feedbacks[generalFeedbackIndex];
-        } else {
-            this.generalFeedback = new Feedback();
-        }
         this.validateFeedback();
     }
 
     private setFeedbacksForManualResult() {
-        if (Feedback.hasDetailText(this.generalFeedback)) {
-            this.manualResult!.feedbacks = [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        } else {
-            this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
-        }
+        this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
     }
 
-    private createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${totalScore} of ${maxScore} points`;
+    private static createResultString(totalScore: number, maxScore: number | undefined): string {
+        return `${round(totalScore, 1)} of ${round(maxScore, 1)} points`;
     }
 
     private setAttributesForManualResult(totalScore: number) {
@@ -514,11 +519,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
         // In the case no automatic result exists before the assessment, the resultString is undefined. In this case we just want to see the manual assessment.
+        const resultStringExtension = CodeEditorTutorAssessmentContainerComponent.createResultString(totalScore, this.exercise.maxPoints);
         if (this.isFirstAssessment) {
             if (this.manualResult!.resultString) {
-                this.manualResult!.resultString += ', ' + this.createResultString(totalScore, this.exercise.maxPoints);
+                this.manualResult!.resultString += ', ' + resultStringExtension;
             } else {
-                this.manualResult!.resultString = this.createResultString(totalScore, this.exercise.maxPoints);
+                this.manualResult!.resultString = resultStringExtension;
             }
             this.isFirstAssessment = false;
         } else {
@@ -526,11 +532,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
              * as the points the student has achieved have changed
              */
             const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            resultStringParts[resultStringParts.length - 1] = this.createResultString(totalScore, this.exercise.maxPoints);
+            resultStringParts[resultStringParts.length - 1] = resultStringExtension;
             this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
-        this.manualResult!.score = Math.round((totalScore / this.exercise.maxPoints!) * 100);
+        this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;
         // This is done to update the result string in result.component.ts
         this.manualResult = cloneDeep(this.manualResult);
     }

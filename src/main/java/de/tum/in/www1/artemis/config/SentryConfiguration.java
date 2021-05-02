@@ -10,22 +10,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import io.github.jhipster.config.JHipsterConstants;
 import io.sentry.Sentry;
 
 @Configuration
-@Profile("prod")
+@Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
 public class SentryConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
-
-    @Value("${server.url}")
-    private String artemisServerUrl;
 
     @Value("${artemis.version}")
     private String artemisVersion;
 
     @Value("${info.sentry.dsn}")
     private Optional<String> sentryDsn;
+
+    @Value("${info.test-server}")
+    private Optional<Boolean> isTestServer;
 
     /**
      * init sentry with the correct package name and Artemis version
@@ -39,7 +40,7 @@ public class SentryConfiguration {
 
         try {
             final String dsn = sentryDsn.get() + "?stacktrace.app.packages=de.tum.in.www1.artemis";
-            log.info("Sentry DSN: " + dsn);
+            log.info("Sentry DSN: {}", dsn);
 
             Sentry.init(options -> {
                 options.setDsn(dsn);
@@ -55,13 +56,16 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
-        return switch (artemisServerUrl) {
-            case "https://artemis.ase.in.tum.de" -> "prod";
-            case "https://artemistest.ase.in.tum.de" -> "test";
-            case "https://artemistest2.ase.in.tum.de" -> "test";
-            case "https://artemistest5.ase.in.tum.de" -> "test";
-            case "https://vmbruegge60.in.tum.de" -> "test";
-            default -> "local";
-        };
+        if (isTestServer.isPresent()) {
+            if (isTestServer.get()) {
+                return "test";
+            }
+            else {
+                return "prod";
+            }
+        }
+        else {
+            return "local";
+        }
     }
 }

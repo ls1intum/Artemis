@@ -6,6 +6,7 @@
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "examTitle": "Aktuelle Prüfung von \"{{ course }}\":",
             "cardTitle": "Deine insgesamte Punktzahl:",
+            "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
@@ -35,6 +36,7 @@
                 "releaseDate": "Veröffentlichungsdatum",
                 "dueDate": "Einreichungsfrist",
                 "overdue": "Keine Überfälligen",
+                "unreleased": "Keine Unveröffentlichten",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",

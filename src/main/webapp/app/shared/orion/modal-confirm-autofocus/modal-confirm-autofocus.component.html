@@ -1,11 +1,11 @@
 <div class="modal-header">
-    <h4 class="modal-title">{{ title | translate }}</h4>
+    <h4 class="modal-title">{{ title | artemisTranslate }}</h4>
     <button type="button" class="close" aria-label="Close button" aria-describedby="modal-title" (click)="modal.dismiss('Cross click')">
         <span aria-hidden="true">&times;</span>
     </button>
 </div>
 <div class="modal-body">
-    <p>{{ text | translate }}</p>
+    <p>{{ text | artemisTranslate }}</p>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel click')">Cancel</button>

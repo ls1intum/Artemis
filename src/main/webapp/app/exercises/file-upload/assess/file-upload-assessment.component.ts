@@ -24,9 +24,11 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     providers: [FileUploadAssessmentsService],
@@ -39,11 +41,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     participation: StudentParticipation;
     submission: FileUploadSubmission;
     unassessedSubmission: FileUploadSubmission;
-    result: Result;
-    generalFeedback: Feedback = new Feedback();
-    // TODO: rename this, because right now there is no reference
+    result?: Result;
     unreferencedFeedback: Feedback[] = [];
-    exercise: FileUploadExercise;
+    exercise?: FileUploadExercise;
     exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
@@ -62,6 +62,12 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
     hasNewSubmissions = true;
+    resultId: number;
+    examId = 0;
+    exerciseGroupId: number;
+    exerciseDashboardLink: string[];
+    loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     private cancelConfirmationText: string;
 
@@ -81,13 +87,14 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         private complaintService: ComplaintService,
         private fileService: FileService,
         public structuredGradingCriterionService: StructuredGradingCriterionService,
+        public submissionService: SubmissionService,
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     get assessments(): Feedback[] {
-        return [this.generalFeedback, ...this.unreferencedFeedback];
+        return [...this.unreferencedFeedback];
     }
 
     public ngOnInit(): void {
@@ -108,11 +115,21 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
+            this.resultId = Number(params['resultId']) ?? 0;
             this.exerciseId = exerciseId;
+
+            const examId = params['examId'];
+            if (examId) {
+                this.examId = Number(examId);
+                this.exerciseGroupId = Number(params['exerciseGroupId']);
+            }
+
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
-                this.loadOptimalSubmission(exerciseId);
+                this.loadOptimalSubmission(this.exerciseId);
             } else {
                 this.loadSubmission(submissionId);
             }
@@ -136,6 +153,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.location.go(newUrl);
             },
             (error: HttpErrorResponse) => {
+                this.loadingInitialSubmission = false;
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
@@ -151,13 +169,14 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
-            .get(submissionId, this.correctionRound)
+            .get(submissionId, this.correctionRound, this.resultId)
             .pipe(filter((res) => !!res))
             .subscribe(
                 (res) => {
                     this.initializePropertiesFromSubmission(res.body!);
                 },
                 (error: HttpErrorResponse) => {
+                    this.loadingInitialSubmission = false;
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
                     } else {
@@ -168,28 +187,39 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
+        this.loadingInitialSubmission = false;
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && moment(this.exercise.assessmentDueDate).isBefore(now());
-        this.result = getLatestSubmissionResult(this.submission)!;
-        if (this.result.hasComplaint) {
+        if (this.resultId > 0) {
+            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
+            this.result = getSubmissionResultById(this.submission, this.resultId);
+        } else {
+            this.result = getLatestSubmissionResult(this.submission);
+        }
+        if (this.result?.hasComplaint) {
             this.getComplaint();
         }
-        this.submission.participation!.results = [this.result];
-        this.result.participation = this.submission.participation;
-        if (this.result.feedbacks) {
-            this.loadFeedbacks(this.result.feedbacks);
-        } else {
-            this.result.feedbacks = [];
+        if (this.result) {
+            this.submission.participation!.results = [this.result];
+            this.result!.participation = this.submission.participation;
         }
-        if ((!this.result.assessor || this.result.assessor.id === this.userId) && !this.result.completionDate) {
+        if (this.result?.feedbacks) {
+            this.unreferencedFeedback = this.result.feedbacks;
+        } else if (this.result) {
+            this.result!.feedbacks = [];
+        }
+        if ((!this.result?.assessor || this.result?.assessor.id === this.userId) && !this.result?.completionDate) {
             this.jhiAlertService.clear();
             this.jhiAlertService.info('artemisApp.fileUploadAssessment.messages.lock');
         }
 
         this.checkPermissions();
         this.validateAssessment();
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+
         this.busy = false;
         this.isLoading = false;
     }
@@ -216,25 +246,32 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNext() {
-        this.generalFeedback = new Feedback();
+        this.isLoading = true;
         this.unreferencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, false, this.correctionRound).subscribe(
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe(
             (response: FileUploadSubmission) => {
+                this.isLoading = false;
                 this.unassessedSubmission = response;
-                this.router.onSameUrlNavigation = 'reload';
+
                 // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.navigateByUrl(
-                    `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/submissions/${this.unassessedSubmission.id}/assessment`,
-                    {},
+                this.router.onSameUrlNavigation = 'reload';
+
+                const url = getLinkToSubmissionAssessment(
+                    ExerciseType.FILE_UPLOAD,
+                    this.courseId,
+                    this.exerciseId,
+                    this.unassessedSubmission.id!,
+                    this.examId,
+                    this.exerciseGroupId,
                 );
+                this.router.navigate(url);
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    this.jhiAlertService.error('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                    this.isLoading = true;
                     this.hasNewSubmissions = false;
                 } else {
+                    this.isLoading = false;
                     this.onError(error.message);
                 }
             },
@@ -328,7 +365,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     /**
      * Checks if the assessment is valid:
-     *   - There must be at least one referenced feedback or a general feedback.
+     *   - There must be at least one referenced feedback.
      *   - Each feedback must have either a score or a feedback text or both.
      *   - The score must be a valid number.
      *
@@ -338,34 +375,24 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 
-        if ((!this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0) && this.unreferencedFeedback && this.unreferencedFeedback.length === 0) {
-            this.totalScore = 0;
-            this.assessmentsAreValid = false;
-            return;
-        }
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = hasUnreferencedFeedback;
 
-        let credits = this.unreferencedFeedback.map((assessment) => assessment.credits);
-
-        if (!this.invalidError && !credits.every((credit) => credit && !isNaN(credit))) {
-            this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidScoreMustBeNumber';
-            this.assessmentsAreValid = false;
-            credits = credits.filter((credit) => credit && !isNaN(credit));
-        }
-
-        if (!this.invalidError && !this.unreferencedFeedback.every((feedback) => feedback.credits !== 0)) {
-            this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
-            this.assessmentsAreValid = false;
-        }
         this.totalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         // Cap totalScore to maxPoints
-        const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints! ?? 0.0;
-        if (this.totalScore > maxPoints) {
-            this.totalScore = maxPoints;
+        if (this.exercise) {
+            const maxPoints = this.exercise.maxPoints! + this.exercise.bonusPoints! ?? 0.0;
+            if (this.totalScore > maxPoints) {
+                this.totalScore = maxPoints;
+            }
+            // Do not allow negative score
+            if (this.totalScore < 0) {
+                this.totalScore = 0;
+            }
         }
-        // Do not allow negative score
-        if (this.totalScore < 0) {
-            this.totalScore = 0;
-        }
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     downloadFile(filePath: string) {
@@ -440,17 +467,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     }
                 },
             );
-    }
-
-    private loadFeedbacks(feedbacks: Feedback[]): void {
-        const generalFeedbackIndex = feedbacks.findIndex((feedback) => feedback.credits === 0);
-        if (generalFeedbackIndex !== -1) {
-            this.generalFeedback = feedbacks[generalFeedbackIndex];
-            feedbacks.splice(generalFeedbackIndex, 1);
-        } else {
-            this.generalFeedback = new Feedback();
-        }
-        this.unreferencedFeedback = feedbacks;
     }
 
     get readOnly(): boolean {

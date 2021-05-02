@@ -4,12 +4,14 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-learning-goal-course-detail-modal',
     templateUrl: './learning-goal-course-detail-modal.component.html',
 })
 export class LearningGoalCourseDetailModalComponent implements OnInit {
+    readonly round = round;
     @Input()
     learningGoal: LearningGoal;
     @Input()

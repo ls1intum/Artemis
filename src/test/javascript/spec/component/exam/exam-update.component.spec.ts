@@ -11,7 +11,7 @@ import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockProvider, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider, MockModule, MockPipe } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +26,7 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
 import { Component } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -63,6 +64,7 @@ describe('Exam Update Component', function () {
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
                 DummyComponent,
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -9,13 +9,13 @@ RUN apt update
 # Install Java and Maven dependencies
 RUN apt-get install -y maven
 RUN cd /usr/lib/jvm && \
-    wget https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15%2B36/OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz && \
-    tar -zxf OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz \
-    && mv jdk-15+36 java-15-openjdk-amd64 \
-    && rm OpenJDK15U-jdk_x64_linux_hotspot_15_36.tar.gz
-RUN chown -R root:root /usr/lib/jvm/java-15-openjdk-amd64
-RUN JAVA_HOME="/usr/lib/jvm/java-15-openjdk-amd64" && export JAVA_HOME
-ENV JAVA_HOME /usr/lib/jvm/java-15-openjdk-amd64
+    wget https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk-16%2B36/OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz && \
+    tar -zxf OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz \
+    && mv jdk-16+36 java-16-openjdk-amd64 \
+    && rm OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz
+RUN chown -R root:root /usr/lib/jvm/java-16-openjdk-amd64
+RUN JAVA_HOME="/usr/lib/jvm/java-16-openjdk-amd64" && export JAVA_HOME
+ENV JAVA_HOME /usr/lib/jvm/java-16-openjdk-amd64
 
 # Install C dependencies
 RUN apt install -y gcc gdb make libubsan0 liblsan0 libtsan0
@@ -38,5 +38,17 @@ RUN rm -r -f Python3.8.6/ && rm -f Python-3.8.6.tgz
 
 # Install pytest for python exercises
 RUN pip3 install -U pytest
+
+# Install third-party plugins required by Artemis
+COPY plugins.yml /usr/share/jenkins/ref/plugins.yml
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.yml
+
+# Install docker client (if you want a local build agent)
+# (Uncomment this line if you want to use a local docker build agent e.g for development purposes)
+#RUN curl https://download.docker.com/linux/static/stable/x86_64/docker-19.03.8.tgz | tar xvz --directory /tmp && mv -v /tmp/docker/docker /usr/local/bin/docker && chmod +x /usr/local/bin/docker && rm -rf /tmp/docker
+
+# Disables the first-time setup wizard of Jenkins
+# (Uncomment this line if you're using jenknis-casc-config.yml for auto-configuration)
+#ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 
 USER jenkins

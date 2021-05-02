@@ -3,19 +3,13 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,10 +21,7 @@ import org.apache.maven.plugins.surefire.report.SurefireReportParser;
 import org.apache.maven.reporting.MavenReportException;
 import org.apache.maven.shared.invoker.*;
 import org.apache.maven.shared.utils.Os;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -44,7 +35,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -57,11 +49,11 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
     private ProgrammingExercise exercise;
 
-    LocalRepository exerciseRepo = new LocalRepository();
+    private final LocalRepository exerciseRepo = new LocalRepository();
 
-    LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository();
 
-    LocalRepository solutionRepo = new LocalRepository();
+    private final LocalRepository solutionRepo = new LocalRepository();
 
     @BeforeAll
     public static void detectMavenHome() {
@@ -98,7 +90,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     @BeforeEach
     @SuppressWarnings("resource")
     public void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(1, 1, 1);
+        programmingExerciseTestService.setupTestUsers(1, 1, 0, 1);
         Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -146,14 +138,14 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         return argumentBuilder.build();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     public void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, exerciseRepo, TestResult.FAILED);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     public void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
@@ -163,7 +155,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     private void runTests(ProgrammingLanguage language, ProjectType projectType, LocalRepository repository, TestResult testResult) throws Exception {
         exercise.setProgrammingLanguage(language);
         exercise.setProjectType(projectType);
-        mockConnectorRequestsForSetup(exercise);
+        mockConnectorRequestsForSetup(exercise, false);
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
@@ -183,6 +175,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setPomFile(testRepo.localRepoFile);
         mvnRequest.setGoals(List.of("clean", "test"));
+        mvnRequest.setShowVersion(true);
 
         Invoker mvnInvoker = new DefaultInvoker();
         InvocationResult result = mvnInvoker.execute(mvnRequest);
@@ -214,12 +207,15 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         SUCCESSFUL, FAILED, ERROR, SKIPPED;
 
         static TestResult of(ReportTestCase testCase) {
-            if (testCase.hasError())
+            if (testCase.hasError()) {
                 return TestResult.ERROR;
-            if (testCase.hasFailure())
+            }
+            if (testCase.hasFailure()) {
                 return TestResult.FAILED;
-            if (testCase.hasSkipped())
+            }
+            if (testCase.hasSkipped()) {
                 return TestResult.SKIPPED;
+            }
             return TestResult.SUCCESSFUL;
         }
     }

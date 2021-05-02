@@ -1,0 +1,275 @@
+@import '../../../overview/_overview-vars.scss';
+
+.course-item {
+    border: 1px solid $blue-border-color;
+    background-color: $light-background-color;
+    border-radius: 0.1rem;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    height: 60px;
+
+    .exercise-details-container {
+        max-width: 55ch;
+    }
+
+    .item-title-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .item-title {
+        font-weight: bold;
+        margin-left: 15px;
+        margin-bottom: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50ch;
+        display: block;
+    }
+
+    .item-category {
+        color: gray;
+        margin-left: 15px;
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: space-around;
+
+        h4 {
+            margin-bottom: -5px;
+            font-size: 1rem;
+
+            .badge {
+                max-width: 150px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+    }
+
+    .btn {
+        margin-top: 5px;
+        float: right;
+        height: 40px;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .row-flex {
+        display: inline-flex;
+        flex-direction: row;
+    }
+
+    .exercise-details-item {
+        z-index: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .calender-icon-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .calender-icon-circle {
+        width: 19px;
+        height: 19px;
+        background-color: $light-border-color;
+        border-radius: 25px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .calender-icon {
+        font-size: x-small;
+    }
+
+    .exercise-date-timeline {
+        top: 50%;
+        bottom: 0;
+        position: relative;
+        content: ' ';
+        width: 100%;
+        height: 4px;
+        background-color: #3e8acc;
+        z-index: -1;
+    }
+
+    .exercise-date-container {
+        justify-content: center;
+        min-width: 285px;
+        max-width: max-content;
+        padding: 0;
+        margin: auto;
+    }
+
+    .exercise-date {
+        text-align: center;
+        z-index: 1;
+        min-width: 95px;
+        font-size: x-small;
+        margin-top: -5px;
+    }
+
+    .exercise-no-date {
+        opacity: 0.4;
+    }
+
+    .exercise-score-container {
+        padding: 0;
+        margin: auto;
+        z-index: 1;
+    }
+
+    .exercise-score {
+        width: 250px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        span {
+            white-space: nowrap;
+        }
+    }
+
+    .pointer-row {
+        cursor: pointer;
+        overflow: hidden;
+        align-items: center;
+    }
+
+    .container {
+        max-width: 100%;
+    }
+
+    .button-row {
+        z-index: 1;
+        min-width: 132px;
+        align-items: center;
+        justify-content: start;
+        margin-right: 5px;
+    }
+
+    .grading-icon {
+        font-size: large;
+        margin-left: 5px;
+    }
+}
+
+@media screen and (max-width: 1900px) {
+    .hide-categories {
+        display: none !important;
+    }
+
+    .course-item {
+        .exercise-details-container {
+            max-width: 43ch;
+        }
+
+        .item-title {
+            max-width: 40ch;
+        }
+
+        .exercise-date-container {
+            margin-right: unset !important;
+        }
+    }
+}
+
+@media screen and (max-width: 1680px) {
+    .course-item {
+        .exercise-details-container {
+            max-width: 33ch;
+        }
+
+        .item-title {
+            max-width: 30ch;
+        }
+
+        .exercise-score {
+            span {
+                font-size: small;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 1400px) {
+    .course-item {
+        .exercise-details-container {
+            max-width: 23ch;
+        }
+
+        .item-title {
+            max-width: 15ch;
+        }
+    }
+}
+
+@media screen and (max-width: 1250px) {
+    .course-item {
+        .exercise-details-container {
+            max-width: 18ch;
+        }
+
+        .item-title {
+            max-width: 10ch;
+        }
+    }
+}
+
+@media screen and (max-width: 1150px) {
+    .exercise-score-container {
+        display: none !important;
+    }
+
+    .exercise-date-container {
+        display: none !important;
+    }
+
+    .course-item {
+        .exercise-details-container {
+            max-width: 60ch;
+        }
+
+        .item-title {
+            max-width: 50ch;
+        }
+    }
+}
+
+@media screen and (max-width: 675px) {
+    .details-container {
+        max-width: 70% !important;
+    }
+
+    .course-item {
+        .exercise-details-container {
+            max-width: 30ch;
+        }
+
+        .item-title {
+            max-width: 20ch;
+        }
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .course-item {
+        .exercise-details-container {
+            max-width: 40ch;
+        }
+
+        .item-title {
+            max-width: 15ch;
+        }
+    }
+}

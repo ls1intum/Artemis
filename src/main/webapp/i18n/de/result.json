@@ -20,6 +20,7 @@
             "completionDate": "Abgabedatum",
             "successful": "Erfolgreich",
             "buildArtifact": "Build-Artefakt",
+            "buildError": "Build Fehler:",
             "score": "Bewertung",
             "scorePercentage": "Bewertung (in %)",
             "currentScore": "Aktuelle Bewertung",

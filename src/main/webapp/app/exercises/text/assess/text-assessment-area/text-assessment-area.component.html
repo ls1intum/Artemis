@@ -4,7 +4,7 @@
         [textBlockRef]="ref"
         [selected]="selectedRef === ref"
         [readOnly]="readOnly"
-        [isConflictingFeedback]="isConflictingFeedbackMap?.get(ref)"
+        [isConflictingFeedback]="!!isConflictingFeedbackMap?.get(ref)"
         [conflictType]="conflictTypeMap?.get(ref)"
         [conflictMode]="conflictMode"
         [isLeftConflictingFeedback]="isLeftConflictingFeedback"
@@ -12,6 +12,7 @@
         (didChange)="textBlockRefsChangeEmit()"
         (didDelete)="removeTextBlockRef($event)"
         (onConflictsClicked)="onConflictsClicked.emit($event)"
+        [highlightDifferences]="highlightDifferences"
     ></jhi-textblock-assessment-card>
 </ng-container>
 <ng-template #manualTextBlockSelection>
@@ -26,9 +27,9 @@
 
 <div>
     <span class="badge badge-primary mb-2">
-        {{ 'artemisApp.textExercise.wordCount' | translate: { count: wordCount } }}
+        {{ 'artemisApp.textExercise.wordCount' | artemisTranslate: { count: wordCount } }}
     </span>
     <span class="badge badge-primary mb-2">
-        {{ 'artemisApp.textExercise.characterCount' | translate: { count: characterCount } }}
+        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }}
     </span>
 </div>

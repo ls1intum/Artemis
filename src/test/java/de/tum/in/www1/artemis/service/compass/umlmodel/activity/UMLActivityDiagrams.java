@@ -6,11 +6,11 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-final class UMLActivityDiagrams {
+public final class UMLActivityDiagrams {
 
-    static final String ACTIVITY_MODEL_1;
+    public static final String ACTIVITY_MODEL_1;
 
-    static final String ACTIVITY_MODEL_2;
+    public static final String ACTIVITY_MODEL_2;
 
     static {
         try {

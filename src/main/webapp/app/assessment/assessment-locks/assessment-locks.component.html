@@ -2,7 +2,7 @@
     <div class="row justify-content-between">
         <div class="col-8">
             <h2>
-                <span>{{ 'artemisApp.assessment.locks.title' | translate }}</span>
+                <span>{{ 'artemisApp.assessment.locks.title' + (showAll ? 'All' : '') | artemisTranslate }}</span>
             </h2>
         </div>
     </div>
@@ -27,38 +27,38 @@
                     <td>{{ submission.id }}</td>
                     <td>
                         <fa-icon
-                            [icon]="getIcon(submission.participation.exercise.type)"
+                            [icon]="getIcon(submission.participation!.exercise!.type)"
                             placement="right"
-                            [ngbTooltip]="getIconTooltip(submission.participation.exercise.type) | translate"
+                            [ngbTooltip]="getIconTooltip(submission.participation!.exercise!.type) | artemisTranslate"
                             container="body"
                         ></fa-icon>
                     </td>
-                    <td>{{ submission.participation.exercise.title }}</td>
-                    <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
-                    <td>{{ submission.participation.submissions?.length }}</td>
+                    <td>{{ submission.participation!.exercise!.title || '' }}</td>
+                    <td>{{ submission.submissionDate?.date() | artemisDate: 'long-date' }}</td>
+                    <td>{{ submission.participation!.submissions ? submission.participation!.submissions.length : 0 }}</td>
                     <td>
                         <span *ngIf="submission.latestResult?.score != undefined">{{ submission.latestResult!.score }}%</span>
                     </td>
                     <td>
-                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
+                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
                             <a
                                 [routerLink]="[
                                     '/course-management',
                                     courseId,
-                                    submission.participation.exercise.type + '-exercises',
-                                    submission.participation.exercise.id,
-                                    submission.participation.exercise.type !== PROGRAMMING_EXERCISE ? 'submissions' : 'code-editor',
-                                    submission.participation.exercise.type !== PROGRAMMING_EXERCISE ? submission.id : submission.participation.id,
+                                    submission.participation!.exercise!.type + '-exercises',
+                                    submission.participation!.exercise!.id!,
+                                    'submissions',
+                                    submission.id,
                                     'assessment'
                                 ]"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
-                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                             </a>
                         </span>
                         <span>
                             <button *ngIf="!submission.latestResult!.completionDate" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
-                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
                             </button>
                         </span>
                     </td>

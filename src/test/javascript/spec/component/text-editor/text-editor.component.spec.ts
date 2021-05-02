@@ -253,22 +253,6 @@ describe('TextEditorComponent', () => {
         expect(submissionForAnswer.language).to.be.equal(Language.ENGLISH);
     });
 
-    it('should return general feedback', () => {
-        comp.result = {
-            id: 1,
-            feedbacks: [
-                {
-                    id: 1,
-                    detailText: 'abc',
-                    reference: undefined,
-                    type: FeedbackType.MANUAL,
-                } as Feedback,
-            ],
-        } as Result;
-        const feedbackWithoutReference = comp.generalFeedback;
-        expect(feedbackWithoutReference?.id).to.be.equal(1);
-    });
-
     it('should return unreferenced feedback', () => {
         comp.result = {
             id: 1,

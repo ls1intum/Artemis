@@ -5,10 +5,10 @@
             [ngClass]="{ 'btn-secondary': exercise.mode === INDIVIDUAL, 'btn-default': exercise.mode !== INDIVIDUAL, disabled: disabled }"
             (click)="setMode(INDIVIDUAL)"
         >
-            {{ 'artemisApp.exercise.modes.individual' | translate }}
+            {{ 'artemisApp.exercise.modes.individual' | artemisTranslate }}
         </div>
         <div class="btn btn-default" [ngClass]="{ 'btn-info': exercise.mode === TEAM, 'btn-default': exercise.mode !== TEAM, disabled: disabled }" (click)="setMode(TEAM)">
-            {{ 'artemisApp.exercise.modes.team' | translate }}
+            {{ 'artemisApp.exercise.modes.team' | artemisTranslate }}
         </div>
     </div>
 </div>

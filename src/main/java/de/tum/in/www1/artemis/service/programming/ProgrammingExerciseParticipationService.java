@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -21,7 +18,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -63,18 +59,6 @@ public class ProgrammingExerciseParticipationService {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.gitService = gitService;
-    }
-
-    public Participation findParticipation(Long participationId) throws EntityNotFoundException {
-        return participationRepository.findByIdElseThrow(participationId);
-    }
-
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipation(Long participationId) {
-        return studentParticipationRepository.findById(participationId);
-    }
-
-    public Optional<TemplateProgrammingExerciseParticipation> findTemplateParticipation(Long participationId) {
-        return templateParticipationRepository.findById(participationId);
     }
 
     public Optional<SolutionProgrammingExerciseParticipation> findSolutionParticipation(Long participationId) {
@@ -135,32 +119,9 @@ public class ProgrammingExerciseParticipationService {
         return participation.get();
     }
 
-    // TODO move as default methods into ProgrammingExerciseStudentParticipationRepository
-
-    public Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId) {
-        return studentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, teamId);
-    }
-
-    public List<ProgrammingExerciseStudentParticipation> findByExerciseAndParticipationIds(Long exerciseId, Set<Long> participationIds) {
-        return studentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
-    }
-
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
-        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
-    }
-
-    /**
-     *
-     * @param participationId the participation
-     * @return the participation with all its manual/semi-automatic results
-     */
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
-            Long participationId) {
-        return studentParticipationRepository.findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(participationId);
-    }
-
     /**
      * Try to find a programming exercise participation for the given id.
+     * It contains the last submission which might be illegal!
      *
      * @param participationId ProgrammingExerciseParticipation id
      * @return the casted participation
@@ -197,31 +158,26 @@ public class ProgrammingExerciseParticipationService {
     }
 
     private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 
     private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete solution programming exercise participation
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            participation = findSolutionParticipation(participation.getId()).get();
+            participation.setProgrammingExercise(solutionParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
         }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
     }
 
     private boolean canAccessParticipation(@NotNull TemplateProgrammingExerciseParticipation participation) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
         // To prevent null pointer exceptions, we therefore retrieve it again as concrete template programming exercise participation
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            participation = findTemplateParticipation(participation.getId()).get();
+            participation.setProgrammingExercise(templateParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
         }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
     }
 
     /**
@@ -253,12 +209,12 @@ public class ProgrammingExerciseParticipationService {
 
     private boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
+        return authCheckService.isAtLeastEditorForExercise(participation.getExercise(), user);
     }
 
     private boolean canAccessParticipation(TemplateProgrammingExerciseParticipation participation, Principal principal) {
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        return authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
+        return authCheckService.isAtLeastEditorForExercise(participation.getExercise(), user);
     }
 
     /**
@@ -307,7 +263,7 @@ public class ProgrammingExerciseParticipationService {
             versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
         }
         else {
-            log.warn("Cannot lock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+            log.warn("Cannot lock student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
     }
 
@@ -323,7 +279,7 @@ public class ProgrammingExerciseParticipationService {
             versionControlService.get().configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
         }
         else {
-            log.warn("Cannot unlock student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+            log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
     }
 
@@ -341,12 +297,12 @@ public class ProgrammingExerciseParticipationService {
                 gitService.stashChanges(repo);
             }
             catch (InterruptedException | GitAPIException e) {
-                log.error("Stashing student repository for participation " + participation.getId() + " in exercise '" + programmingExercise.getTitle()
-                        + "' did not work as expected: " + e.getMessage());
+                log.error("Stashing student repository for participation {} in exercise '{}' did not work as expected: {}", participation.getId(), programmingExercise.getTitle(),
+                        e.getMessage());
             }
         }
         else {
-            log.warn("Cannot stash student repository for participation " + participation.getId() + " because the repository was not copied yet!");
+            log.warn("Cannot stash student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
     }
 }

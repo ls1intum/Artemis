@@ -1,6 +1,6 @@
 <div class="modal-header">
     <h4 class="modal-title" id="showHealthLabel" *ngIf="health">
-        {{ 'health.indicator.' + health.key | translate }}
+        {{ 'health.indicator.' + health.key | artemisTranslate }}
     </h4>
 
     <button aria-label="Close" data-dismiss="modal" class="close" type="button" (click)="dismiss()">

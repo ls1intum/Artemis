@@ -41,7 +41,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { UMLElement, UMLModel } from '@ls1intum/apollon';
@@ -151,9 +151,10 @@ describe('Component Tests', () => {
             expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
         });
 
-        it('should allow to submit after the deadline if the initialization date is after the due date', () => {
+        it('should allow to submit after the deadline if the initialization date is after the due date and not submitted', () => {
             submission.participation!.initializationDate = moment().add(1, 'days');
             (<StudentParticipation>submission.participation).exercise!.dueDate = moment();
+            submission.submitted = false;
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -162,6 +163,7 @@ describe('Component Tests', () => {
             const submitButton = debugElement.query(By.css('jhi-button'));
             expect(submitButton).to.exist;
             expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+            submission.submitted = true;
         });
 
         it('should not allow to submit if there is a result and no due date', () => {
@@ -237,16 +239,18 @@ describe('Component Tests', () => {
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(of(submission)));
             const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
 
-            const generalFeedback = new Feedback();
-            generalFeedback.id = 1;
-            generalFeedback.detailText = 'General Feedback';
+            const unreferencedFeedback = new Feedback();
+            unreferencedFeedback.id = 1;
+            unreferencedFeedback.detailText = 'General Feedback';
+            unreferencedFeedback.credits = 5;
+            unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
             const newResult = new Result();
             newResult.score = 50.0;
             newResult.assessmentType = AssessmentType.MANUAL;
             newResult.submission = submission;
             newResult.participation = submission.participation;
             newResult.completionDate = moment();
-            newResult.feedbacks = [generalFeedback];
+            newResult.feedbacks = [unreferencedFeedback];
             sinon.replace(participationWebSocketService, 'subscribeForLatestResultOfParticipation', sinon.fake.returns(of(newResult)));
             fixture.detectChanges();
             expect(comp.assessmentResult).to.deep.equal(newResult);
@@ -271,13 +275,12 @@ describe('Component Tests', () => {
         });
 
         it('should set correct properties on modeling exercise update when submitting', () => {
-            const modelSubmission = <ModelingSubmission>(<unknown>{
+            comp.submission = <ModelingSubmission>(<unknown>{
                 id: 1,
                 model: '{"elements": [{"id": 1}]}',
                 submitted: true,
                 participation,
             });
-            comp.submission = modelSubmission;
             const fake = sinon.replace(service, 'update', sinon.fake.returns(of({ body: submission })));
             comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
             comp.modelingExercise.id = 1;
@@ -308,28 +311,28 @@ describe('Component Tests', () => {
             expect(comp.selectedEntities).to.deep.equal(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
         });
 
-        it('should isSelected return true if no selectedEntities and selectedRelationships', () => {
+        it('should shouldBeDisplayed return true if no selectedEntities and selectedRelationships', () => {
             const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
             comp.selectedEntities = [];
             comp.selectedRelationships = [];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(true);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(true);
             comp.selectedEntities = ['3'];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(false);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(false);
         });
 
-        it('should isSelected return true if feedback reference is in selectedEntities or selectedRelationships', () => {
+        it('should shouldBeDisplayed return true if feedback reference is in selectedEntities or selectedRelationships', () => {
             const id = 'referenceId';
             const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
             comp.selectedEntities = [id];
             comp.selectedRelationships = [];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(true);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(true);
             comp.selectedEntities = [];
             comp.selectedRelationships = [id];
             fixture.detectChanges();
-            expect(comp.isSelected(feedback)).to.equal(false);
+            expect(comp.shouldBeDisplayed(feedback)).to.equal(false);
         });
 
         it('should update submission with current values', () => {

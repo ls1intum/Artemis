@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.user;
 
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
+import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
 import java.util.*;
@@ -22,11 +22,10 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -66,7 +65,11 @@ public class UserService {
 
     private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
+    private final Optional<CIUserManagementService> optionalCIUserManagementService;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
+    private final StudentScoreRepository studentScoreRepository;
 
     private final CacheManager cacheManager;
 
@@ -76,7 +79,8 @@ public class UserService {
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
+            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -86,7 +90,9 @@ public class UserService {
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.passwordService = passwordService;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
+        this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.studentScoreRepository = studentScoreRepository;
     }
 
     /**
@@ -101,15 +107,15 @@ public class UserService {
                 SecurityUtils.setAuthorizationObject();
                 Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
                 if (existingInternalAdmin.isPresent()) {
-                    log.info("Update internal admin user " + artemisInternalAdminUsername.get());
+                    log.info("Update internal admin user {}", artemisInternalAdminUsername.get());
                     existingInternalAdmin.get().setPassword(passwordService.encodePassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
+                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
                     updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups());
                 }
                 else {
-                    log.info("Create internal admin user " + artemisInternalAdminUsername.get());
+                    log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
                     ManagedUserVM userDto = new ManagedUserVM();
                     userDto.setLogin(artemisInternalAdminUsername.get());
                     userDto.setPassword(artemisInternalAdminPassword.get());
@@ -121,14 +127,14 @@ public class UserService {
                     userDto.setCreatedBy("system");
                     userDto.setLastModifiedBy("system");
                     // needs to be mutable --> new HashSet<>(Set.of(...))
-                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN, USER)));
+                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
                     userDto.setGroups(new HashSet<>());
                     userCreationService.createUser(userDto);
                 }
             }
         }
         catch (Exception ex) {
-            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search: " + ex.getMessage(), ex);
+            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
         }
     }
 
@@ -162,6 +168,7 @@ public class UserService {
             user.setResetDate(null);
             saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
             return user;
         });
     }
@@ -174,7 +181,7 @@ public class UserService {
      */
     public User saveUser(User user) {
         clearUserCaches(user);
-        log.debug("Save user " + user);
+        log.debug("Save user {}", user);
         return userRepository.save(user);
     }
 
@@ -200,13 +207,13 @@ public class UserService {
      * @return newly registered user or throw registration exception
      */
     public User registerUser(UserDTO userDTO, String password) {
-        userRepository.findOneByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
+        userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
             if (!removed) {
                 throw new UsernameAlreadyUsedException();
             }
         });
-        userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
+        userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
             if (!removed) {
                 throw new EmailAlreadyUsedException();
@@ -227,11 +234,12 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(USER).ifPresent(authorities::add);
+        authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         saveUser(newUser);
         // we need to save first so that the user can be found in the database in the subsequent method
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser));
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
@@ -247,6 +255,8 @@ public class UserService {
             return false;
         }
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteVcsUser(existingUser.getLogin()));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(existingUser));
+
         deleteUser(existingUser);
         return true;
     }
@@ -267,7 +277,7 @@ public class UserService {
             Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByRegistrationNumber(registrationNumber);
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User " + ldapUser.getUsername() + " has registration number: " + ldapUser.getRegistrationNumber());
+                log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
 
                 // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
                 if (StringUtils.hasText(ldapUser.getUsername())) {
@@ -288,7 +298,7 @@ public class UserService {
                 return Optional.of(user);
             }
             else {
-                log.warn("Ldap User with registration number " + registrationNumber + " not found");
+                log.warn("Ldap User with registration number {} not found", registrationNumber);
             }
         }
         return Optional.empty();
@@ -307,7 +317,9 @@ public class UserService {
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, true));
-        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. JIRA
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, addedGroups, removedGroups));
+
+        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
         try {
             addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group)); // e.g. JIRA
         }
@@ -327,6 +339,7 @@ public class UserService {
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteVcsUser(login));
         // Delete the user in the local Artemis database
         userRepository.findOneByLogin(login).ifPresent(user -> {
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(user));
             deleteUser(user);
             log.warn("Deleted User: {}", user);
         });
@@ -345,6 +358,9 @@ public class UserService {
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
+
+        studentScoreRepository.deleteAllByUser(user);
+
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();
@@ -366,6 +382,8 @@ public class UserService {
             user.setPassword(encryptedPassword);
             saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
+
             log.debug("Changed password for User: {}", user);
         });
     }
@@ -428,9 +446,9 @@ public class UserService {
      * @param groupName the group that should be removed from all existing users
      */
     public void removeGroupFromUsers(String groupName) {
-        log.info("Remove group " + groupName + " from users");
+        log.info("Remove group {} from users", groupName);
         List<User> users = userRepository.findAllInGroupWithAuthorities(groupName);
-        log.info("Found " + users.size() + " users with group " + groupName);
+        log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);
             saveUser(user);
@@ -453,6 +471,7 @@ public class UserService {
         }
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
     }
 
     /**
@@ -462,7 +481,7 @@ public class UserService {
      * @param group the group
      */
     private void addUserToGroupInternal(User user, String group) {
-        log.debug("Add user " + user.getLogin() + " to group " + group);
+        log.debug("Add user {} to group {}", user.getLogin(), group);
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
             user.setAuthorities(authorityService.buildAuthorities(user));
@@ -481,6 +500,10 @@ public class UserService {
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
+            ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group));
+            ciUserManagementService.addUserToGroups(user.getLogin(), user.getGroups());
+        });
     }
 
     /**
@@ -490,7 +513,7 @@ public class UserService {
      * @param group the group
      */
     private void removeUserFromGroupInternal(User user, String group) {
-        log.info("Remove user " + user.getLogin() + " from group " + group);
+        log.info("Remove user {} from group {}", user.getLogin(), group);
         if (user.getGroups().contains(group)) {
             user.getGroups().remove(group);
             user.setAuthorities(authorityService.buildAuthorities(user));

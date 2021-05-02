@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -33,6 +30,7 @@ public class ExamScoresDTO {
     public List<StudentResult> studentResults = new ArrayList<>();
 
     // Inner DTO
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class ExerciseGroup {
 
         public Long id;
@@ -55,6 +53,7 @@ public class ExamScoresDTO {
             this.maxPoints = maxPoints;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public static class ExerciseInfo {
 
             public Long exerciseId;
@@ -79,6 +78,7 @@ public class ExamScoresDTO {
     }
 
     // Inner DTO
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class StudentResult {
 
         public Long userId;
@@ -114,6 +114,7 @@ public class ExamScoresDTO {
     }
 
     // Inner DTO
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class ExerciseResult {
 
         public Long exerciseId;
@@ -122,7 +123,7 @@ public class ExamScoresDTO {
 
         public Double maxScore;
 
-        public Long achievedScore;
+        public Double achievedScore;
 
         public Double achievedPoints;
 
@@ -133,7 +134,7 @@ public class ExamScoresDTO {
             // default constructor for our beloved Jackson :-*
         }
 
-        public ExerciseResult(Long exerciseId, String title, Double maxScore, Long achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
+        public ExerciseResult(Long exerciseId, String title, Double maxScore, Double achievedScore, Double achievedPoints, Boolean hasNonEmptySubmission) {
             this.exerciseId = exerciseId;
             this.title = title;
             this.maxScore = maxScore;

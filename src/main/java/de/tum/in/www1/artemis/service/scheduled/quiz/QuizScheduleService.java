@@ -119,7 +119,7 @@ public class QuizScheduleService {
      * @param result the result, which should be added
      */
     public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
-        log.debug("add result for statistic update for quiz " + quizExerciseId + ": " + result);
+        log.debug("add result for statistic update for quiz {}: {}", quizExerciseId, result);
         if (quizExerciseId != null && result != null) {
             quizCache.getTransientWriteCacheFor(quizExerciseId).getResults().put(result.getId(), result);
         }
@@ -208,12 +208,12 @@ public class QuizScheduleService {
     public void startSchedule(long delayInMillis) {
         if (scheduledProcessQuizSubmissions.isNull()) {
             try {
-                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(this), 0, delayInMillis, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
                 log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                log.debug("Quiz process cache task already redistered");
+                log.warn("Quiz process cache task already registered");
                 // this is expected if we run on multiple nodes
             }
 
@@ -229,7 +229,7 @@ public class QuizScheduleService {
             }
         }
         else {
-            log.debug("Cannot start quiz exercise schedule service, it is already RUNNING");
+            log.info("Cannot start quiz exercise schedule service, it is already RUNNING");
         }
     }
 
@@ -277,7 +277,7 @@ public class QuizScheduleService {
             // schedule sending out filtered quiz over websocket
             try {
                 long delay = Duration.between(ZonedDateTime.now(), quizExercise.getReleaseDate()).toMillis();
-                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId, this), delay, TimeUnit.MILLISECONDS);
+                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
                 // save scheduled future in HashMap
                 quizCache.performCacheWrite(quizExercise.getId(), quizExerciseCache -> {
                     quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
@@ -314,7 +314,7 @@ public class QuizScheduleService {
                 }
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " already disposed/cancelled");
+                log.info("Stop scheduled quiz start for quiz {} already disposed/cancelled", quizExerciseId);
                 // has already been disposed (sadly there is no method to check that)
             }
         });
@@ -382,7 +382,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
+                    log.debug("Remove quiz {} from resultHashMap", quizExerciseId);
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }
@@ -520,7 +520,7 @@ public class QuizScheduleService {
      *
      * @param quizExercise      the quiz which should be checked
      * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
-     * @return                  the number of processed submissions (submit or timeout)
+     * @return the number of processed submissions (submit or timeout)
      */
     private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
 

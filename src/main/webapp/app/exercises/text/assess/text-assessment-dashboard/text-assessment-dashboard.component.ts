@@ -12,6 +12,9 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { map } from 'rxjs/operators';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -25,6 +28,10 @@ export class TextAssessmentDashboardComponent implements OnInit {
     predicate = 'id';
     reverse = false;
     numberOfCorrectionrounds = 1;
+    courseId: number;
+    exerciseId: number;
+    examId: number;
+    exerciseGroupId: number;
 
     private cancelConfirmationText: string;
 
@@ -45,16 +52,24 @@ export class TextAssessmentDashboardComponent implements OnInit {
      */
     async ngOnInit() {
         this.busy = true;
-        const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        this.exerciseService
-            .find(exerciseId)
-            .map((exerciseResponse) => {
-                if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
-                    throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
-                }
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.route.snapshot.paramMap.has('examId')) {
+            this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        }
 
-                return <TextExercise>exerciseResponse.body!;
-            })
+        this.exerciseService
+            .find(this.exerciseId)
+            .pipe(
+                map((exerciseResponse) => {
+                    if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
+                        throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
+                    }
+
+                    return <TextExercise>exerciseResponse.body!;
+                }),
+            )
             .subscribe((exercise) => {
                 this.exercise = exercise;
                 this.getSubmissions();
@@ -70,18 +85,21 @@ export class TextAssessmentDashboardComponent implements OnInit {
     private getSubmissions(): void {
         this.textSubmissionService
             .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
-            .map((response: HttpResponse<TextSubmission[]>) =>
-                response.body!.map((submission: TextSubmission) => {
-                    const tmpResult = getLatestSubmissionResult(submission);
-                    if (tmpResult) {
-                        // reconnect some associations
-                        tmpResult!.submission = submission;
-                        tmpResult!.participation = submission.participation;
-                        submission.participation!.results = [tmpResult!];
-                    }
+            .pipe(
+                map((response: HttpResponse<TextSubmission[]>) =>
+                    response.body!.map((submission: TextSubmission) => {
+                        const tmpResult = getLatestSubmissionResult(submission);
+                        if (tmpResult) {
+                            // reconnect some associations
+                            tmpResult!.submission = submission;
+                            tmpResult!.participation = submission.participation;
+                            submission.participation!.results = [tmpResult!];
+                        }
+                        submission.participation = submission.participation as StudentParticipation;
 
-                    return submission;
-                }),
+                        return submission;
+                    }),
+                ),
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
@@ -127,15 +145,11 @@ export class TextAssessmentDashboardComponent implements OnInit {
             });
         }
     }
+
     /**
      * get the link for the assessment of a specific submission of the current exercise
-     * @param submissionId
      */
     getAssessmentLink(submissionId: number) {
-        if (this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.exerciseGroup.exam?.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        } else {
-            return ['/course-management', this.exercise.course?.id, 'text-exercises', this.exercise.id, 'submissions', submissionId, 'assessment'];
-        }
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
     }
 }

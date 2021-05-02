@@ -88,11 +88,11 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
      *              quizExercise)
      */
-    public void addResult(Long score, Boolean rated) {
+    public void addResult(Double score, Boolean rated) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score.doubleValue(), rated, 1);
+        changeStatisticBasedOnResult(score, rated, 1);
     }
 
     /**
@@ -102,11 +102,11 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise) or unrated ( participated after the dueDate of the
      *              quizExercise)
      */
-    public void removeOldResult(Long score, Boolean rated) {
+    public void removeOldResult(Double score, Boolean rated) {
         if (score == null) {
             return;
         }
-        changeStatisticBasedOnResult(score.doubleValue(), rated, -1);
+        changeStatisticBasedOnResult(score, rated, -1);
     }
 
     /**

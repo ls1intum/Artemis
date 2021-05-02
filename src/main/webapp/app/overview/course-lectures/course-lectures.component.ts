@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Lecture } from 'app/entities/lecture.model';
@@ -26,7 +26,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public weeklyLecturesGrouped: object;
 
     public exerciseCountMap: Map<string, number>;
-    public totalAttachmentCount: number;
 
     constructor(
         private courseService: CourseManagementService,
@@ -65,7 +64,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     private onCourseLoad() {
         this.groupLectures(this.DUE_DATE_DESC);
-        this.totalAttachmentCount = this.getAttachmentCount();
     }
 
     public groupLectures(selectedOrder: number): void {
@@ -127,9 +125,5 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
             return selectedOrder * (aValue - bValue);
         });
-    }
-
-    private getAttachmentCount() {
-        return this.course && this.course.lectures ? this.course.lectures.reduce((prev, el) => prev + (el.attachments ? el.attachments.length : 0), 0) : 0;
     }
 }

@@ -26,12 +26,15 @@ export class AssessmentLayoutComponent {
     @Input() submitBusy: boolean;
     @Input() cancelBusy: boolean;
     @Input() nextSubmissionBusy: boolean;
+    @Input() correctionRound: number;
 
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
     @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;
     @Input() isTestRun = false;
+    @Input() isIllegalSubmission: boolean;
+    @Input() exerciseDashboardLink: string[];
 
     @Input() result?: Result;
     @Input() assessmentsAreValid: boolean;
@@ -39,10 +42,23 @@ export class AssessmentLayoutComponent {
     @Input() exercise?: Exercise;
     @Input() submission?: Submission;
     @Input() hasAssessmentDueDatePassed: boolean;
+    @Input() isProgrammingExercise: boolean; // remove once diff view activated for programming exercises
+
+    private _highlightDifferences: boolean;
+
+    @Input() set highlightDifferences(highlightDifferences: boolean) {
+        this._highlightDifferences = highlightDifferences;
+        this.highlightDifferencesChange.emit(this.highlightDifferences);
+    }
+
+    get highlightDifferences() {
+        return this._highlightDifferences;
+    }
 
     @Output() save = new EventEmitter<void>();
     @Output() submit = new EventEmitter<void>();
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
+    @Output() highlightDifferencesChange = new EventEmitter<boolean>();
 }

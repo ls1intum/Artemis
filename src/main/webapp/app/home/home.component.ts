@@ -1,6 +1,6 @@
 import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
@@ -13,6 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',
@@ -26,7 +27,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     modalRef: NgbModalRef;
     password: string;
     rememberMe = true;
-    acceptTerms = true;
+    userAcceptTerms = false; // in case this is activated (see application-artemis.yml), users have to actively click into it
+    needsToAcceptTerms = false;
     username: string;
     captchaRequired = false;
     credentials: Credentials;
@@ -45,6 +47,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     isSubmittingLogin = false;
 
+    profileInfo: ProfileInfo | undefined = undefined;
+    showResetPasswordLink = false;
+
     constructor(
         private router: Router,
         private accountService: AccountService,
@@ -57,11 +62,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         private javaBridge: OrionConnectorService,
         private modalService: NgbModal,
         private profileService: ProfileService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
+                this.profileInfo = profileInfo;
                 if (profileInfo.activeProfiles.includes('jira')) {
                     this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
                     this.externalUserManagementName = profileInfo.externalUserManagementName;
@@ -77,6 +84,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     this.errorMessageUsername = 'home.errors.tumWarning';
                 }
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+                this.needsToAcceptTerms = profileInfo.needsToAcceptTerms || false;
+                this.showResetPasswordLink = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
         this.accountService.identity().then((user) => {
@@ -91,7 +100,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     }
 
     registerAuthenticationSuccess() {
-        this.eventManager.subscribe('authenticationSuccess', () => {
+        const subscription = this.eventManager.subscribe('authenticationSuccess', () => {
+            // We only need to authenticate once, make sure we don't run this subscription multiple times
+            this.eventManager.destroy(subscription);
+
             this.accountService.identity().then((user) => {
                 this.currentUserCallback(user!);
             });
@@ -109,6 +121,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (input) {
             input.focus();
             this.inputFocused = true;
+        }
+
+        // If the session expired or similar display a warning
+        if (this.loginService.lastLogoutWasForceful()) {
+            this.jhiAlertService.error('home.errors.sessionExpired');
         }
     }
 
@@ -133,14 +150,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     name: 'authenticationSuccess',
                     content: 'Sending Authentication Success',
                 });
-
-                // previousState was set in the authExpiredInterceptor before being redirected to login modal.
-                // since login is successful, go to stored previousState and clear previousState
-                const redirect = this.stateStorageService.getUrl();
-                if (redirect) {
-                    this.stateStorageService.storeUrl(null);
-                    this.router.navigate([redirect]);
-                }
 
                 // Log in to Orion
                 if (isOrion) {
@@ -167,9 +176,17 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
-            // TODO: Remove redirect after summer 2021 term. New deep links should no longer use /#.
-            const url = this.router.url.startsWith('/#') ? this.router.url.substr(2) : 'courses';
-            this.router.navigate([url]);
+            // previousState was set in the authExpiredInterceptor before being redirected to login modal.
+            // since login is successful, go to stored previousState and clear previousState
+            const redirect = this.stateStorageService.getUrl();
+            if (redirect && redirect !== '') {
+                this.stateStorageService.storeUrl('');
+                this.router.navigate([redirect]);
+            } else {
+                // TODO: Remove redirect after summer 2021 term. New deep links should no longer use /#.
+                const url = this.router.url.startsWith('/#') ? this.router.url.substr(2) : 'courses';
+                this.router.navigate([url]);
+            }
         }
     }
 

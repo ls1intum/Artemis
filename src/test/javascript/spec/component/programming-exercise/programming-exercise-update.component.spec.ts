@@ -114,15 +114,15 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     describe('exam mode', () => {
         const examId = 1;
-        const groupId = 1;
+        const exerciseGroupId = 1;
         const exerciseGroup = new ExerciseGroup();
-        exerciseGroup.id = groupId;
+        exerciseGroup.id = exerciseGroupId;
         const expectedExamProgrammingExercise = new ProgrammingExercise(undefined, undefined);
         expectedExamProgrammingExercise.exerciseGroup = exerciseGroup;
 
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId, examId, groupId });
+            route.params = of({ courseId, examId, exerciseGroupId });
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
         });
@@ -137,7 +137,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, groupId);
+            expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
             expect(comp.isSaving).toEqual(false);
             expect(comp.programmingExercise).toEqual(expectedExamProgrammingExercise);
             expect(comp.isExamMode).toBeTruthy();

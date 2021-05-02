@@ -44,11 +44,18 @@ The following activity diagram shows this exercise workflow.
    Exercise Workflow
 
 Setup
---------
+------
 
 The following sections describe the supported features and the process of creating a new programming exercise.
 
 .. include:: programming-exercise-setup.inc
+
+Static Code Analysis Default Configuration
+------------------------------------------
+
+The following sections list the rules that are active for the default static code analysis configuration.
+
+.. include:: programming-sca-default-configuration.inc
 
 Online Editor
 -------------
@@ -91,3 +98,39 @@ Its main features are
 * utilities to test exercises using System.out and System.in comfortably
 
 **For more information see** `AJTS GitHub <https://github.com/ls1intum/artemis-java-test-sandbox>`__
+
+Best practices for writing test cases
+-------------------------------------
+
+The following sections describe best practices for writing test cases.
+The examples and explanations are specifically written for Java (using AJTS/JUnit5), but the practices can also be generalized
+for other programming languages.
+
+.. include:: test-case-best-practices.inc
+
+
+Sending Feedback back to Artemis
+--------------------------------
+
+Per default the results of all unit tests are extracted and sent back to Artemis without any further manual interaction needed.
+Only for some custom setups a semi-automatic approach might be necessary.
+
+Jenkins
+^^^^^^^
+
+In the Jenkins CI-System the test case feedbacks are extracted from XML-Files in the JUnit format.
+The Jenkins plugins reads all such files from a folder ``results`` in the top level of the Jenkins workspace.
+The files resulting from the execution of regular executed unit tests are copied to this folder automatically.
+
+To add additional custom test case feedbacks another mechanism is provided by creating a folder
+``customFeedbacks`` also on the top level of the workspace.
+In this folder an arbitrary number of JSON-Files can be created.
+Each one represents a single test case feedback and should have the format:
+``{ "name": string, "successful": boolean, "message": string }``
+
+* ``name``: This is the name of the test case as it will be shown for example on the ‘Configure Grading’ page.
+  It should therefore have a for this exercise uniquely identifiable name and **has to be non-null and not empty**.
+* ``successful``: Indicates if the test case execution for this submission should be marked as successful or failed.
+  Defaults to ``false`` if not present.
+* ``message``: The message shown as additional information to the student.
+  **Required for non-successful tests/feedback**, optional otherwise.

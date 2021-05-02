@@ -22,7 +22,7 @@ export class ExamExerciseRowButtonsComponent {
     @Input() exercise: Exercise;
     @Input() exam: Exam;
     @Input() exerciseGroupId: number;
-    @Input() latestIndividualEndDate: moment.Moment | null;
+    @Input() latestIndividualEndDate: moment.Moment | undefined;
     @Output() onDeleteExercise = new EventEmitter<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -148,7 +148,7 @@ export class ExamExerciseRowButtonsComponent {
     exportQuizById(exportAll: boolean) {
         this.quizExerciseService.find(this.exercise.id!).subscribe((res: HttpResponse<QuizExercise>) => {
             const exercise = res.body!;
-            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll);
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }
 }

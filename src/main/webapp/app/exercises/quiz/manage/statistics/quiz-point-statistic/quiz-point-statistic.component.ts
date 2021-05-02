@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { ChartOptions } from 'chart.js';
+import { ChartOptions, ChartType } from 'chart.js';
 import { calculateHeightOfChart, createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,7 +14,7 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { BaseChartDirective } from 'ng2-charts';
+import { BaseChartDirective, Color } from 'ng2-charts';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -29,8 +29,8 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
 
     labels: string[] = [];
     data: number[] = [];
-    colors: string[] = [];
-    chartType = 'bar';
+    colors: Color[] = [];
+    chartType: ChartType = 'bar';
     datasets: DataSet[] = [];
 
     label: string[] = [];
@@ -66,7 +66,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -165,7 +165,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -181,7 +181,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;
@@ -225,7 +225,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         });
 
         this.labels = this.label;
-        this.colors = this.backgroundColor;
+        this.colors = this.backgroundColor.map((backgroundColor) => ({ backgroundColor }));
 
         // load data into the chart
         this.loadDataInDiagram();
@@ -245,7 +245,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.data = this.unratedData;
         }
 
-        this.datasets = [{ data: this.data, backgroundColor: this.colors }];
+        this.datasets = [{ data: this.data, backgroundColor: this.colors.map((color) => color.backgroundColor as string) }];
         // recalculate the height of the chart because rated/unrated might have changed or new results might have appeared
         const height = calculateHeightOfChart(this);
 

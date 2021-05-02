@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -14,7 +12,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+
+import de.tum.in.www1.artemis.security.Role;
 
 /**
  * An authority (a security role) used by Spring Security.
@@ -25,24 +24,33 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Authority implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public Authority() {
-        // empty constructor would not be available otherwise
-    }
+    public static Authority ADMIN_AUTHORITY = new Authority(Role.ADMIN.getAuthority());
 
-    public static Authority ADMIN_AUTHORITY = new Authority(AuthoritiesConstants.ADMIN);
+    public static Authority INSTRUCTOR_AUTHORITY = new Authority(Role.INSTRUCTOR.getAuthority());
 
-    public Authority(String name) {
-        // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings
-        setName(name);
-    }
+    public static Authority EDITOR_AUTHORITY = new Authority(Role.EDITOR.getAuthority());
+
+    public static Authority TA_AUTHORITY = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
+
+    public static Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
 
     @NotNull
     @Size(max = 50)
     @Id
     @Column(length = 50)
     private String name;
+
+    public Authority() {
+        // empty constructor would not be available otherwise
+    }
+
+    public Authority(String name) {
+        // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings
+        setName(name);
+    }
 
     public String getName() {
         return name;

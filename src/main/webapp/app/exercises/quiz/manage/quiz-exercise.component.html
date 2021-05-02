@@ -3,7 +3,7 @@
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
         <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
         <a
-            *ngIf="course && course.isAtLeastInstructor"
+            *ngIf="course && course.isAtLeastEditor"
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             id="create-quiz-button"
@@ -12,14 +12,14 @@
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
         </a>
         <a
-            *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastInstructor"
+            *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
         </a>
-        <a *ngIf="course && course.isAtLeastInstructor" class="btn mr-2 btn-primary float-right" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
+        <a *ngIf="course && course.isAtLeastEditor" class="btn mr-2 btn-primary float-right" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
@@ -40,25 +40,25 @@
                     <th jhiSortBy="includedInOverallScore">
                         <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
                     </th>
-                    <th>{{ 'artemisApp.quizExercise.quizLifecycle' | translate }}</th>
+                    <th>{{ 'artemisApp.quizExercise.quizLifecycle' | artemisTranslate }}</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises; trackBy: trackId">
-                    <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor">
+                    <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
-                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor">
+                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
                     <td>
-                        <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{ 'artemisApp.quizExercise.quizStatus.hidden' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | translate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | translate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
                     </td>
                     <td>{{ quizExercise.isPlannedToStart ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
                     <td>
@@ -75,7 +75,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <button
                                 type="submit"
-                                (click)="openForPractice(quizExercise.id)"
+                                (click)="openForPractice(quizExercise.id!)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED"
                             >
@@ -85,7 +85,7 @@
                             <button
                                 id="instructor-quiz-start-{{ quizExercise.id }}"
                                 type="submit"
-                                (click)="startQuiz(quizExercise.id)"
+                                (click)="startQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE"
                             >
@@ -95,7 +95,7 @@
                             <button
                                 id="quiz-set-visible-{{ quizExercise.id }}"
                                 type="submit"
-                                (click)="showQuiz(quizExercise.id)"
+                                (click)="showQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.HIDDEN"
                             >
@@ -135,10 +135,10 @@
                                 </a>
                                 <a
                                     *ngIf="quizExercise.isAtLeastTutor"
-                                    [routerLink]="['/course-management', quizExercise.course.id, 'exercises', quizExercise.id, 'scores']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'eye'"></fa-icon>
+                                    <fa-icon [icon]="'table'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                 </a>
                             </div>
@@ -146,29 +146,32 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
-                                    (click)="exportQuizById(quizExercise.id, true)"
-                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    (click)="exportQuizById(quizExercise.id!, true)"
+                                    class="btn btn-warning btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'file-export'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
                                 </button>
                                 <a
-                                    *ngIf="quizExercise.isAtLeastInstructor"
+                                    *ngIf="quizExercise.isAtLeastEditor"
                                     [hidden]="quizIsOver(quizExercise)"
                                     [class.disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
-                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    class="btn btn-warning btn-sm mr-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
                                 >
-                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    <div>
+                                        <fa-icon [icon]="'wrench'"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    </div>
                                 </a>
                                 <a
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     [hidden]="!quizIsOver(quizExercise)"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']"
-                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    class="btn btn-warning btn-sm mr-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                    <fa-icon [icon]="'wrench'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                                 </a>
                             </div>
@@ -176,10 +179,10 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [entityTitle]="quizExercise.title"
+                                    [entityTitle]="quizExercise.title || ''"
                                     [actionType]="ActionType.Reset"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    (delete)="resetQuizExercise(quizExercise.id)"
+                                    (delete)="resetQuizExercise(quizExercise.id!)"
                                     [dialogError]="dialogError$"
                                     deleteQuestion="artemisApp.quizExercise.reset.question"
                                     class="mb-1"
@@ -189,10 +192,10 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     jhiDeleteButton
-                                    [entityTitle]="quizExercise.title"
+                                    [entityTitle]="quizExercise.title || ''"
                                     deleteQuestion="artemisApp.quizExercise.delete.question"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    (delete)="deleteQuizExercise(quizExercise.id)"
+                                    (delete)="deleteQuizExercise(quizExercise.id!)"
                                     [dialogError]="dialogError$"
                                     id="delete-quiz-{{ quizExercise.id }}"
                                     class="mb-1"

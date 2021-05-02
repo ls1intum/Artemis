@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Observable, Subject, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -11,6 +11,9 @@ import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -27,7 +30,7 @@ export class ExamParticipationService {
         private exerciseService: ExerciseService,
     ) {}
 
-    private getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
+    private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
         return `${prefix}_${courseId}_${examId}`;
     }
@@ -40,6 +43,17 @@ export class ExamParticipationService {
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
+    }
+
+    /**
+     * Retrieves a {@link StudentExam} from the localstorage. Will also mark the student exam as started
+     *
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     */
+    public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam> {
+        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+        return of(localStoredExam);
     }
 
     /**
@@ -61,12 +75,11 @@ export class ExamParticipationService {
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
-
                 return this.convertStudentExamFromServer(studentExam);
             }),
             catchError(() => {
-                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(this.getLocalStorageKeyForStudentExam(courseId, examId)));
-                return Observable.of(localStoredExam);
+                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+                return of(localStoredExam);
             }),
         );
     }
@@ -78,20 +91,26 @@ export class ExamParticipationService {
      */
     public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/start';
-        return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
-            const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
-            this.currentlyLoadedStudentExam.next(convertedStudentExam);
-            return convertedStudentExam;
-        });
+        return this.httpClient.get<StudentExam>(url).pipe(
+            map((studentExam: StudentExam) => {
+                const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
+                this.currentlyLoadedStudentExam.next(convertedStudentExam);
+                return convertedStudentExam;
+            }),
+        );
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
-        return this.httpClient.get<StudentExam>(url).map((studentExam: StudentExam) => {
-            const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
-            this.currentlyLoadedStudentExam.next(convertedStudentExam);
-            return convertedStudentExam;
-        });
+        return this.httpClient.get<StudentExam>(url).pipe(
+            map((studentExam: StudentExam) => {
+                const convertedStudentExam = this.convertStudentExamDateFromServer(studentExam);
+                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
+                this.currentlyLoadedStudentExam.next(convertedStudentExam);
+                return convertedStudentExam;
+            }),
+        );
     }
 
     /**
@@ -157,7 +176,7 @@ export class ExamParticipationService {
     public saveStudentExamToLocalStorage(courseId: number, examId: number, studentExam: StudentExam): void {
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
-        this.localStorageService.store(this.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+        this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
     }
 
     /**
@@ -179,9 +198,20 @@ export class ExamParticipationService {
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
     }
 
+    public setLastSaveFailed(saveFailed: boolean, courseId: number, examId: number): void {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
+        this.localStorageService.store(key, saveFailed);
+    }
+
+    public lastSaveFailed(courseId: number, examId: number): boolean {
+        const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
+        return this.localStorageService.retrieve(key);
+    }
+
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
         studentExam.exam = this.convertExamDateFromServer(studentExam.exam);
+        this.adjustRepositoryUrlsForProgrammingExercises(studentExam);
         return studentExam;
     }
 
@@ -200,5 +230,20 @@ export class ExamParticipationService {
     private convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exam = this.convertExamDateFromServer(studentExam.exam);
         return studentExam;
+    }
+
+    private adjustRepositoryUrlsForProgrammingExercises(studentExam: StudentExam) {
+        // add user indepentend repositoryUrl to all student participations
+        if (studentExam.exercises) {
+            studentExam.exercises!.forEach((ex) => {
+                if (ex.type === ExerciseType.PROGRAMMING && ex.studentParticipations) {
+                    ex.studentParticipations!.forEach((sp) => {
+                        if (sp.type === ParticipationType.PROGRAMMING) {
+                            addUserIndependentRepositoryUrl(sp);
+                        }
+                    });
+                }
+            });
+        }
     }
 }

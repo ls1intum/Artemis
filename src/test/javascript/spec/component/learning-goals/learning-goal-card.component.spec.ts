@@ -1,21 +1,19 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LearningGoalCardComponent } from 'app/course/learning-goals/learning-goal-card/learning-goal-card.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
 import { Component, Input } from '@angular/core';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { LearningGoalCardComponent } from 'app/course/learning-goals/learning-goal-card/learning-goal-card.component';
 import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
+import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
 @Component({ selector: 'jhi-circular-progress-bar', template: '' })
 class CircularProgressBarStubComponent {
@@ -25,13 +23,16 @@ class CircularProgressBarStubComponent {
     progressText = 'Completed';
 }
 
+chai.use(sinonChai);
+const expect = chai.expect;
+
 describe('LearningGoalCardComponent', () => {
     let learningGoalCardComponentFixture: ComponentFixture<LearningGoalCardComponent>;
     let learningGoalCardComponent: LearningGoalCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LearningGoalCardComponent, MockPipe(TranslatePipe), CircularProgressBarStubComponent],
+            declarations: [LearningGoalCardComponent, MockPipe(ArtemisTranslatePipe), CircularProgressBarStubComponent],
             providers: [MockProvider(LectureUnitService), MockProvider(TranslateService), MockProvider(NgbModal)],
             schemas: [],
         })

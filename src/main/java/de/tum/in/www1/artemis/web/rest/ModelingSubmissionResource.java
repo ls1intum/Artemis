@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.security.Principal;
 import java.util.*;
@@ -17,18 +16,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -56,24 +52,27 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final ModelingExerciseService modelingExerciseService;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
+
+    private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final CompassService compassService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExamSubmissionService examSubmissionService;
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
-            ModelingExerciseService modelingExerciseService, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, GradingCriterionService gradingCriterionService, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository) {
+            ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, CompassService compassService, UserRepository userRepository,
+            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
+            StudentParticipationRepository studentParticipationRepository, ModelingSubmissionRepository modelingSubmissionRepository) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
-        this.modelingExerciseService = modelingExerciseService;
+        this.modelingExerciseRepository = modelingExerciseRepository;
         this.compassService = compassService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -86,7 +85,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         long start = System.currentTimeMillis();
@@ -95,7 +94,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
         ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
         long end = System.currentTimeMillis();
-        log.info("createModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+        log.info("createModelingSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
         return response;
     }
 
@@ -110,19 +109,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
         long end = System.currentTimeMillis();
-        log.info("updateModelingSubmission took " + (end - start) + "ms for exercise " + exerciseId + " and user " + principal.getName());
+        log.info("updateModelingSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
         return response;
     }
 
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, Principal principal, ModelingSubmission modelingSubmission) {
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
@@ -161,7 +160,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -173,32 +172,55 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     /**
      * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new Result object is created and
      * assigned to the submission.
+     * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
+     * In case neither resultId nor correctionRound is set, the first correctionRound is used.
      *
      * @param submissionId the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
+     * @param resultId the resultId for which we want do get the submission
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
-        var modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        var modelingSubmission = modelingSubmissionRepository.findOne(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
-        var gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
+        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);
+
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
+        if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
             return forbidden();
         }
-        modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+
+        // load submission with results either by resultId or by correctionRound
+        if (resultId != null) {
+            // load the submission with additional needed properties
+            modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+            // check if result exists
+            Result result = modelingSubmission.getManualResultsById(resultId);
+            if (result == null) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
+            }
+        }
+        else {
+            // load and potentially lock the submission with additional needed properties by correctionRound
+            modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+        }
+
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+
+        // prepare modelingSubmission for response
+        modelingSubmissionService.hideDetails(modelingSubmission, user);
+        modelingSubmission.removeNotNeededResults(correctionRound, resultId);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -212,7 +234,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
@@ -223,6 +245,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+
         if (!(exercise instanceof ModelingExercise)) {
             return badRequest();
         }
@@ -239,7 +262,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var modelingSubmission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode);
 
         // needed to show the grading criteria in the assessment view
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
         // Make sure the exercise is connected to the participation in the json response
         modelingSubmission.getParticipation().setExercise(modelingExercise);
@@ -258,11 +281,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @Deprecated(since = "4.9.0", forRemoval = true)
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAuthorization(modelingExercise, user);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
@@ -304,11 +326,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @Deprecated(since = "4.9.0", forRemoval = true)
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAuthorization(modelingExercise, user);
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         if (compassService.isSupported(modelingExercise)) {
             compassService.resetModelsWaitingForAssessment(exerciseId);
         }
@@ -322,9 +343,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with the submission as body
      */
     @GetMapping("/participations/{participationId}/latest-modeling-submission")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ModelingExercise modelingExercise;
 
@@ -385,7 +406,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         return ResponseEntity.ok(modelingSubmission);
     }
 
-    private void checkAuthorization(ModelingExercise exercise, User user) throws AccessForbiddenException {
+    private void checkAuthorization(ModelingExercise exercise, User user) {
         if (!authCheckService.isAtLeastStudentForExercise(exercise, user)) {
             throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         }

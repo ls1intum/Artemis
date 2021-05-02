@@ -111,6 +111,8 @@ export class NotificationService {
             let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
             if (this.accountService.isAtLeastInstructorInCourse(course)) {
                 courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
+            } else if (this.accountService.isAtLeastEditorInCourse(course)) {
+                courseTopic = `/topic/course/${course.id}/${GroupNotificationType.EDITOR}`;
             } else if (this.accountService.isAtLeastTutorInCourse(course)) {
                 courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}`;
             }

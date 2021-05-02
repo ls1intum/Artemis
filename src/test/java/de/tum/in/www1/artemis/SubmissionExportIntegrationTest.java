@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,7 +15,7 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -22,18 +24,10 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    ExerciseRepository exerciseRepository;
-
-    private List<User> users;
-
-    private Course course1;
 
     private ModelingExercise modelingExercise;
 
@@ -61,11 +55,13 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     private FileUploadSubmission fileUploadSubmission3;
 
+    private final long NOT_EXISTING_EXERCISE_ID = 5489218954L;
+
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(3, 1, 1);
+        List<User> users = database.addUsers(3, 1, 0, 1);
         users.remove(database.getUserByLogin("admin"));
-        course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
+        Course course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
         course1.getExercises().forEach(exercise -> {
             database.createAndSaveParticipationForExercise(exercise, "student1");
             database.createAndSaveParticipationForExercise(exercise, "student2");
@@ -160,6 +156,39 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
+        baseExportOptions.setExportAllParticipants(false);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setInstructorGroupName("abc");
+        database.saveCourse(course);
+        request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testNoSubmissionsForStudent_asTutor() throws Exception {
+        baseExportOptions.setExportAllParticipants(true);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testWrongExerciseId_asInstructor() throws Exception {
+        baseExportOptions.setExportAllParticipants(false);
+        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        request.post("/api/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/file-upload-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testNoSubmissionsForDate_asInstructor() throws Exception {
         baseExportOptions.setFilterLateSubmissions(true);
         baseExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now().minusDays(2));
@@ -179,6 +208,25 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
         File fileUploadUip = request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
         assertZipContains(fileUploadUip, fileUploadSubmission1, fileUploadSubmission2, fileUploadSubmission3);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportAll_IOException() throws Exception {
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+        request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        // the following line resets the mock and prevents it from disturbing any other tests
+        mockedFiles.close();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportTextExerciseSubmission_IOException() throws Exception {
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+        request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        mockedFiles.close();
     }
 
     private void assertZipContains(File file, Submission... submissions) {

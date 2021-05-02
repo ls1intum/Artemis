@@ -1,6 +1,41 @@
 {
-    "assessmentDashboard": {
-        "title": "Bewertungsübersicht",
-        "noSubmissionFound": "Keine Abgaben gefunden"
+    "artemisApp": {
+        "assessmentDashboard": {
+            "home": {
+                "title": "Tutor Kurse Dashboard"
+            },
+            "title": "Bewertungsübersicht",
+            "noSubmissionFound": "Keine Abgaben gefunden",
+            "informationAboutCourse": "Kursinformationen",
+            "informationAboutExam": "Klausurinformationen",
+            "submissions": "Einreichugen",
+            "pageHeader": "Bewertungs-Dashboard für den Kurs",
+            "pageHeaderExam": "Tutor Klausur Dashboard für die Klausur",
+            "pageHeaderExamTestRun": "Testlauf Bewertungs-Dashboard",
+            "yourAssessments": "Deine Bewertungen",
+            "totalAssessments": "Gesamtzahl der Bewertungen",
+            "totalAssessmentsForCorrectionrounds": "Bewertungen der Korrekturrunden",
+            "complaintsAboutYourAssessments": "Beschwerden über deine Bewertungen",
+            "totalComplaints": "Gesamtzahl der Beschwerden",
+            "totalLocks": "Gesamtzahl gesperrter Bewertungen",
+            "moreFeedbackRequestsForYourAssessments": "Feedbackanfragen über deine Bewertungen",
+            "yourAssessmentLocks": "Von dir gesperrte Bewertungen",
+            "totalMoreFeedbackRequests": "Gesamtzahl der weiteren Feedbackanfragen",
+            "showFinishedExercises": "Beendete Übungen anzeigen",
+            "exercise": "Übungen",
+            "exerciseType": "Aufgabentyp",
+            "yourStatus": "Dein Status",
+            "exerciseDueDate": "Einreichungsfrist der Übung",
+            "assessmentsDueDate": "Einreichungsfrist der Bewertungen",
+            "actions": "Aktionen",
+            "notReleased": "Nicht freigegeben",
+            "readGradingInstructions": "Bewertungsanweisungen lesen",
+            "trainOnExampleSubmissions": "Übung zu Beispiel Einreichungen",
+            "assessStudentsSubmissions": "Bewerte die Einreichungen der Studenten.",
+            "assessStudentsLateSubmissions": "Bewerte die verspäteten Einreichungen der Studenten",
+            "evaluateStudentsComplaints": "Evaluiere die Beschwerden und Feedback Anfragen der Studenten",
+            "numberOfOpenComplaints": "Anzahl an offenen Beschwerden",
+            "exerciseTeams": "Teams der Übung"
+        }
     }
 }

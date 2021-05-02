@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExportToCsv } from 'export-to-csv';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
+import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -16,6 +16,11 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockProvider } from 'ng-mocks';
+import * as sinon from 'sinon';
+import { TranslateService } from '@ngx-translate/core';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -68,7 +73,7 @@ describe('Plagiarism Inspector Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisPlagiarismModule, TranslateTestingModule],
-            providers: [{ provide: ActivatedRoute, useValue: activatedRoute }],
+            providers: [{ provide: ActivatedRoute, useValue: activatedRoute }, MockProvider(JhiWebsocketService), MockProvider(TranslateService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismInspectorComponent);
@@ -76,6 +81,29 @@ describe('Plagiarism Inspector Component', () => {
         modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
+    });
+
+    it('should register to topic and fetch latest results on init', fakeAsync(() => {
+        const websocketService = TestBed.inject(JhiWebsocketService);
+        const websocketServiceSpy = sinon.spy(websocketService, 'subscribe');
+        sinon.stub(websocketService, 'receive').returns(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
+        sinon.stub(modelingExerciseService, 'getLatestPlagiarismResult').returns(of(plagiarismResult));
+
+        comp.ngOnInit();
+        tick();
+
+        expect(websocketServiceSpy).toHaveBeenCalledWith(comp.getPlagarismDetectionTopic());
+        expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/modeling-exercises/${modelingExercise.id}/plagiarism-check`);
+        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.plagiarismResult).toBe(plagiarismResult);
+    }));
+
+    it('should return the correct topic url', () => {
+        const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING];
+        exerciseTypes.forEach((exerciseType) => {
+            comp.exercise = { id: 1, type: exerciseType } as Exercise;
+            expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/${exerciseType}-exercises/1/plagiarism-check`);
+        });
     });
 
     it('should get the minimumSize tootip', () => {
@@ -152,4 +180,52 @@ describe('Plagiarism Inspector Component', () => {
         expect(ExportToCsv).toHaveBeenCalled();
         expect(generateCsv).toHaveBeenCalled();
     });
+
+    it('should get the latest plagiarism result for modeling exercise', fakeAsync(() => {
+        comp.exercise = modelingExercise;
+
+        const mockResult = {} as ModelingPlagiarismResult;
+        spyOn(modelingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
+        spyOn(comp, 'handlePlagiarismResult');
+
+        comp.getLatestPlagiarismResult();
+        expect(comp.detectionInProgress).toBe(true);
+
+        tick();
+
+        expect(modelingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(modelingExercise.id);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+    }));
+
+    it('should get the latest plagiarism result for programming exercise', fakeAsync(() => {
+        comp.exercise = programmingExercise;
+
+        const mockResult = {} as TextPlagiarismResult;
+        spyOn(programmingExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
+        spyOn(comp, 'handlePlagiarismResult');
+
+        comp.getLatestPlagiarismResult();
+        expect(comp.detectionInProgress).toBe(true);
+
+        tick();
+
+        expect(programmingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(programmingExercise.id);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+    }));
+
+    it('should get the latest plagiarism result for text exercise', fakeAsync(() => {
+        comp.exercise = textExercise;
+
+        const mockResult = {} as TextPlagiarismResult;
+        spyOn(textExerciseService, 'getLatestPlagiarismResult').and.returnValue(of(mockResult));
+        spyOn(comp, 'handlePlagiarismResult');
+
+        comp.getLatestPlagiarismResult();
+        expect(comp.detectionInProgress).toBe(true);
+
+        tick();
+
+        expect(textExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(textExercise.id);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(mockResult);
+    }));
 });

@@ -1,34 +1,34 @@
+import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
-import { TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { Exam } from 'app/entities/exam.model';
-import { User } from 'app/core/user/user.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { JhiAlertService, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { By } from '@angular/platform-browser';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { SortService } from 'app/shared/service/sort.service';
+import { JhiAlertService, JhiSortDirective, JhiTranslateDirective } from 'ng-jhipster';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+import * as sinon from 'sinon';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -54,7 +54,7 @@ describe('Test Run Management Component', () => {
                 TestRunManagementComponent,
                 MockComponent(AlertErrorComponent),
                 MockComponent(AlertComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(JhiSortDirective),

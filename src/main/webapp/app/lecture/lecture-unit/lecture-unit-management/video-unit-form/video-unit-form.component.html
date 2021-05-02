@@ -2,51 +2,57 @@
     <div class="col-12">
         <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
-                <label class="required" for="name">{{ 'artemisApp.videoUnit.createVideoUnit.name' | translate }}*</label>
-                <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'artemisApp.videoUnit.createVideoUnit.namePlaceHolder' | translate" />
+                <label class="required" for="name">{{ 'artemisApp.videoUnit.createVideoUnit.name' | artemisTranslate }}*</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="name"
+                    formControlName="name"
+                    [placeholder]="'artemisApp.videoUnit.createVideoUnit.namePlaceHolder' | artemisTranslate"
+                />
                 <div *ngIf="nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)" class="alert alert-danger">
                     <div *ngIf="nameControl?.errors?.required">
-                        {{ 'artemisApp.videoUnit.createVideoUnit.nameRequiredValidationError' | translate }}
+                        {{ 'artemisApp.videoUnit.createVideoUnit.nameRequiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="nameControl?.errors?.maxlength">
-                        {{ 'artemisApp.videoUnit.createVideoUnit.nameMaxLengthValidationError' | translate }}
+                        {{ 'artemisApp.videoUnit.createVideoUnit.nameMaxLengthValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <label for="description">{{ 'artemisApp.videoUnit.createVideoUnit.description' | translate }}</label>
+                <label for="description">{{ 'artemisApp.videoUnit.createVideoUnit.description' | artemisTranslate }}</label>
                 <textarea
                     class="form-control"
                     id="description"
                     rows="3"
                     formControlName="description"
-                    [placeholder]="'artemisApp.videoUnit.createVideoUnit.descriptionPlaceHolder' | translate"
+                    [placeholder]="'artemisApp.videoUnit.createVideoUnit.descriptionPlaceHolder' | artemisTranslate"
                 ></textarea>
                 <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
                     <div *ngIf="descriptionControl?.errors?.maxlength">
-                        {{ 'artemisApp.videoUnit.createVideoUnit.descriptionMaxLengthValidationError' | translate }}
+                        {{ 'artemisApp.videoUnit.createVideoUnit.descriptionMaxLengthValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | translate" formControlName="releaseDate"></jhi-date-time-picker>
+                <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
             </div>
             <div class="form-row">
                 <div class="form-group col-4">
-                    <label class="required" for="source">{{ 'artemisApp.videoUnit.createVideoUnit.source' | translate }}*</label>
+                    <label class="required" for="source">{{ 'artemisApp.videoUnit.createVideoUnit.source' | artemisTranslate }}*</label>
                     <input
                         type="text"
                         class="form-control"
                         id="source"
                         formControlName="source"
-                        [placeholder]="'artemisApp.videoUnit.createVideoUnit.sourcePlaceHolder' | translate"
+                        [placeholder]="'artemisApp.videoUnit.createVideoUnit.sourcePlaceHolder' | artemisTranslate"
                     />
                     <div *ngIf="sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)" class="alert alert-danger">
                         <div *ngIf="sourceControl?.errors?.required">
-                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError' | translate }}
+                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError' | artemisTranslate }}
                         </div>
                         <div *ngIf="sourceControl?.errors?.invalidUrl">
-                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceURLValidationError' | translate }}
+                            {{ 'artemisApp.videoUnit.createVideoUnit.sourceURLValidationError' | artemisTranslate }}
                         </div>
                     </div>
                 </div>
@@ -56,12 +62,12 @@
                     </button>
                 </div>
                 <div class="form-group col-7">
-                    <label for="urlHelper">{{ 'artemisApp.videoUnit.createVideoUnit.urlVideoHelper' | translate }}</label>
+                    <label for="urlHelper">{{ 'artemisApp.videoUnit.createVideoUnit.urlVideoHelper' | artemisTranslate }}</label>
                     <input type="text" class="form-control" id="urlHelper" formControlName="urlHelper" aria-describedby="urlHelperExplanation" />
-                    <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | translate }}</small>
+                    <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
                     <div *ngIf="urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)" class="alert alert-danger">
                         <div *ngIf="urlHelperControl?.errors?.invalidVideoUrl">
-                            {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | translate }}
+                            {{ 'artemisApp.videoUnit.createVideoUnit.urlHelperValidationError' | artemisTranslate }}
                         </div>
                     </div>
                 </div>
@@ -69,7 +75,7 @@
             <div class="row">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ 'entity.action.submit' | translate }}</span>
+                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
                     </button>
                 </div>
             </div>

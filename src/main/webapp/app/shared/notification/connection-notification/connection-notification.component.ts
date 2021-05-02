@@ -3,6 +3,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { ConnectionNotification, ConnectionNotificationType } from 'app/shared/notification/connection-notification/connection-notification.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-connection-notification',
@@ -11,7 +12,7 @@ import { ConnectionNotification, ConnectionNotificationType } from 'app/shared/n
 })
 export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     notification = new ConnectionNotification();
-    alert?: { class: string; icon: string; text: string };
+    alert?: { class: string; icon: IconProp; text: string };
     connected?: boolean;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}

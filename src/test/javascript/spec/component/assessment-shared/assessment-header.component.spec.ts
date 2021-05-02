@@ -2,13 +2,12 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
-
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -16,7 +15,7 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule],
             declarations: [AssessmentHeaderComponent],
             providers: [
                 {
@@ -204,5 +203,25 @@ describe('AssessmentHeaderComponent', () => {
         fixture.detectChanges();
         const nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
+    });
+
+    it('should set highlightDifferences to true', () => {
+        component.highlightDifferences = false;
+        spyOn(component.highlightDifferencesChange, 'emit');
+
+        component.toggleHighlightDifferences();
+
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
+        expect(component.highlightDifferences).toEqual(true);
+    });
+
+    it('should set highlightDifferences to false', () => {
+        component.highlightDifferences = true;
+        spyOn(component.highlightDifferencesChange, 'emit');
+
+        component.toggleHighlightDifferences();
+
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
+        expect(component.highlightDifferences).toEqual(false);
     });
 });

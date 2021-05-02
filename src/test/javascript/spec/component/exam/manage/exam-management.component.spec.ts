@@ -17,7 +17,12 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { RouterTestingModule } from '@angular/router/testing';
+import { examManagementRoute } from 'app/exam/manage/exam-management.route';
+import { SortService } from 'app/shared/service/sort.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { JhiEventManager } from 'ng-jhipster';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,18 +37,22 @@ describe('Exam Management Component', () => {
     let fixture: ComponentFixture<ExamManagementComponent>;
     let service: ExamManagementService;
     let courseManagementService: CourseManagementService;
+    let sortService: SortService;
+    let accountService: AccountService;
+    let eventManager: JhiEventManager;
 
     const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any) as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([examManagementRoute[0]])],
             declarations: [ExamManagementComponent],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
+                JhiEventManager,
             ],
         })
             .overrideTemplate(ExamManagementComponent, '')
@@ -53,6 +62,9 @@ describe('Exam Management Component', () => {
         comp = fixture.componentInstance;
         service = TestBed.inject(ExamManagementService);
         courseManagementService = TestBed.inject(CourseManagementService);
+        sortService = TestBed.inject(SortService);
+        accountService = TestBed.inject(AccountService);
+        eventManager = TestBed.inject(JhiEventManager);
     });
 
     afterEach(function () {
@@ -60,11 +72,24 @@ describe('Exam Management Component', () => {
         sinon.restore();
     });
 
-    it('Should call findAllExamsForCourse on init', () => {
+    it('Should call courseService on init', () => {
         // GIVEN
-        const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        const responseFakeCourse = { body: { id: 456 } as Course } as HttpResponse<Course>;
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
         sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(courseManagementService.find).to.have.been.calledOnce;
+        expect(comp.course).to.eq(course);
+    });
+
+    it('Should call loadAllExamsForCourse on init', () => {
+        // GIVEN
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+        const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
         sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
 
         // WHEN
@@ -72,7 +97,72 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.findAllExamsForCourse).to.have.been.calledOnce;
-        expect(comp.exams[0]).to.eq(exam);
+        expect(comp.exams).to.deep.eq([exam]);
+    });
+
+    it('Should call isAtLeastInstructorInCourse on init', () => {
+        // GIVEN
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+        const expectedAtLeastInstructor = true;
+        sinon.replace(accountService, 'isAtLeastInstructorInCourse', sinon.fake.returns(expectedAtLeastInstructor));
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(accountService.isAtLeastInstructorInCourse).to.have.been.calledOnce;
+        expect(comp.isAtLeastInstructor).to.eq(expectedAtLeastInstructor);
+    });
+
+    it('Should call isAtLeastTutorInCourse on init', () => {
+        // GIVEN
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+        const expectedAtLeastTutor = true;
+        sinon.replace(accountService, 'isAtLeastTutorInCourse', sinon.fake.returns(expectedAtLeastTutor));
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(accountService.isAtLeastTutorInCourse).to.have.been.calledOnce;
+        expect(comp.isAtLeastTutor).to.eq(expectedAtLeastTutor);
+    });
+
+    it('Should call getLatestIndividualDate on init', () => {
+        // GIVEN
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+        const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
+        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
+
+        const examInformationDTO = new ExamInformationDTO();
+        examInformationDTO.latestIndividualEndDate = moment();
+        const responseFakeLatestIndividualEndDateOfExam = { body: examInformationDTO } as HttpResponse<ExamInformationDTO>;
+        sinon.replace(service, 'getLatestIndividualEndDateOfExam', sinon.fake.returns(of(responseFakeLatestIndividualEndDateOfExam)));
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(service.getLatestIndividualEndDateOfExam).to.have.been.calledOnce;
+        expect(comp.exams[0].latestIndividualEndDate).to.eq(examInformationDTO.latestIndividualEndDate);
+    });
+
+    it('Should call findAllExamsForCourse on examListModification event being fired after registering for exam changes ', () => {
+        // GIVEN
+        comp.course = course;
+        const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
+        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
+
+        // WHEN
+        comp.registerChangeInExams();
+        eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
+
+        // THEN
+        expect(service.findAllExamsForCourse).to.have.been.calledOnce;
+        expect(comp.exams).to.deep.eq([exam]);
     });
 
     it('Should delete an exam when delete exam is called', () => {
@@ -89,39 +179,26 @@ describe('Exam Management Component', () => {
 
         // THEN
         expect(service.delete).to.have.been.calledOnce;
+        expect(comp.exams.length).to.eq(0);
     });
 
-    it('Should return true for examHasFinished when component has no exam information ', () => {
+    it('Should return false for examHasFinished when component has no exam information ', () => {
         // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
+        exam.latestIndividualEndDate = undefined;
 
         // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
+        const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
-        expect(examHasFinished).to.be.true;
-    });
-
-    it('Should return true for examHasFinished when component has information of other exams', () => {
-        // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
-        comp.examIdToExamInformation.set(1, new ExamInformationDTO());
-
-        // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
-
-        // THEN
-        expect(examHasFinished).to.be.true;
+        expect(examHasFinished).to.be.false;
     });
 
     it('Should return true for examHasFinished when exam is in the past ', () => {
         // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
-        const examInformation: ExamInformationDTO = { latestIndividualEndDate: moment().subtract(1, 'days') };
-        comp.examIdToExamInformation.set(exam.id!, examInformation);
+        exam.latestIndividualEndDate = moment().subtract(1, 'days');
 
         // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
+        const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
         expect(examHasFinished).to.be.true;
@@ -129,14 +206,31 @@ describe('Exam Management Component', () => {
 
     it('Should return false for examHasFinished when exam is in the future ', () => {
         // GIVEN
-        comp.examIdToExamInformation = new Map<number, ExamInformationDTO>();
-        const examInformation: ExamInformationDTO = { latestIndividualEndDate: moment().add(1, 'minute') };
-        comp.examIdToExamInformation.set(exam.id!, examInformation);
+        exam.latestIndividualEndDate = moment().add(1, 'minute');
 
         // WHEN
-        const examHasFinished = comp.examHasFinished(exam.id!);
+        const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
         expect(examHasFinished).to.be.false;
+    });
+
+    it('Should return exam.id, when item in the exam table is being tracked ', () => {
+        // WHEN
+        const itemId = comp.trackId(0, exam);
+
+        // THEN
+        expect(itemId).to.eq(exam.id);
+    });
+
+    it('Should call sortService when sortRows is called ', () => {
+        // GIVEN
+        sinon.replace(sortService, 'sortByProperty', sinon.fake.returns([]));
+
+        // WHEN
+        comp.sortRows();
+
+        // THEN
+        expect(sortService.sortByProperty).to.have.been.calledOnce;
     });
 });

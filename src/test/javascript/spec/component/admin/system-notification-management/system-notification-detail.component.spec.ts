@@ -1,21 +1,21 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
+import { Directive, HostListener, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
-import { ArtemisTestModule } from '../../../test.module';
-import { TranslatePipe } from '@ngx-translate/core';
-import { of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { spy } from 'sinon';
-import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
+import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { Directive, HostListener, Input } from '@angular/core';
-import { SystemNotification } from 'app/entities/system-notification.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { of } from 'rxjs';
+import * as sinon from 'sinon';
+import { spy } from 'sinon';
+import * as sinonChai from 'sinon-chai';
+import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -56,7 +56,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
             declarations: [
                 SystemNotificationManagementDetailComponent,
                 RouterLinkSpy,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(RouterOutlet),
                 MockDirective(AlertErrorComponent),

@@ -15,11 +15,12 @@ import { ScoreChartPreset } from 'app/shared/chart/presets/scoreChartPreset';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    isProgrammingExerciseStudentParticipation,
     isProgrammingExerciseParticipation,
+    isProgrammingExerciseStudentParticipation,
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { round } from 'app/shared/util/utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -46,6 +47,7 @@ export class FeedbackItem {
 export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
+    readonly round = round;
 
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
@@ -245,19 +247,19 @@ export class ResultDetailComponent implements OnInit {
         if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
             return [...feedbackList];
         } else {
-            const positiveTestCases = feedbackList.filter((feedbackItem) => {
-                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive;
+            const positiveTestCasesWithoutDetailText = feedbackList.filter((feedbackItem) => {
+                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
             });
-            if (positiveTestCases.length > 0) {
+            if (positiveTestCasesWithoutDetailText.length > 0) {
                 return [
                     {
                         type: FeedbackItemType.Test,
                         category: 'Feedback',
-                        title: positiveTestCases.length + ' passed test' + (positiveTestCases.length > 1 ? 's' : ''),
+                        title: positiveTestCasesWithoutDetailText.length + ' passed test' + (positiveTestCasesWithoutDetailText.length > 1 ? 's' : ''),
                         positive: true,
-                        credits: positiveTestCases.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
+                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
                     },
-                    ...feedbackList.filter((feedbackItem) => !positiveTestCases.includes(feedbackItem)),
+                    ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
                 ];
             } else {
                 return [...feedbackList];

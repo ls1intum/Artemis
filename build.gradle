@@ -6,7 +6,6 @@ buildscript {
         mavenLocal()
         mavenCentral()
         maven { url "https://repo.spring.io/plugins-release" }
-        jcenter()
     }
     dependencies {
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
@@ -20,22 +19,19 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "2.8.0"
+    id "com.google.cloud.tools.jib" version "3.0.0"
     id "com.github.node-gradle.node" version "3.0.1"
-    id "net.ltgt.apt-eclipse"
-    id "net.ltgt.apt-idea"
-    id "net.ltgt.apt"
-    id "com.diffplug.spotless" version "5.10.2"
+    id "com.diffplug.spotless" version "5.12.4"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.35.0"
+    id "com.github.ben-manes.versions" version "0.38.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.10.4"
+version = "4.12.0"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=15
-targetCompatibility=15
+sourceCompatibility=16
+targetCompatibility=16
 
 apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
@@ -64,7 +60,7 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse().configFile "artemis-spotless-style.xml"
@@ -85,46 +81,39 @@ test {
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*"
     testLogging {
-        events 'FAILED', 'SKIPPED'
+        events "FAILED", "SKIPPED"
     }
     testLogging.showStandardStreams = true
     reports.html.enabled = false
+    jvmArgs "--illegal-access=warn"
 }
-
-task integrationTest(type: Test) {
-    useJUnitPlatform()
-    description = "Execute integration tests."
-    group = "verification"
-    include "**/*IT*", "**/*IntTest*"
-
-    testLogging {
-        events 'FAILED', 'SKIPPED'
-    }
-
-    maxHeapSize = "1024m"
-    jvmArgs "-XX:MaxPermSize=512m"
-    reports.html.enabled = false
-}
-
-check.dependsOn integrationTest
 
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn test
 }
 
-task integrationTestReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
-    reportOn integrationTest
-}
-
 jacoco {
     toolVersion = "0.8.6"
+}
+
+private excludedClassFilesForReport(classDirectories) {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it,
+            exclude: [
+                "**/de/tum/in/www1/artemis/domain/**/*_*",
+            ]
+        )
+    }))
 }
 
 jacocoTestReport {
     reports {
         xml.enabled true
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
     }
 }
 
@@ -135,15 +124,19 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.84
+                minimum = 0.882
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
-                // TODO: in the future the following value should become less than 50
-                maximum = 150
+                // TODO: in the future the following value should become less than 20
+                maximum = 30
             }
         }
+    }
+    // we want to ignore some generated files in the domain folders
+    afterEvaluate {
+        excludedClassFilesForReport(classDirectories)
     }
 }
 check.dependsOn jacocoTestCoverageVerification
@@ -155,37 +148,38 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
-    implementation "org.gitlab4j:gitlab4j-api:4.15.7"
+    implementation "org.gitlab4j:gitlab4j-api:4.16.0"
 
     implementation files("libs/jplag-3.0.0.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r"
-    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:5.10.0.202012080955-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
+    // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit.archive
+    implementation "org.eclipse.jgit:org.eclipse.jgit.archive:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.3.1"
-    implementation "com.atlassian.bamboo:bamboo-specs:7.1.2"
+    implementation "com.atlassian.bamboo:bamboo-specs:7.2.3"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring-boot-starter:4.2.0"
-    implementation "io.sentry:sentry-logback:4.2.0"
+    implementation "io.sentry:sentry-spring-boot-starter:4.3.0"
+    implementation "io.sentry:sentry-logback:4.3.0"
     implementation "org.jsoup:jsoup:1.13.1"
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.5.4"
+    implementation "org.springdoc:springdoc-openapi-ui:1.5.8"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.6.4"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.6.6"
     implementation "net.logstash.logback:logstash-logback-encoder:6.6"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -197,13 +191,13 @@ dependencies {
     implementation "com.hazelcast:hazelcast-hibernate53:2.2.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
-    implementation "com.zaxxer:HikariCP:4.0.2"
+    implementation "com.zaxxer:HikariCP:4.0.3"
     implementation "org.apache.commons:commons-text:1.9"
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    implementation "org.hibernate.validator:hibernate-validator:6.2.0.Final"
-    implementation "org.liquibase:liquibase-core:4.2.2"
+    implementation "org.hibernate.validator:hibernate-validator:7.0.1.Final"
+    implementation "org.liquibase:liquibase-core:4.3.5"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -219,36 +213,37 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.4.5"
+    implementation "org.springframework.data:spring-data-ldap:2.5.0"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.0.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.3"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.59.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.4"
-    implementation "org.springframework:spring-messaging:5.3.4"
+    implementation "io.netty:netty-all:4.1.63.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.6"
+    implementation "org.springframework:spring-messaging:5.3.6"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-    implementation "org.xmlbeam:xmlprojector:1.4.18"
+    implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
+    implementation "org.xmlbeam:xmlprojector:1.4.20"
     implementation "io.jsonwebtoken:jjwt-api:0.11.2"
+    implementation "org.bouncycastle:bcprov-jdk15on:1.68"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.2"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.2"
     implementation ("io.springfox:springfox-swagger2:3.0.0") {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    // at the moment, we cannot upgrade to 8.0.23 because of an error message in Liquibase java.lang.ClassCastException: class java.time.LocalDateTime cannot be cast to class java.lang.String
-    implementation "mysql:mysql-connector-java:8.0.22"
+    implementation "mysql:mysql-connector-java:8.0.24"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
-    implementation "com.ibm.icu:icu4j:68.2"
+    implementation "com.ibm.icu:icu4j:69.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
-    implementation "org.apache.maven:maven-model:3.6.3"
+    implementation "org.apache.maven:maven-model:3.8.1"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -266,18 +261,19 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.19.0"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
-    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.17.0"
-    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.17.0"
+    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.18.0"
+    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.18.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
+    testImplementation "org.mockito:mockito-inline:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.3"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:2.22.2"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
 
-    // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20201115"
+    // Lightweight JSON library needed for the internals of the MockRestServiceServer
+    testImplementation "org.json:json:20210307"
 }
 
 task cleanResources(type: Delete) {
@@ -300,16 +296,6 @@ tasks.withType(Test) {
         showCauses true
         showStackTraces true
 
-        // set options for log level DEBUG and INFO
-        debug {
-            events TestLogEvent.STARTED,
-                TestLogEvent.FAILED,
-                TestLogEvent.PASSED,
-                TestLogEvent.SKIPPED,
-                TestLogEvent.STANDARD_ERROR,
-                TestLogEvent.STANDARD_OUT
-            exceptionFormat TestExceptionFormat.FULL
-        }
         info.events = debug.events
         info.exceptionFormat = debug.exceptionFormat
 
@@ -325,7 +311,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.8.3"
+    gradleVersion = "7.0"
 }
 
 task stage(dependsOn: "bootWar") {
@@ -339,7 +325,7 @@ node {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion "8.39"
+    toolVersion "8.42"
     configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
@@ -354,7 +340,7 @@ task buildJarForDocker (type: Exec) {
 }
 
 def isNonStable = { String version ->
-    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+    def stableKeyword = ["RELEASE", "FINAL", "GA"].any { it -> version.toUpperCase().contains(it) }
     def regex = /^[0-9,.v-]+(-r)?$/
     return !stableKeyword && !(version ==~ regex)
 }
@@ -372,7 +358,7 @@ tasks.named("dependencyUpdates").configure {
         componentSelection {
             all {
                 if (isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)) {
-                    reject('Release candidate')
+                    reject("Release candidate")
                 }
             }
         }

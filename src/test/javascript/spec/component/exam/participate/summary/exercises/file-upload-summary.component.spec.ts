@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FileService } from 'app/shared/http/file.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -23,7 +23,7 @@ describe('FileUploadExamSummaryComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            declarations: [FileUploadExamSummaryComponent, MockPipe(TranslatePipe)],
+            declarations: [FileUploadExamSummaryComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(FileService)],
         })
             .compileComponents()

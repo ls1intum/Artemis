@@ -3,7 +3,7 @@
     id="student-search-input"
     type="text"
     class="form-control"
-    [placeholder]="'artemisApp.team.addStudentToTeam' | translate"
+    [placeholder]="'artemisApp.team.addStudentToTeam' | artemisTranslate"
     (selectItem)="onAutocompleteSelect($event.item)"
     [ngbTypeahead]="onSearch"
     [resultFormatter]="searchResultFormatter"

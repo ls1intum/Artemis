@@ -3,7 +3,7 @@
 # ===================================================================
 
 artemis:
-    course-archives-path: ./exports/courses         # a folder in which archived courses are stored.
+    course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
     repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
     encryption-password: <encrypt-password>         # arbitrary password for encrypting database values
@@ -27,6 +27,7 @@ artemis:
             enabled: false
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
             allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
+        accept-terms: false     # whether users have to accept terms before they can login, from a privacy point of view this is not needed during education, therefore the default value is false
         course-registration:                    # the whole section is optional: whether there is a restriction for the self-registration of students in courses
             allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})'    # example for a TUM identifier, e.g. ab12cde
         login:
@@ -85,7 +86,8 @@ artemis:
         name: Artemis
         email: artemis.in@tum.de
     athene:
-        submit-url: http://localhost/submit
-        feedback-consistency-url: http://localhost:8001/feedback_consistency
+        url: http://localhost
         base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
         token-validity-in-seconds: 10800
+    apollon:
+        conversion-service-url: http://localhost:8080

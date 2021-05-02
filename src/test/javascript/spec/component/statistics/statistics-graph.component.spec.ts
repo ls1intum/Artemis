@@ -1,22 +1,23 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { SimpleChange } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockPipe } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { MomentModule } from 'ngx-moment';
-import { StatisticsService } from 'app/admin/statistics/statistics.service';
-import { StatisticsGraphComponent } from 'app/admin/statistics/statistics-graph.component';
-import { Graphs, SpanType } from 'app/entities/statistics.model';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { of } from 'rxjs/internal/observable/of';
+import { TranslateService } from '@ngx-translate/core';
+import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
 import * as moment from 'moment';
-import { SimpleChange } from '@angular/core';
+import { MockPipe } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
-import { HttpTestingController } from '@angular/common/http/testing';
+import { MomentModule } from 'ngx-moment';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs/internal/observable/of';
+import * as sinonChai from 'sinon-chai';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,7 +31,7 @@ describe('StatisticsGraphComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule, ChartsModule],
-            declarations: [StatisticsGraphComponent, MockComponent(StatisticsGraphComponent), MockPipe(TranslatePipe)],
+            declarations: [StatisticsGraphComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -53,6 +54,7 @@ describe('StatisticsGraphComponent', () => {
     it('should initialize', () => {
         let graphData: number[] = [];
         component.graphType = Graphs.SUBMISSIONS;
+        component.statisticsView = StatisticsView.ARTEMIS;
         let arrayLength = 0;
         const spy = spyOn(service, 'getChartData');
 
@@ -94,6 +96,8 @@ describe('StatisticsGraphComponent', () => {
     it('should initialize after changes', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
+        component.statisticsView = StatisticsView.COURSE;
+        component.courseId = 1;
         const changes = { currentSpan: { currentValue: SpanType.DAY } as SimpleChange };
         const graphData = [];
         for (let i = 0; i < 24; i++) {
@@ -111,6 +115,7 @@ describe('StatisticsGraphComponent', () => {
     it('should switch time span', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
+        component.statisticsView = StatisticsView.ARTEMIS;
         const graphData = [1, 2, 3, 4, 5, 6, 8];
         spyOn(service, 'getChartData').and.returnValue(of(graphData));
 

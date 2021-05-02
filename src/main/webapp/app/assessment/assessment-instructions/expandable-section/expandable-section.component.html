@@ -4,7 +4,7 @@
 </h5>
 
 <h5 *ngIf="hasTranslation === true && headerKey !== null" class="expandable-header" (click)="isCollapsed = !isCollapsed">
-    {{ headerKey | translate }}
+    {{ headerKey | artemisTranslate }}
     <fa-icon [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
 </h5>
 <div [ngbCollapse]="isCollapsed">

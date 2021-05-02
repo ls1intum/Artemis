@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -8,7 +9,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 /**
  * An assessment for elements of the same similarity set. The assessment contains feedback items from manual assessments and a score resulting from the manual feedback.
  */
-public class SimilaritySetAssessment {
+public class SimilaritySetAssessment implements Serializable {
 
     private Set<Feedback> feedbackItems;
 

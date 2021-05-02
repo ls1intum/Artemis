@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 
 @Component({
@@ -9,7 +9,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 })
 export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     @Input() exercise: Exercise;
-    @Input() showNoLevel: true;
+    @Input() showNoLevel: boolean;
     public translatedDifficulty: string;
     public badgeClass: string;
     private translateSubscription: Subscription;

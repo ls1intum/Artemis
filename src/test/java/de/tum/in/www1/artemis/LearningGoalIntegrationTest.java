@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,76 +37,65 @@ import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    TeamRepository teamRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    private LectureRepository lectureRepository;
 
     @Autowired
-    LectureRepository lectureRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ParticipationService participationService;
 
     @Autowired
-    ParticipationService participationService;
+    private UserRepository userRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private TextUnitRepository textUnitRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
-    EntityManager entityManager;
+    private LearningGoalRepository learningGoalRepository;
 
     @Autowired
-    TextUnitRepository textUnitRepository;
+    private LectureUnitRepository lectureUnitRepository;
 
-    @Autowired
-    ExerciseUnitRepository exerciseUnitRepository;
+    private Long idOfCourse;
 
-    @Autowired
-    LearningGoalRepository learningGoalRepository;
+    private Long idOfLearningGoal;
 
-    @Autowired
-    LectureUnitRepository lectureUnitRepository;
+    private Long idOfLectureOne;
 
-    Long idOfCourse;
+    private Long idOfTextUnitOfLectureOne;
 
-    Long idOfLearningGoal;
+    private Long idOfExerciseUnitTextOfLectureOne;
 
-    Long idOfLectureOne;
+    private Long idOfExerciseUnitModelingOfLectureOne;
 
-    Long idOfTextUnitOfLectureOne;
+    private Long idOfLectureTwo;
 
-    Long idOfExerciseUnitTextOfLectureOne;
+    private Long idOfTextUnitOfLectureTwo;
 
-    Long idOfExerciseUnitModelingOfLectureOne;
+    private Long idOfExerciseUnitTextOfLectureTwo;
 
-    Long idOfExerciseUnitTeamTextOfLectureOne;
+    private Long idOfExerciseUnitModelingOfLectureTwo;
 
-    Long idOfLectureTwo;
+    private Long idOfTextExercise;
 
-    Long idOfTextUnitOfLectureTwo;
+    private Long idOfModelingExercise;
 
-    Long idOfExerciseUnitTextOfLectureTwo;
+    private Long idOfTeamTextExercise;
 
-    Long idOfExerciseUnitModelingOfLectureTwo;
-
-    Long idOfTextExercise;
-
-    Long idOfModelingExercise;
-
-    Long idOfTeamTextExercise;
-
-    List<Team> teams;
+    private List<Team> teams;
 
     @AfterEach
     public void resetDatabase() {
@@ -116,10 +103,10 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @BeforeEach
-    public void setupTestScenario() throws Exception {
+    public void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 10);
+        this.database.addUsers(5, 10, 0, 10);
 
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
@@ -188,7 +175,6 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseUnit teamTextExerciseUnit = new ExerciseUnit();
         teamTextExerciseUnit.setExercise(textTeamExercise);
         teamTextExerciseUnit = exerciseUnitRepository.save(teamTextExerciseUnit);
-        idOfExerciseUnitTeamTextOfLectureOne = teamTextExerciseUnit.getId();
 
         List<LectureUnit> lectureUnitsOfLectureOne = List.of(textUnit, textExerciseUnit, modelingExerciseUnit, teamTextExerciseUnit);
         Lecture lectureOne = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(idOfLectureOne).get();
@@ -316,6 +302,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         // result
         Result result = ModelFactory.generateResult(rated, scoreAwarded);
         result.setParticipation(studentParticipation);
+        result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.save(result);
 
         submission.addResult(result);
@@ -340,6 +327,12 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testAll_asStudent() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testAll_asEditor() throws Exception {
         this.testAllPreAuthorize();
     }
 
@@ -423,10 +416,30 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getLearningGoalProgress_asStudent1_usingParticipantScores_shouldReturnProgressTenOutOfTwenty() throws Exception {
+        IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
+                IndividualLearningGoalProgress.class);
+        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
+    }
+
+    @Test
     @WithMockUser(username = "team1student1", roles = "USER")
     public void getLearningGoalProgress_asTeam1Student1_shouldReturnProgressTenOutOfThirty() throws Exception {
         IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
                 HttpStatus.OK, IndividualLearningGoalProgress.class);
+        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(5.0);
+    }
+
+    @Test
+    @WithMockUser(username = "team1student1", roles = "USER")
+    public void getLearningGoalProgress_asTeam1Student1_usingParticipantScores_shouldReturnProgressTenOutOfThirty() throws Exception {
+        IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
+                IndividualLearningGoalProgress.class);
         assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(5.0);
     }
@@ -478,6 +491,36 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
         CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
                 CourseLearningGoalProgress.class);
+
+        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
+        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
+
+        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLearningGoalCourseProgressIndividualTest_asInstructorOne_usingParticipantScoreTable() throws Exception {
+        cleanUpInitialParticipations();
+        User student1 = userRepository.findOneByLogin("student1").get();
+        User student2 = userRepository.findOneByLogin("student2").get();
+        User student3 = userRepository.findOneByLogin("student3").get();
+        User student4 = userRepository.findOneByLogin("student4").get();
+        User instructor1 = userRepository.findOneByLogin("instructor1").get();
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, false);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from student
+        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 10, false);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, student3, 10.0, 0.0, 10, true);
+        createParticipationSubmissionAndResult(idOfTextExercise, student4, 10.0, 0.0, 50, true);
+
+        createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
+
+        CourseLearningGoalProgress courseLearningGoalProgress = request.get(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress?useParticipantScoreTable=true", HttpStatus.OK, CourseLearningGoalProgress.class);
 
         assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);

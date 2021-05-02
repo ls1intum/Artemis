@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,14 +15,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -70,30 +67,29 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param studentQuestion the studentQuestion to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestion, or with status 400 (Bad Request) if the studentQuestion has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new studentQuestion, or with status 400 (Bad Request) if the studentQuestion
+     * already has an ID or the courseId in the body doesn't match the PathVariable
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> createStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match the courseId of the sent StudentQuestion in Body");
+        }
         log.debug("REST request to save StudentQuestion : {}", studentQuestion);
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (studentQuestion.getId() != null) {
             throw new BadRequestAlertException("A new studentQuestion cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        final var course = courseRepository.findByIdElseThrow(courseId);
-        if (!this.authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return forbidden();
-        }
-        if (!studentQuestion.getCourse().getId().equals(courseId)) {
-            return forbidden();
-        }
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) {
-            groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForExercise(question);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForExercise(question);
         }
         if (question.getLecture() != null) {
-            groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForLecture(question);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForLecture(question);
         }
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/student-questions/" + question.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, question.getId().toString())).body(question);
@@ -108,7 +104,7 @@ public class StudentQuestionResource {
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> updateStudentQuestion(@PathVariable Long courseId, @RequestBody StudentQuestion studentQuestion) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
@@ -116,19 +112,15 @@ public class StudentQuestionResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         courseRepository.findByIdElseThrow(courseId);
-        var existingStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestion.getId());
+        StudentQuestion existingStudentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestion.getId());
         if (!existingStudentQuestion.getCourse().getId().equals(courseId)) {
-            return forbidden();
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestion that should be changed");
         }
-        if (mayUpdateOrDeleteStudentQuestion(existingStudentQuestion, user)) {
-            existingStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
-            existingStudentQuestion.setVisibleForStudents(studentQuestion.isVisibleForStudents());
-            StudentQuestion result = studentQuestionRepository.save(existingStudentQuestion);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
-        }
-        else {
-            return forbidden();
-        }
+        mayUpdateOrDeleteStudentQuestionElseThrow(existingStudentQuestion, user);
+        existingStudentQuestion.setQuestionText(studentQuestion.getQuestionText());
+        existingStudentQuestion.setVisibleForStudents(studentQuestion.isVisibleForStudents());
+        StudentQuestion result = studentQuestionRepository.save(existingStudentQuestion);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
     }
 
     /**
@@ -137,34 +129,26 @@ public class StudentQuestionResource {
      * @param courseId course the question belongs to
      * @param questionId the ID of the question to update
      * @param voteChange value by which votes are increased / decreased
-     * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion is not valid, or with
+     * @return the ResponseEntity with status 200 (OK) and with body the updated studentQuestion, or with status 400 (Bad Request) if the studentQuestion or the voteChanges are invalid, or with
      *         status 500 (Internal Server Error) if the studentQuestion couldn't be updated
      */
     @PutMapping("courses/{courseId}/student-questions/{questionId}/votes")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentQuestion> updateStudentQuestionVotes(@PathVariable Long courseId, @PathVariable Long questionId, @RequestBody Integer voteChange) {
         if (voteChange < -2 || voteChange > 2) {
-            return forbidden();
+            return badRequest("voteChange", "400", "voteChange must be >= -2 and <= 2");
         }
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(questionId);
-        if (optionalStudentQuestion.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(questionId);
         courseRepository.findByIdElseThrow(courseId);
-        if (!optionalStudentQuestion.get().getCourse().getId().equals(courseId)) {
-            return forbidden();
+        if (!studentQuestion.getCourse().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the StudentQuestion that should be changed");
         }
-        if (mayUpdateStudentQuestionVotes(optionalStudentQuestion.get(), user)) {
-            StudentQuestion updatedStudentQuestion = optionalStudentQuestion.get();
-            Integer newVotes = updatedStudentQuestion.getVotes() + voteChange;
-            updatedStudentQuestion.setVotes(newVotes);
-            StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
-            return ResponseEntity.ok().body(result);
-        }
-        else {
-            return forbidden();
-        }
+        mayUpdateStudentQuestionVotesElseThrow(studentQuestion, user);
+        Integer newVotes = studentQuestion.getVotes() + voteChange;
+        studentQuestion.setVotes(newVotes);
+        StudentQuestion result = studentQuestionRepository.save(studentQuestion);
+        return ResponseEntity.ok().body(result);
     }
 
     /**
@@ -172,26 +156,21 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param exerciseId the exercise that the student questions belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for exercise or 400 (Bad Request) if exercises courseId doesnt match
+     * the PathVariable courseId
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForExercise(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
-        if (exercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastStudentForExercise(exercise.get(), user)) {
-            return forbidden();
-        }
-        if (!exercise.get().getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
-            return forbidden();
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the exercise that should be returned");
         }
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForExercise(exerciseId);
         hideSensitiveInformation(studentQuestions);
-
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
 
@@ -200,27 +179,24 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param lectureId the lecture that the student questions belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all student questions for lecture
+     * @return the ResponseEntity with status 200 (OK) and with body all student questions for lecture or 400 (Bad Request) if the lectures courseId doesnt match
+     * the PathVariable courseId
      */
     @GetMapping("courses/{courseId}/lectures/{lectureId}/student-questions")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForLecture(@PathVariable Long courseId, @PathVariable Long lectureId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Lecture> lecture = lectureRepository.findById(lectureId);
-        if (lecture.isEmpty()) {
-            throw new EntityNotFoundException("Lecture with lectureId " + lectureId + " does not exist!");
-        }
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastStudentInCourse(lecture.get().getCourse(), user)) {
-            return forbidden();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (lecture.getCourse().getId().equals(courseId)) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
+            List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
+            hideSensitiveInformation(studentQuestions);
+            return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
         }
-        if (!lecture.get().getCourse().getId().equals(courseId)) {
-            return forbidden();
+        else {
+            return badRequest("courseId", "400", "PathVariable courseId and the courseId of the Lecture dont match");
         }
-        List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
-        hideSensitiveInformation(studentQuestions);
-
-        return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
 
     /**
@@ -230,15 +206,11 @@ public class StudentQuestionResource {
      * @return the ResponseEntity with status 200 (OK) and with body all student questions for course
      */
     @GetMapping("courses/{courseId}/student-questions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<StudentQuestion>> getAllQuestionsForCourse(@PathVariable Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<StudentQuestion> studentQuestions = studentQuestionRepository.findStudentQuestionsForCourse(courseId);
-
         return new ResponseEntity<>(studentQuestions, null, HttpStatus.OK);
     }
 
@@ -258,14 +230,14 @@ public class StudentQuestionResource {
      *
      * @param courseId course the question belongs to
      * @param studentQuestionId the id of the studentQuestion to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) or 400 (Bad Request) if the data is inconsistent
      */
     @DeleteMapping("courses/{courseId}/student-questions/{studentQuestionId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteStudentQuestion(@PathVariable Long courseId, @PathVariable Long studentQuestionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         courseRepository.findByIdElseThrow(courseId);
-        var studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionId);
+        StudentQuestion studentQuestion = studentQuestionRepository.findByIdElseThrow(studentQuestionId);
         String entity = "";
         if (studentQuestion.getLecture() != null) {
             entity = "lecture with id: " + studentQuestion.getLecture().getId();
@@ -276,33 +248,42 @@ public class StudentQuestionResource {
         if (studentQuestion.getCourse() == null) {
             return ResponseEntity.badRequest().build();
         }
-        if (mayUpdateOrDeleteStudentQuestion(studentQuestion, user)) {
-            log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
-            studentQuestionRepository.deleteById(studentQuestionId);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, studentQuestionId.toString())).build();
-        }
-        else {
-            return forbidden();
+        mayUpdateOrDeleteStudentQuestionElseThrow(studentQuestion, user);
+        log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity);
+        studentQuestionRepository.deleteById(studentQuestionId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, studentQuestionId.toString())).build();
+
+    }
+
+    /**
+     * Check if user can update or delete StudentQuestion, if not throws an AccessForbiddenException
+     *
+     * @param studentQuestion studentQuestion for which to check
+     * @param user user for which to check
+     */
+    private void mayUpdateOrDeleteStudentQuestionElseThrow(StudentQuestion studentQuestion, User user) {
+        if (!user.getId().equals(studentQuestion.getAuthor().getId())) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, studentQuestion.getCourse(), user);
         }
     }
 
-    private boolean mayUpdateOrDeleteStudentQuestion(StudentQuestion studentQuestion, User user) {
-        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(studentQuestion.getCourse(), user);
-        Boolean isUserAuthor = user.getId().equals(studentQuestion.getAuthor().getId());
-        return hasCourseTAAccess || isUserAuthor;
-    }
-
-    private boolean mayUpdateStudentQuestionVotes(StudentQuestion studentQuestion, User user) {
+    /**
+     * Check if user can update the StudentQuestions votes, if not throws an AccessForbiddenException
+     *
+     * @param studentQuestion studentQuestionAnswer for which to check
+     * @param user user for which to check
+     */
+    private void mayUpdateStudentQuestionVotesElseThrow(StudentQuestion studentQuestion, User user) {
         Course course = studentQuestion.getCourse();
         Exercise exercise = studentQuestion.getExercise();
         if (course != null) {
-            return authorizationCheckService.isAtLeastStudentInCourse(course, user);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         }
         else if (exercise != null) {
-            return authorizationCheckService.isAtLeastStudentForExercise(exercise, user);
+            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         }
         else {
-            return false;
+            throw new AccessForbiddenException("StudentQuestion", studentQuestion.getId());
         }
     }
 }

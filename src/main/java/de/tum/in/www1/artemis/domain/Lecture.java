@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -13,6 +10,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 /**
@@ -102,10 +100,9 @@ public class Lecture extends DomainObject {
         return attachments;
     }
 
-    public Lecture addAttachments(Attachment attachment) {
+    public void addAttachments(Attachment attachment) {
         this.attachments.add(attachment);
         attachment.setLecture(this);
-        return this;
     }
 
     public void setAttachments(Set<Attachment> attachments) {
@@ -123,11 +120,6 @@ public class Lecture extends DomainObject {
     public void addLectureUnit(LectureUnit lectureUnit) {
         this.lectureUnits.add(lectureUnit);
         lectureUnit.setLecture(this);
-    }
-
-    public void removeLectureUnit(LectureUnit lectureUnit) {
-        this.lectureUnits.remove(lectureUnit);
-        lectureUnit.setLecture(null);
     }
 
     public Set<StudentQuestion> getStudentQuestions() {

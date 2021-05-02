@@ -117,6 +117,11 @@ import {
     faUserPlus,
     faVideo,
     faWrench,
+    faChartArea,
+    faChartBar,
+    faPenSquare,
+    faFileContract,
+    faStamp,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -157,6 +162,7 @@ export const fontAwesomeIcons = [
     faSave,
     faPlus,
     faPencilAlt,
+    faPenSquare,
     faBars,
     faHome,
     faThList,
@@ -211,6 +217,8 @@ export const fontAwesomeIcons = [
     faInfoCircle,
     faGraduationCap,
     faChartPie,
+    faChartArea,
+    faChartBar,
     faExternalLinkAlt,
     faSignal,
     faEdit,
@@ -270,4 +278,6 @@ export const fontAwesomeIcons = [
     faClipboardList,
     faToggleOn,
     faEdit,
+    faFileContract,
+    faStamp,
 ];

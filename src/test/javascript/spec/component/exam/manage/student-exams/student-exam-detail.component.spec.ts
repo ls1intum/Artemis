@@ -32,9 +32,8 @@ import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -113,6 +112,8 @@ describe('StudentExamDetailComponent', () => {
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+                StudentExamDetailTableRowComponent,
             ],
             providers: [
                 MockProvider(StudentExamService, {
@@ -190,21 +191,7 @@ describe('StudentExamDetailComponent', () => {
         expect(findCourseSpy).to.have.been.calledOnce;
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
-    });
-
-    it('should return the right icon based on exercise type', () => {
-        exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('project-diagram');
-
-        exercise = new ProgrammingExercise(course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('keyboard');
-
-        exercise = new QuizExercise(course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('check-double');
-
-        exercise = new FileUploadExercise(course, new ExerciseGroup());
-        expect(studentExamDetailComponent.exerciseIcon(exercise)).to.equal('file-upload');
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
     });
 
     it('should save working time', () => {
@@ -216,8 +203,8 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
     });
 
     it('should not increase points when save working time is called more than once', () => {
@@ -230,8 +217,8 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isSavingWorkingTime).to.equal(false);
         expect(course.id).to.equal(1);
         expect(studentExamDetailComponent.workingTimeForm).to.not.be.null;
-        expect(studentExamDetailComponent.achievedTotalScore).to.equal(40);
-        expect(studentExamDetailComponent.maxTotalScore).to.equal(100);
+        expect(studentExamDetailComponent.achievedTotalPoints).to.equal(40);
+        expect(studentExamDetailComponent.maxTotalPoints).to.equal(100);
     });
 
     it('should get examIsOver', () => {
