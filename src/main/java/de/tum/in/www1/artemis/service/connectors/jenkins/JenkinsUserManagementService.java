@@ -242,7 +242,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             else if (groups.contains(course.getEditorGroupName())) {
                 try {
                     // We are assigning editor permissions since the exercise's course editor group is the same as the one that is specified.
-                    jenkinsJobPermissionsService.addPermissionsForUserToFolder(userLogin, jobName, JenkinsJobPermission.getEditorPermissions());                }
+                    jenkinsJobPermissionsService.addPermissionsForUserToFolder(userLogin, jobName, JenkinsJobPermission.getEditorPermissions());
+                }
                 catch (IOException e) {
                     throw new JenkinsException("Cannot assign editor permissions to user: " + userLogin, e);
                 }

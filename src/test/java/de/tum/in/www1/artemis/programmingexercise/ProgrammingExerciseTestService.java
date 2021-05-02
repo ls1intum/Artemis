@@ -1134,17 +1134,17 @@ public class ProgrammingExerciseTestService {
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
+        // Create a team with only one member: student1
+        var student1 = database.getUserByLogin("student1");
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(Set.of(student1));
         team = teamRepository.save(exercise, team);
 
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+        assertThat(team.getStudents()).as("Student1 was correctly added to team").hasSize(1);
 
         // test for internal server error
         final var username = team.getParticipantIdentifier();
         mockDelegate.mockCopyRepositoryForParticipation(exercise, username);
-        mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
+        mockDelegate.mockRepositoryWritePermissions(team, student1, exercise, HttpStatus.BAD_REQUEST);
 
         // Start participation
         try {
