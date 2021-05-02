@@ -237,7 +237,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lectures/{id}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
@@ -245,7 +245,7 @@ public class LectureResource {
             return ResponseEntity.notFound().build();
         }
         Lecture lecture = optionalLecture.get();
-        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
+        if (!(authCheckService.isEditorInCourse(lecture.getCourse(), user) || authCheckService.isInstructorInCourse(lecture.getCourse(), user) || authCheckService.isAdmin(user))) {
             return forbidden();
         }
         Course course = lecture.getCourse();
