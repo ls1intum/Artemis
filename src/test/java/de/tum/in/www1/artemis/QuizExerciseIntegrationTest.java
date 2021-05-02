@@ -1166,6 +1166,22 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         userRepo.save(user);
         request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
     }
+
+    /**
+     * test non instructors cant delete an exercise
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteQuizExerciseAsNonInstructor() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise();
+        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        //remove instructor rights in course
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
+        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN);
+    }
+
     /**
      * Check that the general information of two exercises is equal.
      */
