@@ -159,7 +159,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     }
 
     default Long findFeedbackByStructuredGradingInstructionId(List<GradingCriterion> gradingCriteria) {
-        List<Long> list = gradingCriteria.stream().flatMap( gradingCriterion ->  gradingCriterion.getStructuredGradingInstructions().stream()).map(GradingInstruction::getId).collect(Collectors.toList());
+        List<Long> list = gradingCriteria.stream().flatMap( gradingCriterion ->  gradingCriterion.getStructuredGradingInstructions().stream()).map(GradingInstruction::getId).collect(toList());
         return findFeedbackCountByStructuredGradingInstructionIds(list);
     }
 

@@ -101,7 +101,7 @@ describe('Grading Instructions Management Component', () => {
         }));
     });
 
-    it('should delete an instructor', () => {
+    it('should delete a grading instruction', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
         component.deleteInstruction(gradingInstruction, gradingCriterion);
         fixture.detectChanges();
@@ -109,7 +109,7 @@ describe('Grading Instructions Management Component', () => {
         expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).to.equal(undefined);
     });
 
-    it('should reset the instructor', () => {
+    it('should reset the grading instruction', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
         component.backupExercise.gradingCriteria = [gradingCriterion];
         component.resetInstruction(gradingInstruction, gradingCriterion);
@@ -118,11 +118,36 @@ describe('Grading Instructions Management Component', () => {
         expect(component.exercise.gradingCriteria).to.deep.equal(component.backupExercise.gradingCriteria);
     });
 
-    it('should add new instructor to criteria', () => {
+    it('should add new grading instruction to criteria', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
         component.addNewInstruction(gradingCriterion);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria[0].structuredGradingInstructions.length).to.equal(2);
+    });
+
+    it('should delete the grading criterion', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        component.deleteGradingCriteria(gradingCriterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria.length).to.equal(0);
+    });
+
+    it('should reset the grading criterion', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        component.backupExercise.gradingCriteria = [gradingCriterion];
+        component.resetCriteriaTitle(gradingCriterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria).to.deep.equal(component.backupExercise.gradingCriteria);
+    });
+
+    it('should add new grading criteria to corresponding exercise', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        component.addNewGradingCriteria();
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria.length).to.equal(2);
     });
 });
