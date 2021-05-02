@@ -16,6 +16,7 @@ export class ExamDetailComponent implements OnInit {
     formattedConfirmationStartText?: SafeHtml;
     formattedEndText?: SafeHtml;
     formattedConfirmationEndText?: SafeHtml;
+    isAtLeastEditor = false;
     isAtLeastInstructor = false;
     isExamOver = true;
 
@@ -27,6 +28,7 @@ export class ExamDetailComponent implements OnInit {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
+            this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exam.course);
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exam.course);
             this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);

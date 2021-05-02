@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -132,9 +132,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                               participation.results![0].feedbacks = feedbacks;
                               return participation;
                           }),
-                          catchError(() => Observable.of(participation)),
+                          catchError(() => of(participation)),
                       )
-                    : Observable.of(participation),
+                    : of(participation),
             ),
         );
     }

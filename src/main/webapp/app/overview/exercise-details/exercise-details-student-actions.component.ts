@@ -13,6 +13,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -83,7 +84,7 @@ export class ExerciseDetailsStudentActionsComponent {
         this.exercise.loading = true;
         this.courseExerciseService
             .startExercise(this.courseId, this.exercise.id!)
-            .finally(() => (this.exercise.loading = false))
+            .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe(
                 (participation) => {
                     if (participation) {
@@ -111,7 +112,7 @@ export class ExerciseDetailsStudentActionsComponent {
         this.exercise.loading = true;
         this.courseExerciseService
             .resumeProgrammingExercise(this.courseId, this.exercise.id!)
-            .finally(() => (this.exercise.loading = false))
+            .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe(
                 (participation: StudentParticipation) => {
                     if (participation) {

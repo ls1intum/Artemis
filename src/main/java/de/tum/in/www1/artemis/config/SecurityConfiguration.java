@@ -105,7 +105,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         var roleHierarchy = new RoleHierarchyImpl();
         roleHierarchy.setHierarchy("""
                     ROLE_ADMIN > ROLE_INSTRUCTOR
-                    ROLE_INSTRUCTOR > ROLE_TA
+                    ROLE_INSTRUCTOR > ROLE_EDITOR
+                    ROLE_EDITOR > ROLE_TA
                     ROLE_TA > ROLE_USER
                     ROLE_USER > ROLE_ANONYMOUS
                 """);
@@ -152,7 +153,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
         .and()
-            .featurePolicy("geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen 'self'; payment 'none'")
+            .featurePolicy("geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen *; payment 'none'")
         .and()
             .frameOptions()
             .deny()

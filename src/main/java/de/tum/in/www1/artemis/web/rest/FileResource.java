@@ -137,7 +137,7 @@ public class FileResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(FilePathService.getMarkdownFilePath(), filename);
+        return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
     }
 
     /**
@@ -149,7 +149,7 @@ public class FileResource {
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/templates/{language}/{projectType}/{filename}", "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable Optional<ProjectType> projectType,
             @PathVariable String filename) {
         log.debug("REST request to get file '{}' for programming language {} and project type {}", filename, language, projectType);

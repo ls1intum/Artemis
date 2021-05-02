@@ -20,7 +20,7 @@ on:
 # Keep in sync with codeql-analysis.yml and build.yml
 env:
   CI: true
-  node: 15.x
+  node: 14.x
   java: 16
 
 jobs:

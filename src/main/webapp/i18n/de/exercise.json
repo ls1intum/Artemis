@@ -98,6 +98,7 @@
             "teams": "Teams",
             "exportNames": "Namen exportieren",
             "exportResults": "Ergebnisse exportieren",
+            "exportResultsEmptyError": "{{ exercise }}: Keine Ergebnisse gefunden",
             "refresh": "Aktualisieren",
             "course": "Kurs",
             "type": "Typ",

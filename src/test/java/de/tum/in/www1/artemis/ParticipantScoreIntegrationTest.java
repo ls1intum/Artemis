@@ -77,7 +77,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     public void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 10);
+        this.database.addUsers(5, 10, 0, 10);
         // creating course
         Course course = this.database.createCourse();
         Lecture lecture = new Lecture();

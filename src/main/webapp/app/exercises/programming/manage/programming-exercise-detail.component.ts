@@ -60,6 +60,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
 
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
+            this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
             if (this.programmingExercise.templateParticipation) {

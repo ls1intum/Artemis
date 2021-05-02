@@ -55,7 +55,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(2, 1, 1);
+        database.addUsers(2, 1, 0, 1);
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         var tempProgrammingEx = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());

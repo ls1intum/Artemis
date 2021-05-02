@@ -53,7 +53,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
     }

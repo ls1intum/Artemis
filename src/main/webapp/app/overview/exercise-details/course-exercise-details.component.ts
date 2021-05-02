@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';

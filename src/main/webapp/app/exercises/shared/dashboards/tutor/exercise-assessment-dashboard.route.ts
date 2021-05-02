@@ -8,7 +8,7 @@ export const exerciseAssessmentDashboardRoute: Routes = [
         path: ':courseId/assessment-dashboard/:exerciseId',
         component: ExerciseAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],

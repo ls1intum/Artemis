@@ -12,7 +12,7 @@ import io.github.jhipster.config.metric.JHipsterMetricsEndpoint;
 
 /**
  * CustomMetricsExtension.
- * Extends the default JHI Metrics with custom metrics for ArTEMiS.
+ * Extends the default JHI Metrics with custom metrics for Artemis.
  */
 @Component
 @EndpointWebExtension(endpoint = JHipsterMetricsEndpoint.class)

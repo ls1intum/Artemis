@@ -133,12 +133,14 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE
             e.course.studentGroupName member of u.groups
             AND e.course.teachingAssistantGroupName not member of u.groups
+            AND e.course.editorGroupName not member of u.groups
             AND e.course.instructorGroupName not member of u.groups
             )
             FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
             WHERE e.id IN :exerciseIds
             AND e.course.studentGroupName member of p.student.groups
             AND e.course.teachingAssistantGroupName not member of p.student.groups
+            AND e.course.editorGroupName not member of p.student.groups
             AND e.course.instructorGroupName not member of p.student.groups
             AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
             AND
@@ -169,6 +171,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE
             e.course.studentGroupName member of u.groups
             AND e.course.teachingAssistantGroupName not member of u.groups
+            AND e.course.editorGroupName not member of u.groups
             AND e.course.instructorGroupName not member of u.groups
             )
 
@@ -177,6 +180,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             AND sc.exercise = e AND sc.user = p.student
             AND e.course.studentGroupName member of p.student.groups
             AND e.course.teachingAssistantGroupName not member of p.student.groups
+            AND e.course.editorGroupName not member of p.student.groups
             AND e.course.instructorGroupName not member of p.student.groups
             GROUP BY e.id
             """)
@@ -202,6 +206,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.editorGroupName not member of u.groups
                 AND e.course.instructorGroupName not member of u.groups
              )
             )
@@ -215,6 +220,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.editorGroupName not member of u.groups
                 AND e.course.instructorGroupName not member of u.groups
              )
              AND
@@ -248,6 +254,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.editorGroupName not member of u.groups
                 AND e.course.instructorGroupName not member of u.groups
              )
             )
@@ -261,6 +268,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
+                AND e.course.editorGroupName not member of u.groups
                 AND e.course.instructorGroupName not member of u.groups
              )
             GROUP BY e.id
