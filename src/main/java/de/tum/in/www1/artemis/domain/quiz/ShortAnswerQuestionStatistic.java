@@ -28,16 +28,9 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
         return shortAnswerSpotCounters;
     }
 
-    public ShortAnswerQuestionStatistic addShortAnswerSpotCounters(ShortAnswerSpotCounter shortAnswerSpotCounter) {
+    public void addShortAnswerSpotCounters(ShortAnswerSpotCounter shortAnswerSpotCounter) {
         this.shortAnswerSpotCounters.add(shortAnswerSpotCounter);
         shortAnswerSpotCounter.setShortAnswerQuestionStatistic(this);
-        return this;
-    }
-
-    public ShortAnswerQuestionStatistic removeShortAnswerSpotCounters(ShortAnswerSpotCounter shortAnswerSpotCounter) {
-        this.shortAnswerSpotCounters.remove(shortAnswerSpotCounter);
-        shortAnswerSpotCounter.setShortAnswerQuestionStatistic(null);
-        return this;
     }
 
     public void setShortAnswerSpotCounters(Set<ShortAnswerSpotCounter> shortAnswerSpotCounters) {

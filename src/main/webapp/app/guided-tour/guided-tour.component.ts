@@ -38,6 +38,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
 
     private resizeSubscription: Subscription;
     private scrollSubscription: Subscription;
+    private clickSubscription: Subscription;
 
     readonly OverlayPosition = OverlayPosition;
     readonly UserInteractionEvent = UserInteractionEvent;
@@ -104,6 +105,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         this.subscribeToUserInteractionState();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
+        this.subscribeToClickEvent();
         this.subscribeToDotChanges();
     }
 
@@ -116,6 +118,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
         if (this.resizeSubscription) {
             this.scrollSubscription.unsubscribe();
+        }
+        if (this.clickSubscription) {
+            this.clickSubscription.unsubscribe();
         }
     }
 
@@ -150,7 +155,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.scrollToAndSetElement();
                 this.handleTransition();
                 this.guidedTourService.isBackPageNavigation.next(false);
-                if (this.currentStepIndex && this.nextStepIndex) {
+                if (this.currentStepIndex !== undefined && this.nextStepIndex !== undefined) {
                     setTimeout(() => {
                         this.calculateAndDisplayDotNavigation(this.currentStepIndex!, this.nextStepIndex!);
                     }, 0);
@@ -189,6 +194,17 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToScrollEvent() {
         this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
+            if (this.getSelectedElement()) {
+                this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            }
+        });
+    }
+
+    /**
+     * Subscribe to click event and update step location of the selected element in the tour step
+     */
+    private subscribeToClickEvent() {
+        this.clickSubscription = fromEvent(window, 'click').subscribe(() => {
             if (this.getSelectedElement()) {
                 this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
             }
@@ -492,8 +508,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @return style object for the rectangle beside the highlighted element
      */
     public getOverlayStyle(position: OverlayPosition) {
-        let style;
-
         if (this.selectedElementRect) {
             const selectedElementTop = this.selectedElementRect.top - this.getHighlightPadding();
             const selectedElementLeft = this.selectedElementRect.left - this.getHighlightPadding();
@@ -501,33 +515,24 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const selectedElementWidth = this.selectedElementRect.width + this.getHighlightPadding() * 2;
 
             switch (position) {
-                case OverlayPosition.TOP: {
-                    style = { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop > 0 ? selectedElementTop : 0 };
-                    break;
-                }
-                case OverlayPosition.LEFT: {
-                    style = {
+                case OverlayPosition.TOP:
+                    return { 'top.px': 0, 'left.px': 0, 'height.px': selectedElementTop > 0 ? selectedElementTop : 0 };
+                case OverlayPosition.LEFT:
+                    return {
                         'top.px': selectedElementTop,
                         'left.px': selectedElementLeft < 0 ? selectedElementLeft : 0,
                         'height.px': selectedElementHeight,
                         'width.px': selectedElementLeft > 0 ? selectedElementLeft : 0,
                     };
-                    break;
-                }
-                case OverlayPosition.RIGHT: {
-                    style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft + selectedElementWidth, 'height.px': selectedElementHeight };
-                    break;
-                }
-                case OverlayPosition.BOTTOM: {
-                    style = { 'top.px': selectedElementTop + selectedElementHeight > 0 ? selectedElementTop + selectedElementHeight : 0 };
-                    break;
-                }
-                case OverlayPosition.ELEMENT: {
-                    style = { 'top.px': selectedElementTop, 'left.px': selectedElementLeft, 'height.px': selectedElementHeight, 'width.px': selectedElementWidth };
-                }
+                case OverlayPosition.RIGHT:
+                    return { 'top.px': selectedElementTop, 'left.px': selectedElementLeft + selectedElementWidth, 'height.px': selectedElementHeight };
+                case OverlayPosition.BOTTOM:
+                    return { 'top.px': selectedElementTop + selectedElementHeight > 0 ? selectedElementTop + selectedElementHeight : 0 };
+                case OverlayPosition.ELEMENT:
+                    return { 'top.px': selectedElementTop, 'left.px': selectedElementLeft, 'height.px': selectedElementHeight, 'width.px': selectedElementWidth };
             }
         }
-        return style;
+        return undefined;
     }
 
     /**

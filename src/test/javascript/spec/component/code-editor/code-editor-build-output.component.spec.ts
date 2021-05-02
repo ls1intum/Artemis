@@ -8,7 +8,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { SinonStub, stub } from 'sinon';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -28,6 +28,7 @@ import { Result } from 'app/entities/result.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -128,7 +129,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         const result = { id: 1 };
         const participation = { id: 1, results: [result] } as Participation;
 
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         getFeedbackDetailsForResultStub.returns(of({ body: [] }));
         getBuildLogsStub.returns(of(buildLogs));
 
@@ -140,7 +141,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).to.have.been.calledOnce;
         expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledOnceWithExactly(participation.id, true);
         expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors()).to.deep.equal(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).not.to.exist;
@@ -153,7 +154,7 @@ describe('CodeEditorBuildOutputComponent', () => {
     it('should not retrieve build logs after participation change, if no result is available', () => {
         const participation = { id: 1 } as Participation;
         comp.participation = participation;
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
         expect(getBuildLogsStub).to.not.have.been.called;
@@ -173,7 +174,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         result.submission = submission;
         const participation = { id: 1, results: [result] } as Participation;
         comp.participation = participation;
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         getFeedbackDetailsForResultStub.returns(of({ ...result, feedbacks: [] }));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
@@ -203,7 +204,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors()).to.deep.equal(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).not.to.exist;
@@ -229,7 +230,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).to.have.been.calledOnceWithExactly();
         expect(getFeedbackDetailsForResultStub).to.not.have.been.called;
         expect(comp.rawBuildLogs).to.deep.equal(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors()).to.deep.equal(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).to.deep.equal(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).not.to.exist;
@@ -251,7 +252,7 @@ describe('CodeEditorBuildOutputComponent', () => {
             text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
             detailText: JSON.stringify(staticCodeAnalysisIssue),
         } as Feedback;
-        subscribeForLatestResultOfParticipationStub.returns(Observable.of(null));
+        subscribeForLatestResultOfParticipationStub.returns(of(null));
         getFeedbackDetailsForResultStub.returns(of({ body: [feedback] }));
         let emittedAnnotations: Annotation[] = [];
         comp.onAnnotations.subscribe((emitted: any) => {

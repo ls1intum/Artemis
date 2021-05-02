@@ -78,7 +78,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.stringCountService.countCharacters(this.answer);
     }
 
-    onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
+    onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {
         event.preventDefault();
         const value = editor.value;
         const start = editor.selectionStart;

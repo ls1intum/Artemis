@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -8,6 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { Feedback } from 'app/entities/feedback.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -113,5 +114,44 @@ export class SubmissionService {
      */
     private convertItemFromServer(submission: Submission): Submission {
         return Object.assign({}, submission);
+    }
+
+    /**
+     * Sets the transient property copiedFeedback for feedbacks when comparing a submissions results of two correction rounds
+     * copiedFeedback indicates if the feedback is directly copied and unmodified compared to the first correction round
+     *
+     * @param correctionRound current correction round
+     * @param submission current submission
+     */
+    public handleFeedbackCorrectionRoundTag(correctionRound: number, submission: Submission) {
+        if (correctionRound > 0 && submission?.results && submission.results.length > 1) {
+            const firstResult = submission!.results![0] as Result;
+            const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
+            secondCorrectionFeedback1!.forEach((secondFeedback) => {
+                firstResult.feedbacks!.forEach((firstFeedback) => {
+                    if (
+                        secondFeedback.copiedFeedbackId === undefined &&
+                        secondFeedback.type === firstFeedback.type &&
+                        secondFeedback.credits === firstFeedback.credits &&
+                        secondFeedback.detailText === firstFeedback.detailText &&
+                        secondFeedback.reference === firstFeedback.reference &&
+                        secondFeedback.text === firstFeedback.text
+                    ) {
+                        secondFeedback.copiedFeedbackId = firstFeedback.id;
+                    } else if (
+                        secondFeedback.copiedFeedbackId === firstFeedback.id &&
+                        !(
+                            secondFeedback.type === firstFeedback.type &&
+                            secondFeedback.credits === firstFeedback.credits &&
+                            secondFeedback.detailText === firstFeedback.detailText &&
+                            secondFeedback.reference === firstFeedback.reference &&
+                            secondFeedback.text === firstFeedback.text
+                        )
+                    ) {
+                        secondFeedback.copiedFeedbackId = undefined;
+                    }
+                });
+            });
+        }
     }
 }

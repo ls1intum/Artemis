@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -31,6 +31,7 @@ import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -72,7 +73,8 @@ describe('LectureUnitManagementComponent', () => {
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
                 LearningGoalsPopoverStubComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(AttachmentUnitComponent),
                 MockComponent(VideoUnitComponent),

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
@@ -18,6 +18,8 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -54,6 +56,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     };
 
     exerciseSubmissionState: ExerciseSubmissionState;
+
+    isAdmin = false;
 
     isLoading: boolean;
 
@@ -116,7 +120,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     formatDate(date: Moment | Date | undefined) {
-        return date ? moment(date).format('MMM DD YYYY, HH:mm:ss') : '';
+        // TODO: we should try to use the artemis date pipe here
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 
     hasAccessRights() {
@@ -125,6 +130,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         } else if (this.exercise.exerciseGroup) {
             this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup.exam?.course!);
         }
+        this.isAdmin = this.accountService.isAdmin();
     }
 
     updateParticipationFilter(newValue: FilterProp) {
@@ -254,6 +260,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         } else if (participation.team) {
             return formatTeamAsSearchResult(participation.team);
         }
+        return `${participation.id!}`;
     };
 
     /**
@@ -264,5 +271,18 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      */
     searchTextFromParticipation = (participation: StudentParticipation): string => {
         return participation.student?.login || participation.team?.shortName || '';
+    };
+
+    /**
+     * Removes the login from the repositoryURL
+     *
+     * @param participation Student participation
+     * @param repoUrl original repository url
+     */
+    getRepositoryLink = (participation: StudentParticipation, repoUrl: String) => {
+        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUrl === repoUrl) {
+            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
+        }
+        return repoUrl;
     };
 }

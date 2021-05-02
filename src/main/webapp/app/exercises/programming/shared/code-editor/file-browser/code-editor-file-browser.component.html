@@ -14,7 +14,7 @@
             [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
             class="btn btn-light"
             (click)="setCreatingFileInRoot(FileType.FILE)"
-            title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <fa-icon [icon]="'file'" class="ml-1"></fa-icon>
@@ -24,7 +24,7 @@
             [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
             class="btn btn-light ml-2"
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
-            title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <fa-icon [icon]="'folder'" class="ml-1"></fa-icon>
@@ -34,7 +34,7 @@
             [disabled]="isLoadingFiles"
             class="btn btn-light ml-auto"
             (click)="toggleTreeCompress()"
-            title="{{ 'artemisApp.editor.fileBrowser.compressTree' | translate }}"
+            title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
         >
             <fa-icon [icon]="compressFolders ? 'angle-double-up' : 'angle-double-down'"></fa-icon>
         </button>
@@ -54,7 +54,7 @@
         <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
         <!-- Loading files indicator -->
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
-            <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>
@@ -67,7 +67,7 @@
     <jhi-code-editor-file-browser-folder
         *ngIf="repositoryFiles[item.value] === FileType.FOLDER"
         [item]="item"
-        [isBeingRenamed]="renamingFile && renamingFile[0] === item.value"
+        [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
         [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
         [hasError]="errorFiles && errorFiles.includes(item.value)"
         [onCollapseExpand]="onCollapseExpand"
@@ -85,7 +85,7 @@
         *ngIf="repositoryFiles[item.value] === FileType.FILE"
         [item]="item"
         [hasChanges]="repositoryFilesWithInformationAboutChange ? repositoryFilesWithInformationAboutChange[item.value] : false"
-        [isBeingRenamed]="renamingFile && renamingFile[0] === item.value"
+        [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
         [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
         [hasError]="errorFiles && errorFiles.includes(item.value)"
         [disableActions]="disableActions || commitState === CommitState.CONFLICT"

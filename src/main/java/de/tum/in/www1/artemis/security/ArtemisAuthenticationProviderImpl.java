@@ -1,23 +1,20 @@
 package de.tum.in.www1.artemis.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 public abstract class ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
+    protected final UserCreationService userCreationService;
+
     protected final UserRepository userRepository;
 
-    protected UserService userService;
+    protected final PasswordService passwordService;
 
-    public ArtemisAuthenticationProviderImpl(UserRepository userRepository) {
+    public ArtemisAuthenticationProviderImpl(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
         this.userRepository = userRepository;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setUserService(UserService userService) {
-        this.userService = userService;
+        this.passwordService = passwordService;
+        this.userCreationService = userCreationService;
     }
 }

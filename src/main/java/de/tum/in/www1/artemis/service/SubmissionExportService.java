@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -106,15 +105,17 @@ public abstract class SubmissionExportService {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        String zipGroupName = course.getTitle() + "-" + exercise.getTitle() + "-submissions";
-        String zipFileName = zipGroupName + "-" + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT) + ".zip";
+        String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
+        String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
+
+        String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         Path submissionsFolderPath = Paths.get(submissionExportPath, "zippedSubmissions", zipGroupName);
         Path zipFilePath = Paths.get(submissionExportPath, "zippedSubmissions", zipFileName);
 
         File submissionFolder = submissionsFolderPath.toFile();
         if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {
-            log.error("Couldn't create dir: " + submissionFolder);
+            log.error("Couldn't create dir: {}", submissionFolder);
             return Optional.empty();
         }
 
@@ -149,7 +150,7 @@ public abstract class SubmissionExportService {
                 return Optional.of(submissionFilePath);
             }
             catch (IOException ioException) {
-                log.error("Could not create file " + submissionFilePath.toString() + " for exporting: " + ioException.getMessage());
+                log.error("Could not create file {} for exporting: {}", submissionFilePath.toString(), ioException.getMessage());
                 return Optional.<Path>empty();
             }
 
@@ -188,7 +189,7 @@ public abstract class SubmissionExportService {
                 Files.delete(tempFile);
             }
             catch (Exception ex) {
-                log.warn("Could not delete file " + tempFile + ". Error message: " + ex.getMessage());
+                log.warn("Could not delete file {}. Error message: {}", tempFile, ex.getMessage());
             }
         }
     }

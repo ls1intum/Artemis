@@ -27,9 +27,11 @@
                     <td>{{ notification.text }}</td>
                     <td>{{ notification.type }}</td>
                     <td>
-                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge badge-success">{{ 'artemisApp.systemNotification.active' | translate }}</span>
+                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge badge-success">{{
+                            'artemisApp.systemNotification.active' | artemisTranslate
+                        }}</span>
                         <ng-template #notActive>
-                            <span class="badge badge-danger">{{ 'artemisApp.systemNotification.notActive' | translate }}</span>
+                            <span class="badge badge-danger">{{ 'artemisApp.systemNotification.notActive' | artemisTranslate }}</span>
                         </ng-template>
                     </td>
                     <td>{{ notification.notificationDate | artemisDate }}</td>
@@ -40,15 +42,15 @@
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </a>
-                            <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-primary btn-sm">
-                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+                                <fa-icon [icon]="'wrench'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
                             <button
                                 jhiDeleteButton
-                                [entityTitle]="notification.title"
+                                [entityTitle]="!!notification.title ? notification.title : ''"
                                 deleteQuestion="artemisApp.systemNotification.delete.question"
-                                (delete)="deleteNotification(notification.id)"
+                                (delete)="deleteNotification(notification.id!)"
                                 [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="'times'"></fa-icon>

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.quiz.scoring;
 import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
- * Proportional with Penalty means that every correctly selected/unselected answer increases the score by x and every incorrectly selected/unselected answer the score by x where x
+ * Proportional with penalty means that every correctly selected/unselected answer increases the score by x and every incorrectly selected/unselected answer the score by x where x
  * = maxScore / numberOfAnswerOptions if the result is negative, a score of 0 is given instead
  */
 public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements ScoringStrategy {

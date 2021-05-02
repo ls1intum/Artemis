@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
+import javax.persistence.*;
+
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.Submission;
 
 /**
@@ -74,6 +74,10 @@ public class ModelingSubmission extends Submission {
      */
     public boolean isEmpty(ObjectMapper jacksonObjectMapper) {
         try {
+            // in case there is an explanation, we should
+            if (StringUtils.hasText(explanationText)) {
+                return false;
+            }
             // TODO: further improve this!!
             return model == null || model.isBlank() || jacksonObjectMapper.readTree(getModel()).get("elements").isEmpty();
         }

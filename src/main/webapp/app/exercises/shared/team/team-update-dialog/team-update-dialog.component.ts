@@ -11,6 +11,7 @@ import { cloneDeep, isEmpty, omit } from 'lodash';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
+import { shortNamePattern } from 'app/shared/constants/input.constants';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 
@@ -44,8 +45,7 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     private shortNameValidator = new Subject<string>();
     readonly shortNameAlreadyTakenErrorCode = 'alreadyTaken';
-    readonly shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
-
+    readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal) {}
 
     /**

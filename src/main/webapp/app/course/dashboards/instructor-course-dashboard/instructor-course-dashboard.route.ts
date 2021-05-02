@@ -13,11 +13,6 @@ export const instructorCourseDashboardRoute: Routes = [
         component: InstructorCourseDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.instructorCourseDashboard.title', path: 'instructor-dashboard' },
-            ],
             pageTitle: 'artemisApp.instructorCourseDashboard.title',
         },
         canActivate: [UserRouteAccessService],

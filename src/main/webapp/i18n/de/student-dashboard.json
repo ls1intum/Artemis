@@ -6,6 +6,7 @@
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
             "examTitle": "Aktuelle Prüfung von \"{{ course }}\":",
             "cardTitle": "Deine insgesamte Punktzahl:",
+            "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
@@ -35,6 +36,7 @@
                 "releaseDate": "Veröffentlichungsdatum",
                 "dueDate": "Einreichungsfrist",
                 "overdue": "Keine Überfälligen",
+                "unreleased": "Keine Unveröffentlichten",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
@@ -68,11 +70,11 @@
                 "userSubmittedShort": "Bereits abgegeben.",
                 "noDateAssociated": "Ohne Datum",
                 "details": {
-                    "courseInformation": "Kurs Informationen:",
+                    "courseInformation": "Kursinformationen:",
                     "totalExercises": "Aufgaben insgesamt:",
                     "quizTotal": "Quiz Aufgaben insgesamt:",
-                    "modelingTotal": "Modelierungs Aufgaben insgesamt:",
-                    "programmingTotal": "Programmier Aufgaben insgesamt:",
+                    "modelingTotal": "Modellierungsaufgaben insgesamt:",
+                    "programmingTotal": "Programmieraufgaben insgesamt:",
                     "textTotal": "Text Aufgaben insgesamt:",
                     "file-uploadTotal": "Aufgaben mit Datei-Upload insgesamt:",
                     "startDate": "Start:",
@@ -128,13 +130,13 @@
                 "categories": "Kategorien:",
                 "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
-                "exerciseStatus": "Aufgaben Status:",
+                "exerciseStatus": "Aufgabenstatus:",
                 "points": "Punkte:",
                 "bonus": "Bonus:",
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
-                    "title": "Dozent Aktionen:",
+                    "title": "Dozentenaktionen:",
                     "scores": "Bewertungen",
                     "submissions": "Einreichungen",
                     "statistics": "Statistiken"
@@ -168,8 +170,8 @@
                     "cancel": "Abbrechen",
                     "addQuestion": "Frage hinzufügen",
                     "saveQuestion": "Frage speichern",
-                    "addAnswer": "Anwort hinzufügen",
-                    "saveAnswer": "Anwort speichern",
+                    "addAnswer": "Antwort hinzufügen",
+                    "saveAnswer": "Antwort speichern",
                     "deleteQuestion": "Möchtest du deine Frage löschen?",
                     "confirmDeleteQuestion": "Bitte bestätige, dass du deine Frage löschen möchtest!",
                     "editQuestion": "Frage bearbeiten",
@@ -178,8 +180,8 @@
                     "editAnswer": "Antwort bearbeiten",
                     "approveAnswer": "Antwort bestätigen",
                     "unapproveAnswer": "Antwort nicht bestätigen",
-                    "hideAnswers": "Weniger Anworten anzeigen",
-                    "showAnswers": "Weitere Anworten anzeigen ({{count}})"
+                    "hideAnswers": "Weniger Antworten anzeigen",
+                    "showAnswers": "Weitere Antworten anzeigen ({{count}})"
                 }
             }
         }

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -12,9 +11,12 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AssessmentService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 public abstract class AssessmentResource {
@@ -23,11 +25,9 @@ public abstract class AssessmentResource {
 
     protected final AuthorizationCheckService authCheckService;
 
-    protected final UserService userService;
+    protected final UserRepository userRepository;
 
-    protected final ExerciseService exerciseService;
-
-    protected final SubmissionService submissionService;
+    protected final ExerciseRepository exerciseRepository;
 
     protected final AssessmentService assessmentService;
 
@@ -37,20 +37,22 @@ public abstract class AssessmentResource {
 
     protected final WebsocketMessagingService messagingService;
 
-    protected final ExampleSubmissionService exampleSubmissionService;
+    protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public AssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, SubmissionService submissionService,
-            AssessmentService assessmentService, ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService,
-            ExampleSubmissionService exampleSubmissionService) {
+    protected final SubmissionRepository submissionRepository;
+
+    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
+            ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
-        this.userService = userService;
-        this.exerciseService = exerciseService;
-        this.submissionService = submissionService;
+        this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
         this.examService = examService;
         this.messagingService = messagingService;
-        this.exampleSubmissionService = exampleSubmissionService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     abstract String getEntityName();
@@ -65,7 +67,7 @@ public abstract class AssessmentResource {
      */
     ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
-        Submission submission = submissionService.findOneWithEagerResultAndFeedback(submissionId);
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
@@ -97,15 +99,15 @@ public abstract class AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     ResponseEntity<Result> saveAssessment(Submission submission, boolean submit, List<Feedback> feedbackList, Long resultId) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
-            log.debug("The user " + user.getLogin() + " is not allowed to override the assessment for the submission " + submission.getId());
+            log.debug("The user {} is not allowed to override the assessment for the submission {}", user.getLogin(), submission.getId());
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
@@ -113,12 +115,12 @@ public abstract class AssessmentResource {
         if (submit) {
             result = assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
         }
+        var participation = result.getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
+            participation.filterSensitiveInformation();
         }
-        if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
-                || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
+        if (submit && (participation.getExercise().getAssessmentDueDate() == null || participation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
@@ -130,8 +132,8 @@ public abstract class AssessmentResource {
      * @return result after saving example assessment
      */
     protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
@@ -154,8 +156,8 @@ public abstract class AssessmentResource {
      * @return the result linked to the example submission
      */
     ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
-        Exercise exercise = exerciseService.findOne(exerciseId);
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
 
         // It is allowed to get the example assessment, if the user is an instructor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
@@ -172,15 +174,11 @@ public abstract class AssessmentResource {
      * checks that the given user has at least tutor rights for the given exercise
      *
      * @param exercise the exercise for which the authorization should be checked
-     * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
      * @throws BadRequestAlertException if no course is associated to the given exercise
      */
-    void checkAuthorization(Exercise exercise, User user) throws AccessForbiddenException, BadRequestAlertException {
+    void checkAuthorization(Exercise exercise, User user) throws BadRequestAlertException {
         validateExercise(exercise);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            log.debug("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
-            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
     }
 
     void validateExercise(Exercise exercise) throws BadRequestAlertException {
@@ -192,18 +190,18 @@ public abstract class AssessmentResource {
 
     protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        Submission submission = submissionService.findOneWithEagerResults(submissionId);
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (submission.getLatestResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userService.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
+        if (!(isAtLeastInstructor || userRepository.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             return forbidden();
         }

@@ -2,18 +2,18 @@
     "artemisApp": {
         "dragAndDropSubmittedAnswer": {
             "home": {
-                "title": "Drag And Drop Submitted Answers",
-                "createLabel": "Drag And Drop Submitted Answer erstellen",
-                "createOrEditLabel": "Drag And Drop Submitted Answer erstellen oder bearbeiten"
+                "title": "Drag-And-Drop Submitted Answers",
+                "createLabel": "Drag-And-Drop Submitted Answer erstellen",
+                "createOrEditLabel": "Drag-And-Drop Submitted Answer erstellen oder bearbeiten"
             },
-            "created": "Drag And Drop Submitted Answer erstellt mit ID {{ param }}",
-            "updated": "Drag And Drop Submitted Answer aktualisiert mit ID {{ param }}",
-            "deleted": "Drag And Drop Submitted Answer gelöscht mit ID {{ param }}",
+            "created": "Drag-And-Drop Submitted Answer erstellt mit ID {{ param }}",
+            "updated": "Drag-And-Drop Submitted Answer aktualisiert mit ID {{ param }}",
+            "deleted": "Drag-And-Drop Submitted Answer gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Drag And Drop Submitted Answer {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Drag-And-Drop Submitted Answer {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Drag And Drop Submitted Answer"
+                "title": "Drag-And-Drop Submitted Answer"
             },
             "mappings": "Mappings"
         }

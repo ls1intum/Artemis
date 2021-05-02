@@ -12,4 +12,4 @@ Implement the function in three different ways:
    You are not allowed to use list comprehensions or higher-order functions.
    Call this function ```selectAndReflectB```.
 3. [1P] Use higher-order functions (e.g. `map`, `filter`, etc.) but no recursion or list comprehensions.
-   Call this function ```selectAndReflectB```.
+   Call this function ```selectAndReflectC```.

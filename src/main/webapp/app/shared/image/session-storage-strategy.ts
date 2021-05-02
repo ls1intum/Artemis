@@ -2,7 +2,7 @@ import { GlobalCacheConfig, ICachePair, IStorageStrategy } from 'ts-cacheable';
 
 /**
  * This is the same as the DOMStorageStrategy, only using the sessionStorage
- * instead of the localStorage: https://github.com/angelnikolov/ngx-cacheable/blob/master/common/DOMStorageStrategy.ts
+ * instead of the localStorage: https://github.com/angelnikolov/ts-cacheable/blob/master/common/LocalStorageStrategy.ts
  */
 export class SessionStorageStrategy extends IStorageStrategy {
     private masterCacheKey: string = GlobalCacheConfig.globalCacheKey;
@@ -22,12 +22,12 @@ export class SessionStorageStrategy extends IStorageStrategy {
         this.storeRawData(allCachedData);
     }
 
-    addMany(cachePairs: ICachePair<any>[], cacheKey: string) {
+    addMany(entities: ICachePair<any>[], cacheKey: string) {
         const allCachedData = this.getRawData();
         if (!allCachedData[cacheKey]) {
             allCachedData[cacheKey] = [];
         }
-        allCachedData[cacheKey] = cachePairs;
+        allCachedData[cacheKey] = entities;
         this.storeRawData(allCachedData);
     }
 
@@ -43,12 +43,20 @@ export class SessionStorageStrategy extends IStorageStrategy {
         this.storeRawData(allCachedData);
     }
 
-    updateAtIndex(index: number, entity: any, cacheKey: string) {
+    remove(index: number, entity: ICachePair<any>, cacheKey: string) {
+        this.removeAtIndex(index, cacheKey);
+    }
+
+    updateAtIndex(index: number, entity: ICachePair<any>, cacheKey: string) {
         const allCachedData = this.getRawData();
         if (allCachedData[cacheKey] && allCachedData[cacheKey][index]) {
             allCachedData[cacheKey][index] = entity;
         }
         this.storeRawData(allCachedData);
+    }
+
+    update(index: number, entity: ICachePair<any>, cacheKey: string) {
+        this.updateAtIndex(index, entity, cacheKey);
     }
 
     removeAll(cacheKey: string) {

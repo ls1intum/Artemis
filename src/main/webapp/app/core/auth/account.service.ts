@@ -4,9 +4,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-
 import { SERVER_API_URL } from 'app/app.constants';
-
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -26,6 +24,8 @@ export interface IAccountService {
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorForExercise: (exercise?: Exercise) => boolean;
+    isAtLeastEditorInCourse: (course: Course) => boolean;
+    isAtLeastEditorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAuthenticated: () => boolean;
@@ -70,7 +70,7 @@ export class AccountService implements IAccountService {
     }
 
     save(user: User): Observable<HttpResponse<{}>> {
-        return this.http.post(SERVER_API_URL + 'api/account', user, { observe: 'response' });
+        return this.http.put(SERVER_API_URL + 'api/account', user, { observe: 'response' });
     }
 
     authenticate(identity?: User) {
@@ -171,7 +171,20 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.teachingAssistantGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
+        return (
+            this.hasGroup(course?.instructorGroupName) ||
+            this.hasGroup(course?.editorGroupName) ||
+            this.hasGroup(course?.teachingAssistantGroupName) ||
+            this.hasAnyAuthorityDirect([Authority.ADMIN])
+        );
+    }
+
+    /**
+     * checks if the currently logged in user is at least editor in the given course
+     * @param course
+     */
+    isAtLeastEditorInCourse(course?: Course): boolean {
+        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.editorGroupName) || this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
     /**
@@ -188,6 +201,14 @@ export class AccountService implements IAccountService {
      */
     isAtLeastTutorForExercise(exercise?: Exercise): boolean {
         return this.isAtLeastTutorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
+    }
+
+    /**
+     * checks if the currently logged in user is at least editor for the exercise (directly) in the course or the exercise in the exam in the course
+     * @param exercise
+     */
+    isAtLeastEditorForExercise(exercise?: Exercise): boolean {
+        return this.isAtLeastEditorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
     }
 
     /**

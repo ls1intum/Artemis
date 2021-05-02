@@ -29,7 +29,8 @@ export class ListOfComplaintsComponent implements OnInit {
     private courseId: number;
     private exerciseId: number;
     private tutorId: number;
-
+    private examId?: number;
+    private correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
@@ -53,9 +54,11 @@ export class ListOfComplaintsComponent implements OnInit {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
+            this.examId = Number(params['examId']);
         });
         this.route.queryParams.subscribe((queryParams) => {
             this.tutorId = Number(queryParams['tutorId']);
+            this.correctionRound = Number(queryParams['correctionRound']);
         });
         this.route.data.subscribe((data) => (this.complaintType = data.complaintType));
         this.loadComplaints();
@@ -67,12 +70,17 @@ export class ListOfComplaintsComponent implements OnInit {
         if (this.tutorId) {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
+            } else if (this.examId) {
+                // TODO make exam complaints visible for tutors too
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             } else {
                 complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             }
         } else {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
+            } else if (this.examId) {
+                complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId);
             } else {
                 complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             }
@@ -100,21 +108,23 @@ export class ListOfComplaintsComponent implements OnInit {
         const studentParticipation = complaint.result.participation as StudentParticipation;
         const exercise = studentParticipation.exercise;
         const submissionId = complaint.result.submission.id;
-
         if (!exercise || !exercise.type || !submissionId) {
             return;
+        }
+        if (!this.correctionRound) {
+            this.correctionRound = 0;
         }
 
         switch (exercise.type) {
             case ExerciseType.TEXT:
             case ExerciseType.MODELING:
             case ExerciseType.FILE_UPLOAD:
-                const route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
-                this.router.navigate([route]);
+                const url = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`];
+                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
                 return;
             case ExerciseType.PROGRAMMING:
-                const routeProgramming = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${studentParticipation.id}/assessment`;
-                this.router.navigate([routeProgramming]);
+                const urlProgramming = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${studentParticipation.id}/assessment`];
+                this.router.navigate(urlProgramming, { queryParams: { 'correction-round': this.correctionRound } });
                 return;
         }
     }

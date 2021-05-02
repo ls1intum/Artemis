@@ -4,14 +4,14 @@ import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 
-export const enum ScoringType {
+export enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',
     PROPORTIONAL_WITH_PENALTY = 'PROPORTIONAL_WITH_PENALTY',
-    TRUE_FALSE_NEUTRAL = 'TRUE_FALSE_NEUTRAL',
+    PROPORTIONAL_WITHOUT_PENALTY = 'PROPORTIONAL_WITHOUT_PENALTY',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Question.java
-export const enum QuizQuestionType {
+export enum QuizQuestionType {
     MULTIPLE_CHOICE = 'multiple-choice',
     DRAG_AND_DROP = 'drag-and-drop',
     SHORT_ANSWER = 'short-answer',

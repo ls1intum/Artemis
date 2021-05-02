@@ -13,8 +13,8 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
-    @Input() public numberOfSubmissions: DueDateStat;
-    @Input() public totalNumberOfAssessments: DueDateStat;
+    @Input() public numberOfSubmissions?: DueDateStat;
+    @Input() public totalNumberOfAssessments?: DueDateStat;
     @Input() public numberOfComplaints: number;
     @Input() public numberOfOpenComplaints: number;
     @Input() public numberOfMoreFeedbackRequests: number;
@@ -50,7 +50,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         const courseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.course.id');
 
         if (courseId && exerciseId) {
-            this.routerLink = `/course-management/${courseId}/exercises/${exerciseId}/tutor-dashboard`;
+            this.routerLink = `/course-management/${courseId}/assessment-dashboard/${exerciseId}`;
         }
         this.calculatePercentageAssessmentProgress();
         this.calculatePercentageComplaintsProgress();
@@ -86,10 +86,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         for (const [index, numberOfAssessments] of this.numberOfAssessmentsOfCorrectionRounds.entries()) {
             this.percentageInTimeAssessmentProgressOfCorrectionRound[index] = 0;
             this.percentageLateAssessmentProgressOfCorrectionRound[index] = 0;
-            if (this.numberOfSubmissions?.inTime !== 0) {
+            if (this.numberOfSubmissions && this.numberOfSubmissions.inTime !== 0) {
                 this.percentageInTimeAssessmentProgressOfCorrectionRound[index] = Math.floor((numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
             }
-            if (this.numberOfSubmissions?.late !== 0) {
+            if (this.numberOfSubmissions && this.numberOfSubmissions?.late !== 0) {
                 this.percentageLateAssessmentProgressOfCorrectionRound[index] = Math.floor((numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
             }
         }
@@ -155,7 +155,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (
             this.tutorParticipationStatus === this.COMPLETED ||
-            this.numberOfSubmissions.inTime === this.totalNumberOfAssessments.inTime ||
+            (this.numberOfSubmissions && this.totalNumberOfAssessments && this.numberOfSubmissions.inTime === this.totalNumberOfAssessments.inTime) ||
             this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
         ) {
             return 'active';

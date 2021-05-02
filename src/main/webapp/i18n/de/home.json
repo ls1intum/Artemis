@@ -13,7 +13,8 @@
             "usernameIncorrect": "<p class='text-primary small'>Ungültiger Benutzername</p>",
             "tumWarning": "<p class='text-primary small'>Wenn du ein TUM Student bist, sollte deine Benutzerkennung das Format <b>ab12xyz</b> haben.<br />Füge <b>weder</b> '<b>@mytum.de</b>' noch '<b>@tum.de</b>' hinzu.</p>",
             "externalUserManagementWarning": "<span class='bold'>Du hast dein Passwort zu oft falsch eingegeben. :-(</span><br />Bitte öffne <a href='{{ url }}' target='_blank'>{{ name }}</a>, melde dich mit deinem Konto an und löse das <a href='{{ url }}' target='_blank'>CAPTCHA</a>. Nachdem du es gelöst hast, versuche erneut dich hier einzuloggen.",
-            "loginWarning": "Scheint so, als hättest du Probleme bei der Anmeldung :-(<br />Bitte besuche <a href='{{ url }}'>{{ name }}</a> und versuche dich dort anzumelden.<br />Danach versuche es hier noch einmal."
+            "loginWarning": "Scheint so, als hättest du Probleme bei der Anmeldung :-(<br />Bitte besuche <a href='{{ url }}'>{{ name }}</a> und versuche dich dort anzumelden.<br />Danach versuche es hier noch einmal.",
+            "sessionExpired": "Du wurdest ausgeloggt, da die Sitzung abgelaufen ist. Bitte logge dich erneut ein um zur vorherigen Seite zurückzukehren."
         }
     }
 }

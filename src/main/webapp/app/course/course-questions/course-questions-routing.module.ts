@@ -3,6 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { CourseQuestionsComponent } from 'app/course/course-questions/course-questions.component';
 import { NgModule } from '@angular/core';
 import { CourseResolve } from 'app/course/manage/course-management.route';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
@@ -12,12 +13,7 @@ const routes: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.studentQuestion.overview.title', path: 'questions' },
-            ],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.studentQuestion.overview.title',
         },
         canActivate: [UserRouteAccessService],

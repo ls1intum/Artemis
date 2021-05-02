@@ -18,13 +18,13 @@ import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    Long programmingExerciseId;
+    private Long programmingExerciseId;
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
         database.addCourseWithOneProgrammingExercise();
         programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
     }
@@ -40,8 +40,8 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
 
-        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true);
-        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getTemplateBuildPlanId(), true, false);
+        bambooRequestMockProvider.mockBuildPlanExists(programmingExercise.getSolutionBuildPlanId(), true, false);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
 

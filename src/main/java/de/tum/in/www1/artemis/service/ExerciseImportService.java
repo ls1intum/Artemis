@@ -6,10 +6,7 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 public abstract class ExerciseImportService {
 
@@ -28,15 +25,6 @@ public abstract class ExerciseImportService {
         this.resultRepository = resultRepository;
         this.textBlockRepository = textBlockRepository;
     }
-
-    /**
-     * Abstract method for importing Exercises. Implementations cast the parameters {@code templateExercise} and {@code importedExercise} to their respective type.
-     *
-     * @param templateExercise The template Exercise
-     * @param importedExercise The imported Exercise
-     * @return Returns the importedExercise. If the type casting fails, returns null.
-     */
-    public abstract Exercise importExercise(final Exercise templateExercise, final Exercise importedExercise);
 
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise) {
         if (importedExercise.isCourseExercise()) {
@@ -92,9 +80,13 @@ public abstract class ExerciseImportService {
         newResult.setHasFeedback(originalResult.getHasFeedback());
         newResult.setScore(originalResult.getScore());
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult));
-        newResult.setSubmission(newSubmission);
+        // Cut relationship to parent because result is an ordered collection
+        newResult.setSubmission(null);
 
-        resultRepository.save(newResult);
+        newResult = resultRepository.save(newResult);
+
+        // Restore relationship to parent.
+        newResult.setSubmission(newSubmission);
 
         return newResult;
     }

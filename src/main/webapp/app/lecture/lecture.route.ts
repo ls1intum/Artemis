@@ -39,11 +39,6 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            // HACK: The path is a composite, so we need to define both parts
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-            ],
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -54,12 +49,6 @@ export const lectureRoute: Routes = [
         resolve: {
             course: CourseResolve,
         },
-        data: {
-            breadcrumbs: [
-                { variable: 'course.title', path: 'course.id' },
-                { label: 'artemisApp.lecture.home.title', path: 'lectures' },
-            ],
-        },
         children: [
             {
                 path: 'new',
@@ -67,7 +56,6 @@ export const lectureRoute: Routes = [
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'global.generic.create',
-                    breadcrumbs: [],
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -79,9 +67,7 @@ export const lectureRoute: Routes = [
                 },
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                    breadcrumbLabelVariable: 'lecture.title',
                     pageTitle: 'artemisApp.lecture.home.title',
-                    breadcrumbs: [],
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -90,10 +76,6 @@ export const lectureRoute: Routes = [
                 resolve: {
                     lecture: LectureResolve,
                 },
-                data: {
-                    breadcrumbLabelVariable: 'lecture.title',
-                    breadcrumbs: [],
-                },
                 children: [
                     {
                         path: 'attachments',
@@ -101,7 +83,6 @@ export const lectureRoute: Routes = [
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.lecture.attachments.title',
-                            breadcrumbLabelVariable: '',
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -111,7 +92,6 @@ export const lectureRoute: Routes = [
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'global.generic.edit',
-                            breadcrumbLabelVariable: '',
                         },
                         canActivate: [UserRouteAccessService],
                     },

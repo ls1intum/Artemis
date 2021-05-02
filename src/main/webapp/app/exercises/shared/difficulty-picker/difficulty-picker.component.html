@@ -1,26 +1,26 @@
 <div class="btn-group">
     <div class="btn" [ngClass]="{ 'btn-primary': !exercise.difficulty, 'btn-default': exercise.difficulty }" (click)="setDifficulty(undefined)">
-        {{ 'artemisApp.exercise.noLevel' | translate }}
+        {{ 'artemisApp.exercise.noLevel' | artemisTranslate }}
     </div>
     <div
         class="btn"
         [ngClass]="{ 'btn-success': exercise.difficulty === DifficultyLevel.EASY, 'btn-default': exercise.difficulty !== DifficultyLevel.EASY }"
         (click)="setDifficulty(DifficultyLevel.EASY)"
     >
-        {{ 'artemisApp.exercise.easy' | translate }}
+        {{ 'artemisApp.exercise.easy' | artemisTranslate }}
     </div>
     <div
         class="btn btn-default"
         [ngClass]="{ 'btn-warning': exercise.difficulty === DifficultyLevel.MEDIUM, 'btn-default': exercise.difficulty !== DifficultyLevel.MEDIUM }"
         (click)="setDifficulty(DifficultyLevel.MEDIUM)"
     >
-        {{ 'artemisApp.exercise.medium' | translate }}
+        {{ 'artemisApp.exercise.medium' | artemisTranslate }}
     </div>
     <div
         class="btn btn-default"
         [ngClass]="{ 'btn-danger': exercise.difficulty === DifficultyLevel.HARD, 'btn-default': exercise.difficulty !== DifficultyLevel.HARD }"
         (click)="setDifficulty(DifficultyLevel.HARD)"
     >
-        {{ 'artemisApp.exercise.hard' | translate }}
+        {{ 'artemisApp.exercise.hard' | artemisTranslate }}
     </div>
 </div>

@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -19,6 +17,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
@@ -33,44 +32,22 @@ public class QuizSubmissionService {
 
     private final ResultRepository resultRepository;
 
-    private QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizScheduleService quizScheduleService;
 
-    private ParticipationService participationService;
+    private final ParticipationService participationService;
 
     private final SubmissionVersionService submissionVersionService;
 
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
-            SubmissionVersionService submissionVersionService) {
+            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
         this.submissionVersionService = submissionVersionService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setQuizExerciseService(QuizExerciseService quizExerciseService) {
-        this.quizExerciseService = quizExerciseService;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setParticipationService(ParticipationService participationService) {
+        this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
-    }
-
-    public QuizSubmission findOne(Long id) {
-        return quizSubmissionRepository.findById(id).get();
-    }
-
-    public List<QuizSubmission> findAll() {
-        return quizSubmissionRepository.findAll();
-    }
-
-    public void delete(Long id) {
-        quizSubmissionRepository.deleteById(id);
     }
 
     /**
@@ -117,7 +94,7 @@ public class QuizSubmissionService {
 
         // add result to statistics
         quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
-        log.debug("submit practice quiz finished: " + quizSubmission);
+        log.debug("submit practice quiz finished: {}", quizSubmission);
         return result;
     }
 
@@ -144,14 +121,9 @@ public class QuizSubmissionService {
         if (quizExercise == null) {
             // Fallback solution
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
-            Optional<QuizExercise> optionalQuizExercise = quizExerciseService.findById(exerciseId);
-            if (optionalQuizExercise.isEmpty()) {
-                log.warn(logText + "Could not executre for user {} in quiz {} because the quizExercise could not be found.", username, exerciseId);
-                throw new QuizSubmissionException("The quiz could not be found");
-            }
-            quizExercise = optionalQuizExercise.get();
+            quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         }
-        log.debug(logText + "Received quiz exercise for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isSubmissionAllowed()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
@@ -161,7 +133,7 @@ public class QuizSubmissionService {
 
         // check if user already submitted for this quiz
         Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
-        log.debug(logText + "Received participation for user {} in quiz {} in {} µs.", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("{} Received participation for user {} in quiz {} in {} µs.", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
         if (!participation.getResults().isEmpty()) {
             log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
             // NOTE: At this point, there can only be one Result because we already checked
@@ -183,7 +155,7 @@ public class QuizSubmissionService {
         // save submission to HashMap
         quizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
 
-        log.info(logText + "Saved quiz submission for user {} in quiz {} after {} µs ", username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
     }
 
@@ -220,10 +192,10 @@ public class QuizSubmissionService {
             submissionVersionService.saveVersionForIndividual(quizSubmission, user);
         }
         catch (Exception ex) {
-            log.error("Quiz submission version could not be saved: " + ex);
+            log.error("Quiz submission version could not be saved", ex);
         }
 
-        log.debug("submit exam quiz finished: " + quizSubmission);
+        log.debug("submit exam quiz finished: {}", quizSubmission);
         return quizSubmission;
     }
 }

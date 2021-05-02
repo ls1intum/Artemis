@@ -5,7 +5,7 @@ import * as moment from 'moment';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -32,7 +32,7 @@ describe('AttachmentUnitComponent', () => {
                 AttachmentUnitComponent,
                 MockDirective(NgbCollapse),
                 MockComponent(FaIconComponent),
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
             ],

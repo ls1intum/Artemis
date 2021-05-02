@@ -4,6 +4,7 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -15,7 +16,7 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() exerciseIndex = 0;
     @Input() endDate: Moment;
 
-    @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
+    @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; forceSave: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
@@ -24,7 +25,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     criticalTime = moment.duration(5, 'minutes');
 
-    icon: string;
+    icon: IconProp;
 
     constructor(private layoutService: LayoutService) {}
 
@@ -48,14 +49,14 @@ export class ExamNavigationBarComponent implements OnInit {
         this.examAboutToEnd.emit();
     }
 
-    changeExercise(exerciseIndex: number, force: boolean) {
+    changeExercise(exerciseIndex: number, forceSave: boolean) {
         // out of index -> do nothing
         if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
             return;
         }
         // set index and emit event
         this.exerciseIndex = exerciseIndex;
-        this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], force });
+        this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], forceSave });
         this.setExerciseButtonStatus(exerciseIndex);
     }
 

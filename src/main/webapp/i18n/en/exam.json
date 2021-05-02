@@ -41,6 +41,7 @@
             "publishResultsDate": "Release Date of Results",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
+            "studentReviewEnabled": "Review is open",
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
@@ -189,7 +190,22 @@
             "unlockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were unlocked.",
             "unlockAllRepositoriesFailure": "There was an error during the unlocking of the programming exercises:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
-            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}"
+            "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
+            "removeAllStudents": {
+                "title": "Remove all students",
+                "question": "Are you sure you want to remove <strong class='text-danger'>all students</strong> from the exam?",
+                "confirmationText": "Please enter the name of the exam to confirm removing all students from the exam!"
+            },
+            "confirmDialog": {
+                "titleToUnsubmitted": "Change Student Exam to Unsubmitted",
+                "titleToSubmitted": "Change Student Exam to Submitted",
+                "question": "Are you sure you want to change the submission state?",
+                "submitText": "This will set the submission date of the exam to this moment, and set the Submitted status to 'Yes'. Un-submitting the student exam later is possible.\n",
+                "unSubmitText": "This will delete the submission date and set the Submitted status to 'No'.",
+                "warningRemove": "<strong class='text-danger'>Recovering the original submission date after the deletion is not possible!</strong>",
+                "submit": "Submit",
+                "unsubmit": "Unsubmit"
+            }
         },
         "examManagement": {
             "title": "Exam Management",
@@ -326,7 +342,7 @@
                 "descriptionItem": {
                     "register": "You can register students to the exam in three different ways: via a .csv file, by hand or you can import all students registered to the exam's course.",
                     "exerciseGroups": "You can create exercise groups with multiple exercise variants to make cheating for students more difficult. The points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exam's number of exercises.",
-                    "generateStudentExams": "Student exams must be generated for all registered students before starting the exam. Their working time can be adjusted individually.",
+                    "generateStudentExams": "Student exams must be generated for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally the commits of the templates in programming exercises get combined into one commit.",
                     "prepareExerciseStart": "Preparing the exercises can reduce load on the server during the exam.",
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
                     "conductExam": "On the student exam page you can see which students already submitted their exam.",
@@ -345,7 +361,7 @@
                     "totalpointspossible": "Maximum number of points in exam can be realized with the exercise groups configuration",
                     "hasExercises": "has",
                     "zeroexercises": "0",
-                    "exerciseStart": "Exercise group",
+                    "exerciseStart": "Exercise Group",
                     "exercise": "exercise variant.",
                     "exercises": "exercise variants.",
                     "leastonestudent": "At least one student registered",
@@ -354,7 +370,18 @@
                     "pulishingdateset": "Publishing date for results set",
                     "startdatereviewset": "Start date of exam review set",
                     "enddatereviewset": "End date of exam review set",
-                    "testruns": "Current number of test runs:"
+                    "testruns": "Current number of test runs:",
+                    "allExercisesPrepared": "All exercises prepared for all students",
+                    "noSubmissions": "There are currently no submitted exams.",
+                    "noComplaints": "There are currently no complaints.",
+                    "correctionRound": "Correction Round",
+                    "startedExam": "Started Exam",
+                    "submittedExam": "Submitted Exam",
+                    "exerciseTablePlural": "Exercises",
+                    "exerciseTableSingular": "Exercise",
+                    "points": "Points",
+                    "numberParticipants": "Participants",
+                    "variants": "Variants"
                 }
             }
         },
@@ -375,9 +402,13 @@
             "reviewer": "Reviewer",
             "openSubmission": "Open Submission",
             "openAssessment": " Open Assessment",
+            "openLatestAssessment": "Open latest Assessment",
             "cancelAssessment": " Cancel Assessment",
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
-            "saveWorkingTimeSuccessful": "The working time was saved successfully."
+            "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+            "toggleSuccessful": "The submitted status was changed successfully.",
+            "togglefailed": "The submitted status could not be changed!",
+            "hasComplaint": "Has Complaint"
         }
     },
     "studentExam": {

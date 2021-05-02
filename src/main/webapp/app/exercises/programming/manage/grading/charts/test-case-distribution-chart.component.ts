@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
@@ -41,6 +41,8 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     pointsChartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
+        this.testCases = this.testCases.filter((testCase) => testCase.visibility !== Visibility.Never);
+
         // sum of all weights
         const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
         // max points for the exercise

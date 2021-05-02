@@ -18,6 +18,7 @@ logging:
         ROOT: DEBUG
         de.tum.in.www1.artemis: DEBUG
         io.github.jhipster: DEBUG
+        liquibase: ERROR
 
 spring:
     devtools:
@@ -118,7 +119,6 @@ info:
             - programming_exercise_success_tour: 'test'
             - tutor_assessment_tour: 'Patterns in Software Engineering'
     contact: artemis.in@tum.de                                                                  #default value, can be overridden if needed
-    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint            #default value, can be overridden if needed
 
 # Eureka configuration
 eureka:

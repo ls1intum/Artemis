@@ -13,7 +13,7 @@ import { JhiAlertService } from 'ng-jhipster';
             jhiDeleteButton
             *ngIf="exercise.isAtLeastInstructor"
             [buttonSize]="buttonSize"
-            [entityTitle]="team.shortName"
+            [entityTitle]="team.shortName || ''"
             deleteQuestion="artemisApp.team.delete.question"
             deleteConfirmationText="artemisApp.team.delete.typeNameToConfirm"
             (delete)="removeTeam($event)"

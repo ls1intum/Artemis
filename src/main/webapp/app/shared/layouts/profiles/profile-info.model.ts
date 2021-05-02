@@ -1,6 +1,7 @@
 import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.service';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { ProgrammingLanguageFeature } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 
 export class ProfileInfo {
     public activeProfiles: string[];
@@ -11,15 +12,16 @@ export class ProfileInfo {
     public features: ActiveFeatureToggles;
     public guidedTourMapping?: GuidedTourMapping;
     public buildPlanURLTemplate: string;
+    public commitHashURLTemplate: string;
     public sshCloneURLTemplate: string;
     public sshKeysURL: string;
     public externalUserManagementURL: string;
     public externalUserManagementName: string;
-    public imprint: string;
     public contact: string;
-    public testServer: boolean;
+    public testServer?: boolean;
     public allowedMinimumOrionVersion: string;
     public registrationEnabled?: boolean;
+    public needsToAcceptTerms?: boolean;
     public allowedEmailPattern?: string;
     public allowedEmailPatternReadable?: string;
     public allowedLdapUsernamePattern?: string;
@@ -27,4 +29,5 @@ export class ProfileInfo {
     public accountName?: string;
     public versionControlUrl?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
+    public saml2?: Saml2Config;
 }

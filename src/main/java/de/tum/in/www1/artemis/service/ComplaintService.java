@@ -2,21 +2,20 @@ package de.tum.in.www1.artemis.service;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -30,24 +29,27 @@ public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final ComplaintResponseRepository complaintResponseRepository;
+
     private final ResultRepository resultRepository;
 
     private final ResultService resultService;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final ExamService examService;
+    private final ExamRepository examRepository;
 
-    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService,
-            ExamService examService, UserService userService) {
+    public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
+            ResultService resultService, CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository) {
         this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
-        this.courseService = courseService;
-        this.examService = examService;
-        this.userService = userService;
+        this.courseRepository = courseRepository;
+        this.examRepository = examRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -67,8 +69,8 @@ public class ComplaintService {
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
 
         if (examId.isPresent()) {
-            final Exam exam = examService.findOne(examId.getAsLong());
-            final List<User> instructors = userService.getInstructors(exam.getCourse());
+            final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
+            final List<User> instructors = userRepository.getInstructors(exam.getCourse());
             boolean examTestRun = instructors.stream().anyMatch(instructor -> instructor.getLogin().equals(principal.getName()));
             if (!examTestRun && !isTimeOfComplaintValid(exam)) {
                 throw new BadRequestAlertException("You cannot submit a complaint after the student review period", ENTITY_NAME, "afterStudentReviewPeriod");
@@ -76,7 +78,7 @@ public class ComplaintService {
         }
         else {
             // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-            final Course course = courseService.findOne(courseId);
+            final Course course = courseRepository.findByIdElseThrow(courseId);
 
             if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
                 long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
@@ -148,21 +150,53 @@ public class ComplaintService {
     }
 
     public long countComplaintsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
     }
 
     public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
-     * Given an exercise id, retrieve all the complaints apart the ones related to whoever is calling the method. Useful for creating a list of complaints a tutor can review.
+     * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
      *
-     * @param exerciseId - the id of the exercise we are interested in
-     * @return a list of complaints
+     * @param examMode should be set to ignore the test run submissions
+     * @param exercises the exercises for which the numbers of unevaluated complaints should be calculated
      */
-    public List<Complaint> getAllComplaintsByExerciseIdButMine(long exerciseId) {
-        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.COMPLAINT);
+    public void calculateNrOfOpenComplaints(Set<Exercise> exercises, boolean examMode) {
+        final List<ExerciseMapEntry> numberOfComplaintsOfExercise;
+        final List<ExerciseMapEntry> numberOfComplaintResponsesOfExercise;
+        final List<ExerciseMapEntry> numberOfMoreFeedbackRequestsOfExercise;
+        final List<ExerciseMapEntry> numberOfMoreFeedbackResponsesOfExercise;
+
+        Set<Long> exerciseIds = exercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+
+        if (examMode) {
+            numberOfComplaintsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(exerciseIds, ComplaintType.COMPLAINT);
+            numberOfComplaintResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(exerciseIds,
+                    ComplaintType.COMPLAINT);
+            numberOfMoreFeedbackRequestsOfExercise = new ArrayList<>();
+            numberOfMoreFeedbackResponsesOfExercise = new ArrayList<>();
+        }
+        else {
+            numberOfComplaintsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+            numberOfComplaintResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintType(exerciseIds, ComplaintType.COMPLAINT);
+
+            numberOfMoreFeedbackRequestsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
+            numberOfMoreFeedbackResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
+        }
+        var numberOfComplaintsMap = numberOfComplaintsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfComplaintResponsesMap = numberOfComplaintResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfMoreFeedbackRequestsMap = numberOfMoreFeedbackRequestsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfMoreFeedbackResponsesMap = numberOfMoreFeedbackResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
+        exercises.forEach(exercise -> {
+            exercise.setNumberOfOpenComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L) - numberOfComplaintResponsesMap.getOrDefault(exercise.getId(), 0L));
+            exercise.setNumberOfComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L));
+
+            exercise.setNumberOfOpenMoreFeedbackRequests(
+                    numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L) - numberOfMoreFeedbackResponsesMap.getOrDefault(exercise.getId(), 0L));
+            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequestsMap.getOrDefault(exercise.getId(), 0L));
+        });
     }
 
     /**
@@ -172,7 +206,7 @@ public class ComplaintService {
      * @return a list of complaints
      */
     public List<Complaint> getMyMoreFeedbackRequests(long exerciseId) {
-        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
@@ -181,6 +215,10 @@ public class ComplaintService {
 
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
         return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
+    }
+
+    public List<Complaint> getAllComplaintsByExamId(Long examId) {
+        return complaintRepository.getAllByResult_Participation_Exercise_ExerciseGroup_Exam_Id(examId);
     }
 
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {

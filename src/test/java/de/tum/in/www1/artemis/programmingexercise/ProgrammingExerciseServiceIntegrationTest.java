@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.IMPORT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.stream.Collectors;
@@ -16,8 +15,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -42,7 +41,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = database.addEmptyCourse();
@@ -118,7 +117,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
                 oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
-                && oldTest.getTestName().equals(test.getTestName()) && oldTest.getWeight().equals(test.getWeight())));
+                && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight())));
     }
 
     @Test
@@ -140,7 +139,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage()).isEmpty();
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test
@@ -167,7 +166,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
         final var searchSwift = database.configureSearch("Swift");
         final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchSwift));
-        assertThat(resultSwift.getResultsOnPage()).isEmpty();
+        assertThat(resultSwift.getResultsOnPage()).isNullOrEmpty();
     }
 
     @Test

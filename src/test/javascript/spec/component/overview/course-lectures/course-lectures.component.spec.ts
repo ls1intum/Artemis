@@ -1,26 +1,27 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
+import { Component, Input } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import * as chai from 'chai';
+import * as moment from 'moment';
+import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { JhiTranslateDirective } from 'ng-jhipster';
-import { Component, Input } from '@angular/core';
-import { By } from '@angular/platform-browser';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Lecture } from 'app/entities/lecture.model';
-import { Course } from 'app/entities/course.model';
-import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import * as moment from 'moment';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -79,7 +80,7 @@ describe('CourseLectures', () => {
             declarations: [
                 CourseLecturesComponent,
                 CourseLectureRowStubComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(SidePanelComponent),
                 MockComponent(FaIconComponent),

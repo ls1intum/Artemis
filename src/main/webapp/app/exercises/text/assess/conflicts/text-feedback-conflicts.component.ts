@@ -6,7 +6,7 @@ import { Location } from '@angular/common';
 
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -53,7 +53,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         private router: Router,
         private location: Location,
         protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentsService,
+        protected assessmentsService: TextAssessmentService,
         protected jhiAlertService: JhiAlertService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {
@@ -236,7 +236,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
     private prepareTextBlocksAndFeedbackFor(submission: TextSubmission, textBlockRefs: TextBlockRef[], unusedTextBlockRefs: TextBlockRef[]): void {
         const feedbackList = submission.latestResult?.feedbacks || [];
-        const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(submission?.blocks || [], feedbackList);
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(submission?.blocks || [], feedbackList);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, textBlockRefs, unusedTextBlockRefs, submission);
     }
 

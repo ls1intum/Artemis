@@ -127,6 +127,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.question';
+            default:
+                return '';
         }
     }
 
@@ -140,6 +142,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.typeNameToConfirm';
+            default:
+                return '';
         }
     }
 
@@ -190,14 +194,34 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    getLectureUnitName(lectureUnit: LectureUnit): string | undefined {
-        switch (lectureUnit?.type) {
+    getLectureUnitName(lectureUnit: LectureUnit): string {
+        switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT:
-                return (<AttachmentUnit>lectureUnit)?.attachment?.name;
+                return (<AttachmentUnit>lectureUnit)?.attachment?.name || '';
             case LectureUnitType.EXERCISE:
-                return (<ExerciseUnit>lectureUnit)?.exercise?.title;
+                return (<ExerciseUnit>lectureUnit)?.exercise?.title || '';
             default:
-                return lectureUnit.name;
+                return lectureUnit.name || '';
+        }
+    }
+
+    getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT:
+                return (<AttachmentUnit>lectureUnit)?.attachment?.releaseDate || undefined;
+            case LectureUnitType.EXERCISE:
+                return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate || undefined;
+            default:
+                return lectureUnit.releaseDate || undefined;
+        }
+    }
+
+    getAttachmentVersion(lectureUnit: LectureUnit) {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT:
+                return (<AttachmentUnit>lectureUnit)?.attachment?.version || undefined;
+            default:
+                return undefined;
         }
     }
 }

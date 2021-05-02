@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,26 +19,23 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    TeamRepository teamRepo;
+    private TeamRepository teamRepo;
 
     @Autowired
-    UserRepository userRepo;
+    private UserRepository userRepo;
 
     private Course course;
 
@@ -77,7 +71,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(numberOfStudentsInCourse, 5, 1);
+        database.addUsers(numberOfStudentsInCourse, 5, 0, 1);
         course = database.addCourseWithOneProgrammingExercise();
 
         // Make exercise team-based and already released to students
@@ -158,6 +152,17 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         team.setExercise(exercise);
         team.setStudents(students);
         request.postWithResponseBody(resourceUrl(), team, Team.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateTeam_InvalidShortName_BadRequest() throws Exception {
+        Team team = new Team();
+        team.setName("1 Invalid Name");
+        team.setShortName("1InvalidName");
+        team.setExercise(exercise);
+        team.setStudents(students);
+        request.postWithResponseBody(resourceUrl(), team, Team.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

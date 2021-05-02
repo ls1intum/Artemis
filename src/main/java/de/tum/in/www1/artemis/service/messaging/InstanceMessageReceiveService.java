@@ -11,9 +11,9 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 
@@ -27,24 +27,28 @@ public class InstanceMessageReceiveService {
 
     private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
-    protected ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    protected TextExerciseService textExerciseService;
+    private final TextExerciseRepository textExerciseRepository;
 
-    private Optional<AtheneScheduleService> atheneScheduleService;
+    private final Optional<AtheneScheduleService> atheneScheduleService;
 
-    public InstanceMessageReceiveService(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            TextExerciseService textExerciseService, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
-        this.programmingExerciseService = programmingExerciseService;
+    public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
+            TextExerciseRepository textExerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
-        this.textExerciseService = textExerciseService;
+        this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleProgrammingExercise((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("programming-exercise-schedule-cancel").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleProgrammingExerciseCancel(message.getMessageObject());
         });
         hazelcastInstance.<Long>getTopic("text-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -69,38 +73,45 @@ public class InstanceMessageReceiveService {
     }
 
     public void processScheduleProgrammingExercise(Long exerciseId) {
-        log.info("Received schedule update for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        log.info("Received schedule update for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         programmingExerciseScheduleService.updateScheduling(programmingExercise);
     }
 
+    public void processScheduleProgrammingExerciseCancel(Long exerciseId) {
+        log.info("Received schedule cancel for programming exercise {}", exerciseId);
+        // The exercise might already be deleted, so we can not get it from the database.
+        // Use the ID directly instead.
+        programmingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
+    }
+
     public void processScheduleTextExercise(Long exerciseId) {
-        log.info("Received schedule update for text exercise " + exerciseId);
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        log.info("Received schedule update for text exercise {}", exerciseId);
+        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         atheneScheduleService.ifPresent(service -> service.scheduleExerciseForAtheneIfRequired(textExercise));
     }
 
     public void processTextExerciseScheduleCancel(Long exerciseId) {
-        log.info("Received schedule cancel for text exercise " + exerciseId);
+        log.info("Received schedule cancel for text exercise {}", exerciseId);
         atheneScheduleService.ifPresent(service -> service.cancelScheduledAthene(exerciseId));
     }
 
     public void processTextExerciseInstantClustering(Long exerciseId) {
-        log.info("Received schedule instant clustering for text exercise " + exerciseId);
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        log.info("Received schedule instant clustering for text exercise {}", exerciseId);
+        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         atheneScheduleService.ifPresent(service -> service.scheduleExerciseForInstantAthene(textExercise));
     }
 
     public void processUnlockAllRepositories(Long exerciseId) {
-        log.info("Received unlock all repositories for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        log.info("Received unlock all repositories for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
         programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
     }
 
     public void processLockAllRepositories(Long exerciseId) {
-        log.info("Received lock all repositories for programming exercise " + exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        log.info("Received lock all repositories for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }

@@ -1,31 +1,31 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
-import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslatePipe } from '@ngx-translate/core';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DndModule } from 'ng2-dnd';
-import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
-import { triggerChanges } from '../../helpers/utils/general.utils';
-import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragState } from 'app/entities/quiz/drag-state.enum';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
+import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import * as chai from 'chai';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { DndModule } from 'ng2-dnd';
+import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { triggerChanges } from '../../helpers/utils/general.utils';
+import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,7 +48,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             imports: [ArtemisTestModule, FormsModule, DndModule.forRoot()],
             declarations: [
                 DragAndDropQuestionEditComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(SecuredImageComponent),

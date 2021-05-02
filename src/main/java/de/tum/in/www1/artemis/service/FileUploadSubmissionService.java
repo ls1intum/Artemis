@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -34,9 +35,11 @@ public class FileUploadSubmissionService extends SubmissionService {
     private final FileService fileService;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+                courseRepository, participationRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
     }
@@ -195,17 +198,18 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param submissionId       the id of the file upload submission
      * @param fileUploadExercise the corresponding exercise
+     * @param correctionRound the correctionRound for which the submission should lock a result
      * @return the locked file upload submission
      */
-    public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise) {
-        FileUploadSubmission fileUploadSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+    public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (fileUploadSubmission.getLatestResult() == null || fileUploadSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
         // correctionRound always defaults to 0, as fileUpload exercises currently are not supported within exams
-        lockSubmission(fileUploadSubmission, 0);
+        lockSubmission(fileUploadSubmission, correctionRound);
         return fileUploadSubmission;
     }
 
@@ -222,40 +226,5 @@ public class FileUploadSubmissionService extends SubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("File upload submission for exercise " + fileUploadExercise.getId() + " could not be found"));
         lockSubmission(fileUploadSubmission, correctionRound);
         return fileUploadSubmission;
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
-     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    private FileUploadSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return fileUploadSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the file upload submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the file upload submission with the given id
-     */
-    public FileUploadSubmission findOne(Long submissionId) {
-        return fileUploadSubmissionRepository.findById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("File Upload submission with id \"" + submissionId + "\" does not exist"));
     }
 }

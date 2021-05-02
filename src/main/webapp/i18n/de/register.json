@@ -8,16 +8,16 @@
             "validate": {
                 "login": {
                     "required": "Dein Benutzername wird benötigt.",
-                    "minlength": "Dein Benutzername muss mindestens 1 Zeichen lang sein",
+                    "minlength": "Dein Benutzername muss mindestens 4 Zeichen lang sein",
                     "maxlength": "Dein Benutzername darf nicht länger als 50 Zeichen sein",
                     "pattern": "Dein Benutzername darf nur Kleinbuchstaben und Ziffern enthalten"
                 }
             },
-            "success": "<strong>Registrierung gespeichert!</strong> Bitte überprüfe deine Emails für die Bestätigung.",
+            "success": "<strong>Registrierung gespeichert!</strong> Bitte überprüfe deine E-Mails für die Bestätigung.",
             "error": {
                 "fail": "<strong>Registrierung fehlgeschlagen!</strong> Bitte versuche es später nochmal.",
                 "userexists": "<strong>Benutzername bereits vergeben!</strong> Bitte wähle einen anderen aus.",
-                "emailexists": "<strong>Email wird bereits verwendet!</strong> Bitte wähle eine andere aus."
+                "emailexists": "<strong>E-Mail wird bereits verwendet!</strong> Bitte wähle eine andere aus."
             }
         }
     }

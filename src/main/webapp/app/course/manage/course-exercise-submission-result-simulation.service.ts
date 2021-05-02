@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { HttpResponse, HttpClient } from '@angular/common/http';
 
 /**

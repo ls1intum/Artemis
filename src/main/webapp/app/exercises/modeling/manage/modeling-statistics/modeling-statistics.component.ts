@@ -1,6 +1,6 @@
 import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';

@@ -10,17 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 
 /**
@@ -39,14 +34,14 @@ public class StaticCodeAnalysisResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
-    public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService,
+    public StaticCodeAnalysisResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             StaticCodeAnalysisService staticCodeAnalysisService) {
         this.authCheckService = authCheckService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
@@ -57,11 +52,11 @@ public class StaticCodeAnalysisResource {
      * @return the static code analysis categories
      */
     @GetMapping(Endpoints.CATEGORIES)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> getStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();
@@ -83,12 +78,12 @@ public class StaticCodeAnalysisResource {
      * @return the updated static code analysis categories
      */
     @PatchMapping(Endpoints.CATEGORIES)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> updateStaticCodeAnalysisCategories(@PathVariable Long exerciseId,
             @RequestBody Set<StaticCodeAnalysisCategory> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();
@@ -114,11 +109,11 @@ public class StaticCodeAnalysisResource {
      * @return static code analysis categories with the default configuration
      */
     @PatchMapping(Endpoints.RESET)
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> resetStaticCodeAnalysisCategories(@PathVariable Long exerciseId) {
         log.debug("REST request to reset static code analysis categories for programming exercise {}", exerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             return badRequest();

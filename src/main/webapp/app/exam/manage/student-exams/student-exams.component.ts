@@ -4,7 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -15,6 +15,9 @@ import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { Moment } from 'moment';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -35,6 +38,7 @@ export class StudentExamsComponent implements OnInit {
     isExamStarted = false;
     isExamOver = false;
     longestWorkingTime: number;
+    isAdmin = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -44,6 +48,7 @@ export class StudentExamsComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private translateService: TranslateService,
+        private accountService: AccountService,
     ) {}
 
     /**
@@ -58,6 +63,7 @@ export class StudentExamsComponent implements OnInit {
 
     private loadAll() {
         this.paramSub = this.route.params.subscribe(() => {
+            this.isAdmin = this.accountService.isAdmin();
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
@@ -328,6 +334,8 @@ export class StudentExamsComponent implements OnInit {
     searchResultFormatter = (studentExam: StudentExam) => {
         if (studentExam.user) {
             return `${studentExam.user.login} (${studentExam.user.name})`;
+        } else {
+            return '';
         }
     };
 
@@ -349,5 +357,10 @@ export class StudentExamsComponent implements OnInit {
 
     private onError(error: any) {
         this.jhiAlertService.error(error.errorKey);
+    }
+
+    formatDate(date: Moment | Date | undefined) {
+        // TODO: we should try to use the artemis date pipe here
+        return date ? moment(date).format(defaultLongDateTimeFormat) : '';
     }
 }

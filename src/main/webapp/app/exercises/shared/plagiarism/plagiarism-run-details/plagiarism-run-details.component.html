@@ -1,7 +1,7 @@
 <div class="plagiarism-run-details">
     <div class="plagiarism-run-details-item">
         <div class="plagiarism-run-details-label">
-            {{ 'artemisApp.plagiarism.duration' | translate }}
+            {{ 'artemisApp.plagiarism.duration' | artemisTranslate }}
         </div>
         <div class="plagiarism-run-details-info">
             {{ plagiarismResult.duration | date: 'HH:mm:ss.SSS':'GMT' }}
@@ -10,7 +10,7 @@
 
     <div class="plagiarism-run-details-item">
         <div class="plagiarism-run-details-label">
-            {{ 'artemisApp.plagiarism.similarity-distribution' | translate }}
+            {{ 'artemisApp.plagiarism.similarity-distribution' | artemisTranslate }}
         </div>
         <div class="plagiarism-run-details-info">
             <canvas baseChart [datasets]="chartDataSets" [labels]="chartLabels" [chartType]="chartType" [options]="chartOptions" [legend]="false"></canvas>

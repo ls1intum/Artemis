@@ -5,16 +5,14 @@ import java.util.ArrayList;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.*;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.config.auth.AtheneAuthorizationInterceptor;
 import de.tum.in.www1.artemis.config.auth.JiraAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
@@ -34,21 +32,21 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("gitlab")
-    @Autowired
+    @Autowired // ok
     public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("jenkins")
-    @Autowired
+    @Autowired // ok
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("jira")
-    @Autowired
+    @Autowired // ok
     public RestTemplate jiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createRestTemplate());
     }
@@ -65,26 +63,32 @@ public class RestTemplateConfiguration {
         return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createRestTemplate());
     }
 
+    @Bean
+    @Profile("athene")
+    public RestTemplate atheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createRestTemplate());
+    }
+
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
     // it is recommended to keep the timeout settings constant per rest template
 
     @Bean
     @Profile("gitlab")
-    @Autowired
+    @Autowired // ok
     public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
     @Profile("jenkins")
-    @Autowired
+    @Autowired // ok
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
     @Profile("jira")
-    @Autowired
+    @Autowired // ok
     public RestTemplate shortTimeoutJiraRestTemplate(JiraAuthorizationInterceptor jiraAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(jiraAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
@@ -99,6 +103,12 @@ public class RestTemplateConfiguration {
     @Profile("bamboo")
     public RestTemplate shortTimeoutBambooRestTemplate(BambooAuthorizationInterceptor bambooAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(bambooAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Profile("athene")
+    public RestTemplate shortTimeoutAtheneRestTemplate(AtheneAuthorizationInterceptor atheneAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(atheneAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @NotNull

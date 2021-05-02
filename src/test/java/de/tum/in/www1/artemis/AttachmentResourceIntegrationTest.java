@@ -11,29 +11,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.repository.*;
 
 public class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    AttachmentRepository attachmentRepository;
+    private AttachmentRepository attachmentRepository;
 
     @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    LectureRepository lectureRepository;
+    private LectureRepository lectureRepository;
 
     private Attachment attachment;
 
@@ -43,7 +37,7 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(0, 1, 1);
+        database.addUsers(0, 1, 0, 1);
 
         attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
 
@@ -86,7 +80,8 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
         var actualAttachment = request.putWithResponseBodyAndParams("/api/attachments", attachment, Attachment.class, HttpStatus.OK, params);
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
         assertThat(actualAttachment.getName()).isEqualTo("new name");
-        assertThat(actualAttachment).isEqualToIgnoringGivenFields(expectedAttachment, "name", "fileService", "prevLink");
+        var ignoringFields = new String[] { "name", "fileService", "prevLink", "lecture.lectureUnits", "lecture.studentQuestions", "lecture.course", "lecture.attachments" };
+        assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
         verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
     }
 

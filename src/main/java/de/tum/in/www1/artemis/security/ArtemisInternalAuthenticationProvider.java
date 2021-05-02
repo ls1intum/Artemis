@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +10,13 @@ import org.springframework.security.authentication.InternalAuthenticationService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
@@ -24,40 +24,38 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
 
-    public ArtemisInternalAuthenticationProvider(UserRepository userRepository) {
-        super(userRepository);
+    public ArtemisInternalAuthenticationProvider(UserRepository userRepository, PasswordService passwordService, UserCreationService userCreationService) {
+        super(userRepository, passwordService, userCreationService);
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        final var user = userService.getUserWithAuthoritiesByLogin(authentication.getName());
+        final var user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(authentication.getName());
         if (user.isEmpty()) {
             throw new AuthenticationServiceException(String.format("User %s does not exist in the Artemis database!", authentication.getName()));
         }
         if (!user.get().getActivated()) {
             throw new UserNotActivatedException("User " + user.get().getLogin() + " was not activated");
         }
-        final var storedPassword = userService.decryptPassword(user.get());
+        final var storedPassword = passwordService.decryptPassword(user.get());
         if (!authentication.getCredentials().toString().equals(storedPassword)) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
-        final var grantedAuthorities = user.get().getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
-
-        return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), grantedAuthorities);
+        return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
     }
 
     @Override
     public User getOrCreateUser(Authentication authentication, String firstName, String lastName, String email, boolean skipPasswordCheck) {
         final var password = authentication.getCredentials().toString();
-        final var optionalUser = userService.getUserByLogin(authentication.getName().toLowerCase());
+        final var optionalUser = userRepository.findOneByLogin(authentication.getName().toLowerCase());
         final User user;
         if (optionalUser.isEmpty()) {
-            user = userService.createUser(authentication.getName(), password, firstName, lastName, email, null, null, "en");
+            user = userCreationService.createInternalUser(authentication.getName(), password, null, firstName, lastName, email, null, null, "en");
         }
         else {
             user = optionalUser.get();
             if (!skipPasswordCheck) {
-                final var storedPassword = userService.decryptPassword(user);
+                final var storedPassword = passwordService.decryptPassword(user);
                 if (!password.equals(storedPassword)) {
                     throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
                 }
@@ -102,7 +100,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     @Override
     public void deleteGroup(String groupName) {
-        userService.removeGroupFromUsers(groupName);
+        // nothing to do here, because the user service already takes care about internal groups
     }
 
     @Override

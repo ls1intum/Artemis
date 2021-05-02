@@ -18,7 +18,7 @@
                 "students": {
                     "login": "Login",
                     "name": "Name",
-                    "email": "Email"
+                    "email": "E-Mail"
                 },
                 "noOwner": "Kein Tutor",
                 "participationsTable": {
@@ -33,6 +33,10 @@
             "name": {
                 "label": "Name",
                 "minlength": "Der Name muss mindestens 3 Zeichen lang sein."
+            },
+            "teamName": {
+                "missingTeamName": "Jeder Student muss einen Teamnamen erhalten.",
+                "pattern": "Der Teamname muss mit einem Buchstaben beginnen."
             },
             "shortName": {
                 "label": "Kurzname",
@@ -53,6 +57,7 @@
                 "all": "Alle Teams",
                 "own": "Eigene Teams"
             },
+            "missingUserNameOrId": "Studenten müssen entweder einen Benutzernamen oder eine Matrikelnummer haben.",
             "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
@@ -65,7 +70,8 @@
                 "registrationNumbersNotFound": "Studierende mit folgenden Matrikelnummern konnten nicht gefunden werden: {{ registrationNumbers }}",
                 "loginsNotFound": "Studierende mit folgenden Benutzernamen konnten nicht gefunden werden: {{ logins }}",
                 "studentsWithoutRegistrationNumbers": "Folgende Studenten haben keine Matrikelnummern: {{ students }}",
-                "studentsAppearMultipleTimes": "Folgende Studenten erscheinen mehrmals in importierten Teams: {{ students }}"
+                "studentsAppearMultipleTimes": "Folgende Studenten erscheinen mehrmals in importierten Teams: {{ students }}",
+                "importFailed": "Team-Import Fehlgeschlagen! Ungültige Team-Datei."
             },
             "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
             "ownerSearch": {
@@ -73,7 +79,7 @@
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
                 "noResults": "Keine Tutoren im Kurs gefunden für Suche:"
             },
-            "teamSizeNote": "Empfohlene Team-Größe:",
+            "teamSizeNote": "Empfohlene Teamgröße:",
             "teamSizeUnit": "Studenten",
             "ignoreTeamSizeRecommendation": "Fortfahren gegen Empfehlung",
             "createTeam": {
@@ -127,11 +133,11 @@
                             "tooltip": "Dieses Team kann ohne Probleme importiert werden."
                         },
                         "teamShortNameConflict": {
-                            "label": "Team-Kurznamen Konflikt",
+                            "label": "Team-Kurznamen-Konflikt",
                             "tooltip": "Ein Team mit dem gleichen Kurznamen existiert bereits in dieser Übung."
                         },
                         "studentConflict": {
-                            "label": "Studenten Konflikt",
+                            "label": "Studenten-Konflikt",
                             "tooltip": "Der rot markierte Student ist bereits in einem Team dieser Übung."
                         }
                     }

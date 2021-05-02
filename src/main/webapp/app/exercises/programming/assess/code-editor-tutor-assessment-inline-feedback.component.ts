@@ -3,6 +3,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -31,6 +32,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     codeLine: number;
     @Input()
     readOnly: boolean;
+    @Input()
+    highlightDifferences: boolean;
+
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback>();
     @Output()
@@ -39,6 +43,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     onDeleteFeedback = new EventEmitter<Feedback>();
     @Output()
     onEditFeedback = new EventEmitter<number>();
+
+    // Expose the function to the template
+    readonly round = round;
 
     viewOnly: boolean;
     oldFeedback: Feedback;

@@ -19,7 +19,10 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -40,25 +43,22 @@ public class AttachmentResource {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final AttachmentService attachmentService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final FileService fileService;
 
     private final CacheManager cacheManager;
 
-    public AttachmentResource(AttachmentRepository attachmentRepository, AttachmentService attachmentService, GroupNotificationService groupNotificationService,
-            AuthorizationCheckService authorizationCheckService, UserService userService, FileService fileService, CacheManager cacheManager) {
+    public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
+            UserRepository userRepository, FileService fileService, CacheManager cacheManager) {
         this.attachmentRepository = attachmentRepository;
-        this.attachmentService = attachmentService;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
     }
@@ -71,7 +71,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/attachments")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Attachment> createAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
         if (attachment.getId() != null) {
@@ -93,7 +93,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/attachments")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText)
             throws URISyntaxException {
         log.debug("REST request to update Attachment : {}", attachment);
@@ -120,7 +120,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment, or with status 404 (Not Found)
      */
     @GetMapping("/attachments/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
@@ -134,7 +134,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
      */
     @GetMapping(value = "/lectures/{lectureId}/attachments")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
         return attachmentRepository.findAllByLectureId(lectureId);
@@ -147,9 +147,9 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/attachments/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
         if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -176,7 +176,7 @@ public class AttachmentResource {
         }
         boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         if (hasCourseInstructorAccess) {
-            log.info(user.getLogin() + " deleted attachment with id " + id + " for " + relatedEntity, id);
+            log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
             attachmentRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
         }

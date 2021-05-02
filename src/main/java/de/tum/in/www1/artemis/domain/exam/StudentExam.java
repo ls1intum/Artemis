@@ -152,16 +152,6 @@ public class StudentExam extends AbstractAuditingEntity {
         this.examSessions = examSessions;
     }
 
-    public StudentExam addExercise(ExamSession examSession) {
-        this.examSessions.add(examSession);
-        return this;
-    }
-
-    public StudentExam removeExercise(ExamSession examSession) {
-        this.examSessions.remove(examSession);
-        return this;
-    }
-
     /**
      * check if the individual student exam has ended (based on the working time)
      *

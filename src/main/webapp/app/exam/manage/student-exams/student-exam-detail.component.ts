@@ -6,11 +6,12 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { User } from 'app/core/user/user.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -25,8 +26,12 @@ export class StudentExamDetailComponent implements OnInit {
     workingTimeForm: FormGroup;
     isSavingWorkingTime = false;
     isTestRun = false;
-    maxTotalScore = 0;
-    achievedTotalScore = 0;
+    maxTotalPoints = 0;
+    achievedTotalPoints = 0;
+    bonusTotalPoints = 0;
+    busy = false;
+
+    examId: number;
 
     constructor(
         private route: ActivatedRoute,
@@ -34,6 +39,7 @@ export class StudentExamDetailComponent implements OnInit {
         private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: JhiAlertService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -49,31 +55,13 @@ export class StudentExamDetailComponent implements OnInit {
      */
     loadStudentExam() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
 
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
         this.student = this.studentExam.user!;
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    exerciseIcon(exercise: Exercise): string {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return 'check-double';
-            case ExerciseType.FILE_UPLOAD:
-                return 'file-upload';
-            case ExerciseType.MODELING:
-                return 'project-diagram';
-            case ExerciseType.PROGRAMMING:
-                return 'keyboard';
-            default:
-                return 'font';
-        }
     }
 
     /**
@@ -104,16 +92,24 @@ export class StudentExamDetailComponent implements OnInit {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
         this.initWorkingTimeForm();
+        this.maxTotalPoints = 0;
+        this.achievedTotalPoints = 0;
+        this.bonusTotalPoints = 0;
         studentExam.exercises!.forEach((exercise) => {
-            this.maxTotalScore += exercise.maxPoints!;
+            this.maxTotalPoints += exercise.maxPoints!;
+            this.bonusTotalPoints += exercise.bonusPoints!;
             if (
                 exercise.studentParticipations?.length &&
                 exercise.studentParticipations.length > 0 &&
                 exercise.studentParticipations[0].results?.length &&
-                exercise.studentParticipations[0].results.length > 0
+                exercise.studentParticipations[0].results!.length > 0
             ) {
-                this.achievedTotalScore += (exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100;
-                this.achievedTotalScore = this.rounding(this.achievedTotalScore);
+                if (exercise!.studentParticipations[0].submissions && exercise!.studentParticipations[0].submissions!.length > 0) {
+                    exercise!.studentParticipations[0].submissions![0].results! = exercise.studentParticipations[0].results;
+                    setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
+                }
+
+                this.achievedTotalPoints += this.rounding((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100);
             }
         });
     }
@@ -146,12 +142,60 @@ export class StudentExamDetailComponent implements OnInit {
         return true;
     }
 
+    examIsOver(): boolean {
+        if (this.studentExam.exam) {
+            // only show the button when the exam is over
+            return moment(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod, 'seconds').isBefore(moment());
+        }
+        // if exam is undefined, we do not want to show the button
+        return false;
+    }
+
     getWorkingTimeToolTip(): string {
         return this.examIsVisible()
             ? 'You cannot change the individual working time after the exam has become visible.'
             : 'You can change the individual working time of the student here.';
     }
+
     rounding(number: number) {
         return round(number, 1);
+    }
+
+    /**
+     * switch the 'submitted' state of the studentExam.
+     */
+    toggle() {
+        this.busy = true;
+        if (this.studentExam.exam && this.studentExam.exam.id) {
+            this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, this.studentExam!.submitted!).subscribe(
+                (res) => {
+                    if (res.body) {
+                        this.studentExam.submissionDate = res.body.submissionDate;
+                        this.studentExam.submitted = res.body.submitted;
+                    }
+                    this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
+                    this.busy = false;
+                },
+                () => {
+                    this.alertService.error('artemisApp.studentExamDetail.togglefailed');
+                    this.busy = false;
+                },
+            );
+        }
+    }
+
+    /**
+     * Open a modal that requires the user's confirmation.
+     * @param content the modal content
+     */
+    openConfirmationModal(content: any) {
+        this.modalService.open(content).result.then(
+            (result: string) => {
+                if (result === 'confirm') {
+                    this.toggle();
+                }
+            },
+            () => {},
+        );
     }
 }

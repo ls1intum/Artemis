@@ -4,7 +4,7 @@ Setup Guide
 In this guide you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
-development on the application server using Java 15, and TypeScript
+development on the application server using Java 16, and TypeScript
 development on the application client in the browser using
 `Angular <https://angular.io>`__ and Webpack. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
@@ -21,7 +21,7 @@ following dependencies/tools on your machine:
 
 1. `Java
    JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
-   We use Java (JDK 15) to develop and run the Artemis application
+   We use Java (JDK 16) to develop and run the Artemis application
    server which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
@@ -34,10 +34,10 @@ following dependencies/tools on your machine:
    server application. Alternatively, you can run the MySQL Database
    Server inside a Docker container using
    e.g. ``docker-compose -f src/main/docker/mysql.yml up``
-3. `Node.js <https://nodejs.org>`__: We use Node (>=14.11.0) to compile
+3. `Node.js <https://nodejs.org>`__: We use Node (>=15.10.0) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.5) to
+4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.10) to
    manage client side Node dependencies. Depending on your system, you
    can install Yarn either from source or as a pre-packaged bundle. To
    do so, please follow the instructions on the `Yarn installation
@@ -120,8 +120,7 @@ have to configure the file ``application-artemis.yml`` in the folder
            name: Artemis
            email: artemis@in.tum.de
        athene:
-           submit-url: http://localhost/submit
-           feedback-consistency-url: http://localhost:8001/feedback_consistency
+           url: http://localhost
            base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
            token-validity-in-seconds: 10800
 
@@ -168,7 +167,7 @@ This is a service file that works on Debian/Ubuntu (using systemd):
 ::
 
    [Unit]
-   Description=ArTEMiS
+   Description=Artemis
    After=syslog.target
    [Service]
    User=artemis
@@ -182,6 +181,7 @@ This is a service file that works on Debian/Ubuntu (using systemd):
      -Xmx2048m \
      --add-modules java.se \
      --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
+     --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED \
      --add-opens java.base/java.lang=ALL-UNNAMED \
      --add-opens java.base/java.nio=ALL-UNNAMED \
      --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
@@ -353,8 +353,8 @@ instead of the TUM defaults:
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/public/images/favicon.ico``
 * The privacy statement HTML → ``${artemisRunDirectory}/public/content/privacy_statement.html``
+* The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
-* The imprint link in the ``application-{dev,prod}.yml`` configuration file under the key ``info.imprint``
 
 Alternative: Using docker-compose
 ---------------------------------
@@ -417,8 +417,7 @@ HTTP. We need to extend the configuration in the file
    artemis:
      # ...
      athene:
-       submit-url: http://localhost/submit
-       feedback-consistency-url: http://localhost:8001/feedback_consistency
+       url: http://localhost
        base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
        token-validity-in-seconds: 10800
 

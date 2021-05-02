@@ -40,6 +40,8 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { Exam } from 'app/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,6 +50,7 @@ describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
+    let examManagementService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let exerciseService: ExerciseService;
     let fileUploaderService: FileUploaderService;
@@ -63,6 +66,8 @@ describe('QuizExercise Management Detail Component', () => {
     const quizExercise = new QuizExercise(course, undefined);
     const mcQuestion = new MultipleChoiceQuestion();
     const answerOption = new AnswerOption();
+    const exam = new Exam();
+    exam.id = 1;
 
     const resetQuizExercise = () => {
         quizExercise.id = 456;
@@ -165,6 +170,7 @@ describe('QuizExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(QuizExerciseDetailComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+        examManagementService = fixture.debugElement.injector.get(ExamManagementService);
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
         fileUploaderService = TestBed.inject(FileUploaderService);
@@ -233,7 +239,9 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('with exam id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, groupId: 2 }) } } as any) as ActivatedRoute;
+            const testRoute = ({
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+            } as any) as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -250,7 +258,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
         describe('with exam id but without exercise id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, groupId: 2 }) } } as any) as ActivatedRoute;
+            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) } } as any) as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -290,13 +298,8 @@ describe('QuizExercise Management Detail Component', () => {
         beforeEach(configureFixtureAndServices);
 
         describe('init', () => {
-            let exerciseServiceCategoriesStub: SinonStub;
             let exerciseServiceCategoriesAsStringStub: SinonStub;
             let courseServiceStub: SinonStub;
-            const testExerciseCategories = [
-                { exerciseId: 1, category: 'category1', color: 'color1' },
-                { exerciseId: 2, category: 'category2', color: 'color2' },
-            ];
             const testExistingCategories = [
                 { exerciseId: 1, category: 'eCategory1', color: 'eColor1' },
                 { exerciseId: 2, category: 'eCategory2', color: 'eColor2' },
@@ -305,8 +308,6 @@ describe('QuizExercise Management Detail Component', () => {
             let alertServiceStub: SinonStub;
             beforeEach(() => {
                 comp.course = course;
-                exerciseServiceCategoriesStub = stub(exerciseService, 'convertExerciseCategoriesFromServer');
-                exerciseServiceCategoriesStub.returns(testExerciseCategories);
                 courseServiceStub = stub(courseManagementService, 'findAllCategoriesOfCourse');
                 courseServiceStub.returns(
                     of(
@@ -326,8 +327,6 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(prepareEntitySpy).to.have.been.calledWith(comp.quizExercise);
                 expect(comp.savedEntity).to.deep.equal(new QuizExercise(undefined, undefined));
                 expect(comp.quizExercise.course).to.deep.equal(course);
-                expect(exerciseServiceCategoriesStub).to.have.been.calledWith(comp.quizExercise);
-                expect(comp.exerciseCategories).to.deep.equal(testExerciseCategories);
                 expect(courseServiceStub).to.have.been.calledWith(course.id);
             });
             it('should set entity to quiz exercise if quiz exercise defined', () => {
@@ -423,7 +422,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise = quizExercise;
                 const exerciseCategory1 = { exerciseId: 1, category: 'category1', color: 'color1' };
                 const exerciseCategory2 = { exerciseId: 1, category: 'category1', color: 'color1' };
-                const expected = [JSON.stringify(exerciseCategory1), JSON.stringify(exerciseCategory2)];
+                const expected = [exerciseCategory1, exerciseCategory2];
                 comp.updateCategories([exerciseCategory1, exerciseCategory2]);
                 expect(comp.quizExercise.categories).to.deep.equal(expected);
             });
@@ -686,9 +685,64 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.onCourseSelect();
                     expect(alertServiceStub).to.have.been.called;
                 });
-
                 afterAll(() => {
                     quizExerciseServiceFindForCourseStub.restore();
+                    quizExerciseServiceFindStub.restore();
+                });
+            });
+            describe('select exam', () => {
+                let quizExerciseServiceFindForExamStub: SinonStub;
+                let quizExerciseServiceFindStub: SinonStub;
+                const exerciseGroup = new ExerciseGroup();
+
+                beforeEach(() => {
+                    comp.allExistingQuestions = [];
+                    exerciseGroup.exam = exam;
+                    quizExercise.exerciseGroup = exerciseGroup;
+                    comp.exams = [exam];
+                    comp.selectedExamId = exam.id;
+                    resetQuizExercise();
+                    comp.quizExercise = quizExercise;
+                    quizExerciseServiceFindForExamStub = stub(quizExerciseService, 'findForExam');
+                    quizExerciseServiceFindForExamStub.returns(
+                        of(
+                            new HttpResponse<QuizExercise[]>({ body: [quizExercise] }),
+                        ),
+                    );
+                    quizExerciseServiceFindStub = stub(quizExerciseService, 'find');
+                    quizExerciseServiceFindStub.returns(
+                        of(
+                            new HttpResponse<QuizExercise>({ body: quizExercise }),
+                        ),
+                    );
+                });
+
+                afterEach(() => {
+                    quizExerciseServiceFindForExamStub.reset();
+                    quizExerciseServiceFindStub.reset();
+                });
+                it('should call find exam with selected id', () => {
+                    comp.onExamSelect();
+                    expect(quizExerciseServiceFindForExamStub).to.have.been.calledWithExactly(comp.selectedExamId);
+                    expect(quizExerciseServiceFindStub).to.have.been.calledWithExactly(quizExercise.id);
+                    expect(comp.allExistingQuestions).to.deep.equal(quizExercise.quizQuestions);
+                });
+                it('should not call find exam without selected id', () => {
+                    comp.selectedExamId = undefined;
+                    comp.onExamSelect();
+                    expect(quizExerciseServiceFindForExamStub).to.not.have.been.called;
+                    expect(quizExerciseServiceFindStub).to.not.have.been.called;
+                });
+                it('should call alert service if fails', () => {
+                    quizExerciseServiceFindForExamStub.returns(throwError({ status: 404 }));
+                    console.error = jest.fn();
+                    let alertServiceStub: SinonStub;
+                    alertServiceStub = stub(alertService, 'error');
+                    comp.onExamSelect();
+                    expect(alertServiceStub).to.have.been.called;
+                });
+                afterAll(() => {
+                    quizExerciseServiceFindForExamStub.restore();
                     quizExerciseServiceFindStub.restore();
                 });
             });
@@ -975,6 +1029,16 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
             });
 
+            it('should call not update if testruns exist in exam mode', () => {
+                comp.quizExercise.testRunParticipationsExist = true;
+                comp.isExamMode = true;
+                saveQuizWithPendingChangesCache();
+                expect(exerciseStub).to.not.have.been.calledWith(comp.quizExercise);
+                expect(quizExerciseServiceCreateStub).to.not.have.been.called;
+                expect(quizExerciseServiceUpdateStub).to.not.have.been.called;
+                expect(quizExerciseServiceUpdateStub).to.not.have.been.calledWith(comp.quizExercise, {});
+            });
+
             it('should update if valid and quiz exercise has id', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseStub).to.have.been.calledWith(comp.quizExercise);
@@ -1069,12 +1133,19 @@ describe('QuizExercise Management Detail Component', () => {
 
         describe('show existing questions', () => {
             let courseManagementServiceStub: SinonStub;
+            let examManagementServiceStub: SinonStub;
             beforeEach(() => {
                 comp.courseRepository = courseManagementService;
-                courseManagementServiceStub = stub(comp.courseRepository, 'getAll');
+                courseManagementServiceStub = stub(comp.courseRepository, 'getAllCoursesWithQuizExercises');
                 courseManagementServiceStub.returns(
                     of(
                         new HttpResponse<Course>({ body: course }),
+                    ),
+                );
+                examManagementServiceStub = stub(examManagementService, 'findAllExamsAccessibleToUser');
+                examManagementServiceStub.returns(
+                    of(
+                        new HttpResponse<Exam>({ body: exam }),
                     ),
                 );
             });
@@ -1085,14 +1156,16 @@ describe('QuizExercise Management Detail Component', () => {
                 const setQuestionsFromCourseSpy = spy(comp, 'setExistingQuestionSourceToCourse');
                 comp.showHideExistingQuestions();
                 expect(courseManagementServiceStub).to.have.been.called;
+                expect(examManagementServiceStub).to.have.been.called;
                 expect(comp.showExistingQuestions).to.equal(true);
-                expect(setQuestionsFromCourseSpy).to.have.been.calledWith(true);
+                expect(setQuestionsFromCourseSpy).to.have.been.calledOnce;
             });
             it('should not call getAll if there are courses', () => {
                 comp.courses = [course];
                 comp.quizExercise = quizExercise;
                 comp.showHideExistingQuestions();
                 expect(courseManagementServiceStub).to.not.have.been.called;
+                expect(examManagementServiceStub).to.have.been.called;
             });
             it('should initialize quizExercise if it is not', () => {
                 comp.courses = [course];
@@ -1110,10 +1183,18 @@ describe('QuizExercise Management Detail Component', () => {
                 const element = document.createElement('input');
                 const control = { ...element, value: 'test' };
                 const getElementStub = stub(document, 'getElementById').returns(control);
-                comp.setExistingQuestionSourceToCourse(true);
+                comp.setExistingQuestionSourceToCourse();
                 expect(comp.showExistingQuestionsFromCourse).to.equal(true);
-                comp.setExistingQuestionSourceToCourse(false);
+                expect(comp.showExistingQuestionsFromFile).to.equal(false);
+                expect(comp.showExistingQuestionsFromExam).to.equal(false);
+                comp.setExistingQuestionSourceToFile();
                 expect(comp.showExistingQuestionsFromCourse).to.equal(false);
+                expect(comp.showExistingQuestionsFromFile).to.equal(true);
+                expect(comp.showExistingQuestionsFromExam).to.equal(false);
+                comp.setExistingQuestionSourceToExam();
+                expect(comp.showExistingQuestionsFromCourse).to.equal(false);
+                expect(comp.showExistingQuestionsFromFile).to.equal(false);
+                expect(comp.showExistingQuestionsFromExam).to.equal(true);
                 expect(getElementStub).to.have.been.called;
                 expect(control.value).to.equal('');
                 getElementStub.restore();

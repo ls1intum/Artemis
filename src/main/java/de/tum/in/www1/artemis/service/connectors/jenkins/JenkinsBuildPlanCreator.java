@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
@@ -11,17 +13,16 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 import org.w3c.dom.Document;
 
-import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
@@ -75,11 +76,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final JenkinsService jenkinsService;
-
-    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, @Lazy JenkinsService jenkinsService) {
+    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
-        this.jenkinsService = jenkinsService;
     }
 
     @PostConstruct
@@ -88,8 +86,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     public String getPipelineScript(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled) {
-        var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled);
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+        var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled, isSequentialRuns);
         var replacements = getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
         return replacePipelineScriptParameters(pipelinePath, replacements);
     }
@@ -104,7 +102,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
-        replacements.put(REPLACE_DOCKER_IMAGE_NAME, jenkinsService.getDockerImageName(programmingLanguage));
+        replacements.put(REPLACE_DOCKER_IMAGE_NAME, getDockerImageName(programmingLanguage));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {
@@ -114,17 +112,19 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return replacements;
     }
 
-    private String[] getResourcePath(ProgrammingLanguage programmingLanguage, boolean isStaticCodeAnalysisEnabled) {
-        final var buildPlan = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
-        return new String[] { "templates", "jenkins", programmingLanguage.name().toLowerCase(), buildPlan };
+    private String[] getResourcePath(ProgrammingLanguage programmingLanguage, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+        final var pipelineScriptFilename = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
+        final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
+        final var programmingLanguageName = programmingLanguage.name().toLowerCase();
+        return new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename };
     }
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled) {
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
         final var resourcePath = Paths.get("templates", "jenkins", "config.xml");
 
-        String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
+        String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
         pipeLineScript = pipeLineScript.replace("<", "&lt;");
         pipeLineScript = pipeLineScript.replace(">", "&gt;");
@@ -173,7 +173,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).get(0);
-            script.append("echo \"---------- execute static code analysis ----------\"").append(lineEnding);
             // Copy swiftlint configuration into student's repository
             script.append("cp .swiftlint.yml assignment || true").append(lineEnding);
             // Execute swiftlint within the student's repository and save the report into the sca directory

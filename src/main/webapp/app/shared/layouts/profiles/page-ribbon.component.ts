@@ -5,8 +5,10 @@ import { ProfileInfo } from './profile-info.model';
 @Component({
     selector: 'jhi-page-ribbon',
     template: `
-        <div class="ribbon" *ngIf="ribbonEnv">
-            <a href="" jhiTranslate="global.ribbon.{{ ribbonEnv }}">{{ ribbonEnv }}</a>
+        <div class="box">
+            <div class="ribbon ribbon-top-left" *ngIf="ribbonEnv">
+                <span jhiTranslate="global.ribbon.{{ ribbonEnv }}">{{ ribbonEnv }}</span>
+            </div>
         </div>
     `,
     styleUrls: ['page-ribbon.scss'],

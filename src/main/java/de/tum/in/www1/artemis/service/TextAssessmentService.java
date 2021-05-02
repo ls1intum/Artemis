@@ -6,12 +6,15 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
 @Service
 public class TextAssessmentService extends AssessmentService {
@@ -22,20 +25,16 @@ public class TextAssessmentService extends AssessmentService {
 
     private final FeedbackConflictRepository feedbackConflictRepository;
 
-    public TextAssessmentService(UserService userService, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
+    public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
-            ExamService examService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionService gradingCriterionService, SubmissionService submissionService,
-            LtiService ltiService) {
+            ExamDateService examDateService, FeedbackConflictRepository feedbackConflictRepository, GradingCriterionRepository gradingCriterionRepository,
+            SubmissionService submissionService, LtiService ltiService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examService, gradingCriterionService, userService, ltiService);
+                submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiService);
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;
-    }
-
-    public List<Feedback> getAssessmentsForResult(Result result) {
-        return this.feedbackRepository.findByResult(result);
     }
 
     /**
@@ -46,18 +45,17 @@ public class TextAssessmentService extends AssessmentService {
      *   4. Compute Fallback Text Blocks if needed
      *
      * @param textSubmission Text Submission to be assessed
-     * @param correctionRound correction round for which we prepare the submission
+     * @param result for which we prepare the submission
      */
-    public void prepareSubmissionForAssessment(TextSubmission textSubmission, int correctionRound) {
+    public void prepareSubmissionForAssessment(TextSubmission textSubmission, @Nullable Result result) {
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
-        Result result = textSubmission.getResultForCorrectionRound(correctionRound);
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
         if (result != null) {
             // Load Feedback already created for this assessment
-            final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : getAssessmentsForResult(result);
+            final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : feedbackRepository.findByResult(result);
             result.setFeedbacks(assessments);
             if (assessments.isEmpty() && computeFeedbackSuggestions) {
                 automaticTextFeedbackService.get().suggestFeedback(result);
@@ -102,8 +100,8 @@ public class TextAssessmentService extends AssessmentService {
         final List<FeedbackConflict> allConflictsByFeedbackList = this.feedbackConflictRepository
                 .findAllConflictsByFeedbackList(feedbackList.stream().map(Feedback::getId).collect(toList()));
         feedbackList.forEach(feedback -> {
-            feedback.setFirstConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getFirstFeedback().getId().equals(feedback.getId())).collect(toList()));
-            feedback.setSecondConflicts(allConflictsByFeedbackList.stream().filter(c -> c.getSecondFeedback().getId().equals(feedback.getId())).collect(toList()));
+            feedback.setFirstConflicts(allConflictsByFeedbackList.stream().filter(conflict -> conflict.getFirstFeedback().getId().equals(feedback.getId())).collect(toList()));
+            feedback.setSecondConflicts(allConflictsByFeedbackList.stream().filter(conflict -> conflict.getSecondFeedback().getId().equals(feedback.getId())).collect(toList()));
         });
         return feedbackList;
     }

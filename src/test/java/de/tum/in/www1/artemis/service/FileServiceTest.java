@@ -13,7 +13,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -45,9 +44,6 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
             }\r
             """;
 
-    @Autowired
-    FileService fileService;
-
     private void copyFile(String filePath, String destinationPath) {
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/repository-export/" + filePath), new File("./exportTest/" + destinationPath));
@@ -68,7 +64,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @AfterEach
     @BeforeEach
-    private void deleteFiles() throws IOException {
+    void deleteFiles() throws IOException {
         FileUtils.deleteDirectory(new File("./exportTest/"));
     }
 

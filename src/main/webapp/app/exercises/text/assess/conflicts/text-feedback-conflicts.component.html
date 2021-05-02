@@ -1,5 +1,5 @@
 <jhi-text-feedback-conflicts-header
-    [numberOfConflicts]="conflictingSubmissions?.length"
+    [numberOfConflicts]="conflictingSubmissions ? conflictingSubmissions.length : 0"
     (didChangeConflictIndex)="didChangeConflictIndex($event)"
     [haveRights]="canOverride(leftSubmission!.latestResult!)"
     [overrideBusy]="overrideBusy"
@@ -27,11 +27,11 @@
                         ></span>
                     </ng-template>
                 </div>
-                <jhi-score-display [maxPoints]="exercise?.maxPoints" [score]="leftTotalScore" [maxBonusPoints]="exercise?.bonusPoints"></jhi-score-display>
+                <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [score]="leftTotalScore" [maxBonusPoints]="exercise?.bonusPoints || 0"></jhi-score-display>
             </div>
             <div class="left-body card-body">
                 <jhi-text-assessment-area
-                    [submission]="leftSubmission"
+                    [submission]="leftSubmission!"
                     [(textBlockRefs)]="leftTextBlockRefs"
                     (textBlockRefsChange)="leftTextBlockRefsChange()"
                     [readOnly]="true"
@@ -58,11 +58,11 @@
                             ></span>
                         </ng-template>
                     </div>
-                    <jhi-score-display [maxPoints]="exercise?.maxPoints" [maxBonusPoints]="exercise?.bonusPoints" [score]="rightTotalScore"></jhi-score-display>
+                    <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="rightTotalScore"></jhi-score-display>
                 </div>
                 <div class="right-body card-body">
                     <jhi-text-assessment-area
-                        [submission]="rightSubmission"
+                        [submission]="rightSubmission!"
                         [(textBlockRefs)]="rightTextBlockRefs"
                         [readOnly]="true"
                         [conflictMode]="true"
@@ -78,7 +78,7 @@
 <ng-template #noConflict>
     <div class="alert alert-warning text-center mt-4" role="alert">
         <p jhiTranslate="artemisApp.textAssessment.conflict.notFound">We haven't found any conflicts for the selected feedback, please go back.</p>
-        <button type="submit" class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard" (click)="didClickedButtonNoConflict()">
+        <button type="submit" class="btn btn-info btn-sm mr-1 mb-1 assessment-dashboard" (click)="didClickedButtonNoConflict()">
             <span class="d-none d-md-inline" jhiTranslate="entity.action.back">Back</span>
         </button>
     </div>

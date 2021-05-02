@@ -2,18 +2,12 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -22,16 +16,14 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -55,23 +47,23 @@ public abstract class RepositoryResource {
 
     protected final GitService gitService;
 
-    protected final UserService userService;
+    protected final UserRepository userRepository;
 
     protected final RepositoryService repositoryService;
 
-    protected final ProgrammingExerciseService programmingExerciseService;
+    protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
     protected final Optional<VersionControlService> versionControlService;
 
-    public RepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
+    public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseService programmingExerciseService) {
-        this.userService = userService;
+            ProgrammingExerciseRepository programmingExerciseRepository) {
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.repositoryService = repositoryService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.versionControlService = versionControlService;
     }
 
@@ -234,7 +226,7 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> commitChanges(Long domainId) {
-        User user = userService.getUser();
+        User user = userRepository.getUser();
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
@@ -252,7 +244,7 @@ public abstract class RepositoryResource {
      */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, false);
+            Repository repository = getRepository(domainId, RepositoryActionType.RESET, false);
             gitService.resetToOriginMaster(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });

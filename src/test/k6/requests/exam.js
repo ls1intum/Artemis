@@ -18,14 +18,14 @@ export function newExam(artemis, course) {
     const currentDate = new Date();
     const visibleDate = new Date(currentDate.getTime() + 30000); // Visible in 30 secs
     const startDate = new Date(currentDate.getTime() + 60000); // Starting in 30 secs
-    const endDate = new Date(currentDate.getTime() + 120000); // Ending in 120 secs
+    const endDate = new Date(currentDate.getTime() + 360000); // Ending in 360 secs
 
     const exam = {
         course: course,
         visibleDate: visibleDate,
         startDate: startDate,
         endDate: endDate,
-        maxPoints: 10,
+        maxPoints: 54,
         numberOfExercisesInExam: 4,
         randomizeExerciseOrder: false,
         started: false,

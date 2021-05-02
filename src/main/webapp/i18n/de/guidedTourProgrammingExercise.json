@@ -8,15 +8,15 @@
                 },
                 "exerciseFile": {
                     "headline": "Klassendatei",
-                    "content": "Klick hier auf die Klassendatei, damit sie sich im Programmier-Editor öffnet."
+                    "content": "Klick hier auf die Klassendatei, damit sie sich im Programmiereditor öffnet."
                 },
                 "aceEditor": {
-                    "headline": "Programmier-Editor",
-                    "content": "Nun wird dir der Quellcode im Programmier-Editor angezeigt. Du kannst dir das <tt>TODO</tt> durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch in dieser Demo schon beliebigen Code einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
+                    "headline": "Programmiereditor",
+                    "content": "Nun wird dir der Quellcode im Programmiereditor angezeigt. Du kannst dir das <tt>TODO</tt> durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch in dieser Demo schon beliebigen Code einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
                 },
                 "saveChanges": {
                     "headline": "Änderungen speichern",
-                    "content": "Du kannst deine Änderungen im Programmier-Editor nun speichern, indem du auf <tt>Speichern</tt> klickst."
+                    "content": "Du kannst deine Änderungen im Programmiereditor nun speichern, indem du auf <tt>Speichern</tt> klickst."
                 },
                 "submitChanges": {
                     "headline": "Änderungen absenden",
@@ -31,7 +31,7 @@
             "buildStatus": {
                 "headline": "Buildstatus",
                 "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen welche Tests die Aufgaben bestanden haben und somit erfolgreich gelöst wurden und welche nicht.",
-                "hint": "Es können zusätzliche Tests nach der Einreichungsfrist ausgeführt werden. Das heißt, das eine volle Punktzahl ist nicht sichergestellt, auch wenn alle aktuell angezeigten Tests erfolgreich durchgelaufen sind. Überprüfe deine Imlementierung daher genau bevor du es final abgibst."
+                "hint": "Es können zusätzliche Tests nach der Einreichungsfrist ausgeführt werden. Das heißt, das eine volle Punktzahl ist nicht sichergestellt, auch wenn alle aktuell angezeigten Tests erfolgreich durchgelaufen sind. Überprüfe deine Implementierung daher genau bevor du es final abgibst."
             },
             "testCases": {
                 "headline": "Feedback",
@@ -63,7 +63,7 @@
             },
             "exerciseSuccess": {
                 "headline": "Herzlichen Glückwunsch!",
-                "content": "Du hast hiermit deine erste Programmieraufgaube auf Artemis gelöst!"
+                "content": "Du hast hiermit deine erste Programmieraufgabe auf Artemis gelöst!"
             }
         }
     }

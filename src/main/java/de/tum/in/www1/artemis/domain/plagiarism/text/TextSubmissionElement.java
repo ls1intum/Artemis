@@ -1,16 +1,22 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
-import jplag.Token;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import javax.persistence.Column;
+import javax.persistence.Entity;
 
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import jplag.Token;
+
+@Entity
 public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
+    @Column(name = "file_column")
     private int column;
 
     private int line;
 
     private String file;
 
+    @Column(name = "token_type")
     private int type;
 
     private int length;
@@ -71,5 +77,10 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    @Override
+    public String toString() {
+        return "TextSubmissionElement{" + "column=" + column + ", line=" + line + ", file='" + file + '\'' + ", type=" + type + ", length=" + length + '}';
     }
 }

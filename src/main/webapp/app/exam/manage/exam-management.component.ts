@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JhiEventManager } from 'ng-jhipster';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { Subject } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
@@ -23,8 +23,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
     exams: Exam[];
     isAtLeastInstructor = false;
+    isAtLeastEditor = false;
     isAtLeastTutor = false;
-    examIdToExamInformation: Map<number, ExamInformationDTO> = new Map();
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
@@ -54,6 +54,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             (res: HttpResponse<Course>) => {
                 this.course = res.body!;
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
+                this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course);
                 this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
@@ -82,7 +83,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                 this.exams.forEach((exam) => {
                     this.examManagementService
                         .getLatestIndividualEndDateOfExam(this.course.id!, exam.id!)
-                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => this.examIdToExamInformation.set(exam.id!, examInformationDTORes.body!));
+                        .subscribe(
+                            (examInformationDTORes: HttpResponse<ExamInformationDTO>) => (exam.latestIndividualEndDate = examInformationDTORes.body!.latestIndividualEndDate),
+                        );
                 });
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
@@ -117,7 +120,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @param index {number}
      * @param item {Exam}
      */
-    trackId(index: number, item: Exam) {
+    trackId(index: number, item: Exam): number | undefined {
         return item.id;
     }
 
@@ -125,10 +128,10 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         this.sortService.sortByProperty(this.exams, this.predicate, this.ascending);
     }
 
-    examHasFinished(examId: number): boolean {
-        if (this.examIdToExamInformation.has(examId)) {
-            return this.examIdToExamInformation.get(examId)!.latestIndividualEndDate.isBefore(moment());
+    examHasFinished(exam: Exam): boolean {
+        if (exam.latestIndividualEndDate) {
+            return exam.latestIndividualEndDate.isBefore(moment());
         }
-        return true;
+        return false;
     }
 }

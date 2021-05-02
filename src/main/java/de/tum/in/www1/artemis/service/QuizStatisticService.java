@@ -6,17 +6,13 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.QuizPointStatisticRepository;
-import de.tum.in.www1.artemis.repository.QuizQuestionStatisticRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 @Service
 public class QuizStatisticService {
@@ -31,18 +27,14 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
-    private SimpMessageSendingOperations messagingTemplate;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+    public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate,
             QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
-    }
-
-    @Autowired
-    public void setMessagingTemplate(SimpMessageSendingOperations messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -89,8 +81,8 @@ public class QuizStatisticService {
                 }
             }
             // update statistics with latest rated und unrated Result
-            this.addResultToAllStatistics(quizExercise, latestRatedResult);
-            this.addResultToAllStatistics(quizExercise, latestUnratedResult);
+            quizExercise.addResultToAllStatistics(latestRatedResult);
+            quizExercise.addResultToAllStatistics(latestUnratedResult);
         }
 
         // save changed Statistics
@@ -114,15 +106,15 @@ public class QuizStatisticService {
     public void updateStatistics(Set<Result> results, QuizExercise quiz) {
 
         if (results != null && quiz != null && quiz.getQuizQuestions() != null) {
-            log.debug("update statistics with " + results.size() + " new results");
+            log.debug("update statistics with {} new results", results.size());
 
             for (Result result : results) {
                 // check if the result is rated
                 // NOTE: there is never an old Result if the new result is rated
                 if (Boolean.FALSE.equals(result.isRated())) {
-                    removeResultFromAllStatistics(quiz, getPreviousResult(result));
+                    quiz.removeResultFromAllStatistics(getPreviousResult(result));
                 }
-                addResultToAllStatistics(quiz, result);
+                quiz.addResultToAllStatistics(result);
             }
             // save statistics
             quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
@@ -159,49 +151,4 @@ public class QuizStatisticService {
         }
         return oldResult;
     }
-
-    /**
-     * add Result to all Statistics of the given QuizExercise
-     *
-     * @param quizExercise contains the object of the quiz, where the Results will be added
-     * @param result       the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
-     */
-    private void addResultToAllStatistics(QuizExercise quizExercise, Result result) {
-
-        // update QuizPointStatistic with the result
-        if (result != null) {
-            // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
-            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
-            quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
-            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-                // update QuestionStatistics with the result
-                if (quizQuestion.getQuizQuestionStatistic() != null && quizSubmission != null) {
-                    quizQuestion.getQuizQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
-                }
-            }
-        }
-    }
-
-    /**
-     * remove Result from all Statistics of the given QuizExercise
-     *
-     * @param quizExercise contains the object of the quiz, where the Results will be removed
-     * @param result       the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
-     */
-    private void removeResultFromAllStatistics(QuizExercise quizExercise, Result result) {
-        // update QuizPointStatistic with the result
-        if (result != null) {
-            log.debug("remove result from all statistics " + result);
-            // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
-            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
-            quizExercise.getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
-            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-                // update QuestionStatistics with the result
-                if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestion.getQuizQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
-                }
-            }
-        }
-    }
-
 }

@@ -4,12 +4,14 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-learning-goal-detail-modal',
     templateUrl: './learning-goal-detail-modal.component.html',
 })
 export class LearningGoalDetailModalComponent implements OnInit {
+    readonly round = round;
     @Input()
     learningGoal: LearningGoal;
     @Input()
@@ -33,7 +35,7 @@ export class LearningGoalDetailModalComponent implements OnInit {
             }
 
             const progress = (this.learningGoalProgress.pointsAchievedByStudentInLearningGoal / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100;
-            this.progressInPercent = Math.round(progress * 10) / 10;
+            this.progressInPercent = round(progress);
         }
     }
 

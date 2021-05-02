@@ -10,8 +10,9 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-assessment-locks',
@@ -23,6 +24,8 @@ export class AssessmentLocksComponent implements OnInit {
     course: Course;
     courseId: number;
     tutorId: number;
+    examId?: number;
+    showAll = false;
     exercises: Exercise[] = [];
 
     submissions: Submission[] = [];
@@ -36,12 +39,13 @@ export class AssessmentLocksComponent implements OnInit {
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private textAssessmentsService: TextAssessmentsService,
+        private textAssessmentService: TextAssessmentService,
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         translateService: TranslateService,
         private location: Location,
         private courseService: CourseManagementService,
+        private examManagementService: ExamManagementService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
@@ -49,6 +53,7 @@ export class AssessmentLocksComponent implements OnInit {
     public async ngOnInit(): Promise<void> {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
+            this.examId = Number(params['examId']);
         });
         this.route.queryParams.subscribe((queryParams) => {
             this.tutorId = Number(queryParams['tutorId']);
@@ -60,7 +65,14 @@ export class AssessmentLocksComponent implements OnInit {
      * Get all locked submissions for course and user.
      */
     getAllLockedSubmissions() {
-        this.courseService.findAllLockedSubmissionsOfCourse(this.courseId).subscribe(
+        let lockedSubmissionsObservable;
+        if (this.examId) {
+            lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId, this.examId);
+            this.showAll = true;
+        } else {
+            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
+        }
+        lockedSubmissionsObservable.subscribe(
             (response: HttpResponse<Submission[]>) => {
                 this.submissions.push(...(response.body ?? []));
             },
@@ -81,7 +93,7 @@ export class AssessmentLocksComponent implements OnInit {
                     break;
                 case SubmissionExerciseType.TEXT:
                     if (canceledSubmission.participation?.exercise?.id) {
-                        this.textAssessmentsService.cancelAssessment(canceledSubmission.participation.exercise.id, canceledSubmission.id!).subscribe();
+                        this.textAssessmentService.cancelAssessment(canceledSubmission.participation.exercise.id, canceledSubmission.id!).subscribe();
                     }
                     break;
                 case SubmissionExerciseType.FILE_UPLOAD:

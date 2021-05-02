@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -13,6 +10,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -188,6 +187,20 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         }
         // no correct answer option exists
         return false;
+    }
+
+    /**
+     * creates an instance of ScoringStrategy with the appropriate type for the given multiple choice question (based on polymorphism)
+     *
+     * @return an instance of the appropriate implementation of ScoringStrategy
+     */
+    @Override
+    public ScoringStrategy makeScoringStrategy() {
+        return switch (getScoringType()) {
+            case ALL_OR_NOTHING -> new ScoringStrategyMultipleChoiceAllOrNothing();
+            case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithPenalty();
+            case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithoutPenalty();
+        };
     }
 
     @Override

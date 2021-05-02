@@ -74,7 +74,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input() markdown: string;
+    @Input() markdown?: string;
     @Input() editorMode = EditorMode.NONE;
     @Input() showLineNumbers = false;
     @Output() markdownChange = new EventEmitter<string>();
@@ -151,7 +151,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     @Input()
     enableFileUpload = true;
-    acceptedFileExtensions = 'png,jpg,jpeg,svg';
+    acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private jhiAlertService: JhiAlertService) {}
 
@@ -442,7 +442,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
             } else {
                 this.fileUploaderService.uploadMarkdownFile(file).then(
                     (res) => {
-                        const textToAdd = `![${file.name}](${res.path})\n`;
+                        let textToAdd = `[${file.name}](${res.path})\n`;
+                        if (extension !== 'pdf') {
+                            textToAdd = '!' + textToAdd;
+                        }
+
                         aceEditor.insert(textToAdd);
                     },
                     (error: Error) => {
@@ -452,5 +456,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
                 );
             }
         });
+    }
+
+    markdownTextChange(value: any) {
+        this.markdownChange.emit(value as string);
+        this.markdown = value;
     }
 }

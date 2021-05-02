@@ -2,18 +2,18 @@
     "artemisApp": {
         "multipleChoiceSubmittedAnswer": {
             "home": {
-                "title": "Multiple Choice Submitted Answers",
-                "createLabel": "Multiple Choice Submitted Answer erstellen",
-                "createOrEditLabel": "Multiple Choice Submitted Answer erstellen oder bearbeiten"
+                "title": "Multiple-Choice Submitted Answers",
+                "createLabel": "Multiple-Choice Submitted Answer erstellen",
+                "createOrEditLabel": "Multiple-Choice Submitted Answer erstellen oder bearbeiten"
             },
-            "created": "Multiple Choice Submitted Answer erstellt mit ID {{ param }}",
-            "updated": "Multiple Choice Submitted Answer aktualisiert mit ID {{ param }}",
-            "deleted": "Multiple Choice Submitted Answer gelöscht mit ID {{ param }}",
+            "created": "Multiple-Choice Submitted Answer erstellt mit ID {{ param }}",
+            "updated": "Multiple-Choice Submitted Answer aktualisiert mit ID {{ param }}",
+            "deleted": "Multiple-Choice Submitted Answer gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Multiple Choice Submitted Answer {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Multiple-Choice Submitted Answer {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Multiple Choice Submitted Answer"
+                "title": "Multiple-Choice Submitted Answer"
             },
             "selectedOptions": "Selected Options"
         }

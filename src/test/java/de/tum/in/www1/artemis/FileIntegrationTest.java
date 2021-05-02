@@ -21,43 +21,32 @@ import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.FileResource;
 
 public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private AttachmentRepository attachmentRepo;
 
     @Autowired
-    AttachmentRepository attachmentRepo;
+    private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    QuizExerciseRepository quizExerciseRepository;
+    private QuizQuestionRepository quizQuestionRepository;
 
     @Autowired
-    QuizQuestionRepository quizQuestionRepository;
+    private FileResource fileResource;
 
     @Autowired
-    FileService fileService;
-
-    @Autowired
-    FileResource fileResource;
-
-    @Autowired
-    ParticipationService participationService;
-
-    @Autowired
-    LectureRepository lectureRepo;
+    private LectureRepository lectureRepo;
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 1);
+        database.addUsers(2, 2, 0, 1);
     }
 
     @AfterEach

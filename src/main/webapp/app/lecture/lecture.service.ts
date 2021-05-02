@@ -36,16 +36,28 @@ export class LectureService {
     find(lectureId: number): Observable<EntityResponseType> {
         return this.http
             .get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => {
-                if (res.body) {
-                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.studentQuestions === undefined) {
-                        res.body.studentQuestions = [];
+            .pipe(
+                map((res: EntityResponseType) => {
+                    if (res.body) {
+                        // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                        if (res.body.studentQuestions === undefined) {
+                            res.body.studentQuestions = [];
+                        }
                     }
-                }
-                return res;
-            })
+                    return res;
+                }),
+            )
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
+     * Fetches the title of the lecture with the given id
+     *
+     * @param lectureId the id of the lecture
+     * @return the title of the lecture in an HttpResponse, or an HttpErrorResponse on error
+     */
+    getTitle(lectureId: number): Observable<HttpResponse<string>> {
+        return this.http.get(`${this.resourceUrl}/${lectureId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

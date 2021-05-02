@@ -45,6 +45,7 @@ import * as sinonChai from 'sinon-chai';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -123,6 +124,25 @@ describe('ExamParticipationComponent', () => {
         expect(ExamParticipationComponent).to.be.ok;
     });
 
+    describe('ExamParticipationSummaryComponent for TestRuns', () => {
+        it('should initialize and display test run ribbon', function () {
+            fixture.detectChanges();
+            expect(fixture).to.be.ok;
+            expect(!!comp.testRunId).to.be.true;
+            const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
+            expect(testRunRibbon).to.exist;
+        });
+        it('should initialize and not display test run ribbon', function () {
+            TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            comp.ngOnInit();
+            fixture.detectChanges();
+            expect(fixture).to.be.ok;
+            expect(!!comp.testRunId).to.be.false;
+            const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
+            expect(testRunRibbon).to.not.exist;
+        });
+    });
+
     describe('isProgrammingExercise', () => {
         it('should return true if active exercise is a programming exercise', () => {
             comp.activeExercise = new ProgrammingExercise(new Course(), undefined);
@@ -185,6 +205,29 @@ describe('ExamParticipationComponent', () => {
         expect(loadStudentExamWithExercisesForSummary).to.have.been.called;
         expect(comp.studentExam).to.deep.equal(studentExamWithExercises);
         expect(comp.studentExam).to.not.deep.equal(studentExam);
+    });
+    it('should load exam from local storage if needed', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.id = 1;
+        const loadStudentExamStub = stub(examParticipationService, 'loadStudentExam').returns(of(studentExam));
+
+        const localStudentExam = new StudentExam();
+        localStudentExam.exam = studentExam.exam;
+        localStudentExam.id = 2; // use a different id for testing purposes only
+        const lastSaveFailedStub = stub(examParticipationService, 'lastSaveFailed').returns(true);
+        const loadLocalStudentExamStub = stub(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').returns(of(localStudentExam));
+
+        TestBed.get(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+
+        comp.ngOnInit();
+
+        expect(loadStudentExamStub).to.have.been.called;
+        expect(lastSaveFailedStub).to.have.been.called;
+        expect(loadLocalStudentExamStub).to.have.been.called;
+        expect(comp.studentExam).to.deep.equal(localStudentExam);
+        expect(comp.studentExam).to.not.deep.equal(studentExam);
+        expect(comp.exam).to.deep.equal(studentExam.exam);
     });
 
     const testExamStarted = (studentExam: StudentExam) => {
@@ -510,7 +553,7 @@ describe('ExamParticipationComponent', () => {
     it('should trigger save and initialize exercise when exercise changed', () => {
         const exercise = new ProgrammingExercise(new Course(), undefined);
         const triggerStub = stub(comp, 'triggerSave');
-        const exerciseChange = { exercise, force: true };
+        const exerciseChange = { exercise, forceSave: true };
         const createParticipationForExerciseStub = stub(comp, 'createParticipationForExercise').returns(of(new StudentParticipation()));
         comp.onExerciseChange(exerciseChange);
         expect(triggerStub).to.have.been.calledWith(true);

@@ -8,9 +8,10 @@ import {
 } from 'app/exercises/shared/participation-submission/participation-submission-delete-dialog.component';
 import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
 import { ArtemisParticipationSubmissionRoutingModule } from 'app/exercises/shared/participation-submission/participation-submission-routing.module';
+import { MomentModule } from 'ngx-moment';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisParticipationSubmissionRoutingModule, NgxDatatableModule, ArtemisResultModule],
+    imports: [ArtemisSharedModule, MomentModule, ArtemisParticipationSubmissionRoutingModule, NgxDatatableModule, ArtemisResultModule],
 
     declarations: [ParticipationSubmissionDeleteDialogComponent, ParticipationSubmissionDeletePopupComponent, ParticipationSubmissionComponent],
     entryComponents: [ParticipationSubmissionDeleteDialogComponent, ParticipationSubmissionDeletePopupComponent],

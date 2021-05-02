@@ -22,6 +22,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -203,7 +204,7 @@ describe('CourseStatisticsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, TreeviewModule.forRoot(), RouterTestingModule.withRoutes([]), ArtemisSharedModule, ChartsModule],
-            declarations: [CourseStatisticsComponent, MockComponent(CourseLearningGoalsComponent)],
+            declarations: [CourseStatisticsComponent, MockComponent(CourseLearningGoalsComponent), MockComponent(ExerciseScoresChartComponent)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -272,7 +273,7 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.groupedExercises.length).to.equal(1);
         let exercise: any = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(36);
+        expect(exercise.reachableScore).to.equal(60);
         expect(exercise.overallMaxPoints).to.equal(60);
 
         const newExercise = [
@@ -317,6 +318,34 @@ describe('CourseStatisticsComponent', () => {
                 totalNumberOfAssessments: new DueDateStat(),
                 numberOfComplaints: 0,
             } as unknown) as TextExercise,
+            ({
+                type: 'text',
+                id: 999,
+                title: 'Until 18:20 tooo',
+                dueDate: moment('2019-06-16T18:15:03+02:00'),
+                assessmentDueDate: moment().add(1, 'days'),
+                maxPoints: 10.0,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                studentParticipations: [
+                    {
+                        id: 888,
+                        initializationState: 'FINISHED',
+                        initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                        student: {
+                            id: 9,
+                            login: 'artemis_test_user_1',
+                            firstName: 'Artemis Test User 1',
+                            email: 'krusche+testuser_1@in.tum.de',
+                            activated: true,
+                            langKey: 'en',
+                        },
+                    },
+                ],
+                diagramType: 'ClassDiagram',
+                numberOfSubmissions: new DueDateStat(),
+                totalNumberOfAssessments: new DueDateStat(),
+                numberOfComplaints: 0,
+            } as unknown) as TextExercise,
         ];
         courseToAdd.exercises = [...modelingExercises, ...newExercise];
         fixture.detectChanges();
@@ -326,13 +355,13 @@ describe('CourseStatisticsComponent', () => {
         // check that exerciseGroup scores are untouched
         exercise = comp.groupedExercises[0];
         expect(exercise.absoluteScore).to.equal(20);
-        expect(exercise.reachableScore).to.equal(36);
+        expect(exercise.reachableScore).to.equal(60);
         expect(exercise.overallMaxPoints).to.equal(60);
 
-        // check that overall course score is adapted accordingly
+        // check that overall course score is adapted accordingly -> one exercise after assessment, one before
         expect(comp.overallPoints).to.equal(25.5);
-        expect(comp.reachablePoints).to.equal(46);
-        expect(comp.overallMaxPoints).to.equal(70);
+        expect(comp.reachablePoints).to.equal(70);
+        expect(comp.overallMaxPoints).to.equal(80);
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));

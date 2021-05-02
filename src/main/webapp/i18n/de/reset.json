@@ -6,9 +6,9 @@
                 "button": "Passwort zurücksetzen"
             },
             "messages": {
-                "info": "Gebe die Email Adresse ein, welche du bei der Registrierung verwendest hast.",
-                "success": "Eine Email mit weiteren Instruktionen für das Zurücksetzen des Passworts wurde gesendet.",
-                "notfound": "<strong>Diese Email Adresse existiert nicht!</strong> Überprüfe deine Email Adresse und versuche es nochmal."
+                "info": "Gebe die E-Mail-Adresse ein, welche du bei der Registrierung verwendest hast.",
+                "success": "Eine E-Mail mit weiteren Instruktionen für das Zurücksetzen des Passworts wurde gesendet.",
+                "notfound": "<strong>Diese E-Mail Adresse existiert nicht!</strong> Überprüfe deine E-Mail-Adresse und versuche es nochmal."
             }
         },
         "finish": {
@@ -19,7 +19,7 @@
             "messages": {
                 "info": "Wähle ein neues Passwort",
                 "success": "<strong>Dein Passwort wurde zurückgesetzt.</strong> Bitte ",
-                "keymissing": "Der Reset Schlüssel fehlt.",
+                "keymissing": "Der Reset-Schlüssel fehlt.",
                 "error": "Dein Passwort konnte nicht zurückgesetzt werden. Zur Erinnerung, deine Anfrage ist nur 24 Stunden gültig."
             }
         }

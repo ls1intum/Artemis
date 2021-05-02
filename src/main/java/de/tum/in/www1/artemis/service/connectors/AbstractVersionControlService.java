@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -11,7 +10,6 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 
@@ -36,20 +34,16 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
     protected Optional<String> userPrefixU4I;
 
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
 
     protected final UrlService urlService;
 
     private final GitService gitService;
 
-    public AbstractVersionControlService(UrlService urlService, GitService gitService) {
+    public AbstractVersionControlService(ApplicationContext applicationContext, UrlService urlService, GitService gitService) {
+        this.applicationContext = applicationContext;
         this.urlService = urlService;
         this.gitService = gitService;
-    }
-
-    @Autowired
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
     }
 
     /**
@@ -129,7 +123,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             }
             catch (IOException ex) {
                 // ignore
-                log.error("Could not delete directory of the failed cloned repository in: " + localPath);
+                log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
             }
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, e);
         }

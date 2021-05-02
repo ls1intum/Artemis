@@ -5,7 +5,7 @@
                 "title": "Textaufgaben",
                 "createLabel": "Neue Textaufgabe erstellen",
                 "editLabel": "Textaufgabe bearbeiten",
-                "importLabel": "Neue Textaufgabe importieren"
+                "importLabel": "Textaufgabe importieren"
             },
             "import": {
                 "exampleSubmissionsRequireExercise": "Um die Beispielabgaben zu bearbeiten, musst du zunächst den Import der Textaufgabe abschließen."
@@ -23,7 +23,7 @@
             "detail": {
                 "title": "Textaufgabe"
             },
-            "sampleSolution": "Beispiel Lösung",
+            "sampleSolution": "Beispiellösung",
             "exampleSubmissions": "Beispielabgabe",
             "assessedSubmission": "Deine bewertete Abgabe",
             "assessedSubmissionInstructor": "Die bewertete Abgabe",

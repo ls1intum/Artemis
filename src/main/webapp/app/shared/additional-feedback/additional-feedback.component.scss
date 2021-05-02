@@ -1,0 +1,16 @@
+div {
+    &.positive-feedback {
+        color: #155724;
+        background-color: #d4edda;
+    }
+
+    &.negative-feedback {
+        color: #721c24;
+        background-color: #f8d7da;
+    }
+
+    &.neutral-feedback {
+        color: #383d41;
+        background-color: #e2e3e5;
+    }
+}

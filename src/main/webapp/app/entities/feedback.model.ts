@@ -37,6 +37,8 @@ export class Feedback implements BaseEntity {
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId?: string;
 
+    public copiedFeedbackId?: number; // helper attribute, only calculated locally on the client
+
     constructor() {
         this.credits = 0;
     }
@@ -70,6 +72,14 @@ export class Feedback implements BaseEntity {
 
     public static hasCreditsAndComment(that: Feedback): boolean {
         return that.credits != undefined && Feedback.hasDetailText(that);
+    }
+
+    public static haveCredits(that: Feedback[]): boolean {
+        return that.filter(Feedback.hasCredits).length > 0 && that.filter(Feedback.hasCredits).length === that.length;
+    }
+
+    public static hasCredits(that: Feedback): boolean {
+        return that.credits != undefined;
     }
 
     public static haveCreditsAndComments(that: Feedback[]): boolean {

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef, EventEmitter, Output } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -17,6 +17,7 @@ import { Result } from 'app/entities/result.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -32,8 +33,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     @Input()
     exercise: FileUploadExercise;
 
-    @Output()
-    onExerciseChanged = new EventEmitter<{ exercise: Exercise; force: boolean }>();
+    private synchronizationAlert$ = new Subject();
 
     submittedFileName: string;
     submittedFileExtension: string;
@@ -70,6 +70,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     /**
      * Sets file submission for exercise
+     * Here the file selected with the -browse- button is handeled.
      * @param $event {object} Event object which contains the uploaded file
      */
     setFileSubmissionForExercise($event: any): void {
@@ -115,6 +116,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         // we do nothing here as the new file path comes from the server
     }
 
+    /**
+     *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
+     */
     updateViewFromSubmission(): void {
         if (this.studentSubmission.isSynced && this.studentSubmission.filePath) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
@@ -126,7 +130,31 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         }
     }
 
+    /**
+     *  Here we send the submissionFile obtained in setFileSubmissionForExercise() to the server with the update method. The server returns the path to the file, and we
+     *  set it in the submission.
+     */
     saveUploadedFile() {
-        this.onExerciseChanged.emit({ exercise: this.exercise, force: false });
+        if (!this.submissionFile) {
+            return;
+        }
+        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe(
+            (res) => {
+                const submissionFromServer = res.body!;
+                this.studentSubmission.filePath = submissionFromServer.filePath;
+                this.studentSubmission.isSynced = true;
+                this.studentSubmission.submitted = true;
+                this.updateViewFromSubmission();
+            },
+            () => this.onError(),
+        );
+    }
+
+    /**
+     * Pass on an error to the browser console and the jhiAlertService.
+     * @param error
+     */
+    private onError() {
+        this.jhiAlertService.error(this.translateService.instant('error.fileUploadSavingError'));
     }
 }

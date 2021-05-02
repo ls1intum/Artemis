@@ -4,6 +4,7 @@ import 'brace/ext/modelist';
 import 'brace/mode/java';
 import 'brace/mode/markdown';
 import 'brace/mode/haskell';
+import 'brace/mode/ocaml';
 import 'brace/mode/c_cpp';
 import 'brace/mode/python';
 import 'brace/mode/swift';
@@ -56,6 +57,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     isTutorAssessment = false;
     @Input()
     feedbacks: Feedback[];
+    @Input()
+    highlightDifferences: boolean;
+
     @Output()
     onFileContentChange = new EventEmitter<{ file: string; fileContent: string }>();
     @Output()
@@ -229,9 +233,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @function onFileTextChanged
      * @desc Callback function for text changes in the Ace Editor.
      * Is used for updating the error annotations in the editor and giving the touched file the unsaved flag.
-     * @param code {string} Current editor code
+     * @param $event {string} Current editor code
      */
-    onFileTextChanged(code: string) {
+    onFileTextChanged($event: any) {
+        const code = $event as string;
         if (this.isTutorAssessment) {
             this.editor.setReadOnly(true);
             if (!this.readOnlyManualFeedback) {

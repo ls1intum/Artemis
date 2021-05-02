@@ -24,7 +24,7 @@ on:
 env:
   CI: true
   node: 15.x
-  java: 15
+  java: 16
 
 jobs:
 

@@ -1,22 +1,19 @@
 package de.tum.in.www1.artemis.config.websocket;
 
-import static de.tum.in.www1.artemis.service.WebsocketMessagingService.getExerciseIdFromResultDestination;
-import static de.tum.in.www1.artemis.service.WebsocketMessagingService.isResultNonPersonalDestination;
-import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
-import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.isParticipationTeamDestination;
+import static de.tum.in.www1.artemis.service.WebsocketMessagingService.*;
+import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketService.*;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -48,11 +45,11 @@ import com.google.common.collect.Iterables;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -68,13 +65,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final TaskScheduler messageBrokerTaskScheduler;
 
-    private ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -87,27 +84,23 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
-            AuthorizationCheckService authorizationCheckService, @Lazy ExerciseService exerciseService, UserService userService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
+            UserRepository userRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.exerciseService = exerciseService;
-        this.userService = userService;
-    }
-
-    // Break the cycle
-    @Autowired
-    public void setParticipationService(ParticipationService participationService) {
-        this.participationService = participationService;
+        this.exerciseRepository = exerciseRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
-    protected void configureMessageBroker(MessageBrokerRegistry config) {
+    protected void configureMessageBroker(@NotNull MessageBrokerRegistry config) {
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
-            log.info("Enabling StompBrokerRelay for WebSocket messages using " + String.join(", ", brokerAddresses));
+            log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
                     // Enable the relay for "/topic"
                     .enableStompBrokerRelay("/topic")
@@ -165,6 +158,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         registration.interceptors(new TopicSubscriptionInterceptor());
     }
 
+    @NotNull
     @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
         // NOTE: We need to adapt the default messageConverter for WebSocket messages
@@ -183,7 +177,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new HandshakeInterceptor() {
 
             @Override
-            public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) {
+            public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
+                    @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest) {
                     ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
@@ -192,9 +187,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
 
             @Override
-            public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
+            public void afterHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler, Exception exception) {
                 if (exception != null) {
-                    log.warn("Exception occurred in WS.afterHandshake: " + exception.getMessage());
+                    log.warn("Exception occurred in WS.afterHandshake", exception);
                 }
             }
         };
@@ -204,14 +199,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new DefaultHandshakeHandler() {
 
             @Override
-            protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
+            protected Principal determineUser(@NotNull ServerHttpRequest request, @NotNull WebSocketHandler wsHandler, @NotNull Map<String, Object> attributes) {
                 Principal principal = request.getPrincipal();
                 if (principal == null) {
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                    authorities.add(new SimpleGrantedAuthority(AuthoritiesConstants.ANONYMOUS));
+                    authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
                     principal = new AnonymousAuthenticationToken("WebsocketConfiguration", "anonymous", authorities);
                 }
-                log.debug("determineUser: " + principal);
+                log.debug("determineUser: {}", principal);
                 return principal;
             }
         };
@@ -227,7 +222,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return message that gets passed along further
          */
         @Override
-        public Message<?> preSend(Message<?> message, MessageChannel channel) {
+        public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
             Principal principal = headerAccessor.getUser();
             String destination = headerAccessor.getDestination();
@@ -241,7 +236,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
                 catch (EntityNotFoundException e) {
                     // If the user is not found (e.g. because he is not logged in), he should not be able to subscribe to these topics
-                    log.warn("An error occurred while subscribing user {} to destination {}: {}", principal.getName(), destination, e.getMessage());
+                    log.warn("An error occurred while subscribing user {} to destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
                     return null;
                 }
             }
@@ -265,7 +260,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 Long exerciseId = getExerciseIdFromResultDestination(destination);
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                Exercise exercise = exerciseService.findOne(exerciseId);
+                Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
                 if (exercise.isExamExercise()) {
                     return isUserInstructorOrHigherForExercise(principal, exercise);
                 }
@@ -278,26 +273,26 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {
             if (principal == null) {
-                log.warn("Anonymous user tried to access the protected topic: " + destination);
+                log.warn("Anonymous user tried to access the protected topic: {}", destination);
             }
             else {
-                log.warn("User with login '" + principal.getName() + "' tried to access the protected topic: " + destination);
+                log.warn("User with login '{}' tried to access the protected topic: {}", principal.getName(), destination);
             }
         }
     }
 
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
     }
 
     private boolean isUserInstructorOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastInstructorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 }

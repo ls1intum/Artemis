@@ -14,6 +14,14 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
+
+export type PlagiarismCheckState = {
+    state: 'COMPLETED' | 'RUNNING';
+    messages: string;
+};
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
@@ -34,7 +42,9 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * True, if an automated plagiarism detection is running; false otherwise.
      */
-    detectionInProgress: boolean;
+    detectionInProgress = false;
+
+    detectionInProgressMessage = '';
 
     /**
      * Index of the currently selected comparison.
@@ -87,12 +97,100 @@ export class PlagiarismInspectorComponent implements OnInit {
         private modelingExerciseService: ModelingExerciseService,
         private programmingExerciseService: ProgrammingExerciseService,
         private textExerciseService: TextExerciseService,
+        private websocketService: JhiWebsocketService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
             this.exercise = exercise;
+
+            this.registerToPlagarismDetectionTopic();
+            this.getLatestPlagiarismResult();
         });
+    }
+
+    /**
+     * Registers to the websocket topic of the plagiarism check
+     * to get feedback abount the progress
+     */
+    registerToPlagarismDetectionTopic() {
+        const topic = this.getPlagarismDetectionTopic();
+        this.websocketService.subscribe(topic);
+        this.websocketService
+            .receive(topic)
+            .pipe(tap((plagiarismCheckState: PlagiarismCheckState) => this.handlePlagiarismCheckStateChange(plagiarismCheckState)))
+            .subscribe();
+    }
+
+    /**
+     * Gets the url to the plagiarism detection websocket topic.
+     */
+    getPlagarismDetectionTopic() {
+        let topic = '/topic/';
+        switch (this.exercise.type) {
+            case ExerciseType.PROGRAMMING:
+                topic += 'programming-exercises';
+                break;
+            case ExerciseType.TEXT:
+                topic += 'text-exercises';
+                break;
+            case ExerciseType.MODELING:
+                topic += 'modeling-exercises';
+                break;
+        }
+        return topic + '/' + this.exercise.id + '/plagiarism-check';
+    }
+
+    /**
+     * Handles the state change by updating the progress state. Fetches latest
+     * results once plagiarism detection is done.
+     *
+     * @param plagiarismCheckState the state plagiarism check
+     */
+    handlePlagiarismCheckStateChange(plagiarismCheckState: PlagiarismCheckState) {
+        const { state, messages } = plagiarismCheckState;
+        this.detectionInProgress = state === 'RUNNING';
+        this.detectionInProgressMessage = state === 'RUNNING' ? messages : this.translateService.instant('artemisApp.plagiarism.loading');
+
+        if (state === 'COMPLETED') {
+            this.detectionInProgressMessage = this.translateService.instant('artemisApp.plagiarism.fetching-results');
+            this.getLatestPlagiarismResult();
+        }
+    }
+
+    /**
+     * Fetch the latest plagiarism result. There might be no plagiarism result for the given exercise yet.
+     */
+    getLatestPlagiarismResult() {
+        this.detectionInProgress = true;
+
+        switch (this.exercise.type) {
+            case ExerciseType.MODELING: {
+                this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
+                    (result) => this.handlePlagiarismResult(result),
+                    () => (this.detectionInProgress = false),
+                );
+                return;
+            }
+            case ExerciseType.PROGRAMMING: {
+                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
+                    (result) => this.handlePlagiarismResult(result),
+                    () => (this.detectionInProgress = false),
+                );
+                return;
+            }
+            case ExerciseType.TEXT: {
+                this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
+                    (result) => this.handlePlagiarismResult(result),
+                    () => (this.detectionInProgress = false),
+                );
+                return;
+            }
+            default: {
+                this.detectionInProgress = false;
+            }
+        }
     }
 
     checkPlagiarism() {
@@ -144,24 +242,15 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handleTextPlagiarismResult(result),
+                (result) => this.handlePlagiarismResult(result),
                 () => (this.detectionInProgress = false),
             );
         } else {
             this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handleTextPlagiarismResult(result),
+                (result) => this.handlePlagiarismResult(result),
                 () => (this.detectionInProgress = false),
             );
         }
-    }
-
-    handleTextPlagiarismResult(result: TextPlagiarismResult) {
-        this.detectionInProgress = false;
-
-        this.sortComparisonsForResult(result);
-
-        this.plagiarismResult = result;
-        this.selectedComparisonIndex = 0;
     }
 
     /**
@@ -171,16 +260,20 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-            (result: ModelingPlagiarismResult) => {
-                this.detectionInProgress = false;
-
-                this.sortComparisonsForResult(result);
-
-                this.plagiarismResult = result;
-                this.selectedComparisonIndex = 0;
-            },
+            (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
             () => (this.detectionInProgress = false),
         );
+    }
+
+    handlePlagiarismResult(result: ModelingPlagiarismResult | TextPlagiarismResult) {
+        this.detectionInProgress = false;
+
+        if (result?.comparisons) {
+            this.sortComparisonsForResult(result);
+        }
+
+        this.plagiarismResult = result;
+        this.selectedComparisonIndex = 0;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {

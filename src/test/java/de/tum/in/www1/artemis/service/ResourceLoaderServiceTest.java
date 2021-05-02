@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.ResourceLoaderService;
 
 public class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

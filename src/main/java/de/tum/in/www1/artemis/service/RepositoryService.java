@@ -1,14 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
@@ -35,14 +31,14 @@ public class RepositoryService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserService userService) {
+    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.gitService = gitService;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -80,7 +76,7 @@ public class RepositoryService {
                 fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
             }
             catch (IOException e) {
-                log.error("Content of file: " + file.toString() + " could not be loaded and throws the following error: " + e.getMessage());
+                log.error("Content of file: {} could not be loaded and throws the following error: {}", file.toString(), e.getMessage());
             }
         });
         return fileListWithContent;
@@ -90,7 +86,7 @@ public class RepositoryService {
      * Get a single file/folder from repository.
      *
      * @param repository in which the requested file is located.
-     * @param filename of the file to be retrieved.
+     * @param filename   of the file to be retrieved.
      * @return The file if found or throw an exception.
      * @throws IOException if the file can't be found, is corrupt, etc.
      */
@@ -139,7 +135,7 @@ public class RepositoryService {
                     }
                 }
                 catch (IOException e) {
-                    log.error("Comparing file1 " + fileName + " with file2 " + templateFile.toString() + " throws in following error: " + e.getMessage());
+                    log.error("Comparing files '{}' with '{}' failed: {}", fileName, templateFile.toString(), e.getMessage());
                 }
             }
         });
@@ -295,7 +291,7 @@ public class RepositoryService {
      */
     public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout)
             throws IllegalAccessException, InterruptedException, GitAPIException {
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {
@@ -317,9 +313,9 @@ public class RepositoryService {
      */
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl)
             throws IllegalAccessException, InterruptedException, GitAPIException {
-        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastInstructorInCourse(course, user);
+        boolean hasPermissions = authCheckService.isAtLeastEditorInCourse(course, user);
         if (!hasPermissions) {
             throw new IllegalAccessException();
         }

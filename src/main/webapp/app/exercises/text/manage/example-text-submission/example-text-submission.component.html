@@ -3,12 +3,13 @@
         <div class="col-6">
             <h2>
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="guided-tour-back back-button mr-2"></fa-icon>
-                <span *ngIf="isNewSubmission">{{ 'artemisApp.exampleSubmission.createNew' | translate }} </span>{{ 'artemisApp.exampleSubmission.pageHeader' | translate }}
+                <span *ngIf="isNewSubmission">{{ 'artemisApp.exampleSubmission.createNew' | artemisTranslate }} </span
+                >{{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
             </h2>
         </div>
 
-        <div class="col-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete && exercise">
+        <div class="col-4 text-right" *ngIf="isAtLeastEditor && !readOnly && !toComplete && exercise">
             <div class="row">
                 <div class="form-check col-12 align-baseline">
                     <input
@@ -18,7 +19,7 @@
                         [(ngModel)]="exampleSubmission.usedForTutorial"
                         (ngModelChange)="unsavedChanges = true"
                     />
-                    <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | translate }}</label>
+                    <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate }}</label>
                 </div>
             </div>
 
@@ -26,15 +27,15 @@
                 <ng-container [ngSwitch]="state.submissionEditButton">
                     <button *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
                         <fa-icon [icon]="'save'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.createNewSubmission' | translate }}
+                        {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.UPDATE" (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto">
                         <fa-icon [icon]="'save'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.updateSampleSolution' | translate }}
+                        {{ 'artemisApp.exampleSubmission.updateSampleSolution' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
                         <fa-icon [icon]="'edit'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.editSampleSolution' | translate }}
+                        {{ 'artemisApp.exampleSubmission.editSampleSolution' | artemisTranslate }}
                     </button>
                 </ng-container>
 
@@ -48,7 +49,7 @@
                         [disabled]="unsavedChanges"
                     >
                         <fa-icon [icon]="'save'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.createNewAssessment' | translate }}
+                        {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
                     </button>
                     <button
                         *ngSwitchCase="AssessButtonStates.CREATE"
@@ -58,11 +59,11 @@
                         id="saveNewAssessment"
                     >
                         <fa-icon [icon]="'save'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.saveNewAssessment' | translate }}
+                        {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
                         <fa-icon [icon]="'save'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.updateAssessment' | translate }}
+                        {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                     </button>
                 </ng-container>
             </div>
@@ -85,16 +86,17 @@
     <jhi-score-display
         left-header
         *ngIf="state.ui === UIStates.ASSESSMENT"
-        [maxPoints]="exercise?.maxPoints"
+        [maxPoints]="exercise?.maxPoints || 0"
         [score]="totalScore"
-        [maxBonusPoints]="exercise?.bonusPoints"
+        [maxBonusPoints]="exercise?.bonusPoints || 0"
     ></jhi-score-display>
     <jhi-text-assessment-area
         left-body
+        class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
         *ngIf="state.ui === UIStates.ASSESSMENT"
-        [submission]="submission"
+        [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
-        [readOnly]="readOnly || (!isAtLeastInstructor && !toComplete)"
+        [readOnly]="readOnly || (!isAtLeastEditor && !toComplete)"
         (textBlockRefsChange)="validateFeedback()"
         (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
     ></jhi-text-assessment-area>
@@ -123,13 +125,13 @@
 
 <div class="col-12 text-right" *ngIf="toComplete">
     <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">
-        {{ 'artemisApp.exampleSubmission.submitAssessment' | translate }}
+        {{ 'artemisApp.exampleSubmission.submitAssessment' | artemisTranslate }}
     </button>
 </div>
 
 <div class="col-12 text-right" *ngIf="readOnly">
     <button (click)="readAndUnderstood()" class="btn btn-success col-3 guided-tour-read">
         <fa-icon [icon]="'save'"></fa-icon>
-        {{ 'artemisApp.exampleSubmission.readAndUnderstood' | translate }}
+        {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}
     </button>
 </div>

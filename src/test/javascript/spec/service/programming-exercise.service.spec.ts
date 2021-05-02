@@ -15,6 +15,9 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import * as moment from 'moment';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { Result } from 'app/entities/result.model';
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
@@ -71,6 +74,23 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(JSON.stringify(returnedFromService));
+        });
+
+        it('should reconnect template submission with result', async () => {
+            const templateParticipation = new TemplateProgrammingExerciseParticipation();
+            const tempSubmission = new ProgrammingSubmission();
+            const tempResult = new Result();
+            tempResult.id = 2;
+            tempSubmission.results = [tempResult];
+            templateParticipation.submissions = [tempSubmission];
+            const returnedFromService = Object.assign({ id: 0 }, { ...elemDefault, templateParticipation });
+            const expected = Object.assign({}, returnedFromService);
+            service
+                .findWithTemplateAndSolutionParticipation(expected.id, true)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
         });
 
         it('should update a ProgrammingExercise', async () => {

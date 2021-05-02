@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -36,12 +36,20 @@ export class FileUploadSubmissionService {
     /**
      * Returns File Upload submission from the server
      * @param fileUploadSubmissionId the id of the File Upload submission
+     * @param correctionRound
+     * @param resultId
      */
-    get(fileUploadSubmissionId: number): Observable<HttpResponse<FileUploadSubmission>> {
+    get(fileUploadSubmissionId: number, correctionRound = 0, resultId?: number): Observable<HttpResponse<FileUploadSubmission>> {
+        const url = `api/file-upload-submissions/${fileUploadSubmissionId}`;
+        let params = new HttpParams();
+        if (resultId && resultId > 0) {
+            // in case resultId is set, we do not need the correction round
+            params = params.set('resultId', resultId!.toString());
+        } else {
+            params = params.set('correction-round', correctionRound.toString());
+        }
         return this.http
-            .get<FileUploadSubmission>(`api/file-upload-submissions/${fileUploadSubmissionId}`, {
-                observe: 'response',
-            })
+            .get<FileUploadSubmission>(url, { params, observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res)));
     }
 

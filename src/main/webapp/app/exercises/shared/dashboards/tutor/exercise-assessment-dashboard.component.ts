@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -37,6 +37,9 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SortService } from 'app/shared/service/sort.service';
+import { round } from 'app/shared/util/utils';
+import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -49,14 +52,19 @@ export interface ExampleSubmissionQueryParams {
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [CourseManagementService],
 })
-export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewInit {
+export class ExerciseAssessmentDashboardComponent implements OnInit {
+    readonly round = round;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
+    programmingExercise: ProgrammingExercise;
     courseId: number;
     exam?: Exam;
+    examId: number;
+    exerciseGroupId: number;
     // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
     isTestRun = false;
+    isAtLeastInstructor = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -65,12 +73,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     numberOfSubmissions = new DueDateStat();
     totalNumberOfAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
+    numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [new DueDateStat()];
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
+    complaintsEnabled = false;
+    feedbackRequestEnabled = false;
     totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
@@ -93,6 +104,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     formattedProblemStatement?: SafeHtml;
     formattedSampleSolution?: SafeHtml;
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
+
+    // helper variables to display information message about why no new assessments are possible anymore
+    remainingAssessments: number[] = [];
+    lockedSubmissionsByOtherTutor: number[] = [];
+    notYetAssessed: number[] = [];
+    firstRoundAssessments: number;
 
     readonly ExerciseType = ExerciseType;
 
@@ -119,6 +136,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
 
     constructor(
         private exerciseService: ExerciseService,
+        private courseManagementService: CourseManagementService,
         private jhiAlertService: JhiAlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
@@ -135,6 +153,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
+        private sortService: SortService,
     ) {}
 
     /**
@@ -143,19 +162,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isTestRun = this.route.snapshot.url[3]?.toString() === 'test-run-exercise-assessment-dashboard';
+        this.isTestRun = this.router.url.indexOf('test-assessment-dashboard') >= 0;
         this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
 
+        if (this.route.snapshot.paramMap.has('examId')) {
+            this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+            this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        }
+
         this.loadAll();
-
         this.accountService.identity().then((user: User) => (this.tutor = user));
-    }
-
-    /**
-     * Notifies the guided tour service that this component has loaded
-     */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
     }
 
     /**
@@ -169,6 +185,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
@@ -185,6 +202,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     case ExerciseType.FILE_UPLOAD:
                         const fileUploadExercise = this.exercise as FileUploadExercise;
                         this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.sampleSolution);
+                        break;
+                    case ExerciseType.PROGRAMMING:
+                        this.programmingExercise = this.exercise as ProgrammingExercise;
                         break;
                 }
 
@@ -222,6 +242,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }
+                // load the guided tour step only after everything else on the page is loaded
+                this.guidedTourService.componentPageLoaded();
             },
             (response: string) => this.onError(response),
         );
@@ -242,12 +264,14 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
                     this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
+                    this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = this.statsForDashboard.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+
                     this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                     this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                     this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
                     this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
                     const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
-
+                    this.sortService.sortByProperty(this.statsForDashboard.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
                         this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                         this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfTutorComplaints;
@@ -273,6 +297,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     } else {
                         this.tutorAssessmentPercentage = 100;
                     }
+                    this.complaintsEnabled = this.statsForDashboard.complaintsEnabled;
+                    this.feedbackRequestEnabled = this.statsForDashboard.feedbackRequestEnabled;
+                    this.calculateAssessmentProgressInformation();
                 },
                 (response: string) => this.onError(response),
             );
@@ -359,7 +386,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
                     return submission;
                 });
 
-                this.submissionsByCorrectionRound!.set(correctionRound, sub); // todo NR
+                this.submissionsByCorrectionRound!.set(correctionRound, sub);
             });
     }
 
@@ -557,18 +584,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        let route;
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : submission.participation?.id!;
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/code-editor/${participationURLParameter}/assessment`;
-        } else {
-            route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        }
+        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
+        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
         if (this.isTestRun) {
-            await this.router.navigate([route], { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
+            await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
         } else {
-            await this.router.navigate([route], { queryParams: { 'correction-round': correctionRound } });
+            await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
@@ -579,18 +600,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
      */
     viewComplaint(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
-        // For programming exercises we need the participationId
-        submission.participation = complaint.result?.participation;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
-    }
-
-    /**
-     * Casts an Exercise to a ProgrammingExercise
-     * @param exercise Exercise to cast
-     */
-    asProgrammingExercise(exercise: Exercise) {
-        return exercise as ProgrammingExercise;
     }
 
     toggleSecondCorrection() {
@@ -602,17 +613,26 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, AfterViewIn
             this.toggelingSecondCorrectionButton = false;
         });
     }
+
+    getSubmissionsLinkForExercise(exercise: Exercise): string[] {
+        return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
+    }
+
     /**
-     * Navigates back to the tutor (exam) dashboard
+     * To correctly display why a tutor cannot assess any further submissions we need to calculate those values.
      */
-    back() {
-        if (!this.isExamMode) {
-            this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
-        } else {
-            if (this.isTestRun) {
-                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/test-runs/assess`]);
-            } else {
-                this.router.navigate([`/course-management/${this.courseId}/exams/${this.exercise!.exerciseGroup!.exam!.id}/tutor-exam-dashboard`]);
+    calculateAssessmentProgressInformation() {
+        if (this.exam) {
+            for (let i = 0; i < (this.exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
+                this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[i]?.inTime;
+
+                // number of submissions in the particular round that still need assessment and are not locked
+                this.notYetAssessed[i] = this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[i].inTime - this.lockedSubmissionsByOtherTutor[i];
+
+                // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
+                // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
+                // lock-count from the remaining unassessed submisssions of the current correction round.
+                this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
         }
     }

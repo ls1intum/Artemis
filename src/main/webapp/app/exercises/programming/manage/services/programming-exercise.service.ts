@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { omit as _omit } from 'lodash';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -14,6 +14,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { Submission } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -40,9 +41,13 @@ export class ProgrammingExerciseService {
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -86,6 +91,19 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Get the latest plagiarism result for the exercise with the given ID.
+     *
+     * @param exerciseId
+     */
+    getLatestPlagiarismResult(exerciseId: number): Observable<TextPlagiarismResult> {
+        return this.http
+            .get<TextPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+                observe: 'response',
+            })
+            .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
+    }
+
+    /**
      * Combines all commits of the template repository to one
      * @param exerciseId of the particular programming exercise
      */
@@ -107,12 +125,16 @@ export class ProgrammingExerciseService {
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, recreateBuildPlans: boolean, updateTemplate: boolean): Observable<EntityResponseType> {
         const options = createRequestOption({ recreateBuildPlans, updateTemplate });
         const exercise = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
+        exercise.categories = this.exerciseService.stringifyExerciseCategories(exercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -124,9 +146,13 @@ export class ProgrammingExerciseService {
         const options = createRequestOption(req);
         let copy = this.convertDataFromClient(programmingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -139,7 +165,10 @@ export class ProgrammingExerciseService {
         const copy = this.convertDataFromClient(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, copy, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -152,7 +181,10 @@ export class ProgrammingExerciseService {
         const options = createRequestOption(req);
         return this.http
             .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, problemStatement, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -162,7 +194,10 @@ export class ProgrammingExerciseService {
     find(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
@@ -172,17 +207,55 @@ export class ProgrammingExerciseService {
     findWithTemplateAndSolutionParticipationAndResults(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-participations`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
     }
 
     /**
      * Finds the programming exercise for the given exerciseId with the template and solution participation
      * @param programmingExerciseId of the programming exercise to retrieve
+     * @param withSubmissionResults get results attached to submissions
      */
-    findWithTemplateAndSolutionParticipation(programmingExerciseId: number): Observable<EntityResponseType> {
+    findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false): Observable<EntityResponseType> {
+        let params = new HttpParams();
+        params = params.set('withSubmissionResults', withSubmissionResults.toString());
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { params, observe: 'response' })
+            .pipe(
+                map((res: EntityResponseType) => this.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            )
+            .pipe(
+                map((res: EntityResponseType) => {
+                    if (res.body && withSubmissionResults) {
+                        // We need to reconnect the submissions with the results. They got removed because of the circular dependency
+                        const templateSubmissions = res.body.templateParticipation?.submissions;
+                        this.reconnectSubmissionAndResult(templateSubmissions);
+                        const solutionSubmissions = res.body.solutionParticipation?.submissions;
+                        this.reconnectSubmissionAndResult(solutionSubmissions);
+                    }
+                    return res;
+                }),
+            );
+    }
+
+    /**
+     * Reconnecting the missing submission of a submission's result
+     *
+     * @param submissions where the results have no reference to its submission
+     */
+    private reconnectSubmissionAndResult(submissions: Submission[] | undefined) {
+        if (submissions) {
+            submissions.forEach((submission) => {
+                if (submission.results) {
+                    submission.results.forEach((result) => {
+                        result.submission = submission;
+                    });
+                }
+            });
+        }
     }
 
     /**
@@ -202,7 +275,10 @@ export class ProgrammingExerciseService {
         const options = createRequestOption(req);
         return this.http
             .get<ProgrammingExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)));
+            .pipe(
+                map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
+                map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
+            );
     }
 
     /**

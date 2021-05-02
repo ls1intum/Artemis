@@ -19,10 +19,29 @@
             <button
                 class="btn btn btn-primary ml-auto"
                 (click)="registerAllStudentsFromCourse()"
-                title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | translate }}"
+                title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
             >
                 <fa-icon [icon]="'plus'" [fixedWidth]="true"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
+            </button>
+            <button
+                [disabled]="isLoading"
+                [actionType]="ActionType.Remove"
+                [entityTitle]="exam.title || ''"
+                [renderButtonText]="false"
+                [buttonSize]="ButtonSize.MEDIUM"
+                jhiDeleteButton
+                class="btn btn-primary ml-auto"
+                deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
+                (delete)="removeAllStudents($event)"
+                [dialogError]="dialogError$"
+                [additionalChecks]="{
+                    deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission'
+                }"
+                deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
+            >
+                <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>
+                <fa-icon [icon]="'user-slash'"></fa-icon>
             </button>
         </div>
     </div>
@@ -67,7 +86,10 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}">{{ value.id }}</a>
+                        <a *ngIf="isAdmin; else showId" routerLink="/admin/user-management/{{ value?.login }}">{{ value?.id }}</a>
+                        <ng-template #showId>
+                            {{ value?.id }}
+                        </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -79,7 +101,10 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}">{{ value.login }}</a>
+                        <a *ngIf="isAdmin; else showLogin" routerLink="/admin/user-management/{{ value?.login }}">{{ value?.login }}</a>
+                        <ng-template #showLogin>
+                            {{ value?.login }}
+                        </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
 

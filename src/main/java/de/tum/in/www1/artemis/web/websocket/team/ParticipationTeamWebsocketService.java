@@ -18,10 +18,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.simp.user.SimpSession;
-import org.springframework.messaging.simp.user.SimpSubscription;
-import org.springframework.messaging.simp.user.SimpUser;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.messaging.simp.user.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
@@ -32,8 +29,12 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
@@ -52,29 +53,26 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, Instant> lastActionTracker;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final ParticipationService participationService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExerciseService exerciseService;
+    private final ExerciseRepository exerciseRepository;
 
     private final TextSubmissionService textSubmissionService;
 
     private final ModelingSubmissionService modelingSubmissionService;
 
-    private final HazelcastInstance hazelcastInstance;
-
-    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserService userService,
-            ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
+    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, TextSubmissionService textSubmissionService,
             ModelingSubmissionService modelingSubmissionService, HazelcastInstance hazelcastInstance) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
-        this.userService = userService;
-        this.participationService = participationService;
-        this.exerciseService = exerciseService;
+        this.userRepository = userRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.exerciseRepository = exerciseRepository;
         this.textSubmissionService = textSubmissionService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.hazelcastInstance = hazelcastInstance;
 
         // participationId-username -> timestamp
         this.lastTypingTracker = hazelcastInstance.getMap("lastTypingTracker");
@@ -134,7 +132,7 @@ public class ParticipationTeamWebsocketService {
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
-        log.info("Websocket endpoint updateModelingSubmission took " + (System.currentTimeMillis() - start) + "ms for submission with id " + modelingSubmission.getId());
+        log.info("Websocket endpoint updateModelingSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, modelingSubmission.getId());
     }
 
     /**
@@ -148,7 +146,7 @@ public class ParticipationTeamWebsocketService {
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         long start = System.currentTimeMillis();
         updateSubmission(participationId, textSubmission, principal, "/text-submissions");
-        log.info("Websocket endpoint updateTextSubmission took " + (System.currentTimeMillis() - start) + "ms for submission with id " + textSubmission.getId());
+        log.info("Websocket endpoint updateTextSubmission took {}ms for submission with id {}", System.currentTimeMillis() - start, textSubmission.getId());
     }
 
     /**
@@ -163,15 +161,15 @@ public class ParticipationTeamWebsocketService {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
-        final StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+        final StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
 
         // user must belong to the team who owns the participation in order to update a submission
         if (!participation.isOwnedBy(principal.getName())) {
             return;
         }
 
-        final User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        final Exercise exercise = exerciseService.findOne(participation.getExercise().getId());
+        final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
         if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {
             submission = modelingSubmissionService.save((ModelingSubmission) submission, (ModelingExercise) exercise, principal.getName());
@@ -259,7 +257,7 @@ public class ParticipationTeamWebsocketService {
      * @return list of principals / logins
      */
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
-        return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
+        return simpUserRegistry.findSubscriptions(subscription -> subscription.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
                 .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).distinct().collect(Collectors.toList());
     }
 

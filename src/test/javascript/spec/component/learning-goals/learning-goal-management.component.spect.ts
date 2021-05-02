@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
@@ -20,6 +20,8 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import * as Sentry from '@sentry/browser';
+import * as _ from 'lodash';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,7 +42,7 @@ describe('LearningGoalManagementComponent', () => {
             declarations: [
                 LearningGoalManagementComponent,
                 LearningGoalCardStubComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
@@ -104,15 +106,25 @@ describe('LearningGoalManagementComponent', () => {
             body: courseLearningGoalProgress,
             status: 200,
         });
-
+        const courseProgressParticipantScores = _.cloneDeep(courseLearningGoalProgress);
+        courseProgressParticipantScores.averagePointsAchievedByStudentInLearningGoal = 1;
+        const learningGoalProgressParticipantScoreResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
+            body: courseProgressParticipantScores,
+            status: 200,
+        });
         const getAllForCourseStub = sinon.stub(learningGoalService, 'getAllForCourse').returns(of(learningGoalsOfCourseResponse));
-        const getProgressStub = sinon.stub(learningGoalService, 'getCourseProgress').returns(of(learningGoalProgressResponse));
+        const getProgressStub = sinon.stub(learningGoalService, 'getCourseProgress');
+        getProgressStub.withArgs(sinon.match.any, sinon.match.any, false).returns(of(learningGoalProgressResponse));
+        getProgressStub.withArgs(sinon.match.any, sinon.match.any, true).returns(of(learningGoalProgressParticipantScoreResponse));
+
+        const captureExceptionSpy = sinon.spy(Sentry, 'captureException');
 
         learningGoalManagementComponentFixture.detectChanges();
 
         const learningGoalCards = learningGoalManagementComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
         expect(learningGoalCards).to.have.lengthOf(2);
         expect(getAllForCourseStub).to.have.been.calledOnce;
-        expect(getProgressStub).to.have.been.calledTwice;
+        expect(getProgressStub).to.have.callCount(4);
+        expect(captureExceptionSpy).to.have.been.calledOnce;
     });
 });

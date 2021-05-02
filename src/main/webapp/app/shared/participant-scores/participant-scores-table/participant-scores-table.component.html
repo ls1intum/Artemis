@@ -1,0 +1,206 @@
+<jhi-data-table
+    [isLoading]="isLoading"
+    entityType="participationScoreDTO"
+    [allEntities]="participantScores"
+    entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+    showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+    [searchPlaceholderTranslation]="'artemisApp.participantScores.searchForStudentsOrTeam'"
+    [searchFields]="['userName', 'teamName']"
+    [searchTextFromEntity]="extractParticipantName"
+    [searchResultFormatter]="extractParticipantName"
+>
+    <ng-template let-settings="settings" let-controls="controls">
+        <ngx-datatable
+            class="bootstrap"
+            [limit]="settings.limit"
+            [sortType]="settings.sortType"
+            [columnMode]="settings.columnMode"
+            [headerHeight]="settings.headerHeight"
+            [footerHeight]="settings.footerHeight"
+            [rowHeight]="settings.rowHeight"
+            [rows]="settings.rows"
+            [rowClass]="settings.rowClass"
+            [scrollbarH]="settings.scrollbarH"
+        >
+            <ngx-datatable-column prop="id" [minWidth]="100">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.id"> ID </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="userId" [minWidth]="100">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('userId')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.userId"> User Id </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('userId')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="userName" [minWidth]="200">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('userName')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.userName"> User Name </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('userName')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="teamId" [minWidth]="100">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('teamId')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.teamId"> Team Id </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('teamId')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="teamName" [minWidth]="200">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('teamName')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.teamName"> Team Name </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('teamName')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="exerciseId" [minWidth]="200">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exerciseId')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.exerciseId"> Exercise Id </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('exerciseId')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="exerciseTitle" [minWidth]="200">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exerciseTitle')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.exerciseTitle">
+                            Exercise Title
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('exerciseTitle')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="lastResultId" [minWidth]="300">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastResultId')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastResultId"> Last Result Id </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastResultId')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="lastResultScore" [width]="300">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastResultScore')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastResultScore">
+                            Last Result Score
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastResultScore')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ round(value) }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="lastPoints" [width]="300">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastPoints')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastPoints"> Last Points </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastPoints')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="lastRatedResultId" [width]="300">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastRatedResultId')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastRatedResultId">
+                            Last Rated Result Id
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastRatedResultId')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="lastRatedResultScore" [width]="500">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastRatedResultScore')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastRatedResultScore">
+                            Last Rated Result Score
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastRatedResultScore')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ round(value) }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="lastRatedPoints" [width]="300">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('lastRatedPoints')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreDTO.lastRatedPoints">
+                            Last Rated Points
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('lastRatedPoints')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
+    </ng-template>
+</jhi-data-table>

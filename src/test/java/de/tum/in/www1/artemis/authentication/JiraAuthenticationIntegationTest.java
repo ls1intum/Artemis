@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -23,16 +22,17 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
+import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
@@ -64,6 +64,9 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
     private UserService userService;
 
     @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -93,10 +96,10 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(ltiService).verifyRequest(any());
 
-        final var userAuthority = new Authority(AuthoritiesConstants.USER);
-        final var instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
-        final var adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
-        final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        final var userAuthority = new Authority(Role.STUDENT.getAuthority());
+        final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
+        final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
+        final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
         jiraRequestMockProvider.enableMockingOfRequests();
     }
@@ -143,7 +146,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         assertThat(mrrobotUser.getGroups()).contains(course.getStudentGroupName());
         assertThat(mrrobotUser.getAuthorities()).containsAll(authorityRepository.findAll());
 
-        final var password = userService.encryptor().decrypt(mrrobotUser.getPassword());
+        final var password = passwordService.decryptPassword(mrrobotUser.getPassword());
         final var auth = new TestingAuthenticationToken(username, password);
         final var responseAuth = jiraAuthenticationProvider.authenticate(auth);
 

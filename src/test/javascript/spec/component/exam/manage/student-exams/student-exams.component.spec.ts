@@ -29,6 +29,9 @@ import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -85,6 +88,7 @@ describe('StudentExamsComponent', () => {
                 MockComponent(AlertComponent),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 MockProvider(ExamManagementService, {
@@ -196,6 +200,7 @@ describe('StudentExamsComponent', () => {
                         },
                     },
                 },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()

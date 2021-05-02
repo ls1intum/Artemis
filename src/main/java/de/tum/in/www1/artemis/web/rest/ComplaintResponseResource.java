@@ -16,9 +16,9 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -42,15 +42,15 @@ public class ComplaintResponseResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-            AuthorizationCheckService authorizationCheckService, UserService userService, ComplaintRepository complaintRepository) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, ComplaintRepository complaintRepository) {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -60,7 +60,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
     @PostMapping("/complaint-responses/complaint/{complaintId}/create-lock")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -77,7 +77,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
     @PostMapping("/complaint-responses/complaint/{complaintId}/refresh-lock")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -94,7 +94,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (Ok)
      */
     @DeleteMapping("/complaint-responses/complaint/{complaintId}/remove-lock")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
         log.debug("REST request to remove the lock on the complaint with the id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -110,7 +110,7 @@ public class ComplaintResponseResource {
      * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
     @PutMapping("/complaint-responses/complaint/{complaintId}/resolve")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         getComplaintFromDatabaseAndCheckAccessRights(complaintId);
@@ -129,7 +129,7 @@ public class ComplaintResponseResource {
      */
     // TODO: change URL to /complaint-responses?complaintId={complaintId}
     @GetMapping("/complaint-responses/complaint/{complaintId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
@@ -140,7 +140,7 @@ public class ComplaintResponseResource {
         if (optionalComplaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }
-        var user = userService.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         var complaintResponse = optionalComplaintResponse.get();
         // All tutors and higher can see this, and also the students who first open the complaint
         Participant originalAuthor = complaintResponse.getComplaint().getParticipant();
@@ -190,7 +190,7 @@ public class ComplaintResponseResource {
             throw new IllegalArgumentException("Complaint was not found in database");
         }
         Complaint complaint = complaintFromDatabaseOptional.get();
-        User user = this.userService.getUser();
+        User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!complaintResponseService.isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for modifying the lock on the complaint");
         }

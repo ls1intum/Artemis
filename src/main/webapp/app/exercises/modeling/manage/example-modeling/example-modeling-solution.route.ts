@@ -9,8 +9,7 @@ const routes: Routes = [
         path: ':courseId/modeling-exercises/:exerciseId/example-solution',
         component: ExampleModelingSolutionComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            usePathForBreadcrumbs: true,
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.modelingExercise.exampleSolution',
         },
         canActivate: [UserRouteAccessService],

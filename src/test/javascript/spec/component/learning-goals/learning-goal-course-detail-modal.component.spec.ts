@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -32,7 +32,7 @@ describe('LearningGoalCourseDetailModalComponent', () => {
             imports: [RouterTestingModule.withRoutes([])],
             declarations: [
                 LearningGoalCourseDetailModalComponent,
-                MockPipe(TranslatePipe),
+                MockPipe(ArtemisTranslatePipe),
                 MockDirective(JhiTranslateDirective),
                 MockDirective(JhiSortDirective),
                 MockDirective(JhiSortByDirective),

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.scheduled.quiz;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -36,11 +35,11 @@ final class QuizCache {
 
     private static final String HAZELCAST_CACHED_EXERCISE_UPDATE_TOPIC = Constants.HAZELCAST_QUIZ_PREFIX + "cached-exercise-invalidation";
 
-    private ITopic<QuizExercise> cachedQuizExerciseUpdates;
+    private final ITopic<QuizExercise> cachedQuizExerciseUpdates;
 
-    private IMap<Long, QuizExerciseCache> cachedQuizExercises;
+    private final IMap<Long, QuizExerciseCache> cachedQuizExercises;
 
-    private HazelcastInstance hazelcastInstance;
+    private final HazelcastInstance hazelcastInstance;
 
     public QuizCache(HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
@@ -69,16 +68,6 @@ final class QuizCache {
                 .setEvictionConfig(evictionConfig) //
                 .setCacheLocalEntries(true);
         config.getMapConfig(Constants.HAZELCAST_EXERCISE_CACHE).setNearCacheConfig(nearCacheConfig);
-    }
-
-    /**
-     * Returns all the ids of currently cached quiz exercises.
-     *
-     * @return a snapshot of all ids of cached quiz exercises, cannot be modified
-     * @implNote This is the {@linkplain Map#keySet() key set} of the map of this cache.
-     */
-    Set<Long> getAllCachedQuizExerciseIds() {
-        return cachedQuizExercises.keySet();
     }
 
     /**
@@ -205,7 +194,7 @@ final class QuizCache {
      * Cached data like cached submissions and results will be preserved, if present.
      *
      * @param quizExerciseId the id of the quiz exercise cache to remove
-     * @return
+     * @return the cache entry that was removed in case further processing is necessary
      * @implNote This just removes the {@link QuizExerciseCache} from the cache map
      */
     QuizExerciseCache remove(Long quizExerciseId) {

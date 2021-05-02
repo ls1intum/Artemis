@@ -2,18 +2,18 @@
     "artemisApp": {
         "multipleChoiceQuestion": {
             "home": {
-                "title": "Multiple Choice Questions",
-                "createLabel": "Multiple Choice Question erstellen",
-                "createOrEditLabel": "Multiple Choice Question erstellen oder bearbeiten"
+                "title": "Multiple-Choice Questions",
+                "createLabel": "Multiple-Choice Question erstellen",
+                "createOrEditLabel": "Multiple-Choice Question erstellen oder bearbeiten"
             },
-            "created": "Multiple Choice Question erstellt mit ID {{ param }}",
-            "updated": "Multiple Choice Question aktualisiert mit ID {{ param }}",
-            "deleted": "Multiple Choice Question gelöscht mit ID {{ param }}",
+            "created": "Multiple-Choice Question erstellt mit ID {{ param }}",
+            "updated": "Multiple-Choice Question aktualisiert mit ID {{ param }}",
+            "deleted": "Multiple-Choice Question gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Multiple Choice Question {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Multiple-Choice Question {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Multiple Choice Question"
+                "title": "Multiple-Choice Question"
             },
             "answerOptions": "Antwortmöglichkeiten",
             "randomizeOrder": "Antwortmöglichkeiten in zufälliger Reihenfolge anzeigen",

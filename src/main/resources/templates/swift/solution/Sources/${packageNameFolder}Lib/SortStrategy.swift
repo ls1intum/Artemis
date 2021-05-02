@@ -6,5 +6,5 @@ public protocol SortStrategy {
 
       - Parameter input: list of Dates
      */
-    func performSort(_ input: inout [Date])
+    func performSort(_ input: [Date]) -> [Date]
 }

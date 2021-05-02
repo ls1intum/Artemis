@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
+import java.io.Serial;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +10,7 @@ import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
 
 public class ComplaintResponseLockedException extends BadRequestAlertException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static final String ERROR_KEY = "complaintLock";

@@ -1,31 +1,53 @@
 /* ==========================================================================
 Developement Ribbon
 ========================================================================== */
+.box {
+    position: relative;
+    max-width: 0;
+    width: 90%;
+    height: 0;
+    background: #fff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* common */
 .ribbon {
-    background-color: rgba(170, 0, 0, 0.5);
-    left: -3.5em;
-    -moz-transform: rotate(-45deg);
-    -ms-transform: rotate(-45deg);
-    -o-transform: rotate(-45deg);
-    -webkit-transform: rotate(-45deg);
-    transform: rotate(-45deg);
-    overflow: hidden;
-    position: absolute;
-    top: 40px;
-    white-space: nowrap;
-    width: 15em;
     z-index: 9999;
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    white-space: nowrap;
     pointer-events: none;
+    position: absolute;
     opacity: 0.75;
-    a {
-        color: #fff;
+
+    span {
+        position: absolute;
         display: block;
-        font-weight: 400;
-        margin: 1px 0;
-        padding: 10px 50px;
+        width: 300px;
+        padding: 10px 0;
+        background-color: rgba(170, 0, 0, 0.5);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
         text-align: center;
-        text-decoration: none;
-        text-shadow: 0 0 5px #444;
-        pointer-events: none;
     }
+}
+
+/* top left */
+.ribbon-top-left {
+    top: -20px;
+    left: -20px;
+}
+
+.ribbon-top-left::before,
+.ribbon-top-left::after {
+    border-top-color: transparent;
+    border-left-color: transparent;
+}
+
+.ribbon-top-left span {
+    right: -25px;
+    top: 45px;
+    transform: rotate(-45deg);
 }

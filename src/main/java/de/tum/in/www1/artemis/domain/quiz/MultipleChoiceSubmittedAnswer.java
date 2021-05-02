@@ -12,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
+
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -33,14 +34,8 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
         return selectedOptions;
     }
 
-    public MultipleChoiceSubmittedAnswer addSelectedOptions(AnswerOption answerOption) {
+    public void addSelectedOptions(AnswerOption answerOption) {
         this.selectedOptions.add(answerOption);
-        return this;
-    }
-
-    public MultipleChoiceSubmittedAnswer removeSelectedOptions(AnswerOption answerOption) {
-        this.selectedOptions.remove(answerOption);
-        return this;
     }
 
     public void setSelectedOptions(Set<AnswerOption> answerOptions) {

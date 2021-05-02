@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 import java.util.concurrent.ScheduledFuture;
@@ -21,7 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ExerciseLifecycleService exerciseLifecycleService;
+    private ExerciseLifecycleService exerciseLifecycleService;
 
     @Test
     public void testScheduleExerciseOnReleaseTask() throws InterruptedException {
@@ -103,5 +101,4 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
     private void assertEqual(MutableBoolean testBoolean, boolean expected) {
         assertThat(testBoolean.toBoolean(), is(equalTo(expected)));
     }
-
 }

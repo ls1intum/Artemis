@@ -22,6 +22,7 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSu
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -109,16 +110,16 @@ describe('ParticipationComponent', () => {
         expect(component.formatDate(undefined)).to.equal('');
 
         const momentDate = moment();
-        expect(component.formatDate(momentDate)).to.equal(momentDate.format('MMM DD YYYY, HH:mm:ss'));
+        expect(component.formatDate(momentDate)).to.equal(momentDate.format(defaultLongDateTimeFormat));
 
         const date = new Date();
         const momentFromDate = moment(date);
-        expect(component.formatDate(date)).to.equal(momentFromDate.format('MMM DD YYYY, HH:mm:ss'));
+        expect(component.formatDate(date)).to.equal(momentFromDate.format(defaultLongDateTimeFormat));
     });
 
     it('should format student login or team name from participation', () => {
         const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
-        const participation: StudentParticipation = { student };
+        const participation: StudentParticipation = { id: 123, student };
         expect(component.searchResultFormatter(participation)).to.equal(`${student.login} (${student.name})`);
 
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
@@ -129,13 +130,13 @@ describe('ParticipationComponent', () => {
         // Returns undefined for no student and no team
         participation.student = undefined;
         participation.team = undefined;
-        expect(component.searchResultFormatter(participation)).to.be.undefined;
+        expect(component.searchResultFormatter(participation)).to.equal('123');
     });
 
     it('should return student login, team short name, or empty from participation', () => {
         const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
-        const participation: StudentParticipation = { student, team };
+        const participation: StudentParticipation = { id: 123, student, team };
 
         expect(component.searchTextFromParticipation(participation)).to.be.equal(student.login);
 
@@ -211,6 +212,7 @@ describe('ParticipationComponent', () => {
         } as Exercise;
 
         const participation = {
+            id: 123,
             student: { id: 1 },
             exercise: exercise1,
         } as StudentParticipation;

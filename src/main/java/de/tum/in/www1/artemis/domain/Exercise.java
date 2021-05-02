@@ -22,9 +22,10 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * A Exercise.
+ * An Exercise.
  */
 @Entity
 @Table(name = "exercise")
@@ -188,6 +189,12 @@ public abstract class Exercise extends DomainObject {
 
     @Transient
     private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
+
+    @Transient
+    private Long numberOfParticipationsTransient; // used for instructor exam checklist
+
+    @Transient
+    private Boolean testRunParticipationsExistTransient;
 
     public String getTitle() {
         return title;
@@ -359,14 +366,21 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
-    public Exercise removeParticipation(StudentParticipation participation) {
+    public void removeParticipation(StudentParticipation participation) {
         this.studentParticipations.remove(participation);
         participation.setExercise(null);
-        return this;
     }
 
     public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
         this.studentParticipations = studentParticipations;
+    }
+
+    public Boolean getTestRunParticipationsExist() {
+        return testRunParticipationsExistTransient;
+    }
+
+    public void setTestRunParticipationsExist(Boolean testRunParticipationsExistTransient) {
+        this.testRunParticipationsExistTransient = testRunParticipationsExistTransient;
     }
 
     /**
@@ -433,10 +447,9 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
-    public Exercise removeExampleSubmission(ExampleSubmission exampleSubmission) {
+    public void removeExampleSubmission(ExampleSubmission exampleSubmission) {
         this.exampleSubmissions.remove(exampleSubmission);
         exampleSubmission.setExercise(null);
-        return this;
     }
 
     public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
@@ -476,6 +489,19 @@ public abstract class Exercise extends DomainObject {
         return ZonedDateTime.now().isAfter(getDueDate());
     }
 
+    /**
+     * Checks if the due date is in the future. Returns true, if no due date is set.
+     *
+     * @return true if the due date is in the future, otherwise false
+     */
+    @JsonIgnore
+    public boolean isBeforeDueDate() {
+        if (dueDate == null) {
+            return true;
+        }
+        return ZonedDateTime.now().isBefore(dueDate);
+    }
+
     public Set<LearningGoal> getLearningGoals() {
         return learningGoals;
     }
@@ -484,18 +510,16 @@ public abstract class Exercise extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getExercises().add(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getExercises().remove(this);
-    }
-
     public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
+    }
+
+    public Long getNumberOfParticipations() {
+        return numberOfParticipationsTransient;
+    }
+
+    public void setNumberOfParticipations(Long numberOfParticipationsTransient) {
+        this.numberOfParticipationsTransient = numberOfParticipationsTransient;
     }
 
     /**
@@ -525,6 +549,7 @@ public abstract class Exercise extends DomainObject {
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
      */
+    @Nullable
     public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
@@ -813,10 +838,9 @@ public abstract class Exercise extends DomainObject {
         return gradingCriteria;
     }
 
-    public Exercise addGradingCriteria(GradingCriterion gradingCriterion) {
+    public void addGradingCriteria(GradingCriterion gradingCriterion) {
         this.gradingCriteria.add(gradingCriterion);
         gradingCriterion.setExercise(this);
-        return this;
     }
 
     public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
@@ -826,9 +850,7 @@ public abstract class Exercise extends DomainObject {
     private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
         if (gradingCriteria != null) {
-            this.gradingCriteria.forEach(gradingCriterion -> {
-                gradingCriterion.setExercise(this);
-            });
+            this.gradingCriteria.forEach(gradingCriterion -> gradingCriterion.setExercise(this));
         }
     }
 
@@ -841,6 +863,35 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * Check whether the exercise has either a course or an exerciseGroup.
+     *
+     * @param entityName name of the entity
+     * @throws BadRequestAlertException if course and exerciseGroup are set or course and exerciseGroup are not set
+     */
+    public void checkCourseAndExerciseGroupExclusivity(String entityName) throws BadRequestAlertException {
+        if (isCourseExercise() == isExamExercise()) {
+            throw new BadRequestAlertException("An exercise must have either a course or an exerciseGroup", entityName, "eitherCourseOrExerciseGroupSet");
+        }
+    }
+
+    /**
+     * Return the individual release date for the exercise of the participation's user
+     * <p>
+     * Currently, exercise start dates are the same for all users
+     *
+     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
+     */
+    @JsonIgnore
+    public ZonedDateTime getIndividualReleaseDate() {
+        if (isExamExercise()) {
+            return getExerciseGroup().getExam().getStartDate();
+        }
+        else {
+            return getReleaseDate();
+        }
+    }
+
+    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
@@ -848,7 +899,7 @@ public abstract class Exercise extends DomainObject {
 
         ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
 
-        private String mappedColumnName;
+        private final String mappedColumnName;
 
         ExerciseSearchColumn(String mappedColumnName) {
             this.mappedColumnName = mappedColumnName;

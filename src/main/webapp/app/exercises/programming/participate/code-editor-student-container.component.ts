@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -22,6 +22,8 @@ import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { SubmissionType } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -45,6 +47,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     showEditorInstructions = true;
     latestResult: Result | undefined;
     hasTutorAssessment = false;
+    isIllegalSubmission = false;
 
     constructor(
         private resultService: ResultService,
@@ -71,12 +74,13 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
-                        // (this should match ProgrammingExerciseService.isParticipationRepositoryLocked on the server-side)
+                        // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
                         const dueDateHasPassed = !this.exercise.dueDate || moment(this.exercise.dueDate).isBefore(moment());
                         const isEditingAfterDueAllowed = !this.exercise.buildAndTestStudentSubmissionsAfterDueDate && this.exercise.assessmentType === AssessmentType.AUTOMATIC;
                         this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
-                        this.checkForTutorAssessment();
+                        this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
+                        this.checkForTutorAssessment(dueDateHasPassed);
                     }),
                     switchMap(() => {
                         return this.loadExerciseHints();
@@ -128,9 +132,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                               participation.results![0].feedbacks = feedbacks;
                               return participation;
                           }),
-                          catchError(() => Observable.of(participation)),
+                          catchError(() => of(participation)),
                       )
-                    : Observable.of(participation),
+                    : of(participation),
             ),
         );
     }
@@ -150,7 +154,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     canDeactivate() {
         return this.codeEditorContainer.canDeactivate();
     }
-    checkForTutorAssessment() {
+
+    checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
         if (!!this.latestResult) {
@@ -160,6 +165,17 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
-        this.hasTutorAssessment = isManualResult && hasTutorFeedback;
+        // Also check for assessment due date to never show manual feedback before the deadline
+        this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
+    }
+
+    /**
+     * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
+     */
+    get unreferencedFeedback(): Feedback[] {
+        if (this.latestResult) {
+            return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
+        }
+        return [];
     }
 }

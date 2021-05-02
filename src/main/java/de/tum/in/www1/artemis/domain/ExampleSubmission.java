@@ -10,6 +10,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 
 /**
@@ -67,16 +68,14 @@ public class ExampleSubmission extends DomainObject {
         return tutorParticipations;
     }
 
-    public ExampleSubmission addTutorParticipations(TutorParticipation tutorParticipation) {
+    public void addTutorParticipations(TutorParticipation tutorParticipation) {
         this.tutorParticipations.add(tutorParticipation);
         tutorParticipation.getTrainedExampleSubmissions().add(this);
-        return this;
     }
 
-    public ExampleSubmission removeTutorParticipations(TutorParticipation tutorParticipation) {
+    public void removeTutorParticipations(TutorParticipation tutorParticipation) {
         this.tutorParticipations.remove(tutorParticipation);
         tutorParticipation.getTrainedExampleSubmissions().remove(this);
-        return this;
     }
 
     public void setTutorParticipations(Set<TutorParticipation> tutorParticipations) {

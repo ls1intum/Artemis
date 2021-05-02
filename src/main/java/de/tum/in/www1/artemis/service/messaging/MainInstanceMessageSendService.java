@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.messaging;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +13,7 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
 
     public InstanceMessageReceiveService instanceMessageReceiveService;
 
-    public MainInstanceMessageSendService(@Lazy InstanceMessageReceiveService instanceMessageReceiveService) {
+    public MainInstanceMessageSendService(InstanceMessageReceiveService instanceMessageReceiveService) {
         this.instanceMessageReceiveService = instanceMessageReceiveService;
     }
 
@@ -22,6 +21,12 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     public void sendProgrammingExerciseSchedule(Long exerciseId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processScheduleProgrammingExercise(exerciseId);
+    }
+
+    @Override
+    public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processScheduleProgrammingExerciseCancel(exerciseId);
     }
 
     @Override

@@ -5,7 +5,6 @@ import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { now } from 'moment';
-
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -14,15 +13,24 @@ import { Result } from 'app/entities/result.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, setSubmissionResultByCorrectionRound } from 'app/entities/submission.model';
+import {
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    getSubmissionResultById,
+    setLatestSubmissionResult,
+    setSubmissionResultByCorrectionRound,
+} from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -38,7 +46,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     participation?: StudentParticipation;
     result?: Result;
-    generalFeedback: Feedback;
     unreferencedFeedback: Feedback[];
     complaint?: Complaint;
     totalScore: number;
@@ -54,25 +61,30 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     noNewSubmissions: boolean;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number;
+    resultId: number;
+    loadingInitialSubmission = true;
+    highlightDifferences = false;
 
     /*
      * Non-resetted properties:
      * These properties are not resetted on purpose, as they cannot change between assessments.
      */
     private cancelConfirmationText: string;
+
     // ExerciseId is updated from Route Subscription directly.
     exerciseId: number;
+    courseId: number;
+    examId = 0;
+    exerciseGroupId: number;
+    exerciseDashboardLink: string[];
+    isExamMode = false;
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
     }
 
     private get assessments(): Feedback[] {
-        if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
-        } else {
-            return [...this.referencedFeedback, ...this.unreferencedFeedback];
-        }
+        return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
 
     constructor(
@@ -82,10 +94,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         private route: ActivatedRoute,
         protected jhiAlertService: JhiAlertService,
         protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentsService,
+        protected assessmentsService: TextAssessmentService,
         private complaintService: ComplaintService,
         translateService: TranslateService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
+        private submissionService: SubmissionService,
     ) {
         super(jhiAlertService, accountService, assessmentsService, structuredGradingCriterionService);
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -102,7 +115,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.submission = undefined;
         this.exercise = undefined;
         this.result = undefined;
-        this.generalFeedback = new Feedback();
         this.unreferencedFeedback = [];
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
@@ -118,6 +130,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.isAtLeastInstructor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.highlightDifferences = false;
     }
 
     /**
@@ -130,12 +143,23 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
 
-        this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
+        this.activatedRoute.paramMap.subscribe((paramMap) => {
+            this.exerciseId = Number(paramMap.get('exerciseId'));
+            this.resultId = Number(paramMap.get('resultId')) ?? 0;
+            this.courseId = Number(paramMap.get('courseId'));
+            if (paramMap.has('examId')) {
+                this.examId = Number(paramMap.get('examId'));
+                this.exerciseGroupId = Number(paramMap.get('exerciseGroupId'));
+                this.isExamMode = true;
+            }
+            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
+        });
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         this.resetComponent();
+        this.loadingInitialSubmission = false;
 
         if (studentParticipation == undefined) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
@@ -147,7 +171,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.submission = this.participation!.submissions![0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-        this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+
+        if (this.resultId > 0) {
+            this.result = getSubmissionResultById(this.submission, this.resultId);
+            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
+        } else {
+            this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        }
 
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 
@@ -161,13 +191,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         // track feedback in athene
         this.assessmentsService.trackAssessment(this.submission, 'start');
+
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
     }
 
     private updateUrlIfNeeded() {
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(['course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
+                .createUrlTree(getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.submission!.id!, this.examId, this.exerciseGroupId))
                 .toString();
             this.location.go(newUrl);
         }
@@ -251,10 +283,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Go to next submission
      */
     async nextSubmission(): Promise<void> {
+        const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, 'new', this.examId, this.exerciseGroupId);
         this.nextSubmissionBusy = true;
-        await this.router.navigate(['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment'], {
-            queryParams: { 'correction-round': this.correctionRound },
-        });
+        await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
 
     /**
@@ -263,14 +294,29 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     async navigateToConflictingSubmissions(feedbackId: number): Promise<void> {
         const tempSubmission = this.submission!;
-        getLatestSubmissionResult(tempSubmission)!.completionDate = undefined;
-        getLatestSubmissionResult(tempSubmission)!.submission = undefined;
-        getLatestSubmissionResult(tempSubmission)!.participation = undefined;
+        const latestSubmissionResult = getLatestSubmissionResult(tempSubmission)!;
+        latestSubmissionResult.completionDate = undefined;
+        latestSubmissionResult.submission = undefined;
+        latestSubmissionResult.participation = undefined;
+
+        const url = !this.isExamMode
+            ? ['/course-management', this.courseId, 'text-exercises', this.exerciseId, 'submissions', this.submission!.id, 'text-feedback-conflict', feedbackId]
+            : [
+                  '/course-management',
+                  this.courseId,
+                  'exams',
+                  this.examId,
+                  'exercise-groups',
+                  this.exerciseGroupId,
+                  'text-exercises',
+                  this.exerciseId,
+                  'submissions',
+                  this.submission!.id,
+                  'text-feedback-conflict',
+                  feedbackId,
+              ];
         const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
-        await this.router.navigate(
-            ['/course-management', this.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'text-feedback-conflict', feedbackId],
-            navigationExtras,
-        );
+        await this.router.navigate(url, navigationExtras);
     }
 
     /**
@@ -308,13 +354,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Validate the feedback of the assessment
      */
     validateFeedback(): void {
-        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasUnreferencedFeedback = this.unreferencedFeedback.filter(Feedback.isPresent).length > 0;
-        const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
-
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
+        const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        // When unreferenced feedback is set, it has to be valid (score + detailed text)
+        this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
 
         this.totalScore = this.computeTotalScore(this.assessments);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {
@@ -323,15 +369,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         const feedbacks = this.result.feedbacks || [];
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
-        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
-        if (generalFeedbackIndex !== -1) {
-            this.generalFeedback = feedbacks[generalFeedbackIndex];
-            feedbacks.splice(generalFeedbackIndex, 1);
-        } else {
-            this.generalFeedback = new Feedback();
-        }
 
-        const matchBlocksWithFeedbacks = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 

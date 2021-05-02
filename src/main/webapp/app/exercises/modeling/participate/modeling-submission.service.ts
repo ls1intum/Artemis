@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { map } from 'rxjs/operators';
 
@@ -90,14 +90,17 @@ export class ModelingSubmissionService {
     /**
      * Get a submission with given Id
      * @param {number} submissionId - Id of the submission
-     * @param {correctionRound}
-
+     * @param correctionRound
+     * @param resultId
      */
-    getSubmission(submissionId: number, correctionRound = 0): Observable<ModelingSubmission> {
+    getSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<ModelingSubmission> {
         const url = `api/modeling-submissions/${submissionId}`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
+        }
+        if (resultId && resultId > 0) {
+            params = params.set('resultId', resultId.toString());
         }
         return this.http.get<ModelingSubmission>(url, { params });
     }

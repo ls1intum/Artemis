@@ -25,14 +25,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         this.textExerciseRepository = textExerciseRepository;
     }
 
-    @Override
-    public Exercise importExercise(Exercise templateExercise, Exercise importedExercise) {
-        if (templateExercise instanceof TextExercise && importedExercise instanceof TextExercise) {
-            return importTextExercise((TextExercise) templateExercise, (TextExercise) importedExercise);
-        }
-        return null;
-    }
-
     /**
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
@@ -43,7 +35,8 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    private TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
+    @NotNull
+    public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         TextExercise newExercise = copyTextExerciseBasis(importedExercise);
         textExerciseRepository.save(newExercise);
@@ -84,7 +77,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newTextBlock.setStartIndex(originalTextBlock.getStartIndex());
             newTextBlock.setSubmission(newSubmission);
             newTextBlock.setText(originalTextBlock.getText());
-
+            newTextBlock.computeId();
             textBlockRepository.save(newTextBlock);
             newTextBlocks.add(newTextBlock);
         }
@@ -135,8 +128,8 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
-            newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
+            newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
             newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
         }

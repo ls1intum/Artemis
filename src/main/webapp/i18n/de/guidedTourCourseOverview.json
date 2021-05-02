@@ -20,7 +20,7 @@
             },
             "notificationMenu": {
                 "headline": "Deine Benachrichtigungen",
-                "content": "In diesem Dropdown kannst du die Benachrichtungen über neue Übungen einsehen."
+                "content": "In diesem Dropdown kannst du die Benachrichtigungen über neue Übungen einsehen."
             },
             "accountMenuClick": {
                 "headline": "Persönliche Einstellungen",
@@ -49,7 +49,7 @@
             "contact": {
                 "headline": "Kontaktiere das Artemis Team",
                 "content": "Du kannst dich gerne an uns wenden, um Feedback zu hinterlassen, neue Features vorzuschlagen oder Fehler zu melden.",
-                "hint": "Wenn du einen Beitrag zu Artemis leisten willst, dann schaue auf unserer <a href='https://github.com/ls1intum/ArTEMiS' target='_blank'>Github Seite</a> vorbei und erstelle deinen ersten Pull Request."
+                "hint": "Wenn du einen Beitrag zu Artemis leisten willst, dann schaue auf unserer <a href='https://github.com/ls1intum/Artemis' target='_blank'>Github Seite</a> vorbei und erstelle deinen ersten Pull Request."
             }
         }
     }

@@ -2,12 +2,12 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Assessment",
+            "assessmentIllegalSubmission": "Warning: You are viewing an illegal submission.",
             "testRunAssessment": "Test Run Assessment",
-            "generalFeedback": "General Feedback",
-            "unreferencedFeedback": "Feedback for Missing Elements",
+            "additionalFeedback": "Additional feedback",
+            "feedback": "Feedback",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
-                "moreThanOneGeneralFeedback": "There cannot be more than one general Feedback per Assessment.",
                 "assessmentDueDateOver": "The assessment due date of this exercise is over."
             },
             "assessmentLocked": "Assessment locked by: {{otherUser}}",
@@ -17,6 +17,14 @@
             "moreFeedbackRequest": "You have to respond to the feedback request.",
             "assessmentReadOnlyHandledComplaint": "The complaint about your assessment has been resolved.",
             "assessmentDueDateIsOver": "Assessment Due Date is over, the assessment will be published immediately after submitting",
+            "diffView": {
+                "differenceActivate": "Activate Diff View",
+                "differenceDeactivate": "Deactivate Diff View",
+                "highlightAssessmentDiffTooltipOn": "Highlight the correction round in which the feedback was created or modified",
+                "highlightAssessmentDiffTooltipOff": "Deactivate highlighting of correction rounds",
+                "correctionRoundDiffFirst": "First correction round",
+                "correctionRoundDiffSecond": "Second correction round"
+            },
             "button": {
                 "overrideAssessment": "Override Assessment",
                 "nextSubmission": "Assess Next Submission",
@@ -49,7 +57,8 @@
                     "assessmentType": "Assessment Type",
                     "student": "Student",
                     "assessor": "Reviewer",
-                    "action": "Assessment",
+                    "assessors": "Reviewers",
+                    "action": "Assessment Actions",
                     "assessmentFirst": "Correction Round 1",
                     "assessmentSecond": "Correction Round 2"
                 },
@@ -71,6 +80,7 @@
                     "title": "Locked Assessments"
                 },
                 "title": "Assessments locked by you",
+                "titleAll": "All locked assessments",
                 "exercise": "Exercise",
                 "type": "Type",
                 "empty": "No assessments locked by you!"

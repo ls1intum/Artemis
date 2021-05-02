@@ -3,7 +3,8 @@ import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/tex
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
+import { stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
@@ -23,21 +24,24 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TextBlock } from 'app/entities/text-block.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
+import { RouterTestingModule } from '@angular/router/testing';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
-    let textAssessmentsService: TextAssessmentsService;
+    let textAssessmentService: TextAssessmentService;
+    let submissionService: SubmissionService;
 
     const exercise = {
         id: 20,
@@ -102,7 +106,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
     const route = ({
         snapshot: { path: '' },
-        paramMap: Observable.of(
+        paramMap: of(
             convertToParamMap({
                 exerciseId: '1',
             }),
@@ -110,7 +114,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         queryParams: of({
             testRun: 'false',
         }),
-        data: Observable.of({
+        data: of({
             studentParticipation: participation,
         }),
     } as unknown) as ActivatedRoute;
@@ -123,8 +127,8 @@ describe('TextSubmissionAssessmentComponent', () => {
                 AssessmentInstructionsModule,
                 TranslateModule.forRoot(),
                 ArtemisConfirmIconModule,
-                RouterModule,
                 TextSharedModule,
+                RouterTestingModule,
             ],
             declarations: [
                 TextSubmissionAssessmentComponent,
@@ -147,6 +151,8 @@ describe('TextSubmissionAssessmentComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
+        submissionService = TestBed.inject(SubmissionService);
+
         fixture.detectChanges();
     });
 
@@ -181,8 +187,10 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should save the assessment with correct parameters', function () {
-        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
+        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+
         fixture.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
@@ -191,7 +199,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        spyOn(textAssessmentsService, 'save').and.returnValue(
+        spyOn(textAssessmentService, 'save').and.returnValue(
             of(
                 new HttpResponse({
                     body: result,
@@ -201,12 +209,13 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.validateFeedback();
         component.save();
-        expect(textAssessmentsService.save).toHaveBeenCalledWith(
+        expect(textAssessmentService.save).toHaveBeenCalledWith(
             exercise.id!,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
+        expect(handleFeedbackStub).toHaveBeenCalled();
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {
@@ -220,13 +229,14 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should send update when complaint resolved and assessments are valid', () => {
-        const generalFeedback = new Feedback();
-        generalFeedback.credits = 5;
-        generalFeedback.detailText = 'gj';
-        generalFeedback.id = 1;
-        component.generalFeedback = generalFeedback;
-        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
-        spyOn(textAssessmentsService, 'updateAssessmentAfterComplaint').and.returnValue(
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 5;
+        unreferencedFeedback.detailText = 'gj';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        unreferencedFeedback.id = 1;
+        component.unreferencedFeedback = [unreferencedFeedback];
+        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        spyOn(textAssessmentService, 'updateAssessmentAfterComplaint').and.returnValue(
             of(
                 new HttpResponse({
                     body: new Result(),
@@ -237,10 +247,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
         component.updateAssessmentAfterComplaint(complaintResponse);
-        expect(textAssessmentsService.updateAssessmentAfterComplaint).toHaveBeenCalled();
+        expect(textAssessmentService.updateAssessmentAfterComplaint).toHaveBeenCalled();
     });
     it('should submit the assessment with correct parameters', function () {
-        textAssessmentsService = fixture.debugElement.injector.get(TextAssessmentsService);
+        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
 
@@ -250,7 +260,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.detailText = 'my feedback';
         textBlockRef.feedback!.credits = 42;
 
-        spyOn(textAssessmentsService, 'submit').and.returnValue(
+        spyOn(textAssessmentService, 'submit').and.returnValue(
             of(
                 new HttpResponse({
                     body: result,
@@ -260,7 +270,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.validateFeedback();
         component.submit();
-        expect(textAssessmentsService.submit).toHaveBeenCalledWith(
+        expect(textAssessmentService.submit).toHaveBeenCalledWith(
             exercise.id!,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],

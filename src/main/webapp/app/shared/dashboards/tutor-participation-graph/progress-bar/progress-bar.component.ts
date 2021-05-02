@@ -1,14 +1,18 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
     selector: 'jhi-progress-bar',
     templateUrl: './progress-bar.component.html',
 })
-export class ProgressBarComponent {
+export class ProgressBarComponent implements OnInit {
     @Input() public tooltip: string;
     @Input() public percentage: number;
     @Input() public numerator: number;
     @Input() public denominator: number;
+
+    ngOnInit() {
+        this.percentage = Math.round(this.percentage);
+    }
 
     /**
      * Function to render the correct progress bar class

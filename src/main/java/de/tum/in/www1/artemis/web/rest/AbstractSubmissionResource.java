@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -7,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -20,25 +24,26 @@ public abstract class AbstractSubmissionResource {
 
     protected final ResultService resultService;
 
-    protected final ParticipationService participationService;
-
     protected final AuthorizationCheckService authCheckService;
 
-    protected final UserService userService;
+    protected final UserRepository userRepository;
 
-    protected final ExerciseService exerciseService;
+    protected final ExerciseRepository exerciseRepository;
 
     protected final SubmissionService submissionService;
 
-    public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, SubmissionService submissionService) {
+    protected final StudentParticipationRepository studentParticipationRepository;
+
+    public AbstractSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            UserRepository userRepository, ExerciseRepository exerciseRepository, SubmissionService submissionService,
+            StudentParticipationRepository studentParticipationRepository) {
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
-        this.exerciseService = exerciseService;
-        this.participationService = participationService;
+        this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.submissionService = submissionService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -51,16 +56,16 @@ public abstract class AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
     protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, int correctionRound) {
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (assessedByTutor) {
             if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-                throw new AccessForbiddenException("You are not allowed to access this resource");
+                throw new AccessForbiddenException(NOT_ALLOWED);
             }
         }
         else if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
 
         final boolean examMode = exercise.isExamExercise();

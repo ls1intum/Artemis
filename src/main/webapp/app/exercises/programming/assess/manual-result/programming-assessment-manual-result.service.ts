@@ -6,6 +6,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentManualResultService {
@@ -30,7 +31,7 @@ export class ProgrammingAssessmentManualResultService {
         const copy = this.resultService.convertDateFromClient(result);
         return this.http
             .put<Result>(url, copy, { params, observe: 'response' })
-            .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.resultService.convertDateFromServer(res)));
     }
 
     /**

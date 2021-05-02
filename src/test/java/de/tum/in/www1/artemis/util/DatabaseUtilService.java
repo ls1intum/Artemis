@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -35,14 +37,18 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /** Service responsible for initializing the database with specific testdata for a testscenario */
@@ -55,123 +61,127 @@ public class DatabaseUtilService {
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
-    private static final Authority userAuthority = new Authority(AuthoritiesConstants.USER);
+    private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
 
-    private static final Authority tutorAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+    private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
-    private static final Authority instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
+    private static final Authority editorAuthority = new Authority(Role.EDITOR.getAuthority());
 
-    private static final Authority adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
+    private static final Authority instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
+
+    private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
 
     private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 
     private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
 
-    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority);
+    private static final Set<Authority> editorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority);
 
-    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
+    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
 
-    @Autowired
-    CourseRepository courseRepo;
-
-    @Autowired
-    LectureRepository lectureRepo;
+    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    AttachmentRepository attachmentRepo;
+    private LectureRepository lectureRepo;
 
     @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ExerciseRepository exerciseRepo;
 
     @Autowired
-    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
+    private AttachmentRepository attachmentRepo;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    ExerciseHintRepository exerciseHintRepository;
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
-    UserRepository userRepo;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    TeamRepository teamRepo;
+    private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    ResultRepository resultRepo;
+    private UserRepository userRepo;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepo;
+    private TeamRepository teamRepo;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
+    private ResultRepository resultRepo;
 
     @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
+    private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
+    private PlagiarismResultRepository plagiarismResultRepo;
 
     @Autowired
-    ModelingSubmissionRepository modelingSubmissionRepo;
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepo;
 
     @Autowired
-    TextSubmissionRepository textSubmissionRepo;
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
 
     @Autowired
-    TextBlockRepository textBlockRepo;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepo;
 
     @Autowired
-    FileUploadSubmissionRepository fileUploadSubmissionRepo;
+    private ModelingSubmissionRepository modelingSubmissionRepo;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private TextSubmissionRepository textSubmissionRepo;
 
     @Autowired
-    SubmissionVersionRepository submissionVersionRepository;
+    private ParticipationService participationService;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepo;
+    private TextBlockRepository textBlockRepo;
 
     @Autowired
-    FeedbackRepository feedbackRepo;
+    private FileUploadSubmissionRepository fileUploadSubmissionRepo;
 
     @Autowired
-    ComplaintRepository complaintRepo;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    ComplaintResponseRepository complaintResponseRepo;
+    private ProgrammingSubmissionRepository programmingSubmissionRepo;
 
     @Autowired
-    ExampleSubmissionRepository exampleSubmissionRepo;
+    private FeedbackRepository feedbackRepo;
 
     @Autowired
-    TutorParticipationRepository tutorParticipationRepo;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    StudentQuestionRepository studentQuestionRepository;
+    private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
-    ModelingSubmissionService modelSubmissionService;
+    private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
-    AssessmentService assessmentService;
+    private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    ProgrammingExerciseTestRepository programmingExerciseTestRepository;
+    private StudentQuestionRepository studentQuestionRepository;
+
+    @Autowired
+    private ModelingSubmissionService modelSubmissionService;
+
+    @Autowired
+    private AssessmentService assessmentService;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
-    ObjectMapper mapper;
-
-    @Autowired
-    GroupNotificationRepository groupNotificationRepository;
+    private ObjectMapper mapper;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -183,6 +193,27 @@ public class DatabaseUtilService {
     private ExamRepository examRepository;
 
     @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
+    private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private VideoUnitRepository videoUnitRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
@@ -190,6 +221,10 @@ public class DatabaseUtilService {
 
     @Value("${info.guided-tour.course-group-tutors:#{null}}")
     private Optional<String> tutorialGroupTutors;
+
+    // TODO: Research what we have to do here
+    @Value("${info.guided-tour.course-group-editors:#{null}}")
+    private Optional<String> tutorialGroupEditors;
 
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
@@ -220,14 +255,16 @@ public class DatabaseUtilService {
      *
      * @param numberOfStudents    the number of students that will be added to the database
      * @param numberOfTutors      the number of tutors that will be added to the database
+     * @param numberOfEditors     the number of editors that will be added to the database
      * @param numberOfInstructors the number of instructors that will be added to the database
      */
-    public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
+    public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
 
         authorityRepository.saveAll(adminAuthorities);
 
         List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, studentAuthorities, numberOfStudents);
         List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
+        List<User> editors = ModelFactory.generateActivatedUsers("editor", new String[] { "editor", "testgroup" }, editorAuthorities, numberOfEditors);
         List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
         User admin = ModelFactory.generateActivatedUser("admin");
         admin.setGroups(Set.of("admin"));
@@ -235,14 +272,16 @@ public class DatabaseUtilService {
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
+        usersToAdd.addAll(editors);
         usersToAdd.addAll(instructors);
         usersToAdd.add(admin);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
+        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
         final var users = new ArrayList<>(students);
         users.addAll(tutors);
+        users.addAll(editors);
         users.addAll(instructors);
         users.add(admin);
         return users;
@@ -289,7 +328,7 @@ public class DatabaseUtilService {
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
-            studentParticipation = studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+            studentParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
         }
         else {
             studentParticipation = storedParticipation.get();
@@ -312,7 +351,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -325,8 +364,97 @@ public class DatabaseUtilService {
     }
 
     public Course createCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Course course = createCourse();
+        Set<Organization> organizations = new HashSet<>();
+        Organization organization = createOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        organizations.add(organization);
+        course.setOrganizations(organizations);
+        return courseRepo.save(course);
+    }
+
+    public Course createCourseWithOrganizations() {
+        return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
+    }
+
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
+        return exerciseRepo.save(textExercise);
+    }
+
+    public Team createTeam(Set<User> students, User owner, Exercise exercise, String teamName) {
+        Team team = new Team();
+        for (User student : students) {
+            team.addStudents(student);
+        }
+        team.setOwner(owner);
+        team.setShortName(teamName);
+        team.setName(teamName);
+        team.setExercise(exercise);
+        return teamRepo.saveAndFlush(team);
+    }
+
+    public TextExercise createTeamTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+        TextExercise teamTextExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        teamTextExercise.setMaxPoints(10.0);
+        teamTextExercise.setBonusPoints(0.0);
+        teamTextExercise.setMode(ExerciseMode.TEAM);
+        return exerciseRepo.save(teamTextExercise);
+    }
+
+    public Result createParticipationSubmissionAndResult(long exerciseId, Participant participant, Double points, Double bonusPoints, long scoreAwarded, boolean rated) {
+        Exercise exercise = exerciseRepo.findById(exerciseId).get();
+        if (!exercise.getMaxPoints().equals(points)) {
+            exercise.setMaxPoints(points);
+        }
+        if (!exercise.getBonusPoints().equals(bonusPoints)) {
+            exercise.setBonusPoints(bonusPoints);
+        }
+        exercise = exerciseRepo.saveAndFlush(exercise);
+        StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
+        return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
+    }
+
+    public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
+        Exercise exercise = studentParticipation.getExercise();
+        Submission submission;
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
+            submission = new ModelingSubmission();
+        }
+        else if (exercise instanceof TextExercise) {
+            submission = new TextSubmission();
+        }
+        else if (exercise instanceof FileUploadExercise) {
+            submission = new FileUploadSubmission();
+        }
+        else if (exercise instanceof QuizExercise) {
+            submission = new QuizSubmission();
+        }
+        else {
+            throw new RuntimeException("Unsupported exercise type: " + exercise);
+        }
+
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission = submissionRepository.saveAndFlush(submission);
+
+        Result result = ModelFactory.generateResult(rated, scoreAwarded);
+        result.setParticipation(studentParticipation);
+        result.setSubmission(submission);
+        result.completionDate(ZonedDateTime.now());
+        submission.addResult(result);
+        submission = submissionRepository.saveAndFlush(submission);
+        submission.getResults().get(0);
+        return submission.getResults().get(0);
     }
 
     public Course createCourseWithExamAndExerciseGroupAndExercises(User user, ZonedDateTime visible, ZonedDateTime start, ZonedDateTime end) {
@@ -345,13 +473,64 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
+        Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        VideoUnit videoUnit = createVideoUnit();
+        TextUnit textUnit = createTextUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit();
+        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
+        return courses;
+    }
+
+    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
+        Lecture l = lectureRepo.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        for (LectureUnit lectureUnit : lectureUnits) {
+            l.addLectureUnit(lectureUnit);
+        }
+        return lectureRepo.save(l);
+    }
+
+    public ExerciseUnit createExerciseUnit(Exercise exercise) {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setExercise(exercise);
+        return exerciseUnitRepository.save(exerciseUnit);
+    }
+
+    public AttachmentUnit createAttachmentUnit() {
+        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    public TextUnit createTextUnit() {
+        TextUnit textUnit = new TextUnit();
+        textUnit.setContent("Lorem Ipsum");
+        return textUnitRepository.save(textUnit);
+    }
+
+    public VideoUnit createVideoUnit() {
+        VideoUnit videoUnit = new VideoUnit();
+        videoUnit.setDescription("Lorem Ipsum");
+        videoUnit.setSource("Some URL");
+        return videoUnitRepository.save(videoUnit);
+    }
+
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
@@ -436,9 +615,9 @@ public class DatabaseUtilService {
             Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
             Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
 
-            Result result1 = ModelFactory.generateResult(true, 10);
-            Result result2 = ModelFactory.generateResult(true, 12);
-            Result result3 = ModelFactory.generateResult(false, 0);
+            Result result1 = ModelFactory.generateResult(true, 10D);
+            Result result2 = ModelFactory.generateResult(true, 12D);
+            Result result3 = ModelFactory.generateResult(false, 0D);
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
@@ -497,7 +676,7 @@ public class DatabaseUtilService {
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion1);
         studentQuestions.add(studentQuestion1);
 
@@ -505,7 +684,7 @@ public class DatabaseUtilService {
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion2);
         studentQuestions.add(studentQuestion2);
 
@@ -517,7 +696,7 @@ public class DatabaseUtilService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
@@ -538,7 +717,7 @@ public class DatabaseUtilService {
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion1);
         studentQuestions.add(studentQuestion1);
 
@@ -546,7 +725,7 @@ public class DatabaseUtilService {
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion2);
         studentQuestions.add(studentQuestion2);
 
@@ -554,7 +733,7 @@ public class DatabaseUtilService {
         studentQuestion3.setLecture(lecture);
         studentQuestion3.setQuestionText("Test Student Question 3");
         studentQuestion3.setVisibleForStudents(true);
-        studentQuestion3.setAuthor(getUserByLogin("student1"));
+        studentQuestion3.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         studentQuestionRepository.save(studentQuestion3);
         studentQuestions.add(studentQuestion3);
 
@@ -562,15 +741,15 @@ public class DatabaseUtilService {
         studentQuestion4.setLecture(lecture);
         studentQuestion4.setQuestionText("Test Student Question 4");
         studentQuestion4.setVisibleForStudents(true);
-        studentQuestion4.setAuthor(getUserByLogin("student2"));
+        studentQuestion4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         studentQuestionRepository.save(studentQuestion4);
-        studentQuestions.add(studentQuestion2);
+        studentQuestions.add(studentQuestion4);
 
         return studentQuestions;
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
@@ -625,23 +804,23 @@ public class DatabaseUtilService {
         participationProgramming = studentParticipationRepo.save(participationProgramming);
 
         // Setup results
-        Result resultModeling = ModelFactory.generateResult(true, 10);
+        Result resultModeling = ModelFactory.generateResult(true, 10D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
-        Result resultText = ModelFactory.generateResult(true, 12);
+        Result resultText = ModelFactory.generateResult(true, 12D);
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
-        Result resultFileUpload = ModelFactory.generateResult(true, 0);
+        Result resultFileUpload = ModelFactory.generateResult(true, 0D);
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
-        Result resultQuiz = ModelFactory.generateResult(true, 0);
+        Result resultQuiz = ModelFactory.generateResult(true, 0D);
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
-        Result resultProgramming = ModelFactory.generateResult(true, 20);
+        Result resultProgramming = ModelFactory.generateResult(true, 20D);
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
@@ -732,6 +911,15 @@ public class DatabaseUtilService {
         studentParticipationRepo.save(participationProgramming);
 
         return courseSaved;
+    }
+
+    public Organization createOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        Organization organization = ModelFactory.generateOrganization(name, shortName, url, description, logoUrl, emailPattern);
+        return organizationRepository.save(organization);
+    }
+
+    public Organization createOrganization() {
+        return createOrganization("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
@@ -960,7 +1148,7 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise) {
+    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
         ModelFactory.generateExerciseGroup(true, initialExam); // text
         ModelFactory.generateExerciseGroup(true, initialExam); // modeling
         initialExam.setNumberOfExercisesInExam(2);
@@ -993,6 +1181,17 @@ public class DatabaseUtilService {
             addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));
         }
+
+        if (withQuizExercise) {
+            ModelFactory.generateExerciseGroup(true, exam); // modeling
+            exam.setNumberOfExercisesInExam(3 + (withProgrammingExercise ? 1 : 0));
+            exam = examRepository.save(exam);
+            var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
+            // Programming exercises need a proper setup for 'prepare exam start' to work
+            QuizExercise quizExercise = createQuizForExam(exerciseGroup3);
+            exerciseRepo.save(quizExercise);
+            exerciseGroup3.setExercises(Set.of(quizExercise));
+        }
         return exam;
     }
 
@@ -1004,7 +1203,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (storedParticipation.isEmpty()) {
             User user = getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -1012,10 +1211,10 @@ public class DatabaseUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
         }
-        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
     /**
@@ -1026,7 +1225,7 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
         if (storedParticipation.isEmpty()) {
             Team team = teamRepo.findById(teamId).orElseThrow();
             StudentParticipation participation = new StudentParticipation();
@@ -1034,10 +1233,10 @@ public class DatabaseUtilService {
             participation.setParticipant(team);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
+            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
-        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+        return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
@@ -1051,7 +1250,7 @@ public class DatabaseUtilService {
         participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
     public ProgrammingExerciseStudentParticipation addTeamParticipationForProgrammingExercise(ProgrammingExercise exercise, Team team) {
@@ -1065,7 +1264,7 @@ public class DatabaseUtilService {
         participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URL localRepoPath) {
@@ -1078,7 +1277,7 @@ public class DatabaseUtilService {
         participation.setRepositoryUrl(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
     private ProgrammingExerciseStudentParticipation configureIndividualParticipation(ProgrammingExercise exercise, String login) {
@@ -1128,8 +1327,14 @@ public class DatabaseUtilService {
         return programmingExerciseRepository.save(exercise);
     }
 
+    public Result addResultToParticipation(AssessmentType type, ZonedDateTime completionDate, Participation participation, boolean successful, boolean rated, double score) {
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(successful).rated(rated).score(score).assessmentType(type)
+                .completionDate(completionDate);
+        return resultRepo.save(result);
+    }
+
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).rated(true).score(100L).assessmentType(assessmentType)
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).rated(true).score(100D).assessmentType(assessmentType)
                 .completionDate(completionDate);
         return resultRepo.save(result);
     }
@@ -1142,7 +1347,7 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(false).score(100L);
+        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).score(100D);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -1157,6 +1362,18 @@ public class DatabaseUtilService {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
+        result.addFeedbacks(feedbacks);
+        return resultRepo.save(result);
+    }
+
+    public Result addVariousVisibilityFeedbackToResults(Result result) {
+        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE));
+        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("never1").visibility(Visibility.NEVER));
+        Feedback feedback3 = feedbackRepo.save(new Feedback().detailText("always1").visibility(Visibility.ALWAYS));
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(feedback1);
+        feedbacks.add(feedback2);
+        feedbacks.add(feedback3);
         result.addFeedbacks(feedbacks);
         return resultRepo.save(result);
     }
@@ -1183,7 +1400,7 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Long score, boolean rated,
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Double score, boolean rated,
             ZonedDateTime completionDate) {
         Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).resultString(resultString).score(score).rated(rated)
                 .completionDate(completionDate);
@@ -1196,14 +1413,14 @@ public class DatabaseUtilService {
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
-        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100L, true, null);
+        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100D, true, null);
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100L, true, ZonedDateTime.now());
+        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100D, true, ZonedDateTime.now());
     }
 
-    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
         return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
     }
 
@@ -1246,7 +1463,7 @@ public class DatabaseUtilService {
     public Course addCourseWithOneModelingExercise(String title) {
         long currentCourseRepoSize = courseRepo.count();
         long currentExerciseRepoSize = exerciseRepo.count();
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
@@ -1269,7 +1486,7 @@ public class DatabaseUtilService {
      * @return A course with one specified text exercise
      */
     public Course addCourseWithOneReleasedTextExercise(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
@@ -1344,7 +1561,7 @@ public class DatabaseUtilService {
     }
 
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
@@ -1377,7 +1594,7 @@ public class DatabaseUtilService {
     }
 
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
@@ -1413,7 +1630,7 @@ public class DatabaseUtilService {
         long numberOfCourses = courseRepo.count();
         long numberOfExercises = exerciseRepo.count();
 
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         TextExercise finishedTextExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
@@ -1427,7 +1644,7 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithDifferentModelingExercises() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         classExercise.setTitle("ClassDiagram");
         course.addExercises(classExercise);
@@ -1454,7 +1671,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
         exerciseRepo.save(finishedExercise);
-        Course storedCourse = courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+        Course storedCourse = courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises.size()).as("five exercises got stored").isEqualTo(5);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
@@ -1470,11 +1687,11 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
-        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage);
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
-        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
@@ -1501,7 +1718,7 @@ public class DatabaseUtilService {
      * @return A course with named exercise
      */
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle) {
-        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
@@ -1515,11 +1732,7 @@ public class DatabaseUtilService {
 
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
-        return courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
-    }
-
-    private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName) {
-        populateProgrammingExercise(programmingExercise, shortName, "Programming", false);
+        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
@@ -1571,7 +1784,7 @@ public class DatabaseUtilService {
      * @return A empty course
      */
     public Course addEmptyCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
         return course;
@@ -1582,7 +1795,7 @@ public class DatabaseUtilService {
      */
     public Course addTutorialCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
-                tutorialGroupInstructors.get());
+                tutorialGroupEditors.get(), tutorialGroupInstructors.get());
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
         return course;
@@ -1593,7 +1806,7 @@ public class DatabaseUtilService {
      * @return A course that is added in other group different from the group that created in beforeEach() method
      */
     public Course addCourseInOtherInstructionGroupAndExercise(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "other-instructors");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
 
@@ -1635,11 +1848,11 @@ public class DatabaseUtilService {
 
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
         testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Context]").weight(2.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(3.0).active(true).exercise(programmingExercise).bonusMultiplier(1D).bonusPoints(0D)
-                .afterDueDate(false));
+                .visibility(Visibility.ALWAYS));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -1682,25 +1895,24 @@ public class DatabaseUtilService {
 
     /**
      * @param programmingExerciseTitle The title of the programming exercise
-     * @return A Course with named programming exercise and test cases
      */
-    public Course addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
+    public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
         Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
 
         addTestCasesToProgrammingExercise(programmingExercise);
 
-        return courseRepo.findById(course.getId()).get();
+        courseRepo.findById(course.getId()).get();
     }
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D).bonusPoints(0D));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).afterDueDate(false).bonusMultiplier(1D)
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
                 .bonusPoints(0D));
-        testCases.add(
-                new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).afterDueDate(true).bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
+                .bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).visibility(Visibility.AFTER_DUE_DATE)
+                .bonusMultiplier(1D).bonusPoints(0D));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -1708,7 +1920,7 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithModelingAndTextExercise() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle("Modeling");
         course.addExercises(modelingExercise);
@@ -1722,7 +1934,7 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle("Modeling");
@@ -1744,7 +1956,7 @@ public class DatabaseUtilService {
     }
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
@@ -1773,6 +1985,124 @@ public class DatabaseUtilService {
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
         return courseRepoContent.get(0);
+    }
+
+    /** With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text exercises in a cyclic manner.
+     *
+     * @param numberOfExercises             - number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated. (thats why there is the %3 check)
+     * @param numberOfSubmissionPerExercise - for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8 submissions will be created.
+     * @param numberOfAssessments           - generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set numberOfAssessments to 2, for each exercise 2 assessmetns will be created.
+     *                                          In total there will be 4 assessments then. (by two different tutors, as each exercise is assesssed by an individual tutor. There are 4 tutors that create assessments)
+     * @param numberOfComplaints            - generates the complaints for assessments, in the same way as results are created.
+     * @param typeComplaint                 - true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
+     * @param numberComplaintResponses      - generates responses for the complaint/feedback request (as above)
+     * @param validModel                    - model for the modeling submission
+     *
+     * @return                              - the generated course
+     */
+    public Course addCourseWithExercisesAndSubmissions(int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
+            boolean typeComplaint, int numberComplaintResponses, String validModel) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var tutors = userRepo.getTutors(course);
+        for (int i = 0; i < numberOfExercises; i++) {
+            var currentUser = tutors.get(i % 4);
+
+            if ((i % 3) == 0) {
+                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+                modelingExercise.setTitle("Modeling" + i);
+                course.addExercises(modelingExercise);
+                course = courseRepo.save(course);
+                exerciseRepo.save(modelingExercise);
+                for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
+                    StudentParticipation participation = createAndSaveParticipationForExercise(modelingExercise, "student" + j);
+                    ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+                    modelSubmissionService.save(submission, modelingExercise, "student" + j);
+                    studentParticipationRepo.save(participation);
+                    if (numberOfAssessments >= j) {
+                        Result result = generateResult(submission, currentUser);
+                        submission.addResult(result);
+                        participation.addResult(result);
+                        studentParticipationRepo.save(participation);
+                        modelingSubmissionRepo.save(submission);
+                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                    }
+                }
+
+            }
+            else if ((i % 3) == 1) {
+                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, futureTimestamp, course);
+                textExercise.setTitle("Text" + i);
+                course.addExercises(textExercise);
+                course = courseRepo.save(course);
+                exerciseRepo.save(textExercise);
+                for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
+                    TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
+                    submission = saveTextSubmission(textExercise, submission, "student" + j);
+                    if (numberOfAssessments >= j) {
+                        Result result = generateResult(submission, currentUser);
+                        submission.addResult(result);
+                        submission = (TextSubmission) saveResultInParticipation(submission, result);
+                        textSubmissionRepo.save(submission);
+                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                    }
+                }
+            }
+            else if ((i % 3) == 2) {
+                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureTimestamp, "png,pdf", course);
+                fileUploadExercise.setTitle("FileUpload" + i);
+                course.addExercises(fileUploadExercise);
+                course = courseRepo.save(course);
+                exerciseRepo.save(fileUploadExercise);
+                for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
+                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    saveFileUploadSubmission(fileUploadExercise, submission, "student" + j);
+                    if (numberOfAssessments >= j) {
+                        Result result = generateResult(submission, currentUser);
+                        submission = (FileUploadSubmission) saveResultInParticipation(submission, result);
+                        fileUploadSubmissionRepo.save(submission);
+                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                    }
+                }
+            }
+        }
+        course = courseRepo.save(course);
+        return course;
+    }
+
+    private Submission saveResultInParticipation(Submission submission, Result result) {
+        submission.addResult(result);
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        participation.addResult(result);
+        studentParticipationRepo.save(participation);
+        return submission;
+    }
+
+    public Result generateResult(Submission submission, User assessor) {
+        Result result = new Result();
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
+        result.completionDate(pastTimestamp);
+        result.resultString("3 of 10 points");
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setAssessor(assessor);
+        return result;
+    }
+
+    private void generateComplaintAndResponses(int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result, User currentUser) {
+        result = resultRepo.save(result);
+        if (numberOfComplaints >= j) {
+            Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT) : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
+            complaint.setResult(result);
+            complaint = complaintRepo.save(complaint);
+            if (numberComplaintResponses >= j) {
+                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
+                complaintResponse.getComplaint().setAccepted(true);
+                complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
+                complaintResponseRepo.save(complaintResponse);
+                complaint.setComplaintResponse(complaintResponse);
+                complaintRepo.save(complaint);
+            }
+        }
     }
 
     /**
@@ -1853,7 +2183,7 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setAssessmentType(assessmentType);
-        result.setScore(50L);
+        result.setScore(50D);
         if (hasCompletionDate) {
             result.setCompletionDate(ZonedDateTime.now());
         }
@@ -1928,10 +2258,22 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public ModelingSubmission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
+    public Submission addModelingSubmissionWithFinishedResultAndAssessor(ModelingExercise exercise, ModelingSubmission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        return addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+    }
+
+    public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+        return submission;
+    }
+
+    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Exercise exercise, Submission submission, String login,
+            String assessorLogin) {
         participation.addSubmission(submission);
-        submission = modelingSubmissionRepo.save(submission);
+        submission = saveSubmissionToRepo(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
@@ -1940,10 +2282,23 @@ public class DatabaseUtilService {
         submission.setParticipation(participation);
         submission.addResult(result);
         submission.getParticipation().addResult(result);
-        submission = modelingSubmissionRepo.save(submission);
+        submission = saveSubmissionToRepo(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
+    }
+
+    private Submission saveSubmissionToRepo(Submission submission) {
+        if (submission instanceof ModelingSubmission) {
+            return modelingSubmissionRepo.save((ModelingSubmission) submission);
+        }
+        else if (submission instanceof TextSubmission) {
+            return textSubmissionRepo.save((TextSubmission) submission);
+        }
+        else if (submission instanceof ProgrammingSubmission) {
+            return programmingSubmissionRepo.save((ProgrammingSubmission) submission);
+        }
+        return null;
     }
 
     public FileUploadSubmission addFileUploadSubmission(FileUploadExercise fileUploadExercise, FileUploadSubmission fileUploadSubmission, String login) {
@@ -1964,7 +2319,8 @@ public class DatabaseUtilService {
         participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setScore(100L);
+        result.setScore(100D);
+        result.setResultString(exercise.getMaxPoints(), exercise.getMaxPoints());
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -1987,6 +2343,14 @@ public class DatabaseUtilService {
         return saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, login, assessorLogin, new ArrayList<>());
     }
 
+    public FileUploadSubmission saveFileUploadSubmission(FileUploadExercise exercise, FileUploadSubmission submission, String login) {
+        StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        submission = fileUploadSubmissionRepo.save(submission);
+        return submission;
+    }
+
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
@@ -2004,7 +2368,7 @@ public class DatabaseUtilService {
         participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
-        result.setScore(100L);
+        result.setScore(100D);
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -2096,6 +2460,23 @@ public class DatabaseUtilService {
         return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
     }
 
+    public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) throws Exception {
+        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
+        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(feedback1);
+        feedbacks.add(feedback2);
+
+        Result result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+        result.setParticipation(submission.getParticipation().results(null));
+        result.setAssessor(getUserByLogin(login));
+        resultRepo.save(result);
+        if (submit) {
+            assessmentService.submitManualAssessment(result.getId(), exercise, submission.getSubmissionDate());
+        }
+        return resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(result.getId()).get();
+    }
+
     public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
         Submission submission;
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
@@ -2120,6 +2501,19 @@ public class DatabaseUtilService {
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = FileUtils.loadFileFromResources(path);
         return mapper.readValue(fileContent, mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class));
+    }
+
+    /**
+     * Gets a user from the database using the provided login but without the authorities.
+     * <p>
+     * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
+     * circumstances when this happens in still unknown.
+     *
+     * @param login login to find user with
+     * @return user with the provided logih
+     */
+    public User getUserByLoginWithoutAuthorities(String login) {
+        return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public User getUserByLogin(String login) {
@@ -2249,6 +2643,9 @@ public class DatabaseUtilService {
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
             dragItem2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
             dropLocation1.setQuestion((DragAndDropQuestion) question);
@@ -2256,14 +2653,19 @@ public class DatabaseUtilService {
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
             System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3));
             }
             else {
-                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation1));
             }
 
             return submittedAnswer;
@@ -2281,6 +2683,70 @@ public class DatabaseUtilService {
                 }
                 else {
                     submittedText.setText(correctText.toUpperCase());
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+                // also invoke remove once
+                submittedAnswer.removeSubmittedTexts(submittedText);
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
+    public SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                submittedAnswer.addSelectedOptions(answerOption);
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            dragItem1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem1.toString());
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            dragItem2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem2.toString());
+            DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
+            dragItem3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dragItem3.toString());
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            dropLocation1.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation1.toString());
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            dropLocation2.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation2.toString());
+            DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
+            dropLocation3.setQuestion((DragAndDropQuestion) question);
+            System.out.println(dropLocation3.toString());
+
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
+            submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation2));
+
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
+                if (spot.getSpotNr() == 2) {
+                    submittedText.setText(correctText);
+                }
+                else {
+                    submittedText.setText("wrong submitted text");
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -2317,7 +2783,7 @@ public class DatabaseUtilService {
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
-        sa.setScoringType(ScoringType.ALL_OR_NOTHING);
+        sa.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
         // TODO: we should test different values here
         sa.setMatchLetterCase(true);
         sa.setSimilarityValue(100);
@@ -2376,22 +2842,28 @@ public class DatabaseUtilService {
         dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
         dragItem2.setTempID(generateTempId());
+        var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
         dragItem1.addMappings(mapping1);
@@ -2405,6 +2877,8 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping1);
         var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
         dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
         dnd.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("DnD: " + dnd.toString());
@@ -2573,5 +3047,213 @@ public class DatabaseUtilService {
         final var paramMap = new LinkedMultiValueMap<String, String>();
         params.forEach(paramMap::add);
         return paramMap;
+    }
+
+    public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
+        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
+        Result storedFeedbackResult = new Result();
+        Result sentFeedbackResult = new Result();
+        storedFeedbackResult.setFeedbacks(storedFeedback);
+        sentFeedbackResult.setFeedbacks(sentFeedback);
+
+        double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
+        double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
+        storedFeedbackResult.setScore(totalPoints, 20.0);
+        storedFeedbackResult.setResultString(totalPoints, 20.0);
+
+        double calculatedTotalPoints2 = resultRepo.calculateTotalPoints(sentFeedback);
+        double totalPoints2 = resultRepo.constrainToRange(calculatedTotalPoints2, 20.0);
+        sentFeedbackResult.setScore(totalPoints2, 20.0);
+        sentFeedbackResult.setResultString(totalPoints2, 20.0);
+
+        assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
+        storedFeedback.forEach(feedback -> {
+            assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType);
+        });
+    }
+
+    public void createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
+        textSubmission = textSubmissionRepo.save(textSubmission);
+
+        var studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        studentParticipation.addSubmission(textSubmission);
+
+        studentParticipationRepo.save(studentParticipation);
+        textSubmissionRepo.save(textSubmission);
+    }
+
+    public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
+        TextPlagiarismResult result = new TextPlagiarismResult();
+        result.setExercise(exercise);
+        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        result.setDuration(4);
+        return plagiarismResultRepo.save(result);
+    }
+
+    public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
+        ModelingPlagiarismResult result = new ModelingPlagiarismResult();
+        result.setExercise(exercise);
+        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        result.setDuration(4);
+        return plagiarismResultRepo.save(result);
+    }
+
+    @NotNull
+    public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
+        return getPlagiarismOptions(50D, 0, 0);
+    }
+
+    @NotNull
+    public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
+        // Use default options for plagiarism detection
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("similarityThreshold", String.valueOf(similarityThreshold));
+        params.add("minimumScore", String.valueOf(minimumScore));
+        params.add("minimumSize", String.valueOf(minimumSize));
+        return params;
+    }
+
+    @NotNull
+    public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
+        GradeStep gradeStep1 = new GradeStep();
+        GradeStep gradeStep2 = new GradeStep();
+        GradeStep gradeStep3 = new GradeStep();
+
+        gradeStep1.setGradingScale(gradingScale);
+        gradeStep2.setGradingScale(gradingScale);
+        gradeStep3.setGradingScale(gradingScale);
+
+        gradeStep1.setPassingGrade(false);
+        gradeStep1.setGradeName("Fail");
+        gradeStep1.setLowerBoundPercentage(0);
+        gradeStep1.setUpperBoundPercentage(60);
+
+        gradeStep2.setPassingGrade(true);
+        gradeStep2.setGradeName("Pass");
+        gradeStep2.setLowerBoundPercentage(60);
+        if (valid) {
+            gradeStep2.setUpperBoundPercentage(90);
+        }
+        else {
+            gradeStep2.setUpperBoundPercentage(80);
+        }
+
+        gradeStep3.setPassingGrade(true);
+        gradeStep3.setGradeName("Excellent");
+        gradeStep3.setLowerBoundPercentage(90);
+        gradeStep3.setUpperBoundPercentage(100);
+        gradeStep3.setUpperBoundInclusive(true);
+
+        return Set.of(gradeStep1, gradeStep2, gradeStep3);
+    }
+
+    public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
+        Course course = addCourseWithModelingAndTextAndFileUploadExercise();
+        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course = courseRepo.save(course);
+
+        var fileUploadExercise = findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
+        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+
+        var textExercise = findTextExerciseWithTitle(course.getExercises(), "Text");
+        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        saveTextSubmission(textExercise, textSubmission, "student1");
+
+        var modelingExercise = findModelingExerciseWithTitle(course.getExercises(), "Modeling");
+        createAndSaveParticipationForExercise(modelingExercise, "student1");
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
+        addSubmission(modelingExercise, submission, "student1");
+
+        return course;
+    }
+
+    public FileUploadSubmission createFileUploadSubmissionWithFile(FileUploadExercise fileUploadExercise, String filename) throws IOException {
+        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        // Create a dummy file
+        var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
+        var uploadedFilePath = Path.of(uploadedFileDir.toString(), filename);
+        if (!Files.exists(uploadedFilePath)) {
+            Files.createDirectories(uploadedFileDir);
+            Files.createFile(uploadedFilePath);
+        }
+        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
+        return fileUploadSubmissionRepo.save(fileUploadSubmission);
+    }
+
+    public Course createCourseWithExamAndExercises() throws IOException {
+        Course course = courseRepo.save(addEmptyCourse());
+
+        // Create a file upload exercise with a dummy submission file
+        var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
+        var fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
+        fileUploadExercise = exerciseRepo.save(fileUploadExercise);
+        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+        exerciseGroup1.addExercise(fileUploadExercise);
+        exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
+
+        // Create a text exercise with a dummy submission file
+        var exerciseGroup2 = exerciseGroupRepository.save(new ExerciseGroup());
+        var textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup2);
+        textExercise = exerciseRepo.save(textExercise);
+        var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        saveTextSubmission(textExercise, textSubmission, "student1");
+        exerciseGroup2.addExercise(textExercise);
+        exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
+
+        // Create a modeling exercise with a dummy submission file
+        var exerciseGroup3 = exerciseGroupRepository.save(new ExerciseGroup());
+        var modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup2);
+        modelingExercise = exerciseRepo.save(modelingExercise);
+        String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
+        var modelingSubmission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
+        addSubmission(modelingExercise, modelingSubmission, "student1");
+        exerciseGroup3.addExercise(modelingExercise);
+        exerciseGroupRepository.save(exerciseGroup3);
+
+        Exam exam = addExam(course);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam.addExerciseGroup(exerciseGroup1);
+        exam.addExerciseGroup(exerciseGroup2);
+        examRepository.save(exam);
+
+        return course;
+    }
+
+    public Course createCourseWithProgrammingExerciseAndIllegalAndLegalSubmissions() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(null, null, course);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var student1 = userRepo.findOneByLogin("student1").orElseThrow();
+        var student2 = userRepo.findOneByLogin("student2").orElseThrow();
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation1 = ModelFactory
+                .generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation2 = ModelFactory
+                .generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student2);
+        programmingExerciseStudentParticipation1 = programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation1);
+        programmingExerciseStudentParticipation2 = programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation2);
+        ProgrammingSubmission programmingSubmission1 = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmissionRepo.save(programmingSubmission1);
+        programmingSubmission1.setType(SubmissionType.MANUAL);
+        ProgrammingSubmission programmingSubmission2 = ModelFactory.generateProgrammingSubmission(true);
+        programmingSubmission2.setType(SubmissionType.ILLEGAL);
+        programmingSubmissionRepo.save(programmingSubmission2);
+        programmingExerciseStudentParticipation1.addSubmission(programmingSubmission1);
+        programmingExerciseStudentParticipation2.addSubmission(programmingSubmission2);
+        programmingSubmission1.setParticipation(programmingExerciseStudentParticipation1);
+        programmingSubmission2.setParticipation(programmingExerciseStudentParticipation2);
+        programmingSubmissionRepo.save(programmingSubmission2);
+        programmingSubmissionRepo.save(programmingSubmission1);
+        programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation1);
+        programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation2);
+        return course;
+    }
+
+    public Course saveCourse(Course course) {
+        return courseRepo.save(course);
     }
 }

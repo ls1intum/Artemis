@@ -19,26 +19,18 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ApollonDiagramRepository apollonDiagramRepository;
+    private ApollonDiagramRepository apollonDiagramRepository;
 
     @Autowired
-    CourseRepository courseRepo;
+    private CourseRepository courseRepo;
 
     @Autowired
-    UserRepository userRepo;
-
-    @Autowired
-    CourseService courseService;
-
-    @Autowired
-    UserService userService;
+    private UserRepository userRepo;
 
     private ApollonDiagram apollonDiagram;
 
@@ -48,14 +40,14 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
         userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
 
         apollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 
-        course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
-        course2 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
+        course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course2 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course1);
         courseRepo.save(course2);
     }
@@ -124,13 +116,13 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetAllApollonDiagram_OK() throws Exception {
         apollonDiagramRepository.save(apollonDiagram);
-        List response = request.get("/api/apollon-diagrams", HttpStatus.OK, List.class);
+        List<ApollonDiagram> response = request.getList("/api/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
         assertThat(response.isEmpty()).as("response is not empty").isFalse();
         assertThat(response.size()).as("response has length 1 ").isEqualTo(1);
 
         ApollonDiagram newApollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.CommunicationDiagram, "new title");
         apollonDiagramRepository.save(newApollonDiagram);
-        List updatedResponse = request.get("/api/apollon-diagrams", HttpStatus.OK, List.class);
+        List<ApollonDiagram> updatedResponse = request.getList("/api/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
         assertThat(updatedResponse.isEmpty()).as("updated response is not empty").isFalse();
         assertThat(updatedResponse.size()).as("updated response has length 2").isEqualTo(2);
     }
@@ -140,25 +132,25 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     public void testGetDiagramsByCourse() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
-        List responseCourse1 = request.get("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, List.class);
+        List<ApollonDiagram> responseCourse1 = request.getList("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
         assertThat(responseCourse1.isEmpty()).as("response is not empty").isFalse();
         assertThat(responseCourse1.size()).as("response has length 1 ").isEqualTo(1);
 
         ApollonDiagram newDiagramCourse1 = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "new title");
         newDiagramCourse1.setCourseId(course1.getId());
         apollonDiagramRepository.save(newDiagramCourse1);
-        List updatedResponseCourse1 = request.get("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, List.class);
+        List<ApollonDiagram> updatedResponseCourse1 = request.getList("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
         assertThat(updatedResponseCourse1.isEmpty()).as("updated response is not empty").isFalse();
         assertThat(updatedResponseCourse1.size()).as("updated response has length 2").isEqualTo(2);
 
         ApollonDiagram newDiagramCourse2 = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "newer title");
         newDiagramCourse2.setCourseId(course2.getId());
         apollonDiagramRepository.save(newDiagramCourse2);
-        updatedResponseCourse1 = request.get("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, List.class);
+        updatedResponseCourse1 = request.getList("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
         assertThat(updatedResponseCourse1.isEmpty()).as("updated response is not empty").isFalse();
         assertThat(updatedResponseCourse1.size()).as("updated response has length 2").isEqualTo(2);
 
-        List responseCourse2 = request.get("/api/course/" + course2.getId() + "/apollon-diagrams", HttpStatus.OK, List.class);
+        List<ApollonDiagram> responseCourse2 = request.getList("/api/course/" + course2.getId() + "/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
         assertThat(responseCourse2.isEmpty()).as("updated response is not empty").isFalse();
         assertThat(responseCourse2.size()).as("updated response has length 1").isEqualTo(1);
     }
@@ -207,5 +199,37 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
         request.delete("/api/course/" + course1.getId() + "/apollon-diagrams/" + savedDiagram.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetDiagramTitleAsInstructor() throws Exception {
+        testGetDiagramTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetDiagramTitleAsTeachingAssistant() throws Exception {
+        testGetDiagramTitle();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetDiagramTitleAsUser() throws Exception {
+        testGetDiagramTitle();
+    }
+
+    private void testGetDiagramTitle() throws Exception {
+        apollonDiagram.setCourseId(course1.getId());
+        ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
+
+        final var title = request.get("/api/apollon-diagrams/" + savedDiagram.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(apollonDiagram.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetDiagramTitleForNonExistingDiagram() throws Exception {
+        request.get("/api/apollon-diagrams/12312312412/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

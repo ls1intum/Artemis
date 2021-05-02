@@ -28,16 +28,9 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
         return dropLocationCounters;
     }
 
-    public DragAndDropQuestionStatistic addDropLocationCounters(DropLocationCounter dropLocationCounter) {
+    public void addDropLocationCounters(DropLocationCounter dropLocationCounter) {
         this.dropLocationCounters.add(dropLocationCounter);
         dropLocationCounter.setDragAndDropQuestionStatistic(this);
-        return this;
-    }
-
-    public DragAndDropQuestionStatistic removeDropLocationCounters(DropLocationCounter dropLocationCounter) {
-        this.dropLocationCounters.remove(dropLocationCounter);
-        dropLocationCounter.setDragAndDropQuestionStatistic(null);
-        return this;
     }
 
     public void setDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
@@ -79,7 +72,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      */
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-
         changeStatisticBasedOnResult(submittedAnswer, rated, 1);
     }
 
@@ -92,7 +84,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      */
     @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-
         changeStatisticBasedOnResult(submittedAnswer, rated, -1);
     }
 
@@ -106,7 +97,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
      * @param change          the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
-
         if (submittedAnswer == null) {
             return;
         }

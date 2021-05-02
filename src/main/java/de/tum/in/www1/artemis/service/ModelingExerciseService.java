@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -16,7 +14,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ModelingExerciseService {
@@ -30,17 +27,6 @@ public class ModelingExerciseService {
     public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
-    }
-
-    /**
-     * Get one modeling exercise by id.
-     *
-     * @param exerciseId the id of the entity
-     * @return the entity
-     */
-    public ModelingExercise findOne(Long exerciseId) {
-        log.debug("Request to get Modeling Exercise : {}", exerciseId);
-        return modelingExerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + exerciseId + "\" does not exist"));
     }
 
     /**
@@ -67,15 +53,5 @@ public class ModelingExerciseService {
             exercisePage = modelingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
-    }
-
-    /**
-     * Get one modeling exercise by id with eagerly fetched Student participations, submissions and results.
-     *
-     * @param exerciseId the id of the modeling exercise in question
-     * @return modeling exercise with eagerly fetched Student participations, submissions and results.
-     */
-    public Optional<ModelingExercise> findOneWithParticipationsSubmissionsResults(long exerciseId) {
-        return modelingExerciseRepository.findWithEagerStudentParticipationSubmissionsResultsById(exerciseId);
     }
 }

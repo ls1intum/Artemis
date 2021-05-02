@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,16 +24,16 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
@@ -51,15 +49,17 @@ public class ModelingExerciseResource {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     private final ModelingExerciseService modelingExerciseService;
 
     private final ExerciseService exerciseService;
+
+    private final PlagiarismResultRepository plagiarismResultRepository;
 
     private final ModelingExerciseImportService modelingExerciseImportService;
 
@@ -69,28 +69,29 @@ public class ModelingExerciseResource {
 
     private final CompassService compassService;
 
-    private final GradingCriterionService gradingCriterionService;
+    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, ModelingExerciseService modelingExerciseService, ModelingExerciseImportService modelingExerciseImportService,
-            SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService, GradingCriterionService gradingCriterionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
+            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
+            CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
+        this.plagiarismResultRepository = plagiarismResultRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
-        this.userService = userService;
-        this.courseService = courseService;
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
-        this.gradingCriterionService = gradingCriterionService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
@@ -104,53 +105,25 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new modelingExercise, or with status 400 (Bad Request) if the modelingExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    // TODO: we should add courses/{courseId} here
     @PostMapping("/modeling-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new modeling exercise cannot already have an ID")).body(null);
         }
-        ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-
-        // Validate score settings
-        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(modelingExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        modelingExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
+        // make sure the course actually exists
+        var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        exerciseService.validateScoreSettings(modelingExercise);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
-    }
-
-    /**
-     * This method performs the basic checks for a modeling exercise. These include making sure that a course
-     * or exerciseGroup has been set, otherwise we return http badRequest.
-     * If the above condition is met, it then checks whether the user is an instructor of the parent course.
-     * If not, it returns http forbidden.
-     * @param modelingExercise The modeling exercise to be checked
-     * @return Returns the http error, or null if successful
-     */
-    @Nullable
-    private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
-        if (modelingExercise.getCourseViaExerciseGroupOrCourseMember() != null) {
-            // fetch course from database to make sure client didn't change groups
-            Course course = courseService.findOne(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            if (authCheckService.isAtLeastInstructorInCourse(course, null)) {
-                if (modelingExercise.isCourseExercise() && modelingExercise.isExamExercise()) {
-                    return badRequest();
-                }
-                return null;
-            }
-            return forbidden();
-        }
-        return badRequest();
     }
 
     /**
@@ -161,9 +134,9 @@ public class ModelingExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("/modeling-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR, ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
-        final var user = userService.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
     }
 
@@ -177,30 +150,26 @@ public class ModelingExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/modeling-exercises")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() == null) {
             return createModelingExercise(modelingExercise);
         }
+        modelingExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
+        // make sure the course actually exists
+        var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        exerciseService.validateScoreSettings(modelingExercise);
 
-        ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-
-        // Validate score settings
-        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(modelingExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
-
+        ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
 
+        exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
         // Avoid recursions
         if (updatedModelingExercise.getExampleSubmissions().size() != 0) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithEagerResultByExerciseId(updatedModelingExercise.getId());
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(updatedModelingExercise.getId());
             updatedModelingExercise.setExampleSubmissions(exampleSubmissionsWithResults);
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
@@ -220,11 +189,11 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/modeling-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
@@ -244,17 +213,12 @@ public class ModelingExerciseResource {
      * @return the json encoded modelingExercise statistics
      */
     @GetMapping(value = "/modeling-exercises/{exerciseId}/statistics")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
-        if (modelingExercise.isEmpty()) {
-            return notFound();
-        }
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            return forbidden();
-        }
-        if (compassService.isSupported(modelingExercise.get())) {
+        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
+        if (compassService.isSupported(modelingExercise)) {
             return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
         }
         else {
@@ -269,9 +233,9 @@ public class ModelingExerciseResource {
      * @return the statistic as key-value pairs in json
      */
     @GetMapping("/modeling-exercises/{exerciseId}/print-statistic")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> printCompassStatisticForExercise(@PathVariable Long exerciseId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         compassService.printStatistic(modelingExercise.getId());
         return ResponseEntity.ok().build();
     }
@@ -283,17 +247,14 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("/modeling-exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
-        // TODO CZ: provide separate endpoint GET /modeling-exercises/{id}/withExampleSubmissions and load exercise without example submissions here
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsById(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        modelingExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            return forbidden();
-        }
-        return ResponseUtil.wrapOrNotFound(modelingExercise);
+        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        modelingExercise.setGradingCriteria(gradingCriteria);
+        return ResponseEntity.ok().body(modelingExercise);
     }
 
     /**
@@ -303,22 +264,16 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/modeling-exercises/{exerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
-        if (modelingExercise.isEmpty()) {
-            return notFound();
-        }
-        Course course = modelingExercise.get().getCourseViaExerciseGroupOrCourseMember();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
+        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(modelingExercise.get(), course, user);
+        exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.delete(exerciseId, false, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.get().getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
 
     /**
@@ -327,7 +282,6 @@ public class ModelingExerciseResource {
      * This will import the whole exercise except for the participations and Dates.
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link ModelingExerciseImportService}.
-     * See {@link ExerciseImportService#importExercise(Exercise, Exercise)}
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
@@ -337,29 +291,18 @@ public class ModelingExerciseResource {
      *         (403) if the user is not at least an instructor in the target course.
      */
     @PostMapping("/modeling-exercises/import/{sourceExerciseId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             return badRequest();
         }
-        final var user = userService.getUserWithGroupsAndAuthorities();
-        final var optionalOriginalModelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissionsAndResults(sourceExerciseId);
-        if (optionalOriginalModelingExercise.isEmpty()) {
-            log.debug("Cannot find original exercise to import from {}", sourceExerciseId);
-            return notFound();
-        }
-
-        ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(importedExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-
-        // Validate score settings
-        Optional<ResponseEntity<ModelingExercise>> optionalScoreSettingsError = exerciseService.validateScoreSettings(importedExercise);
-        if (optionalScoreSettingsError.isPresent()) {
-            return optionalScoreSettingsError.get();
-        }
+        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
+        importedExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
+        exerciseService.validateScoreSettings(importedExercise);
 
         if (importedExercise.isExamExercise()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
@@ -368,21 +311,10 @@ public class ModelingExerciseResource {
             log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         }
 
-        final var originalModelingExercise = optionalOriginalModelingExercise.get();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(originalModelingExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-            log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            return forbidden();
-        }
-
-        final var newExercise = modelingExerciseImportService.importExercise(originalModelingExercise, importedExercise);
-        if (newExercise == null) {
-            return conflict();
-        }
-
-        modelingExerciseRepository.save((ModelingExercise) newExercise);
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newExercise.getId().toString())).body((ModelingExercise) newExercise);
+        final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
+        modelingExerciseRepository.save(newModelingExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newModelingExercise.getId().toString())).body(newModelingExercise);
     }
 
     /**
@@ -393,18 +325,10 @@ public class ModelingExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("/modeling-exercises/{exerciseId}/export-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
-
-        Optional<ModelingExercise> optionalModelingExercise = modelingExerciseRepository.findById(exerciseId);
-        if (optionalModelingExercise.isEmpty()) {
-            return notFound();
-        }
-        ModelingExercise modelingExercise = optionalModelingExercise.get();
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            return forbidden();
-        }
+        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
 
         // ta's are not allowed to download all participations
         if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
@@ -432,35 +356,53 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /check-plagiarism : Run similarity check pair-wise against all submissions of a given
-     * exercises. This can be used with human intelligence to identify suspicious similar
-     * submissions which might be a sign for plagiarism.
+     * GET /modeling-exercises/{exerciseId}/plagiarism-result
+     * <p>
+     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise yet.
      *
-     * @param exerciseId for which all submission should be checked
+     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be
+     *                   returned
+     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
+     * parameters are invalid
+     */
+    @GetMapping("/modeling-exercises/{exerciseId}/plagiarism-result")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ModelingPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+        log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
+        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
+        return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
+    }
+
+    /**
+     * GET /modeling-exercises/{exerciseId}/check-plagiarism
+     * <p>
+     * Start the automated plagiarism detection for the given exercise and return its result.
+     *
+     * @param exerciseId          for which all submission should be checked
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
-     * @param minimumSize consider only submissions whose size is greater or equal to this value
-     * @return the ResponseEntity with status 200 (OK) and the list of pair-wise submission
-     * similarities above a threshold of 80%.
+     * @param minimumScore        consider only submissions whose score is greater or equal to this
+     *                            value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this
+     *                            value
+     * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("/modeling-exercises/{exerciseId}/check-plagiarism")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) {
-        Optional<ModelingExercise> optionalModelingExercise = modelingExerciseService.findOneWithParticipationsSubmissionsResults(exerciseId);
-
-        if (optionalModelingExercise.isEmpty()) {
-            return notFound();
-        }
-
-        ModelingExercise modelingExercise = optionalModelingExercise.get();
-
-        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
-            return forbidden();
-        }
-
+        var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
+        long start = System.nanoTime();
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
-
+        log.info("Finished modelingPlagiarismDetectionService.compareSubmissions call for {} comparisons in {}", result.getComparisons().size(),
+                TimeLogUtil.formatDurationFrom(start));
+        result.sortAndLimit(500);
+        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
+        start = System.nanoTime();
+        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
+        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
 }

@@ -3,6 +3,8 @@ import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 
+export const defaultLongDateTimeFormat = 'YYYY-MM-DD HH:mm:ss';
+
 /**
  * Format a given date time that must be convertible to a moment object to a localized date time
  * string based on the current language setting. Always returns the short format on mobile devices.

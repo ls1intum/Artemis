@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
+import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.getDockerImageName;
 
 import java.io.IOException;
 import java.net.URL;
@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -27,10 +26,7 @@ import com.atlassian.bamboo.specs.api.builders.notification.Notification;
 import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
 import com.atlassian.bamboo.specs.api.builders.permission.Permissions;
 import com.atlassian.bamboo.specs.api.builders.permission.PlanPermissions;
-import com.atlassian.bamboo.specs.api.builders.plan.Job;
-import com.atlassian.bamboo.specs.api.builders.plan.Plan;
-import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
-import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.*;
 import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
@@ -48,13 +44,14 @@ import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
-import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
@@ -79,18 +76,15 @@ public class BambooBuildPlanService {
 
     private final Environment env;
 
-    private final BambooService bambooService;
-
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, @Lazy BambooService bambooService) {
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
-        this.bambooService = bambooService;
     }
 
     /**
      * Creates a Build Plan for a Programming Exercise
-     * 
+     *
      * @param programmingExercise    programming exercise with the required
      *                               information to create the base build plan
      * @param planKey                the key of the build plan
@@ -119,8 +113,8 @@ public class BambooBuildPlanService {
     }
 
     /**
-     * Set Build Plan Permissions for admins, instructors and teaching assistants.
-     * 
+     * Set Build Plan Permissions for admins, instructors, editors and teaching assistants.
+     *
      * @param programmingExercise a programming exercise with the required
      *                            information to set the needed build plan
      *                            permissions
@@ -131,9 +125,10 @@ public class BambooBuildPlanService {
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
+        final String editorGroupName = course.getEditorGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
-        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, instructorGroupName,
-                adminGroupName);
+        final PlanPermissions planPermission = generatePlanPermissions(programmingExercise.getProjectKey(), planKey, teachingAssistantGroupName, editorGroupName,
+                instructorGroupName, adminGroupName);
         bambooServer.publish(planPermission);
     }
 
@@ -203,7 +198,7 @@ public class BambooBuildPlanService {
                 defaultStage.jobs(defaultJob);
                 return defaultStage;
             }
-            case HASKELL -> {
+            case HASKELL, OCAML -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/test-reports/*.xml");
             }
             case VHDL, ASSEMBLER -> {
@@ -293,13 +288,16 @@ public class BambooBuildPlanService {
                 .changeDetection(new VcsChangeDetection());
     }
 
-    private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, String instructorGroupName,
-            String adminGroupName) {
+    private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, @Nullable String editorGroupName,
+            String instructorGroupName, String adminGroupName) {
         var permissions = new Permissions().userPermissions(bambooUser, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+        if (editorGroupName != null) {
+            permissions = permissions.groupPermissions(editorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+        }
         if (teachingAssistantGroupName != null) {
-            permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW);
+            permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.VIEW);
         }
         return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
     }
@@ -333,7 +331,7 @@ public class BambooBuildPlanService {
     }
 
     private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage language) {
-        var dockerImage = bambooService.getDockerImageName(language);
+        var dockerImage = getDockerImageName(language);
         return new DockerConfiguration().image(dockerImage);
     }
 }

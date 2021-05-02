@@ -1,0 +1,36 @@
+{
+    "artemisApp": {
+        "participantScores": {
+            "pageTitle": "Participant Scores",
+            "participantScoreDTO": {
+                "id": "Id",
+                "userId": "User Id",
+                "userName": "Username",
+                "teamId": "Team Id",
+                "teamName": "Team Name",
+                "exerciseId": "Exercise Id",
+                "exerciseTitle": "Exercise Title",
+                "lastResultId": "Id of Last Result",
+                "lastResultScore": "Last Result (%)",
+                "lastPoints": "Last Points",
+                "lastRatedResultId": "Id of Last Rated Result",
+                "lastRatedResultScore": "Last Rated Result (%)",
+                "lastRatedPoints": "Last Rated Points"
+            },
+            "participantScoreAverageDTO": {
+                "userName": "Username",
+                "teamName": "Team Name",
+                "averageScore": "Average Score",
+                "averageRatedScore": "Average Rated Score",
+                "averagePoints": "Average Points",
+                "averageRatedPoints": "Average Rated Points"
+            },
+            "average": "Average Scores",
+            "individual": "Individual Scores",
+            "searchForStudentsOrTeam": "Search for student or team",
+            "averageScore": "Average Score: {{avg}}%",
+            "averageRatedScore": "Average Rated Score: {{avg}}%",
+            "notIncluded": "Optional exercises not included in calculation!"
+        }
+    }
+}

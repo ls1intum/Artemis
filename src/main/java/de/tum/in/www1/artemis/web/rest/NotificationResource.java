@@ -21,9 +21,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.NotificationService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -47,17 +46,13 @@ public class NotificationResource {
 
     private final NotificationRepository notificationRepository;
 
-    private final NotificationService notificationService;
-
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService,
-            AuthorizationCheckService authorizationCheckService) {
+    public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.notificationRepository = notificationRepository;
-        this.notificationService = notificationService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -69,7 +64,7 @@ public class NotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/notifications")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to save Notification : {}", notification);
         if (notification.getId() != null) {
@@ -88,10 +83,10 @@ public class NotificationResource {
      * @return the list notifications
      */
     @GetMapping("/notifications")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUser(@ApiParam Pageable pageable) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-        final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        final Page<Notification> page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -105,7 +100,7 @@ public class NotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/notifications")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to update Notification : {}", notification);
         if (notification.getId() == null) {
@@ -123,7 +118,7 @@ public class NotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("/notifications/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Notification> getNotification(@PathVariable Long id) {
         log.debug("REST request to get Notification : {}", id);
         Optional<Notification> notification = notificationRepository.findById(id);
@@ -137,7 +132,7 @@ public class NotificationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/notifications/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         log.debug("REST request to delete Notification : {}", id);
         restrictSystemNotificationsToAdmin(id, null);

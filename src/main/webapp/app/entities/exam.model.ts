@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 
 export class Exam implements BaseEntity {
     public id?: number;
-    public title?: String;
+    public title?: string;
     public visibleDate?: Moment;
     public startDate?: Moment;
     public endDate?: Moment;
@@ -36,12 +36,14 @@ export class Exam implements BaseEntity {
     public registeredUsers?: User[];
 
     public numberOfRegisteredUsers?: number; // transient
-    public numberOfGeneratedStudentExams?: number; // transient
-    public numberOfTestRuns?: number; // transient
 
     // helper attributes
     public visible?: boolean;
     public started?: boolean;
+
+    public examArchivePath?: string;
+
+    public latestIndividualEndDate?: Moment;
 
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)

@@ -21,7 +21,10 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -39,24 +42,28 @@ public class ExerciseGroupResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final ExerciseGroupService exerciseGroupService;
+    private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExamService examService;
+    private final ExerciseGroupRepository exerciseGroupRepository;
+
+    private final ExamRepository examRepository;
 
     private final ExamAccessService examAccessService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final ExerciseService exerciseService;
 
     private final AuditEventRepository auditEventRepository;
 
-    public ExerciseGroupResource(ExerciseGroupService exerciseGroupService, ExamAccessService examAccessService, UserService userService, ExerciseService exerciseService,
-            AuditEventRepository auditEventRepository, ExamService examService) {
-        this.exerciseGroupService = exerciseGroupService;
-        this.examService = examService;
+    public ExerciseGroupResource(StudentParticipationRepository studentParticipationRepository, ExerciseGroupRepository exerciseGroupRepository,
+            ExamAccessService examAccessService, UserRepository userRepository, ExerciseService exerciseService, AuditEventRepository auditEventRepository,
+            ExamRepository examRepository) {
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.exerciseGroupRepository = exerciseGroupRepository;
+        this.examRepository = examRepository;
         this.examAccessService = examAccessService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.exerciseService = exerciseService;
         this.auditEventRepository = auditEventRepository;
     }
@@ -72,7 +79,7 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup exerciseGroup)
             throws URISyntaxException {
         log.debug("REST request to create an exercise group : {}", exerciseGroup);
@@ -88,15 +95,15 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForEditor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
 
         // Save the exerciseGroup as part of the exam to ensure that the order column is set correctly
-        Exam examFromDB = examService.findOneWithExerciseGroups(examId);
+        Exam examFromDB = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
         examFromDB.addExerciseGroup(exerciseGroup);
-        Exam savedExam = examService.save(examFromDB);
+        Exam savedExam = examRepository.save(examFromDB);
         ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().get(savedExam.getExerciseGroups().size() - 1);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exerciseGroups/" + savedExerciseGroup.getId()))
@@ -113,7 +120,7 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
             throws URISyntaxException {
         log.debug("REST request to update an exercise group : {}", updatedExerciseGroup);
@@ -125,12 +132,13 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId,
+                updatedExerciseGroup.getId());
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
 
-        ExerciseGroup result = exerciseGroupService.save(updatedExerciseGroup);
+        ExerciseGroup result = exerciseGroupRepository.save(updatedExerciseGroup);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
@@ -143,11 +151,11 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
-        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findOneWithExam(exerciseGroupId)));
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId, exerciseGroupId);
+        return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupRepository.findByIdElseThrow(exerciseGroupId)));
     }
 
     /**
@@ -158,11 +166,13 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exercise groups. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
-        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
-        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupService.findAllWithExamAndExercises(examId)));
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForEditor(courseId, examId);
+
+        List<ExerciseGroup> exerciseGroupList = exerciseGroupRepository.findWithExamAndExercisesByExamId(examId);
+        return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupList));
     }
 
     /**
@@ -176,7 +186,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
@@ -185,12 +195,12 @@ public class ExerciseGroupResource {
             return accessFailure.get();
         }
 
-        ExerciseGroup exerciseGroup = exerciseGroupService.findOneWithExercises(exerciseGroupId);
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
 
-        User user = userService.getUser();
+        User user = userRepository.getUser();
         AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has requested to delete the exercise group {}", exerciseGroup.getTitle());
+        log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
 
         for (Exercise exercise : exerciseGroup.getExercises()) {
             exerciseService.delete(exercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
@@ -199,11 +209,11 @@ public class ExerciseGroupResource {
         // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
         // This is necessary as @OrderColumn (exercise_group_order) needs continuous values. Otherwise the client will
         // receive null values for the gaps in exam.getExerciseGroups().
-        Exam exam = examService.findOneWithExerciseGroups(examId);
+        Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
         List<ExerciseGroup> filteredExerciseGroups = exam.getExerciseGroups();
-        filteredExerciseGroups.removeIf(e -> e.getId().equals(exerciseGroupId));
+        filteredExerciseGroups.removeIf(exGroup -> exGroup.getId().equals(exerciseGroupId));
         exam.setExerciseGroups(filteredExerciseGroups);
-        examService.save(exam);
+        examRepository.save(exam);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseGroup.getTitle())).build();
     }

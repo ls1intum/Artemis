@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,15 +11,13 @@ import org.assertj.core.data.Offset;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.component.*;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismWebsocketService;
 
 public abstract class AbstractUMLDiagramTest {
 
-    protected ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = new ModelingPlagiarismDetectionService();
+    protected ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = new ModelingPlagiarismDetectionService(mock(PlagiarismWebsocketService.class));
 
     protected void compareSubmissions(ModelingSubmission modelingSubmission1, ModelingSubmission modelingSubmission2, double minimumSimilarity, double expectedSimilarity) {
         // not really necessary, but avoids issues.
@@ -29,10 +28,10 @@ public abstract class AbstractUMLDiagramTest {
         submissions.add(modelingSubmission1);
         submissions.add(modelingSubmission2);
 
-        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(submissions, minimumSimilarity, 1, 0);
+        var comparisonResult = modelingPlagiarismDetectionService.compareSubmissions(submissions, minimumSimilarity, 1, 0, 1L);
         assertThat(comparisonResult).isNotNull();
         assertThat(comparisonResult.getComparisons()).hasSize(1);
-        assertThat(comparisonResult.getComparisons().get(0).getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
+        assertThat(comparisonResult.getComparisons().stream().findFirst().get().getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.01));
     }
 
     protected UMLComponent getComponent(UMLComponentDiagram componentDiagram, String name) {

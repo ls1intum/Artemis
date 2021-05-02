@@ -77,21 +77,18 @@ public class TextCluster extends DomainObject {
     /**
      * Adds a TextBlock to the Cluster
      * @param textBlock the TextBlock which should be added
-     * @return the Cluster Object with the new TextBlock
      */
-    public TextCluster addBlocks(TextBlock textBlock) {
+    public void addBlocks(TextBlock textBlock) {
         int newPosition = this.blocks.size();
         this.blocks.add(textBlock);
         textBlock.setCluster(this);
         textBlock.setPositionInCluster(newPosition);
-        return this;
     }
 
-    public TextCluster removeBlocks(TextBlock textBlock) {
+    public void removeBlocks(TextBlock textBlock) {
         this.blocks.remove(textBlock);
         textBlock.setCluster(null);
         textBlock.setPositionInCluster(null);
-        return this;
     }
 
     public void setBlocks(List<TextBlock> textBlocks) {

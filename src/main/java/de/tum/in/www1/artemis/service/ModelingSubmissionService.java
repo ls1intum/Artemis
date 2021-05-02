@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -36,9 +34,11 @@ public class ModelingSubmissionService extends SubmissionService {
     private final SubmissionVersionService submissionVersionService;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository) {
-        super(submissionRepository, userService, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository);
+            CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+                courseRepository, participationRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
@@ -56,7 +56,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the locked modeling submission
      */
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
-        ModelingSubmission modelingSubmission = findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(submissionId);
 
         if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -91,7 +91,7 @@ public class ModelingSubmissionService extends SubmissionService {
             Collections.shuffle(modelsWaitingForAssessment);
 
             for (Long submissionId : modelsWaitingForAssessment) {
-                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId);
+                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId);
                 if (submission.isPresent()) {
                     return submission;
                 }
@@ -151,18 +151,11 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
         catch (Exception ex) {
-            log.error("Modeling submission version could not be saved: " + ex);
+            log.error("Modeling submission version could not be saved", ex);
         }
 
         participation.addSubmission(modelingSubmission);
 
-        try {
-            notifyCompass(modelingSubmission, modelingExercise);
-        }
-        catch (Exception ex) {
-            log.warn("There was an exception when notifying Compass about a new modeling submission with error message: " + ex.getMessage()
-                    + ". Artemis will ignore this error and continue to save the modeling submission", ex);
-        }
         participation.setInitializationState(InitializationState.FINISHED);
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
@@ -173,7 +166,7 @@ public class ModelingSubmissionService extends SubmissionService {
             }
         }
 
-        log.debug("return model: " + modelingSubmission.getModel());
+        log.debug("return model: {}", modelingSubmission.getModel());
         return modelingSubmission;
     }
 
@@ -229,7 +222,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId(), exerciseId);
+        Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId());
         if (automaticResult != null) {
             automaticResult.setSubmission(null);
             automaticResult.setParticipation(modelingSubmission.getParticipation());
@@ -243,52 +236,5 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         return modelingSubmission;
-    }
-
-    /**
-     * Adds a model to compass service to include it in the automatic grading process.
-     *
-     * @param modelingSubmission the submission which contains the model
-     * @param modelingExercise   the exercise the submission belongs to
-     */
-    public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        if (compassService.isSupported(modelingExercise)) {
-            this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
-        }
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    public ModelingSubmission findOne(Long submissionId) {
-        return modelingSubmissionRepository.findById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
-     * result. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    public ModelingSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
-        return modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result, the assessor of the result,
-     * its participation and all results of the participation. Throws an EntityNotFoundException if no submission could be found for the given id.
-     *
-     * @param submissionId the id of the submission that should be loaded from the database
-     * @return the modeling submission with the given id
-     */
-    private ModelingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
-        return modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
 }

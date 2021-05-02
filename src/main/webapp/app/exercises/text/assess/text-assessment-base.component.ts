@@ -7,7 +7,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Feedback } from 'app/entities/feedback.model';
@@ -23,6 +23,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      */
 
     exercise?: TextExercise;
+    isAtLeastEditor: boolean;
     isAtLeastInstructor: boolean;
     protected userId?: number;
     textBlockRefs: TextBlockRef[];
@@ -36,7 +37,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     protected constructor(
         protected jhiAlertService: JhiAlertService,
         protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentsService,
+        protected assessmentsService: TextAssessmentService,
         protected structuredGradingCriterionService: StructuredGradingCriterionService,
     ) {}
 
@@ -44,6 +45,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity?.id;
+        this.isAtLeastEditor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR]);
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
     }
 

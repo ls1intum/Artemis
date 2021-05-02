@@ -23,7 +23,11 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -40,13 +44,15 @@ public class QuizSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
-    private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizSubmissionService quizSubmissionService;
 
     private final ParticipationService participationService;
+
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final WebsocketMessagingService messagingService;
 
@@ -54,15 +60,17 @@ public class QuizSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService) {
-        this.quizExerciseService = quizExerciseService;
+    public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
+            WebsocketMessagingService messagingService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService,
+            StudentParticipationRepository studentParticipationRepository) {
+        this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
         this.messagingService = messagingService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.examSubmissionService = examSubmissionService;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -74,7 +82,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/live")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission, Principal principal) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
         try {
@@ -84,7 +92,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
-            log.warn("QuizSubmissionException :" + e.getMessage() + " for user " + principal.getName() + " in quiz " + exerciseId);
+            log.warn("QuizSubmissionException: {} for user {} in quiz {}", e.getMessage(), principal.getName(), exerciseId);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizSubmissionError", e.getMessage())).body(null);
         }
     }
@@ -97,7 +105,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/practice")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
@@ -111,13 +119,9 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
-        if (quizExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
-        User user = userService.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             return ResponseEntity.status(403)
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
@@ -139,7 +143,7 @@ public class QuizSubmissionResource {
         // The quizScheduler is usually responsible for updating the participation to FINISHED in the database. If quizzes where the student did not participate are used for
         // practice, the QuizScheduler does not update the participation, that's why we update it manually here
         participation.setInitializationState(InitializationState.FINISHED);
-        participationService.save(participation);
+        studentParticipationRepository.saveAndFlush(participation);
 
         // remove some redundant or unnecessary data that is not needed on client side
         for (SubmittedAnswer answer : quizSubmission.getSubmittedAnswers()) {
@@ -162,7 +166,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
@@ -171,13 +175,9 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
-        if (quizExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
-        if (!quizExerciseService.userHasTAPermissions(quizExercise)) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, null)) {
             return forbidden();
         }
 
@@ -208,7 +208,7 @@ public class QuizSubmissionResource {
      * @return                  the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
@@ -218,12 +218,8 @@ public class QuizSubmissionResource {
             submittedAnswer.setSubmission(quizSubmission);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
-        if (quizExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Apply further checks if it is an exam submission
         Optional<ResponseEntity<QuizSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(quizExercise, user);
@@ -236,7 +232,7 @@ public class QuizSubmissionResource {
 
         QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
         long end = System.currentTimeMillis();
-        log.info("submitQuizForExam took " + (end - start) + "ms for exercise " + exerciseId + " and user " + user.getLogin());
+        log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
     }
 }

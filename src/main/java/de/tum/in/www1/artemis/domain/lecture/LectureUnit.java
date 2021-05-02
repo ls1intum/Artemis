@@ -10,10 +10,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.LearningGoal;
@@ -82,16 +79,6 @@ public abstract class LectureUnit extends DomainObject {
 
     public void setLearningGoals(Set<LearningGoal> learningGoals) {
         this.learningGoals = learningGoals;
-    }
-
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.getLectureUnits().add(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.getLectureUnits().remove(this);
     }
 
     @JsonProperty("visibleToStudents")

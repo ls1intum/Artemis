@@ -1,16 +1,9 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -26,15 +19,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.ResourceLoaderService;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 /**
@@ -57,7 +49,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final GitService gitService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -66,10 +58,10 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
     private final FileService fileService;
 
     public JavaTemplateUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
-            UserService userService, RepositoryService repositoryService, FileService fileService) {
+            UserRepository userRepository, RepositoryService repositoryService, FileService fileService) {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
-        this.userService = userService;
+        this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
         this.repositoryService = repositoryService;
         this.fileService = fileService;
@@ -126,10 +118,10 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                     deleteFileIfPresent(repository, SCA_CONFIG_FOLDER);
                 }
             }
-            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userService.getUser());
+            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userRepository.getUser());
         }
         catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
-            log.error("Updating of template files of repository " + repositoryType.name() + " for exercise " + exercise.getId() + " failed with error:" + exception.getMessage());
+            log.error("Updating of template files of repository {} for exercise {} failed with error: {}", repositoryType.name(), exercise.getId(), exception.getMessage());
             // Rollback by deleting the local repository
             gitService.deleteLocalRepository(exercise.getRepositoryURL(repositoryType));
         }

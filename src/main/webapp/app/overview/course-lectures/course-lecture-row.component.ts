@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input } from '@angular/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course.model';
@@ -10,7 +10,7 @@ import { Lecture } from 'app/entities/lecture.model';
     templateUrl: './course-lecture-row.component.html',
     styleUrls: ['../course-exercises/course-exercise-row.scss'],
 })
-export class CourseLectureRowComponent implements OnInit {
+export class CourseLectureRowComponent {
     @HostBinding('class') classes = 'exercise-row';
     @Input() lecture: Lecture;
     @Input() course: Course;
@@ -18,16 +18,15 @@ export class CourseLectureRowComponent implements OnInit {
 
     constructor(private router: Router, private route: ActivatedRoute) {}
 
-    ngOnInit() {}
-
     getUrgentClass(date?: Moment) {
         if (!date) {
-            return undefined;
+            return '';
         }
         const remainingDays = date.diff(moment(), 'days');
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         }
+        return '';
     }
 
     showDetails() {
