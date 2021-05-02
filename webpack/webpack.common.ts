@@ -8,7 +8,11 @@ const MergeJsonWebpackPlugin = require('merge-jsons-webpack-plugin');
 
 import { mapTypescriptAliasToWebpackAlias, parseVersion, root } from './utils';
 
-export const commonConfig = (options: any) => ({
+interface Options {
+    env: 'production' | 'development';
+}
+
+export const commonConfig = (options: Options) => ({
     resolve: {
         extensions: ['.ts', '.js'],
         modules: ['node_modules'],
@@ -71,18 +75,15 @@ export const commonConfig = (options: any) => ({
             process: 'process/browser',
         }),
         new webpack.DefinePlugin({
-            'process.env': {
-                NODE_ENV: `'${options.env}'`,
-                BUILD_TIMESTAMP: `'${new Date().getTime()}'`,
-                // APP_VERSION is passed as an environment variable from the Gradle / Maven build tasks.
-                VERSION: `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== 'unspecified' ? process.env.APP_VERSION : parseVersion()}'`,
-                DEBUG_INFO_ENABLED: options.env === 'development',
-                // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
-                // If this URL is left empty (""), then it will be relative to the current context.
-                // If you use an API server, in `prod` mode, you will need to enable CORS
-                // (see the `jhipster.cors` common JHipster property in the `application-*.yml` configurations)
-                SERVER_API_URL: `''`,
-            },
+            'process.env.NODE_ENV': JSON.stringify(`'${options.env}'`),
+            // APP_VERSION is passed as an environment variable from the Gradle / Maven build tasks.
+            'process.env.VERSION': `'${process.env.hasOwnProperty('APP_VERSION') && process.env.APP_VERSION !== 'unspecified' ? process.env.APP_VERSION : parseVersion()}'`,
+            'process.env.DEBUG_INFO_ENABLED': options.env === 'development',
+            // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
+            // If this URL is left empty (""), then it will be relative to the current context.
+            // If you use an API server, in `prod` mode, you will need to enable CORS
+            // (see the `jhipster.cors` common JHipster property in the `application-*.yml` configurations)
+            'process.env.SERVER_API_URL': '',
         }),
         new CopyWebpackPlugin({
             patterns: [
