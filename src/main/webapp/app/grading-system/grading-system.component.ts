@@ -34,17 +34,27 @@ export class GradingSystemComponent implements OnInit {
             }
         });
         if (this.isExam) {
-            this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!).subscribe((gradingSystemResponse) => {
-                if (gradingSystemResponse.body) {
-                    this.handleFindResponse(gradingSystemResponse.body);
-                }
-            });
+            this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!).subscribe(
+                (gradingSystemResponse) => {
+                    if (gradingSystemResponse.body) {
+                        this.handleFindResponse(gradingSystemResponse.body);
+                    }
+                },
+                () => {
+                    return;
+                },
+            );
         } else {
-            this.gradingSystemService.findGradingScaleForCourse(this.courseId!).subscribe((gradingSystemResponse) => {
-                if (gradingSystemResponse.body) {
-                    this.handleFindResponse(gradingSystemResponse.body);
-                }
-            });
+            this.gradingSystemService.findGradingScaleForCourse(this.courseId!).subscribe(
+                (gradingSystemResponse) => {
+                    if (gradingSystemResponse.body) {
+                        this.handleFindResponse(gradingSystemResponse.body);
+                    }
+                },
+                () => {
+                    return;
+                },
+            );
         }
     }
 
@@ -79,23 +89,43 @@ export class GradingSystemComponent implements OnInit {
         });
         if (this.existingGradingScale) {
             if (this.isExam) {
-                this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe(
+                    (gradingSystemResponse) => {
+                        this.handleSaveResponse(gradingSystemResponse.body!);
+                    },
+                    () => {
+                        return;
+                    },
+                );
             } else {
-                this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe(
+                    (gradingSystemResponse) => {
+                        this.handleSaveResponse(gradingSystemResponse.body!);
+                    },
+                    () => {
+                        return;
+                    },
+                );
             }
         } else {
             if (this.isExam) {
-                this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe(
+                    (gradingSystemResponse) => {
+                        this.handleSaveResponse(gradingSystemResponse.body!);
+                    },
+                    () => {
+                        return;
+                    },
+                );
             } else {
-                this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe(
+                    (gradingSystemResponse) => {
+                        this.handleSaveResponse(gradingSystemResponse.body!);
+                    },
+                    () => {
+                        return;
+                    },
+                );
             }
         }
     }
@@ -123,16 +153,28 @@ export class GradingSystemComponent implements OnInit {
             return;
         }
         if (this.isExam) {
-            this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!).subscribe(() => {
-                this.existingGradingScale = false;
-                this.dialogErrorSource.next('');
-            });
+            this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!).subscribe(
+                () => {
+                    this.existingGradingScale = false;
+                    this.dialogErrorSource.next('');
+                },
+                () => {
+                    return;
+                },
+            );
         } else {
-            this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!).subscribe(() => {
-                this.existingGradingScale = false;
-                this.dialogErrorSource.next('');
-            });
+            this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!).subscribe(
+                () => {
+                    this.existingGradingScale = false;
+                    this.dialogErrorSource.next('');
+                },
+                () => {
+                    return;
+                },
+            );
         }
+        this.gradingScale = new GradingScale();
+        this.gradingScale.gradeType = GradeType.GRADE;
     }
 
     /**
