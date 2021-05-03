@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "gradingSystem": {
+            "title": "Benotungssystem",
             "titleCourse": "Benotungssytem für Kurs",
             "titleExam": "Benotungssytem für Klausur",
             "defaultButton": "Generiere standarmäßiges Benotungssystem",

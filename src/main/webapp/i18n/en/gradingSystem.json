@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "gradingSystem": {
+            "title": "Grading system",
             "titleCourse": "Grading system for course",
             "titleExam": "Grading system for exam",
             "defaultButton": "Generate Default Grading Scale",
