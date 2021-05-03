@@ -12,7 +12,7 @@ export const assessmentDashboardRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],

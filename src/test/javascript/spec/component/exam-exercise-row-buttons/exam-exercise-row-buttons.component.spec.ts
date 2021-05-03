@@ -54,7 +54,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
     let deleteTextExerciseStub: SinonStub;
     let deleteModelingExerciseStub: SinonStub;
-    let deleteQuizExercsieStub: SinonStub;
+    let deleteQuizExerciseStub: SinonStub;
     let deleteFileUploadExerciseStub: SinonStub;
     let deleteProgrammingExerciseStub: SinonStub;
     let quizExerciseServiceFindStub: SinonStub;
@@ -101,7 +101,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
                 deleteTextExerciseStub = stub(textExerciseService, 'delete');
                 deleteModelingExerciseStub = stub(modelingExerciseService, 'delete');
-                deleteQuizExercsieStub = stub(quizExerciseService, 'delete');
+                deleteQuizExerciseStub = stub(quizExerciseService, 'delete');
                 deleteFileUploadExerciseStub = stub(fileUploadExerciseService, 'delete');
                 deleteProgrammingExerciseStub = stub(programmingExerciseService, 'delete');
                 quizExerciseServiceFindStub = stub(quizExerciseService, 'find');
@@ -145,7 +145,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
             });
             it('should handle error for textexercise', () => {
-                const error = { message: 'error occured!' } as HttpErrorResponse;
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
                 deleteTextExerciseStub.returns(throwError(error));
                 component.exercise = textExercise;
                 component.deleteExercise();
@@ -162,7 +162,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
             });
             it('should handle error for modelingexercise', () => {
-                const error = { message: 'error occured!' } as HttpErrorResponse;
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
                 deleteModelingExerciseStub.returns(throwError(error));
                 component.exercise = modelingExercise;
                 component.deleteExercise();
@@ -179,7 +179,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
             });
             it('should handle error for fileupload exercise', () => {
-                const error = { message: 'error occured!' } as HttpErrorResponse;
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
                 deleteFileUploadExerciseStub.returns(throwError(error));
                 component.exercise = fileUploadExercise;
                 component.deleteExercise();
@@ -189,18 +189,18 @@ describe('ExamExerciseRowButtonsComponent', () => {
         });
         describe('should deleteQuizExercise', () => {
             it('should deleteQuizExercise', () => {
-                deleteQuizExercsieStub.returns(of({}));
+                deleteQuizExerciseStub.returns(of({}));
                 component.exercise = quizExercise;
                 component.deleteExercise();
-                expect(deleteQuizExercsieStub).to.have.been.calledOnce;
+                expect(deleteQuizExerciseStub).to.have.been.calledOnce;
                 expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
             });
             it('should handle error for quizexercise', () => {
-                const error = { message: 'error occured!' } as HttpErrorResponse;
-                deleteQuizExercsieStub.returns(throwError(error));
+                const error = { message: 'error occurred!' } as HttpErrorResponse;
+                deleteQuizExerciseStub.returns(throwError(error));
                 component.exercise = quizExercise;
                 component.deleteExercise();
-                expect(deleteQuizExercsieStub).to.have.been.calledOnce;
+                expect(deleteQuizExerciseStub).to.have.been.calledOnce;
                 expect(onDeleteExerciseEmitSpy).to.not.have.been.called;
             });
         });
@@ -214,7 +214,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
             expect(onDeleteExerciseEmitSpy).to.have.been.calledOnce;
         });
         it('should handle error for programmingExercise', () => {
-            const error = { message: 'error occured!' } as HttpErrorResponse;
+            const error = { message: 'error occurred!' } as HttpErrorResponse;
             deleteProgrammingExerciseStub.returns(throwError(error));
             component.exercise = programmingExercise;
             component.deleteProgrammingExercise({});
@@ -228,14 +228,14 @@ describe('ExamExerciseRowButtonsComponent', () => {
             component.exercise = quizExercise;
             component.exportQuizById(true);
             expect(quizExerciseExportSpy).to.have.been.called;
-            expect(quizExerciseExportSpy).to.have.been.calledWith({}, true);
+            expect(quizExerciseExportSpy).to.have.been.calledWith({}, true, quizExercise.title);
         });
         it('should export Quiz, exportAll false', () => {
             quizExerciseServiceFindStub.returns(of(quizResponse));
             component.exercise = quizExercise;
             component.exportQuizById(false);
             expect(quizExerciseExportSpy).to.have.been.called;
-            expect(quizExerciseExportSpy).to.have.been.calledWith({}, false);
+            expect(quizExerciseExportSpy).to.have.been.calledWith({}, false, quizExercise.title);
         });
     });
 });

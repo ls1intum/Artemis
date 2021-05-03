@@ -55,7 +55,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     public void testProcessingClusterAddedDistances() throws Exception {
         SecurityUtils.setAuthorizationObject();
-        database.addUsers(10, 0, 0);
+        database.addUsers(10, 0, 0, 0);
         final var course = database.addCourseWithOneFinishedTextExercise();
         final var exercise = (TextExercise) course.getExercises().iterator().next();
         final var textSubmissions = ModelFactory.generateTextSubmissions(10);

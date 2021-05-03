@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { omit as _omit } from 'lodash';
 import { SERVER_API_URL } from 'app/app.constants';

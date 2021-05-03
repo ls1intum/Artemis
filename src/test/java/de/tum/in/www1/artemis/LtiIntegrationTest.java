@@ -60,7 +60,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         doReturn(null).when(ltiService).verifyRequest(any());
         doNothing().when(ltiService).handleLaunchRequest(any(), any());
 
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
 
         database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);

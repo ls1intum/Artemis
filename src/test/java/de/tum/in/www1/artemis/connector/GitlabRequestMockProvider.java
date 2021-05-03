@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -92,6 +93,9 @@ public class GitlabRequestMockProvider {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UrlService urlService;
 
     public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
@@ -216,7 +220,7 @@ public class GitlabRequestMockProvider {
                 }
             }
 
-            mockAddMemberToRepository(repositoryUrl, user);
+            mockAddMemberToRepository(repositoryUrl, user.getLogin());
         }
         mockProtectBranch("master", repositoryUrl);
     }
@@ -239,28 +243,27 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        mockAddMemberToRepository(repositoryId, user);
+    private void mockAddMemberToRepository(VcsRepositoryUrl repositoryUrl, String login) throws GitLabApiException {
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
+        mockAddMemberToRepository(repositoryPath, login, false);
     }
 
-    public void mockAddMemberToRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+    public void mockAddMemberToRepository(String repositoryPath, String login, boolean throwError) throws GitLabApiException {
         final var mockedUserId = 1;
-        doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(user.getLogin());
-        doReturn(new Member()).when(projectApi).addMember(repositoryId, mockedUserId, DEVELOPER);
+        doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(login);
+        if (throwError) {
+            System.out.println("repositoryPath: " + repositoryPath + ", mockedUserId: " + mockedUserId);
+            doThrow(new GitLabApiException("Bad Request", 400)).when(projectApi).addMember(repositoryPath, mockedUserId, DEVELOPER);
+        }
+        else {
+            doReturn(new Member()).when(projectApi).addMember(repositoryPath, mockedUserId, DEVELOPER);
+        }
     }
 
     private void mockProtectBranch(String branch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryId, branch);
-        doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryId, branch);
-    }
-
-    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repository) {
-        final var namespaces = repository.toString().split("/");
-        final var last = namespaces.length - 1;
-
-        return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
+        doReturn(new Branch()).when(repositoryApi).unprotectBranch(repositoryPath, branch);
+        doReturn(new ProtectedBranch()).when(protectedBranchesApi).protectBranch(repositoryPath, branch);
     }
 
     public void mockFailToCheckIfProjectExists(String projectKey) throws GitLabApiException {
@@ -273,10 +276,10 @@ public class GitlabRequestMockProvider {
         mockServerShortTimeout.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(httpStatus).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
-    public void mockRemoveMemberFromRepository(String repositoryId, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+    public void mockRemoveMemberFromRepository(String repositoryPath, String login) throws GitLabApiException {
         final var mockedUserId = 1;
-        doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(user.getLogin());
-        doNothing().when(projectApi).removeMember(repositoryId, mockedUserId);
+        doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(login);
+        doNothing().when(projectApi).removeMember(repositoryPath, mockedUserId);
     }
 
     public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
@@ -292,7 +295,7 @@ public class GitlabRequestMockProvider {
 
         // Add as member to new groups
         if (addedGroups != null && !addedGroups.isEmpty()) {
-            final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(addedGroups);
+            final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(addedGroups);
             for (final var exercise : exercisesWithAddedGroups) {
                 final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
                 doReturn(new Member()).when(groupApi).addMember(eq(exercise.getProjectKey()), anyInt(), eq(accessLevel));
@@ -301,7 +304,7 @@ public class GitlabRequestMockProvider {
 
         // Update/remove old groups
         if (removedGroups != null && !removedGroups.isEmpty()) {
-            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(removedGroups);
+            final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(removedGroups);
             for (final var exercise : exercisesWithOutdatedGroups) {
                 // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
                 // then we have to add him as a member with the new access level
@@ -345,9 +348,12 @@ public class GitlabRequestMockProvider {
         // Add user to existing exercises
         if (user.getGroups() != null && user.getGroups().size() > 0) {
             final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
+            final var editorExercises = programmingExerciseRepository.findAllByCourse_EditorGroupNameIn(user.getGroups()).stream()
+                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
                     .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             mockAddUserToGroups(userId, instructorExercises, MAINTAINER);
+            mockAddUserToGroups(userId, editorExercises, DEVELOPER);
             mockAddUserToGroups(userId, teachingAssistantExercises, GUEST);
         }
     }
@@ -367,8 +373,9 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws GitLabApiException {
-        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws GitLabApiException {
+        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldEditorGroup.equals(updatedCourse.getEditorGroupName())
+                && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
             // Do nothing if the group names didn't change
             return;
         }
@@ -379,13 +386,19 @@ public class GitlabRequestMockProvider {
         // Update the old instructors of the course
         final var oldInstructors = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
         // doUpgrade=false, because these users already are instructors.
-        mockUpdateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), GUEST, false);
+        mockUpdateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), REPORTER, false);
         final var processedUsers = new HashSet<>(oldInstructors);
 
+        // Update the old editors of the group
+        final var oldEditors = userRepository.findAllUserInGroupAndNotIn(oldEditorGroup, processedUsers);
+        // doUpgrade=true, because these users should be upgraded from editor to instructor, if possible.
+        mockUpdateOldGroupMembers(exercises, oldEditors, updatedCourse.getEditorGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+        processedUsers.addAll(oldEditors);
+
         // Update the old teaching assistant of the group
-        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
+        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, processedUsers);
         // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
-        mockUpdateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
+        mockUpdateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), DEVELOPER, true);
         processedUsers.addAll(oldTeachingAssistants);
 
         // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
@@ -397,11 +410,18 @@ public class GitlabRequestMockProvider {
         }
         processedUsers.addAll(remainingInstructors);
 
+        // Find all NEW editors that did not belong to the old editors or instructors
+        final var remainingEditors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getEditorGroupName(), processedUsers);
+        for (var user : remainingEditors) {
+            mockGetUserId(user.getLogin(), true);
+            mockAddUserToGroups(1, exercises, DEVELOPER);
+        }
+
         // Find all NEW TAs that did not belong to the old TAs or instructors
         final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
         for (var user : remainingTeachingAssistants) {
             mockGetUserId(user.getLogin(), true);
-            mockAddUserToGroups(1, exercises, GUEST);
+            mockAddUserToGroups(1, exercises, REPORTER);
         }
     }
 
@@ -446,12 +466,12 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockDeleteRepository(String repositoryId, boolean shouldFail) throws GitLabApiException {
+    public void mockDeleteRepository(String repositoryPath, boolean shouldFail) throws GitLabApiException {
         if (shouldFail) {
-            doThrow(new GitLabApiException("Bad Request", 400)).when(projectApi).deleteProject(repositoryId);
+            doThrow(new GitLabApiException("Bad Request", 400)).when(projectApi).deleteProject(repositoryPath);
         }
         else {
-            doNothing().when(projectApi).deleteProject(repositoryId);
+            doNothing().when(projectApi).deleteProject(repositoryPath);
         }
     }
 
@@ -469,12 +489,12 @@ public class GitlabRequestMockProvider {
             return;
         }
 
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         if (isUrlValid) {
-            doReturn(new Project()).when(projectApi).getProject(repositoryId);
+            doReturn(new Project()).when(projectApi).getProject(repositoryPath);
         }
         else {
-            when(projectApi.getProject(repositoryId)).thenAnswer(invocation -> {
+            when(projectApi.getProject(repositoryPath)).thenAnswer(invocation -> {
                 throw new Exception("exception");
             });
         }
@@ -483,8 +503,8 @@ public class GitlabRequestMockProvider {
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<de.tum.in.www1.artemis.domain.User> users) throws GitLabApiException {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true);
-            final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-            doReturn(new Member()).when(projectApi).updateMember(repositoryId, 1, GUEST);
+            final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
+            doReturn(new Member()).when(projectApi).updateMember(repositoryPath, 1, GUEST);
         }
     }
 }

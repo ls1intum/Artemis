@@ -86,7 +86,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(0, 5, 1);
+        database.addUsers(0, 5, 0, 1);
         course = database.addCourseWithModelingAndTextExercise();
 
         // Make both source and destination exercise team exercises

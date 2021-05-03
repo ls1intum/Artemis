@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { splitCamelCase } from 'app/shared/util/utils';
+import { map } from 'rxjs/operators';
 
 /**
  * Corresponds to ExerciseScoresDTO.java on the server
@@ -38,14 +39,16 @@ export class ExerciseScoresChartService {
 
         return this.http
             .get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/charts/exercise-scores`, { observe: 'response' })
-            .map((response: HttpResponse<ExerciseScoresDTO[]>) => {
-                if (response.body) {
-                    for (const exerciseScoreDTO of response.body) {
-                        exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? moment(exerciseScoreDTO.releaseDate) : undefined;
-                        exerciseScoreDTO.exerciseType = exerciseScoreDTO.exerciseType ? splitCamelCase(exerciseScoreDTO.exerciseType) : undefined;
+            .pipe(
+                map((response: HttpResponse<ExerciseScoresDTO[]>) => {
+                    if (response.body) {
+                        for (const exerciseScoreDTO of response.body) {
+                            exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? moment(exerciseScoreDTO.releaseDate) : undefined;
+                            exerciseScoreDTO.exerciseType = exerciseScoreDTO.exerciseType ? splitCamelCase(exerciseScoreDTO.exerciseType) : undefined;
+                        }
                     }
-                }
-                return response;
-            });
+                    return response;
+                }),
+            );
     }
 }

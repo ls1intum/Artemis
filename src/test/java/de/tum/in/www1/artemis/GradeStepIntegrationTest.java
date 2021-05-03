@@ -43,7 +43,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @BeforeEach
     public void init() {
-        database.addUsers(0, 0, 1);
+        database.addUsers(0, 0, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();

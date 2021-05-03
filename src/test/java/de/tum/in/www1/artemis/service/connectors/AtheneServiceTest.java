@@ -50,7 +50,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @BeforeEach
     public void init() {
         // Create example exercise
-        database.addUsers(10, 1, 1);
+        database.addUsers(10, 1, 0, 1);
         var course = database.addCourseWithOneReleasedTextExercise();
         exercise1 = (TextExercise) course.getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();

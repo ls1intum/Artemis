@@ -40,6 +40,7 @@ export class ExerciseDetailsComponent implements OnInit {
         }
         this.isExamExercise = !!this.exercise.exerciseGroup;
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.exercise);
+        this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.exercise);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
     }
 

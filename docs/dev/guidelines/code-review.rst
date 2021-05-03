@@ -20,7 +20,7 @@ STEPS
 2. Implementation is "done" -> only Developer
 =============================================
 
-* Make sure all steps in the `Checklist <https://github.com/ls1intum/ArTEMiS/blob/develop/.github/PULL_REQUEST_TEMPLATE.md>`_ are completed
+* Make sure all steps in the `Checklist <https://github.com/ls1intum/Artemis/blob/develop/.github/PULL_REQUEST_TEMPLATE.md>`_ are completed
 * Add or update the "Steps for Testing" in the description of your pull request
 * Mark the pull request as `ready for review <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request>`_
 * Make sure that the changes in the pull request are only the ones necessary

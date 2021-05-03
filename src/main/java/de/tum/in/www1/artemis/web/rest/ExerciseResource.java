@@ -101,8 +101,8 @@ public class ExerciseResource {
         // Exam exercise
         if (exercise.isExamExercise()) {
             Exam exam = exercise.getExerciseGroup().getExam();
-            if (authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-                // instructors and admins should always be able to see exam exercises
+            if (authCheckService.isAtLeastEditorForExercise(exercise, user)) {
+                // instructors editors and admins should always be able to see exam exercises
                 // continue
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
@@ -242,7 +242,7 @@ public class ExerciseResource {
     }
 
     /**
-     * Reset the exercise by deleting all its partcipations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom implementations
+     * Reset the exercise by deleting all its participations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param exerciseId exercise to delete
      * @return the ResponseEntity with status 200 (OK)

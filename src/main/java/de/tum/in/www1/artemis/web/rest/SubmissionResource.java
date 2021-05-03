@@ -98,14 +98,14 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of the latest test run submission in body
      */
     @GetMapping("/exercises/{exerciseId}/test-run-submissions")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
             throw new AccessForbiddenException(NOT_ALLOWED);
         }
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (!authCheckService.isAtLeastEditorForExercise(exercise)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();

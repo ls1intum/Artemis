@@ -14,7 +14,7 @@ export const listOfComplaintsRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.complaint.listOfComplaints.title',
             complaintType: ComplaintType.COMPLAINT,
         },
@@ -27,7 +27,7 @@ export const listOfComplaintsRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.complaint.listOfComplaints.title',
             complaintType: ComplaintType.COMPLAINT,
         },
@@ -38,7 +38,7 @@ export const listOfComplaintsRoute: Routes = [
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/complaints',
             component: ListOfComplaintsComponent,
             data: {
-                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                 pageTitle: 'artemisApp.complaint.listOfComplaints.title',
                 complaintType: ComplaintType.COMPLAINT,
             },
@@ -52,7 +52,7 @@ export const listOfComplaintsRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.moreFeedback.list.title',
             complaintType: ComplaintType.MORE_FEEDBACK,
         },
@@ -63,7 +63,7 @@ export const listOfComplaintsRoute: Routes = [
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/more-feedback-requests',
             component: ListOfComplaintsComponent,
             data: {
-                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                 pageTitle: 'artemisApp.moreFeedback.list.title',
                 complaintType: ComplaintType.MORE_FEEDBACK,
             },

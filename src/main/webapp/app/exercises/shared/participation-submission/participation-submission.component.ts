@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { JhiEventManager } from 'ng-jhipster';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';

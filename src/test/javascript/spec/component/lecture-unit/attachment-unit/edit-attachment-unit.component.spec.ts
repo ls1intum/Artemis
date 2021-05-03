@@ -8,7 +8,7 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
@@ -67,7 +67,7 @@ describe('EditAttachmentUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
+                        paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
                                     case 'attachmentUnitId':
@@ -77,7 +77,7 @@ describe('EditAttachmentUnitComponent', () => {
                         }),
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'lectureId':

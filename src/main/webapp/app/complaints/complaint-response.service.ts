@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
@@ -45,7 +46,7 @@ export class ComplaintResponseService {
     refreshLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/refresh-lock`, {}, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     removeLock(complaintId: number): Observable<HttpResponse<void>> {
@@ -55,20 +56,20 @@ export class ComplaintResponseService {
     createLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/create-lock`, {}, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     resolveComplaint(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaintResponse);
         return this.http
             .put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponse.complaint!.id}/resolve`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     findByComplaintId(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .get<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     public convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
