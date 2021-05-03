@@ -462,7 +462,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
         database.addSampleFeedbackToResults(textSubmission.getLatestResult());
-        request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+        request.postWithoutLocation("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + textSubmission.getId() + "/cancel-assessment", null, expectedStatus,
+                null);
     }
 
     @Test
@@ -492,7 +493,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void cancelAssessment_wrongSubmissionId() throws Exception {
-        request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/100/cancel-assessment", null, HttpStatus.NOT_FOUND);
+        request.post("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/100/cancel-assessment", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -1004,16 +1005,15 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void solveFeedbackConflict_forNonExistingConflict() throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
-        FeedbackConflict feedbackConflict = request.get("/api/text-assessments/exercise/" + textExercise.getId() + "/feedbackConflict/2/solve-feedback-conflict",
-                HttpStatus.BAD_REQUEST, FeedbackConflict.class);
+        FeedbackConflict feedbackConflict = solveFeedbackConflict(HttpStatus.BAD_REQUEST);
         assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
     }
 
     private FeedbackConflict solveFeedbackConflict(HttpStatus expectedStatus) throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
-        return request.get(
+        return request.postWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/feedbackConflict/" + feedbackConflictRepository.findAll().get(0).getId() + "/solve-feedback-conflict",
-                expectedStatus, FeedbackConflict.class);
+                null, FeedbackConflict.class, expectedStatus);
     }
 
     @Test

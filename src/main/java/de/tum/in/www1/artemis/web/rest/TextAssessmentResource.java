@@ -88,7 +88,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Saves a given manual textAssessment
+     * PUT exercise/:exerciseId/result/:resultId : Saves a given manual textAssessment
      * TODO SE: refactor this REST call to not use the exerciseId anymore, and make uniform with other save..Assessment calls
      * @param exerciseId the exerciseId of the exercise which will be saved
      * @param resultId the resultId the assessment belongs to
@@ -104,7 +104,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -137,8 +137,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * DELETE text-submissions/:exampleSubmissionId/example-assessment : delete result & text blocks for example submission.
-     * This is used when updating the text of the example assessment.
+     * DELETE text-submissions/:exampleSubmissionId/example-assessment/feedback : delete feedback for example submission.
      *
      * @param exampleSubmissionId id of the submission
      * @return 204 No Content
@@ -172,7 +171,9 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Submits manual textAssessments for a given result and notify the user if it's before the Assessment Due Date
+     *
+     * PUT exercise/:exerciseId/result/:resultId/submit : Submits manual textAssessments for a given result
+     *     and notify the user if it's before the Assessment Due Date
      *
      * @param exerciseId the exerciseId of the exercise which will be saved
      * @param resultId the resultId the assessment belongs to
@@ -189,7 +190,8 @@ public class TextAssessmentResource extends AssessmentResource {
                     "feedbackReferenceTooLong");
         }
         final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+        checkAuthorization(exercise, null);
+        final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -206,7 +208,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Update an assessment after a complaint was accepted.
+     * PUT text-submissions/:submissionId/assessment-after-complaint : Update an assessment after a complaint was accepted.
      *
      * @param submissionId     the id of the submission for which the assessment should be updated
      * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
@@ -234,21 +236,21 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * POST exercise/:exerciseId/submission/:submissionId/cancel-assessment : Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
      * @param exerciseId the exerciseId of the exercise for which the assessment gets canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
+    @PostMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
     }
 
     /**
-     * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
+     * GET submission/:submissionId : Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
@@ -291,11 +293,10 @@ public class TextAssessmentResource extends AssessmentResource {
         else {
             // in case no resultId is set we get result by correctionRound
             result = textSubmission.getResultForCorrectionRound(correctionRound);
-
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
                     && result.getCompletionDate() == null) {
                 // If we already have a result, we need to check if it is locked.
-                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
+                forbidden(ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor");
             }
 
             textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
@@ -336,7 +337,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
+     * GET exercise/:exerciseId/submission/:submissionId/example-result : Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
      *
      * @param exerciseId   the id of the exercise
      * @param submissionId the id of the submission which must be connected to an example submission
@@ -350,7 +351,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         // If the user is not at least a tutor for this exercise, return error
-       authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, user);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         Submission submission = exampleSubmission.getSubmission();
 
@@ -381,7 +382,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Retrieves all the text submissions that have conflicting feedback with the given feedback id.
+     * GET submission/:submissionId/feedback/:feedbackId/feedback-conflicts : Retrieves all the text submissions that have conflicting feedback with the given feedback id.
      * User needs to be either assessor of the submission (with given feedback id) or an instructor for the exercise to check the conflicts.
      *
      * @param submissionId - id of the submission with the feedback that has conflicts
@@ -393,15 +394,10 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long submissionId, @PathVariable long feedbackId) {
         log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);
 
-        final Optional<TextSubmission> textSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessor(submissionId);
-        if (textSubmission.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
-                    .body(null);
-        }
+        final TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(submissionId);
 
-        final TextExercise textExercise = (TextExercise) textSubmission.get().getParticipation().getExercise();
-        final Result result = textSubmission.get().getLatestResult();
+        final TextExercise textExercise = (TextExercise) textSubmission.getParticipation().getExercise();
+        final Result result = textSubmission.getLatestResult();
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkTextExerciseForRequest(textExercise, user);
@@ -422,7 +418,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * With given feedbackConflictId, finds the conflict and sets it as solved.
+     * POST exercise/:exerciseId/feedbackConflict/:feedbackConflictId/solve-feedback-conflict : With given feedbackConflictId, finds the conflict and sets it as solved.
      * Checks; if the feedback conflict is present, if the user is the assessor of one of the feedback or
      * if the user is at least the instructor for the exercise.
      *
@@ -430,7 +426,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param feedbackConflictId - feedback conflict id to set the conflict as solved
      * @return - solved feedback conflict
      */
-    @GetMapping("/exercise/{exerciseId}/feedbackConflict/{feedbackConflictId}/solve-feedback-conflict")
+    @PostMapping("/exercise/{exerciseId}/feedbackConflict/{feedbackConflictId}/solve-feedback-conflict")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long exerciseId, @PathVariable long feedbackConflictId) {
         log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);
@@ -443,19 +439,11 @@ public class TextAssessmentResource extends AssessmentResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
-        Optional<FeedbackConflict> optionalFeedbackConflict = this.feedbackConflictRepository.findByFeedbackConflictId(feedbackConflictId);
-        if (optionalFeedbackConflict.isEmpty()) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "feedbackConflict", "feedbackConflictNotFound", "No feedback conflict was found for the given ID."))
-                    .body(null);
-        }
-
-        final FeedbackConflict feedbackConflict = optionalFeedbackConflict.get();
+        final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 
         final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-
         if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
             return forbidden();
         }
@@ -481,7 +469,6 @@ public class TextAssessmentResource extends AssessmentResource {
         if (textExercise == null) {
             throw new BadRequestAlertException("No exercise was found for the given ID.", "textExercise", "exerciseNotFound");
         }
-
         validateExercise(textExercise);
         checkAuthorization(textExercise, user);
     }
