@@ -86,11 +86,14 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        console.log('on changes');
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
+            console.log('1');
             this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
         }
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
+            console.log('2');
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
             this.applyStateConfiguration();
@@ -174,6 +177,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
+        console.log('handle feedback');
         this.referencedFeedbacks = this.removeInvalidFeedback(this.feedbacks);
         this.updateElementFeedbackMapping(this.referencedFeedbacks);
         this.updateApollonAssessments(this.referencedFeedbacks);
@@ -259,9 +263,29 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
             score: feedback.credits!,
             feedback: feedback.text || undefined,
+            label: this.calculateLabel(feedback),
+            labelColor: this.calculateLabelColor(feedback),
         }));
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
         }
+        console.log('updating apollon editor!');
+    }
+
+    // label: this.calculateLabel(feedback),
+    // labelColor: this.calculateLabelColor(feedback),
+
+    private calculateLabel(feedback: Feedback) {
+        if (this.highlightDifferences) {
+            return feedback.copiedFeedbackId ? 'Second correction round' : 'First correction round';
+        }
+        return undefined;
+    }
+
+    private calculateLabelColor(feedback: Feedback) {
+        if (this.highlightDifferences) {
+            return feedback.copiedFeedbackId ? 'orange' : 'blue';
+        }
+        return undefined;
     }
 }
