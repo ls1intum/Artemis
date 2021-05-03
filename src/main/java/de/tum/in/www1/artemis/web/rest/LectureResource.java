@@ -84,7 +84,7 @@ public class LectureResource {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!(authCheckService.isEditorInCourse(lecture.getCourse(), user) || authCheckService.isInstructorInCourse(lecture.getCourse(), user) || authCheckService.isAdmin(user))) {
+        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
             return forbidden();
         }
         Lecture result = lectureRepository.save(lecture);
@@ -108,7 +108,7 @@ public class LectureResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!(authCheckService.isEditorInCourse(lecture.getCourse(), user) || authCheckService.isInstructorInCourse(lecture.getCourse(), user) || authCheckService.isAdmin(user))) {
+        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
             return forbidden();
         }
 
@@ -136,7 +136,7 @@ public class LectureResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!(authCheckService.isEditorInCourse(course, user) || authCheckService.isInstructorInCourse(course, user) || authCheckService.isAdmin(user))) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
 
@@ -245,7 +245,7 @@ public class LectureResource {
             return ResponseEntity.notFound().build();
         }
         Lecture lecture = optionalLecture.get();
-        if (!(authCheckService.isEditorInCourse(lecture.getCourse(), user) || authCheckService.isInstructorInCourse(lecture.getCourse(), user) || authCheckService.isAdmin(user))) {
+        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
             return forbidden();
         }
         Course course = lecture.getCourse();
