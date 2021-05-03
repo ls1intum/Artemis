@@ -2,7 +2,7 @@
 <!-- If your pull request is not ready for review yet, create a draft pull request! -->
 
 ### Checklist
-- [ ] I tested *all* changes and *all* related features with different users (student, tutor, instructor, admin) on the test server https://artemistest.ase.in.tum.de.
+- [ ] I tested *all* changes and *all* related features with different users (student, tutor, editor, instructor, admin) on the test server https://artemistest.ase.in.tum.de.
 - [ ] Server: I followed the [coding and design guidelines](https://artemis-platform.readthedocs.io/en/latest/dev/guidelines/server.html).
 - [ ] Server: I added multiple integration tests (Spring) related to the features (with a high test coverage)
 - [ ] Server: I added `@PreAuthorize` and check the course groups for all new REST Calls (security)
