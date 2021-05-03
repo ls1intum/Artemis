@@ -6,7 +6,7 @@ import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import textFiles from './text-files.json';
+import * as textFiles from './text-files.json';
 import {
     CommitState,
     CreateFileChange,
