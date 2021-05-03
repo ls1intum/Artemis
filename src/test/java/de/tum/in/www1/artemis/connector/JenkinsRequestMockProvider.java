@@ -388,8 +388,8 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers, boolean failToRemoveUsers)
-            throws IOException {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
+            boolean failToRemoveUsers) throws IOException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
         var newEditorGroup = updatedCourse.getEditorGroupName();
         var newTeachingAssistantGroup = updatedCourse.getTeachingAssistantGroupName();

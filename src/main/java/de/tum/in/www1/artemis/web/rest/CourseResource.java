@@ -1227,15 +1227,15 @@ public class CourseResource {
         if (course.getEditorGroupName() == null) {
             try {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
-                if(!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
+                if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
                     artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
                 }
             }
             catch (GroupAlreadyExistsException ex) {
                 throw new BadRequestAlertException(
-                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                        + "Please choose a different short name!",
-                    ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+                        ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                                + "Please choose a different short name!",
+                        ENTITY_NAME, "shortNameWasAlreadyUsed", true);
             }
             catch (ArtemisAuthenticationException ex) {
                 // a specified group does not exist, notify the client
