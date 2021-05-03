@@ -33,6 +33,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { instructorCourseDashboardRoute } from 'app/course/dashboards/instructor-course-dashboard/instructor-course-dashboard.route';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -85,7 +87,7 @@ describe('InstructorCourseDashboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, ChartsModule, RouterModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, ChartsModule, RouterTestingModule.withRoutes([instructorCourseDashboardRoute[0]])],
             declarations: [
                 InstructorCourseDashboardComponent,
                 MockPipe(ArtemisTranslatePipe),
