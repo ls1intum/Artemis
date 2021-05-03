@@ -479,6 +479,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
+    // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
     // @Test
     // @WithMockUser(username = "instructor1", roles = "ADMIN")
     // public void testStatistics() throws Exception {
@@ -557,6 +558,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was not created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         // assertThat(automaticResult.getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(20);
@@ -566,6 +568,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was not created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
@@ -573,6 +576,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was not created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
@@ -580,6 +584,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was not created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
@@ -587,6 +592,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was not created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         // assertThat(automaticResult.getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(1);
@@ -606,6 +612,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         // assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
@@ -614,6 +621,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         // assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
@@ -622,6 +630,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         // assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
@@ -638,6 +647,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result storedResultOfSubmission2 = compassService.getResultWithFeedbackSuggestionsForSubmission(submission2.getId());
         assertThat(storedResultOfSubmission2).as("automatic result is created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
         // checkAutomaticAssessment(storedResultOfSubmission2);
         // database.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
@@ -682,6 +692,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("all elements got assessed automatically").isEqualTo(4);
 
@@ -689,6 +700,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(submissionToCheck.getId());
         assertThat(automaticResult).as("automatic result was created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(automaticResult).as("automatic result was created").isNotNull();
         // assertThat(automaticResult.getFeedbacks().size()).as("not all elements got assessed automatically").isEqualTo(2);
     }
@@ -716,6 +728,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(submissionWithAutomaticAssessment.getId()).isEqualTo(storedSubmission.getId());
         assertThat(compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId())).isNull();
 
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // Result resultWithFeedback = submissionWithAutomaticAssessment.getLatestResult();
         // List<Feedback> existingFeedback = resultWithFeedback.getFeedbacks();
         // Feedback feedback = existingFeedback.get(0);
@@ -785,6 +798,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(modelingAssessment.getFeedbacks().get(0)).as("feedback is properly overridden").isEqualToComparingOnlyGivenFields(changedFeedback, "credits", "text");
         modelingAssessment = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission2.getId());
         assertThat(modelingAssessment).as("automatic result is created").isNull();
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(modelingAssessment.getFeedbacks().size()).as("automatic assessment still exists").isEqualTo(1);
         // assertThat(modelingAssessment.getFeedbacks().get(0)).as("automatic assessment is overridden properly").isEqualToComparingOnlyGivenFields(changedFeedback, "credits",
         // "text");
@@ -814,6 +828,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(modelingAssessment.getFeedbacks().size()).as("existing submitted assessment still exists").isEqualTo(2);
         assertThat(modelingAssessment.getFeedbacks().get(0)).as("existing feedback is still the same").isEqualToComparingOnlyGivenFields(originalFeedback, "credits", "text");
         modelingAssessment = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission3.getId());
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // assertThat(modelingAssessment.getFeedbacks().size()).as("automatic assessment is not possible").isEqualTo(0);
         assertThat(modelingAssessment).as("automatic result is not created").isNull();
 

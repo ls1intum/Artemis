@@ -77,6 +77,7 @@ public class CompassService {
         // NOTE: at the moment Compass is not working reliably and should not be used
         return false;
 
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // // only use compass for course exercises, in exam exercises the additional delay is too much so it is currently deactivated
         // // TODO: we should support compass also for the exam mode
         // if (modelingExercise.isExamExercise()) {
@@ -108,6 +109,7 @@ public class CompassService {
         // NOTE: at the moment Compass is not working reliably and should not be used
         return false;
 
+        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // ModelingExercise modelingExercise = findModelingExerciseById(exerciseId);
         // return modelingExercise != null && isSupported(modelingExercise);
     }
