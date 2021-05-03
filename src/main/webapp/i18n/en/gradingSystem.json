@@ -36,7 +36,7 @@
                 },
                 "inclusivity": {
                     "title": "Inclusivity",
-                    "explanation": "Determines whether a grade step's Min % boundary gets included and Max % boundary gets excluded or vice versa (Exception - 0% and 100% always get included in the first and respectively last grade step). Example: 60% score will be mapped to a grade step wih range 60% - 70% if lower bound inclusivity is set but not if upper bound inclusivity is set (in this case it would be mapped to the previous grade step)"
+                    "explanation": "Determines whether a grade step's Min % boundary gets included and Max % boundary gets excluded or vice versa (Exception - 0% and 100% always get included in the first and respectively last grade step). Example: 60% score will be mapped to a grade step with range 60% - 70% if lower bound inclusivity is set but not if upper bound inclusivity is set (in this case it would be mapped to the previous grade step)"
                 },
                 "firstPassingGrade": {
                     "title": "First Passing Grade",

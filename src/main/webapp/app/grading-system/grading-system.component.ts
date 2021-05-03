@@ -14,7 +14,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class GradingSystemComponent implements OnInit {
     ButtonSize = ButtonSize;
-    gradingScale: GradingScale;
+    gradingScale = new GradingScale();
     lowerBoundInclusivity = true;
     existingGradingScale = false;
     firstPassingGrade: string;
