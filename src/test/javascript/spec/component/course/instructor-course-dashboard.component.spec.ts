@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, RouterModule, UrlSegment } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AlertComponent } from 'app/shared/alert/alert.component';
