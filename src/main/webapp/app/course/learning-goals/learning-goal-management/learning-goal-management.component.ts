@@ -4,7 +4,7 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { JhiAlertService } from 'ng-jhipster';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
+import { finalize, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, Subject } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
@@ -65,19 +65,21 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.learningGoalService
             .getAllForCourse(this.courseId)
-            .switchMap((res) => {
-                this.learningGoals = res.body!;
+            .pipe(
+                switchMap((res) => {
+                    this.learningGoals = res.body!;
 
-                const progressObservable = this.learningGoals.map((lg) => {
-                    return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, false);
-                });
+                    const progressObservable = this.learningGoals.map((lg) => {
+                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, false);
+                    });
 
-                const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
-                    return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, true);
-                });
+                    const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
+                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, true);
+                    });
 
-                return forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
-            })
+                    return forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
+                }),
+            )
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

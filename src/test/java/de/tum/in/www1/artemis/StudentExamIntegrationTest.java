@@ -103,7 +103,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        users = programmingExerciseTestService.setupTestUsers(10, 1, 2);
+        users = programmingExerciseTestService.setupTestUsers(10, 1, 0, 2);
         users.remove(database.getUserByLogin("admin")); // the admin is not registered for the course and therefore cannot access the student exam so we need to remove it
         course1 = database.addEmptyCourse();
         exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(1));

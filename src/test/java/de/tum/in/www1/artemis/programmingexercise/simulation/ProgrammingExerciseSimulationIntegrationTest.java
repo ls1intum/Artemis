@@ -36,7 +36,7 @@ public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpring
 
     @BeforeEach
     public void setup() {
-        database.addUsers(numberOfStudents, 1, 1);
+        database.addUsers(numberOfStudents, 1, 0, 1);
         course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
     }

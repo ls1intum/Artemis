@@ -48,6 +48,10 @@ public class RequestUtilService {
         return mvc;
     }
 
+    public ObjectMapper getObjectMapper() {
+        return mapper;
+    }
+
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());

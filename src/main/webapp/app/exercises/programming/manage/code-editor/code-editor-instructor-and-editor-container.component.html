@@ -95,7 +95,7 @@
                 <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
             </button>
             <button
-                *ngIf="exercise.studentParticipations && exercise.studentParticipations.length"
+                *ngIf="exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor"
                 (click)="deleteAssignmentParticipation()"
                 [disabled]="loadingState !== LOADING_STATE.CLEAR"
                 class="btn btn-danger"

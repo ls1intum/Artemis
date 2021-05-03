@@ -119,12 +119,6 @@ public final class Constants {
 
     public static final String SOLUTION_CHECKOUT_PATH = "solution";
 
-    // TODO: the following numbers should be configurable in the yml files
-
-    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 50;
-
-    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 30 * 1000; // 30s
-
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";

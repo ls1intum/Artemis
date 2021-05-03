@@ -3,7 +3,7 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { onError } from 'app/shared/util/global.utils';
-import { finalize } from 'rxjs/operators';
+import { finalize, switchMap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { forkJoin } from 'rxjs';
@@ -53,19 +53,21 @@ export class CourseLearningGoalsComponent implements OnInit {
         this.isLoading = true;
         this.learningGoalService
             .getAllForCourse(this.courseId)
-            .switchMap((res) => {
-                this.learningGoals = res.body!;
+            .pipe(
+                switchMap((res) => {
+                    this.learningGoals = res.body!;
 
-                const progressObservable = this.learningGoals.map((lg) => {
-                    return this.learningGoalService.getProgress(lg.id!, this.courseId, false);
-                });
+                    const progressObservable = this.learningGoals.map((lg) => {
+                        return this.learningGoalService.getProgress(lg.id!, this.courseId, false);
+                    });
 
-                const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
-                    return this.learningGoalService.getProgress(lg.id!, this.courseId, true);
-                });
+                    const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
+                        return this.learningGoalService.getProgress(lg.id!, this.courseId, true);
+                    });
 
-                return forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
-            })
+                    return forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
+                }),
+            )
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

@@ -59,7 +59,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        this.database.addUsers(10, 10, 10);
+        this.database.addUsers(10, 10, 0, 10);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();

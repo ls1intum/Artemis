@@ -3,7 +3,7 @@
         <span *ngIf="course && !showHeading">{{ course.title }} - </span><span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
         <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
         <a
-            *ngIf="course && course.isAtLeastInstructor"
+            *ngIf="course && course.isAtLeastEditor"
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             id="create-quiz-button"
@@ -12,14 +12,14 @@
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
         </a>
         <a
-            *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastInstructor"
+            *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
         </a>
-        <a *ngIf="course && course.isAtLeastInstructor" class="btn mr-2 btn-primary float-right" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
+        <a *ngIf="course && course.isAtLeastEditor" class="btn mr-2 btn-primary float-right" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
@@ -46,10 +46,10 @@
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises; trackBy: trackId">
-                    <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor">
+                    <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
-                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor">
+                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
@@ -153,14 +153,17 @@
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
                                 </button>
                                 <a
-                                    *ngIf="quizExercise.isAtLeastInstructor"
+                                    *ngIf="quizExercise.isAtLeastEditor"
                                     [hidden]="quizIsOver(quizExercise)"
                                     [class.disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                                     class="btn btn-warning btn-sm mr-1 mb-1"
+                                    style="display: flex; justify-content: center; align-items: center"
                                 >
-                                    <fa-icon [icon]="'wrench'"></fa-icon>
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    <div>
+                                        <fa-icon [icon]="'wrench'"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    </div>
                                 </a>
                                 <a
                                     *ngIf="quizExercise.isAtLeastInstructor"

@@ -52,7 +52,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @BeforeEach
     public void init() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
@@ -191,7 +191,8 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId())
                 .get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
-        verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
+        verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise,
+                Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
     }
 

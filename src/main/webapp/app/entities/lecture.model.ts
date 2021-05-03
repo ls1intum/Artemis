@@ -17,6 +17,7 @@ export class Lecture implements BaseEntity {
     course?: Course;
 
     // helper attribute
+    isAtLeastEditor?: boolean;
     isAtLeastInstructor?: boolean;
 
     constructor() {}

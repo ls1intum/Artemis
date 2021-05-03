@@ -85,12 +85,12 @@ public class ProgrammingSubmissionResultSimulationResource {
      */
 
     @PostMapping(Endpoints.SUBMISSIONS_SIMULATION)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastEditorForExercise(exercise, user)) {
             return forbidden();
         }
 
@@ -117,7 +117,7 @@ public class ProgrammingSubmissionResultSimulationResource {
      * @return HTTP OK and Result
      */
     @PostMapping(Endpoints.RESULTS_SIMULATION)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
         User user = userRepository.getUserWithGroupsAndAuthorities();
