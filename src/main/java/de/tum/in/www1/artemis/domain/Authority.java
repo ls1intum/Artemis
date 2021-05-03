@@ -27,28 +27,30 @@ public class Authority implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public Authority() {
-        // empty constructor would not be available otherwise
-    }
-
     public static Authority ADMIN_AUTHORITY = new Authority(Role.ADMIN.getAuthority());
 
     public static Authority INSTRUCTOR_AUTHORITY = new Authority(Role.INSTRUCTOR.getAuthority());
 
+    public static Authority EDITOR_AUTHORITY = new Authority(Role.EDITOR.getAuthority());
+
     public static Authority TA_AUTHORITY = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
     public static Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
-
-    public Authority(String name) {
-        // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings
-        setName(name);
-    }
 
     @NotNull
     @Size(max = 50)
     @Id
     @Column(length = 50)
     private String name;
+
+    public Authority() {
+        // empty constructor would not be available otherwise
+    }
+
+    public Authority(String name) {
+        // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings
+        setName(name);
+    }
 
     public String getName() {
         return name;

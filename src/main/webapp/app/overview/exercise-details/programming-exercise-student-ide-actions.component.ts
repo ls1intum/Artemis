@@ -12,7 +12,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
-import { catchError, filter, tap } from 'rxjs/operators';
+import { catchError, filter, finalize, tap } from 'rxjs/operators';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
@@ -82,7 +82,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
 
         this.courseExerciseService
             .startExercise(this.courseId, this.exercise.id!)
-            .finally(() => (this.exercise.loading = false))
+            .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe(
                 (participation: StudentParticipation) => {
                     if (participation) {
@@ -152,7 +152,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
                     return error;
                 }),
             )
-            .finally(() => (this.exercise.loading = false))
+            .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe();
     }
 }

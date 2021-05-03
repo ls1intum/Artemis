@@ -8,7 +8,7 @@ import { MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { CreateAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-attachment-unit/create-attachment-unit.component';
 import { AttachmentService } from 'app/lecture/attachment.service';
@@ -54,7 +54,7 @@ describe('CreateAttachmentUnitComponent', () => {
                     useValue: {
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'lectureId':
@@ -63,7 +63,7 @@ describe('CreateAttachmentUnitComponent', () => {
                                     },
                                 }),
                                 parent: {
-                                    paramMap: Observable.of({
+                                    paramMap: of({
                                         get: (key: string) => {
                                             switch (key) {
                                                 case 'courseId':

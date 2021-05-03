@@ -19,7 +19,11 @@ public enum JenkinsJobPermission {
     }
 
     public static Set<JenkinsJobPermission> getTeachingAssistantPermissions() {
-        return Set.of(JenkinsJobPermission.JOB_READ, JenkinsJobPermission.JOB_BUILD, JenkinsJobPermission.JOB_CANCEL, JenkinsJobPermission.RUN_UPDATE);
+        return Set.of(JOB_BUILD, JOB_CANCEL, JOB_READ, RUN_UPDATE);
+    }
+
+    public static Set<JenkinsJobPermission> getEditorPermissions() {
+        return Set.of(JOB_BUILD, JOB_CANCEL, JOB_CONFIGURE, JOB_CREATE, JOB_READ, JOB_WORKSPACE, RUN_REPLAY, RUN_UPDATE, SCM_TAG);
     }
 
     public static Set<JenkinsJobPermission> getInstructorPermissions() {

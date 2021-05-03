@@ -50,7 +50,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @BeforeEach
     void init() {
-        database.addUsers(3, 1, 1);
+        database.addUsers(3, 1, 0, 1);
         Course course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {

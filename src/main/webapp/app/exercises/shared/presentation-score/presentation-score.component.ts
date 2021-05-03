@@ -5,7 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 @Component({
     selector: 'jhi-presentation-score-checkbox',
     template: `
-        <ng-container *jhiHasAnyAuthority="[Authority.ADMIN, Authority.INSTRUCTOR]">
+        <ng-container *jhiHasAnyAuthority="[Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR]">
             <div class="form-group" *ngIf="this.showPresentationScoreCheckbox()">
                 <div class="form-check custom-control custom-checkbox">
                     <input

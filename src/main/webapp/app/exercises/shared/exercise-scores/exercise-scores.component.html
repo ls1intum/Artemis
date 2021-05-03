@@ -63,21 +63,21 @@
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
 
-                <button class="btn btn-info btn-sm mr-1" (click)="exportNames()">
+                <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm mr-1" (click)="exportNames()">
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
                 </button>
-                <button class="btn btn-info btn-sm mr-1" (click)="exportResults()">
-                    <fa-icon [icon]="'download'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
-                </button>
+                <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" exercise]="exercise"></jhi-exercise-scores-export-button>
                 <jhi-programming-assessment-repo-export
                     *ngIf="exercise.type === ExerciseType.PROGRAMMING"
                     [exerciseId]="exercise.id!"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
                 <jhi-exercise-submission-export
-                    *ngIf="exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD"
+                    *ngIf="
+                        exercise.isAtLeastInstructor &&
+                        (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type == ExerciseType.FILE_UPLOAD)
+                    "
                     [exerciseId]="exercise.id!"
                     [exerciseType]="exercise.type"
                     class="mr-1"
@@ -253,11 +253,11 @@
                     [width]="470"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
+                        <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
                             <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
                             Repository
                         </a>
-                        <button class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
+                        <button *ngIf="buildPlanId(value)" class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
                             <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>

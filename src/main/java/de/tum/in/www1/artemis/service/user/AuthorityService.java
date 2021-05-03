@@ -56,11 +56,17 @@ public class AuthorityService {
         }
 
         Set<String> instructorGroups = courseRepository.findAllInstructorGroupNames();
+        Set<String> editorGroups = courseRepository.findAllEditorGroupNames();
         Set<String> teachingAssistantGroups = courseRepository.findAllTeachingAssistantGroupNames();
 
         // Check if user is an instructor in any course
         if (groups.stream().anyMatch(instructorGroups::contains)) {
             authorities.add(new Authority(INSTRUCTOR.getAuthority()));
+        }
+
+        // Check if user is an editor in any course
+        if (groups.stream().anyMatch(editorGroups::contains)) {
+            authorities.add(new Authority(EDITOR.getAuthority()));
         }
 
         // Check if user is a tutor in any course

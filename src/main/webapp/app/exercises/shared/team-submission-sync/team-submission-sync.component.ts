@@ -1,7 +1,7 @@
 import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { throttleTime, filter } from 'rxjs/internal/operators';
+import { throttleTime, filter } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';

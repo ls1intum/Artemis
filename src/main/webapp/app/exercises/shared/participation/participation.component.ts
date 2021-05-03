@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';

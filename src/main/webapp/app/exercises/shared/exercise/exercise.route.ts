@@ -9,7 +9,7 @@ export const exercisePopupRoute: Routes = exerciseTypes.map((exerciseType) => {
         path: ':courseId/' + exerciseType + '-exercises/:exerciseId/lti-configuration',
         component: ExerciseLtiConfigurationComponent,
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

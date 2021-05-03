@@ -92,7 +92,7 @@ public class QuizExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/quiz-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.debug("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
@@ -116,7 +116,7 @@ public class QuizExerciseResource {
 
         // Check that the user is authorized to create the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
 
@@ -143,7 +143,7 @@ public class QuizExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/quiz-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update QuizExercise : {}", quizExercise);
@@ -167,7 +167,7 @@ public class QuizExerciseResource {
 
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
 
@@ -207,7 +207,7 @@ public class QuizExerciseResource {
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
         }
         var quizExercises = quizExerciseRepository.findByCourseId(courseId);
@@ -228,11 +228,11 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
     @GetMapping("/{examId}/quiz-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
         Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         for (QuizExercise quizExercise : quizExercises) {
             quizExercise.setQuizQuestions(null);
@@ -261,7 +261,7 @@ public class QuizExerciseResource {
             // Get the course over the exercise group
             Course course = quizExercise.getExerciseGroup().getExam().getCourse();
 
-            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+            if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
                 return forbidden();
             }
             exerciseService.checkTestRunsExist(quizExercise);
@@ -322,7 +322,7 @@ public class QuizExerciseResource {
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
 
@@ -330,7 +330,7 @@ public class QuizExerciseResource {
 
         // check permissions
         Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
             return forbidden();
         }
 

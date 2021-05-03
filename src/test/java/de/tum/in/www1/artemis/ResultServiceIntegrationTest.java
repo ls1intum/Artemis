@@ -27,6 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -75,11 +76,16 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Autowired
     private SubmissionRepository submissionRepository;
 
+    @Autowired
+    private ExamRepository examRepository;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
 
     private ModelingExercise modelingExercise;
+
+    private ModelingExercise examModelingExercise;
 
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
@@ -89,7 +95,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void reset() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
@@ -103,6 +109,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
+
+        Exam exam = database.addExamWithExerciseGroup(this.course, true);
+        this.examModelingExercise = new ModelingExercise();
+        this.examModelingExercise.setMaxPoints(100D);
+        this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
+        this.modelingExerciseRepository.save(this.examModelingExercise);
+        this.examRepository.save(exam);
 
         Result result = ModelFactory.generateResult(true, 200D).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
@@ -491,6 +504,38 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetResultsForExamExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        for (int i = 1; i <= 5; i++) {
+            ModelingSubmission modelingSubmission = new ModelingSubmission();
+            modelingSubmission.model("Testingsubmission");
+            modelingSubmission.submitted(true);
+            modelingSubmission.submissionDate(now.minusHours(2));
+            database.addSubmission(this.examModelingExercise, modelingSubmission, "student" + i);
+            database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 12D, true);
+        }
+
+        // empty participation with submission
+        StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(null);
+        participation.setExercise(this.examModelingExercise);
+        studentParticipationRepository.save(participation);
+        ModelingSubmission modelingSubmission = new ModelingSubmission();
+        modelingSubmission.model("Text");
+        modelingSubmission.submitted(true);
+        modelingSubmission.submissionDate(now.minusHours(3));
+        participation.addSubmission(modelingSubmission);
+        modelingSubmission.setParticipation(participation);
+        submissionRepository.save(modelingSubmission);
+        studentParticipationRepository.save(participation);
+
+        List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        assertThat(results).hasSize(5);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getLatestResultWithFeedbacks() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
@@ -520,6 +565,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         request.delete("/api/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
         request.delete("api/results/" + result.getId(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void deleteResultStudent() throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        request.delete("/api/results/" + result.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -593,6 +646,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     public void createResultForExternalSubmission_studentNotInTheCourse() throws Exception {
         Result result = new Result().rated(false);
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student11"), result, Result.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createResultForExternalSubmissionExam() throws Exception {
+        Result result = new Result().rated(false);
+        request.postWithResponseBody("/api/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     private String externalResultPath(long exerciseId, String studentLogin) {

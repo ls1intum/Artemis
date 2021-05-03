@@ -468,9 +468,11 @@ const entityToString = (entity: BaseEntity) => entity.id!.toString();
  * @param stream$ stream of searches of the format {text, entities} where entities are the results
  */
 const onSearchDefaultWrapper = (stream$: Observable<{ text: string; entities: BaseEntity[] }>): Observable<BaseEntity[]> => {
-    return stream$.map(({ entities }) => {
-        return entities;
-    });
+    return stream$.pipe(
+        map(({ entities }) => {
+            return entities;
+        }),
+    );
 };
 
 /**

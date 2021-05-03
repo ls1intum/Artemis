@@ -153,6 +153,12 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
                 .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
 
+        if (exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName() != null) {
+            final var editorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName());
+            mockServer.expect(requestTo(editorURI)).andExpect(method(HttpMethod.PUT))
+                    .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        }
+
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
             final var tutorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName());
             mockServer.expect(requestTo(tutorURI)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(List.of("READ"))))
@@ -496,7 +502,12 @@ public class BambooRequestMockProvider {
 
     public void mockDeleteBambooBuildPlan(String planKey, boolean buildPlanExists) throws URISyntaxException, JsonProcessingException {
 
-        mockGetBuildPlan(planKey, null, false);
+        if (buildPlanExists) {
+            mockGetBuildPlan(planKey, new BambooBuildPlanDTO(planKey), false);
+        }
+        else {
+            mockGetBuildPlan(planKey, null, false);
+        }
         if (!buildPlanExists) {
             return;
         }

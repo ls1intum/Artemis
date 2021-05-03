@@ -86,10 +86,10 @@ public class StudentQuestionResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) {
-            groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForExercise(question);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForExercise(question);
         }
         if (question.getLecture() != null) {
-            groupNotificationService.notifyTutorAndInstructorGroupAboutNewQuestionForLecture(question);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForLecture(question);
         }
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/student-questions/" + question.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, question.getId().toString())).body(question);
