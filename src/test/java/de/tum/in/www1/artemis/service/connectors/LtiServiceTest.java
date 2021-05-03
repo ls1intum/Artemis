@@ -6,15 +6,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -57,6 +62,8 @@ public class LtiServiceTest {
 
     private LtiService ltiService;
 
+    private LtiService ltiServiceWithClient;
+
     private LtiLaunchRequestDTO launchRequest;
 
     private User user;
@@ -67,11 +74,22 @@ public class LtiServiceTest {
 
     private LtiOutcomeUrl ltiOutcomeUrl;
 
+    private HttpClient httpClient;
+
+    private HttpResponse httpResponse;
+
+    private StatusLine statusLine;
+
     @BeforeEach
     public void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
+        httpClient = Mockito.mock(HttpClient.class);
+        httpResponse = Mockito.mock(HttpResponse.class);
+        statusLine = Mockito.mock(StatusLine.class);
         ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository, response);
+        ltiServiceWithClient = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository,
+                response, httpClient);
         Course course = new Course();
         course.setStudentGroupName(courseStudentGroupName);
         exercise = new TextExercise();
@@ -249,6 +267,10 @@ public class LtiServiceTest {
         when(ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise)).thenReturn(Optional.of(ltiOutcomeUrl));
     }
 
+    private void ltiOutcomeUrlRepositorySetupWithUrl(User user, LtiOutcomeUrl ltiOutcomeUrl) {
+        when(ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise)).thenReturn(Optional.of(ltiOutcomeUrl));
+    }
+
     private void onSuccessfulAuthenticationAssertions(User user, LtiUserId ltiUserId) {
         assertThat(user.getGroups()).contains(courseStudentGroupName);
         assertThat("ff30145d6884eeb2c1cef50298939383").isEqualTo(ltiUserId.getLtiUserId());
@@ -301,6 +323,33 @@ public class LtiServiceTest {
         ltiOutcomeUrlRepositorySetup(user);
         when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
         ltiService.onNewResult(participation);
+        verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
+    }
+
+    @Test
+    public void onNewResult_WithHttpClient() throws IOException {
+        ReflectionTestUtils.setField(ltiServiceWithClient, "OAUTH_KEY", Optional.of("oauthKey"));
+        ReflectionTestUtils.setField(ltiServiceWithClient, "OAUTH_SECRET", Optional.of("oauthSecret"));
+
+        StudentParticipation participation = new StudentParticipation();
+        User user = new User();
+        user.setEmail("test@test.de");
+        participation.setParticipant(user);
+        participation.setExercise(exercise);
+        participation.setId(27L);
+        Result result = new Result();
+        result.setScore(3D);
+        LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
+        ltiOutcomeUrl.setUrl("https://some.url.com/");
+        ltiOutcomeUrl.setSourcedId("sourceId");
+        ltiOutcomeUrl.setExercise(exercise);
+        ltiOutcomeUrl.setUser(user);
+        ltiOutcomeUrlRepositorySetupWithUrl(user, ltiOutcomeUrl);
+        when(statusLine.getStatusCode()).thenReturn(200);
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(httpClient.execute(any())).thenReturn(httpResponse);
+
+        ltiServiceWithClient.onNewResult(participation);
         verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
     }
 
