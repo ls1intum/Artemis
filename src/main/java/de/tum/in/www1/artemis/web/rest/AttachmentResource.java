@@ -71,7 +71,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/attachments")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Attachment> createAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
         if (attachment.getId() != null) {
@@ -93,7 +93,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/attachments")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText)
             throws URISyntaxException {
         log.debug("REST request to update Attachment : {}", attachment);
@@ -120,7 +120,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment, or with status 404 (Not Found)
      */
     @GetMapping("/attachments/{id}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
@@ -147,7 +147,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/attachments/{id}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(id);
@@ -174,7 +174,7 @@ public class AttachmentResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+        boolean hasCourseInstructorAccess = authorizationCheckService.isAtLeastEditorInCourse(course, user);
         if (hasCourseInstructorAccess) {
             log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
             attachmentRepository.deleteById(id);
