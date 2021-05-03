@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-grading-system',
@@ -20,8 +21,9 @@ export class GradingSystemComponent implements OnInit {
     courseId?: number;
     examId?: number;
     isExam = false;
-    private dialogErrorSource = new Subject<string>();
+    dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    notFound = false;
 
     constructor(private gradingSystemService: GradingSystemService, private route: ActivatedRoute) {}
 
@@ -40,8 +42,10 @@ export class GradingSystemComponent implements OnInit {
                         this.handleFindResponse(gradingSystemResponse.body);
                     }
                 },
-                () => {
-                    return;
+                (err: HttpErrorResponse) => {
+                    if (err.status === 404) {
+                        this.notFound = true;
+                    }
                 },
             );
         } else {
@@ -51,8 +55,10 @@ export class GradingSystemComponent implements OnInit {
                         this.handleFindResponse(gradingSystemResponse.body);
                     }
                 },
-                () => {
-                    return;
+                (err: HttpErrorResponse) => {
+                    if (err.status === 404) {
+                        this.notFound = true;
+                    }
                 },
             );
         }
@@ -80,6 +86,7 @@ export class GradingSystemComponent implements OnInit {
      * and passing grade properties and saves the grading scale via the service
      */
     save(): void {
+        this.notFound = false;
         this.gradingScale.gradeSteps = this.sortGradeSteps(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setInclusivity(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
@@ -89,43 +96,23 @@ export class GradingSystemComponent implements OnInit {
         });
         if (this.existingGradingScale) {
             if (this.isExam) {
-                this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe(
-                    (gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    },
-                    () => {
-                        return;
-                    },
-                );
+                this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe((gradingSystemResponse) => {
+                    this.handleSaveResponse(gradingSystemResponse.body!);
+                });
             } else {
-                this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe(
-                    (gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    },
-                    () => {
-                        return;
-                    },
-                );
+                this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe((gradingSystemResponse) => {
+                    this.handleSaveResponse(gradingSystemResponse.body!);
+                });
             }
         } else {
             if (this.isExam) {
-                this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe(
-                    (gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    },
-                    () => {
-                        return;
-                    },
-                );
+                this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe((gradingSystemResponse) => {
+                    this.handleSaveResponse(gradingSystemResponse.body!);
+                });
             } else {
-                this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe(
-                    (gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    },
-                    () => {
-                        return;
-                    },
-                );
+                this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe((gradingSystemResponse) => {
+                    this.handleSaveResponse(gradingSystemResponse.body!);
+                });
             }
         }
     }
@@ -153,25 +140,15 @@ export class GradingSystemComponent implements OnInit {
             return;
         }
         if (this.isExam) {
-            this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!).subscribe(
-                () => {
-                    this.existingGradingScale = false;
-                    this.dialogErrorSource.next('');
-                },
-                () => {
-                    return;
-                },
-            );
+            this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!).subscribe(() => {
+                this.existingGradingScale = false;
+                this.dialogErrorSource.next('');
+            });
         } else {
-            this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!).subscribe(
-                () => {
-                    this.existingGradingScale = false;
-                    this.dialogErrorSource.next('');
-                },
-                () => {
-                    return;
-                },
-            );
+            this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!).subscribe(() => {
+                this.existingGradingScale = false;
+                this.dialogErrorSource.next('');
+            });
         }
         this.gradingScale = new GradingScale();
         this.gradingScale.gradeType = GradeType.GRADE;
