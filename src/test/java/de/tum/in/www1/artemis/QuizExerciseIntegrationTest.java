@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
+import org.springframework.util.LinkedMultiValueMap;
 
 public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -1237,6 +1238,121 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate",quizExercise, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * test unfinished exam cannot be re-evaluated
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUnfinishedExamReEvaluateBadRequest() throws Exception{
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuizForExam(exerciseGroup);
+        quizExercise.setTitle("Titel");
+        quizExercise.setDuration(200);
+        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
+        quizExerciseRepository.save(quizExercise);
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * test non editor cant update quiz exercise
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception{
+        final Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
+        quizExercise.setTitle("Titel");
+        quizExercise.setDuration(200);
+        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
+        assertThat(quizExercise.isExamExercise()).isFalse().as("Is an exam exercise!");
+        assertThat(quizExercise.isEnded()).isTrue().as("Is not ended!");
+        course.addExercises(quizExercise);
+        courseRepo.save(course);
+        quizExerciseRepository.save(quizExercise);
+        //change some stuff
+        quizExercise.setTitle("new Titel");
+        quizExercise.setIsVisibleBeforeStart(true);
+        //remove instructor rights in course
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
+        request.put("/api/quiz-exercises" , quizExercise, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * test quiz exercise cant be edited to be invalid
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateQuizExerciseInvalidBadRequest() throws Exception{
+        final Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
+        quizExercise.setTitle("Titel");
+        quizExercise.setDuration(200);
+        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
+        assertThat(quizExercise.isExamExercise()).isFalse().as("Is an exam exercise!");
+        assertThat(quizExercise.isEnded()).isTrue().as("Is not ended!");
+        course.addExercises(quizExercise);
+        courseRepo.save(course);
+        quizExerciseRepository.save(quizExercise);
+        //change some stuff
+        quizExercise.setTitle(null);
+        assertThat(quizExercise.isValid()).isFalse();
+        request.put("/api/quiz-exercises" , quizExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * test update quiz exercise with notificationText
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateQuizExerciseWithNotificationText() throws Exception{
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.getAnswerOptions().remove(0);
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+
+        DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
+        dnd.getDropLocations().remove(0);
+        dnd.getCorrectMappings().remove(0);
+        dnd.getDragItems().remove(0);
+
+        ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+        sa.getSpots().remove(0);
+        sa.getSolutions().remove(0);
+        sa.getCorrectMappings().remove(0);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("notificationText", "NotificationTextTEST!");
+        request.putWithResponseBodyAndParams("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK, params);
+        //TODO check if notifications arrived correctly
+    }
+
+    /**
+     * test redundant actions performed on quiz exercises will result in bad request
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testRedundantActionsBadRequest() throws Exception{
+        //set-visible
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        //start-now
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
+        assertThat(quizExercise.isStarted()).isTrue();
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        //open-for-practice
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
+        quizExercise.setIsOpenForPractice(true);
+        quizExerciseRepository.save(quizExercise);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        //misspelled request
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
