@@ -55,7 +55,7 @@ export class GradingSystemComponent implements OnInit {
      * @param gradingScale the grading scale retrieved from the get request
      * @private
      */
-    private handleFindResponse(gradingScale?: GradingScale): void {
+    handleFindResponse(gradingScale?: GradingScale): void {
         if (gradingScale) {
             gradingScale.gradeSteps = this.sortGradeSteps(gradingScale.gradeSteps);
             this.gradingScale = gradingScale;
@@ -157,7 +157,7 @@ export class GradingSystemComponent implements OnInit {
     }
 
     /**
-     * Sets the inclusivity for all grade steps based on the lowerBoundInclusive property
+     * Sets the inclusivity for all grade steps based on the lowerBoundInclusivity property
      * Called before a post/put request
      *
      * @param gradeSteps the grade steps which will be adjusted
@@ -220,7 +220,7 @@ export class GradingSystemComponent implements OnInit {
             upperBoundPercentage: 100,
             isPassingGrade: true,
             lowerBoundInclusive: this.lowerBoundInclusivity,
-            upperBoundInclusive: !this.lowerBoundInclusivity,
+            upperBoundInclusive: true,
         };
         if (!this.gradingScale) {
             this.gradingScale = new GradingScale();
