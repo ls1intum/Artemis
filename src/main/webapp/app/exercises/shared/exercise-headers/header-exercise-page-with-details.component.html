@@ -34,9 +34,11 @@
                     </span>
                 </h4>
                 <h4 class="row mb-2" *ngIf="exercise!.attachments">
-                    <span *ngFor="let attachment of exercise!.attachments">
-                        {{ 'artemisApp.exercise.notReleased' | artemisTranslate }}
-                    </span>
+                    <h4 *ngFor="let attachment of exercise!.attachments">
+                        <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
+                            {{ 'artemisApp.exercise.notReleased' | artemisTranslate }}
+                        </span>
+                    </h4>
                 </h4>
             </ng-template>
 
