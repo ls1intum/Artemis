@@ -58,6 +58,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private UserRepository userRepo;
 
+    @Autowired
+    private CourseRepository courseRepo;
+
     private QuizExercise quizExercise;
 
     // helper attributes for shorter code in assert statements
@@ -1210,6 +1213,30 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
         request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN,QuizExercise.class);
+    }
+
+    /**
+     * test non instructors in this course cant re-evaluate quiz exercises
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateQuizAsNonInstructorForbidden() throws Exception{
+        final Course course = database.createCourse();
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
+        quizExercise.setTitle("Titel");
+        quizExercise.setDuration(200);
+        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
+        assertThat(quizExercise.isExamExercise()).isFalse().as("Is an exam exercise!");
+        assertThat(quizExercise.isEnded()).isTrue().as("Is not ended!");
+        course.addExercises(quizExercise);
+
+        courseRepo.save(course);
+        quizExerciseRepository.save(quizExercise);
+        //remove instructor rights in course
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate",quizExercise, HttpStatus.FORBIDDEN);
     }
 
     /**
