@@ -960,12 +960,12 @@ public class GitService {
      * Zip the content of a git repository that contains a participation.
      *
      * @param repo            Local Repository Object.
-     * @param targetPath      path where the repo is located on disk
+     * @param repositoryDir      path where the repo is located on disk
      * @param hideStudentName option to hide the student name for the zip file
      * @return path to zip file.
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException, UncheckedIOException {
+    public Path zipRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
@@ -986,7 +986,7 @@ public class GitService {
         else {
             zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
-        return zipRepository(repo, zipRepoName, targetPath);
+        return zipRepository(repo, zipRepoName, repositoryDir);
     }
 
     /**
@@ -994,11 +994,11 @@ public class GitService {
      *
      * @param repository The repository
      * @param zipFilename   the name of the zipped file
-     * @param targetPath    path where the repo is located on disk
+     * @param repositoryDir    path where the repo is located on disk
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Repository repository, String zipFilename, String targetPath) throws IOException, UncheckedIOException {
+    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir) throws IOException, UncheckedIOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
@@ -1006,8 +1006,8 @@ public class GitService {
             zipFilenameWithoutSlash += ".zip";
         }
 
-        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
-        Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
+        Path zipFilePath = Paths.get(repositoryDir, "zippedRepos", zipFilenameWithoutSlash);
+        Files.createDirectories(Paths.get(repositoryDir, "zippedRepos"));
 
         return archiveRepository(repository, zipFilePath.toString());
     }
@@ -1019,6 +1019,7 @@ public class GitService {
      * @param repository The repository to archive
      * @param outputFile The filename of the zip file that will be created.
      * @throws IOException If the outFile is a directory or if git archive command failed.
+     * @throws UncheckedIOException thrown when a file (e.g .lock) has been deleted during the archival process
      */
     private Path archiveRepository(Repository repository, String outputFile) throws IOException, UncheckedIOException {
         try {
