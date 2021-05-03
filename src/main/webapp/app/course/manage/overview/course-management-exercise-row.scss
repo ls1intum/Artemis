@@ -9,10 +9,6 @@
     align-content: center;
     height: 60px;
 
-    .exercise-details-container {
-        max-width: 55ch;
-    }
-
     .item-title-container {
         display: flex;
         align-items: center;
@@ -25,7 +21,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 50ch;
+        max-width: 60ch;
         display: block;
     }
 
@@ -42,7 +38,7 @@
             font-size: 1rem;
 
             .badge {
-                max-width: 150px;
+                max-width: 130px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -164,34 +160,38 @@
     }
 }
 
-@media screen and (max-width: 1900px) {
+@media screen and (max-width: 1925px) {
     .hide-categories {
         display: none !important;
     }
 
     .course-item {
         .exercise-details-container {
-            max-width: 43ch;
+            max-width: 53ch;
         }
 
         .item-title {
-            max-width: 40ch;
+            max-width: 47ch;
         }
 
         .exercise-date-container {
             margin-right: unset !important;
         }
+
+        .exercise-score-container {
+            margin: 0 10px 0 10px;
+        }
     }
 }
 
-@media screen and (max-width: 1680px) {
+@media screen and (max-width: 1700px) {
     .course-item {
         .exercise-details-container {
-            max-width: 33ch;
+            max-width: 40ch;
         }
 
         .item-title {
-            max-width: 30ch;
+            max-width: 34ch;
         }
 
         .exercise-score {
@@ -202,7 +202,7 @@
     }
 }
 
-@media screen and (max-width: 1400px) {
+@media screen and (max-width: 1500px) {
     .course-item {
         .exercise-details-container {
             max-width: 23ch;
@@ -246,7 +246,7 @@
     }
 }
 
-@media screen and (max-width: 675px) {
+@media screen and (max-width: 725px) {
     .details-container {
         max-width: 70% !important;
     }
