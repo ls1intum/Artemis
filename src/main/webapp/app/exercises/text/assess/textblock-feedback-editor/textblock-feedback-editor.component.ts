@@ -123,6 +123,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     onScoreClick(event: MouseEvent): void {
         event.preventDefault();
+        console.warn('Clicked on Score-->', this.feedback.credits);
     }
 
     /**
@@ -131,6 +132,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
+        if (this.feedback.credits !== 0) {
+            console.warn('didChangeFired-->', this.feedback, this.feedback.credits);
+        }
     }
 
     connectFeedbackWithInstruction(event: Event) {
