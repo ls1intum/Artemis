@@ -545,11 +545,11 @@ public class TextExerciseResource {
      * parameters are invalid
      */
     @GetMapping("/text-exercises/{exerciseId}/plagiarism-result")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+        if (!authCheckService.isAtLeastEditorForExercise(textExercise)) {
             return forbidden();
         }
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
@@ -568,11 +568,11 @@ public class TextExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+        if (!authCheckService.isAtLeastEditorForExercise(textExercise)) {
             return forbidden();
         }
         long start = System.nanoTime();
