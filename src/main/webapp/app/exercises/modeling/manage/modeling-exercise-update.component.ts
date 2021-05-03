@@ -42,6 +42,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
+    semiAutomaticAssessmentAvailable = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,

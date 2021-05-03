@@ -30,8 +30,10 @@ export class ModelingExercise extends Exercise {
         this.exerciseGroup = exerciseGroup;
         this.diagramType = diagramType;
         // default value
-        if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {
-            this.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        }
+        // NOTE: at the moment Compass does not work reliably and is therefore deactivated.
+        this.assessmentType = AssessmentType.MANUAL;
+        // if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {
+        //     this.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        // }
     }
 }
