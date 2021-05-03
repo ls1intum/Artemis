@@ -533,7 +533,7 @@ public class AuthorizationCheckService {
             return true;
         }
         Course course = lectureUnit.getLecture().getCourse();
-        return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lectureUnit.isVisibleToStudents());
+        return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lectureUnit.isVisibleToStudents());
     }
 
     /**
