@@ -1183,6 +1183,36 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
+     * test non tutors cant recalculate quiz exercise statistics
+     * */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testRecalculateStatisticsAsNonInstructor() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise();
+        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        //remove instructor rights in course
+        User user = database.getUserByLogin("instructor1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
+        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN,QuizExercise.class);
+    }
+
+    /**
+     * test students not in course cant get quiz exercises
+     * */
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception{
+        final Course course = database.addCourseWithOneQuizExercise();
+        quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
+        //remove instructor rights in course
+        User user = database.getUserByLogin("student1");
+        user.setGroups(Collections.emptySet());
+        userRepo.save(user);
+        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN,QuizExercise.class);
+    }
+
+    /**
      * Check that the general information of two exercises is equal.
      */
     private void checkQuizExercises(QuizExercise quizExercise, QuizExercise quizExercise2) {
