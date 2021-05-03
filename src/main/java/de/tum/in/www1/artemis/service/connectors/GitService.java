@@ -24,7 +24,6 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -50,6 +49,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -93,16 +93,19 @@ public class GitService {
 
     private final FileService fileService;
 
+    private final ZipFileService zipFileService;
+
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
 
-    public GitService(FileService fileService) {
+    public GitService(FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
         this.fileService = fileService;
+        this.zipFileService = zipFileService;
     }
 
     /**
@@ -1009,42 +1012,7 @@ public class GitService {
         Path zipFilePath = Paths.get(repositoryDir, "zippedRepos", zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(repositoryDir, "zippedRepos"));
 
-        return archiveRepository(repository, zipFilePath.toString());
-    }
-
-    /**
-     * Executes git archive command to zip the specified repository. The function uses HEAD
-     * as the base of archival.
-     *
-     * @param repository The repository to archive
-     * @param outputFile The filename of the zip file that will be created.
-     * @throws IOException If the outFile is a directory or if git archive command failed.
-     * @throws UncheckedIOException thrown when a file (e.g .lock) has been deleted during the archival process
-     */
-    private Path archiveRepository(Repository repository, String outputFile) throws IOException, UncheckedIOException {
-        try {
-            ArchiveCommand.registerFormat("zip", new ZipFormat());
-            try (OutputStream out = new FileOutputStream(outputFile)) {
-                try (Git git = new Git(repository)) {
-                    ObjectId objectId = repository.resolve("HEAD");
-                    if (objectId != null) {
-                        git.archive().setTree(objectId).setOutputStream(out).setFilename(outputFile).call();
-                        return Path.of(outputFile);
-                    }
-                    else {
-                        log.warn("Skipped archiving repository {} because it doesn't contain HEAD.", repository);
-                        return null;
-                    }
-                }
-                catch (GitAPIException e) {
-                    log.warn("The git archive command failed: {}", e.getMessage());
-                    throw new IOException(e);
-                }
-            }
-        }
-        finally {
-            ArchiveCommand.unregisterFormat("zip");
-        }
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
     }
 
     /**

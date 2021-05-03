@@ -230,7 +230,7 @@ public class ProgrammingExerciseExportService {
             return null;
         }
         finally {
-            fileService.scheduleForDeletion(outputDir, 5);
+            fileService.scheduleForDirectoryDeletion(outputDir, 5);
         }
     }
 
@@ -290,6 +290,7 @@ public class ProgrammingExerciseExportService {
         // Checkout the repository
         repository = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, true);
         gitService.resetToOriginMaster(repository);
+        repository.close();
 
         // Zip it and return the path to the file
         return gitService.zipRepository(repository, zipFilename, repositoryDir);
@@ -336,10 +337,9 @@ public class ProgrammingExerciseExportService {
             return null;
         }
 
-        Repository repository;
         try {
             // Checkout the repository
-            repository = gitService.getOrCheckoutRepository(participation, outputDir.toString());
+            Repository repository = gitService.getOrCheckoutRepository(participation, outputDir.toString());
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;
