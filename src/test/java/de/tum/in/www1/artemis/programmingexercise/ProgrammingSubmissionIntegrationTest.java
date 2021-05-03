@@ -13,6 +13,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.util.FileUtils;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +96,18 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissionRepository.findWithEagerResultsById(submission.getId()).get().getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void triggerBuildStudent_submissionNotFound() throws Exception {
+        String login = "student1";
+        Course course = database.addCourseWithDifferentModelingExercises();
+        ModelingExercise classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, login);
+        String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-build";
+        request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
     }
 
     @Test
@@ -255,6 +270,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void triggerBuildForParticipations_instructor_participationsEmpty() throws Exception {
+        String url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
+        request.postWithoutLocation(url, List.of(), HttpStatus.BAD_REQUEST, new HttpHeaders());
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void triggerBuildForParticipations_tutorForbidden() throws Exception {
         request.postWithoutLocation("/api/programming-exercises/" + 1L + "/trigger-instructor-build", new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
@@ -293,6 +315,40 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var updatedSubmissions = submissionRepository.findAll();
         assertThat(updatedSubmissions.size()).isEqualTo(1);
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void triggerFailedBuild_forbiddenParticipationAccess() throws Exception {
+        String login = "student2";
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void triggerFailedBuild_emptyLatestPendingSubmission() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+        String login = "student1";
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        doReturn(Optional.empty()).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        request.postWithoutLocation(url, null, HttpStatus.BAD_REQUEST, new HttpHeaders());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void triggerFailedBuild_submissionNotFound() throws Exception {
+        String login = "student1";
+        Course course = database.addCourseWithDifferentModelingExercises();
+        ModelingExercise classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingSubmission modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, login);
+        String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-failed-build";
+        request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
     }
 
     @Test
