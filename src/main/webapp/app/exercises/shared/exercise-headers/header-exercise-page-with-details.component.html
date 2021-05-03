@@ -33,10 +33,10 @@
                         {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
                 </h4>
-                <h4 class="row mb-2" *ngIf="exercise!.attachments">
-                    <h4 *ngFor="let attachment of exercise!.attachments">
+                <h4 class="row mb-2" *ngIf="lecture!.attachments">
+                    <h4 *ngFor="let attachment of lecture!.attachments">
                         <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
-                            {{ 'artemisApp.exercise.notReleased' | artemisTranslate }}
+                            {{ 'artemisApp.lecture.attachments.title' | artemisTranslate }}
                         </span>
                     </h4>
                 </h4>

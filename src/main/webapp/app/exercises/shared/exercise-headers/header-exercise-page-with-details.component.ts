@@ -1,11 +1,12 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Lecture } from "app/entities/lecture.model";
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import {Attachment} from "app/entities/attachment.model";
+import { Attachment } from "app/entities/attachment.model";
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -15,6 +16,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input() public exercise: Exercise;
+    @Input() public lecture: Lecture;
     @Input() public onBackClick: () => void; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public title: string;
     @Input() public exam?: Exam;
