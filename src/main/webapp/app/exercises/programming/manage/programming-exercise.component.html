@@ -257,7 +257,7 @@
                                 </a>
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
