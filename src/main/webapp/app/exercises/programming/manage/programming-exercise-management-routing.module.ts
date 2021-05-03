@@ -34,7 +34,7 @@ export const routes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -46,7 +46,7 @@ export const routes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -82,7 +82,7 @@ export const routes: Routes = [
             exercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
@@ -91,7 +91,7 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/grading/:tab',
         component: ProgrammingExerciseConfigureGradingComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

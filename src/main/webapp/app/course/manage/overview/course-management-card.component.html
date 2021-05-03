@@ -206,7 +206,7 @@
             <span class="d-none d-xl-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastInstructor"
+            *ngIf="course.isAtLeastEditor"
             [routerLink]="['/course-management', course.id, 'lectures']"
             class="btn btn-primary mr-1 mb-1"
             [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
