@@ -27,7 +27,7 @@ public class ZipFileService {
     public void createZipFile(Path zipFilePath, List<Path> paths, boolean createParentDir) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             paths.stream().filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
-                var zipPath = createParentDir ? zipFilePath.getParent().relativize(path) : path.getFileName();
+                var zipPath = createParentDir ? path : path.getFileName();
                 ZipEntry zipEntry = new ZipEntry(zipPath.toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });

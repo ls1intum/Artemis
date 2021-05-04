@@ -78,24 +78,24 @@ public class CourseExamExportService {
         String cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
-        Path courseDirPath = Path.of("./exports", cleanCourseDirName);
+        Path tmpCourseDir = Path.of("./exports", cleanCourseDirName);
         try {
-            Files.createDirectories(courseDirPath);
+            Files.createDirectories(tmpCourseDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + courseDirPath + " cannot be created.", exportErrors);
+            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.", exportErrors);
             return Optional.empty();
         }
 
         // Export course exercises and exams
-        List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, courseDirPath.toString(), exportErrors);
+        List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors);
 
         // Zip all exported exercises into a single zip file.
-        Path courseZip = Path.of(outputDir, courseDirPath.getFileName() + ".zip");
-        var exportedCourse = createCourseZipFile(courseZip, exportedFiles, exportErrors);
+        Path courseZip = Path.of(outputDir, tmpCourseDir.getFileName() + ".zip");
+        var exportedCourse = createCourseZipFile(courseZip, exportedFiles, tmpCourseDir, exportErrors);
 
         // Delete temporary directory used for zipping
-        fileService.scheduleForDirectoryDeletion(courseDirPath, 1);
+        fileService.scheduleForDirectoryDeletion(tmpCourseDir, 1);
 
         var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
         notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);
@@ -122,25 +122,25 @@ public class CourseExamExportService {
         var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
-        Path examDirPath = Path.of("./exports", cleanExamDirName, cleanExamDirName);
+        Path tempExamsDir = Path.of("./exports", cleanExamDirName, cleanExamDirName);
         try {
-            Files.createDirectories(examDirPath);
+            Files.createDirectories(tempExamsDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export exam " + exam.getId() + " because the temporary directory: " + examDirPath + " cannot be created.", exportErrors);
+            logMessageAndAppendToList("Failed to export exam " + exam.getId() + " because the temporary directory: " + tempExamsDir + " cannot be created.", exportErrors);
             return Optional.empty();
         }
 
         // Export exam exercises
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
-        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, examDirPath.toString(), 0, exercises.size(), exportErrors);
+        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir.toString(), 0, exercises.size(), exportErrors);
 
         // Zip all exported exercises into a single zip file.
-        Path examZip = Path.of(outputDir, examDirPath.getFileName() + ".zip");
-        var exportedExamPath = createCourseZipFile(examZip, exportedExercises, exportErrors);
+        Path examZip = Path.of(outputDir, tempExamsDir.getFileName() + ".zip");
+        var exportedExamPath = createCourseZipFile(examZip, exportedExercises, tempExamsDir, exportErrors);
 
         // Delete temporary directory used for zipping
-        fileService.scheduleForDirectoryDeletion(examDirPath, 1);
+        fileService.scheduleForDirectoryDeletion(tempExamsDir, 1);
 
         var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
         notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);
@@ -367,11 +367,12 @@ public class CourseExamExportService {
      *
      * @param outputZipFile The path to the zip file that will be created
      * @param filesToZip the files to zip together
+     * @param relativeZipPath the path of the zip files will be relativized with this path
      * @return The path to the zip file
      */
-    private Optional<Path> createCourseZipFile(Path outputZipFile, List<Path> filesToZip, List<String> exportErrors) {
+    private Optional<Path> createCourseZipFile(Path outputZipFile, List<Path> filesToZip, Path relativeZipPath, List<String> exportErrors) {
         try {
-            zipFileService.createZipFile(outputZipFile, filesToZip, true);
+            zipFileService.createZipFile(outputZipFile, filesToZip, relativeZipPath);
             log.info("Successfully created zip file: {}", outputZipFile);
             return Optional.of(outputZipFile);
         }
