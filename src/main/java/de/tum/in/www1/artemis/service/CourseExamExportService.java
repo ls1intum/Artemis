@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -89,9 +88,7 @@ public class CourseExamExportService {
         }
 
         // Export course exercises and exams
-        List<Path> exportedFiles = new ArrayList<>();
-        exportedFiles.addAll(exportCourseExercises(notificationTopic, course, courseDirPath.toString(), exportErrors));
-        exportedFiles.addAll(exportCourseExams(notificationTopic, course, courseDirPath.toString(), exportErrors));
+        List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, courseDirPath.toString(), exportErrors);
 
         // Zip all exported exercises into a single zip file.
         Path courseZip = Path.of(outputDir, courseDirPath.getFileName() + ".zip");
@@ -136,7 +133,7 @@ public class CourseExamExportService {
 
         // Export exam exercises
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
-        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, examDirPath.toString(), exportErrors);
+        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, examDirPath.toString(), 0, exercises.size(), exportErrors);
 
         // Zip all exported exercises into a single zip file.
         Path examZip = Path.of(outputDir, examDirPath.getFileName() + ".zip");
@@ -153,20 +150,56 @@ public class CourseExamExportService {
     }
 
     /**
+     * Exports the exercises of the course and of each exam belonging to the course.
+     *
+     * @param notificationTopic the topic used to notify the client
+     * @param course The course to export
+     * @param outputDir the directory that will be used to store the exported data
+     * @param exportErrors any errors that occured during the export
+     * @return list of zip files
+     */
+    private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
+        // Get every course and exam exercise
+        Set<Exercise> courseExercises = course.getExercises();
+
+        // Retrieve exams of the course and get exercises for each exam
+        List<Exam> courseExams = examRepository.findByCourseId(course.getId());
+
+        // Calculate the amount of exercises for all exams
+        var examExercises = courseExams.stream().map(exam -> examRepository.findAllExercisesByExamId(exam.getId())).flatMap(Collection::stream).collect(Collectors.toSet());
+
+        int totalExercises = courseExercises.size() + examExercises.size();
+        int progress = 0;
+
+        // Export exercises of the course
+        List<Path> exportedFiles = new ArrayList<>(exportCourseExercises(notificationTopic, course, outputDir, progress, totalExercises, exportErrors));
+        progress += courseExercises.size();
+
+        // Export the exercises of the course exams
+        List<Path> exportedExercises = exportCourseExams(notificationTopic, courseExams, outputDir, progress, totalExercises, exportErrors);
+        exportedFiles.addAll(exportedExercises);
+
+        return exportedFiles;
+    }
+
+    /**
      * Exports all exercises of the course and adds them into the directory
      * outputDir/exercises/
      *
+     * @param notificationTopic the topic used to notify the client
      * @param course       The course where the exercises are located
      * @param outputDir    The directory that will be used to store the exercises subdirectory
+     * @param progress The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported
      * @param exportErrors List of failures that occurred during the export
      */
-    private List<Path> exportCourseExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
+    private List<Path> exportCourseExercises(String notificationTopic, Course course, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
         log.info("Exporting course exercises for course {} and title {}", course.getId(), course.getTitle());
 
         Path exercisesDir = Path.of(outputDir, "course-exercises");
         try {
             Files.createDirectory(exercisesDir);
-            return exportExercises(notificationTopic, course.getExercises(), exercisesDir.toString(), exportErrors);
+            return exportExercises(notificationTopic, course.getExercises(), exercisesDir.toString(), progress, totalExerciseCount, exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exercise directory" + exercisesDir + ".", exportErrors);
@@ -175,26 +208,41 @@ public class CourseExamExportService {
     }
 
     /**
-     * Exports all exams of the course by zipping each one separately and adds them into the directory
+     * Exports all exams of the course by zipping each one separately and add them into the directory
      * outputDir/exams/
      *
-     * @param course       The course where the exams are located
+     * @param notificationTopic the topic used to notify the client
+     * @param exams       The exams that will be exported
      * @param outputDir    The directory that will be used to store the exams
+     * @param progress The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported
      * @param exportErrors List of failures that occurred during the export
      */
-    private List<Path> exportCourseExams(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
+    private List<Path> exportCourseExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
+        Optional<Exam> firstExam = exams.stream().findFirst();
+        if (firstExam.isEmpty()) {
+            logMessageAndAppendToList("Cannot export exams because the course is missing.", exportErrors);
+            return List.of();
+        }
+
+        Course course = firstExam.get().getCourse();
         log.info("Export course exams for course {} and title {}", course.getId(), course.getTitle());
 
         Path examsDir = null;
         try {
+            // Create the exams directory that will contain the exported exams
             examsDir = Path.of(outputDir, "exams");
             Files.createDirectory(examsDir);
 
-            List<Exam> exams = examRepository.findByCourseId(course.getId());
-            Path finalExamsDir = examsDir;
-
-            var exportedExamExercises = exams.stream().map(exam -> exportExam(notificationTopic, exam.getId(), finalExamsDir.toString(), exportErrors));
-            return exportedExamExercises.flatMap(Collection::stream).collect(Collectors.toList());
+            // Export each exams. We first fetch its exercises and then export them.
+            var exportedExams = new ArrayList<Path>();
+            for (var exam : exams) {
+                var examExercises = examRepository.findAllExercisesByExamId(exam.getId());
+                var exportedExam = exportExam(notificationTopic, exam, examExercises, examsDir.toString(), progress, totalExerciseCount, exportErrors);
+                exportedExams.addAll(exportedExam);
+                progress += examExercises.size();
+            }
+            return exportedExams;
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
@@ -205,24 +253,26 @@ public class CourseExamExportService {
     /**
      * Exports an exam and adds the zip file into the directory specified by outputDir.
      *
-     * @param examId       The id of the exam to archive
+     * @param notificationTopic the topic used to notify the client
+     * @param exam       The exam to export
+     * @param examExercises the exercises that belong to the exam
      * @param outputDir    The directory that will be used to store the exam
-     * @param exportErrors List of failures that occurred during the export
+     * @param progress The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported     * @param exportErrors List of failures that occurred during the export
      */
-    private List<Path> exportExam(String notificationTopic, long examId, String outputDir, List<String> exportErrors) {
-        log.info("Export course exam {}", examId);
+    private List<Path> exportExam(String notificationTopic, Exam exam, Set<Exercise> examExercises, String outputDir, int progress, int totalExerciseCount,
+            List<String> exportErrors) {
+        log.info("Export course exam {}", exam.getId());
 
         Path examDir = null;
         try {
             // Create exam directory.
-            var exam = examRepository.findByIdElseThrow(examId);
             String cleanExamTitle = fileService.removeIllegalCharacters(exam.getId() + "-" + exam.getTitle());
             examDir = Path.of(outputDir, cleanExamTitle);
             Files.createDirectory(examDir);
 
             // We retrieve every exercise from each exercise group and flatten the list.
-            var exercises = examRepository.findAllExercisesByExamId(examId);
-            return exportExercises(notificationTopic, exercises, examDir.toString(), exportErrors);
+            return exportExercises(notificationTopic, examExercises, examDir.toString(), progress, totalExerciseCount, exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors);
@@ -235,22 +285,26 @@ public class CourseExamExportService {
      * The zip files are created in the directory specified by outputDir. The function returns
      * a list of exercise ids that couldn't be exported.
      *
+     * @param notificationTopic the topic used to notify the client
      * @param exercises    The exercises to export
      * @param outputDir    The path to a directory that will be used to store the zipped files.
+     * @param progress     The previous export progress that should be used as a base
+     * @param totalExerciseCount The total amount of exercises that will be exported
      * @param exportErrors List of failures that occurred during the export
      */
-    private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, String outputDir, List<String> exportErrors) {
-        AtomicInteger exportedExercises = new AtomicInteger(0);
-        return exercises.stream().map(exercise -> {
+    private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
+        List<Path> exportedExercices = new ArrayList<>();
+        for (var exercise : exercises) {
             log.info("Exporting exercise {} with id {} ", exercise.getTitle(), exercise.getId());
 
             // Notify the user after the progress
-            exportedExercises.addAndGet(1);
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(exportedExercises + "/" + exercises.size() + " done"));
+            progress++;
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(progress + "/" + totalExerciseCount + " done"));
 
             // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
-                return programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, Path.of(outputDir), exportErrors);
+                exportedExercices.add(programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, Path.of(outputDir), exportErrors));
+                continue;
             }
 
             // Export the other exercises types
@@ -276,11 +330,11 @@ public class CourseExamExportService {
                 }
                 else if (exercise instanceof QuizExercise) {
                     // TODO: Quiz submissions aren't supported yet
-                    return null;
+                    continue;
                 }
                 else {
-                    // Exercise is not supported so return
-                    return null;
+                    // Exercise is not supported so skip
+                    continue;
                 }
             }
             catch (IOException e) {
@@ -296,17 +350,15 @@ public class CourseExamExportService {
                     Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
                     // Delete the directory where the zip was located before it was moved
                     FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
-                    return newExportedSubmissionsFilePath;
+
+                    exportedExercices.add(newExportedSubmissionsFilePath);
                 }
                 catch (IOException e) {
                     logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors);
-                    return null;
                 }
             }
-            else {
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        }
+        return exportedExercices.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     /**
