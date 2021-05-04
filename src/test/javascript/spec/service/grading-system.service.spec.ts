@@ -27,106 +27,76 @@ describe('Grading System Service', () => {
     });
 
     it('should find a grading scale for course', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 123,
-            },
-            elemDefault,
-        );
-        service.findGradingScaleForCourse(123).pipe(take(1)).subscribe();
+        service
+            .findGradingScaleForCourse(123)
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
         const request = httpMock.expectOne({ method: 'GET' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 
     it('should find a grading scale for exam', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 456,
-            },
-            elemDefault,
-        );
-        service.findGradingScaleForExam(123, 456).pipe(take(1)).subscribe();
+        service
+            .findGradingScaleForExam(123, 456)
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
         const request = httpMock.expectOne({ method: 'GET' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 
     it('should create a grading scale for course', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 123,
-            },
-            elemDefault,
-        );
-        service.createGradingScaleForCourse(123, new GradingScale()).pipe(take(1)).subscribe();
+        service
+            .createGradingScaleForCourse(123, new GradingScale())
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
         const request = httpMock.expectOne({ method: 'POST' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 
     it('should create a grading scale for exam', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 456,
-            },
-            elemDefault,
-        );
-        service.createGradingScaleForExam(123, 456, new GradingScale()).pipe(take(1)).subscribe();
+        service
+            .createGradingScaleForExam(123, 456, new GradingScale())
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
         const request = httpMock.expectOne({ method: 'POST' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 
     it('should update a grading scale for course', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 123,
-            },
-            elemDefault,
-        );
-        service.updateGradingScaleForCourse(123, new GradingScale()).pipe(take(1)).subscribe();
+        service
+            .updateGradingScaleForCourse(123, new GradingScale())
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
         const request = httpMock.expectOne({ method: 'PUT' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 
     it('should update a grading scale for exam', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 456,
-            },
-            elemDefault,
-        );
-        service.updateGradingScaleForExam(123, 456, new GradingScale()).pipe(take(1)).subscribe();
+        service
+            .updateGradingScaleForExam(123, 456, new GradingScale())
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
         const request = httpMock.expectOne({ method: 'PUT' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 
     it('should delete a grading scale for course', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 123,
-            },
-            elemDefault,
-        );
         service.deleteGradingScaleForCourse(123).pipe(take(1)).subscribe();
 
         const request = httpMock.expectOne({ method: 'DELETE' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 
     it('should delete a grading scale for exam', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 456,
-            },
-            elemDefault,
-        );
         service.deleteGradingScaleForExam(123, 456).pipe(take(1)).subscribe();
 
         const request = httpMock.expectOne({ method: 'DELETE' });
-        request.flush(JSON.stringify(returnedFromService));
+        request.flush(elemDefault);
     });
 });

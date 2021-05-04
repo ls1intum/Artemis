@@ -6,7 +6,7 @@
         {{ isExam ? examId : courseId }}
     </h2>
     <div>
-        <div style="display: flex">
+        <div class="d-flex">
             <button (click)="generateDefaultGradingScale()" class="btn btn-primary mr-1 mb-1" type="button">
                 <span jhiTranslate="artemisApp.gradingSystem.defaultButton">Generate Default Grading Scale</span>
             </button>

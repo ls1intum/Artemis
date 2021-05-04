@@ -36,32 +36,31 @@ export class GradingSystemComponent implements OnInit {
             }
         });
         if (this.isExam) {
-            this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!).subscribe(
-                (gradingSystemResponse) => {
-                    if (gradingSystemResponse.body) {
-                        this.handleFindResponse(gradingSystemResponse.body);
-                    }
-                },
-                (err: HttpErrorResponse) => {
-                    if (err.status === 404) {
-                        this.notFound = true;
-                    }
-                },
-            );
+            this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!).subscribe((gradingSystemResponse) => {
+                if (gradingSystemResponse.body) {
+                    this.handleFindResponse(gradingSystemResponse.body);
+                }
+            }, this.handleErrorResponse());
         } else {
-            this.gradingSystemService.findGradingScaleForCourse(this.courseId!).subscribe(
-                (gradingSystemResponse) => {
-                    if (gradingSystemResponse.body) {
-                        this.handleFindResponse(gradingSystemResponse.body);
-                    }
-                },
-                (err: HttpErrorResponse) => {
-                    if (err.status === 404) {
-                        this.notFound = true;
-                    }
-                },
-            );
+            this.gradingSystemService.findGradingScaleForCourse(this.courseId!).subscribe((gradingSystemResponse) => {
+                if (gradingSystemResponse.body) {
+                    this.handleFindResponse(gradingSystemResponse.body);
+                }
+            }, this.handleErrorResponse());
         }
+    }
+
+    /**
+     * Handles 404 Not Found response in case not grading scale exists
+     *
+     * @private
+     */
+    private handleErrorResponse() {
+        return (err: HttpErrorResponse) => {
+            if (err.status === 404) {
+                this.notFound = true;
+            }
+        };
     }
 
     /**
@@ -160,9 +159,13 @@ export class GradingSystemComponent implements OnInit {
      * @param gradeSteps the grade steps to be sorted
      */
     sortGradeSteps(gradeSteps: GradeStep[]): GradeStep[] {
-        return gradeSteps.sort((gradeStep1, gradeStep2) => {
-            return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
-        });
+        if (gradeSteps) {
+            return gradeSteps.sort((gradeStep1, gradeStep2) => {
+                return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
+            });
+        } else {
+            return [];
+        }
     }
 
     /**

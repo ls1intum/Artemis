@@ -226,9 +226,11 @@ describe('Grading System Component', () => {
 
     it('should create grading scale correctly for course', () => {
         comp.existingGradingScale = false;
+        const createdGradingScaleForCourse = comp.gradingScale;
+        createdGradingScaleForCourse.gradeType = GradeType.BONUS;
         const gradingSystemCreateForCourseStub = sinon.stub(gradingSystemService, 'createGradingScaleForCourse').returns(
             of(
-                new HttpResponse<GradingScale>({ body: comp.gradingScale }),
+                new HttpResponse<GradingScale>({ body: createdGradingScaleForCourse }),
             ),
         );
 
@@ -236,14 +238,17 @@ describe('Grading System Component', () => {
 
         expect(gradingSystemCreateForCourseStub).to.have.been.calledOnceWith(comp.courseId);
         expect(comp.existingGradingScale).to.equal(true);
+        expect(comp.gradingScale).to.equal(createdGradingScaleForCourse);
     });
 
     it('should create grading scale correctly for exam', () => {
         comp.existingGradingScale = false;
         comp.isExam = true;
+        const createdGradingScaleForExam = comp.gradingScale;
+        createdGradingScaleForExam.gradeType = GradeType.BONUS;
         const gradingSystemCreateForExamStub = sinon.stub(gradingSystemService, 'createGradingScaleForExam').returns(
             of(
-                new HttpResponse<GradingScale>({ body: comp.gradingScale }),
+                new HttpResponse<GradingScale>({ body: createdGradingScaleForExam }),
             ),
         );
 
@@ -251,13 +256,16 @@ describe('Grading System Component', () => {
 
         expect(gradingSystemCreateForExamStub).to.have.been.calledOnceWith(comp.courseId, comp.examId);
         expect(comp.existingGradingScale).to.equal(true);
+        expect(comp.gradingScale).to.deep.equal(createdGradingScaleForExam);
     });
 
     it('should update grading scale correctly for course', () => {
         comp.existingGradingScale = true;
+        const updateGradingScaleFoCourse = comp.gradingScale;
+        updateGradingScaleFoCourse.gradeType = GradeType.BONUS;
         const gradingSystemUpdateForCourseStub = sinon.stub(gradingSystemService, 'updateGradingScaleForCourse').returns(
             of(
-                new HttpResponse<GradingScale>({ body: comp.gradingScale }),
+                new HttpResponse<GradingScale>({ body: updateGradingScaleFoCourse }),
             ),
         );
 
@@ -265,21 +273,25 @@ describe('Grading System Component', () => {
 
         expect(gradingSystemUpdateForCourseStub).to.have.been.calledOnceWith(comp.courseId);
         expect(comp.existingGradingScale).to.equal(true);
+        expect(comp.gradingScale).to.deep.equal(updateGradingScaleFoCourse);
     });
 
     it('should update grading scale correctly for exam', () => {
         comp.existingGradingScale = true;
         comp.isExam = true;
-        const gradingSystemUpdateForExabStub = sinon.stub(gradingSystemService, 'updateGradingScaleForExam').returns(
+        const updatedGradingScaleForExam = comp.gradingScale;
+        updatedGradingScaleForExam.gradeType = GradeType.BONUS;
+        const gradingSystemUpdateForExamStub = sinon.stub(gradingSystemService, 'updateGradingScaleForExam').returns(
             of(
-                new HttpResponse<GradingScale>({ body: comp.gradingScale }),
+                new HttpResponse<GradingScale>({ body: updatedGradingScaleForExam }),
             ),
         );
 
         comp.save();
 
-        expect(gradingSystemUpdateForExabStub).to.have.been.calledOnceWith(comp.courseId);
+        expect(gradingSystemUpdateForExamStub).to.have.been.calledOnceWith(comp.courseId);
         expect(comp.existingGradingScale).to.equal(true);
+        expect(comp.gradingScale).to.deep.equal(updatedGradingScaleForExam);
     });
 
     it('should handle find response correctly', () => {
