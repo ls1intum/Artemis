@@ -72,6 +72,7 @@ public class CourseExamExportService {
     public Optional<Path> exportCourse(Course course, String outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
@@ -91,6 +92,7 @@ public class CourseExamExportService {
         List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors);
 
         // Zip all exported exercises into a single zip file.
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
         Path courseZip = Path.of(outputDir, tmpCourseDir.getFileName() + ".zip");
         var exportedCourse = createCourseZipFile(courseZip, exportedFiles, tmpCourseDir, exportErrors);
 
@@ -116,6 +118,7 @@ public class CourseExamExportService {
     public Optional<Path> exportExam(Exam exam, String outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
@@ -132,10 +135,12 @@ public class CourseExamExportService {
         }
 
         // Export exam exercises
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."));
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
         List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir.toString(), 0, exercises.size(), exportErrors);
 
         // Zip all exported exercises into a single zip file.
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
         Path examZip = Path.of(outputDir, tempExamsDir.getFileName() + ".zip");
         var exportedExamPath = createCourseZipFile(examZip, exportedExercises, tempExamsDir, exportErrors);
 
@@ -159,6 +164,8 @@ public class CourseExamExportService {
      * @return list of zip files
      */
     private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors) {
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."));
+
         // Get every course and exam exercise
         Set<Exercise> courseExercises = course.getExercises();
 
