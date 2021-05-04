@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.locked;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
@@ -297,7 +298,7 @@ public class TextAssessmentResource extends AssessmentResource {
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
                     && result.getCompletionDate() == null) {
                 // If we already have a result, we need to check if it is locked.
-                return forbidden(ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor");
+                return locked(ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor");
             }
 
             textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
