@@ -44,7 +44,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(0, 1, 0);
+        database.addUsers(0, 1, 0, 0);
         Course course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {

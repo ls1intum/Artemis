@@ -63,7 +63,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(2, 2, 1);
+        database.addUsers(2, 2, 0, 1);
 
         // Initialize with 3 max complaints and 7 days max complaint deadline
         course = database.addCourseWithOneModelingExercise();

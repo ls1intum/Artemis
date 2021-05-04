@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -78,7 +79,7 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup exerciseGroup)
             throws URISyntaxException {
         log.debug("REST request to create an exercise group : {}", exerciseGroup);
@@ -94,7 +95,7 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<ExerciseGroup>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForEditor(courseId, examId);
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
         }
@@ -119,7 +120,7 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/exerciseGroups")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
             throws URISyntaxException {
         log.debug("REST request to update an exercise group : {}", updatedExerciseGroup);
@@ -131,7 +132,8 @@ public class ExerciseGroupResource {
             return conflict();
         }
 
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, updatedExerciseGroup.getId());
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId,
+                updatedExerciseGroup.getId());
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
@@ -149,10 +151,10 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
-        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(courseId, examId, exerciseGroupId);
+        Optional<ResponseEntity<ExerciseGroup>> accessFailure = examAccessService.checkCourseAndExamAndExerciseGroupAccess(Role.EDITOR, courseId, examId, exerciseGroupId);
         return accessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupRepository.findByIdElseThrow(exerciseGroupId)));
     }
 
@@ -164,10 +166,10 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exercise groups. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
-        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForInstructor(courseId, examId);
+        Optional<ResponseEntity<List<ExerciseGroup>>> courseAndExamAccessFailure = examAccessService.checkCourseAndExamAccessForEditor(courseId, examId);
 
         List<ExerciseGroup> exerciseGroupList = exerciseGroupRepository.findWithExamAndExercisesByExamId(examId);
         return courseAndExamAccessFailure.orElseGet(() -> ResponseEntity.ok(exerciseGroupList));

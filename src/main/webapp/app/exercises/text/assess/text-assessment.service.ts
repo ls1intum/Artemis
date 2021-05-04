@@ -38,7 +38,7 @@ export class TextAssessmentService {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, body, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
     /**
@@ -52,7 +52,7 @@ export class TextAssessmentService {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, body, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
     /**
@@ -76,7 +76,7 @@ export class TextAssessmentService {
         };
         return this.http
             .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
     saveExampleAssessment(exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
@@ -84,7 +84,7 @@ export class TextAssessmentService {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(url, body, { observe: 'response' })
-            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
     /**

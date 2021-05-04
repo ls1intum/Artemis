@@ -8,7 +8,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { forkJoin, Observable, combineLatest } from 'rxjs';
+import { forkJoin, Observable, combineLatest, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 
 @Component({
@@ -72,7 +72,7 @@ export class CreateExerciseUnitComponent implements OnInit {
             return unit;
         });
 
-        Observable.from(exerciseUnitsToCreate)
+        from(exerciseUnitsToCreate)
             .pipe(
                 concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId)),
                 finalize(() => {

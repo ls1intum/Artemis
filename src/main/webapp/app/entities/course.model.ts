@@ -16,6 +16,7 @@ export class Course implements BaseEntity {
     public shortName?: string;
     public studentGroupName?: string;
     public teachingAssistantGroupName?: string;
+    public editorGroupName?: string;
     public instructorGroupName?: string;
     public startDate?: Moment;
     public endDate?: Moment;
@@ -39,6 +40,7 @@ export class Course implements BaseEntity {
     // the following values are only used in course administration
     public numberOfStudents?: number;
     public numberOfTeachingAssistants?: number;
+    public numberOfEditors?: number;
     public numberOfInstructors?: number;
 
     public exercises?: Exercise[];
@@ -50,6 +52,7 @@ export class Course implements BaseEntity {
 
     // helper attributes
     public isAtLeastTutor?: boolean;
+    public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
     public relativeScore?: number;
     public absoluteScore?: number;
@@ -60,6 +63,7 @@ export class Course implements BaseEntity {
     constructor() {
         this.onlineCourse = false; // default value
         this.isAtLeastTutor = false; // default value
+        this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
 
         this.registrationEnabled = false; // default value
@@ -94,7 +98,8 @@ export class Course implements BaseEntity {
 export const enum CourseGroup {
     STUDENTS = 'students',
     TUTORS = 'tutors',
+    EDITORS = 'editors',
     INSTRUCTORS = 'instructors',
 }
 
-export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.INSTRUCTORS];
+export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.EDITORS, CourseGroup.INSTRUCTORS];

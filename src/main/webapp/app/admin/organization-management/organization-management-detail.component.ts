@@ -6,7 +6,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { JhiAlertService } from 'ng-jhipster';
 import { User } from 'app/core/user/user.model';
 import { Subject, Observable, of } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { iconsAsHTML } from 'app/utils/icons.utils';

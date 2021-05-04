@@ -80,7 +80,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 3, 1);
+        database.addUsers(2, 3, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -340,7 +340,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "student1", roles = "USER")
     public void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-            ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
+                ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
 
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);

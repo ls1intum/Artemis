@@ -33,7 +33,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        this.database.addUsers(1, 1, 1);
+        this.database.addUsers(1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.videoUnit = new VideoUnit();
         this.videoUnit.setDescription("LoremIpsum");

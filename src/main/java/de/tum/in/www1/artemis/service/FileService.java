@@ -5,10 +5,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Map;
@@ -695,7 +692,7 @@ public class FileService implements DisposableBean {
         ScheduledFuture<?> future = executor.schedule(() -> {
             try {
                 if (Files.exists(path) && Files.isDirectory(path)) {
-                    log.info("Delete directory {}", path);
+                    log.debug("Delete directory {}", path);
                     FileUtils.deleteDirectory(path.toFile());
                 }
                 futures.remove(path);
@@ -737,6 +734,15 @@ public class FileService implements DisposableBean {
             }
         }
         return uniquePath;
+    }
+
+    /**
+     * Removes illegal characters for filenames from the string.
+     * @param string the string with the characters
+     * @return stripped string
+     */
+    public String removeIllegalCharacters(String string) {
+        return string.replaceAll("/[/\\\\?%*:|\"<>]/g", "");
     }
 
     /**

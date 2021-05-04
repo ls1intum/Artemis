@@ -58,7 +58,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/example-submissions")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -78,7 +78,7 @@ public class ExampleSubmissionResource {
      *         status 500 (Internal Server Error) if the exampleSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/example-submissions")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() == null) {
@@ -90,7 +90,7 @@ public class ExampleSubmissionResource {
 
     @NotNull
     private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
-        if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.getExercise())) {
+        if (!authCheckService.isAtLeastEditorForExercise(exampleSubmission.getExercise())) {
             return forbidden();
         }
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
@@ -128,7 +128,7 @@ public class ExampleSubmissionResource {
      * @return the ResponseEntity with status 200 (OK), or with status 404 (Not Found)
      */
     @DeleteMapping("/example-submissions/{id}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to delete ExampleSubmission : {}", id);
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(id);
@@ -137,7 +137,7 @@ public class ExampleSubmissionResource {
             throw new EntityNotFoundException("ExampleSubmission with " + id + " was not found!");
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(exampleSubmission.get().getExercise())) {
+        if (!authCheckService.isAtLeastEditorForExercise(exampleSubmission.get().getExercise())) {
             return forbidden();
         }
 

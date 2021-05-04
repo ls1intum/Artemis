@@ -325,13 +325,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.RUNNING);
         // Send a notification to the client to inform the instructor about the test case update.
-        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE);
+        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE);
     }
 
     private void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
         // Send a notification to the client to inform the instructor about the test case update.
-        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE);
+        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise, BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE);
     }
 
     /**
@@ -543,7 +543,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
         String notificationText = testCasesChanged ? TEST_CASES_CHANGED_NOTIFICATION : TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
-        groupNotificationService.notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
+        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, notificationText);
     }
 
     private String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {

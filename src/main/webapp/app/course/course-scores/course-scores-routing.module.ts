@@ -13,7 +13,7 @@ const routes: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],

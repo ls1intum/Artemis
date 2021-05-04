@@ -80,8 +80,9 @@ public interface CIUserManagementService {
      *
      * @param updatedCourse the course that has the new groups
      * @param oldInstructorGroup the old instructor group. Permissions are revoked for each user in that group
+     * @param oldEditorGroup the old editor group. Permissions are revoked for each user in that group
      * @param oldTeachingAssistantGroup the old teaching assistant group. Permissions are revoked for each user in that group
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws ContinuousIntegrationException;
+    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws ContinuousIntegrationException;
 }
