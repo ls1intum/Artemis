@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
@@ -175,11 +176,9 @@ public abstract class AssessmentResource {
      * @param exercise the exercise for which the authorization should be checked
      * @throws BadRequestAlertException if no course is associated to the given exercise
      */
-    void checkAuthorization(Exercise exercise, User user) {
+    void checkAuthorization(Exercise exercise, User user) throws BadRequestAlertException {
         validateExercise(exercise);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
     }
 
     void validateExercise(Exercise exercise) throws BadRequestAlertException {

@@ -297,7 +297,7 @@ public class TextAssessmentResource extends AssessmentResource {
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
                     && result.getCompletionDate() == null) {
                 // If we already have a result, we need to check if it is locked.
-                forbidden(ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor");
+                return forbidden(ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor");
             }
 
             textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
