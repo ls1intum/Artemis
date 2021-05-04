@@ -172,7 +172,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     /**
      *
-     * PUT exercise/:exerciseId/result/:resultId/submit : Submits manual textAssessments for a given result
+     * POST exercise/:exerciseId/result/:resultId/submit : Submits manual textAssessments for a given result
      *     and notify the user if it's before the Assessment Due Date
      *
      * @param exerciseId the exerciseId of the exercise which will be saved
