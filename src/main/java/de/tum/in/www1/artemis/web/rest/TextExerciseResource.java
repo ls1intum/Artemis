@@ -207,18 +207,18 @@ public class TextExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
-        TextExercise result = textExerciseRepository.save(textExercise);
+        TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
+        exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
 
-        exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, result);
-
-        instanceMessageSendService.sendTextExerciseSchedule(result.getId());
+        instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
 
         // Avoid recursions
         if (textExercise.getExampleSubmissions().size() != 0) {
             Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(textExercise.getId());
-            result.setExampleSubmissions(exampleSubmissionsWithResults);
-            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
+            updatedTextExercise.setExampleSubmissions(exampleSubmissionsWithResults);
+            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
         // Only notify students about changes if a regular exercise was updated
@@ -226,7 +226,7 @@ public class TextExerciseResource {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
     }
 
     /**
