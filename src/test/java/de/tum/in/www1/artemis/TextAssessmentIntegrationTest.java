@@ -267,7 +267,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
-        Result result = request.putWithResponseBody(
+        Result result = request.postWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
@@ -742,7 +742,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is over 100% -> 105
-        Result response = request.putWithResponseBody(
+        Result response = request.postWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
@@ -776,11 +776,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         params.add("submit", submit);
         List<Feedback> feedbacks = ModelFactory.generateFeedback();
         var path = "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + textSubmission.getLatestResult().getId();
+        var body = new TextAssessmentDTO(feedbacks);
         if (submit.equals("true")) {
             path = path + "/submit";
+            request.postWithResponseBody(path, body, Result.class, httpStatus);
         }
-        var body = new TextAssessmentDTO(feedbacks);
-        request.putWithResponseBodyAndParams(path, body, Result.class, httpStatus, params);
+        else {
+            request.putWithResponseBodyAndParams(path, body, Result.class, httpStatus, params);
+        }
     }
 
     @Test
@@ -807,7 +810,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textAssessmentDTO.setFeedbacks(
                 Collections.singletonList(new Feedback().detailText("Test").credits(1d).reference(blocksFrom1stRequest.iterator().next().getId()).type(FeedbackType.MANUAL)));
         textAssessmentDTO.setTextBlocks(blocksFrom1stRequest);
-        request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submission1stRequest.getLatestResult().getId() + "/submit",
+        request.postWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submission1stRequest.getLatestResult().getId() + "/submit",
                 textAssessmentDTO, Result.class, HttpStatus.OK);
 
         Participation participation2ndRequest = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.OK, Participation.class, params);
@@ -1094,7 +1097,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         }).collect(Collectors.toList());
         TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(feedbacks);
-        Result firstSubmittedManualResult = request.putWithResponseBody(
+        Result firstSubmittedManualResult = request.postWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutFirstAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
@@ -1176,7 +1179,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textAssessmentDTO.setFeedbacks(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks());
 
         // assess submission and submit
-        Result secondSubmittedManualResult = request.putWithResponseBody(
+        Result secondSubmittedManualResult = request.postWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutSecondAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
         assertThat(secondSubmittedManualResult).isNotNull();
@@ -1235,7 +1238,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
             long expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
         textAssessmentDTO.setFeedbacks(feedbacks);
-        Result response = request.putWithResponseBody(
+        Result response = request.postWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(expectedScore);
