@@ -32,7 +32,8 @@ describe('Grading System Service', () => {
             .pipe(take(1))
             .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
-        httpMock.expectOne({ method: 'GET' }).flush(elemDefault);
+        const request = httpMock.expectOne({ method: 'GET' });
+        request.flush(elemDefault);
     });
 
     it('should find a grading scale for exam', async () => {
@@ -50,7 +51,8 @@ describe('Grading System Service', () => {
             .pipe(take(1))
             .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
-        httpMock.expectOne({ method: 'POST' }).flush(elemDefault);
+        const request = httpMock.expectOne({ method: 'POST' });
+        request.flush(elemDefault);
     });
 
     it('should create a grading scale for exam', async () => {
@@ -68,7 +70,8 @@ describe('Grading System Service', () => {
             .pipe(take(1))
             .subscribe((data) => expect(data.body).toEqual(elemDefault));
 
-        httpMock.expectOne({ method: 'PUT' }).flush(elemDefault);
+        const request = httpMock.expectOne({ method: 'PUT' });
+        request.flush(elemDefault);
     });
 
     it('should update a grading scale for exam', async () => {
@@ -83,7 +86,8 @@ describe('Grading System Service', () => {
     it('should delete a grading scale for course', async () => {
         service.deleteGradingScaleForCourse(123).pipe(take(1)).subscribe();
 
-        httpMock.expectOne({ method: 'DELETE' }).flush(elemDefault);
+        const request = httpMock.expectOne({ method: 'DELETE' });
+        request.flush(elemDefault);
     });
 
     it('should delete a grading scale for exam', async () => {
