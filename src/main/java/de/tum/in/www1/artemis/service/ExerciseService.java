@@ -475,6 +475,12 @@ public class ExerciseService {
         log.info("User {} has requested to delete {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
 
+    public void logUpdate(Exercise exercise, Course course, User user) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.EDIT_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User {} has updated {} {} with id {}", user.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
+    }
+
     /**
      * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
      *
