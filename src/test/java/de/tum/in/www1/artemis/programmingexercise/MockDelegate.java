@@ -49,6 +49,8 @@ public interface MockDelegate {
 
     void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl);
 
+    void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl);
+
     void mockGetProjectKeyFromAnyUrl(String projectKey);
 
     void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException;

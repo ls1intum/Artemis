@@ -229,6 +229,11 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, exerciseRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, testRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, solutionRepoTestUrl);
+
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + exerciseRepoName, exerciseRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + testRepoName, testRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + solutionRepoName, solutionRepoTestUrl);
+
         mockDelegate.mockGetProjectKeyFromAnyUrl(projectKey);
     }
 
@@ -245,6 +250,7 @@ public class ProgrammingExerciseTestService {
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + participantRepoName, participantRepoTestUrl);
     }
 
     public MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {
@@ -983,10 +989,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        setupTeamExercise();
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
@@ -1016,10 +1019,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        setupTeamExercise();
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
@@ -1048,10 +1048,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        setupTeamExercise();
 
         // create a team for the user (necessary condition before starting an exercise)
         final String edxUsername = userPrefixEdx.get() + "student";
@@ -1070,21 +1067,8 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void copyRepository_testNotCreatedError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        Team team = setupTeamForBadRequestForStartExercise();
 
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamRepository.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
-        mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
         var participantRepoTestUrl = getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
@@ -1093,25 +1077,40 @@ public class ProgrammingExerciseTestService {
         // the local repo should exist before startExercise()
         assertThat(Files.exists(teamLocalPath)).isTrue();
         // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
-            // the directory of the repo should be deleted
-            assertThat(Files.exists(teamLocalPath)).isFalse();
-            // We cannot compare exception messages because each vcs has their
-            // own. Maybe simply checking that the exception is not empty is
-            // enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
+        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
+        // the directory of the repo should be deleted
+        assertThat(Files.exists(teamLocalPath)).isFalse();
+        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
+        assertThat(exception.getMessage()).isNotEmpty();
     }
 
-    // TEST
-    public void copyRepository_testConflictError() throws Exception {
+    @NotNull
+    private Team setupTeamForBadRequestForStartExercise() throws Exception {
+        setupTeamExercise();
+
+        // Create a team with students
+        var student1 = database.getUserByLogin("student1");
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(Set.of(student1));
+        team = teamRepository.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Student1 was correctly added to team").hasSize(1);
+
+        // test for internal server error
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
+        mockDelegate.mockRepositoryWritePermissions(team, student1, exercise, HttpStatus.BAD_REQUEST);
+        return team;
+    }
+
+    private void setupTeamExercise() {
         exercise.setMode(TEAM);
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
+    }
+
+    // TEST
+    public void copyRepository_testConflictError() throws Exception {
+        setupTeamExercise();
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
@@ -1125,35 +1124,18 @@ public class ProgrammingExerciseTestService {
 
         // Start participation
         participationService.startExercise(exercise, team, false);
+
+        // TODO add assertions
     }
 
     // TEST
     public void configureRepository_testBadRequestError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamRepository.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        final var username = team.getParticipantIdentifier();
-        mockDelegate.mockCopyRepositoryForParticipation(exercise, username);
-        mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
+        Team team = setupTeamForBadRequestForStartExercise();
 
         // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
-            // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
+        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
+        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
+        assertThat(exception.getMessage()).isNotEmpty();
     }
 
     // TEST

@@ -158,13 +158,15 @@ public class ModelingExerciseResource {
             return createModelingExercise(modelingExercise);
         }
         modelingExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         // make sure the course actually exists
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         exerciseService.validateScoreSettings(modelingExercise);
 
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
+        exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
         // Avoid recursions
@@ -366,11 +368,11 @@ public class ModelingExerciseResource {
      * parameters are invalid
      */
     @GetMapping("/modeling-exercises/{exerciseId}/plagiarism-result")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
         return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
     }
