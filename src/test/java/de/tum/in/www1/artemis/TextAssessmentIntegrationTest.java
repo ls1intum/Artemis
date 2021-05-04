@@ -124,7 +124,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
         resultRepo.save(result);
-        StudentParticipation participation = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.BAD_REQUEST, StudentParticipation.class);
+        StudentParticipation participation = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.FORBIDDEN, StudentParticipation.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
 
@@ -1005,7 +1005,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void solveFeedbackConflict_forNonExistingConflict() throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
-        FeedbackConflict feedbackConflict = solveFeedbackConflict(HttpStatus.BAD_REQUEST);
+        FeedbackConflict feedbackConflict = request.postWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/feedbackConflict/2/solve-feedback-conflict",
+                null, FeedbackConflict.class, HttpStatus.BAD_REQUEST);
         assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
     }
 

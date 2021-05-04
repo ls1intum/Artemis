@@ -180,7 +180,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textAssessment the assessments which should be submitted
      * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
      */
-    @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
+    @PostMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
@@ -293,6 +293,7 @@ public class TextAssessmentResource extends AssessmentResource {
         else {
             // in case no resultId is set we get result by correctionRound
             result = textSubmission.getResultForCorrectionRound(correctionRound);
+
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
                     && result.getCompletionDate() == null) {
                 // If we already have a result, we need to check if it is locked.

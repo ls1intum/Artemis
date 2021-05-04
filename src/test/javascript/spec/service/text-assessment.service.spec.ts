@@ -165,7 +165,7 @@ describe('TextAssessment Service', () => {
 
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/text-assessments/exercise/${exerciseId}/feedbackConflict/${feedbackConflict.id}/solve-feedback-conflict`,
-            method: 'GET',
+            method: 'POST',
         });
         req.flush(JSON.stringify(returnedFromService));
     });
