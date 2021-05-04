@@ -119,7 +119,8 @@ public class ProgrammingExerciseExportService {
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-"
                 + timestamp + ".zip";
-        var pathToZippedExercise = Path.of(repoDownloadClonePath, exportedExerciseZipFileName);
+        String cleanFilename = fileService.removeIllegalCharacters(exportedExerciseZipFileName);
+        Path pathToZippedExercise = Path.of(repoDownloadClonePath, cleanFilename);
 
         // Get the file path of each file to be included, i.e. each entry in the zipFiles list
         var includedFilePaths = zipFiles.stream().map(File::toPath).collect(Collectors.toList());
