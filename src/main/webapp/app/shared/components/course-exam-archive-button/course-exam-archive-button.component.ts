@@ -41,6 +41,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     @ViewChild('archiveCompleteWithWarningsModal', { static: false })
     archiveCompleteWithWarningsModal: TemplateRef<any>;
 
+    @ViewChild('archiveConfirmModal', { static: false })
+    archiveConfirmModal: TemplateRef<any>;
+
     isBeingArchived = false;
     archiveButtonText = '';
     archiveWarnings: string[] = [];
@@ -159,7 +162,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     openModal(modalRef: TemplateRef<any>) {
         this.modalService.open(modalRef).result.then(
             (result: string) => {
-                if (result === 'archive') {
+                if (result === 'archive-confirm' && this.canDownloadArchive()) {
+                    this.openModal(this.archiveConfirmModal);
+                }
+                if (result === 'archive' || !this.canDownloadArchive()) {
                     this.archive();
                 } else {
                     this.reloadCourseOrExam();
