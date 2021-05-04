@@ -67,7 +67,7 @@ public class StatisticsResource {
      * @param span        the spantime of which the amount should be calculated
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @param graphType   the type of graph the data should be fetched
-     * @param entityId    the id of the dentity (Course, exercise or exam) for which the data should be fetched
+     * @param entityId    the id of the entity (Course, exercise or exam) for which the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data-for-content")

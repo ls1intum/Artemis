@@ -5,6 +5,7 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
+import * as Chart from 'chart.js';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
@@ -53,20 +54,6 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
         this.barChartLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
         this.chartData = [
             {
-                // Average course score line
-                label: this.exerciseAverageLegend,
-                data: new Array(this.barChartLabels.length).fill(this.averageScoreOfExercise),
-                backgroundColor: GraphColors.BLUE,
-                fill: false,
-                pointBackgroundColor: GraphColors.BLUE_TRANSPARENT,
-                pointBorderColor: GraphColors.BLUE_TRANSPARENT,
-                pointHoverBackgroundColor: GraphColors.BLUE,
-                pointHoverBorderColor: GraphColors.BLUE_TRANSPARENT,
-                borderColor: GraphColors.BLUE,
-                hoverBackgroundColor: GraphColors.BLUE,
-                hoverBorderColor: GraphColors.BLUE,
-            },
-            {
                 // Average exercise score bars
                 label: this.distributionLegend,
                 data: this.scoreDistribution,
@@ -74,6 +61,8 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                 backgroundColor: GraphColors.DARK_BLUE,
                 borderColor: GraphColors.DARK_BLUE,
                 hoverBackgroundColor: GraphColors.DARK_BLUE,
+                barPercentage: 0.99,
+                categoryPercentage: 1.0,
             },
         ];
     }
@@ -125,16 +114,11 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                         ticks: {
                             autoSkip: false,
                         },
+                        // barPercentage: 1.0,
+                        // categoryPercentage: 1.0,
                     },
                 ],
             },
         };
-    }
-
-    // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
-    public switchTimeSpan(forward: boolean): void {
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
-        this.currentPeriod += forward ? 1 : -1;
-        this.initializeChart();
     }
 }

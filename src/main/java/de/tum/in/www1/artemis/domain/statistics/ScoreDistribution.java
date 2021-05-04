@@ -9,9 +9,9 @@ public class ScoreDistribution {
 
     private final double score;
 
-    public ScoreDistribution(long amount, double score) {
+    public ScoreDistribution(Long amount, Double score) {
         this.amount = amount;
-        this.score = score;
+        this.score = score != null ? score : 0;
     }
 
     public long getAmount() {

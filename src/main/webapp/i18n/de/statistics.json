@@ -11,6 +11,7 @@
         },
         "title": "Benutzerstatistiken",
         "course_statistics_title": "Kursstatistiken",
+        "exercise_statistics_title": "Aufgabenstatistiken",
         "submissions": "Abgaben",
         "active_users": "Aktive Nutzer",
         "logged_in_users": "Eingeloggte Nutzer",
