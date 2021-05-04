@@ -16,11 +16,21 @@ import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
+    let courseService: CourseManagementService;
+    let exerciseService: ExerciseService;
+    let exampleSubmissionService: ExampleSubmissionService;
+    const categories = [{ category: 'testCat' }, { category: 'testCat2' }];
+    const categoriesStringified = categories.map((cat) => JSON.stringify(cat));
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -39,6 +49,9 @@ describe('ModelingExercise Management Update Component', () => {
         fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(ModelingExerciseService);
+        courseService = fixture.debugElement.injector.get(CourseManagementService);
+        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+        exampleSubmissionService = fixture.debugElement.injector.get(ExampleSubmissionService);
     });
 
     describe('save', () => {
@@ -91,13 +104,14 @@ describe('ModelingExercise Management Update Component', () => {
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+        const course = new Course();
+        course.id = 123;
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         modelingExercise.id = 1;
         modelingExercise.releaseDate = moment();
         modelingExercise.dueDate = moment();
         modelingExercise.assessmentDueDate = moment();
         const courseId = 1;
-
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
@@ -106,6 +120,7 @@ describe('ModelingExercise Management Update Component', () => {
         });
 
         it('Should set isImport and remove all dates', fakeAsync(() => {
+            spyOn(courseService, 'findAllCategoriesOfCourse').and.returnValue(of(new HttpResponse({ body: categoriesStringified })));
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -115,6 +130,8 @@ describe('ModelingExercise Management Update Component', () => {
             expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
             expect(comp.modelingExercise.releaseDate).toEqual(undefined);
             expect(comp.modelingExercise.dueDate).toEqual(undefined);
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(course.id);
+            expect(comp.existingCategories).toEqual(categories);
         }));
     });
 
@@ -138,6 +155,8 @@ describe('ModelingExercise Management Update Component', () => {
         });
 
         it('Should set isImport and remove all dates', fakeAsync(() => {
+            spyOn(courseService, 'findAllCategoriesOfCourse').and.returnValue(of(new HttpResponse({ body: categoriesStringified })));
+
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -147,6 +166,8 @@ describe('ModelingExercise Management Update Component', () => {
             expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
             expect(comp.modelingExercise.releaseDate).toEqual(undefined);
             expect(comp.modelingExercise.dueDate).toEqual(undefined);
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(exerciseGroup!.exam!.course!.id);
+            expect(comp.existingCategories).toEqual(categories);
         }));
     });
 
@@ -207,4 +228,56 @@ describe('ModelingExercise Management Update Component', () => {
             expect(comp.modelingExercise.dueDate).toEqual(undefined);
         }));
     });
+
+    it('should update categories with given ones', () => {
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.categories = categories;
+        comp.modelingExercise = modelingExercise;
+        const newCategories = [{ category: 'newCat1' }, { category: 'newCat2' }];
+        comp.updateCategories(newCategories);
+        expect(comp.modelingExercise.categories).toEqual(newCategories);
+    });
+
+    it('should call exercise service to validate date', () => {
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        comp.modelingExercise = modelingExercise;
+        spyOn(exerciseService, 'validateDate');
+        comp.validateDate();
+        expect(exerciseService.validateDate).toHaveBeenCalledWith(modelingExercise);
+    });
+
+    it('should set assessmentType to manual in exam mode', () => {
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        comp.isExamMode = true;
+        comp.diagramTypeChanged();
+        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.MANUAL);
+    });
+
+    it('should set assessmentType to manual if diagram type is not class or activity diagram', () => {
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.Flowchart, undefined, undefined);
+        comp.isExamMode = false;
+        comp.diagramTypeChanged();
+        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.MANUAL);
+    });
+
+    it('should set checked flag to given value', () => {
+        comp.getCheckedFlag(true);
+        expect(comp.checkedFlag).toBe(true);
+        comp.getCheckedFlag(false);
+        expect(comp.checkedFlag).toBe(false);
+    });
+
+    it('should delete example submission', fakeAsync(() => {
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.Flowchart, undefined, undefined);
+        const exampleSubmission1 = new ExampleSubmission();
+        exampleSubmission1.id = 1;
+        const exampleSubmission2 = new ExampleSubmission();
+        exampleSubmission2.id = 2;
+        comp.modelingExercise.exampleSubmissions = [exampleSubmission1, exampleSubmission2];
+        spyOn(exampleSubmissionService, 'delete').and.returnValue(of(new HttpResponse({})));
+        comp.deleteExampleSubmission(2, 1);
+        tick();
+        expect(exampleSubmissionService.delete).toHaveBeenCalledWith(2);
+        expect(comp.modelingExercise.exampleSubmissions).toEqual([exampleSubmission1]);
+    }));
 });
