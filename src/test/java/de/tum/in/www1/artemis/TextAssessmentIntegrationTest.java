@@ -752,7 +752,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
-        response = request.putWithResponseBody(
+        response = request.postWithResponseBody(
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
