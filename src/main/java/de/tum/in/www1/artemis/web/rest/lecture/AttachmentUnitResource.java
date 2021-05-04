@@ -51,7 +51,7 @@ public class AttachmentUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{lectureId}/attachment-units/{attachmentUnitId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
@@ -66,7 +66,7 @@ public class AttachmentUnitResource {
             return conflict();
         }
 
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
         return ResponseEntity.ok().body(attachmentUnit);
@@ -81,7 +81,7 @@ public class AttachmentUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures/{lectureId}/attachment-units")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         if (attachmentUnit.getId() == null) {
@@ -92,7 +92,7 @@ public class AttachmentUnitResource {
             return conflict();
         }
 
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
 
@@ -117,7 +117,7 @@ public class AttachmentUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures/{lectureId}/attachment-units")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit : {}", attachmentUnit);
         if (attachmentUnit.getId() != null) {
@@ -131,7 +131,7 @@ public class AttachmentUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
             return forbidden();
         }
 

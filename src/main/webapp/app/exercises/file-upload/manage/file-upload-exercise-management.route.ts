@@ -62,7 +62,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -74,7 +74,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
