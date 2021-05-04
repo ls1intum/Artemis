@@ -57,6 +57,7 @@ describe('ModelingExercise Service', () => {
             .subscribe((resp) => expect(resp.body).toEqual(elemDefault));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+        tick();
     }));
 
     it('should create a ModelingExercise', fakeAsync(() => {
