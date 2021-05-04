@@ -1678,10 +1678,12 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneQuizExercise(){return addCourseWithOneQuizExercise("Title");}
+    public Course addCourseWithOneQuizExercise() {
+        return addCourseWithOneQuizExercise("Title");
+    }
 
-    public Course addCourseWithOneQuizExercise(String title){
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor","instructor");
+    public Course addCourseWithOneQuizExercise(String title) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp);
         quizExercise.setIsVisibleBeforeStart(false);
         quizExercise.setTitle(title);
