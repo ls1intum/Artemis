@@ -122,7 +122,7 @@ public class CourseExamExportService {
         var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
 
         // Create a temporary directory that will contain the files that will be zipped
-        Path tempExamsDir = Path.of("./exports", cleanExamDirName, cleanExamDirName);
+        Path tempExamsDir = Path.of("./exports", cleanExamDirName);
         try {
             Files.createDirectories(tempExamsDir);
         }
