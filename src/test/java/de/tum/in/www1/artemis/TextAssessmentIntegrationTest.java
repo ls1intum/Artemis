@@ -124,7 +124,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
         resultRepo.save(result);
-        StudentParticipation participation = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.FORBIDDEN, StudentParticipation.class);
+        StudentParticipation participation = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.LOCKED, StudentParticipation.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
 
