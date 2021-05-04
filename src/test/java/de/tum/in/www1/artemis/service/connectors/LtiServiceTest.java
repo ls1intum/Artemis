@@ -19,7 +19,6 @@ import org.apache.http.client.HttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -84,9 +83,9 @@ public class LtiServiceTest {
     public void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        httpClient = Mockito.mock(HttpClient.class);
-        httpResponse = Mockito.mock(HttpResponse.class);
-        statusLine = Mockito.mock(StatusLine.class);
+        httpClient = mock(HttpClient.class);
+        httpResponse = mock(HttpResponse.class);
+        statusLine = mock(StatusLine.class);
         ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository, response);
         ltiServiceWithClient = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository,
                 response, httpClient);
@@ -150,7 +149,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_lookupWithLtiEmailAddressWithContextLabelTUMx() {
+    public void handleLaunchRequest_lookupWithLtiEmailAddressWithContextLabelTumx() {
         String username = "username";
         String email = launchRequest.getLis_person_contact_email_primary();
         launchRequest.setCustom_lookup_user_by_email(true);
@@ -189,7 +188,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_newUserIsNotRequiredWithContextLabelTUMx() {
+    public void handleLaunchRequest_newUserIsNotRequiredWithContextLabelTumx() {
         String username = launchRequest.getLis_person_sourcedid();
         Set<String> groups = new HashSet<>();
         groups.add("");
@@ -327,7 +326,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void onNewResult_WithHttpClient() throws IOException {
+    public void onNewResult_withHttpClient() throws IOException {
         ReflectionTestUtils.setField(ltiServiceWithClient, "OAUTH_KEY", Optional.of("oauthKey"));
         ReflectionTestUtils.setField(ltiServiceWithClient, "OAUTH_SECRET", Optional.of("oauthSecret"));
 
