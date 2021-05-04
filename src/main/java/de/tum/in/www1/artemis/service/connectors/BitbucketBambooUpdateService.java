@@ -114,7 +114,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         parameters.add("confirm", "true");
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
-        //TODO: Master-Branch
+        // TODO: Master-Branch
         parameters.add("repository.stash.branch", "master");
 
         BitbucketRepositoryDTO bitbucketRepository = getBitbucketRepository(bitbucketProjectKey, bitbucketRepositoryName);

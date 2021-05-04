@@ -1240,7 +1240,6 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
-
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();

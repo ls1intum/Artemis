@@ -13,4 +13,4 @@ if [[ "$OSTYPE" == "msys" ]]; then
   FILES=$(echo $FILES | sed 's/\\/\\\\/g')
 fi
 
-# ./gradlew spotlessApply -PspotlessFiles="${FILES}"
+./gradlew spotlessApply -PspotlessFiles="${FILES}"
