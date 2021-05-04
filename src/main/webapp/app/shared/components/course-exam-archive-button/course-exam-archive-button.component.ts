@@ -104,6 +104,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
             this.archiveWarnings = message.split('\n');
             this.openModal(this.archiveCompleteWithWarningsModal);
+            this.reloadCourseOrExam();
         }
     }
 
