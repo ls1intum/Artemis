@@ -51,7 +51,7 @@ public class TextUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the text unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/text-units/{textUnitId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> getTextUnit(@PathVariable Long textUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get TextUnit : {}", textUnitId);
         Optional<TextUnit> optionalTextUnit = textUnitRepository.findById(textUnitId);
@@ -65,7 +65,7 @@ public class TextUnitResource {
         if (!textUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(textUnit.getLecture().getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(textUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
         return ResponseEntity.ok().body(textUnit);
@@ -80,7 +80,7 @@ public class TextUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures/{lectureId}/text-units")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) {
         log.debug("REST request to update an text unit : {}", textUnit);
         if (textUnit.getId() == null) {
@@ -93,7 +93,7 @@ public class TextUnitResource {
         if (!textUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(textUnit.getLecture().getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(textUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
 
@@ -110,7 +110,7 @@ public class TextUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures/{lectureId}/text-units")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
         if (textUnit.getId() != null) {
@@ -124,7 +124,7 @@ public class TextUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
             return forbidden();
         }
 
