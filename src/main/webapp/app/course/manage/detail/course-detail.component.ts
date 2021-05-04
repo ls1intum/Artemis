@@ -24,7 +24,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
     ActionType = ActionType;
     readonly isOrion = isOrion;
-    public refreshingCourse = false;
 
     CachingStrategy = CachingStrategy;
     courseDTO: CourseManagementDetailViewDto;
