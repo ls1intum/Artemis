@@ -223,7 +223,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void addUserToGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
             // The exercise's project key is also the name of the Jenkins job that groups all build plans
             // for students, solution, and template.
@@ -232,18 +232,25 @@ public class JenkinsUserManagementService implements CIUserManagementService {
 
             if (groups.contains(course.getInstructorGroupName())) {
                 try {
-                    // We are assigning instructor permissions since the exercise's course teaching assistant group
-                    // is the same as the one that is specified.
+                    // We are assigning instructor permissions since the exercise's course instructor group is the same as the one that is specified.
                     jenkinsJobPermissionsService.addPermissionsForUserToFolder(userLogin, jobName, JenkinsJobPermission.getInstructorPermissions());
                 }
                 catch (IOException e) {
                     throw new JenkinsException("Cannot assign instructor permissions to user: " + userLogin, e);
                 }
             }
+            else if (groups.contains(course.getEditorGroupName())) {
+                try {
+                    // We are assigning editor permissions since the exercise's course editor group is the same as the one that is specified.
+                    jenkinsJobPermissionsService.addPermissionsForUserToFolder(userLogin, jobName, JenkinsJobPermission.getEditorPermissions());
+                }
+                catch (IOException e) {
+                    throw new JenkinsException("Cannot assign editor permissions to user: " + userLogin, e);
+                }
+            }
             else if (groups.contains(course.getTeachingAssistantGroupName())) {
                 try {
-                    // We are assigning teaching assistant permissions since the exercise's course teaching assistant group
-                    // is the same as the one that is specified.
+                    // We are assigning teaching assistant permissions since the exercise's course teaching assistant group is the same as the one that is specified.
                     jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForFolder(userLogin, jobName);
                 }
                 catch (IOException e) {
@@ -264,7 +271,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void removeUserFromGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         // Remove all permissions assigned to the user for each exercise that belongs to the specified groups.
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         exercises.forEach(exercise -> {
             try {
                 // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,
@@ -279,66 +286,68 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     @Override
-    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) throws ContinuousIntegrationException {
+    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup)
+            throws ContinuousIntegrationException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
+        var newEditorGroup = updatedCourse.getEditorGroupName();
         var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
 
         // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
             return;
         }
 
         // Remove all permissions assigned to the instructors and teaching assistants that do not belong to the course
         // anymore.
-        removePermissionsFromInstructorsAndTAsForCourse(oldInstructorGroup, oldTeachingAssistantGroup, updatedCourse);
+        removePermissionsFromInstructorsAndEditorsAndTAsForCourse(oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, updatedCourse);
 
         // Assign teaching assistant and instructor permissions
-        assignPermissionsToInstructorAndTAsForCourse(updatedCourse);
+        assignPermissionsToInstructorAndEditorAndTAsForCourse(updatedCourse);
     }
 
     /**
-     * Assigns teaching assistant and/or instructor permissions to each user belonging to the teaching assistant/instructor
-     * groups of the course.
+     * Assigns teaching assistant and/or editor and/or instructor permissions to each user belonging to the teaching assistant/editor/instructor groups of the course.
      *
      * @param course the course
      */
-    private void assignPermissionsToInstructorAndTAsForCourse(Course course) {
-        var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+    private void assignPermissionsToInstructorAndEditorAndTAsForCourse(Course course) {
         var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var editors = userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
 
-        // Courses can have the same groups. We do not want to add/remove users from exercises of other courses
-        // belonging to the same group
+        // Courses can have the same groups. We do not want to add/remove users from exercises of other courses belonging to the same group
         var exercises = programmingExerciseRepository.findAllByCourse(course);
         exercises.forEach(exercise -> {
             var job = exercise.getProjectKey();
             try {
-                jenkinsJobPermissionsService.addInstructorAndTAPermissionsToUsersForFolder(teachingAssistants, instructors, job);
+                jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForFolder(teachingAssistants, editors, instructors, job);
             }
             catch (IOException e) {
-                throw new JenkinsException("Cannot assign teaching assistant and instructor permissions for job: " + job, e);
+                throw new JenkinsException("Cannot assign teaching assistant and editor and instructor permissions for job: " + job, e);
             }
         });
 
     }
 
     /**
-     * Removes all permissions assigned to instructors and teaching assistants for the specified course. The function
-     * fetches all exercises that belong to the course and removes all permissions assigned to all instructors and
+     * Removes all permissions assigned to instructors and editors and teaching assistants for the specified course. The function
+     * fetches all exercises that belong to the course and removes all permissions assigned to all instructors and editors and
      * teaching assistants belonging to the groups.
      *
      * @param instructorGroup the group of instructors
+     * @param editorGroup the group of editors
      * @param teachingAssistantGroup the group of teaching assistants
      * @param course the course
      */
-    private void removePermissionsFromInstructorsAndTAsForCourse(String instructorGroup, String teachingAssistantGroup, Course course) {
-        // Courses can have the same groups. We do not want to add/remove users from exercises of other courses
-        // belonging to the same group
+    private void removePermissionsFromInstructorsAndEditorsAndTAsForCourse(String instructorGroup, String editorGroup, String teachingAssistantGroup, Course course) {
+        // Courses can have the same groups. We do not want to add/remove users from exercises of other courses belonging to the same group
         var exercises = programmingExerciseRepository.findAllByCourse(course);
 
-        // Fetch all instructors and teaching assistants belonging to the group that was removed from the course.
+        // Fetch all instructors and editors and teaching assistants belonging to the group that was removed from the course.
         var oldInstructors = userRepository.findAllInGroupWithAuthorities(instructorGroup);
+        var oldEditors = userRepository.findAllInGroupWithAuthorities(editorGroup);
         var oldTeachingAssistants = userRepository.findAllInGroupWithAuthorities(teachingAssistantGroup);
-        var usersFromOldGroup = Stream.concat(oldInstructors.stream(), oldTeachingAssistants.stream()).collect(Collectors.toList()).stream().map(User::getLogin)
+        var usersFromOldGroup = Stream.concat(oldInstructors.stream(), Stream.concat(oldEditors.stream(), oldTeachingAssistants.stream())).map(User::getLogin)
                 .collect(Collectors.toSet());
 
         // Revoke all permissions.
@@ -371,7 +380,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             }
 
             var errorMessage = "Could not get user " + userLogin;
-            log.error(errorMessage + ": " + e);
+            log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
         }
     }

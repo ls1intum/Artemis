@@ -13,7 +13,6 @@
 <dd *ngIf="exercise.exerciseGroup">
     <div>
         <a [routerLink]="['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id]">{{ exercise.exerciseGroup?.exam?.title }}</a>
-        <span>{{ exercise.exerciseGroup?.exam?.title }}</span>
     </div>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
@@ -54,21 +53,29 @@
         <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
     </dd>
 </ng-container>
-<dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
-<dd>
-    <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>
-    <span *ngIf="!exercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-</dd>
-<dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
-<dd>
-    <span *ngIf="exercise.dueDate">{{ exercise.dueDate | artemisDate }}</span>
-    <span *ngIf="!exercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-</dd>
-<dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
-<dd>
-    <span *ngIf="exercise.assessmentDueDate">{{ exercise.assessmentDueDate | artemisDate }}</span>
-    <span *ngIf="!exercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-</dd>
+<ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING">
+    <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
+    <dd>
+        <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>
+        <span *ngIf="!exercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    </dd>
+    <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
+    <dd>
+        <span *ngIf="exercise.dueDate">{{ exercise.dueDate | artemisDate }}</span>
+        <span *ngIf="!exercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    </dd>
+    <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
+    <dd>
+        <span *ngIf="exercise.assessmentDueDate">{{ exercise.assessmentDueDate | artemisDate }}</span>
+        <span *ngIf="!exercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    </dd>
+</ng-container>
+<ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+    <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel">Timeline</span></dt>
+    <dd>
+        <jhi-programming-exercise-lifecycle [isExamMode]="isExamExercise" [exercise]="exercise" [readOnly]="true"></jhi-programming-exercise-lifecycle>
+    </dd>
+</ng-container>
 <dt><span jhiTranslate="artemisApp.exercise.points">Points</span></dt>
 <dd>
     <span>{{ exercise.maxPoints }}</span>
@@ -90,11 +97,11 @@
 <ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING">
     <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>
 </ng-container>
-<ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+<ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && programmingExercise">
     <dd>
         <jhi-programming-exercise-instructions
             [exercise]="exercise"
-            [participation]="programmingExercise?.templateParticipation"
+            [participation]="programmingExercise!.templateParticipation!"
             [personalParticipation]="true"
         ></jhi-programming-exercise-instructions>
     </dd>
@@ -103,10 +110,10 @@
     <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
     <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
 </ng-container>
-<jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
-<ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastInstructor === true">
+<jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria || []"></jhi-structured-grading-instructions-assessment-layout>
+<ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastEditor === true">
     <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
     <dd>
-        <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
+        <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
     </dd>
 </ng-container>

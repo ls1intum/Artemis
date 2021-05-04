@@ -20,10 +20,7 @@ import org.w3c.dom.Document;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.offbytwo.jenkins.JenkinsServer;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -73,10 +70,12 @@ public class JenkinsBuildPlanService {
      * @param testRepositoryURL the url of the tests vcs repository
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL) {
-        // TODO support sequential test runs
         var programmingLanguage = exercise.getProgrammingLanguage();
+        var statisCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        var isSequentialTestRuns = exercise.hasSequentialTestRuns();
+
         final var configBuilder = builderFor(programmingLanguage);
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()));
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, statisCodeAnalysisEnabled, isSequentialTestRuns);
 
         var jobFolder = exercise.getProjectKey();
         var job = jobFolder + "-" + planKey;
@@ -192,7 +191,7 @@ public class JenkinsBuildPlanService {
             return isJobBuilding ? ContinuousIntegrationService.BuildStatus.BUILDING : ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
         catch (NullPointerException | HttpClientErrorException e) {
-            log.error("Error while trying to fetch build status from Jenkins for " + planKey + ":" + e.getMessage());
+            log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
         }
     }
@@ -226,12 +225,13 @@ public class JenkinsBuildPlanService {
             // Retrieve the TAs and instructors that will be given access to the plan of the programming exercise
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
             var teachingAssistants = userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+            var editors = userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
             var instructors = userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
 
             // The build plan of the exercise is inside the course folder
             var jobFolder = programmingExercise.getProjectKey();
             var jobName = jobFolder + "-" + planName;
-            jenkinsJobPermissionsService.addInstructorAndTAPermissionsToUsersForJob(teachingAssistants, instructors, jobFolder, jobName);
+            jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForJob(teachingAssistants, editors, instructors, jobFolder, jobName);
         }
         catch (IOException e) {
             throw new JenkinsException("Cannot give assign permissions to plan" + planName, e);

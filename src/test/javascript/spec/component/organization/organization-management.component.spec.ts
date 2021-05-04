@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
@@ -14,6 +14,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
+import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -54,13 +55,20 @@ describe('OrganizationManagementComponent', () => {
         organization2.id = 6;
         organization2.name = 'orgTwo';
 
-        const numOfUsersAndCoursesOfOrganizations = {};
-        numOfUsersAndCoursesOfOrganizations[5] = { users: 1, courses: 1 };
-        numOfUsersAndCoursesOfOrganizations[6] = { users: 2, courses: 2 };
+        const countOrg1 = new OrganizationCountDto();
+        countOrg1.organizationId = organization1.id;
+        countOrg1.numberOfUsers = 1;
+        countOrg1.numberOfCourses = 1;
 
-        component.organizations = [organization1];
-        spyOn(organizationService, 'getOrganizations').and.returnValue(Observable.of([organization1, organization2]));
-        spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').and.returnValue(Observable.of(numOfUsersAndCoursesOfOrganizations));
+        const countOrg2 = new OrganizationCountDto();
+        countOrg2.organizationId = organization2.id;
+        countOrg2.numberOfUsers = 2;
+        countOrg2.numberOfCourses = 2;
+
+        const numOfUsersAndCoursesOfOrganizations = [countOrg1, countOrg2];
+
+        spyOn(organizationService, 'getOrganizations').and.returnValue(of([organization1, organization2]));
+        spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').and.returnValue(of(numOfUsersAndCoursesOfOrganizations));
 
         fixture.detectChanges();
         expect(component).to.be.ok;

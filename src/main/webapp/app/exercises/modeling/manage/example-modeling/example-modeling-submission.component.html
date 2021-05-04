@@ -11,7 +11,7 @@
         <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
     </div>
 
-    <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
+    <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastEditor && !readOnly && !toComplete">
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
@@ -67,9 +67,9 @@
                 <div class="row editor-container-inner">
                     <jhi-modeling-editor
                         class="col-12"
-                        *ngIf="!assessmentMode"
+                        *ngIf="!assessmentMode && exercise.diagramType"
                         [umlModel]="umlModel"
-                        [diagramType]="exercise.diagramType"
+                        [diagramType]="exercise.diagramType!"
                         [readOnly]="readOnly"
                         [explanation]="explanationText"
                         (explanationChange)="explanationChanged($event)"
@@ -79,12 +79,12 @@
 
                     <jhi-modeling-assessment
                         class="col-12"
-                        *ngIf="assessmentMode"
+                        *ngIf="assessmentMode && exercise.diagramType"
                         [model]="umlModel"
-                        [feedbacks]="result?.feedbacks"
-                        [diagramType]="exercise.diagramType"
-                        [maxScore]="exercise.maxPoints"
-                        [maxBonusPoints]="exercise.bonusPoints"
+                        [feedbacks]="result?.feedbacks || []"
+                        [diagramType]="exercise.diagramType!"
+                        [maxScore]="exercise.maxPoints || 0"
+                        [maxBonusPoints]="exercise.bonusPoints || 0"
                         [totalScore]="totalScore"
                         [readOnly]="readOnly"
                         (feedbackChanged)="onFeedbackChanged($event)"

@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -55,8 +54,6 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingAssessmentService programmingAssessmentService;
 
-    private final ResultService resultService;
-
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -67,12 +64,14 @@ public class ProgrammingExerciseGradingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final ResultService resultService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
-            ResultService resultService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService) {
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -84,9 +83,9 @@ public class ProgrammingExerciseGradingService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.resultService = resultService;
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
+        this.resultService = resultService;
     }
 
     /**
@@ -98,7 +97,7 @@ public class ProgrammingExerciseGradingService {
      * @return result after compilation
      */
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
-        log.debug("Received new build result (NEW) for participation " + participation.getId());
+        log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         Result newResult;
         try {
@@ -106,7 +105,7 @@ public class ProgrammingExerciseGradingService {
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
-            log.error("Result for participation " + participation.getId() + " could not be created due to the following exception: " + ex, ex);
+            log.error("Result for participation " + participation.getId() + " could not be created", ex);
             return Optional.empty();
         }
 
@@ -173,10 +172,8 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
-            Feedback newFeedback = feedback.copyFeedback();
-            latestSemiAutomaticResult.addFeedback(newFeedback);
-        }
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
         latestSemiAutomaticResult.setResultString(resultString);
@@ -199,15 +196,14 @@ public class ProgrammingExerciseGradingService {
         if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
             return;
         }
-        // We use the last commitHash of the test repository.
-        ObjectId testCommitHash = ObjectId.fromString(submission.getCommitHash());
         try {
-            programmingSubmissionService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, testCommitHash, SubmissionType.TEST);
+            programmingSubmissionService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
         }
         catch (EntityNotFoundException ex) {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-            log.error("Could not trigger the build of the template repository for the programming exercise id " + programmingExerciseId
-                    + " because no template participation could be found for the given exercise");
+            log.error(
+                    "Could not trigger the build of the template repository for the programming exercise id {} because no template participation could be found for the given exercise",
+                    programmingExerciseId);
         }
     }
 
@@ -266,13 +262,13 @@ public class ProgrammingExerciseGradingService {
 
         ArrayList<Result> updatedResults = new ArrayList<>();
 
-        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);
                 });
-        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);
                 });
@@ -283,7 +279,7 @@ public class ProgrammingExerciseGradingService {
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
 
         for (StudentParticipation studentParticipation : participations) {
-            Result result = studentParticipation.findLatestResult();
+            Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
                 calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
                 updatedResults.add(result);
@@ -293,7 +289,7 @@ public class ProgrammingExerciseGradingService {
         // Update also manual results
         List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
         for (StudentParticipation studentParticipation : participationsWithManualResult) {
-            Result result = studentParticipation.findLatestResult();
+            Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
                 calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
                 updatedResults.add(result);
@@ -307,7 +303,7 @@ public class ProgrammingExerciseGradingService {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RE_EVALUATE_RESULTS, "exercise=" + exercise.getTitle(), "course=" + course.getTitle(),
                 "results=" + results.size());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " triggered a re-evaluation of {} results for exercise {} with id {}", results.size(), exercise.getTitle(), exercise.getId());
+        log.info("User {} triggered a re-evaluation of {} results for exercise {} with id {}", user.getLogin(), results.size(), exercise.getTitle(), exercise.getId());
     }
 
     /**
@@ -397,7 +393,7 @@ public class ProgrammingExerciseGradingService {
     private void retainAutomaticFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
         // Remove automatic feedbacks not associated with test cases
         result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
-                && testCases.stream().noneMatch(test -> test.getTestName().equals(feedback.getText())));
+                && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
 
         // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
         if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
@@ -413,7 +409,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> allTests) {
         for (Feedback feedback : result.getFeedbacks()) {
-            allTests.stream().filter(testCase -> testCase.getTestName().equals(feedback.getText())).findFirst()
+            allTests.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(feedback.getText())).findFirst()
                     .ifPresent(testCase -> feedback.setVisibility(testCase.getVisibility()));
         }
     }
@@ -455,7 +451,7 @@ public class ProgrammingExerciseGradingService {
             // Enables to view the result details in case all test cases are positive
             result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
-            groupNotificationService.notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
             return true;
         }
         return false;

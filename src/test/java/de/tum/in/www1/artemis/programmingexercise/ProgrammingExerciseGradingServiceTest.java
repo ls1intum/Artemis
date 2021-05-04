@@ -23,17 +23,13 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -43,51 +39,37 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
 public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private ProgrammingExerciseTestCaseService testCaseService;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
-
-    @Autowired
-    ProgrammingExerciseTestCaseService testCaseService;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    StaticCodeAnalysisService staticCodeAnalysisService;
-
-    @Autowired
-    ProgrammingExerciseGradingService gradingService;
+    private ProgrammingExerciseGradingService gradingService;
 
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExerciseStudentParticipation participation;
-
     private Result result;
 
-    private Double offsetByTenThousandth = 0.0001;
+    private final Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     public void setUp() {
-        database.addUsers(5, 1, 1);
+        database.addUsers(5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
@@ -95,7 +77,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
         programmingExercise = programmingExercises.get(0);
 
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         result = new Result();
         result.setParticipation(participation);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -108,6 +90,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotUpdateResultIfNoTestCasesExist() {
         testCaseRepository.deleteAll();
 
@@ -118,6 +101,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldAddFeedbackForDuplicateTestCases() {
         // Adjust existing test cases to our need
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
@@ -149,10 +133,11 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.getFeedbacks().size()).isEqualTo(countOfNewFeedbacks);
         assertThat(result.getResultString()).isEqualTo("Error: Found duplicated tests!");
         String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test3, test1";
-        verify(groupNotificationService).notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -174,6 +159,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
         List<Feedback> feedbacks = new ArrayList<>();
         // we deliberately don't set the credits here, null must work as well
@@ -201,6 +187,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
@@ -298,6 +285,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
@@ -353,6 +341,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
@@ -380,6 +369,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
         // Set programming exercise due date in future.
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
@@ -407,6 +397,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in past.
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(10));
@@ -431,31 +422,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
         assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(false);
-    }
-
-    private void testAndAssertZeroScoreIfThereAreNoTestCasesBeforeDueDate(ProgrammingExercise programmingExercise, String expectedResultString, int expectedFeedbackSize) {
-        // Set programming exercise due date in future.
-        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(10));
-        Double scoreBeforeUpdate = result.getScore();
-
-        // Set all test cases of the programming exercise to be executed after due date.
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        for (ProgrammingExerciseTestCase testCase : testCases) {
-            testCase.visibility(Visibility.AFTER_DUE_DATE);
-        }
-        testCaseRepository.saveAll(testCases);
-
-        gradingService.calculateScoreForResult(result, programmingExercise, true);
-
-        // No test case was executed.
-        Double expectedScore = 0D;
-
-        assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo(expectedResultString);
-        assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.isSuccessful()).isFalse();
-        // The feedback must be empty as not test should be executed yet.
-        assertThat(result.getFeedbacks()).hasSize(expectedFeedbackSize);
     }
 
     @Test
@@ -499,7 +465,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, "0 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // solution 100 %
@@ -509,14 +475,14 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
     }
 
     @ValueSource(booleans = { false, true })
-    @ParameterizedTest(name = "shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation [isAfterDueDate = {0}]")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date
@@ -572,7 +538,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, "0 of 4 passed", true, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // solution 100 %
@@ -582,7 +548,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, "2 of 4 passed", true, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
@@ -596,7 +562,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 25D, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // student2 61% % / 75 %
@@ -608,7 +574,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
             testParticipationResult(manualResultOptional.get(), 86D, "1 of 3 passed, 86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
-            assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestResult());
+            assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestLegalResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
             assertThat(automaticResultOptional).isPresent();
@@ -620,7 +586,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[2].getId()).get();
             var results = participation.getResults();
             assertThat(results).isNullOrEmpty();
-            assertThat(participation.findLatestResult()).isNull();
+            assertThat(participation.findLatestLegalResult()).isNull();
         }
 
         // student4 100%
@@ -630,7 +596,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, "3 of 3 passed", false, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // student5 Build Failed
@@ -640,7 +606,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, "Build Failed", false, 0, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
 
@@ -670,7 +636,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             // score 0 %
             var resultTemplate = new Result().participation(participationTemplate).resultString("x of y passed").successful(false).rated(true).score(100D);
             participationTemplate.setResults(Set.of(resultTemplate));
-            resultTemplate = updateAndSaveAutomaticResult(resultTemplate, false, false, false);
+            updateAndSaveAutomaticResult(resultTemplate, false, false, false);
         }
 
         // solution passes most tests but is still faulty
@@ -753,8 +719,8 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
-    public void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() {
-
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() throws Exception {
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
         var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
@@ -809,7 +775,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 60D, "3 of 3 passed, 21 issues", true, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).get();
@@ -817,7 +783,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 71.42857142857143, "3 of 3 passed, 5 issues", true, 8, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // Also remove max penalty from exercise
@@ -846,7 +812,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, "3 of 3 passed, 21 issues", true, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).get();
@@ -854,7 +820,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 11.904761904761903, "2 of 3 passed, 9 issues", true, 12, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
 
@@ -883,7 +849,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 79.04761904761905, "3 of 3 passed, 6 issues", true, 9, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // Remove max penalty from exercise
@@ -912,7 +878,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 19.047619047619047, "3 of 3 passed, 16 issues", true, 19, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
 
@@ -930,7 +896,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 4.761904761904762, "1 of 3 passed, 2 issues", true, 5, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(1).getId()).get();
@@ -938,7 +904,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 40.476190476190474, "2 of 3 passed, 4 issues", true, 7, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(2).getId()).get();
@@ -946,7 +912,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, "1 of 3 passed, 7 issues", true, 10, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(3).getId()).get();
@@ -954,7 +920,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 26.190476190476193, "2 of 3 passed, 6 issues", true, 9, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(4).getId()).get();
@@ -962,11 +928,12 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 60D, "3 of 3 passed, 11 issues", true, 14, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldCalculateCorrectStatistics() {
         activateAllTestCases(false);
         createTestParticipationsWithResults();
@@ -1003,6 +970,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
@@ -1010,6 +978,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
     }
 
     @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
@@ -1071,7 +1040,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         return List.of(participation1, participation2, participation3, participation4, participation5);
     }
 
-    private List<Participation> createTestParticipationsWithMultipleResults() {
+    private void createTestParticipationsWithMultipleResults() {
 
         // create results
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
@@ -1112,7 +1081,6 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
             updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
         }
 
-        return List.of(participation1, participation2, participation3, participation4, participation5);
     }
 
     private void testParticipationResult(Result result, Double score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {

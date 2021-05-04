@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
@@ -23,13 +23,14 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
 })
-export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, AfterViewInit, Context {
+export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context {
     isNewSubmission: boolean;
     areNewAssessments = true;
     unsavedChanges = false;
@@ -98,19 +99,13 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     * Sets the size of resizable elements after initialization.
-     */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
-    }
-
-    /**
      * Loads the exercise.
      * Also loads the example submission if the new parameter is not set.
      */
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
+            this.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.exercise);
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
             this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
@@ -131,6 +126,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
+            // do this here to make sure  everythign is loaded before the guided tour step is loaded
+            this.guidedTourService.componentPageLoaded();
         });
     }
 
@@ -138,7 +135,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         return new Promise((resolve) => {
             this.assessmentsService
                 .getExampleResult(this.exerciseId, this.submission?.id!)
-                .filter(notUndefined)
+                .pipe(filter(notUndefined))
                 .subscribe((result) => {
                     this.result = result;
                     this.exampleSubmission.submission = this.submission = result.submission;

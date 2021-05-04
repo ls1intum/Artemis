@@ -10,17 +10,14 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 
 @Service
 public class ProgrammingExerciseTestCaseService {
@@ -70,10 +67,8 @@ public class ProgrammingExerciseTestCaseService {
      * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and visibility of.
      * @return the updated test cases.
      * @throws EntityNotFoundException if the programming exercise could not be found.
-     * @throws IllegalAccessException if the retriever does not have the permissions to fetch information related to the programming exercise.
      */
-    public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS)
-            throws EntityNotFoundException, IllegalAccessException {
+    public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) throws EntityNotFoundException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
 
@@ -91,6 +86,8 @@ public class ProgrammingExerciseTestCaseService {
             matchingTestCase.setVisibility(programmingExerciseTestCaseDTO.getVisibility());
             matchingTestCase.setBonusMultiplier(programmingExerciseTestCaseDTO.getBonusMultiplier());
             matchingTestCase.setBonusPoints(programmingExerciseTestCaseDTO.getBonusPoints());
+
+            validateTestCase(matchingTestCase);
             updatedTests.add(matchingTestCase);
         }
 
@@ -104,6 +101,17 @@ public class ProgrammingExerciseTestCaseService {
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
+    }
+
+    private static void validateTestCase(ProgrammingExerciseTestCase testCase) {
+        if (testCase.getWeight() == null || testCase.getBonusMultiplier() == null || testCase.getBonusPoints() == null || testCase.getVisibility() == null) {
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings that are null.",
+                    "TestCaseGrading", "settingNull", Map.of("testCase", testCase.getTestName()));
+        }
+        if (testCase.getWeight() < 0 || testCase.getBonusMultiplier() < 0 || testCase.getBonusPoints() < 0) {
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings set to negative numbers.",
+                    "TestCaseGrading", "settingNegative", Map.of("testCase", testCase.getTestName()));
+        }
     }
 
     /**
@@ -176,7 +184,7 @@ public class ProgrammingExerciseTestCaseService {
     public void logTestCaseReset(User user, ProgrammingExercise exercise, Course course) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_GRADING, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " requested to reset the grading configuration for exercise {} with id {}", exercise.getTitle(), exercise.getId());
+        log.info("User {} requested to reset the grading configuration for exercise {} with id {}", user.getLogin(), exercise.getTitle(), exercise.getId());
     }
 
 }

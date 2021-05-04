@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -45,9 +45,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
             if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
-            }
-            if (this.modelingExercise.categories) {
-                this.modelingExercise.categories = this.modelingExercise.categories.map((category) => JSON.parse(category));
             }
         });
     }

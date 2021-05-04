@@ -11,10 +11,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -58,6 +55,10 @@ public class Course extends DomainObject {
     @Column(name = "teaching_assistant_group_name")
     @JsonView(QuizView.Before.class)
     private String teachingAssistantGroupName;
+
+    @Column(name = "editor_group_name")
+    @JsonView(QuizView.Before.class)
+    private String editorGroupName;
 
     @Column(name = "instructor_group_name")
     @JsonView(QuizView.Before.class)
@@ -162,6 +163,9 @@ public class Course extends DomainObject {
     private Long numberOfInstructorsTransient;
 
     @Transient
+    private Long numberOfEditorsTransient;
+
+    @Transient
     private Long numberOfTeachingAssistantsTransient;
 
     @Transient
@@ -207,6 +211,14 @@ public class Course extends DomainObject {
         this.teachingAssistantGroupName = teachingAssistantGroupName;
     }
 
+    public String getEditorGroupName() {
+        return editorGroupName;
+    }
+
+    public void setEditorGroupName(String editorGroupName) {
+        this.editorGroupName = editorGroupName;
+    }
+
     public String getInstructorGroupName() {
         return instructorGroupName;
     }
@@ -223,6 +235,11 @@ public class Course extends DomainObject {
     @JsonIgnore
     public String getDefaultTeachingAssistantGroupName() {
         return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-tutors";
+    }
+
+    @JsonIgnore
+    public String getDefaultEditorGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-editors";
     }
 
     @JsonIgnore
@@ -271,7 +288,7 @@ public class Course extends DomainObject {
     }
 
     public Boolean isOnlineCourse() {
-        return onlineCourse == null ? false : onlineCourse;
+        return Boolean.TRUE.equals(onlineCourse);
     }
 
     public void setOnlineCourse(Boolean onlineCourse) {
@@ -387,10 +404,9 @@ public class Course extends DomainObject {
         return lectures;
     }
 
-    public Course addLectures(Lecture lecture) {
+    public void addLectures(Lecture lecture) {
         this.lectures.add(lecture);
         lecture.setCourse(this);
-        return this;
     }
 
     public void setLectures(Set<Lecture> lectures) {
@@ -478,14 +494,18 @@ public class Course extends DomainObject {
     @Override
     public String toString() {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
-                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", instructorGroupName='"
-                + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", semester='" + getSemester() + "'" + "'"
-                + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='"
-                + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
+                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
+                + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
+                + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='"
+                + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
         this.numberOfInstructorsTransient = numberOfInstructors;
+    }
+
+    public void setNumberOfEditors(Long numberOfEditors) {
+        this.numberOfEditorsTransient = numberOfEditors;
     }
 
     public void setNumberOfTeachingAssistants(Long numberOfTeachingAssistants) {
@@ -498,6 +518,10 @@ public class Course extends DomainObject {
 
     public Long getNumberOfInstructors() {
         return this.numberOfInstructorsTransient;
+    }
+
+    public Long getNumberOfEditors() {
+        return this.numberOfEditorsTransient;
     }
 
     public Long getNumberOfTeachingAssistants() {

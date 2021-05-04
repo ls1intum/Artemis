@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.domain.plagiarism.text;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 
-import jplag.Token;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import jplag.Token;
 
 @Entity
 public class TextSubmissionElement extends PlagiarismSubmissionElement {
@@ -77,5 +77,10 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    @Override
+    public String toString() {
+        return "TextSubmissionElement{" + "column=" + column + ", line=" + line + ", file='" + file + '\'' + ", type=" + type + ", length=" + length + '}';
     }
 }

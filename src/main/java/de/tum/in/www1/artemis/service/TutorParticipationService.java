@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,34 +20,23 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class TutorParticipationService {
 
+    private static final String ENTITY_NAME = "TutorParticipation";
+
+    private static final float scoreRangePercentage = 10;
+
     private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    private static final String ENTITY_NAME = "TutorParticipation";
-
     private final TutorParticipationRepository tutorParticipationRepository;
 
     private final ExampleSubmissionService exampleSubmissionService;
-
-    private static final float scoreRangePercentage = 10;
 
     public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExampleSubmissionService exampleSubmissionService) {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exampleSubmissionService = exampleSubmissionService;
-    }
-
-    /**
-     * Save a tutorParticipations.
-     *
-     * @param tutorParticipation the entity to save
-     * @return the persisted entity
-     */
-    public TutorParticipation save(TutorParticipation tutorParticipation) {
-        log.debug("Request to save TutorParticipation : {}", tutorParticipation);
-        return tutorParticipationRepository.saveAndFlush(tutorParticipation);
     }
 
     /**
@@ -84,16 +70,6 @@ public class TutorParticipationService {
     }
 
     /**
-     * Checks if the tutor participation for the given values already exists to prevent duplicated values in the database
-     * @param assessedExerciseId the exercise we want to retrieve the tutor participation
-     * @param tutorId the tutor of who we want to retrieve the participation
-     * @return true if the tutor participation exists, false otherwise
-     */
-    public Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId) {
-        return tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(assessedExerciseId, tutorId);
-    }
-
-    /**
      * Given an exercise and a tutor it creates the participation of the tutor to that exercise The tutor starts a participation when she reads the grading instruction. If no
      * grading instructions are available, then she starts her participation clicking on "Start participation". Usually, the first step is `REVIEWED_INSTRUCTIONS`: after that, she
      * has to train reviewing some example submissions, and assessing others. If no example submissions are available, because the instructor hasn't created any, then she goes
@@ -105,31 +81,11 @@ public class TutorParticipationService {
      */
     public TutorParticipation createNewParticipation(Exercise exercise, User tutor) {
         TutorParticipation tutorParticipation = new TutorParticipation();
-
         Long exampleSubmissionsCount = exampleSubmissionRepository.countAllByExerciseId(exercise.getId());
-
-        if (exampleSubmissionsCount == 0) {
-            tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
-        }
-        else {
-            tutorParticipation.setStatus(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
-        }
-
+        tutorParticipation.setStatus(exampleSubmissionsCount == 0 ? TutorParticipationStatus.TRAINED : TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipation.setTutor(tutor);
         tutorParticipation.setAssessedExercise(exercise);
-
-        return save(tutorParticipation);
-    }
-
-    /**
-     * Given a course and a tutor, it finds all the participation of that tutor in the course, with related assessed exercise and trained example submissions
-     *
-     * @param course - the course we are interested in
-     * @param user   - the tutor who is querying the service
-     * @return a list of tutor participation for the course
-     */
-    public List<TutorParticipation> findAllByCourseAndTutor(Course course, User user) {
-        return tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
+        return tutorParticipationRepository.saveAndFlush(tutorParticipation);
     }
 
     /**
@@ -196,7 +152,8 @@ public class TutorParticipationService {
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
                 // to asses student submissions in the assessment dashboard.
-                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null && exSub.getSubmission().getLatestResult().isExampleResult())
+                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null
+                        && Boolean.TRUE.equals(exSub.getSubmission().getLatestResult().isExampleResult()))
                 .count();
         int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
 
@@ -212,7 +169,7 @@ public class TutorParticipationService {
 
         existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(originalExampleSubmission);
         exampleSubmissionService.save(originalExampleSubmission);
-        existingTutorParticipation = save(existingTutorParticipation);
+        existingTutorParticipation = tutorParticipationRepository.saveAndFlush(existingTutorParticipation);
 
         existingTutorParticipation.setTrainedExampleSubmissions(exampleSubmissionSet);
         existingTutorParticipation.getTrainedExampleSubmissions().add(originalExampleSubmission);

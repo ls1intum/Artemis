@@ -37,6 +37,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected GitService gitService;
 
     @SpyBean
+    protected FileService fileService;
+
+    @SpyBean
     protected GroupNotificationService groupNotificationService;
 
     @SpyBean
@@ -93,6 +96,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     public void mockGetProjectKeyFromRepositoryUrl(String projectKey, VcsRepositoryUrl repositoryUrl) {
         // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
         doReturn(projectKey).when(urlService).getProjectKeyFromUrl(repositoryUrl.getURL());
+    }
+
+    @Override
+    public void mockGetRepositoryPathFromRepositoryUrl(String projectPath, VcsRepositoryUrl repositoryUrl) {
+        // we convert this to URL to make sure the mock is properly hit, as there could be problems with objects such as VcsRepositoryUrl and its subclasses
+        doReturn(projectPath).when(urlService).getRepositoryPathFromUrl(repositoryUrl.getURL());
     }
 
     @Override

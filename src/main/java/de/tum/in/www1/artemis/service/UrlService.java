@@ -39,9 +39,9 @@ public class UrlService {
      */
     public String getRepositorySlugFromUrl(URL url) throws VersionControlException {
         // split the URL in parts using the separator "/"
-        String[] urlParts = url.getFile().split("/");
+        final var urlParts = url.getFile().split("/");
         if (urlParts.length < 1) {
-            throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url.toString());
+            throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
         }
         // take the last element
         String repositorySlug = urlParts[urlParts.length - 1];
@@ -50,8 +50,37 @@ public class UrlService {
             // ... cut out the ending ".git", i.e. the last 4 characters
             repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
         }
-        log.debug("getRepositorySlugFromUrl " + url + " --> " + repositorySlug);
+        log.debug("getRepositorySlugFromUrl {} --> {}", url, repositorySlug);
         return repositorySlug;
+    }
+
+    /**
+     * Gets the project key + repository slug from the given repository URL, ee {@link #getRepositoryPathFromUrl}
+     *
+     * @param repositoryUrl The repository url object
+     * @throws VersionControlException if the URL is invalid and no project key could be extracted
+     * @return <project key>/<repositorySlug>
+     */
+    public String getPathFromRepositoryUrl(VcsRepositoryUrl repositoryUrl) throws VersionControlException {
+        return getRepositoryPathFromUrl(repositoryUrl.getURL());
+    }
+
+    /**
+     * Gets the project key + repository slug from the given URL
+     *
+     * Example: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER/testadapter-exercise
+     *
+     * @param url The complete repository url (including protocol, host and the complete path)
+     * @throws VersionControlException if the URL is invalid and no project key could be extracted
+     * @return <project key>/<repositorySlug>
+     */
+    public String getRepositoryPathFromUrl(URL url) throws VersionControlException {
+        final var urlParts = url.getFile().split("/");
+        if (urlParts.length < 2) {
+            throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
+        }
+        final var last = urlParts.length - 1;
+        return urlParts[last - 1] + "/" + urlParts[last].replace(".git", "");
     }
 
     /**
@@ -80,7 +109,7 @@ public class UrlService {
             throw new VersionControlException("No project key could be found for " + url.toString());
         }
         var projectKey = urlParts[2];
-        log.debug("getProjectKeyFromUrl " + url + " --> " + projectKey);
+        log.debug("getProjectKeyFromUrl {} --> {}", url, projectKey);
         return projectKey;
     }
 }

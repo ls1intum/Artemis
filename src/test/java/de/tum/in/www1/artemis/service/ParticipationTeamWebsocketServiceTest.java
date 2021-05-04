@@ -34,7 +34,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     void init() {
-        database.addUsers(3, 0, 0);
+        database.addUsers(3, 0, 0, 0);
         Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");

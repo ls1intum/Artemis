@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,10 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -153,7 +146,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             restTemplate.exchange(serverUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Void.class);
         }
         catch (RestClientException e) {
-            log.error("HttpError while triggering build plan " + buildPlan + " with error: " + e.getMessage());
+            log.error("HttpError while triggering build plan {} with error: {}", buildPlan, e.getMessage());
             throw new BambooException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());
         }
     }
@@ -163,7 +156,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
         var buildPlan = getBuildPlan(buildPlanId, false, false);
         if (buildPlan == null) {
-            log.error("Cannot delete " + buildPlanId + ", because it does not exist!");
+            log.error("Cannot delete {}, because it does not exist!", buildPlanId);
             return;
         }
 
@@ -171,7 +164,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         // because then the build plan is not deleted directly and subsequent calls to create build plans with the same id might fail
 
         executeDelete("selectedBuilds", buildPlanId);
-        log.info("Delete bamboo build plan " + buildPlanId + " was successful.");
+        log.info("Delete bamboo build plan {} was successful.", buildPlanId);
     }
 
     /**
@@ -212,7 +205,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
      */
     @Override
     public void deleteProject(String projectKey) {
-        log.info("Try to delete bamboo project " + projectKey);
+        log.info("Try to delete bamboo project {}", projectKey);
 
         // TODO: check if the project actually exists, if not, we can immediately return
 
@@ -231,7 +224,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
 
         executeDelete("selectedProjects", projectKey);
-        log.info("Delete bamboo project " + projectKey + " was successful.");
+        log.info("Delete bamboo project {} was successful.", projectKey);
     }
 
     private void executeDelete(String elementKey, String elementValue) {
@@ -255,7 +248,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         if (participation.getBuildPlanId() == null) {
-            log.warn("Cannot get the build status, because the build plan for the participation " + participation + " was cleaned up already!");
+            log.warn("Cannot get the build status, because the build plan for the participation {} was cleaned up already!", participation);
             // The build plan does not exist, the build status cannot be retrieved
             return null;
         }
@@ -314,7 +307,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             if (HttpStatus.NOT_FOUND.equals(ex.getStatusCode())) {
                 // in certain cases, not found is the desired behavior
                 if (logNotFound) {
-                    log.error("The build plan " + planKey + " could not be found");
+                    log.error("The build plan {} could not be found", planKey);
                 }
                 return null;
             }
@@ -337,12 +330,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
             // execute get Plan so that Bamboo refreshes its internal list whether the build plan already exists. If this is the case, we could then also exit early
             var targetBuildPlan = getBuildPlan(targetPlanKey, false, false);
             if (targetBuildPlan != null) {
-                log.info("Build Plan " + targetPlanKey + " already exists. Going to recover build plan information...");
+                log.info("Build Plan {} already exists. Going to recover build plan information...", targetPlanKey);
                 return targetPlanKey;
             }
-            log.info("Try to clone build plan " + sourcePlanKey + " to " + targetPlanKey);
+            log.info("Try to clone build plan {} to {}", sourcePlanKey, targetPlanKey);
             cloneBuildPlan(sourceProjectKey, sourcePlanName, targetProjectKey, cleanPlanName, targetProjectExists);
-            log.info("Clone build plan " + sourcePlanKey + " to " + targetPlanKey + " was successful");
+            log.info("Clone build plan {} to {} was successful", sourcePlanKey, targetPlanKey);
         }
         catch (RestClientException clientException) {
             if (clientException.getMessage() != null && clientException.getMessage().contains("already exists")) {
@@ -350,8 +343,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
                 // because the build plan cannot exist (this might be a caching issue shortly after the participation / build plan was deleted).
                 // It is important that we do not allow this here, because otherwise the subsequent actions won't succeed and the user might be in a wrong state that cannot be
                 // solved any more
-                log.warn("Edge case: Bamboo reports that the build Plan " + targetPlanKey
-                        + " already exists. However the build plan was not found. The user should try again in a few minutes");
+                log.warn("Edge case: Bamboo reports that the build Plan {} already exists. However the build plan was not found. The user should try again in a few minutes",
+                        targetPlanKey);
             }
             throw new BambooException("Something went wrong while cloning build plan " + sourcePlanKey + " to " + targetPlanKey + ":" + clientException.getMessage(),
                     clientException);
@@ -442,9 +435,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void enablePlan(String projectKey, String planKey) throws BambooException {
         try {
-            log.debug("Enable build plan " + planKey);
+            log.debug("Enable build plan {}", planKey);
             restTemplate.postForObject(serverUrl + "/rest/api/latest/plan/" + planKey + "/enable", null, Void.class);
-            log.info("Enable build plan " + planKey + " was successful.");
+            log.info("Enable build plan {} was successful.", planKey);
         }
         catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -526,7 +519,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return newResult;
         }
         catch (Exception e) {
-            log.error("Error when creating build result from Bamboo notification: " + e.getMessage(), e);
+            log.error("Error when creating build result from Bamboo notification", e);
             throw new BambooException("Could not create build result from Bamboo notification", e);
         }
     }
@@ -638,7 +631,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                     HttpMethod.GET, null, QueriedBambooBuildResultDTO.class);
         }
         catch (Exception e) {
-            log.warn("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ": " + e.getMessage());
+            log.warn("HttpError while retrieving latest build results from Bamboo for planKey {}: {}", planKey, e.getMessage());
         }
         if (response != null) {
             final var buildResult = response.getBody();
@@ -685,7 +678,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             }
         }
         catch (Exception e) {
-            log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
+            log.error("HttpError while retrieving build result logs from Bamboo", e);
         }
         return logs;
     }
@@ -715,11 +708,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public String checkIfProjectExists(String projectKey, String projectName) {
         try {
             restTemplate.exchange(serverUrl + "/rest/api/latest/project/" + projectKey, HttpMethod.GET, null, Void.class);
-            log.warn("Bamboo project " + projectKey + " already exists");
+            log.warn("Bamboo project {} already exists", projectKey);
             return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         }
         catch (HttpClientErrorException e) {
-            log.debug("Bamboo project " + projectKey + " does not exit");
+            log.debug("Bamboo project {} does not exit", projectKey);
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // only if this is the case, we additionally check that the project name is unique
                 final var response = restTemplate.exchange(serverUrl + "/rest/api/latest/search/projects?searchTerm=" + projectName, HttpMethod.GET, null,
@@ -728,7 +721,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                     final var exists = response.getBody().getSearchResults().stream().map(BambooProjectsSearchDTO.SearchResultDTO::getSearchEntity)
                             .anyMatch(project -> project.getProjectName().equalsIgnoreCase(projectName));
                     if (exists) {
-                        log.warn("Bamboo project with name" + projectName + " already exists");
+                        log.warn("Bamboo project with name {} already exists", projectName);
                         return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
                     }
                 }

@@ -15,6 +15,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { map } from 'rxjs/operators';
 
 @Component({
     templateUrl: './programming-assessment-dashboard.component.html',
@@ -62,12 +63,14 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
 
         this.exerciseService
             .find(this.exerciseId)
-            .map((exerciseResponse) => {
-                if (exerciseResponse.body!.type !== ExerciseType.PROGRAMMING) {
-                    throw new Error('Cannot use Programming Assessment Dashboard with non-programming Exercise type.');
-                }
-                return <ProgrammingExercise>exerciseResponse.body!;
-            })
+            .pipe(
+                map((exerciseResponse) => {
+                    if (exerciseResponse.body!.type !== ExerciseType.PROGRAMMING) {
+                        throw new Error('Cannot use Programming Assessment Dashboard with non-programming Exercise type.');
+                    }
+                    return <ProgrammingExercise>exerciseResponse.body!;
+                }),
+            )
             .subscribe((exercise) => {
                 this.exercise = exercise;
                 this.getSubmissions();
@@ -84,19 +87,21 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
     private getSubmissions(): void {
         this.programmingSubmissionService
             .getProgrammingSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
-            .map((response: HttpResponse<ProgrammingSubmission[]>) =>
-                response.body!.map((submission: ProgrammingSubmission) => {
-                    const tmpResult = getLatestSubmissionResult(submission);
-                    setLatestSubmissionResult(submission, tmpResult);
-                    if (tmpResult) {
-                        // reconnect some associations
-                        tmpResult.submission = submission;
-                        tmpResult.participation = submission.participation;
-                        submission.participation!.results = [tmpResult];
-                    }
+            .pipe(
+                map((response: HttpResponse<ProgrammingSubmission[]>) =>
+                    response.body!.map((submission: ProgrammingSubmission) => {
+                        const tmpResult = getLatestSubmissionResult(submission);
+                        setLatestSubmissionResult(submission, tmpResult);
+                        if (tmpResult) {
+                            // reconnect some associations
+                            tmpResult.submission = submission;
+                            tmpResult.participation = submission.participation;
+                            submission.participation!.results = [tmpResult];
+                        }
 
-                    return submission;
-                }),
+                        return submission;
+                    }),
+                ),
             )
             .subscribe((submissions: ProgrammingSubmission[]) => {
                 this.submissions = submissions;
@@ -151,7 +156,7 @@ export class ProgrammingAssessmentDashboardComponent implements OnInit {
     /**
      * get the link for the assessment of a specific submission of the current exercise
      */
-    getAssessmentLink(participationId: number) {
-        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, this.examId, this.exerciseGroupId);
+    getAssessmentLink(submissionId: number) {
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
     }
 }

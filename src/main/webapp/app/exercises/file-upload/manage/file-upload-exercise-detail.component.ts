@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -50,9 +50,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
-                    if (this.fileUploadExercise.categories) {
-                        this.fileUploadExercise.categories = this.fileUploadExercise.categories.map((category) => JSON.parse(category));
-                    }
                 },
                 (res: HttpErrorResponse) => this.onError(res),
             );

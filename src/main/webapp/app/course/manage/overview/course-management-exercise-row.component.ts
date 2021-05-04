@@ -50,8 +50,8 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     ngOnChanges() {
         if (this.details && !this.detailsLoaded) {
             this.detailsLoaded = true;
-            this.icon = getIcon(this.details.type) as IconProp;
             this.iconTooltip = getIconTooltip(this.details.type);
+            this.setIcon(this.details.type);
         }
 
         if (!this.statistic || this.statisticsLoaded) {
@@ -60,5 +60,11 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
 
         this.statisticsLoaded = true;
         this.averageScoreNumerator = round((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100, 1);
+    }
+
+    setIcon(exerciseType?: ExerciseType) {
+        if (exerciseType) {
+            this.icon = getIcon(exerciseType) as IconProp;
+        }
     }
 }

@@ -33,31 +33,31 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ComplaintRepository complaintRepo;
+    private ComplaintRepository complaintRepo;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
-    ProgrammingAssessmentService programmingAssessmentService;
+    private ProgrammingAssessmentService programmingAssessmentService;
 
     @Autowired
-    ExamRepository examRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -69,11 +69,11 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
 
-    private Double offsetByTenThousandth = 0.0001;
+    private final Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -295,13 +295,14 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(manualResult.getFeedbacks().size());
         assertThat(response.isRated()).isEqualTo(Boolean.TRUE);
-        assertThat(response.getCompletionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        var now = ZonedDateTime.now();
+        assertThat(response.getCompletionDate()).isBetween(now.minusSeconds(1), now.plusSeconds(1));
 
         Course course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);
         Exercise exercise = (Exercise) course.getExercises().toArray()[0];
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
     }
 
     @Test
@@ -724,14 +725,14 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
 
         // verify that the relationship between student participation,
-        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(3);
         assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
         assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -763,7 +764,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // verify that the relationship between student participation,
-        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
+        databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation.isPresent()).isTrue();
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 

@@ -9,7 +9,7 @@ const routes: Routes = [
         path: ':courseId/modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
         component: ExampleModelingSubmissionComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],

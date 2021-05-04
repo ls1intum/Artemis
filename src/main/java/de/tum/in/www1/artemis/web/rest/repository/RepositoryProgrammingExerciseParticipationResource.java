@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.web.rest.repository;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -25,7 +22,9 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -42,7 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+@PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
     private final ParticipationRepository participationRepository;
@@ -103,7 +102,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 }
                 // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
                 var optStudent = ((StudentParticipation) participation).getStudent();
-                if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get())) {
+                if (optStudent.isPresent() && programmingExercise.isExamExercise()
+                        && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
                     throw new IllegalAccessException();
                 }
             }
@@ -111,7 +111,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Error case 5: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user)) {
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
@@ -151,7 +151,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
      */
     @GetMapping(value = "/repository/{participationId}/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
@@ -179,7 +179,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and a map of files with their content
      */
     @GetMapping(value = "/repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
@@ -273,10 +273,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
         // Apply checks for exam (submission is in time & user's student exam has the exercise)
-        // Checks only apply to students and tutors, otherwise template, solution and assignment participation can't be edited using the code editor
+        // Checks only apply to students, tutors and editors, otherwise template, solution and assignment participation can't be edited using the code editor
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExerciseParticipation.getProgrammingExercise())
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user)) {
+        if (!authCheckService.isAtLeastEditorForExercise(programmingExerciseParticipation.getProgrammingExercise())
+                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user, false)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }

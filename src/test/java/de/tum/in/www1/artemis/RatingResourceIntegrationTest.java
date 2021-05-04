@@ -14,7 +14,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.RatingRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -40,7 +42,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void initTestCase() {
-        List<User> users = database.addUsers(2, 1, 1);
+        List<User> users = database.addUsers(2, 1, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         TextExercise exercise = (TextExercise) exerciseRepo.findAll().get(0);
         User student1 = users.get(0);

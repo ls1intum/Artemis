@@ -12,7 +12,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
-import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 
 export enum ProgrammingSubmissionState {
@@ -420,7 +419,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple times.
         const preloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (preloadingSubject) {
-            return preloadingSubject.asObservable().filter((val) => val !== undefined) as Observable<ExerciseSubmissionState>;
+            return preloadingSubject.asObservable().pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
         }
         this.exerciseBuildStateSubjects.set(exerciseId, new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined));
         this.fetchLatestPendingSubmissionsByExerciseId(exerciseId)
@@ -570,7 +569,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 params,
                 observe: 'response',
             })
-            .map((res: HttpResponse<ProgrammingSubmission[]>) => ProgrammingSubmissionService.convertArrayResponse(res));
+            .pipe(map((res: HttpResponse<ProgrammingSubmission[]>) => ProgrammingSubmissionService.convertArrayResponse(res)));
     }
 
     /**
@@ -596,12 +595,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param participationId
      * @param correctionRound
      */
-    lockAndGetProgrammingSubmissionParticipation(participationId: number, correctionRound = 0): Observable<Participation> {
+    lockAndGetProgrammingSubmissionParticipation(submissionId: number, correctionRound = 0): Observable<ProgrammingSubmission> {
         let params = new HttpParams();
         if (correctionRound > 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<Participation>(`api/programming-submissions/${participationId}/lock`, { params });
+        return this.http.get<ProgrammingSubmission>(`api/programming-submissions/${submissionId}/lock`, { params });
     }
 
     private static convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {

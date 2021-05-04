@@ -38,7 +38,7 @@ public class AtheneScheduleService {
 
     private final Environment env;
 
-    private final Map<Long, ScheduledFuture> scheduledAtheneTasks = new HashMap<>();
+    private final Map<Long, ScheduledFuture<?>> scheduledAtheneTasks = new HashMap<>();
 
     private final AtheneService atheneService;
 
@@ -63,7 +63,7 @@ public class AtheneScheduleService {
         }
         final List<TextExercise> runningTextExercises = textExerciseRepository.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
         runningTextExercises.forEach(this::scheduleExerciseForAthene);
-        log.info("Scheduled Athene for " + runningTextExercises.size() + " text exercises with future due dates.");
+        log.info("Scheduled Athene for {} text exercises with future due dates.", runningTextExercises.size());
     }
 
     /**
@@ -88,10 +88,10 @@ public class AtheneScheduleService {
         // no exercise should be scheduled for Athene more than once.
         cancelScheduledAthene(exercise.getId());
 
-        final ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, atheneRunnableForExercise(exercise));
+        final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, atheneRunnableForExercise(exercise));
 
         scheduledAtheneTasks.put(exercise.getId(), future);
-        log.debug("Scheduled Athene for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for " + exercise.getDueDate() + ".");
+        log.debug("Scheduled Athene for Text Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
     }
 
     /**
@@ -116,7 +116,7 @@ public class AtheneScheduleService {
      * @param exerciseId id of the exercise for which a potential Athene task is canceled
      */
     public void cancelScheduledAthene(Long exerciseId) {
-        final ScheduledFuture future = scheduledAtheneTasks.get(exerciseId);
+        final ScheduledFuture<?> future = scheduledAtheneTasks.get(exerciseId);
         if (future != null) {
             future.cancel(false);
             scheduledAtheneTasks.remove(exerciseId);
@@ -129,7 +129,7 @@ public class AtheneScheduleService {
      * @return currently computing Athene?
      */
     public boolean currentlyProcessing(TextExercise exercise) {
-        final ScheduledFuture future = scheduledAtheneTasks.get(exercise.getId());
+        final ScheduledFuture<?> future = scheduledAtheneTasks.get(exercise.getId());
         if (future == null) {
             return false;
         }

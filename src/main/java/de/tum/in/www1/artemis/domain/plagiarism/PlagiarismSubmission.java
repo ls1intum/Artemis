@@ -5,15 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-
-import jplag.Submission;
+import javax.persistence.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +15,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import jplag.Submission;
 
 @Entity
 @Table(name = "plagiarism_submission")
@@ -160,5 +153,32 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
 
     public void setScore(Double score) {
         this.score = score;
+    }
+
+    @Override
+    public String toString() {
+        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", elements=" + elements + ", size=" + size + ", score="
+                + score + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        PlagiarismSubmission<?> that = (PlagiarismSubmission<?>) o;
+        return getSubmissionId() == that.getSubmissionId() && getSize() == that.getSize() && Objects.equals(getStudentLogin(), that.getStudentLogin())
+                && Objects.equals(getScore(), that.getScore());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getSubmissionId(), getStudentLogin(), getSize(), getScore());
     }
 }

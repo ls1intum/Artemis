@@ -15,14 +15,11 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.security.UserNotActivatedException;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
@@ -73,14 +70,14 @@ public class UserJWTController {
             return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
         }
         catch (CaptchaRequiredException ex) {
-            log.warn("CAPTCHA required in JIRA during login for user " + loginVM.getUsername());
+            log.warn("CAPTCHA required in JIRA during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", ex.getMessage()).build();
         }
     }
 
     /**
      * Authorizes an User logged in with SAML2
-     * 
+     *
      * @param body the body of the request. "true" to remember the user.
      * @return a JWT Token if the authorization is successful
      */
@@ -99,7 +96,14 @@ public class UserJWTController {
         log.debug("SAML2 authentication: {}", authentication);
 
         final Saml2AuthenticatedPrincipal principal = (Saml2AuthenticatedPrincipal) authentication.getPrincipal();
-        authentication = saml2Service.get().handleAuthentication(principal);
+        try {
+            authentication = saml2Service.get().handleAuthentication(principal);
+        }
+        catch (UserNotActivatedException e) {
+            // If the exception is not catched a 401 is returned.
+            // That does not match the actual reason and would trigger authentication in the client
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
+        }
 
         final String jwt = tokenProvider.createToken(authentication, rememberMe);
         final HttpHeaders httpHeaders = new HttpHeaders();

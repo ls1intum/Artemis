@@ -80,7 +80,7 @@ export class GuidedTourService {
         // Retrieve the guided tour setting from the account service after the user is logged in
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
-                this.guidedTourSettings = user ? user.guidedTourSettings : [];
+                this.guidedTourSettings = user.guidedTourSettings ? user.guidedTourSettings : [];
             }
         });
 
@@ -192,7 +192,7 @@ export class GuidedTourService {
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
         // The guided tour is currently disabled for mobile devices and tablets
         // TODO optimize guided tour layout for mobile devices and tablets
-        return this.guidedTourAvailabilitySubject.map((isTourAvailable) => isTourAvailable && this.deviceService.isDesktop());
+        return this.guidedTourAvailabilitySubject.pipe(map((isTourAvailable) => isTourAvailable && this.deviceService.isDesktop()));
     }
 
     /**

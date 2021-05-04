@@ -22,6 +22,7 @@
                     [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                 ></jhi-programming-exercise-configure-grading-status>
                 <jhi-programming-exercise-configure-grading-actions
+                    *ngIf="exercise.isAtLeastInstructor"
                     [exercise]="exercise"
                     [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                     [isSaving]="isSaving"
@@ -141,7 +142,7 @@
                                     ></jhi-table-editable-field>
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column name="Visibility" prop="visibility" sortable="false">
+                            <ngx-datatable-column name="Visibility" prop="visibility" [sortable]="false">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Visibility</span>
@@ -155,7 +156,7 @@
                                     </ng-template>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                                    <select [ngModel]="value" class="p-1 form-control" (change)="updateEditedField(row, EditableField.VISIBILITY)($event.target.value)">
+                                    <select [ngModel]="value" class="p-1 form-control" (change)="updateEditedField(row, EditableField.VISIBILITY)(getEventValue($event))">
                                         <option *ngFor="let s of testCaseVisibilityList" [value]="s.value">
                                             {{ 'artemisApp.programmingExerciseTestCase.visibility.' + s.name | artemisTranslate }}
                                         </option>
@@ -268,7 +269,7 @@
                                         [id]="row.id + '-state'"
                                         [ngModel]="value"
                                         class="p-1 form-control"
-                                        (change)="updateEditedCategoryField(row, EditableField.STATE)($event.target.value)"
+                                        (change)="updateEditedCategoryField(row, EditableField.STATE)(getEventValue($event))"
                                     >
                                         <option *ngFor="let s of categoryStateList" [value]="s.value">{{ s.name }}</option>
                                     </select>

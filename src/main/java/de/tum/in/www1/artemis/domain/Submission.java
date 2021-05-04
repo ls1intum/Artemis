@@ -191,7 +191,7 @@ public abstract class Submission extends DomainObject {
     @Nullable
     @JsonIgnore
     public Result getManualResultsById(long resultId) {
-        return getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().get();
+        return getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().orElse(null);
     }
 
     /**

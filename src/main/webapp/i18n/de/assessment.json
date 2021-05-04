@@ -2,6 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
+            "assessmentIllegalSubmission": "Achtung: Es handelt sich um eine illegale Einreichung.",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
             "feedback": "Feedback",
@@ -16,6 +17,14 @@
             "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
+            "diffView": {
+                "differenceActivate": "Aktiviere Vergleichsansicht",
+                "differenceDeactivate": "Deaktiviere Vergleichsansicht",
+                "highlightAssessmentDiffTooltipOn": "Markiere die Korrekturrunde in welchem jedes Feedback erstellt oder bearbeitet wurde",
+                "highlightAssessmentDiffTooltipOff": "Deaktiviere Markierung der Korrekturrunde",
+                "correctionRoundDiffFirst": "Erste Korrekturrunde",
+                "correctionRoundDiffSecond": "Zweite Korrekturrunde"
+            },
             "button": {
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",

@@ -4,22 +4,17 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,10 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -46,24 +38,24 @@ import de.tum.in.www1.artemis.util.TestConstants;
 public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ProgrammingSubmissionRepository submissionRepository;
+    private ProgrammingSubmissionRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    ProgrammingExercise exercise;
+    private ProgrammingExercise exercise;
 
-    ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     @BeforeEach
     public void init() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndSubmissions().get(0);
+        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addProgrammingParticipationWithResultForExercise(exercise, "student1");
@@ -199,7 +191,8 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId())
                 .get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
-        verify(groupNotificationService, times(1)).notifyInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
+        verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise,
+                Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
     }
 
@@ -359,6 +352,9 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testLockAndGetProgrammingSubmission_withManualResult() throws Exception {
+        database.addGradingInstructionsToExercise(exercise);
+        programmingExerciseRepository.save(exercise);
+
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -370,28 +366,32 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         result.setSubmission(submission);
         submission.addResult(result);
         submission.setParticipation(programmingExerciseStudentParticipation);
-        submissionRepository.save(submission);
+        submission = submissionRepository.save(submission);
         var submissions = submissionRepository.findAll();
 
-        request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.OK, Participation.class);
+        var storedSubmission = request.get("/api/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
         assertThat(submissions.size()).isEqualTo(latestSubmissions.size());
+
+        // Check that grading instructions are loaded
+        ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testLockAndGetProgrammingSubmission_withoutManualResult() throws Exception {
         var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
-        database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        var submission = database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         var submissions = submissionRepository.findAll();
 
-        Participation response = request.get("/api/programming-submissions/" + programmingExerciseStudentParticipation.getId() + "/lock", HttpStatus.FORBIDDEN,
-                Participation.class);
+        request.get("/api/programming-submissions/" + submission.getId() + "/lock", HttpStatus.FORBIDDEN, Participation.class);
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
@@ -418,10 +418,9 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetProgrammingSubmissionWithoutAssessment_lockSubmission() throws Exception {
+        database.addGradingInstructionsToExercise(exercise);
+        programmingExerciseRepository.save(exercise);
         User user = database.getUserByLogin("tutor1");
-        var automaticFeedback = new Feedback().credits(null).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
-        var automaticFeedbacks = new ArrayList<Feedback>();
-        automaticFeedbacks.add(automaticFeedback);
         var newResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
         programmingExerciseStudentParticipation.addResult(newResult);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
@@ -443,6 +442,11 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         var latestSubmissions = submissionRepository.findAll();
         assertThat(latestSubmissions.size()).isEqualTo(1);
         assertThat(latestSubmissions.get(0).getId()).isEqualTo(submission.getId());
+
+        // Check that grading instructions are loaded
+        ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
     }
 
     @Test

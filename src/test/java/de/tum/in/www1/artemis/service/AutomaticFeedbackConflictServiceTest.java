@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
+import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackConflictType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -48,7 +48,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
     @BeforeEach
     public void init() {
-        database.addUsers(2, 1, 0);
+        database.addUsers(2, 1, 0, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();
     }

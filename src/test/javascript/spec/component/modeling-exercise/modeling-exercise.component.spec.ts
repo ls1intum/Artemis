@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -12,11 +12,23 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { JhiEventManager } from 'ng-jhipster';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
+import * as sinon from 'sinon';
+import { SortService } from 'app/shared/service/sort.service';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('ModelingExercise Management Component', () => {
     let comp: ModelingExerciseComponent;
     let fixture: ComponentFixture<ModelingExerciseComponent>;
     let courseExerciseService: CourseExerciseService;
+    let modelingExerciseService: ModelingExerciseService;
+    let eventManager: JhiEventManager;
+    let sortService: SortService;
 
     const course: Course = { id: 123 } as Course;
     const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -40,12 +52,20 @@ describe('ModelingExercise Management Component', () => {
         fixture = TestBed.createComponent(ModelingExerciseComponent);
         comp = fixture.componentInstance;
         courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
+        modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
+        sortService = fixture.debugElement.injector.get(SortService);
+
+        eventManager = fixture.debugElement.injector.get(JhiEventManager);
+    });
+
+    afterEach(function () {
+        sinon.restore();
     });
 
     it('Should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').and.returnValue(
+        const findStub = sinon.stub(courseExerciseService, 'findAllModelingExercisesForCourse').returns(
             of(
                 new HttpResponse({
                     body: [modelingExercise],
@@ -59,7 +79,33 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(courseExerciseService.findAllModelingExercisesForCourse).toHaveBeenCalled();
-        expect(comp.modelingExercises[0]).toEqual(modelingExercise);
+        expect(findStub).to.have.been.called;
+        expect(comp.modelingExercises[0]).to.deep.equal(modelingExercise);
+    });
+
+    it('should return items id when tracked', () => {
+        const item = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        item.id = 123;
+        expect(comp.trackId(2, item)).to.equal(123);
+    });
+
+    it('should delete the given exercise', fakeAsync(() => {
+        const deleteStub = sinon.stub(modelingExerciseService, 'delete').returns(of({} as HttpResponse<{}>));
+        comp.deleteModelingExercise(2);
+        expect(deleteStub).to.have.been.calledWith(2);
+        tick();
+        expect(eventManager.broadcast).to.have.been.calledWith({
+            name: 'modelingExerciseListModification',
+            content: 'Deleted an modelingExercise',
+        });
+    }));
+
+    it('should sort rows', () => {
+        const sortStub = sinon.stub(sortService, 'sortByProperty');
+        comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
+        comp.predicate = 'testPredicate';
+        comp.reverse = true;
+        comp.sortRows();
+        expect(sortStub).to.have.been.calledWith(comp.modelingExercises, comp.predicate, comp.reverse);
     });
 });

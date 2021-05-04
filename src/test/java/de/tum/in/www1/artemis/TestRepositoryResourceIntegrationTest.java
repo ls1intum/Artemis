@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -30,7 +29,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
@@ -54,7 +55,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(0, 0, 1);
+        database.addUsers(0, 0, 0, 1);
         Course course = database.addEmptyCourse();
         programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");

@@ -1,29 +1,13 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
+import static java.util.Comparator.*;
 
-import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.persistence.*;
 
 import org.hibernate.annotations.DiscriminatorOptions;
 
@@ -45,7 +29,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      * List of detected comparisons whose similarity is above the specified threshold.
      */
     @OneToMany(mappedBy = "plagiarismResult", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = PlagiarismComparison.class)
-    protected Set<PlagiarismComparison<E>> comparisons;
+    protected Set<PlagiarismComparison<E>> comparisons = new HashSet<>();
 
     /**
      * Duration of the plagiarism detection run in milliseconds.
@@ -97,7 +81,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     }
 
     public List<Integer> getSimilarityDistribution() {
-        return this.similarityDistribution.entrySet().stream().sorted(Comparator.comparingInt(Entry::getKey)).map(Entry::getValue).collect(Collectors.toList());
+        return this.similarityDistribution.entrySet().stream().sorted(comparingInt(Entry::getKey)).map(Entry::getValue).collect(Collectors.toList());
     }
 
     /**
@@ -112,5 +96,20 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
         for (int i = 0; i < similarityDistribution.length; i++) {
             this.similarityDistribution.put(i, similarityDistribution[i]);
         }
+    }
+
+    /**
+     * sort after the comparisons with the highest similarity and limit the number of comparisons to size to prevent too many plagiarism results
+     * @param size the size to which the comparisons should be limited, e.g. 500
+     */
+    public void sortAndLimit(int size) {
+        // we have to use an intermediate variable here, otherwise the compiler complaints due to generics and type erasing
+        Stream<PlagiarismComparison<E>> stream = getComparisons().stream().sorted(reverseOrder()).limit(size);
+        this.comparisons = stream.collect(Collectors.toSet());
+    }
+
+    @Override
+    public String toString() {
+        return "PlagiarismResult{" + "comparisons=" + comparisons + ", duration=" + duration + ", similarityDistribution=" + similarityDistribution + '}';
     }
 }

@@ -1,10 +1,9 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static io.github.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static io.github.jhipster.config.JHipsterConstants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -29,9 +28,9 @@ import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.connector.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
+import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -39,10 +38,7 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -386,13 +382,13 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
         // Not needed here.
     }
 
     @Override
-    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
-            boolean failToRemoveUsers) throws Exception {
+    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
+            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
         // Not needed here
     }
 
@@ -418,8 +414,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
-        // var planKey = (projectKey + "-" + planName).toUpperCase();
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, false);
+        bambooRequestMockProvider.mockDeleteBambooBuildPlan(planName, !shouldFail);
     }
 
     @Override

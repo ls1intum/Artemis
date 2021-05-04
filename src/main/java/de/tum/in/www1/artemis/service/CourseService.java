@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
-import java.time.ZonedDateTime;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
@@ -70,10 +71,12 @@ public class CourseService {
 
     private final LearningGoalRepository learningGoalRepository;
 
+    private final GradingScaleRepository gradingScaleRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, UserRepository userRepository,
             LectureService lectureService, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
             AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
-            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService) {
+            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -88,6 +91,7 @@ public class CourseService {
         this.examService = examService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
+        this.gradingScaleRepository = gradingScaleRepository;
     }
 
     /**
@@ -100,7 +104,7 @@ public class CourseService {
     public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
+            throw new AccessForbiddenException(NOT_ALLOWED);
         }
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
@@ -164,6 +168,7 @@ public class CourseService {
      *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      *     <li>All Exams, see {@link ExamService#delete}</li>
+     *     <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
      * </ul>
      *
      * @param course the course to be deleted
@@ -177,7 +182,14 @@ public class CourseService {
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
+        deleteGradingScaleOfCourse(course);
         courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteGradingScaleOfCourse(Course course) {
+        // delete course grading scale if it exists
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(course.getId());
+        gradingScale.ifPresent(gradingScaleRepository::delete);
     }
 
     private void deleteExamsOfCourse(Course course) {
@@ -195,6 +207,9 @@ public class CourseService {
         }
         if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
             userService.deleteGroup(course.getTeachingAssistantGroupName());
+        }
+        if (course.getEditorGroupName().equals(course.getDefaultEditorGroupName())) {
+            userService.deleteGroup(course.getEditorGroupName());
         }
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             userService.deleteGroup(course.getInstructorGroupName());
@@ -268,7 +283,7 @@ public class CourseService {
         userService.addUserToGroup(user, course.getStudentGroupName());
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+        log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
     }
 
     /**
@@ -435,7 +450,7 @@ public class CourseService {
      */
     public void cleanupCourse(Long courseId) {
         // Get the course with all exercises
-        var course = courseRepository.findWithEagerExercisesAndLecturesById(courseId);
+        var course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
         if (!course.hasCourseArchive()) {
             log.info("Cannot clean up course {} because it hasn't been archived.", courseId);
             return;

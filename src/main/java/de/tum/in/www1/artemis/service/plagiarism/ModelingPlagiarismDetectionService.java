@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -27,6 +29,12 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 public class ModelingPlagiarismDetectionService {
 
     private final Logger log = LoggerFactory.getLogger(ModelingPlagiarismDetectionService.class);
+
+    private final PlagiarismWebsocketService plagiarismWebsocketService;
+
+    public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService) {
+        this.plagiarismWebsocketService = plagiarismWebsocketService;
+    }
 
     /**
      * Convenience method to extract all latest submissions from a ModelingExercise and compute
@@ -46,9 +54,10 @@ public class ModelingPlagiarismDetectionService {
             int minimumScore) {
         final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
 
-        log.info("Found " + modelingSubmissions.size() + " modeling submissions in exercise " + exerciseWithParticipationsSubmissionsResults.getId());
+        log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
 
-        ModelingPlagiarismResult result = compareSubmissions(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore);
+        Long exerciseId = exerciseWithParticipationsSubmissionsResults.getId();
+        ModelingPlagiarismResult result = compareSubmissions(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
 
         result.setExercise(exerciseWithParticipationsSubmissionsResults);
 
@@ -58,7 +67,7 @@ public class ModelingPlagiarismDetectionService {
     /**
      * Calculate the similarity distribution of the given comparisons.
      */
-    private int[] calculateSimilarityDistribution(List<PlagiarismComparison<ModelingSubmissionElement>> comparisons) {
+    private int[] calculateSimilarityDistribution(Set<PlagiarismComparison<ModelingSubmissionElement>> comparisons) {
         int[] similarityDistribution = new int[10];
 
         comparisons.stream().map(PlagiarismComparison::getSimilarity).map(percent -> percent / 10).map(Double::intValue).map(index -> index == 10 ? 9 : index)
@@ -78,16 +87,23 @@ public class ModelingPlagiarismDetectionService {
      *                            plagiarism
      * @return List of submission id pairs and similarity score
      */
-    public ModelingPlagiarismResult compareSubmissions(List<ModelingSubmission> modelingSubmissions, double minimumSimilarity, int minimumModelSize, int minimumScore) {
+    public ModelingPlagiarismResult compareSubmissions(List<ModelingSubmission> modelingSubmissions, double minimumSimilarity, int minimumModelSize, int minimumScore,
+            Long exerciseId) {
+        String topic = plagiarismWebsocketService.getModelingExercisePlagiarismCheckTopic(exerciseId);
+
         ModelingPlagiarismResult result = new ModelingPlagiarismResult();
 
         Map<UMLDiagram, ModelingSubmission> models = new HashMap<>();
         ObjectMapper objectMapper = new ObjectMapper();
 
+        AtomicInteger processedSubmissionCount = new AtomicInteger(1);
         modelingSubmissions.stream().filter(modelingSubmission -> !modelingSubmission.isEmpty(objectMapper))
                 .filter(modelingSubmission -> minimumScore == 0 || modelingSubmission.getLatestResult() != null && modelingSubmission.getLatestResult().getScore() != null
                         && modelingSubmission.getLatestResult().getScore() >= minimumScore)
                 .forEach(modelingSubmission -> {
+                    String progressMessage = "Getting UML diagram for submission: " + processedSubmissionCount + "/" + modelingSubmissions.size();
+                    plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+
                     try {
                         log.debug("Build UML diagram from json");
                         UMLDiagram model = UMLModelParser.buildModelFromJSON(parseString(modelingSubmission.getModel()).getAsJsonObject(), modelingSubmission.getId());
@@ -99,11 +115,13 @@ public class ModelingPlagiarismDetectionService {
                     catch (IOException e) {
                         log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
                     }
+
+                    processedSubmissionCount.getAndIncrement();
                 });
 
-        log.info(String.format("Found %d modeling submissions with at least %d elements to compare", models.size(), minimumModelSize));
+        log.info("Found {} modeling submissions with at least {} elements to compare", models.size(), minimumModelSize);
 
-        List<PlagiarismComparison<ModelingSubmissionElement>> comparisons = new ArrayList<>();
+        Set<PlagiarismComparison<ModelingSubmissionElement>> comparisons = new HashSet<>();
         List<UMLDiagram> nonEmptyDiagrams = new ArrayList<>(models.keySet());
 
         long timeBeforeStartInMillis = System.currentTimeMillis();
@@ -111,12 +129,16 @@ public class ModelingPlagiarismDetectionService {
         // It is intended to use the classic for loop here, because we only want to check
         // similarity between two different submissions once
         for (int i = 0; i < nonEmptyDiagrams.size(); i++) {
+            String progressMessage = "Comparing submissions: " + (i + 1) + "/" + nonEmptyDiagrams.size();
+            plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+
             for (int j = i + 1; j < nonEmptyDiagrams.size(); j++) {
+
                 UMLDiagram model1 = nonEmptyDiagrams.get(i);
                 UMLDiagram model2 = nonEmptyDiagrams.get(j);
 
                 final double similarity = model1.similarity(model2);
-                log.debug("Compare result " + i + " with " + j + ": " + similarity);
+                log.debug("Compare result {} with {}: {}", i, j, similarity);
 
                 if (similarity < minimumSimilarity) {
                     // ignore comparison results with too small similarity
@@ -126,7 +148,7 @@ public class ModelingPlagiarismDetectionService {
                 ModelingSubmission modelingSubmissionA = models.get(model1);
                 ModelingSubmission modelingSubmissionB = models.get(model2);
 
-                log.info("Found similar models " + i + " with " + j + ": " + similarity);
+                log.info("Found similar models {} with {}: {}", i, j, similarity);
 
                 PlagiarismSubmission<ModelingSubmissionElement> submissionA = PlagiarismSubmission.fromModelingSubmission(modelingSubmissionA);
                 submissionA.setSize(model1.getAllModelElements().size());
@@ -149,12 +171,13 @@ public class ModelingPlagiarismDetectionService {
             }
         }
 
-        log.info(String.format("Found %d similar modeling submission combinations (>%f)", comparisons.size(), minimumSimilarity));
+        log.info("Found {} similar modeling submission combinations (>{})", comparisons.size(), minimumSimilarity);
+        plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
 
         long durationInMillis = System.currentTimeMillis() - timeBeforeStartInMillis;
         int[] similarityDistribution = calculateSimilarityDistribution(comparisons);
 
-        result.setComparisons(new HashSet<>(comparisons));
+        result.setComparisons(comparisons);
         result.setDuration(durationInMillis);
         result.setSimilarityDistribution(similarityDistribution);
 

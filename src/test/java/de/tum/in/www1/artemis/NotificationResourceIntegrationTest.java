@@ -13,48 +13,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepo;
+    private UserRepository userRepository;
 
     @Autowired
-    UserService userService;
+    private NotificationRepository notificationRepository;
 
     @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    GroupNotificationRepository groupNotificationRepository;
-
-    @Autowired
-    SingleUserNotificationRepository singleUserNotificationRepository;
-
-    @Autowired
-    NotificationRepository notificationRepository;
-
-    @Autowired
-    CourseService courseService;
-
-    @Autowired
-    SystemNotificationRepository systemNotificationRepository;
-
-    @Autowired
-    SystemNotificationService systemNotificationService;
+    private SystemNotificationRepository systemNotificationRepository;
 
     private Exercise exercise;
 
@@ -66,7 +47,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(2, 1, 1);
+        users = database.addUsers(2, 1, 1, 1);
         course1 = database.addCourseWithOneReleasedTextExercise();
         course2 = database.addCourseWithOneReleasedTextExercise();
         systemNotificationRepository.deleteAll();
@@ -152,12 +133,15 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         notificationRepository.save(notificationStudent);
         GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.TA);
         notificationRepository.save(notificationTutor);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.EDITOR);
+        notificationRepository.save(notificationEditor);
         GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.INSTRUCTOR);
         notificationRepository.save(notificationInstructor);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with type student is returned").contains(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
+        assertThat(notifications).as("Notification with type editor is not returned").doesNotContain(notificationEditor);
         assertThat(notifications).as("Notification with type instructor is not returned").doesNotContain(notificationInstructor);
     }
 
@@ -168,12 +152,34 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         notificationRepository.save(notificationStudent);
         GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.TA);
         notificationRepository.save(notificationTutor);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.EDITOR);
+        notificationRepository.save(notificationEditor);
         GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.INSTRUCTOR);
         notificationRepository.save(notificationInstructor);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is returned").contains(notificationTutor);
+        assertThat(notifications).as("Notification with type editor is not returned").doesNotContain(notificationEditor);
+        assertThat(notifications).as("Notification with type instructor is not returned").doesNotContain(notificationInstructor);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetNotifications_groupNotificationTypeEvaluation_asEditor() throws Exception {
+        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.STUDENT);
+        notificationRepository.save(notificationStudent);
+        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.TA);
+        notificationRepository.save(notificationTutor);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.EDITOR);
+        notificationRepository.save(notificationEditor);
+        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.INSTRUCTOR);
+        notificationRepository.save(notificationInstructor);
+
+        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
+        assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
+        assertThat(notifications).as("Notification with type editor is returned").contains(notificationEditor);
         assertThat(notifications).as("Notification with type instructor is not returned").doesNotContain(notificationInstructor);
     }
 
@@ -184,12 +190,15 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         notificationRepository.save(notificationStudent);
         GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.TA);
         notificationRepository.save(notificationTutor);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.EDITOR);
+        notificationRepository.save(notificationEditor);
         GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.INSTRUCTOR);
         notificationRepository.save(notificationInstructor);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
+        assertThat(notifications).as("Notification with type editor is not returned").doesNotContain(notificationEditor);
         assertThat(notifications).as("Notification with type instructor is returned").contains(notificationInstructor);
     }
 

@@ -3,20 +3,18 @@ package de.tum.in.www1.artemis.service.connectors;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.hasSize;
 
 import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.connector.athene.AtheneRequestMockProvider;
+import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.*;
@@ -52,7 +50,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @BeforeEach
     public void init() {
         // Create example exercise
-        database.addUsers(10, 1, 1);
+        database.addUsers(10, 1, 0, 1);
         var course = database.addCourseWithOneReleasedTextExercise();
         exercise1 = (TextExercise) course.getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();

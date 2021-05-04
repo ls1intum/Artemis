@@ -51,7 +51,7 @@ public class VideoUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the video unit, or with status 404 (Not Found)
      */
     @GetMapping("lectures/{lectureId}/video-units/{videoUnitId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
         Optional<VideoUnit> optionalVideoUnit = videoUnitRepository.findById(videoUnitId);
@@ -65,7 +65,7 @@ public class VideoUnitResource {
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(videoUnit.getLecture().getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
         return ResponseEntity.ok().body(videoUnit);
@@ -80,7 +80,7 @@ public class VideoUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures/{lectureId}/video-units")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to update an video unit : {}", videoUnit);
         if (videoUnit.getId() == null) {
@@ -91,7 +91,7 @@ public class VideoUnitResource {
             return conflict();
         }
 
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(videoUnit.getLecture().getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(videoUnit.getLecture().getCourse(), null)) {
             return forbidden();
         }
 
@@ -112,7 +112,7 @@ public class VideoUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures/{lectureId}/video-units")
-    @PreAuthorize("hasAnyRole('ADMIN','INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> createVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to create VideoUnit : {}", videoUnit);
         if (videoUnit.getId() != null) {
@@ -126,7 +126,7 @@ public class VideoUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(lecture.getCourse(), null)) {
+        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
             return forbidden();
         }
 

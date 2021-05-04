@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,7 +55,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     public void testProcessingClusterAddedDistances() throws Exception {
         SecurityUtils.setAuthorizationObject();
-        database.addUsers(10, 0, 0);
+        database.addUsers(10, 0, 0, 0);
         final var course = database.addCourseWithOneFinishedTextExercise();
         final var exercise = (TextExercise) course.getExercises().iterator().next();
         final var textSubmissions = ModelFactory.generateTextSubmissions(10);

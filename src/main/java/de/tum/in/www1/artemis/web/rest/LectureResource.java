@@ -77,14 +77,14 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
             return forbidden();
         }
         Lecture result = lectureRepository.save(lecture);
@@ -101,14 +101,14 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
             return forbidden();
         }
 
@@ -130,13 +130,13 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping(value = "/courses/{courseId}/lectures")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin(user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
 
@@ -158,7 +158,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
         Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
@@ -186,7 +186,7 @@ public class LectureResource {
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
     @GetMapping(value = "/lectures/{lectureId}/title")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -237,7 +237,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lectures/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
@@ -245,7 +245,7 @@ public class LectureResource {
             return ResponseEntity.notFound().build();
         }
         Lecture lecture = optionalLecture.get();
-        if (!authCheckService.isInstructorInCourse(lecture.getCourse(), user) && !authCheckService.isAdmin(user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(lecture.getCourse(), user)) {
             return forbidden();
         }
         Course course = lecture.getCourse();

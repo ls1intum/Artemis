@@ -3,6 +3,9 @@
     <div class="row-container mr-2">
         <span *ngIf="!isTestRun" jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
         <span *ngIf="isTestRun" jhiTranslate="artemisApp.assessment.testRunAssessment">Test Run Assessment</span>
+        <span *ngIf="isIllegalSubmission" class="badge badge-danger ml-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
+            Warning: You are viewing an illegal submission.
+        </span>
     </div>
     <jhi-alert></jhi-alert>
     <ngb-alert
@@ -70,6 +73,27 @@
         >
             You have the lock for this assessment
         </span>
+        <!-- Highlight the difference between first and second correction -->
+        <button
+            *ngIf="!isProgrammingExercise && result && correctionRound > 0"
+            class="btn ml-2 btn-primary"
+            (click)="toggleHighlightDifferences()"
+            [disabled]="saveBusy || submitBusy || cancelBusy"
+        >
+            <span
+                *ngIf="!highlightDifferences"
+                ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
+                jhiTranslate="artemisApp.assessment.diffView.differenceActivate"
+                >Activate Diff-View</span
+            >
+            <span
+                *ngIf="highlightDifferences"
+                ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
+                jhiTranslate="artemisApp.assessment.diffView.differenceDeactivate"
+                >Deactivate Diff-View</span
+            >
+        </button>
+        <br />
         <ng-container *ngIf="!result?.completionDate">
             <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy">
                 <fa-icon *ngIf="saveBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>

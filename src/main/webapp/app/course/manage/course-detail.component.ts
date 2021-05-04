@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -98,5 +98,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
+        this.router.navigate(['/course-management']);
     }
 }

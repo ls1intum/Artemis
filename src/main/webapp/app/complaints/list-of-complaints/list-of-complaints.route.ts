@@ -4,6 +4,7 @@ import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/lis
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseResolve } from 'app/course/manage/course-management.route';
+import { exerciseTypes } from 'app/entities/exercise.model';
 
 export const listOfComplaintsRoute: Routes = [
     {
@@ -13,7 +14,7 @@ export const listOfComplaintsRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.complaint.listOfComplaints.title',
             complaintType: ComplaintType.COMPLAINT,
         },
@@ -26,22 +27,24 @@ export const listOfComplaintsRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.complaint.listOfComplaints.title',
             complaintType: ComplaintType.COMPLAINT,
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: ':courseId/exercises/:exerciseId/complaints',
-        component: ListOfComplaintsComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.complaint.listOfComplaints.title',
-            complaintType: ComplaintType.COMPLAINT,
-        },
-        canActivate: [UserRouteAccessService],
-    },
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/complaints',
+            component: ListOfComplaintsComponent,
+            data: {
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                pageTitle: 'artemisApp.complaint.listOfComplaints.title',
+                complaintType: ComplaintType.COMPLAINT,
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
     {
         path: ':courseId/more-feedback-requests',
         component: ListOfComplaintsComponent,
@@ -49,20 +52,22 @@ export const listOfComplaintsRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.moreFeedback.list.title',
             complaintType: ComplaintType.MORE_FEEDBACK,
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: ':courseId/exercises/:exerciseId/more-feedback-requests',
-        component: ListOfComplaintsComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'artemisApp.moreFeedback.list.title',
-            complaintType: ComplaintType.MORE_FEEDBACK,
-        },
-        canActivate: [UserRouteAccessService],
-    },
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/more-feedback-requests',
+            component: ListOfComplaintsComponent,
+            data: {
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                pageTitle: 'artemisApp.moreFeedback.list.title',
+                complaintType: ComplaintType.MORE_FEEDBACK,
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
 ];

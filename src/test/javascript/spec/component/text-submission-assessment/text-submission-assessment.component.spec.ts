@@ -3,7 +3,8 @@ import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/tex
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
+import { stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
@@ -34,11 +35,13 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { RouterTestingModule } from '@angular/router/testing';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
+    let submissionService: SubmissionService;
 
     const exercise = {
         id: 20,
@@ -103,7 +106,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
     const route = ({
         snapshot: { path: '' },
-        paramMap: Observable.of(
+        paramMap: of(
             convertToParamMap({
                 exerciseId: '1',
             }),
@@ -111,7 +114,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         queryParams: of({
             testRun: 'false',
         }),
-        data: Observable.of({
+        data: of({
             studentParticipation: participation,
         }),
     } as unknown) as ActivatedRoute;
@@ -148,6 +151,8 @@ describe('TextSubmissionAssessmentComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
+        submissionService = TestBed.inject(SubmissionService);
+
         fixture.detectChanges();
     });
 
@@ -184,6 +189,8 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should save the assessment with correct parameters', function () {
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
+        const handleFeedbackStub = stub(submissionService, 'handleFeedbackCorrectionRoundTag');
+
         fixture.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
@@ -208,6 +215,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
+        expect(handleFeedbackStub).toHaveBeenCalled();
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {

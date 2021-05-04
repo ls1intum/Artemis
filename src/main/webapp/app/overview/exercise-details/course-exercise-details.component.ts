@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
@@ -17,7 +17,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseCategory, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -36,6 +36,7 @@ import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model'
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -159,7 +160,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
-        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        this.exerciseCategories = this.exercise.categories || [];
 
         // This is only needed in the local environment
         if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {

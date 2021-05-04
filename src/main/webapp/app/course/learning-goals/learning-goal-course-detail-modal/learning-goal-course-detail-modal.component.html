@@ -8,7 +8,7 @@
     <p *ngIf="learningGoal?.description">{{ learningGoal?.description }}</p>
     <!-- Table for connected lecture units -->
     <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.noUnitsConnected' | artemisTranslate }}</ng-template>
-    <div *ngIf="learningGoal?.lectureUnits && learningGoal?.lectureUnits.length > 0; else elseBlock">
+    <div *ngIf="learningGoal?.lectureUnits && learningGoal!.lectureUnits!.length > 0; else elseBlock">
         <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | artemisTranslate }}</h5>
         <p>
             {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | artemisTranslate }}
@@ -57,23 +57,23 @@
                         </td>
                         <td>
                             {{
-                                getLectureUnitCourseProgress(lectureUnit.id) === undefined
+                                getLectureUnitCourseProgress(lectureUnit.id!) === undefined
                                     ? '-'
-                                    : getLectureUnitCourseProgress(lectureUnit.id).averageScoreAchievedByStudentInLectureUnit + ' %'
+                                    : round(getLectureUnitCourseProgress(lectureUnit.id!).averageScoreAchievedByStudentInLectureUnit) + ' %'
                             }}
                         </td>
                         <td>
                             {{
-                                getLectureUnitCourseProgress(lectureUnit.id) === undefined
+                                getLectureUnitCourseProgress(lectureUnit.id!) === undefined
                                     ? '-'
-                                    : getLectureUnitCourseProgress(lectureUnit.id).totalPointsAchievableByStudentsInLectureUnit
+                                    : getLectureUnitCourseProgress(lectureUnit.id!).totalPointsAchievableByStudentsInLectureUnit
                             }}
                         </td>
                         <td>
-                            {{ getLectureUnitCourseProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitCourseProgress(lectureUnit.id).noOfParticipants }}
+                            {{ getLectureUnitCourseProgress(lectureUnit.id!) === undefined ? '-' : getLectureUnitCourseProgress(lectureUnit.id!).noOfParticipants }}
                         </td>
                         <td>
-                            {{ getLectureUnitCourseProgress(lectureUnit.id) === undefined ? '-' : getLectureUnitCourseProgress(lectureUnit.id).participationRate + ' %' }}
+                            {{ getLectureUnitCourseProgress(lectureUnit.id!) === undefined ? '-' : round(getLectureUnitCourseProgress(lectureUnit.id!).participationRate) + ' %' }}
                         </td>
                     </tr>
                 </tbody>

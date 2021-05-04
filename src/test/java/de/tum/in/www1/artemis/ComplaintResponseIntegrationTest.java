@@ -18,42 +18,38 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ParticipationService participationService;
+    private ParticipationService participationService;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @Autowired
-    AssessmentService assessmentService;
+    private ResultRepository resultRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ComplaintRepository complaintRepository;
 
     @Autowired
-    ComplaintRepository complaintRepository;
+    private ComplaintResponseRepository complaintResponseRepository;
 
-    @Autowired
-    ComplaintResponseRepository complaintResponseRepository;
-
-    Complaint complaint;
+    private Complaint complaint;
 
     @BeforeEach
     public void initTestCase() throws Exception {
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 10);
+        this.database.addUsers(5, 10, 0, 10);
         // Add users that are not in the course
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
         userRepository.save(ModelFactory.generateActivatedUser("tutor42"));

@@ -13,8 +13,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -51,6 +49,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Get all submissions of a participation and eagerly load results
+     *
      * @param participationId the id of the participation
      * @return a list of the participation's submissions
      */
@@ -168,7 +167,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
             SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e join e.course c
-                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND c.id = :#{#courseId}
                 AND s.submitted = TRUE
                 AND (s.submissionDate <= e.dueDate
@@ -202,7 +201,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("""
             SELECT COUNT (DISTINCT submission) FROM Submission submission
-                WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+            WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND submission.participation.exercise.exerciseGroup.exam.id = :#{#examId}
                 AND submission.submitted = TRUE
                 AND submission.participation.testRun = FALSE
@@ -216,9 +215,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e join e.course c
-                WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND c.id = :#{#courseId}
+            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e
+            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
+                AND e.course.id = :#{#courseId}
                 AND s.submitted = TRUE
                 AND e.dueDate IS NOT NULL
                 AND s.submissionDate > e.dueDate
@@ -228,7 +227,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     /**
      * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
      *
-     * @param exerciseIds the ids of the exercises bolonging to the course we are interested in
+     * @param exerciseIds the ids of the exercises belonging to the course we are interested in
      * @return the number of submissions belonging to the course, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
@@ -247,10 +246,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p JOIN p.submissions s
-                WHERE p.exercise.id = :#{#exerciseId}
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join p.exercise e
+            JOIN p.submissions s
+                WHERE e.id = :#{#exerciseId}
                 AND s.submitted = TRUE
-                AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
 
@@ -260,16 +261,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-             SELECT
-                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                     p.exercise.id,
-                     count(DISTINCT p)
-                 )
-            FROM StudentParticipation p JOIN p.submissions s
-             WHERE p.exercise.id IN :exerciseIds
-                 AND s.submitted = TRUE
-                 AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
-             GROUP BY  p.exercise.id
+            SELECT
+                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+                    p.exercise.id,
+                    count(DISTINCT p)
+                )
+            FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
+            WHERE e.id IN :exerciseIds
+                AND s.submitted = TRUE
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
+            GROUP BY e.id
              """)
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -282,7 +283,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT COUNT (DISTINCT p.id) FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
-            """)
+                """)
     long countUniqueSubmissionsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
@@ -292,11 +293,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      *         exercise due date at all
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join  p.submissions s
-            WHERE p.exercise.id = :#{#exerciseId}
+            SELECT COUNT (DISTINCT p) FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
+            WHERE e.id = :#{#exerciseId}
             AND p.testRun = FALSE
             AND s.submitted = TRUE
-            AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
+            AND (s.type <> 'ILLEGAL' or s.type is null)
+            AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
@@ -312,12 +314,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                     p.exercise.id,
                     count(DISTINCT p)
                 )
-            FROM StudentParticipation p JOIN  p.submissions s
-            WHERE p.exercise.id IN :exerciseIds
+            FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
+            WHERE e.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (p.exercise.dueDate IS NULL OR s.submissionDate <= p.exercise.dueDate)
-            GROUP BY p.exercise.id
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
+            GROUP BY e.id
                 """)
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -327,10 +329,12 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join p.submissions s
-                WHERE p.exercise.id = :#{#exerciseId}
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
+                WHERE e.id = :#{#exerciseId}
                 AND s.submitted = TRUE
-                AND s.submissionDate > p.exercise.dueDate
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND s.submissionDate > e.dueDate
             """)
     long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
 
@@ -340,8 +344,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM StudentParticipation p join p.submissions s
-                WHERE p.exercise.id = :#{#exerciseId}
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p JOIN p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
                 AND s.submitted = TRUE
             """)
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
@@ -351,16 +356,16 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-             SELECT
-                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                     p.exercise.id,
-                     count(DISTINCT p)
-                 )
-            FROM StudentParticipation p JOIN p.submissions s
-             WHERE p.exercise.id IN :exerciseIds
+            SELECT
+                new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+                    p.exercise.id,
+                    count(DISTINCT p)
+                    )
+            FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
+             WHERE e.id IN :exerciseIds
                  AND s.submitted = TRUE
-                 AND s.submissionDate > p.exercise.dueDate
-             GROUP BY  p.exercise.id
+                 AND s.submissionDate > e.dueDate
+             GROUP BY e.id
              """)
     List<ExerciseMapEntry> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -375,8 +380,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
     @Query("""
-            SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results r LEFT JOIN FETCH r.assessor a
-            WHERE submission.participation.exercise.id = :#{#exerciseId} AND :#{#assessor} = a
+            SELECT DISTINCT submission
+            FROM Submission submission LEFT JOIN FETCH submission.results r LEFT JOIN FETCH r.assessor a
+            WHERE submission.participation.exercise.id = :#{#exerciseId}
+                AND :#{#assessor} = a
             """)
     <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
@@ -385,7 +392,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the submission with its feedback and assessor
      */
     @Query("""
-            SELECT DISTINCT submission FROM Submission submission LEFT JOIN FETCH submission.results r LEFT JOIN FETCH r.feedbacks LEFT JOIN FETCH r.assessor
+            SELECT DISTINCT submission FROM Submission submission
+            LEFT JOIN FETCH submission.results r
+            LEFT JOIN FETCH r.feedbacks
+            LEFT JOIN FETCH r.assessor
             WHERE submission.id = :#{#submissionId}
             """)
     Optional<Submission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);

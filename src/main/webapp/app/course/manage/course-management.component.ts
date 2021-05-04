@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -37,7 +37,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     courseForGuidedTour?: Course;
 
     constructor(
-        private courseService: CourseManagementService,
         private examService: ExamManagementService,
         private lectureService: LectureService,
         private courseManagementService: CourseManagementService,
@@ -50,7 +49,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
      * loads all courses from courseService
      */
     loadAll() {
-        this.courseService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
+        this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);

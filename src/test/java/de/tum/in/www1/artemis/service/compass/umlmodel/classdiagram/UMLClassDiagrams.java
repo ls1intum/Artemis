@@ -8,9 +8,9 @@ import org.apache.commons.io.IOUtils;
 
 final class UMLClassDiagrams {
 
-    static final String CLASS_MODEL_1;
+    public static final String CLASS_MODEL_1;
 
-    static final String CLASS_MODEL_2;
+    public static final String CLASS_MODEL_2;
 
     static {
         try {

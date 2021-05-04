@@ -7,7 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import * as moment from 'moment';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { finalize } from 'rxjs/operators';
+import { concatMap, finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
@@ -77,10 +77,12 @@ export class CreateAttachmentUnitComponent implements OnInit {
                 this.attachmentToCreate.link = result.path;
                 this.attachmentUnitService
                     .create(this.attachmentUnitToCreate!, this.lectureId)
-                    .concatMap((response: HttpResponse<AttachmentUnit>) => {
-                        this.attachmentToCreate.attachmentUnit = response.body!;
-                        return this.attachmentService.create(this.attachmentToCreate);
-                    })
+                    .pipe(
+                        concatMap((response: HttpResponse<AttachmentUnit>) => {
+                            this.attachmentToCreate.attachmentUnit = response.body!;
+                            return this.attachmentService.create(this.attachmentToCreate);
+                        }),
+                    )
                     .pipe(
                         finalize(() => {
                             this.isLoading = false;

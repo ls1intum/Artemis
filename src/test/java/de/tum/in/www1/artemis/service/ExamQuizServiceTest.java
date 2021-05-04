@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -71,7 +71,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void init() {
-        users = database.addUsers(numberOfParticipants, 1, 1);
+        users = database.addUsers(numberOfParticipants, 1, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -251,7 +251,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
-            final var studentParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).get();
+            final var studentParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin()).get();
             QuizSubmission quizSubmission2 = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);

@@ -8,7 +8,7 @@ import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-manageme
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
@@ -48,14 +48,14 @@ describe('EditTextUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
+                        paramMap: of({
                             get: () => {
                                 return { textUnitId: 1 };
                             },
                         }),
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: () => {
                                         return { lectureId: 1 };
                                     },

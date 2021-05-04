@@ -33,30 +33,27 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     private final String exercisesBaseUrl = "/api/programming-exercises/";
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    ParticipationRepository participationRepository;
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    StudentParticipationRepository studentParticipationRepository;
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
-    TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+    private ResultRepository resultRepository;
 
-    @Autowired
-    ResultRepository resultRepository;
+    private ProgrammingExercise programmingExercise;
 
-    ProgrammingExercise programmingExercise;
-
-    Participation programmingExerciseParticipation;
+    private Participation programmingExerciseParticipation;
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
     }
@@ -86,7 +83,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
                 Arguments.of(AssessmentType.SEMI_AUTOMATIC, someDate, pastDate, true));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetParticipationWithLatestResultAsAStudent(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
@@ -106,7 +103,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("argumentsForGetParticipationWithLatestResult")
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetParticipationWithLatestResult_multipleResultsAvailable(AssessmentType assessmentType, ZonedDateTime completionDate, ZonedDateTime assessmentDueDate,
@@ -217,7 +214,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetLatestResultWithSubmission(boolean withSubmission) throws Exception {
@@ -329,33 +326,6 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetLatestSubmissionsForExercise_studentForbidden() throws Exception {
         request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.FORBIDDEN, Long.class, ProgrammingSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetParticipationWithResultsForStudentParticipation_success() throws Exception {
-        database.addGradingInstructionsToExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
-        addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
-
-        ProgrammingExerciseStudentParticipation response = request.get(
-                participationsBaseUrl + participation.getId() + "/student-participation-with-result-and-feedbacks-for/0/correction-round", HttpStatus.OK,
-                ProgrammingExerciseStudentParticipation.class);
-        ProgrammingExercise exercise = (ProgrammingExercise) response.getExercise();
-
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(response.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        assertThat(response.getResults().iterator().next().getResultString()).isEqualTo("x of y passed");
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetParticipationWithResultsForStudentParticipation_notFound() throws Exception {
-        StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
-        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-result-and-feedbacks-for/0/correction-round", HttpStatus.NOT_FOUND,
-                ProgrammingExerciseStudentParticipation.class);
     }
 
     @Test

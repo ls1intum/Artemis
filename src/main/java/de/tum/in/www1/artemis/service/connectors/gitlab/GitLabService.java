@@ -27,10 +27,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Commit;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -100,11 +99,12 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
-            gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
+            log.info("repositoryPath: " + repositoryPath + ", userId: " + userId);
+            gitlab.getProjectApi().addMember(repositoryPath, userId, DEVELOPER);
         }
         catch (GitLabApiException e) {
             // A resource conflict status code is returned if the member
@@ -112,7 +112,7 @@ public class GitLabService extends AbstractVersionControlService {
             if (e.getHttpStatus() == 409) {
                 updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
             }
-            else if (e.getValidationErrors().containsKey("access_level")
+            else if (e.getValidationErrors() != null && e.getValidationErrors().containsKey("access_level")
                     && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
                 log.warn("Member already has the requested permissions! Permission stays the same");
             }
@@ -124,11 +124,11 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
-            gitlab.getProjectApi().removeMember(repositoryId, userId);
+            gitlab.getProjectApi().removeMember(repositoryPath, userId);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUrl, e);
@@ -153,6 +153,12 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
+    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
+        final var namespaces = repositoryUrl.getURL().toString().split("/");
+        final var last = namespaces.length - 1;
+        return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
+    }
+
     /**
      * Protects a branch from the repository, so that developers cannot change the history
      *
@@ -161,57 +167,57 @@ public class GitLabService extends AbstractVersionControlService {
      * @throws VersionControlException      If the communication with the VCS fails.
      */
     private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         // we have to first unprotect the branch in order to set the correct access level, this is the case, because the master branch is protected for maintainers by default
         // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
         // We do this to wait on any async calls to Gitlab and make sure that the branch really exists before protecting it.
-        unprotectBranch(repositoryId, branch, 8L, TimeUnit.SECONDS);
-        protectBranch(repositoryId, branch, 12L, TimeUnit.SECONDS);
+        unprotectBranch(repositoryPath, branch, 8L, TimeUnit.SECONDS);
+        protectBranch(repositoryPath, branch, 12L, TimeUnit.SECONDS);
     }
 
     /**
      * Protects the branch but delays the execution.
      *
-     * @param repositoryId  The id of the repository
+     * @param repositoryPath  The id of the repository
      * @param branch        The branch to protect
      * @param delayTime     Time until the call is executed
      * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
      */
-    private void protectBranch(String repositoryId, String branch, Long delayTime, TimeUnit delayTimeUnit) {
+    private void protectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
             try {
-                log.info("Protecting branch " + branch + "for Gitlab repository " + repositoryId);
-                gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER, MAINTAINER, false);
+                log.info("Protecting branch {} for Gitlab repository {}", branch, repositoryPath);
+                gitlab.getProtectedBranchesApi().protectBranch(repositoryPath, branch, DEVELOPER, DEVELOPER, MAINTAINER, false);
             }
             catch (GitLabApiException e) {
-                throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryId, e);
+                throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryPath, e);
             }
         }, delayTime, delayTimeUnit);
     }
 
     @Override
     public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         // Unprotect the branch in 10 seconds. We do this to wait on any async calls to Gitlab and make sure that the branch really exists before unprotecting it.
-        unprotectBranch(repositoryId, branch, 10L, TimeUnit.SECONDS);
+        unprotectBranch(repositoryPath, branch, 10L, TimeUnit.SECONDS);
     }
 
     /**
-     * Unprotects the branch but delays the execution.
+     * Unprotect the branch but delays the execution.
      *
-     * @param repositoryId  The id of the repository
+     * @param repositoryPath  The id of the repository
      * @param branch        The branch to unprotect
      * @param delayTime     Time until the call is executed
      * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
      */
-    private void unprotectBranch(String repositoryId, String branch, Long delayTime, TimeUnit delayTimeUnit) {
+    private void unprotectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
             try {
-                log.info("Unprotecting branch " + branch + "for Gitlab repository " + repositoryId);
-                gitlab.getProtectedBranchesApi().unprotectBranch(repositoryId, branch);
+                log.info("Unprotecting branch {} for Gitlab repository {}", branch, repositoryPath);
+                gitlab.getProtectedBranchesApi().unprotectBranch(repositoryPath, branch);
             }
             catch (GitLabApiException e) {
-                throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryId, e);
+                throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryPath, e);
             }
         }, delayTime, delayTimeUnit);
     }
@@ -251,11 +257,11 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
 
         try {
-            gitlab.getProjectApi().addHook(repositoryId, notificationUrl, hook, false, secretToken);
+            gitlab.getProjectApi().addHook(repositoryPath, notificationUrl, hook, false, secretToken);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to add webhook for " + repositoryUrl, e);
@@ -277,10 +283,10 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         try {
-            gitlab.getProjectApi().deleteProject(repositoryId);
+            gitlab.getProjectApi().deleteProject(repositoryPath);
         }
         catch (GitLabApiException e) {
             // Do not throw an exception if we try to delete a non-existant repository.
@@ -300,12 +306,12 @@ public class GitLabService extends AbstractVersionControlService {
         if (repositoryUrl == null || repositoryUrl.getURL() == null) {
             return false;
         }
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         try {
-            gitlab.getProjectApi().getProject(repositoryId);
+            gitlab.getProjectApi().getProject(repositoryPath);
         }
         catch (Exception emAll) {
-            log.warn("Invalid repository VcsRepositoryUrl " + repositoryUrl);
+            log.warn("Invalid repository VcsRepositoryUrl {}", repositoryUrl);
             return false;
         }
 
@@ -340,18 +346,28 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             if (e.getMessage().contains("has already been taken")) {
                 // ignore this error, because it is not really a problem
-                log.warn("Failed to add group " + exerciseName + " due to error: " + e.getMessage());
+                log.warn("Failed to add group {} due to error: {}", exerciseName, e.getMessage());
             }
             else {
                 throw new GitLabException("Unable to create new group for course " + exerciseName, e);
             }
         }
         final var instructors = userRepository.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        final var editors = userRepository.getEditors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         final var tutors = userRepository.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         for (final var instructor : instructors) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
                 gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+            }
+            catch (GitLabException ignored) {
+                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
+            }
+        }
+        for (final var editor : editors) {
+            try {
+                final var userId = gitLabUserManagementService.getUserId(editor.getLogin());
+                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), DEVELOPER);
             }
             catch (GitLabException ignored) {
                 // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
@@ -372,8 +388,8 @@ public class GitLabService extends AbstractVersionControlService {
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
         try {
             final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
-            final var project = new Project().withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
-                    .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
+            final var project = new Project().withPath(repoName.toLowerCase()).withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE)
+                    .withJobsEnabled(false).withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
             gitlab.getProjectApi().createProject(project);
         }
         catch (GitLabApiException e) {
@@ -408,9 +424,9 @@ public class GitLabService extends AbstractVersionControlService {
      */
     private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, String username, AccessLevel accessLevel) {
         final var userId = gitLabUserManagementService.getUserId(username);
-        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var repositoryPath = urlService.getPathFromRepositoryUrl(repositoryUrl);
         try {
-            gitlab.getProjectApi().updateMember(repositoryId, userId, accessLevel);
+            gitlab.getProjectApi().updateMember(repositoryPath, userId, accessLevel);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel, e);
@@ -440,13 +456,6 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to fetch user ID for " + username, e);
         }
-    }
-
-    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
-        final var namespaces = repositoryUrl.getURL().toString().split("/");
-        final var last = namespaces.length - 1;
-
-        return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
     }
 
     private enum Endpoints {

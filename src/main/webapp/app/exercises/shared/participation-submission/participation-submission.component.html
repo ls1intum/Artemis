@@ -67,7 +67,7 @@
                     <div *ngFor="let result of value">
                         <jhi-result
                             [result]="result"
-                            [participation]="participation"
+                            [participation]="participation!"
                             [showUngradedResults]="!isTmpOrSolutionProgrParticipation"
                             [showGradedBadge]="!isTmpOrSolutionProgrParticipation"
                             [showTestDetails]="isTmpOrSolutionProgrParticipation"
@@ -81,8 +81,9 @@
                 <span jhiTranslate="artemisApp.programmingSubmission.commitHash"></span>
             </ng-template>
             <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
-                <div *ngIf="value != undefined; else displayNa">
-                    <a href="{{ getCommitUrl(row) }}" target="_blank" rel="noopener noreferrer">{{ value.substr(0, 11) }}</a>
+                <div *ngIf="value; else displayNa">
+                    <a *ngIf="getCommitUrl(row); else commitWithoutLink" href="{{ getCommitUrl(row) }}" target="_blank" rel="noopener noreferrer">{{ value.substr(0, 11) }}</a>
+                    <ng-template #commitWithoutLink>{{ value.substr(0, 11) }}</ng-template>
                 </div>
                 <ng-template #displayNa>
                     {{ 'n.a' }}

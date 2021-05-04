@@ -16,31 +16,31 @@ import org.mockito.Spy;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
 
-class UMLDiagramTest {
+public class UMLDiagramTest {
 
     @Spy
-    UMLDiagram umlDiagram;
+    private UMLDiagram umlDiagram;
 
     @Spy
-    UMLDiagram referenceDiagram;
+    private UMLDiagram referenceDiagram;
 
     @Spy
-    UMLElement umlElement1;
+    private UMLElement umlElement1;
 
     @Spy
-    UMLElement umlElement2;
+    private UMLElement umlElement2;
 
     @Spy
-    UMLElement umlElement3;
+    private UMLElement umlElement3;
 
     @Spy
-    UMLElement referenceElement1;
+    private UMLElement referenceElement1;
 
     @Spy
-    UMLElement referenceElement2;
+    private UMLElement referenceElement2;
 
     @Spy
-    CompassResult compassResult;
+    private CompassResult compassResult;
 
     @BeforeEach
     void setUp() {

@@ -25,6 +25,9 @@ artemis:
     version: #project.version#
     file-upload-path: uploads
     submission-export-path: exports
+    external-system-request:
+        batch-size: 50  # wait the time below after 50 requests
+        batch-waiting-time: 30000   # in ms = 30s
 
 management:
     endpoints:
@@ -136,8 +139,8 @@ spring:
             enabled: always
     servlet:
         multipart:
-            max-file-size: 10MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
-            max-request-size: 10MB
+            max-file-size: 20MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
+            max-request-size: 20MB
     lifecycle:
         timeout-per-shutdown-phase: 10
     websocket:

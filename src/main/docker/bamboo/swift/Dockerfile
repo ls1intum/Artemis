@@ -1,4 +1,4 @@
-FROM atlassian/bamboo-server:7.1.2
+FROM atlassian/bamboo-server:7.2.3
 
 LABEL description="Bamboo pre-configured for Artemis, pre-installed with Swift"
 
@@ -24,6 +24,7 @@ COPY --from=swift:latest /usr /usr
 RUN apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
     libxml2-dev
+# TODO: Master-Branch
 RUN git clone --branch master https://github.com/realm/SwiftLint.git && \
     cd SwiftLint && \
     swift build --configuration release -Xswiftc -static-stdlib && \

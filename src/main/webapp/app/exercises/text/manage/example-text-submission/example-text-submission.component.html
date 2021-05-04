@@ -9,7 +9,7 @@
             </h2>
         </div>
 
-        <div class="col-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete && exercise">
+        <div class="col-4 text-right" *ngIf="isAtLeastEditor && !readOnly && !toComplete && exercise">
             <div class="row">
                 <div class="form-check col-12 align-baseline">
                     <input
@@ -86,16 +86,17 @@
     <jhi-score-display
         left-header
         *ngIf="state.ui === UIStates.ASSESSMENT"
-        [maxPoints]="exercise?.maxPoints"
+        [maxPoints]="exercise?.maxPoints || 0"
         [score]="totalScore"
-        [maxBonusPoints]="exercise?.bonusPoints"
+        [maxBonusPoints]="exercise?.bonusPoints || 0"
     ></jhi-score-display>
     <jhi-text-assessment-area
         left-body
+        class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
         *ngIf="state.ui === UIStates.ASSESSMENT"
-        [submission]="submission"
+        [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
-        [readOnly]="readOnly || (!isAtLeastInstructor && !toComplete)"
+        [readOnly]="readOnly || (!isAtLeastEditor && !toComplete)"
         (textBlockRefsChange)="validateFeedback()"
         (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
     ></jhi-text-assessment-area>

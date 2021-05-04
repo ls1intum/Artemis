@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.IMPORT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.stream.Collectors;
@@ -42,7 +41,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = database.addEmptyCourse();

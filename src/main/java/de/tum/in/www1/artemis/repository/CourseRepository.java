@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -29,20 +26,26 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    @Query("select distinct course.teachingAssistantGroupName from Course course")
-    Set<String> findAllTeachingAssistantGroupNames();
-
     @Query("select distinct course.instructorGroupName from Course course")
     Set<String> findAllInstructorGroupNames();
+
+    @Query("select distinct course.editorGroupName from Course course")
+    Set<String> findAllEditorGroupNames();
+
+    @Query("select distinct course.teachingAssistantGroupName from Course course")
+    Set<String> findAllTeachingAssistantGroupNames();
 
     @Query("select distinct course from Course course where course.instructorGroupName like :#{#name}")
     Course findCourseByInstructorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
-    Course findCourseByStudentGroupName(@Param("name") String name);
+    @Query("select distinct course from Course course where course.editorGroupName like :#{#name}")
+    Course findCourseByEditorGroupName(@Param("name") String name);
 
     @Query("select distinct course from Course course where course.teachingAssistantGroupName like :#{#name}")
     Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
+
+    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
+    Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
             SELECT DISTINCT c FROM Course c
@@ -87,7 +90,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findWithEagerLearningGoalsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
-    Course findWithEagerExercisesAndLecturesById(long courseId);
+    Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
     Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
@@ -127,11 +130,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     String getCourseTitle(@Param("courseId") Long courseId);
 
     @Query("""
-            select distinct c
-            from Course c left join fetch c.exercises e
-            where c.instructorGroupName in :#{#userGroups} and TYPE(e) = QuizExercise
+            SELECT DISTINCT c
+            FROM Course c LEFT JOIN FETCH c.exercises e
+            WHERE (c.instructorGroupName IN :#{#userGroups} OR c.editorGroupName IN :#{#userGroups})
+                AND TYPE(e) = QuizExercise
             """)
-    List<Course> getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
+    List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
             select distinct c
@@ -182,7 +186,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             SELECT c
             FROM Course c
             WHERE (c.endDate IS NULL OR :#{#now} IS NULL OR c.endDate >= :#{#now})
-                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
+                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 
@@ -239,13 +243,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Get one course by id.
+     * Get one course by id with lectures and exams. If the course cannot be found throw an exception
      *
      * @param courseId the id of the entity
      * @return the entity
      */
     @NotNull
-    default Course findByIdWithLecturesAndExamsElseThrow(Long courseId) {
+    default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
         return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
@@ -255,7 +259,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param organization the organization to add to the course
      */
     @NotNull
-    default void addOrganizationToCourse(Long courseId, Organization organization) {
+    default void addOrganizationToCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (!course.getOrganizations().contains(organization)) {
             course.getOrganizations().add(organization);
@@ -264,16 +268,21 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Remove organizaiton from course, if currently contained
+     * Remove organization from course, if currently contained
      * @param courseId the id of the course to remove from the organization
      * @param organization the organization to remove from the course
      */
     @NotNull
-    default void removeOrganizationFromCourse(Long courseId, Organization organization) {
+    default void removeOrganizationFromCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (course.getOrganizations().contains(organization)) {
             course.getOrganizations().remove(organization);
             save(course);
         }
+    }
+
+    @NotNull
+    default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
+        return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 }

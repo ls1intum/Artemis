@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
@@ -18,13 +18,14 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-courses',
     templateUrl: './assessment-dashboard.component.html',
     providers: [CourseManagementService],
 })
-export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
+export class AssessmentDashboardComponent implements OnInit {
     readonly TeamFilterProp = TeamFilterProp;
 
     course: Course;
@@ -93,13 +94,6 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
         }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
-    }
-
-    /**
-     * After the page has fully loaded, notify the GuidedTourService about it.
-     */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
     }
 
     /**
@@ -205,6 +199,8 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
+                    // This is done here to make sure the whole page is already loaded when the guided tour step is startet on the page
+                    this.guidedTourService.componentPageLoaded();
                 },
                 (response: string) => this.onError(response),
             );
@@ -303,5 +299,9 @@ export class AssessmentDashboardComponent implements OnInit, AfterViewInit {
 
     getSubmissionsLinkForExercise(exercise: Exercise): string[] {
         return getExerciseSubmissionsLink(exercise.type!, this.courseId, exercise.id!, this.examId, this.exerciseGroupId);
+    }
+
+    asQuizExercise(exercise: Exercise): QuizExercise {
+        return exercise as QuizExercise;
     }
 }

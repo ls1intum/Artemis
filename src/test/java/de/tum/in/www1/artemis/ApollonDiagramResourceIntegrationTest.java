@@ -40,14 +40,14 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(1, 1, 0, 1);
         userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
         userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
 
         apollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 
-        course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
-        course2 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
+        course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course2 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course1);
         courseRepo.save(course2);
     }
@@ -230,7 +230,6 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetDiagramTitleForNonExistingDiagram() throws Exception {
-        // No diagram with id 1 was created
-        request.get("/api/apollon-diagrams/1/title", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/apollon-diagrams/12312312412/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

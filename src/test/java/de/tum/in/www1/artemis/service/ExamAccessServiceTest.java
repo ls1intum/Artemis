@@ -21,10 +21,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 
 public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -56,7 +53,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(1, 1, 2);
+        List<User> users = database.addUsers(1, 1, 0, 2);
         User instructor1 = users.get(2);
         User instructor2 = users.get(3);
         instructor1.setGroups(Collections.singleton("course1InstructorGroup"));

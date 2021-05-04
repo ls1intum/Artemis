@@ -29,7 +29,7 @@ import { omit } from 'lodash';
 import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
@@ -317,6 +317,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id!).subscribe(
                 (response) => {
                     this.submission = response.body!;
+                    if (this.submission.model) {
+                        this.umlModel = JSON.parse(this.submission.model);
+                        this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
+                    }
                     this.submissionChange.next(this.submission);
                     this.participation = this.submission.participation as StudentParticipation;
                     this.participation.exercise = this.modelingExercise;
