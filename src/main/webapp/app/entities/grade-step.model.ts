@@ -5,5 +5,5 @@ export class GradeStep {
     upperBoundPercentage: number;
     lowerBoundInclusive = true;
     upperBoundInclusive = false;
-    isPassingGrade: boolean;
+    isPassingGrade = false;
 }

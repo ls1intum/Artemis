@@ -140,6 +140,16 @@ describe('Grading System Component', () => {
         expect(comp.isGradeType()).to.be.equal(false);
     });
 
+    it('should filter grade steps with empty names correctly', () => {
+        comp.gradingScale.gradeSteps[0].gradeName = '';
+        comp.gradingScale.gradeSteps[2].gradeName = '';
+
+        const filteredGradeSteps = comp.gradeStepsWithNonemptyNames();
+
+        expect(filteredGradeSteps.length).to.equal(1);
+        expect(filteredGradeSteps[0]).to.deep.equal(gradeStep2);
+    });
+
     it('should set passing Grades correctly', () => {
         comp.firstPassingGrade = 'Fail';
 
