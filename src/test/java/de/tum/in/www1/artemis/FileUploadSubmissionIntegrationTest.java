@@ -297,7 +297,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
-        assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.getLatestResult().getFeedbacks()).isEmpty();
     }
 
     @Test
