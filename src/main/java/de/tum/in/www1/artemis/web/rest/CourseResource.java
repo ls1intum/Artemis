@@ -1416,7 +1416,7 @@ public class CourseResource {
         Set<Long> exerciseIdsOfCourse = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
 
-        setAssessments(dto, exerciseIdsOfCourse, courseId);
+        setAssessments(dto, exerciseIdsOfCourse);
         setComplaints(dto, courseId);
         setMoreFeedbackRequests(dto, courseId);
         setAverageScore(dto, reachablePoints, averageScoreForCourse);
@@ -1428,33 +1428,17 @@ public class CourseResource {
      *  Helper method for setting the assessments in the CourseManagementDetailViewDTO
      *  Only counting assessments and submissions which are handed in in time
      */
-    private void setAssessments(CourseManagementDetailViewDTO dto, Set<Long> exerciseIdsOfCourse, Long courseId) {
-        var start = System.currentTimeMillis();
-
-        // 3,5 - 3,9 s
+    private void setAssessments(CourseManagementDetailViewDTO dto, Set<Long> exerciseIdsOfCourse) {
         DueDateStat assessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
         long numberOfAssessments = assessments.inTime() + assessments.late();
-
-        // 3,9s | 3,6s |
-        // long numberOfAssessments = resultRepository.countRatedAssessmentsByExerciseIds(exerciseIdsOfCourse);
-
-        var end = System.currentTimeMillis();
-        log.debug("numberOfAssessment query took {} ms", end - start);
         dto.setCurrentAbsoluteAssessments(numberOfAssessments);
-        start = System.currentTimeMillis();
 
-        // 5,6s | 5,3s | 5,4s
-        // long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-        // + programmingExerciseRepository.countLegalSubmissionsByCourseIdSubmitted(courseId);
-
-        // 4,3s | 4,0s | 4,1s
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse)
                 + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
         long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIdsOfCourse);
-        end = System.currentTimeMillis();
+
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
         dto.setCurrentMaxAssessments(numberOfSubmissions);
-        log.debug("numberOfSubmissions query took {} ms", end - start);
         if (numberOfSubmissions > 0) {
             dto.setCurrentPercentageAssessments(Math.round(numberOfAssessments * 1000.0 / numberOfSubmissions) / 10.0);
         }
