@@ -22,7 +22,6 @@ describe('Grading Instructions Management Component', () => {
     const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
     const exercise = { id: 1 } as Exercise;
     const backupExercise = { id: 1 } as Exercise;
-    const gradingCriterionBackup = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
