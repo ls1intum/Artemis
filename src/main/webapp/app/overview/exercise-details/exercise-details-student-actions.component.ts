@@ -144,7 +144,7 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     get assignedTeamId(): number | undefined {
         const participation = this.exercise.studentParticipations;
-        return participation !== undefined && participation?.length > 0 ? participation[0].team?.id : this.exercise.studentAssignedTeamId;
+        return participation && participation?.length > 0 ? participation[0].team?.id : this.exercise.studentAssignedTeamId;
     }
 
     repositoryUrl(participation: Participation) {
