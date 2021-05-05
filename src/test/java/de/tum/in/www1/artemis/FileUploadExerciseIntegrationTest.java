@@ -259,7 +259,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getFileUploadExercise_setGradingInstructionFeedbackUsed() throws Exception {
+    public void testGetFileUploadExercise_setGradingInstructionFeedbackUsed() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);

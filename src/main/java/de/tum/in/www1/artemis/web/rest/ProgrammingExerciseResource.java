@@ -670,9 +670,9 @@ public class ProgrammingExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
-        long feedbackCount = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        if(feedbackCount > 0) {
+        if(feedbackList.size() > 0) {
             programmingExercise.setGradingInstructionFeedbackUsed(true);
         }
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access

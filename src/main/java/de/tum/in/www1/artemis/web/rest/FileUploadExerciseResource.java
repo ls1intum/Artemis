@@ -257,9 +257,9 @@ public class FileUploadExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        long feedbackCount = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        if(feedbackCount > 0) {
+        if(feedbackList.size() > 0) {
             fileUploadExercise.setGradingInstructionFeedbackUsed(true);
         }
 

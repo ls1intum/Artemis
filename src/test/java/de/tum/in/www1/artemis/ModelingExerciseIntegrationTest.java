@@ -119,7 +119,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getTextExercise_setGradingInstructionFeedbackUsed() throws Exception {
+    public void testGetModelingExercise_setGradingInstructionFeedbackUsed() throws Exception {
 
         gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);

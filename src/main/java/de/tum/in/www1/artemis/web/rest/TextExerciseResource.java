@@ -294,9 +294,9 @@ public class TextExerciseResource {
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
 
-        long feedbackCount = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        if(feedbackCount > 0) {
+        if(feedbackList.size() > 0) {
             textExercise.setGradingInstructionFeedbackUsed(true);
         }
         textExercise.setGradingCriteria(gradingCriteria);
