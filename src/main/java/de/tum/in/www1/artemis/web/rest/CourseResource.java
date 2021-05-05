@@ -1405,30 +1405,68 @@ public class CourseResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        var exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
-        var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
+        // For the average score we need to only consider scores which are included completely or as bonus
+        Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
-        var reachablePoints = includedExercises.stream().map(Exercise::getMaxPoints).collect(Collectors.toSet()).stream().mapToDouble(Double::doubleValue).sum();
+        double reachablePoints = includedExercises.stream().map(Exercise::getMaxPoints).collect(Collectors.toSet()).stream().mapToDouble(Double::doubleValue).sum();
 
-        Set<Long> exerciseIdsOfCourse = includedExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        Set<Long> exerciseIdsOfCourse = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
 
-        // Only counting assessments and submissions which are handed in in time
-        long numberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse).inTime();
+        setAssessments(dto, exerciseIdsOfCourse, courseId);
+        setComplaints(dto, courseId);
+        setMoreFeedbackRequests(dto, courseId);
+        setAverageScore(dto, reachablePoints, averageScoreForCourse);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     *  Helper method for setting the assessments in the CourseManagementDetailViewDTO
+     *  Only counting assessments and submissions which are handed in in time
+     */
+    private void setAssessments(CourseManagementDetailViewDTO dto, Set<Long> exerciseIdsOfCourse, Long courseId) {
+        var start = System.currentTimeMillis();
+
+        // 3,5 - 3,9 s
+        DueDateStat assessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
+        long numberOfAssessments = assessments.inTime() + assessments.late();
+
+        // 3,9s | 3,6s |
+        // long numberOfAssessments = resultRepository.countRatedAssessmentsByExerciseIds(exerciseIdsOfCourse);
+
+        var end = System.currentTimeMillis();
+        log.debug("numberOfAssessment query took {} ms", end - start);
         dto.setCurrentAbsoluteAssessments(numberOfAssessments);
-        long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseRepository.countLegalSubmissionsByCourseIdSubmitted(courseId);
+        start = System.currentTimeMillis();
+
+        // 5,6s | 5,3s | 5,4s
+        // long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
+        // + programmingExerciseRepository.countLegalSubmissionsByCourseIdSubmitted(courseId);
+
+        // 4,3s | 4,0s | 4,1s
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse)
+                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
+        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIdsOfCourse);
+        end = System.currentTimeMillis();
+        long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
         dto.setCurrentMaxAssessments(numberOfSubmissions);
+        log.debug("numberOfSubmissions query took {} ms", end - start);
         if (numberOfSubmissions > 0) {
             dto.setCurrentPercentageAssessments(Math.round(numberOfAssessments * 1000.0 / numberOfSubmissions) / 10.0);
         }
         else {
             dto.setCurrentPercentageAssessments(0.0);
         }
+    }
 
-        // Complaints
+    /**
+     *  Helper method for setting the complaints in the CourseManagementDetailViewDTO
+     */
+    private void setComplaints(CourseManagementDetailViewDTO dto, Long courseId) {
         long numberOfAnsweredComplaints = complaintResponseRepository
                 .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.COMPLAINT);
         dto.setCurrentAbsoluteComplaints(numberOfAnsweredComplaints);
@@ -1440,8 +1478,12 @@ public class CourseResource {
         else {
             dto.setCurrentPercentageComplaints(0.0);
         }
+    }
 
-        // More Feedback Requests
+    /**
+     *  Helper method for setting the more feedback requests in the CourseManagementDetailViewDTO
+     */
+    private void setMoreFeedbackRequests(CourseManagementDetailViewDTO dto, Long courseId) {
         long numberOfAnsweredFeedbackRequests = complaintResponseRepository
                 .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.MORE_FEEDBACK);
         dto.setCurrentAbsoluteMoreFeedbacks(numberOfAnsweredFeedbackRequests);
@@ -1453,7 +1495,12 @@ public class CourseResource {
         else {
             dto.setCurrentPercentageMoreFeedbacks(0.0);
         }
-        // Average Student Score
+    }
+
+    /**
+     *  Helper method for setting the average score in the CourseManagementDetailViewDTO
+     */
+    private void setAverageScore(CourseManagementDetailViewDTO dto, double reachablePoints, Double averageScoreForCourse) {
         dto.setCurrentMaxAverageScore(reachablePoints);
         dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * reachablePoints));
         if (reachablePoints > 0.0) {
@@ -1462,8 +1509,6 @@ public class CourseResource {
         else {
             dto.setCurrentPercentageAverageScore(0.0);
         }
-
-        return ResponseEntity.ok(dto);
     }
 
     /**

@@ -83,7 +83,6 @@ export class CourseDetailBarChartComponent implements OnChanges {
             } else {
                 this.data = new Array(res.length).fill(0);
             }
-            // this.data = res;
             this.chartData = [
                 {
                     label: this.amountOfStudents,
