@@ -98,7 +98,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         ProgrammingSubmission submission = submissions.get(0);
         var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
-        assertThat(optionalSubmission.isPresent()).isTrue();
+        assertThat(optionalSubmission).isPresent();
         assertThat(optionalSubmission.get().getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
@@ -133,7 +133,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         ProgrammingSubmission submission = submissions.get(0);
         var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
-        assertThat(optionalSubmission.isPresent()).isTrue();
+        assertThat(optionalSubmission).isPresent();
         assertThat(optionalSubmission.get().getLatestResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
@@ -208,7 +208,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         List<ProgrammingExerciseParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
             var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
-            assertThat(optionalSubmission.isPresent()).isTrue();
+            assertThat(optionalSubmission).isPresent();
             assertThat(optionalSubmission.get().getLatestResult()).isNull();
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
@@ -220,7 +220,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         }
 
         var optionalUpdatedProgrammingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId());
-        assertThat(optionalUpdatedProgrammingExercise.isPresent()).isTrue();
+        assertThat(optionalUpdatedProgrammingExercise).isPresent();
         ProgrammingExercise updatedProgrammingExercise = optionalUpdatedProgrammingExercise.get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
         verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise,
@@ -284,7 +284,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
         for (ProgrammingSubmission submission : submissions) {
             var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
-            assertThat(optionalSubmission.isPresent()).isTrue();
+            assertThat(optionalSubmission).isPresent();
             assertThat(optionalSubmission.get().getLatestResult()).isNull();
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
@@ -336,7 +336,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         submission.setType(SubmissionType.MANUAL);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
         var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
-        assertThat(optionalParticipation.isPresent()).isTrue();
+        assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
         bambooRequestMockProvider.enableMockingOfRequests();
         var buildPlan = new BambooBuildPlanDTO(true, false);
@@ -366,7 +366,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         submission.setType(SubmissionType.MANUAL);
         submission = database.addProgrammingSubmission(exercise, submission, user.getLogin());
         var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
-        assertThat(optionalParticipation.isPresent()).isTrue();
+        assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
         participation.setBuildPlanId(null);
         programmingExerciseStudentParticipationRepository.save(participation);
