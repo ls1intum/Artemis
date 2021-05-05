@@ -134,8 +134,7 @@ public class TextPlagiarismDetectionService {
             FileSystemUtils.deleteRecursively(submissionFolderFile);
         }
 
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-        textPlagiarismResult.convertJPlagResult(jPlagResult);
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(jPlagResult);
         textPlagiarismResult.setExercise(textExercise);
 
         log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
