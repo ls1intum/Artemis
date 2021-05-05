@@ -327,14 +327,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         participation.setResults(null);
 
         if (fileUploadSubmission.getLatestResult() != null) {
-            // do not send the result to the client
+            // do not send the feedback to the client
             // if the assessment is not finished
             boolean assessmentUnfinished = fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null;
             // or the assessment due date isn't over yet
             boolean assessmentDueDateNotOver = fileUploadExercise.getAssessmentDueDate() != null && fileUploadExercise.getAssessmentDueDate().isAfter(ZonedDateTime.now());
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.setResults(new ArrayList<>());
+                fileUploadSubmission.getLatestResult().setFeedbacks(new ArrayList<>());
             }
         }
 
