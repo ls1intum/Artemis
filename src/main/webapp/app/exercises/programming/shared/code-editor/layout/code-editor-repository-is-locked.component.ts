@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
             <span
                 class="ml-2 locked-lable"
                 jhiTranslate="artemisApp.programmingExercise.repositoryIsLocked.title"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.repositoryIsLocked.tooltip' | translate }}"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.repositoryIsLocked.tooltip' | artemisTranslate }}"
             >
                 The due date has passed, your repository is locked. You can still read the code but not make any changes to it.
             </span>
