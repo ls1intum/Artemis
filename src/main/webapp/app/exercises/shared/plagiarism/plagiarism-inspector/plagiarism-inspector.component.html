@@ -86,7 +86,9 @@
 
         <jhi-plagiarism-details
             [hidden]="showRunDetails"
-            [comparison]="plagiarismResult!.comparisons.length > selectedComparisonIndex ? plagiarismResult!.comparisons[selectedComparisonIndex] : undefined"
+            [comparison]="
+                plagiarismResult.comparisons && plagiarismResult.comparisons.length > selectedComparisonIndex ? plagiarismResult!.comparisons[selectedComparisonIndex] : undefined
+            "
             [exercise]="exercise"
         ></jhi-plagiarism-details>
 
