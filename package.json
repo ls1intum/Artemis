@@ -116,6 +116,7 @@
         "codelyzer": "6.0.1",
         "copy-webpack-plugin": "6.4.1",
         "css-loader": "5.2.2",
+        "cypress": "^7.2.0",
         "eslint": "7.24.0",
         "eslint-config-prettier": "8.2.0",
         "eslint-loader": "4.0.2",
@@ -206,6 +207,8 @@
         "webpack:prod:main": "yarn run webpack --config webpack/webpack.prod.js --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
         "webpack-dev-server": "node --max-old-space-size=3072 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-        "webpack": "node --max-old-space-size=3072 --report-on-fatalerror node_modules/webpack/bin/webpack.js"
+        "webpack": "node --max-old-space-size=3072 --report-on-fatalerror node_modules/webpack/bin/webpack.js",
+        "cypress:open": "yarn run cypress open ",
+        "cypress:run": "yarn run cypress run --headless --browser chrome"
     }
 }
