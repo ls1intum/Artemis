@@ -19,7 +19,6 @@ import org.imsglobal.lti.launch.*;
 import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -89,7 +88,6 @@ public class LtiService {
 
     public final Map<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
-    @Autowired
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
         this.userCreationService = userCreationService;
@@ -100,18 +98,6 @@ public class LtiService {
         this.ltiUserIdRepository = ltiUserIdRepository;
         this.response = response;
         this.client = HttpClientBuilder.create().build();
-    }
-
-    public LtiService(UserCreationService userCreationService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response, HttpClient httpClient) {
-        this.userCreationService = userCreationService;
-        this.userRepository = userRepository;
-        this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
-        this.resultRepository = resultRepository;
-        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.ltiUserIdRepository = ltiUserIdRepository;
-        this.response = response;
-        this.client = httpClient;
     }
 
     /**
