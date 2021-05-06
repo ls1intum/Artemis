@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -325,10 +326,16 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         participation.setSubmissions(null);
         participation.setResults(null);
 
-        // do not send the result to the client if the assessment is not finished
-        if (fileUploadSubmission.getLatestResult() != null
-                && (fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null)) {
-            fileUploadSubmission.setResults(new ArrayList<Result>());
+        if (fileUploadSubmission.getLatestResult() != null) {
+            // do not send the feedback to the client
+            // if the assessment is not finished
+            boolean assessmentUnfinished = fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null;
+            // or the assessment due date isn't over yet
+            boolean assessmentDueDateNotOver = fileUploadExercise.getAssessmentDueDate() != null && fileUploadExercise.getAssessmentDueDate().isAfter(ZonedDateTime.now());
+
+            if (assessmentUnfinished || assessmentDueDateNotOver) {
+                fileUploadSubmission.getLatestResult().setFeedbacks(new ArrayList<>());
+            }
         }
 
         // do not send the assessor information to students
