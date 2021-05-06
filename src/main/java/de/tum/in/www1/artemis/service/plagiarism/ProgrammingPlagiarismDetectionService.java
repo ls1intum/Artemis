@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -106,7 +105,6 @@ public class ProgrammingPlagiarismDetectionService {
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
             textPlagiarismResult.setExercise(programmingExercise);
             textPlagiarismResult.setSimilarityDistribution(new int[0]);
-            textPlagiarismResult.setComparisons(new HashSet<>());
 
             log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", textPlagiarismResult.getComparisons().size(),
                     TimeLogUtil.formatDurationFrom(start));
@@ -116,7 +114,8 @@ public class ProgrammingPlagiarismDetectionService {
         }
 
         log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", result.getComparisons().size(), programmingExerciseId);
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult(result);
+        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+        textPlagiarismResult.convertJPlagResult(result);
         textPlagiarismResult.setExercise(programmingExercise);
 
         log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
