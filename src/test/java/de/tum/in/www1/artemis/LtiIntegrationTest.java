@@ -5,22 +5,26 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.web.rest.LtiResource;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
 public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -34,6 +38,9 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private LtiResource ltiResource;
 
     private final String requestBody = """
             custom_component_display_name=Exercise\
@@ -78,6 +85,26 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.resetDatabase();
     }
 
+    /**
+     * Runs a test but changes the specified property beforehand and resets it to the previous property afterwards
+     *
+     * @param configName  the name of the attribute
+     * @param configValue the value it should be changed to
+     * @param test        the test to execute
+     * @throws Throwable if the test throws anything
+     */
+    private void testWithChangedConfig(String configName, Object configValue, Executable test) throws Throwable {
+        var oldValue = ReflectionTestUtils.getField(ltiResource, configName);
+        ReflectionTestUtils.setField(ltiResource, configName, configValue);
+
+        try {
+            test.execute();
+        }
+        finally {
+            ReflectionTestUtils.setField(ltiResource, configName, oldValue);
+        }
+    }
+
     @Test
     @WithAnonymousUser
     void launchAsAnonymousUser() throws Exception {
@@ -89,6 +116,15 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertTrue(header.toString().contains("/courses/" + courseId + "/exercises/" + exerciseId));
 
         this.checkExceptions();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void launchAsAnonymousUser_withEmptyConfig() throws Throwable {
+        testWithChangedConfig("LTI_ID", Optional.empty(), () -> {
+            Long exerciseId = programmingExercise.getId();
+            request.postWithoutLocation("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FORBIDDEN, null);
+        });
     }
 
     @Test
@@ -119,6 +155,14 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void exerciseLtiConfiguration() throws Exception {
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
         request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void exerciseLtiConfiguration_withEmptyConfig() throws Throwable {
+        testWithChangedConfig("LTI_OAUTH_KEY", Optional.empty(), () -> {
+            request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.FORBIDDEN, ExerciseLtiConfigurationDTO.class);
+        });
     }
 
     @Test

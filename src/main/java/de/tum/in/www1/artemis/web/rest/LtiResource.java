@@ -89,6 +89,7 @@ public class LtiResource {
             String message = "LTI not configured on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.";
             log.warn(message);
             response.sendError(HttpServletResponse.SC_FORBIDDEN, message);
+            return;
         }
 
         log.info("Request header X-Forwarded-Proto: {}", request.getHeader("X-Forwarded-Proto"));
