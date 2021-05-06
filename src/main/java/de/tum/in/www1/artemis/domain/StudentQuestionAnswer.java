@@ -6,6 +6,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "student_question_answer")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(value = { "author" }, allowGetters = true) // author field is not deserialized
 public class StudentQuestionAnswer extends DomainObject {
 
     @Lob
@@ -72,6 +74,7 @@ public class StudentQuestionAnswer extends DomainObject {
         this.tutorApproved = tutorApproved;
     }
 
+    @JsonProperty
     public User getAuthor() {
         return author;
     }
