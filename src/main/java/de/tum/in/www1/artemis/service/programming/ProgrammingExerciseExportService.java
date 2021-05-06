@@ -240,6 +240,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     the programming exercise
      * @param participations          participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
+     * @param outputDir The directory used for store the zip file
      * @param exportErrors            A list of errors that occured during export (populated by this function)
      * @return List of zip file paths
      */

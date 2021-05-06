@@ -235,6 +235,7 @@ public class CourseExamExportService {
         Course course = firstExam.get().getCourse();
         log.info("Export course exams for course {} and title {}", course.getId(), course.getTitle());
 
+        int currentProgress = progress;
         Path examsDir = null;
         try {
             // Create the exams directory that will contain the exported exams
@@ -245,9 +246,9 @@ public class CourseExamExportService {
             var exportedExams = new ArrayList<Path>();
             for (var exam : exams) {
                 var examExercises = examRepository.findAllExercisesByExamId(exam.getId());
-                var exportedExam = exportExam(notificationTopic, exam, examExercises, examsDir.toString(), progress, totalExerciseCount, exportErrors);
+                var exportedExam = exportExam(notificationTopic, exam, examExercises, examsDir.toString(), currentProgress, totalExerciseCount, exportErrors);
                 exportedExams.addAll(exportedExam);
-                progress += examExercises.size();
+                currentProgress += examExercises.size();
             }
             return exportedExams;
         }
@@ -301,12 +302,13 @@ public class CourseExamExportService {
      */
     private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
         List<Path> exportedExercices = new ArrayList<>();
+        int currentProgress = progress;
         for (var exercise : exercises) {
             log.info("Exporting exercise {} with id {} ", exercise.getTitle(), exercise.getId());
 
             // Notify the user after the progress
-            progress++;
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(progress + "/" + totalExerciseCount + " done"));
+            currentProgress++;
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(currentProgress + "/" + totalExerciseCount + " done"));
 
             // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
