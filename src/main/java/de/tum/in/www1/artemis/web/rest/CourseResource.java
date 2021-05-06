@@ -1439,12 +1439,7 @@ public class CourseResource {
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
         dto.setCurrentMaxAssessments(numberOfSubmissions);
-        if (numberOfSubmissions > 0) {
-            dto.setCurrentPercentageAssessments(Math.round(numberOfAssessments * 1000.0 / numberOfSubmissions) / 10.0);
-        }
-        else {
-            dto.setCurrentPercentageAssessments(0.0);
-        }
+        dto.setCurrentPercentageAssessments(calculatePercentage(numberOfAssessments, numberOfSubmissions));
     }
 
     /**
@@ -1456,12 +1451,7 @@ public class CourseResource {
         dto.setCurrentAbsoluteComplaints(numberOfAnsweredComplaints);
         long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
         dto.setCurrentMaxComplaints(numberOfComplaints);
-        if (numberOfComplaints > 0) {
-            dto.setCurrentPercentageComplaints(Math.round(numberOfAnsweredComplaints * 1000.0 / numberOfComplaints) / 10.0);
-        }
-        else {
-            dto.setCurrentPercentageComplaints(0.0);
-        }
+        dto.setCurrentPercentageComplaints(calculatePercentage(numberOfAnsweredComplaints, numberOfComplaints));
     }
 
     /**
@@ -1473,12 +1463,7 @@ public class CourseResource {
         dto.setCurrentAbsoluteMoreFeedbacks(numberOfAnsweredFeedbackRequests);
         long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         dto.setCurrentMaxMoreFeedbacks(numberOfMoreFeedbackRequests);
-        if (numberOfMoreFeedbackRequests > 0) {
-            dto.setCurrentPercentageMoreFeedbacks(Math.round(numberOfAnsweredFeedbackRequests * 1000.0 / numberOfMoreFeedbackRequests) / 10.0);
-        }
-        else {
-            dto.setCurrentPercentageMoreFeedbacks(0.0);
-        }
+        dto.setCurrentPercentageMoreFeedbacks(calculatePercentage(numberOfAnsweredFeedbackRequests, numberOfMoreFeedbackRequests));
     }
 
     /**
@@ -1493,6 +1478,10 @@ public class CourseResource {
         else {
             dto.setCurrentPercentageAverageScore(0.0);
         }
+    }
+
+    private double calculatePercentage(double positive, double total) {
+        return total > 0.0 ? round(positive * 1000.0 / total) / 10.0 : 0.0;
     }
 
     /**
