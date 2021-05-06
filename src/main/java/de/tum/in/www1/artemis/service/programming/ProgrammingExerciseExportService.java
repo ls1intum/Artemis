@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.service.dto.ProgrammingExerciseExportDTO.programmingExerciseExportDTOFromDomain;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -32,11 +30,14 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -63,6 +64,8 @@ public class ProgrammingExerciseExportService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ObjectMapper objectMapper;
+
     private final FileService fileService;
 
     private final GitService gitService;
@@ -74,9 +77,10 @@ public class ProgrammingExerciseExportService {
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            FileService fileService, GitService gitService, ZipFileService zipFileService) {
+            FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.fileService = fileService;
         this.gitService = gitService;
         this.zipFileService = zipFileService;
@@ -111,8 +115,7 @@ public class ProgrammingExerciseExportService {
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         var exerciseDetailsExportPath = Path.of(repoDownloadClonePath, exerciseDetailsFileName);
-        var exerciseExportDTO = programmingExerciseExportDTOFromDomain(exercise);
-        zipFiles.add(fileService.writeObjectToJsonFile(exerciseExportDTO, exerciseDetailsExportPath).toFile());
+        zipFiles.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath).toFile());
 
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));

@@ -19,7 +19,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -29,6 +28,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -787,10 +787,9 @@ public class FileService implements DisposableBean {
      * @param path      The path where the file will be written to
      * @return Path to the written file
      */
-    public Path writeObjectToJsonFile(Object object, Path path) {
-        ObjectMapper mapper = new ObjectMapper();
+    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
         try {
-            mapper.writeValue(new File(path.toString()), object);
+            objectMapper.writeValue(new File(path.toString()), object);
         }
         catch (IOException e) {
             log.warn("Could not write given object in file {}", path);
