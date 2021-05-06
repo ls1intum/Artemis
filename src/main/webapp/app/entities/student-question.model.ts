@@ -11,6 +11,7 @@ export class StudentQuestion implements BaseEntity {
     public creationDate?: Moment;
     public visibleForStudents?: boolean;
     public answers?: StudentQuestionAnswer[];
+    // TODO: check how to avoid sending author in body (causes parse error)
     public author?: User;
     public exercise?: Exercise;
     public lecture?: Lecture;
