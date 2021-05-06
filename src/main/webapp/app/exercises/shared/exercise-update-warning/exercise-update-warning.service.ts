@@ -1,7 +1,6 @@
 import { Component, Injectable } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { Exercise } from 'app/entities/exercise.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
