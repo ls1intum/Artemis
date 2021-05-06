@@ -93,7 +93,7 @@ export class TextAssessmentService {
      * @param submissionId id of corresponding submission of type {number}
      */
     public cancelAssessment(exerciseId: number, submissionId: number): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/cancel-assessment`, null);
+        return this.http.post<void>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/cancel-assessment`, undefined);
     }
 
     /**
@@ -160,7 +160,7 @@ export class TextAssessmentService {
      * @param feedbackConflictId id of the feedback conflict to be solved
      */
     public solveFeedbackConflict(exerciseId: number, feedbackConflictId: number): Observable<FeedbackConflict> {
-        return this.http.post<FeedbackConflict>(`${this.resourceUrl}/exercise/${exerciseId}/feedbackConflict/${feedbackConflictId}/solve-feedback-conflict`, null);
+        return this.http.post<FeedbackConflict>(`${this.resourceUrl}/exercise/${exerciseId}/feedbackConflict/${feedbackConflictId}/solve`, undefined);
     }
 
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
