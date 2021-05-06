@@ -24,7 +24,6 @@ export class CourseDetailBarChartComponent implements OnChanges {
 
     LEFT = false;
     RIGHT = true;
-    Graphs = Graphs;
 
     // Chart
     chartTime: any;
@@ -37,6 +36,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
     data: number[] = [];
+    absoluteData: number[] = [];
 
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
@@ -52,6 +52,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
         this.initialStatsReceived = true;
         this.createLabels();
         if (this.numberOfStudentsInCourse > 0) {
+            this.absoluteData = this.initialStats;
             for (const value of this.initialStats) {
                 this.data.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
             }
@@ -76,6 +77,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
         this.createLabels();
         this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
             if (this.numberOfStudentsInCourse > 0) {
+                this.absoluteData = res;
                 this.data = [];
                 for (const value of res) {
                     this.data.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
@@ -154,7 +156,10 @@ export class CourseDetailBarChartComponent implements OnChanges {
                 enabled: true,
                 callbacks: {
                     label(tooltipItem: any) {
-                        return ' ' + self.initialStats[tooltipItem.index];
+                        if (!self.initialStats) {
+                            return ' 0';
+                        }
+                        return ' ' + self.absoluteData[tooltipItem.index];
                     },
                 },
             },
