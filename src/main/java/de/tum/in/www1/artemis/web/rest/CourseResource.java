@@ -1481,7 +1481,7 @@ public class CourseResource {
     }
 
     private double calculatePercentage(double positive, double total) {
-        return total > 0.0 ? round(positive * 1000.0 / total) / 10.0 : 0.0;
+        return total > 0.0 ? Math.round(positive * 1000.0 / total) / 10.0 : 0.0;
     }
 
     /**
