@@ -78,7 +78,7 @@ public class StaticCodeAnalysisResource {
      * @return the updated static code analysis categories
      */
     @PatchMapping(Endpoints.CATEGORIES)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<StaticCodeAnalysisCategory>> updateStaticCodeAnalysisCategories(@PathVariable Long exerciseId,
             @RequestBody Set<StaticCodeAnalysisCategory> categories) {
         log.debug("REST request to update static code analysis categories for programming exercise {}", exerciseId);
@@ -89,7 +89,7 @@ public class StaticCodeAnalysisResource {
             return badRequest();
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
+        if (!authCheckService.isAtLeastEditorForExercise(programmingExercise)) {
             return forbidden();
         }
 
