@@ -17,6 +17,9 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { NgForm } from '@angular/forms';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { cloneDeep } from 'lodash';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -36,6 +39,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     AssessmentType = AssessmentType;
 
     textExercise: TextExercise;
+    backupExercise: TextExercise;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -48,6 +52,8 @@ export class TextExerciseUpdateComponent implements OnInit {
     constructor(
         private jhiAlertService: JhiAlertService,
         private textExerciseService: TextExerciseService,
+        private modalService: NgbModal,
+        private popupService: ExerciseUpdateWarningService,
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
@@ -70,6 +76,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
+            this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
 
@@ -150,10 +157,27 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.textExercise.categories = categories;
     }
 
+    save() {
+        if (this.textExercise.gradingInstructionFeedbackUsed) {
+            const ref = this.popupService.checkExerciseBeforeUpdate(this.textExercise, this.backupExercise);
+            if (!this.modalService.hasOpenModals()) {
+                this.saveExercise();
+            } else {
+                ref.then((reference) => {
+                    reference.componentInstance.confirmed.subscribe(() => {
+                        this.saveExercise();
+                    });
+                });
+            }
+        } else {
+            this.saveExercise();
+        }
+    }
+
     /**
      * Sends a request to either update or create a text exercise
      */
-    save() {
+    saveExercise() {
         Exercise.sanitize(this.textExercise);
 
         this.isSaving = true;

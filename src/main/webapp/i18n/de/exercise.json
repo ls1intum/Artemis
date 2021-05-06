@@ -174,7 +174,19 @@
                 }
             },
             "exam": "Klausur",
-            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe."
+            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
+            "update": {
+                "warning": {
+                    "warning": "Warnung!",
+                    "confirm": "Änderungen bestätigen",
+                    "problems": "Folgende Probleme können auftreten:",
+                    "gradingCriteria_deleted": "Benotungskriterien gelöscht:",
+                    "instruction_deleted": "Benotungshinweise gelöscht:",
+                    "scoring_change": "Bewertungsart verändert:",
+                    "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
+                    "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?"
+                }
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

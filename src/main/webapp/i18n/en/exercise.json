@@ -174,7 +174,19 @@
                 }
             },
             "exam": "Exam",
-            "isTeamExercise": "This is a team exercise."
+            "isTeamExercise": "This is a team exercise.",
+            "update": {
+                "warning": {
+                    "warning": "Warning!",
+                    "confirm": "Confirm changes",
+                    "problems": "The following problems may occur:",
+                    "gradingCriteria_deleted": "Grading Criteria deleted:",
+                    "instruction_deleted": "Grading Instruction deleted:",
+                    "scoring_change": "Scoring changed:",
+                    "results": "The existing results must be recalculated!",
+                    "confirmtext": "Do you really want to perform these changes?"
+                }
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

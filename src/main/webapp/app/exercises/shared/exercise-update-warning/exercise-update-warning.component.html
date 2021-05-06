@@ -1,0 +1,46 @@
+<div  style="padding: 20px">
+    <h2><span jhiTranslate="artemisApp.exercise.update.warning.warning"></span></h2>
+    <div style="padding: 10px">
+        <h4><span jhiTranslate="artemisApp.exercise.update.warning.problems"></span></h4>
+        <ul>
+            <li *ngIf="gradingCriteriaDeleted" style="padding-top: 5px">
+                <span jhiTranslate="artemisApp.exercise.update.warning.gradingCriteria_deleted"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px">
+                        <span jhiTranslate="artemisApp.exercise.update.warning.results"></span>
+                    </li>
+                </ul>
+            </li>
+            <li *ngIf="instructionDeleted" style="padding-top: 5px">
+                <span jhiTranslate="artemisApp.exercise.update.warning.instruction_deleted"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px">
+                        <span jhiTranslate="artemisApp.exercise.update.warning.results"></span>
+                    </li>
+                </ul>
+            </li>
+            <li *ngIf="scoringChanged" style="padding-top: 5px">
+                <span jhiTranslate="artemisApp.exercise.update.warning.scoring_change"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px">
+                        <span jhiTranslate="artemisApp.exercise.update.warning.results"></span>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="edit-quiz-footer-content">
+        <h4>
+            <span jhiTranslate="artemisApp.exercise.update.warning.confirmtext"></span>
+        </h4>
+        &nbsp;
+        <div class="form-group">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <button type="submit" (click)="confirmChange()" class="btn btn-primary">
+                &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.confirm"></span>
+            </button>
+        </div>
+    </div>
+</div>
