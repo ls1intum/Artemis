@@ -47,6 +47,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     isBeingArchived = false;
     archiveButtonText = '';
     archiveWarnings: string[] = [];
+    displayDownloadArchiveButton = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -70,6 +71,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
         this.registerArchiveWebsocket();
         this.archiveButtonText = this.getArchiveButtonText();
+        this.displayDownloadArchiveButton = this.canDownloadArchive();
 
         // update the span title on each language change
         this.translateService.onLangChange.subscribe(() => {
@@ -116,11 +118,13 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             this.examService.find(this.course.id!, this.exam.id!).subscribe((res) => {
                 this.exam = res.body!;
                 this.changeDetectionRef.detectChanges();
+                this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         } else {
             this.courseService.find(this.course.id!).subscribe((res) => {
                 this.course = res.body!;
                 this.changeDetectionRef.detectChanges();
+                this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         }
     }
