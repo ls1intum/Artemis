@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.service.dto.ProgrammingExerciseExportDTO.programmingExerciseExportDTOFromDomain;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -36,14 +38,10 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -105,20 +103,21 @@ public class ProgrammingExerciseExportService {
 
         // Add problem statement as .md file
         var problemStatementFileExtension = ".md";
-        var problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
+        String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
         var problemStatementExportPath = Path.of(repoDownloadClonePath, problemStatementFileName);
         zipFiles.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath).toFile());
 
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
-        var exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
+        String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
         var exerciseDetailsExportPath = Path.of(repoDownloadClonePath, exerciseDetailsFileName);
-        zipFiles.add(fileService.writeObjectToJsonFile(exercise, exerciseDetailsExportPath).toFile());
+        var exerciseExportDTO = programmingExerciseExportDTOFromDomain(exercise);
+        zipFiles.add(fileService.writeObjectToJsonFile(exerciseExportDTO, exerciseDetailsExportPath).toFile());
 
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        var exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-"
-                + timestamp + ".zip";
+        String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
+                + "-" + timestamp + ".zip";
         String cleanFilename = fileService.removeIllegalCharacters(exportedExerciseZipFileName);
         Path pathToZippedExercise = Path.of(repoDownloadClonePath, cleanFilename);
 
@@ -152,9 +151,9 @@ public class ProgrammingExerciseExportService {
             exportOptions.setHideStudentNameInZippedFolder(false);
 
             // Export student repositories and add them to list
-            var studentZipFilePaths = exportStudentRepositories(exercise, studentParticipations, exportOptions, exportErrors).stream().filter(Objects::nonNull).map(Path::toFile)
-                    .collect(Collectors.toList());
-            zipFiles.addAll(studentZipFilePaths);
+            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, exportErrors).stream().filter(Objects::nonNull)
+                    .map(Path::toFile).collect(Collectors.toList());
+            zipFiles.addAll(exportedStudentRepositoryFiles);
         }
 
         // Export the template, solution, and tests repositories and add them to list
@@ -164,7 +163,7 @@ public class ProgrammingExerciseExportService {
 
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        var filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
+        String filename = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
         String cleanFilename = fileService.removeIllegalCharacters(filename);
         Path pathToZippedExercise = Path.of(pathToStoreZipFile, cleanFilename);
 

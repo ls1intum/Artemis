@@ -823,22 +823,22 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportInstructorProgrammingExercise_shouldReturnFile() throws Exception {
-        var zip = exportInstructorProgrammingExercise(HttpStatus.OK);
+        var zipFile = exportInstructorProgrammingExercise(HttpStatus.OK);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
-        await().until(zip::exists);
-        assertThat(zip).isNotNull();
+        await().until(zipFile::exists);
+        assertThat(zipFile).isNotNull();
 
         // Recursively unzip the exported file, to make sure there is no erroneous content
-        zipFileTestUtilService.extractZipFileRecursively(zip.getAbsolutePath());
-        var extractedZipDir = zip.getPath().substring(0, zip.getPath().length() - 4);
+        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
+        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
 
         // Check that the contents we created exist in the unzipped exported folder
-        var filenames = Files.walk(Path.of(extractedZipDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
-        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))).isTrue();
-        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(".*-solution.zip"))).isTrue();
-        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))).isTrue();
-        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))).isTrue();
-        assertThat(filenames.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))).isTrue();
+        var listOfIncludedFiles = Files.walk(Path.of(extractedZipDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-solution.zip"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))).isTrue();
     }
 
     public void exportInstructorProgrammingExercise_forbidden() throws Exception {
@@ -879,15 +879,15 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void testZipFilesAndCleanUp_shouldReturnNull() {
-        var resultingPath = Path.of("result.zip");
+        Path resultingPath = Path.of("result.zip");
         var includedFilePaths = new ArrayList<Path>();
         includedFilePaths.add(Path.of("file1"));
         includedFilePaths.add(Path.of("file2"));
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
-        var resultingZip = programmingExerciseExportService.zipFilesAndCleanUp(resultingPath, includedFilePaths, false, new ArrayList<String>());
+        Path resultingZipPath = programmingExerciseExportService.zipFilesAndCleanUp(resultingPath, includedFilePaths, false, new ArrayList<String>());
         mockedFiles.close();
-        assertThat(resultingZip).isEqualTo(null);
+        assertThat(resultingZipPath).isEqualTo(null);
     }
 
     // Test
@@ -908,7 +908,7 @@ public class ProgrammingExerciseTestService {
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
 
         // Mock student repo
-        var studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
+        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
