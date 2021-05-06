@@ -2354,6 +2354,10 @@ public class DatabaseUtilService {
         }
         result.setFeedbacks(feedbacks);
         result = resultRepo.save(result);
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
+        result = resultRepo.save(result);
         result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
