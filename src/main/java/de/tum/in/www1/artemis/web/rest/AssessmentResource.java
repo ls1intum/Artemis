@@ -162,7 +162,7 @@ public abstract class AssessmentResource {
         // It is allowed to get the example assessment, if the user is an instructor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
         boolean isAllowed = authCheckService.isAtLeastInstructorForExercise(exercise)
-                || authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !exampleSubmission.isUsedForTutorial();
+                || authCheckService.isAtLeastTeachingAssistantForExercise(exercise) && !Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial());
         if (!isAllowed) {
             forbidden();
         }
