@@ -47,7 +47,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     isBeingArchived = false;
     archiveButtonText = '';
     archiveWarnings: string[] = [];
-    displayDownloadArchiveButton = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -71,7 +70,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
         this.registerArchiveWebsocket();
         this.archiveButtonText = this.getArchiveButtonText();
-        this.displayDownloadArchiveButton = this.canDownloadArchive();
 
         // update the span title on each language change
         this.translateService.onLangChange.subscribe(() => {
@@ -102,7 +100,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         const { exportState, message } = courseArchiveState;
         this.isBeingArchived = exportState === 'RUNNING';
         this.archiveButtonText = exportState === 'RUNNING' ? message : this.getArchiveButtonText();
-        this.displayDownloadArchiveButton = this.canDownloadArchive();
 
         if (exportState === 'COMPLETED') {
             this.jhiAlertService.success(this.getArchiveSuccessText());
