@@ -228,6 +228,12 @@ export class GradingSystemComponent implements OnInit {
         return gradeSteps;
     }
 
+    deleteGradeNames(): void {
+        this.gradingScale.gradeSteps.forEach((gradeStep) => {
+            gradeStep.gradeName = '';
+        });
+    }
+
     gradeStepsWithNonemptyNames(): GradeStep[] {
         return this.gradingScale.gradeSteps.filter((gradeStep) => {
             return gradeStep.gradeName !== '';

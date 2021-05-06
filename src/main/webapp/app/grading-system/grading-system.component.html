@@ -15,7 +15,7 @@
         <div class="dropdown-container">
             <div class="form-group">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title">Grade Type</span>
-                <select class="form-control" [(ngModel)]="gradingScale.gradeType" title="grade type">
+                <select class="form-control" [(ngModel)]="gradingScale.gradeType" (change)="deleteGradeNames()" title="grade type">
                     <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade">Grade</option>
                     <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus">Bonus</option>
                 </select>

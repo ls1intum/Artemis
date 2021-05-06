@@ -140,6 +140,14 @@ describe('Grading System Component', () => {
         expect(comp.isGradeType()).to.be.equal(false);
     });
 
+    it('should delete grade names correctly', () => {
+        comp.deleteGradeNames();
+
+        comp.gradingScale.gradeSteps.forEach((gradeStep) => {
+            expect(gradeStep.gradeName).is.equal('');
+        });
+    });
+
     it('should filter grade steps with empty names correctly', () => {
         comp.gradingScale.gradeSteps[0].gradeName = '';
         comp.gradingScale.gradeSteps[2].gradeName = '';
