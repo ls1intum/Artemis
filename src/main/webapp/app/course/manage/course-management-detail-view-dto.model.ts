@@ -27,7 +27,5 @@ export class CourseManagementDetailViewDto {
     currentAbsoluteAverageScore: number;
     currentMaxAverageScore: number;
 
-    activeStudents: number[];
-
     constructor() {}
 }

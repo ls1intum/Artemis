@@ -17,8 +17,9 @@ export class CourseDetailBarChartComponent implements OnChanges {
     @Input()
     numberOfStudentsInCourse: number;
     @Input()
-    initialStats: number[];
+    initialStats: number[] | undefined;
     initialStatsReceived = false;
+    loading = true;
 
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
@@ -44,6 +45,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 
     ngOnChanges() {
+        this.loading = true;
         this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
         // Only use the pre-loaded stats once
         if (this.initialStatsReceived || !this.initialStats) {
@@ -71,9 +73,11 @@ export class CourseDetailBarChartComponent implements OnChanges {
             },
         ];
         this.createChart();
+        this.loading = false;
     }
 
     private reloadChart() {
+        this.loading = true;
         this.createLabels();
         this.service.getStatisticsData(this.courseId, this.currentPeriod).subscribe((res: number[]) => {
             if (this.numberOfStudentsInCourse > 0) {
@@ -96,6 +100,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
                     pointHoverBorderColor: 'rgba(53,61,71,1)',
                 },
             ];
+            this.loading = false;
         });
         this.createChart();
     }

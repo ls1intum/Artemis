@@ -27,6 +27,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     CachingStrategy = CachingStrategy;
     courseDTO: CourseManagementDetailViewDto;
+    activeStudents: number[];
     course: Course;
     private eventSubscriber: Subscription;
 
@@ -49,6 +50,10 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.courseDTO = courseResponse.body!;
             this.course = this.courseDTO.course;
             this.registerChangeInCourses();
+        });
+        // fetch active students separately
+        this.courseService.getStatisticsData(courseId, 0).subscribe((activeStudents: number[]) => {
+            this.activeStudents = activeStudents;
         });
     }
 

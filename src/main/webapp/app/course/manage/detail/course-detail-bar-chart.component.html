@@ -13,6 +13,9 @@
             [legend]="barChartLegend"
             [chartType]="barChartType"
         ></canvas>
+        <div *ngIf="loading" style="z-index: 1; position: absolute; font-size: large">
+            <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+        </div>
         <fa-icon [icon]="'arrow-right'" size="2x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
     </div>
     <h5 class="col-md-10 offset-md-1 text-center mt-3 mb-5">{{ chartTime }}</h5>
