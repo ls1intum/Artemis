@@ -499,6 +499,15 @@ public class GitlabRequestMockProvider {
         }
     }
 
+    public void mockFailToGetUserWhenUpdatingOldMembers(de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        mockGetUserId(user.getLogin(), false, true);
+    }
+
+    public void mockFailToUpdateOldGroupMembers(ProgrammingExercise exercise, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        mockGetUserId(user.getLogin(), true, false);
+        doThrow(GitLabApiException.class).when(groupApi).updateMember(eq(exercise.getProjectKey()), eq(1), any(AccessLevel.class));
+    }
+
     public void mockDeleteRepository(String repositoryPath, boolean shouldFail) throws GitLabApiException {
         if (shouldFail) {
             doThrow(new GitLabApiException("Bad Request", 400)).when(projectApi).deleteProject(repositoryPath);
