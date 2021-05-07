@@ -526,4 +526,10 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
         courseTestService.testGetExerciseStatsForCourseOverviewWithPastExercises();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCourseManagementDetailData() throws Exception {
+        courseTestService.testGetCourseManagementDetailData();
+    }
 }

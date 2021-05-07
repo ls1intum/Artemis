@@ -50,6 +50,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
+            WHERE e.course.id = :#{#courseId}
+            """)
+    Set<Exercise> findAllExercisesByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#now}
             ORDER BY e.dueDate ASC
