@@ -313,7 +313,7 @@ public class CourseExamExportService {
             // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
                 // Download the repositories template, solution, tests and students' repositories
-                exportedExercices.add(programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, Path.of(outputDir), exportErrors));
+                exportedExercices.add(programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, true, Path.of(outputDir), exportErrors));
                 continue;
             }
 

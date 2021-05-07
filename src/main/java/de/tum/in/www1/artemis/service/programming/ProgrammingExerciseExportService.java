@@ -103,7 +103,7 @@ public class ProgrammingExerciseExportService {
         var zipFiles = new ArrayList<File>();
 
         // Add the exported zip folder containing template, solution, and tests repositories
-        zipFiles.add(exportProgrammingExerciseRepositories(exercise, false, repoDownloadClonePath, exportErrors).toFile());
+        zipFiles.add(exportProgrammingExercise(exercise, false, Path.of(repoDownloadClonePath), exportErrors).toFile());
 
         // Add problem statement as .md file
         var problemStatementFileExtension = ".md";
