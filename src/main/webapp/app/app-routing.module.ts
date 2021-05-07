@@ -78,7 +78,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
                 },
                 {
-                    path: 'courses/:courseId/exams/:examId/Dgrading-system',
+                    path: 'courses/:courseId/exams/:examId/grading-system',
                     loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
                 },
                 {
