@@ -164,8 +164,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: feedbackConflict }));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/text-assessments/exercise/${exerciseId}/feedbackConflict/${feedbackConflict.id}/solve
-            `,
+            url: `${SERVER_API_URL}api/text-assessments/exercise/${exerciseId}/feedbackConflict/${feedbackConflict.id}/solve`,
             method: 'POST',
         });
         req.flush(JSON.stringify(returnedFromService));
