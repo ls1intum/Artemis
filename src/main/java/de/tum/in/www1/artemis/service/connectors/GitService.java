@@ -289,6 +289,7 @@ public class GitService {
      * @return the repository if it could be checked out
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
     public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath)
             throws InterruptedException, GitAPIException, InvalidPathException {
@@ -358,6 +359,7 @@ public class GitService {
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
+     * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet)
             throws InterruptedException, GitAPIException, GitException, InvalidPathException {
@@ -397,7 +399,7 @@ public class GitService {
                 Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 result.close();
             }
-            catch (IOException | URISyntaxException | GitAPIException e) {
+            catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
                 FileUtils.deleteQuietly(localPath.toFile());
