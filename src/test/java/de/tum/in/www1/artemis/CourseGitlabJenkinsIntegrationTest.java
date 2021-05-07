@@ -163,6 +163,41 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testSetPermissionsForNewGroupMembersInCourse() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        String oldInstructorGroup = course.getInstructorGroupName();
+        String oldEditorGroup = course.getEditorGroupName();
+        String oldTaGroup = course.getTeachingAssistantGroupName();
+
+        course.setInstructorGroupName("new-instructor-group");
+        course.setEditorGroupName("new-editor-group");
+        course.setTeachingAssistantGroupName("new-ta-group");
+
+        // Create editor in the course
+        User user = ModelFactory.generateActivatedUser("new-editor");
+        user.setGroups(Set.of("new-editor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        user = ModelFactory.generateActivatedUser("new-ta");
+        user.setGroups(Set.of("new-ta-group"));
+        courseTestService.getUserRepo().save(user);
+
+        user = ModelFactory.generateActivatedUser("new-instructor");
+        user.setGroups(Set.of("new-instructor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTaGroup);
+        jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
+        assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
+        assertThat(course.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
+
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testFailToUpdateOldMembersInCourse() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
@@ -221,7 +256,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         var exercise = programmingExerciseRepository.findAllByCourse(course).stream().findFirst();
         assertThat(exercise).isPresent();
 
-        gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
+        gitlabRequestMockProvider.mockFailToRemoveOldMember(exercise.get(), user.get());
         request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
