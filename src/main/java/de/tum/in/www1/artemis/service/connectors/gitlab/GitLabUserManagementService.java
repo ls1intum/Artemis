@@ -411,7 +411,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param gitlabUserId the user id of the Gitlab user
      * @param group the group to remove the user from
      */
-    private void removeUserFromGroup(int gitlabUserId, String group) {
+    private void removeUserFromGroup(int gitlabUserId, String group) throws GitLabApiException {
         try {
             gitlabApi.getGroupApi().removeMember(group, gitlabUserId);
         }
@@ -419,6 +419,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             // If user membership to group is missing on Gitlab, ignore the exception.
             if (ex.getHttpStatus() != 404) {
                 log.error("Gitlab Exception when removing a user " + gitlabUserId + " to a group " + group, ex);
+                throw ex;
             }
         }
     }

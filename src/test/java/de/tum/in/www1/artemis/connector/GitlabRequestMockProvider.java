@@ -284,14 +284,7 @@ public class GitlabRequestMockProvider {
 
     public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
             throws GitLabApiException {
-        var gitlabUser = new User().withUsername(login).withId(1);
-        doReturn(gitlabUser).when(userApi).getUser(login);
-        if (shouldSynchronizePassword) {
-            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, user.getPassword());
-        }
-        else {
-            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, null);
-        }
+        mockUpdateBasicUserInformation(login, user, shouldSynchronizePassword);
 
         // Add as member to new groups
         if (addedGroups != null && !addedGroups.isEmpty()) {
@@ -319,6 +312,29 @@ public class GitlabRequestMockProvider {
                     // If the user is not a member of any relevant group any more, we can remove him from the exercise
                     doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyInt());
                 }
+            }
+        }
+    }
+
+    public void mockUpdateBasicUserInformation(String login, de.tum.in.www1.artemis.domain.User user, boolean shouldUpdatePassword) throws GitLabApiException {
+        var gitlabUser = new User().withUsername(login).withId(1);
+        doReturn(gitlabUser).when(userApi).getUser(login);
+        if (shouldUpdatePassword) {
+            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, user.getPassword());
+        }
+        else {
+            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, null);
+        }
+    }
+
+    public void mockRemoveUserFromGroup(int gitlabUserId, String group, Optional<GitLabApiException> exceptionToThrow) throws GitLabApiException {
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(Set.of(group));
+        for (var exercise : exercises) {
+            if (exceptionToThrow.isEmpty()) {
+                doNothing().when(groupApi).removeMember(exercise.getProjectKey(), gitlabUserId);
+            }
+            else {
+                doThrow(exceptionToThrow.get()).when(groupApi).removeMember(exercise.getProjectKey(), gitlabUserId);
             }
         }
     }

@@ -111,6 +111,10 @@ public class CourseTestService {
         return courseRepo;
     }
 
+    public UserRepository getUserRepo() {
+        return userRepo;
+    }
+
     // Test
     public void testCreateCourseWithPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());

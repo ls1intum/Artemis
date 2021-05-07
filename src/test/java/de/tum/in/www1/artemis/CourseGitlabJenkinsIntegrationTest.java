@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
+import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -317,6 +323,27 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
         courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveTutorFromCourse_removeUserFromGitlabGroupFails() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseTestService.getCourseRepo().save(course);
+        database.addProgrammingExerciseToCourse(course, false);
+
+        Optional<User> optionalTutor = courseTestService.getUserRepo().findOneWithGroupsByLogin("tutor1");
+        assertThat(optionalTutor).isPresent();
+
+        String tutorGroup = course.getTeachingAssistantGroupName();
+        User tutor = optionalTutor.get();
+
+        gitlabRequestMockProvider.mockUpdateBasicUserInformation(tutor.getLogin(), tutor, false);
+        gitlabRequestMockProvider.mockRemoveUserFromGroup(1, tutorGroup, Optional.of(new GitLabApiException("Forbidden", 403)));
+
+        jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(tutorGroup), false);
+        jenkinsRequestMockProvider.mockAddUsersToGroups(tutor.getLogin(), Set.of(tutorGroup), false);
+        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
