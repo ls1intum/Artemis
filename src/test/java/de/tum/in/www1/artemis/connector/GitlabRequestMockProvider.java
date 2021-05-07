@@ -366,12 +366,12 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockAddUserToGroupsUserExists(de.tum.in.www1.artemis.domain.User user, String projectKey) throws GitLabApiException {
-        var userId = mockGetUserIdCreateIfNotExist(user, false, false);
+        int userId = mockGetUserIdCreateIfNotExist(user, false, false);
         doThrow(new GitLabApiException("Member already exists")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
     }
 
     public void mockAddUserToGroupsFails(de.tum.in.www1.artemis.domain.User user, String projectKey) throws GitLabApiException {
-        var userId = mockGetUserIdCreateIfNotExist(user, false, false);
+        int userId = mockGetUserIdCreateIfNotExist(user, false, false);
         doThrow(new GitLabApiException("Oh no")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
     }
 

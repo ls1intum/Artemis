@@ -342,7 +342,7 @@ public class GitLabService extends AbstractVersionControlService {
         for (final var editor : editors) {
             try {
                 final var userId = gitLabUserManagementService.getUserId(editor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), DEVELOPER);
+                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(programmingExercise), DEVELOPER);
             }
             catch (GitLabException ignored) {
                 // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise

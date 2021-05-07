@@ -6,6 +6,7 @@ import java.util.*;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.UserApi;
 import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     @Override
     public void createVcsUser(User user) {
-        final var gitlabUserId = getUserIdCreateIfNotExists(user);
+        final int gitlabUserId = getUserIdCreateIfNotExists(user);
         // Add user to existing exercises
         addUserToGroups(gitlabUserId, user.getGroups());
     }
@@ -83,7 +84,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @throws GitLabApiException if the user cannot be retrieved or cannot update the user
      */
     private org.gitlab4j.api.models.User updateBasicUserInformation(String userLogin, User user, boolean shouldUpdatePassword) throws GitLabApiException {
-        var userApi = gitlabApi.getUserApi();
+        UserApi userApi = gitlabApi.getUserApi();
 
         final var gitlabUser = userApi.getUser(userLogin);
         if (gitlabUser == null) {
@@ -98,7 +99,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         // Skip confirmation is necessary in order to update the email without user re-confirmation
         gitlabUser.setSkipConfirmation(true);
 
-        var password = shouldUpdatePassword ? passwordService.decryptPassword(user) : null;
+        String password = shouldUpdatePassword ? passwordService.decryptPassword(user) : null;
         return userApi.updateUser(gitlabUser, password);
     }
 
@@ -268,7 +269,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     public void deleteVcsUser(String login) {
         try {
             // Delete by login String doesn't work, so we need to get the actual userId first.
-            final var userId = getUserId(login);
+            final int userId = getUserId(login);
             gitlabApi.getUserApi().deleteUser(userId, true);
         }
         catch (GitLabUserDoesNotExistException e) {
@@ -313,7 +314,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             return;
         }
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (var exercise : exercises) {
             Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(groups, exercise);
             if (accessLevel.isPresent()) {
@@ -384,10 +385,10 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     private Optional<AccessLevel> getAccessLevelFromUserGroups(Set<String> userGroups, Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var instructorGroup = course.getInstructorGroupName();
-        var editorGroup = course.getEditorGroupName();
-        var teachingAssisstantGroup = course.getTeachingAssistantGroupName();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        String instructorGroup = course.getInstructorGroupName();
+        String editorGroup = course.getEditorGroupName();
+        String teachingAssisstantGroup = course.getTeachingAssistantGroupName();
 
         if (userGroups.contains(instructorGroup)) {
             return Optional.of(MAINTAINER);

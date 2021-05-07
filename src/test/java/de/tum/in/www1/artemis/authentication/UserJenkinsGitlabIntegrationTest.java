@@ -13,6 +13,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.util.UserTestService;
@@ -190,7 +193,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void deleteUser_failToGetUserIdInGitlab() throws Exception {
-        var student = userTestService.student;
+        User student = userTestService.student;
         gitlabRequestMockProvider.mockDeleteVcsUserFailToGetUserId(student.getLogin());
         request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -288,10 +291,10 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUserWithGroupsAlreadyExistsInGitlab() throws Exception {
-        var course = database.addEmptyCourse();
-        var programmingExericse = database.addProgrammingExerciseToCourse(course, false);
+        Course course = database.addEmptyCourse();
+        ProgrammingExercise programmingExericse = database.addProgrammingExerciseToCourse(course, false);
 
-        var newUser = userTestService.student;
+        User newUser = userTestService.student;
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
@@ -305,10 +308,10 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
-        var course = database.addEmptyCourse();
-        var programmingExericse = database.addProgrammingExerciseToCourse(course, false);
+        Course course = database.addEmptyCourse();
+        ProgrammingExercise programmingExericse = database.addProgrammingExerciseToCourse(course, false);
 
-        var newUser = userTestService.student;
+        User newUser = userTestService.student;
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");

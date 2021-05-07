@@ -394,7 +394,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         // Create instructor in the course
-        var user = ModelFactory.generateActivatedUser("instructor11");
+        User user = ModelFactory.generateActivatedUser("instructor11");
         user.setGroups(Set.of("new-instructor-group"));
         userRepo.save(user);
 
