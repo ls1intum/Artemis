@@ -259,7 +259,7 @@ public class FileUploadExerciseResource {
 
         List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        if(feedbackList.size() > 0) {
+        if(!feedbackList.isEmpty()) {
             fileUploadExercise.setGradingInstructionFeedbackUsed(true);
         }
 

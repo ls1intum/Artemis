@@ -296,7 +296,7 @@ public class TextExerciseResource {
 
         List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        if(feedbackList.size() > 0) {
+        if(!feedbackList.isEmpty()) {
             textExercise.setGradingInstructionFeedbackUsed(true);
         }
         textExercise.setGradingCriteria(gradingCriteria);
