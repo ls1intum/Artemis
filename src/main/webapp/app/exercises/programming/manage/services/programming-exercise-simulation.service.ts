@@ -4,7 +4,7 @@ import { EntityResponseType, ProgrammingExerciseService } from 'app/exercises/pr
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 

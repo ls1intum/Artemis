@@ -57,6 +57,7 @@
             },
             "studentGroupName": "Studierendengruppe",
             "teachingAssistantGroupName": "Tutorengruppe",
+            "editorGroupName": "Editorengruppe",
             "instructorGroupName": "Dozentengruppe",
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
@@ -89,9 +90,11 @@
             "students": "Studierende",
             "participations": "Teilnahmen",
             "tutors": "Tutoren",
+            "editors": "Editoren",
             "instructors": "Dozenten",
             "student": "Student",
             "tutor": "Tutor",
+            "editor": "Editor",
             "instructor": "Dozent",
             "form": {
                 "shortname": {
@@ -126,9 +129,9 @@
             "pastExercises": "Vergangene Übungen ({{ amount }} von {{ total }})",
             "noExercises": "Keine aktiven Übungen vorhanden",
             "assessmentProgress": "Bewertungen",
-            "releaseDate": "Veröffentlichung",
-            "dueDate": "Einreichungsfrist",
-            "assessmentDueDate": "Bewertungsfrist",
+            "releaseDate": "Freigabe",
+            "dueDate": "Einreichung",
+            "assessmentDueDate": "Bewertung",
             "cleanup": {
                 "title": "Aufräumen",
                 "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"

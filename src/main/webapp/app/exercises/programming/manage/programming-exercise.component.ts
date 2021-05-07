@@ -36,6 +36,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     selectedProgrammingExercises: ProgrammingExercise[];
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
+    allChecked = false;
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
@@ -70,6 +72,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(getCourseFromExercise(exercise));
+                    exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(getCourseFromExercise(exercise));
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(exercise));
                 });
                 this.emitExerciseCount(this.programmingExercises.length);
@@ -148,6 +151,19 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         } else {
             this.selectedProgrammingExercises.push(programmingExercise);
         }
+    }
+
+    toggleAllProgrammingExercises() {
+        if (this.allChecked) {
+            this.selectedProgrammingExercises = [];
+        } else {
+            this.selectedProgrammingExercises = this.selectedProgrammingExercises.concat(this.programmingExercises);
+        }
+        this.allChecked = !this.allChecked;
+    }
+
+    isExerciseSelected(programmingExercise: ProgrammingExercise) {
+        return this.selectedProgrammingExercises.includes(programmingExercise);
     }
 
     openEditSelectedModal() {

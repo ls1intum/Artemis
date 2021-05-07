@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -102,111 +103,165 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
-        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
+    public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
+        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldEditorGroup.equals(updatedCourse.getEditorGroupName())
+                && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
             // Do nothing if the group names didn't change
             return;
         }
 
-        final var exercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
-        // All users that we already updated
+        final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllByCourse(updatedCourse);
 
-        // Update the old instructors of the course
-        final var oldInstructors = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
-        // doUpgrade=false, because these users already are instructors.
-        updateOldGroupMembers(exercises, oldInstructors, updatedCourse.getInstructorGroupName(), updatedCourse.getTeachingAssistantGroupName(), REPORTER, false);
-        final var processedUsers = new HashSet<>(oldInstructors);
+        final List<User> allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
+        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldEditorGroup));
+        allUsers.addAll(userRepository.findAllInGroupWithAuthorities(oldTeachingAssistantGroup));
 
-        // Update the old teaching assistant of the group
-        final var oldTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(oldTeachingAssistantGroup, oldInstructors);
-        // doUpgrade=true, because these users should be upgraded from TA to instructor, if possible.
-        updateOldGroupMembers(exercises, oldTeachingAssistants, updatedCourse.getTeachingAssistantGroupName(), updatedCourse.getInstructorGroupName(), MAINTAINER, true);
-        processedUsers.addAll(oldTeachingAssistants);
+        final Set<User> oldUsers = new HashSet<>();
+        final Set<User> newUsers = new HashSet<>();
 
-        // Now, we only have to add all users that have not been updated yet AND that are part of one of the new groups
-        // Find all NEW instructors, that did not belong to the old TAs or instructors
-        final var remainingInstructors = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getInstructorGroupName(), processedUsers);
-        remainingInstructors.forEach(user -> {
-            final var userId = getUserId(user.getLogin());
-            addUserToGroupsOfExercises(userId, exercises, MAINTAINER);
-        });
-        processedUsers.addAll(remainingInstructors);
+        for (User user : allUsers) {
+            Set<String> userGroups = user.getGroups();
+            if (userGroups != null) {
+                if (userGroups.contains(oldTeachingAssistantGroup) || userGroups.contains(oldEditorGroup) || userGroups.contains(oldInstructorGroup)) {
+                    oldUsers.add(user);
+                }
+                else {
+                    newUsers.add(user);
+                }
+            }
+        }
 
-        // Find all NEW TAs that did not belong to the old TAs or instructors
-        final var remainingTeachingAssistants = userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), processedUsers);
-        remainingTeachingAssistants.forEach(user -> {
-            final var userId = getUserId(user.getLogin());
-            addUserToGroupsOfExercises(userId, exercises, REPORTER);
-        });
+        updateOldGroupMembers(programmingExercises, oldUsers, updatedCourse);
+        setPermissionsForNewGroupMembers(programmingExercises, newUsers, updatedCourse);
     }
 
     /**
-     * Updates all exercise groups in GitLab for the new course instructor/TA group names. Removes users that are no longer
-     * in any group and moves users to the new group, if they still have a valid group (e.g. instructor to TA).
-     * If a user still belongs to a group that is valid for the same access level, he will stay on this level. If a user
-     * can be upgraded, i.e. from instructor to TA, this will also be done.
-     * All cases:
-     * <ul>
-     *     <li>DOWNGRADE from instructor to TA</li>
-     *     <li>STAY instructor, because other group name is valid for newInstructorGroup</li>
-     *     <li>UPGRADE from TA to instructor</li>
-     *     <li>REMOVAL from GitLab group, because no valid active group is present</li>
-     * </ul>
+     * Sets the permission for users that have not been in a group before.
+     * The permissions are updated for all programming exercises of a course, according to the user groups the user is part of.
      *
-     * @param exercises              All exercises for the updated course
-     * @param users                  All user in the old group
-     * @param newGroupName           The name of the new group, e.g. "newInstructors"
-     * @param alternativeGroupName   The name of the other group (instructor or TA), e.g. "newTeachingAssistant"
-     * @param alternativeAccessLevel The access level for the alternative group, e.g. REPORTER for TAs
-     * @param doUpgrade              True, if the alternative group would be an upgrade. This is the case if the old group was TA, so the new instructor group would be better (if applicable)
+     * @param programmingExercises  all programming exercises of the passed updatedCourse
+     * @param newUsers              users of the passed course that have not been in a group before
+     * @param updatedCourse         course with updated groups
      */
-    private void updateOldGroupMembers(List<ProgrammingExercise> exercises, List<User> users, String newGroupName, String alternativeGroupName, AccessLevel alternativeAccessLevel,
-            boolean doUpgrade) {
-        for (final var user : users) {
-            final var userId = getUserId(user.getLogin());
-            /*
-             * Contains the access level of the other group, to which the user currently does NOT belong, IF the user could be in that group E.g. user1(groups=[foo,bar]),
-             * oldInstructorGroup=foo, oldTAGroup=bar; newInstructorGroup=instr newTAGroup=bar So, while the instructor group changed, the TA group stayed the same. user1 was part
-             * of the old instructor group, but isn't any more. BUT he could be a TA according to the new groups, so the alternative access level would be the level of the TA
-             * group, i.e. REPORTER
-             */
-            final Optional<AccessLevel> newAccessLevel;
-            if (user.getGroups().contains(alternativeGroupName)) {
-                newAccessLevel = Optional.of(alternativeAccessLevel);
-            }
-            else {
-                // No alternative access level, if the user does not belong to ANY of the new groups (i.e. TA or instructor)
-                newAccessLevel = Optional.empty();
-            }
-            // The user still is in the TA or instructor group
-            final var userStillInRelevantGroup = user.getGroups().contains(newGroupName);
-            // We cannot upgrade the user (i.e. from TA to instructor) if the alternative group would be below the current
-            // one (i.e. instructor down to TA), or if the user is not eligible for the new access level:
-            // TA to instructor, BUT the user does not belong to the new instructor group.
-            final var cannotUpgrade = !doUpgrade || newAccessLevel.isEmpty();
-            if (userStillInRelevantGroup && cannotUpgrade) {
-                continue;
-            }
+    private void setPermissionsForNewGroupMembers(List<ProgrammingExercise> programmingExercises, Set<User> newUsers, Course updatedCourse) {
+        final var userApi = gitlabApi.getUserApi();
 
-            exercises.forEach(exercise -> {
-                try {
-                    /*
-                     * Update the user, if 1. The user can be upgraded: TA -> instructor 2. We have to downgrade the user (instructor -> TA), if he only belongs to the new TA
-                     * group, but not to the instructor group any more
-                     */
-                    if (newAccessLevel.isPresent()) {
-                        gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), userId, newAccessLevel.get());
+        for (User user : newUsers) {
+            Set<String> groups = user.getGroups();
+
+            try {
+                var gitlabUser = userApi.getUser(user.getLogin());
+                if (gitlabUser == null) {
+                    log.warn("User {} does not exist in Gitlab and cannot be updated!", user.getLogin());
+                    continue;
+                }
+
+                if (user.getGroups() != null) {
+                    final int userId = getUserId(user.getLogin());
+
+                    if (groups.contains(updatedCourse.getInstructorGroupName())) {
+                        addUserToGroupsOfExercises(userId, programmingExercises, MAINTAINER);
+                    }
+                    else if (groups.contains(updatedCourse.getEditorGroupName())) {
+                        addUserToGroupsOfExercises(userId, programmingExercises, DEVELOPER);
+                    }
+                    else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
+                        addUserToGroupsOfExercises(userId, programmingExercises, REPORTER);
                     }
                     else {
-                        // Remove the user from the all groups, if he no longer is a TA, or instructor
-                        gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), userId);
+                        removeMemberFromExercises(programmingExercises, gitlabUser.getId());
                     }
                 }
-                catch (GitLabApiException e) {
-                    throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
-                }
-            });
+
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Error while trying to set permission for user in GitLab: " + user, e);
+            }
         }
+
+    }
+
+    /**
+     * Updates the permission for users that have been in a group before.
+     * The permissions are updated for all programming exercises of a course, according to the user groups the user is part of.
+     *
+     * @param programmingExercises  programming exercises of the passed updatedCourse
+     * @param oldUsers              users of the passed course that have been in a group before
+     * @param updatedCourse         course with updated groups
+     */
+    private void updateOldGroupMembers(List<ProgrammingExercise> programmingExercises, Set<User> oldUsers, Course updatedCourse) {
+        final var userApi = gitlabApi.getUserApi();
+
+        for (User user : oldUsers) {
+
+            try {
+                var gitlabUser = userApi.getUser(user.getLogin());
+                if (gitlabUser == null) {
+                    log.warn("User {} does not exist in Gitlab and cannot be updated!", user.getLogin());
+                    continue;
+                }
+
+                Set<String> groups = user.getGroups();
+                if (user.getGroups() == null) {
+                    removeMemberFromExercises(programmingExercises, gitlabUser.getId());
+                }
+
+                if (groups.contains(updatedCourse.getInstructorGroupName())) {
+                    updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), MAINTAINER);
+                }
+                else if (groups.contains(updatedCourse.getEditorGroupName())) {
+                    updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), DEVELOPER);
+                }
+                else if (groups.contains(updatedCourse.getTeachingAssistantGroupName())) {
+                    updateMemberExercisePermissions(programmingExercises, gitlabUser.getId(), REPORTER);
+                }
+                else {
+                    removeMemberFromExercises(programmingExercises, gitlabUser.getId());
+                }
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
+            }
+
+        }
+
+    }
+
+    /**
+     * Updates the permissions for the passed user to the passed accessLevel
+     *
+     * @param programmingExercises  all exercises for which the permissions shall be updated
+     * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
+     * @param accessLevel           access level that shall be set for a user
+     */
+    private void updateMemberExercisePermissions(List<ProgrammingExercise> programmingExercises, Integer gitlabUserId, AccessLevel accessLevel) {
+        programmingExercises.forEach(exercise -> {
+            try {
+                gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel);
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
+            }
+        });
+
+    }
+
+    /**
+     * Removes a member from an exercise, e.g. when a group is removed and the user is not part of another group that has permissions.
+     *
+     * @param programmingExercises  all exercises for which the permissions shall be updated
+     * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
+     */
+    private void removeMemberFromExercises(List<ProgrammingExercise> programmingExercises, Integer gitlabUserId) {
+        programmingExercises.forEach(exercise -> {
+            try {
+                gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUserId);
+            }
+            catch (GitLabApiException e) {
+                throw new GitLabException("Error while updating GitLab group " + exercise.getProjectKey(), e);
+            }
+        });
+
     }
 
     @Override
@@ -258,11 +313,12 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             return;
         }
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (var exercise : exercises) {
-            var instructorGroupName = exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName();
-            var accessLevel = groups.contains(instructorGroupName) ? MAINTAINER : REPORTER;
-            addUserToGroup(exercise.getProjectKey(), gitlabUserId, accessLevel);
+            Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(groups, exercise);
+            if (accessLevel.isPresent()) {
+                addUserToGroup(exercise.getProjectKey(), gitlabUserId, accessLevel.get());
+            }
         }
     }
 
@@ -313,21 +369,37 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
 
         // Gitlab groups are identified by the project key of the programming exercise
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groupsToRemove);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
         for (var exercise : exercises) {
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            var instructorGroup = course.getInstructorGroupName();
-            var teachingAssisstantGroup = course.getTeachingAssistantGroupName();
-
+            Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(userGroups, exercise);
             // Do not remove the user from the group and only update it's access level
-            var shouldUpdateGroupAccess = userGroups.contains(instructorGroup) || userGroups.contains(teachingAssisstantGroup);
+            var shouldUpdateGroupAccess = accessLevel.isPresent();
             if (shouldUpdateGroupAccess) {
-                var accessLevel = userGroups.contains(instructorGroup) ? MAINTAINER : REPORTER;
-                gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel);
+                gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel.get());
             }
             else {
                 removeUserFromGroup(gitlabUserId, exercise.getProjectKey());
             }
+        }
+    }
+
+    private Optional<AccessLevel> getAccessLevelFromUserGroups(Set<String> userGroups, Exercise exercise) {
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var instructorGroup = course.getInstructorGroupName();
+        var editorGroup = course.getEditorGroupName();
+        var teachingAssisstantGroup = course.getTeachingAssistantGroupName();
+
+        if (userGroups.contains(instructorGroup)) {
+            return Optional.of(MAINTAINER);
+        }
+        else if (userGroups.contains(editorGroup)) {
+            return Optional.of(DEVELOPER);
+        }
+        else if (userGroups.contains(teachingAssisstantGroup)) {
+            return Optional.of(REPORTER);
+        }
+        else {
+            return Optional.empty();
         }
     }
 

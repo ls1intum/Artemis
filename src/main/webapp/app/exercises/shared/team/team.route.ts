@@ -11,7 +11,7 @@ export const teamRoute: Routes = [
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/teams',
             component: TeamsComponent,
             data: {
-                authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+                authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                 pageTitle: 'artemisApp.team.home.title',
             },
             canActivate: [UserRouteAccessService],
@@ -22,7 +22,7 @@ export const teamRoute: Routes = [
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/teams/:teamId',
             component: TeamComponent,
             data: {
-                authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+                authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                 pageTitle: 'artemisApp.team.detail.title',
             },
             canActivate: [UserRouteAccessService],

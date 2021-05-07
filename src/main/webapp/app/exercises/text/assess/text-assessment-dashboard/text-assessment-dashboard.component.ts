@@ -14,6 +14,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { map } from 'rxjs/operators';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
@@ -60,13 +61,15 @@ export class TextAssessmentDashboardComponent implements OnInit {
 
         this.exerciseService
             .find(this.exerciseId)
-            .map((exerciseResponse) => {
-                if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
-                    throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
-                }
+            .pipe(
+                map((exerciseResponse) => {
+                    if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
+                        throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
+                    }
 
-                return <TextExercise>exerciseResponse.body!;
-            })
+                    return <TextExercise>exerciseResponse.body!;
+                }),
+            )
             .subscribe((exercise) => {
                 this.exercise = exercise;
                 this.getSubmissions();
@@ -82,19 +85,21 @@ export class TextAssessmentDashboardComponent implements OnInit {
     private getSubmissions(): void {
         this.textSubmissionService
             .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
-            .map((response: HttpResponse<TextSubmission[]>) =>
-                response.body!.map((submission: TextSubmission) => {
-                    const tmpResult = getLatestSubmissionResult(submission);
-                    if (tmpResult) {
-                        // reconnect some associations
-                        tmpResult!.submission = submission;
-                        tmpResult!.participation = submission.participation;
-                        submission.participation!.results = [tmpResult!];
-                    }
-                    submission.participation = submission.participation as StudentParticipation;
+            .pipe(
+                map((response: HttpResponse<TextSubmission[]>) =>
+                    response.body!.map((submission: TextSubmission) => {
+                        const tmpResult = getLatestSubmissionResult(submission);
+                        if (tmpResult) {
+                            // reconnect some associations
+                            tmpResult!.submission = submission;
+                            tmpResult!.participation = submission.participation;
+                            submission.participation!.results = [tmpResult!];
+                        }
+                        submission.participation = submission.participation as StudentParticipation;
 
-                    return submission;
-                }),
+                        return submission;
+                    }),
+                ),
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;

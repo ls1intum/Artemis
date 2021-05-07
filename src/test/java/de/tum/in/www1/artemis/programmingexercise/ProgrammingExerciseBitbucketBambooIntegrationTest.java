@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -34,14 +33,14 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @BeforeEach
     public void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(0, 0, 0);
+        programmingExerciseTestService.setupTestUsers(0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    public void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
@@ -284,5 +283,17 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
         programmingExerciseTestService.testDownloadCourseArchiveAsInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testAutomaticCleanUpBuildPlans() throws Exception {
+        programmingExerciseTestService.automaticCleanupBuildPlans();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testAutomaticCleanupGitRepositories() {
+        programmingExerciseTestService.automaticCleanupGitRepositories();
     }
 }

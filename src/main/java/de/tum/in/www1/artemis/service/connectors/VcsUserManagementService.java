@@ -40,13 +40,14 @@ public interface VcsUserManagementService {
     void deleteVcsUser(String login) throws VersionControlException;
 
     /**
-     * Updates all exercises in a course based on the new instructors and teaching assistant groups. This entails removing
+     * Updates all exercises in a course based on the new instructors, editors and teaching assistant groups. This entails removing
      * all users from exercises, that are no longer part of any relevant group and adding all users to exercises in the course
      * that are part of the updated groups.
      *
      * @param updatedCourse             The updated course with the new permissions
      * @param oldInstructorGroup        The old instructor group name
+     * @param oldEditorGroup            The old editor group name
      * @param oldTeachingAssistantGroup The old teaching assistant group name
      */
-    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup);
+    void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup);
 }

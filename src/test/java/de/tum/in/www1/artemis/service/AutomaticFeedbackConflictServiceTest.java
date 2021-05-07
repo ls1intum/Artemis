@@ -48,7 +48,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
     @BeforeEach
     public void init() {
-        database.addUsers(2, 1, 0);
+        database.addUsers(2, 1, 0, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();
     }

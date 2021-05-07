@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
@@ -67,8 +67,8 @@ describe('OrganizationManagementComponent', () => {
 
         const numOfUsersAndCoursesOfOrganizations = [countOrg1, countOrg2];
 
-        spyOn(organizationService, 'getOrganizations').and.returnValue(Observable.of([organization1, organization2]));
-        spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').and.returnValue(Observable.of(numOfUsersAndCoursesOfOrganizations));
+        spyOn(organizationService, 'getOrganizations').and.returnValue(of([organization1, organization2]));
+        spyOn(organizationService, 'getNumberOfUsersAndCoursesOfOrganizations').and.returnValue(of(numOfUsersAndCoursesOfOrganizations));
 
         fixture.detectChanges();
         expect(component).to.be.ok;

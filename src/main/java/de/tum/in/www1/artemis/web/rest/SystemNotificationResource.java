@@ -110,7 +110,7 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("/system-notifications/{id}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long id) {
         log.debug("REST request to get SystemNotification : {}", id);
         Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(id);

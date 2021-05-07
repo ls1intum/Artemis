@@ -47,7 +47,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(3, 1, 1);
+        database.addUsers(3, 1, 0, 1);
         Course course = database.addCourseWithThreeFileUploadExercise();
         releasedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         finishedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
