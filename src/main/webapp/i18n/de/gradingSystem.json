@@ -1,10 +1,10 @@
 {
     "artemisApp": {
         "gradingSystem": {
-            "title": "Benotungssystem",
-            "titleCourse": "Benotungssytem für Kurs",
-            "titleExam": "Benotungssytem für Klausur",
-            "defaultButton": "Generiere standarmäßiges Benotungssystem",
+            "title": "Notenschlüssel",
+            "titleCourse": "Notenschlüssel für Kurs",
+            "titleExam": "Notenschlüssel für Klausur",
+            "defaultButton": "Generiere standarmäßiger Notenschlüssel",
             "gradeType": {
                 "title": "Notentyp",
                 "grade": "Note",
@@ -21,18 +21,18 @@
             "gradeName": "Notenname",
             "bonusPoints": "Bonus Punkte",
             "delete": "Löschen",
-            "deleteQuestion": "Willst Du das Benotungssystem wirklich löschen?",
+            "deleteQuestion": "Willst Du den Notenschlüssel wirklich löschen?",
             "add": "Notenstufe hinzufügen",
             "save": "Speichern",
             "info": {
-                "title": "Hilfe zum Benotungssystem",
+                "title": "Hilfe zum Notenschlüssel",
                 "general": {
                     "title": "Allgemeine Informationen",
-                    "explanation": "Ein Benotungssystem besteht aus Notenstufen, die alle möglichen Prozentwerte von 0 bis 100 abdecken. Alle benachbarten Notenstufen sollten sich an ihren Schranken überschneiden (Beispiel: Notenstufen (60, 70) und (70, 80) überschneiden sich bei 70%). Welche Notenstufe diese Schranke einschließt, wird durch die \"Inklusivität\" bestimmt. Alle Notenstufen haben außerdem entweder einen Namen (1,0, Ausreichend, A,...) oder eine Bonuspunktzahl (5, 10,..), abhängig von dem \"Notentyp\""
+                    "explanation": "Ein Notenschlüssel besteht aus Notenstufen, die alle möglichen Prozentwerte von 0 bis 100 abdecken. Alle benachbarten Notenstufen sollten sich an ihren Schranken überschneiden (Beispiel: Notenstufen (60, 70) und (70, 80) überschneiden sich bei 70%). Welche Notenstufe diese Schranke einschließt, wird durch die \"Inklusivität\" bestimmt. Alle Notenstufen haben außerdem entweder einen Namen (1,0, Ausreichend, A,...) oder eine Bonuspunktzahl (5, 10,..), abhängig von dem \"Notentyp\""
                 },
                 "gradeType": {
                     "title": "Notentyp",
-                    "explanation": "Ein Benotungssystem kann entweder direkt auf Noten oder auf Bonuspunkte für den Kurs oder die Abschlussprüfung abgebildet werden"
+                    "explanation": "Ein Notenschlüssel kann entweder direkt auf Noten oder auf Bonuspunkte für den Kurs oder die Abschlussprüfung abgebildet werden"
                 },
                 "inclusivity": {
                     "title": "Inklusivität",
@@ -40,14 +40,14 @@
                 },
                 "firstPassingGrade": {
                     "title": "Erste bestehende Note",
-                    "explanation": "Legt die erste bestehende Note für ein Benotungssystem fest. Jede Note mit höheren Prozentsätzen wird ebenfalls als bestanden gewertet"
+                    "explanation": "Legt die erste bestehende Note für einen Notenschlüssel fest. Jede Note mit höheren Prozentsätzen wird ebenfalls als bestanden gewertet"
                 }
             }
         },
         "gradingScale": {
-            "created": "Benotungssystem wurde erstellt",
-            "updated": "Benotungssystem wurde aktualisiert",
-            "deleted": "Benotungssystem wurde gelöscht"
+            "created": "Notenschlüssel wurde erstellt",
+            "updated": "Notenschlüssel wurde aktualisiert",
+            "deleted": "Notenschlüssel wurde gelöscht"
         }
     }
 }

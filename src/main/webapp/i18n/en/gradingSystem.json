@@ -1,10 +1,10 @@
 {
     "artemisApp": {
         "gradingSystem": {
-            "title": "Grading system",
-            "titleCourse": "Grading system for course",
-            "titleExam": "Grading system for exam",
-            "defaultButton": "Generate Default Grading Scale",
+            "title": "Grade key",
+            "titleCourse": "Grade key for course",
+            "titleExam": "Grade key for exam",
+            "defaultButton": "Generate Default Grade key",
             "gradeType": {
                 "title": "Grade Type",
                 "grade": "Grade",
@@ -21,18 +21,18 @@
             "gradeName": "Grade Name",
             "bonusPoints": "Bonus Points",
             "delete": "Delete",
-            "deleteQuestion": "Do you really wish to delete the grading scale?",
+            "deleteQuestion": "Do you really wish to delete the grade key?",
             "add": "Add Grade Step",
             "save": "Save",
             "info": {
-                "title": "Grading System Help",
+                "title": "Grade Key Help",
                 "general": {
                     "title": "General Information",
-                    "explanation": "A grading scale consists of grade steps that cover all possible percentages from 0 to 100. All adjacent grade steps should overlap on their boundaries (Example: grade steps (60, 70) and (70, 80) overlap at 70%). Which grade step includes that boundary is determined by the \"Lower Bound Inclusivity\". All grade steps also have either a name (1.0, Ausreichend, A,...) or a bonus point count (5, 10,..) depending on the \"Grade Type\""
+                    "explanation": "A grade key consists of grade steps that cover all possible percentages from 0 to 100. All adjacent grade steps should overlap on their boundaries (Example: grade steps (60, 70) and (70, 80) overlap at 70%). Which grade step includes that boundary is determined by the \"Lower Bound Inclusivity\". All grade steps also have either a name (1.0, Ausreichend, A,...) or a bonus point count (5, 10,..) depending on the \"Grade Type\""
                 },
                 "gradeType": {
                     "title": "Grade Type",
-                    "explanation": "A grading scale can either map directly to grades or to bonus points for the course or the final exam"
+                    "explanation": "A grade key can either map directly to grades or to bonus points for the course or the final exam"
                 },
                 "inclusivity": {
                     "title": "Inclusivity",
@@ -40,14 +40,14 @@
                 },
                 "firstPassingGrade": {
                     "title": "First Passing Grade",
-                    "explanation": "Sets the first passing grade for a grading scale. Every grade with higher percentages will be considered passing as well"
+                    "explanation": "Sets the first passing grade for a grade key. Every grade with higher percentages will be considered passing as well"
                 }
             }
         },
         "gradingScale": {
-            "created": "Grading scale has been created",
-            "updated": "Grading scale has been updated",
-            "deleted": "Grading scale has been deleted"
+            "created": "Grade key has been created",
+            "updated": "Grade key has been updated",
+            "deleted": "Grade key has been deleted"
         }
     }
 }
