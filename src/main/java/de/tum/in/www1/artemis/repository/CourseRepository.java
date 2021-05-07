@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -166,13 +167,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return A list with a map for every submission containing date and the username
      */
     @Query("""
-            SELECT s.submissionDate AS day, p.student.login AS username
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                substring(s.submissionDate, 1, 10), p.student.login
+                )
             FROM StudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
                 AND s.submissionDate >= :#{#startDate}
                 AND s.submissionDate <= :#{#endDate}
+                group by substring(s.submissionDate, 1, 10), p.student.login
             """)
-    List<Map<String, Object>> getActiveStudents(@Param("exerciseIds") List<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+    List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
      * Fetches the courses to display for the management overview
