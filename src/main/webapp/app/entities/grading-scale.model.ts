@@ -1,16 +1,13 @@
 import { GradeStep } from 'app/entities/grade-step.model';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
-export class GradingScale {
-    id?: number;
-    course?: Course;
-    exam?: Exam;
-    gradeType: GradeType = GradeType.NONE;
-    gradeSteps: GradeStep[];
+export class GradingScale implements BaseEntity {
+    public id?: number;
+    public gradeType: GradeType = GradeType.NONE;
+    public gradeSteps: GradeStep[];
 }
 
-export const enum GradeType {
+export enum GradeType {
     NONE = 'NONE',
     GRADE = 'GRADE',
     BONUS = 'BONUS',

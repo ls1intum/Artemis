@@ -64,6 +64,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/file-upload-exercises/:exerciseId',
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
                 },
+                {
+                    path: 'courses/:courseId/grading-system',
+                    loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+                },
                 // ===== EXAM =====
                 {
                     path: 'courses/:courseId/exams/:examId',
@@ -72,6 +76,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'course-management/:courseId/exams',
                     loadChildren: () => import('./exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+                },
+                {
+                    path: 'courses/:courseId/exams/:examId/Dgrading-system',
+                    loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
                 },
                 {
                     path: 'features',
