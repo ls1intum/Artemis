@@ -10,15 +10,15 @@ import { ChartDataSets } from 'chart.js';
     template: `
         <div>
             <div>
-                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | translate }}</h4>
-                <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | translate"></p>
+                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.title' | artemisTranslate }}</h4>
+                <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
             </div>
             <div class="bg-light">
                 <jhi-chart [preset]="weightChartPreset" [datasets]="weightChartDatasets"></jhi-chart>
             </div>
             <div class="mt-4">
-                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | translate }}</h4>
-                <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | translate"></p>
+                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title' | artemisTranslate }}</h4>
+                <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
             </div>
             <div class="bg-light" style="height: 100px">
                 <jhi-chart [preset]="pointsChartPreset" [datasets]="pointsChartDatasets"></jhi-chart>

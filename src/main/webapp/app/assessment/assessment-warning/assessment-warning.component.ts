@@ -12,7 +12,7 @@ if the due date is not over yet as they are allowed to assess submissions there
         <h6>
             <div class="card-header" *ngIf="this.isBeforeDueDate">
                 <fa-icon [icon]="'exclamation-triangle'" size="2x" class="text-warning" placement="bottom"></fa-icon>
-                {{ 'artemisApp.assessment.dashboard.warning' | translate }}
+                {{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}
             </div>
         </h6>
     `,
