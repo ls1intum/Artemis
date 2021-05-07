@@ -14,7 +14,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
+import { JhiAlertService } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import * as sinon from 'sinon';
@@ -30,6 +30,9 @@ import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { BuildPlanButtonDirective } from 'app/exercises/programming/shared/utils/build-plan-button.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { MockTranslateValuesDirective } from '../../course/course-scores/course-scores.component.spec';
+import { DifferencePipe } from 'ngx-moment';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -67,18 +70,19 @@ describe('Exercise Scores Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: Router, useValue: router },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                DifferencePipe,
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseScoresComponent);
-                component = fixture.componentInstance;
-                exerciseService = TestBed.inject(ExerciseService);
-                accountService = TestBed.inject(AccountService);
-                resultService = TestBed.inject(ResultService);
-                profileService = TestBed.inject(ProfileService);
-                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseScoresComponent);
+        component = fixture.componentInstance;
+        exerciseService = TestBed.inject(ExerciseService);
+        accountService = TestBed.inject(AccountService);
+        resultService = TestBed.inject(ResultService);
+        profileService = TestBed.inject(ProfileService);
+        programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
     });
 
     afterEach(() => {
