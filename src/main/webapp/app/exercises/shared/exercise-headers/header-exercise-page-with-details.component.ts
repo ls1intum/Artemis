@@ -67,7 +67,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
         }
     }
 
-    attachmentNotReleased(attachment: Attachment): boolean {
-        return attachment.releaseDate != undefined && !moment(attachment.releaseDate).isBefore(moment())!;
+    notReleased(): boolean {
+        return this.exercise.releaseDate != undefined && !moment(this.exercise.releaseDate).isBefore(moment())!;
     }
 }

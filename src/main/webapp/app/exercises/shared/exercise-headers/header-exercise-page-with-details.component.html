@@ -33,13 +33,11 @@
                         {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
                 </h4>
-                <h4 class="row mb-2" *ngIf="exercise!.attachments">
-                    <h4 *ngFor="let attachment of exercise!.attachments">
-                        <span class="ml-1 badge badge-warning" *ngIf="attachmentNotReleased(attachment)">
-                            {{ 'artemisApp.exercise.attachments.title' | artemisTranslate }}
-                        </span>
-                    </h4>
+
+                <h4>
+                    <span class="ml-1 badge badge-warning" *ngIf="notReleased()"> {{ "Not release" }} </span>
                 </h4>
+
             </ng-template>
 
             <div class="d-md-flex" *ngIf="exercise.categories">
