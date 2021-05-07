@@ -31,7 +31,7 @@ describe('ExerciseHint Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should find an element', async () => {
+        it('should find an element', () => {
             const returnedFromService = Object.assign({}, elemDefault);
             service
                 .find(123)
@@ -43,7 +43,7 @@ describe('ExerciseHint Service', () => {
             expect(expectedResult.body).to.deep.equal(elemDefault);
         });
 
-        it('should create a ExerciseHint', async () => {
+        it('should create a ExerciseHint', () => {
             const returnedFromService = Object.assign(
                 {
                     id: 0,
@@ -60,7 +60,7 @@ describe('ExerciseHint Service', () => {
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
-        it('should update a ExerciseHint', async () => {
+        it('should update a ExerciseHint', () => {
             const returnedFromService = Object.assign(
                 {
                     title: 'BBBBBB',
@@ -79,7 +79,7 @@ describe('ExerciseHint Service', () => {
             expect(expectedResult.body).to.deep.equal(expected);
         });
 
-        it('should delete a ExerciseHint', async () => {
+        it('should delete a ExerciseHint', () => {
             service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
