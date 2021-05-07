@@ -42,7 +42,7 @@ import { Component, Input } from '@angular/core';
                     <fa-icon
                         class="ml-2 text-white"
                         icon="exclamation-triangle"
-                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | translate"
+                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | artemisTranslate"
                     ></fa-icon>
                     <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.updatedGradingConfigShort"></span>
                 </div>
@@ -58,7 +58,7 @@ import { Component, Input } from '@angular/core';
                     <fa-icon
                         class="ml-2 text-white"
                         icon="question-circle"
-                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.notReleasedTooltip' | translate"
+                        [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.notReleasedTooltip' | artemisTranslate"
                     ></fa-icon>
                     <span class="ml-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.notReleased"></span>
                 </div>

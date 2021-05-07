@@ -142,7 +142,6 @@ export class StudentQuestionRowComponent implements OnInit {
     addAnswer(): void {
         const studentQuestionAnswer = new StudentQuestionAnswer();
         studentQuestionAnswer.answerText = this.questionAnswerText;
-        studentQuestionAnswer.author = this.user;
         studentQuestionAnswer.verified = true;
         studentQuestionAnswer.question = this.studentQuestion;
         studentQuestionAnswer.tutorApproved = false;

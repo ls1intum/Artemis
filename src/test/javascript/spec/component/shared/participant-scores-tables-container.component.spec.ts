@@ -1,7 +1,6 @@
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { Component, Input } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
@@ -9,6 +8,7 @@ import * as chai from 'chai';
 import { ParticipantScoresTablesContainerComponent } from 'app/shared/participant-scores/participant-scores-tables-container/participant-scores-tables-container.component';
 import { NgbButtonsModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,7 +36,12 @@ describe('ParticipantScoresTablesContainer', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, NgbTooltipModule, NgbButtonsModule],
-            declarations: [ParticipantScoresTablesContainerComponent, ParticipantScoresTableStubComponent, ParticipantScoresAverageTableStubComponent, MockPipe(TranslatePipe)],
+            declarations: [
+                ParticipantScoresTablesContainerComponent,
+                ParticipantScoresTableStubComponent,
+                ParticipantScoresAverageTableStubComponent,
+                MockPipe(ArtemisTranslatePipe),
+            ],
         })
             .compileComponents()
             .then(() => {
