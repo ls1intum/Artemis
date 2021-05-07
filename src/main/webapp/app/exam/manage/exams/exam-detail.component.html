@@ -33,6 +33,11 @@
                     <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                 </a>
 
+                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('grading-system')" class="btn btn-info">
+                    <fa-icon [icon]="'clipboard'"></fa-icon>
+                    <span>{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
+                </a>
+
                 <a *ngIf="isAtLeastEditor" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups">
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
