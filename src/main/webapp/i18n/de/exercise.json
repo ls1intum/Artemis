@@ -53,6 +53,7 @@
             "title": "Titel",
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
+            "notReleased": "Nicht veröffentlicht",
             "dueDate": "Einreichungsfrist",
             "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal",
             "assessmentDueDate": "Einreichungsfrist der Bewertung",

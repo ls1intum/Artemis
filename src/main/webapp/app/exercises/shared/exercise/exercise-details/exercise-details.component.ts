@@ -43,8 +43,4 @@ export class ExerciseDetailsComponent implements OnInit {
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.exercise);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
     }
-
-    attachmentNotReleased(attachment: Attachment): boolean {
-        return attachment.releaseDate != undefined && !moment(attachment.releaseDate).isBefore(moment())!;
-    }
 }

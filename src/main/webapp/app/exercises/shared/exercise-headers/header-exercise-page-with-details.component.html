@@ -21,6 +21,13 @@
                 </h4>
             </ng-template>
             <ng-template #courseMode>
+                <h4 *ngIf="notReleased()">
+                    <span class="mr-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }} : {{ (exercise.releaseDate | artemisDate) || 'N/A' }} </span>
+                    <span class="ml-1 badge badge-warning"> {{ 'artemisApp.exercise.notReleased' | artemisTranslate }} </span>
+                    <span [ngClass]="exerciseStatusBadge" class="badge">
+                        {{ exercise.releaseDate | artemisTimeAgo }}
+                    </span>
+                </h4>
                 <h4>
                     <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
                     <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
@@ -33,11 +40,6 @@
                         {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
                 </h4>
-
-                <h4>
-                    <span class="ml-1 badge badge-warning" *ngIf="notReleased()"> {{ "Not release" }} </span>
-                </h4>
-
             </ng-template>
 
             <div class="d-md-flex" *ngIf="exercise.categories">
