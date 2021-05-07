@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -71,6 +72,9 @@ public class CourseResource {
 
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
@@ -1048,8 +1052,11 @@ public class CourseResource {
         if (!course.hasCourseArchive()) {
             return notFound();
         }
+
         // The path is stored in the course table
-        File zipFile = new File(course.getCourseArchivePath());
+        Path archive = Path.of(courseArchivesDirPath, course.getCourseArchivePath());
+
+        File zipFile = archive.toFile();
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
