@@ -58,11 +58,27 @@
             <button
                 type="button"
                 class="btn btn-warning"
-                (click)="modal.close('archive')"
+                (click)="modal.close('archive-confirm')"
                 [jhiTranslate]="archiveMode === 'Course' ? 'artemisApp.courseExamArchive.archiveCourse' : 'artemisApp.courseExamArchive.archiveExam'"
             >
                 Archive
             </button>
+        </div>
+    </ng-template>
+    <ng-template #archiveConfirmModal let-modal>
+        <div class="modal-header">
+            <h4 class="modal-title">
+                <span [jhiTranslate]="'artemisApp.courseExamArchive.confirmArchive.title'">Warning: an archive already exists!</span>
+            </h4>
+        </div>
+        <div class="modal-body">
+            <p [jhiTranslate]="'artemisApp.courseExamArchive.confirmArchive.message'">
+                Warning! The course has already been archived. If you continue, the archive will be overwritten! Are you sure you want to continue?
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-warning" (click)="modal.close('archive')" [jhiTranslate]="'global.generic.yes'">Yes</button>
+            <button type="button" class="btn btn-success" [jhiTranslate]="'global.generic.no'" (click)="modal.dismiss()">No</button>
         </div>
     </ng-template>
     <button *ngIf="canArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-warning mr-1 mb-1" (click)="openModal(archiveWarningPopup)">
@@ -70,7 +86,7 @@
         <fa-icon [hidden]="isBeingArchived" [icon]="'archive'"></fa-icon>&nbsp;
         <span>{{ archiveButtonText }}</span>
     </button>
-    <button *ngIf="canDownloadArchive()" [disabled]="isBeingArchived" type="button" class="btn btn-primary mr-1 mb-1" (click)="downloadArchive()">
+    <button *ngIf="displayDownloadArchiveButton" [disabled]="isBeingArchived" type="button" class="btn btn-primary mr-1 mb-1" (click)="downloadArchive()">
         <fa-icon [icon]="'download'"></fa-icon>&nbsp;
         <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
     </button>
