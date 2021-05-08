@@ -124,6 +124,7 @@ export class LectureService {
             res.body.forEach((lecture: Lecture) => {
                 if (lecture.course) {
                     lecture.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(lecture.course);
+                    lecture.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(lecture.course);
                 }
             });
         }

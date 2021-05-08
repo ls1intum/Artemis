@@ -50,7 +50,7 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastInstructor"
+                    *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastEditor"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
@@ -70,7 +70,7 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    *ngIf="programmingExercise.isAtLeastEditor"
                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                     class="btn btn-outline-primary btn-sm mr-1"
                     routerLink="plagiarism"

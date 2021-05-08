@@ -109,7 +109,7 @@ public class GradingScaleResource {
             return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected course");
         }
         else if (gradingScale.getGradeSteps() == null || gradingScale.getGradeSteps().isEmpty()) {
-            return badRequest(ENTITY_NAME, "noGradeSteps", "A grading scale must contain grade steps");
+            return badRequest(ENTITY_NAME, "emptyGradeSteps", "A grading scale must contain grade steps");
         }
         else if (gradingScale.getId() != null) {
             return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
@@ -142,7 +142,7 @@ public class GradingScaleResource {
             return badRequest(ENTITY_NAME, "gradingScaleAlreadyExists", "A grading scale already exists for the selected exam");
         }
         else if (gradingScale.getGradeSteps() == null || gradingScale.getGradeSteps().isEmpty()) {
-            return badRequest(ENTITY_NAME, "noGradeSteps", "A grading scale must contain grade steps");
+            return badRequest(ENTITY_NAME, "emptyGradeSteps", "A grading scale must contain grade steps");
         }
         else if (gradingScale.getId() != null) {
             return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");

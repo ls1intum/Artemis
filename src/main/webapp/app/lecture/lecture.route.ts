@@ -38,7 +38,7 @@ export const lectureRoute: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -54,7 +54,7 @@ export const lectureRoute: Routes = [
                 path: 'new',
                 component: LectureUpdateComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'global.generic.create',
                 },
                 canActivate: [UserRouteAccessService],
@@ -66,7 +66,7 @@ export const lectureRoute: Routes = [
                     lecture: LectureResolve,
                 },
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.lecture.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -81,7 +81,7 @@ export const lectureRoute: Routes = [
                         path: 'attachments',
                         component: LectureAttachmentsComponent,
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.lecture.attachments.title',
                         },
                         canActivate: [UserRouteAccessService],
@@ -90,7 +90,7 @@ export const lectureRoute: Routes = [
                         path: 'edit',
                         component: LectureUpdateComponent,
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'global.generic.edit',
                         },
                         canActivate: [UserRouteAccessService],

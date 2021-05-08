@@ -93,7 +93,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepValidMappingExists() {
         GradeStep expectedGradeStep = new GradeStep();
-        expectedGradeStep.setPassingGrade(true);
+        expectedGradeStep.setIsPassingGrade(true);
         expectedGradeStep.setGradeName("Pass");
         expectedGradeStep.setLowerBoundPercentage(60);
         expectedGradeStep.setUpperBoundPercentage(90);
@@ -116,7 +116,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsNoGradeName() {
         GradeStep gradeStep = new GradeStep();
-        gradeStep.setPassingGrade(true);
+        gradeStep.setIsPassingGrade(true);
         gradeStep.setGradeName("");
         gradeStep.setLowerBoundPercentage(90);
         gradeStep.setUpperBoundPercentage(100);
@@ -129,7 +129,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(exception.getMessage()).isEqualTo("Not all grade steps are following the correct format.");
         assertThat(exception.getEntityName()).isEqualTo("gradeStep");
-        assertThat(exception.getErrorKey()).isEqualTo("invalidFormat");
+        assertThat(exception.getErrorKey()).isEqualTo("invalidGradeStepFormat");
     }
 
     /**
@@ -139,7 +139,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsInvalidPercentageValues() {
         GradeStep gradeStep = new GradeStep();
-        gradeStep.setPassingGrade(true);
+        gradeStep.setIsPassingGrade(true);
         gradeStep.setGradeName("Name");
         gradeStep.setLowerBoundPercentage(90);
         gradeStep.setUpperBoundPercentage(80);
@@ -152,7 +152,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(exception.getMessage()).isEqualTo("Not all grade steps are following the correct format.");
         assertThat(exception.getEntityName()).isEqualTo("gradeStep");
-        assertThat(exception.getErrorKey()).isEqualTo("invalidFormat");
+        assertThat(exception.getErrorKey()).isEqualTo("invalidGradeStepFormat");
     }
 
     /**
@@ -170,7 +170,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(exception.getMessage()).isEqualTo("Grade step set can't match to a valid grading scale.");
         assertThat(exception.getEntityName()).isEqualTo("gradeStep");
-        assertThat(exception.getErrorKey()).isEqualTo("invalidFormat");
+        assertThat(exception.getErrorKey()).isEqualTo("invalidGradeStepAdjacency");
     }
 
     /**

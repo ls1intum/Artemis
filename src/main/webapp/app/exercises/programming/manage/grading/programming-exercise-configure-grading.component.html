@@ -22,6 +22,7 @@
                     [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                 ></jhi-programming-exercise-configure-grading-status>
                 <jhi-programming-exercise-configure-grading-actions
+                    *ngIf="exercise.isAtLeastInstructor"
                     [exercise]="exercise"
                     [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                     [isSaving]="isSaving"

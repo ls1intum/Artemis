@@ -84,6 +84,8 @@ public class StudentQuestionResource {
         }
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        // set author to current user
+        studentQuestion.setAuthor(user);
         StudentQuestion question = studentQuestionRepository.save(studentQuestion);
         if (question.getExercise() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForExercise(question);

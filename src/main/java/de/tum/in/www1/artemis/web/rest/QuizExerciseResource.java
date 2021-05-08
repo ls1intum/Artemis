@@ -185,6 +185,7 @@ public class QuizExerciseResource {
         quizExercise.reconnectJSONIgnoreAttributes();
 
         quizExercise = quizExerciseService.save(quizExercise);
+        exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         // TODO: it does not really make sense to notify students here because the quiz is not visible yet when it is edited!
         // Only notify students about changes if a regular exercise in a course was updated
@@ -207,7 +208,8 @@ public class QuizExerciseResource {
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
         }
         var quizExercises = quizExerciseRepository.findByCourseId(courseId);
@@ -315,7 +317,7 @@ public class QuizExerciseResource {
     }
 
     /**
-     * POST /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
+     * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
      * @param quizExerciseId     the id of the quiz exercise to start
      * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
@@ -444,11 +446,13 @@ public class QuizExerciseResource {
                     "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(originalQuizExercise, null)) {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorForExercise(originalQuizExercise, user)) {
             return forbidden();
         }
 
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
+        exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         exerciseService.validateScoreSettings(quizExercise);
 
