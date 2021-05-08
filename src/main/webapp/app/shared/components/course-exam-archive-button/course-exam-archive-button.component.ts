@@ -41,9 +41,13 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     @ViewChild('archiveCompleteWithWarningsModal', { static: false })
     archiveCompleteWithWarningsModal: TemplateRef<any>;
 
+    @ViewChild('archiveConfirmModal', { static: false })
+    archiveConfirmModal: TemplateRef<any>;
+
     isBeingArchived = false;
     archiveButtonText = '';
     archiveWarnings: string[] = [];
+    displayDownloadArchiveButton = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -67,6 +71,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
         this.registerArchiveWebsocket();
         this.archiveButtonText = this.getArchiveButtonText();
+        this.displayDownloadArchiveButton = this.canDownloadArchive();
 
         // update the span title on each language change
         this.translateService.onLangChange.subscribe(() => {
@@ -104,6 +109,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
             this.archiveWarnings = message.split('\n');
             this.openModal(this.archiveCompleteWithWarningsModal);
+            this.reloadCourseOrExam();
         }
     }
 
@@ -112,11 +118,13 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             this.examService.find(this.course.id!, this.exam.id!).subscribe((res) => {
                 this.exam = res.body!;
                 this.changeDetectionRef.detectChanges();
+                this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         } else {
             this.courseService.find(this.course.id!).subscribe((res) => {
                 this.course = res.body!;
                 this.changeDetectionRef.detectChanges();
+                this.displayDownloadArchiveButton = this.canDownloadArchive();
             });
         }
     }
@@ -158,7 +166,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     openModal(modalRef: TemplateRef<any>) {
         this.modalService.open(modalRef).result.then(
             (result: string) => {
-                if (result === 'archive') {
+                if (result === 'archive-confirm' && this.canDownloadArchive()) {
+                    this.openModal(this.archiveConfirmModal);
+                }
+                if (result === 'archive' || !this.canDownloadArchive()) {
                     this.archive();
                 } else {
                     this.reloadCourseOrExam();

@@ -17,6 +17,8 @@ public class StatisticsEntry {
 
     private String username;
 
+    private String date;
+
     public StatisticsEntry(TemporalAccessor day, long amount) {
         this.day = day;
         this.amount = amount;
@@ -25,6 +27,12 @@ public class StatisticsEntry {
 
     public StatisticsEntry(TemporalAccessor day, String username) {
         this.day = day;
+        this.amount = 1L;
+        this.username = username;
+    }
+
+    public StatisticsEntry(String date, String username) {
+        this.date = date;
         this.amount = 1L;
         this.username = username;
     }
@@ -56,5 +64,13 @@ public class StatisticsEntry {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
     }
 }

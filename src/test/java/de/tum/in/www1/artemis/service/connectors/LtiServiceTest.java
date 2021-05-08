@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
@@ -130,6 +132,22 @@ public class LtiServiceTest {
     }
 
     @Test
+    public void handleLaunchRequest_lookupWithLtiEmailAddressWithContextLabelTumx() {
+        String username = "username";
+        String email = launchRequest.getLis_person_contact_email_primary();
+        launchRequest.setCustom_lookup_user_by_email(true);
+        when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
+        when(artemisAuthenticationProvider.getUsernameForEmail(email)).thenReturn(Optional.of(username));
+        when(artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), "", launchRequest.getLis_person_sourcedid(), email, true))
+                .thenReturn(user);
+
+        onSuccessfulAuthenticationSetup(user, ltiUserId);
+        launchRequest.setContext_label("TUMx");
+        ltiService.handleLaunchRequest(launchRequest, exercise);
+        onSuccessfulAuthenticationAssertions(user, ltiUserId);
+    }
+
+    @Test
     public void handleLaunchRequest_newUserIsNotRequired() {
         String username = launchRequest.getLis_person_sourcedid();
         Set<String> groups = new HashSet<>();
@@ -141,6 +159,30 @@ public class LtiServiceTest {
                 null, "en")).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
+        ltiService.handleLaunchRequest(launchRequest, exercise);
+        onSuccessfulAuthenticationAssertions(user, ltiUserId);
+        verify(userCreationService).activateUser(user);
+
+        SecurityContextHolder.clearContext();
+        launchRequest.setContext_label("randomLabel");
+        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
+        assertThat(exception.getMessage()).isEqualTo(expectedMessage);
+    }
+
+    @Test
+    public void handleLaunchRequest_newUserIsNotRequiredWithContextLabelTumx() {
+        String username = launchRequest.getLis_person_sourcedid();
+        Set<String> groups = new HashSet<>();
+        groups.add("");
+        user.setActivated(false);
+        when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
+        when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
+        when(userCreationService.createInternalUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null,
+                null, "en")).thenReturn(user);
+
+        onSuccessfulAuthenticationSetup(user, ltiUserId);
+        launchRequest.setContext_label("TUMx");
         ltiService.handleLaunchRequest(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
         verify(userCreationService).activateUser(user);
@@ -170,11 +212,31 @@ public class LtiServiceTest {
     }
 
     @Test
+    public void handleLaunchRequest_alreadyAuthenticated() {
+        launchRequest.setCustom_require_existing_user(true);
+        when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
+        SecurityUtils.setAuthorizationObject();
+        onSuccessfulAuthenticationSetup(user, ltiUserId);
+        ltiService.handleLaunchRequest(launchRequest, exercise);
+        onSuccessfulAuthenticationAssertions(user, ltiUserId);
+    }
+
+    @Test
     public void onSuccessfulLtiAuthentication() {
         ltiUserId.setLtiUserId("oldStudentId");
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         ltiService.onSuccessfulLtiAuthentication(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
+    }
+
+    @Test
+    public void onSuccessfulLtiAuthenticationWithoutUrl() {
+        launchRequest.setLis_outcome_service_url(null);
+        launchRequest.setUser_id(null);
+        onSuccessfulAuthenticationSetup(user, ltiUserId);
+        ltiService.onSuccessfulLtiAuthentication(launchRequest, exercise);
+        assertNull(ltiOutcomeUrl.getUrl());
+        assertNull(ltiUserId.getLtiUserId());
     }
 
     private void onSuccessfulAuthenticationSetup(User user, LtiUserId ltiUserId) {

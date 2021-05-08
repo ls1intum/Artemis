@@ -80,6 +80,8 @@ public class LtiService {
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
+    private final HttpClient client;
+
     // Ok, Spring actually injects the response for the current context using a proxy
     // TODO Although this works, this is a bad design practice and we should move all response related code to the controller
     private final HttpServletResponse response;
@@ -95,6 +97,7 @@ public class LtiService {
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
         this.response = response;
+        this.client = HttpClientBuilder.create().build();
     }
 
     /**
@@ -452,7 +455,6 @@ public class LtiService {
                             ltiOutcomeUrl.getSourcedId());
                     HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY.get(), OAUTH_SECRET.get(), ltiOutcomeUrl.getSourcedId(), score, null,
                             false);
-                    HttpClient client = HttpClientBuilder.create().build();
                     HttpResponse response = client.execute(request);
                     String responseString = new BasicResponseHandler().handleResponse(response);
                     log.info("Response from LTI consumer: {}", responseString);

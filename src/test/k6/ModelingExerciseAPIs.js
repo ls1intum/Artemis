@@ -11,7 +11,7 @@ import {
     submitRandomModelingAnswerExam,
 } from './requests/modeling.js';
 import { login } from './requests/requests.js';
-import { createTutorsIfNeeded, createUsersIfNeeded } from './requests/user.js';
+import { createUsersIfNeeded } from './requests/user.js';
 
 // Version: 1.1
 // Creator: Firefox
