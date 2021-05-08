@@ -124,13 +124,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         for (User user : allUsers) {
             Set<String> userGroups = user.getGroups();
-            if (userGroups != null) {
-                if (userGroups.contains(oldTeachingAssistantGroup) || userGroups.contains(oldEditorGroup) || userGroups.contains(oldInstructorGroup)) {
-                    oldUsers.add(user);
-                }
-                else {
-                    newUsers.add(user);
-                }
+            if (userGroups.contains(oldTeachingAssistantGroup) || userGroups.contains(oldEditorGroup) || userGroups.contains(oldInstructorGroup)) {
+                oldUsers.add(user);
+            }
+            else {
+                newUsers.add(user);
             }
         }
 
@@ -150,11 +148,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var userApi = gitlabApi.getUserApi();
 
         for (User user : newUsers) {
-            Set<String> groups = user.getGroups();
-            if (groups == null) {
-                continue;
-            }
-
             try {
                 var gitlabUser = userApi.getUser(user.getLogin());
                 if (gitlabUser == null) {
@@ -162,7 +155,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     continue;
                 }
 
-                Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(groups, updatedCourse);
+                Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(user.getGroups(), updatedCourse);
                 if (accessLevel.isPresent()) {
                     addUserToGroupsOfExercises(gitlabUser.getId(), programmingExercises, accessLevel.get());
                 }
@@ -174,7 +167,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 throw new GitLabException("Error while trying to set permission for user in GitLab: " + user, e);
             }
         }
-
     }
 
     /**
