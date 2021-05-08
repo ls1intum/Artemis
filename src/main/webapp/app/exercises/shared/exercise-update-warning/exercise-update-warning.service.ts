@@ -3,8 +3,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
-import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseUpdateWarningService {
@@ -15,11 +13,7 @@ export class ExerciseUpdateWarningService {
     scoringChanged: boolean;
     isSaving: boolean;
 
-    private textExerciseUpdateComponent: TextExerciseUpdateComponent;
-
-    constructor(private modalService: NgbModal, private textExerciseService: TextExerciseService) {
-        // this.ngbModalRef = null;
-    }
+    constructor(private modalService: NgbModal) {}
 
     /**
      * Open the modal with the given content for the given exercise.
