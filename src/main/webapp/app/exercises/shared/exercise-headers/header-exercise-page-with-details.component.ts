@@ -5,7 +5,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { Attachment } from "app/entities/attachment.model";
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
