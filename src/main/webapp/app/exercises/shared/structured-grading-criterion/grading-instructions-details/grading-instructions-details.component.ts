@@ -386,8 +386,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         const criteria = new GradingCriterion();
         criteria.structuredGradingInstructions = [];
         criteria.structuredGradingInstructions.push(new GradingInstruction());
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
-        this.exercise.gradingCriteria?.push(criteria);
+        this.exercise.gradingCriteria!.push(criteria);
     }
 
     /**
@@ -422,7 +421,6 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      */
     deleteGradingCriteria(criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
-        // eslint-disable-next-line chai-friendly/no-unused-expressions
-        this.exercise.gradingCriteria?.splice(criteriaIndex, 1);
+        this.exercise.gradingCriteria!.splice(criteriaIndex, 1);
     }
 }
