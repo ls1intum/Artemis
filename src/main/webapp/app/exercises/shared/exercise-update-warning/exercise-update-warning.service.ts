@@ -57,22 +57,21 @@ export class ExerciseUpdateWarningService {
      */
     loadExercise(exercise: Exercise, backupExercise: Exercise): void {
         // check each instruction
-        exercise.gradingCriteria!.forEach((criteria) => {
+        backupExercise.gradingCriteria!.forEach((criteriaBackup) => {
             // find same question in backUp (necessary if the order has been changed)
-            const backupCriteria = backupExercise.gradingCriteria?.find((criteriaBackup) => criteria.id === criteriaBackup.id)!;
+            const updatedCriteria = exercise.gradingCriteria?.find((criteria) => criteria.id === criteriaBackup.id);
 
-            if (backupCriteria) {
-                if (criteria.structuredGradingInstructions!.length !== backupCriteria.structuredGradingInstructions!.length) {
-                    this.instructionDeleted = true;
-                }
-
-                criteria.structuredGradingInstructions.forEach((instruction) => {
-                    const backupInstruction = backupCriteria.structuredGradingInstructions?.find((instructionBackup) => instruction.id === instructionBackup.id)!;
-
-                    if (backupInstruction) {
-                        this.checkInstruction(instruction, backupInstruction);
+            if (updatedCriteria) {
+                criteriaBackup.structuredGradingInstructions.forEach((instructionBackup) => {
+                    const updatedInstruction = updatedCriteria.structuredGradingInstructions?.find((instruction) => instruction.id === instructionBackup.id);
+                    if (updatedInstruction) {
+                        this.checkInstruction(updatedInstruction, instructionBackup);
+                    } else {
+                        this.instructionDeleted = true;
                     }
                 });
+            } else {
+                this.instructionDeleted = true;
             }
         });
     }
@@ -85,11 +84,9 @@ export class ExerciseUpdateWarningService {
      * @param backupInstruction original not changed instruction
      */
     checkInstruction(instruction: GradingInstruction, backupInstruction: GradingInstruction): void {
-        if (backupInstruction) {
-            // instruction credits changed?
-            if (instruction.credits !== backupInstruction.credits) {
-                this.scoringChanged = true;
-            }
+        // instruction credits changed?
+        if (instruction.credits !== backupInstruction.credits) {
+            this.scoringChanged = true;
         }
     }
 }
