@@ -180,7 +180,6 @@
                     "warning": "Warnung!",
                     "confirm": "Änderungen bestätigen",
                     "problems": "Folgende Probleme können auftreten:",
-                    "gradingCriteria_deleted": "Benotungskriterien gelöscht:",
                     "instruction_deleted": "Benotungshinweise gelöscht:",
                     "scoring_change": "Bewertungsart verändert:",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",

@@ -8,7 +8,6 @@ import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-up
 export class ExerciseUpdateWarningService {
     private ngbModalRef: NgbModalRef;
 
-    gradingCriteriaDeleted: boolean;
     instructionDeleted: boolean;
     scoringChanged: boolean;
     isSaving: boolean;
@@ -21,7 +20,6 @@ export class ExerciseUpdateWarningService {
      */
     open(component: Component): NgbModalRef {
         const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.gradingCriteriaDeleted = this.gradingCriteriaDeleted;
         modalRef.componentInstance.instructionDeleted = this.instructionDeleted;
         modalRef.componentInstance.scoringChanged = this.scoringChanged;
 
@@ -36,12 +34,11 @@ export class ExerciseUpdateWarningService {
      * @param backupExercise the copy of exercise for which the modal should be shown
      */
     checkExerciseBeforeUpdate(exercise: Exercise, backupExercise: Exercise): Promise<NgbModalRef> {
-        this.gradingCriteriaDeleted = false;
         this.instructionDeleted = false;
         this.scoringChanged = false;
         this.loadExercise(exercise, backupExercise);
         return new Promise<NgbModalRef>((resolve) => {
-            if (this.gradingCriteriaDeleted || this.scoringChanged || this.instructionDeleted) {
+            if (this.scoringChanged || this.instructionDeleted) {
                 this.ngbModalRef = this.open(ExerciseUpdateWarningComponent as Component);
             }
             resolve(this.ngbModalRef);
@@ -59,22 +56,21 @@ export class ExerciseUpdateWarningService {
      * @param backupExercise the copy of exercise for which the modal should be shown
      */
     loadExercise(exercise: Exercise, backupExercise: Exercise): void {
-        // criteria deleted?
-        this.gradingCriteriaDeleted = backupExercise.gradingCriteria!.length !== exercise.gradingCriteria!.length;
-
         // check each instruction
         exercise.gradingCriteria!.forEach((criteria) => {
             // find same question in backUp (necessary if the order has been changed)
             const backupCriteria = backupExercise.gradingCriteria?.find((criteriaBackup) => criteria.id === criteriaBackup.id)!;
 
-            if (criteria.structuredGradingInstructions!.length !== backupCriteria.structuredGradingInstructions!.length) {
+            if (backupCriteria && criteria.structuredGradingInstructions!.length !== backupCriteria.structuredGradingInstructions!.length) {
                 this.instructionDeleted = true;
             }
 
             criteria.structuredGradingInstructions.forEach((instruction) => {
                 const backupInstruction = backupCriteria.structuredGradingInstructions?.find((instructionBackup) => instruction.id === instructionBackup.id)!;
 
-                this.checkInstruction(instruction, backupInstruction);
+                if (backupInstruction) {
+                    this.checkInstruction(instruction, backupInstruction);
+                }
             });
         });
     }

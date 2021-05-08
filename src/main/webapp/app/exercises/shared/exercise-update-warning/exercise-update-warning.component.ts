@@ -6,8 +6,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './exercise-update-warning.component.html',
 })
 export class ExerciseUpdateWarningComponent implements OnInit {
-    isSaving: boolean;
-    gradingCriteriaDeleted = false;
     instructionDeleted = false;
     scoringChanged = false;
 
@@ -16,26 +14,20 @@ export class ExerciseUpdateWarningComponent implements OnInit {
 
     constructor(public activeModal: NgbActiveModal) {}
 
-    /**
-     * Reset saving status, load the quiz by id and back it up.
-     */
-    ngOnInit(): void {
-        this.isSaving = false;
-    }
+    ngOnInit(): void {}
 
     /**
      * Closes the modal
      */
     clear(): void {
-        this.activeModal.dismiss('cancel');
+        this.activeModal.close();
     }
 
     /**
      * Confirm changes
      */
     confirmChange(): void {
-        this.isSaving = true;
         this.confirmed.emit();
-        this.activeModal.close('test');
+        this.activeModal.close();
     }
 }

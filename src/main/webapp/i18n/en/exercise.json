@@ -180,7 +180,6 @@
                     "warning": "Warning!",
                     "confirm": "Confirm changes",
                     "problems": "The following problems may occur:",
-                    "gradingCriteria_deleted": "Grading Criteria deleted:",
                     "instruction_deleted": "Grading Instruction deleted:",
                     "scoring_change": "Scoring changed:",
                     "results": "The existing results must be recalculated!",
