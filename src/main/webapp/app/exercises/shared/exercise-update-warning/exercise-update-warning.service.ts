@@ -61,17 +61,19 @@ export class ExerciseUpdateWarningService {
             // find same question in backUp (necessary if the order has been changed)
             const backupCriteria = backupExercise.gradingCriteria?.find((criteriaBackup) => criteria.id === criteriaBackup.id)!;
 
-            if (backupCriteria && criteria.structuredGradingInstructions!.length !== backupCriteria.structuredGradingInstructions!.length) {
-                this.instructionDeleted = true;
-            }
-
-            criteria.structuredGradingInstructions.forEach((instruction) => {
-                const backupInstruction = backupCriteria.structuredGradingInstructions?.find((instructionBackup) => instruction.id === instructionBackup.id)!;
-
-                if (backupInstruction) {
-                    this.checkInstruction(instruction, backupInstruction);
+            if (backupCriteria) {
+                if (criteria.structuredGradingInstructions!.length !== backupCriteria.structuredGradingInstructions!.length) {
+                    this.instructionDeleted = true;
                 }
-            });
+
+                criteria.structuredGradingInstructions.forEach((instruction) => {
+                    const backupInstruction = backupCriteria.structuredGradingInstructions?.find((instructionBackup) => instruction.id === instructionBackup.id)!;
+
+                    if (backupInstruction) {
+                        this.checkInstruction(instruction, backupInstruction);
+                    }
+                });
+            }
         });
     }
 
