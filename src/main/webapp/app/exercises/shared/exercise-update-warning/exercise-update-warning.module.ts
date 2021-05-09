@@ -10,4 +10,4 @@ import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-up
     exports: [ExerciseUpdateWarningComponent],
     imports: [CommonModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule],
 })
-export class ExerciseUpdateWarningModule {}
+export class ArtemisExerciseUpdateWarningModule {}
