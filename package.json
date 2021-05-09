@@ -81,6 +81,7 @@
         "@angular/cli": "11.2.11",
         "@angular/compiler-cli": "11.2.12",
         "@angular/language-service": "11.2.12",
+        "@briebug/cypress-schematic": "5.0.0",
         "@ngtools/webpack": "11.2.11",
         "@testing-library/angular": "10.6.0",
         "@types/ace": "0.0.45",
@@ -115,6 +116,7 @@
         "codelyzer": "6.0.1",
         "copy-webpack-plugin": "6.4.1",
         "css-loader": "5.2.4",
+        "cypress": "7.2.0",
         "eslint": "7.25.0",
         "eslint-config-prettier": "8.3.0",
         "eslint-plugin-chai-friendly": "0.6.0",
@@ -178,6 +180,8 @@
         "src/{main,test}/java/**/*.java": "bash ./linting.sh"
     },
     "scripts": {
+        "cy:open": "cypress open",
+        "cy:run": "cypress run",
         "postinstall": "husky install",
         "prettier:format": "prettier --write 'src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}'",
         "prettier:check": "prettier --check 'src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}'",
