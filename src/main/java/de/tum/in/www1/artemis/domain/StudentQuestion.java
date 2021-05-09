@@ -12,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A StudentQuestion.
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "student_question")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(value = { "author" }, allowGetters = true) // author field is not deserialized
 public class StudentQuestion extends DomainObject {
 
     @Size(max = 1000)
@@ -90,6 +92,7 @@ public class StudentQuestion extends DomainObject {
         this.answers = studentQuestionAnswers;
     }
 
+    @JsonProperty
     public User getAuthor() {
         return author;
     }

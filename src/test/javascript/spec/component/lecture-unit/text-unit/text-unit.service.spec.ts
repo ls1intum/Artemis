@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -50,7 +50,7 @@ describe('TextUnitService', () => {
         httpMock.verify();
     });
 
-    it('should find a TextUnit', async () => {
+    it('should find a TextUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         service
             .findById(1, 1)
@@ -59,9 +59,9 @@ describe('TextUnitService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(expectedResult.body).to.deep.equal(elemDefault);
-    });
+    }));
 
-    it('should create a TextUnit', async () => {
+    it('should create a TextUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -71,9 +71,9 @@ describe('TextUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(expectedResult.body).to.deep.equal(expected);
-    });
+    }));
 
-    it('should update a TextUnit', async () => {
+    it('should update a TextUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, name: 'Test' };
         const expected = { ...returnedFromService };
         service
@@ -83,5 +83,5 @@ describe('TextUnitService', () => {
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         expect(expectedResult.body).to.deep.equal(expected);
-    });
+    }));
 });

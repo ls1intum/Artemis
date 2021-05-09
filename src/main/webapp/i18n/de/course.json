@@ -14,9 +14,6 @@
                 "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
             },
-            "detail": {
-                "title": "Kurs"
-            },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",
@@ -64,6 +61,7 @@
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "gradingSystem": "Notenschlüssel",
             "testCourse": {
                 "title": "Testkurs",
                 "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind.",
@@ -129,12 +127,19 @@
             "pastExercises": "Vergangene Übungen ({{ amount }} von {{ total }})",
             "noExercises": "Keine aktiven Übungen vorhanden",
             "assessmentProgress": "Bewertungen",
-            "releaseDate": "Veröffentlichung",
-            "dueDate": "Einreichungsfrist",
-            "assessmentDueDate": "Bewertungsfrist",
+            "releaseDate": "Freigabe",
+            "dueDate": "Einreichung",
+            "assessmentDueDate": "Bewertung",
             "cleanup": {
                 "title": "Aufräumen",
                 "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+            },
+            "detail": {
+                "title": "Kurs Details:",
+                "assessmentsTitle": "Insgesamte Bewertungen",
+                "complaintsTitle": "Insgesamte Beschwerden",
+                "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
+                "averageStudentScore": "Durchschnittliche Studentenpunktzahl"
             }
         },
         "courseStatistics": {

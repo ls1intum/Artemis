@@ -1,0 +1,19 @@
+<div class="col">
+    <h5 class="col-md-12 text-center" style="margin-top: 15px">{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
+    <div class="row flex-nowrap">
+        <fa-icon [icon]="'arrow-left'" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+        <canvas
+            class="course-detail-bar-chart col-md-9"
+            baseChart
+            height="750"
+            width="1500"
+            [datasets]="chartData"
+            [labels]="barChartLabels"
+            [options]="barChartOptions"
+            [legend]="barChartLegend"
+            [chartType]="barChartType"
+        ></canvas>
+        <fa-icon [icon]="'arrow-right'" size="2x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
+    </div>
+    <h5 class="col-md-10 offset-md-1 text-center mt-3 mb-5">{{ chartTime }}</h5>
+</div>
