@@ -109,6 +109,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         evaluateQuiz_authorization_forbidden();
     }
 
+    @Test
     public void evaluateQuiz_authorization_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
