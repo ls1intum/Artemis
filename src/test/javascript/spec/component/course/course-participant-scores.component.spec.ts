@@ -2,7 +2,6 @@ import { CourseParticipantScoresComponent } from 'app/course/course-participant-
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslatePipe } from '@ngx-translate/core';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -12,6 +11,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
 import * as chai from 'chai';
 import { HttpResponse } from '@angular/common/http';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,7 +38,7 @@ describe('CourseParticipantScores', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CourseParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(TranslatePipe), MockComponent(AlertComponent)],
+            declarations: [CourseParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AlertComponent)],
             providers: [
                 MockProvider(ParticipantScoresService),
                 MockProvider(JhiAlertService),

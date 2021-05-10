@@ -4,12 +4,14 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
+import { CourseManagementService } from '../course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { JhiAlertService } from 'ng-jhipster';
+import { isOrion } from 'app/shared/orion/orion';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-detail',
@@ -17,29 +19,35 @@ import { Subject } from 'rxjs';
     styleUrls: ['./course-detail.component.scss'],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
     ButtonSize = ButtonSize;
     ActionType = ActionType;
+    readonly isOrion = isOrion;
+
     CachingStrategy = CachingStrategy;
+    courseDTO: CourseManagementDetailViewDto;
     course: Course;
     private eventSubscriber: Subscription;
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    paramSub: Subscription;
 
-    constructor(
-        private eventManager: JhiEventManager,
-        private courseService: CourseManagementService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private jhiAlertService: JhiAlertService,
-    ) {}
+    constructor(private eventManager: JhiEventManager, private courseService: CourseManagementService, private route: ActivatedRoute, private router: Router) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        this.route.data.subscribe(({ course }) => {
-            this.course = course;
-
+        // There is no course 0 -> will fetch no course if route does not provide different courseId
+        let courseId = 0;
+        this.paramSub = this.route.params.subscribe((params) => {
+            courseId = params['courseId'];
+        });
+        this.courseService.getCourseForDetailView(courseId).subscribe((courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
+            this.courseDTO = courseResponse.body!;
+            this.course = this.courseDTO.course;
             this.registerChangeInCourses();
         });
     }
@@ -49,37 +57,19 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInCourses() {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.courseService.find(this.course.id!).subscribe((courseResponse: HttpResponse<Course>) => {
+            this.courseService.find(this.courseDTO.course.id!).subscribe((courseResponse: HttpResponse<Course>) => {
                 this.course = courseResponse.body!;
             });
         });
     }
 
     /**
-     * Register for the currently loaded course.
-     */
-    registerForCourse() {
-        this.courseService.registerForCourse(this.course.id!).subscribe(
-            (userResponse) => {
-                if (userResponse.body != undefined) {
-                    const message = 'Registered user for course ' + this.course.title;
-                    const jhiAlert = this.jhiAlertService.info(message);
-                    jhiAlert.msg = message;
-                }
-            },
-            (error: HttpErrorResponse) => {
-                const errorMessage = error.headers.get('X-artemisApp-message')!;
-                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.jhiAlertService.error(errorMessage);
-                jhiAlert.msg = errorMessage;
-            },
-        );
-    }
-
-    /**
      * On destroy unsubscribe all subscriptions.
      */
     ngOnDestroy() {
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
         this.eventManager.destroy(this.eventSubscriber);
     }
 

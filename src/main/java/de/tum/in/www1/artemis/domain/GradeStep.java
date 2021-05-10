@@ -87,11 +87,11 @@ public class GradeStep extends DomainObject {
         this.gradeName = gradeName;
     }
 
-    public boolean isPassingGrade() {
+    public boolean getIsPassingGrade() {
         return isPassingGrade;
     }
 
-    public void setPassingGrade(boolean passingGrade) {
+    public void setIsPassingGrade(boolean passingGrade) {
         isPassingGrade = passingGrade;
     }
 
@@ -130,7 +130,7 @@ public class GradeStep extends DomainObject {
      *
      * @return true if all conditions are true and false otherwise
      */
-    public boolean isValid() {
+    public boolean checkValidity() {
         boolean validOrder = lowerBoundPercentage < upperBoundPercentage || lowerBoundPercentage == upperBoundPercentage && lowerBoundInclusive && upperBoundInclusive;
         return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder && upperBoundPercentage <= 100;
     }

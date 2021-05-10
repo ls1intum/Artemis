@@ -84,7 +84,13 @@
             [activeIndex]="selectedComparisonIndex"
         ></jhi-plagiarism-sidebar>
 
-        <jhi-plagiarism-details [hidden]="showRunDetails" [comparison]="plagiarismResult!.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
+        <jhi-plagiarism-details
+            [hidden]="showRunDetails"
+            [comparison]="
+                plagiarismResult.comparisons && plagiarismResult.comparisons.length > selectedComparisonIndex ? plagiarismResult!.comparisons[selectedComparisonIndex] : undefined
+            "
+            [exercise]="exercise"
+        ></jhi-plagiarism-details>
 
         <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult"></jhi-plagiarism-run-details>
     </div>
