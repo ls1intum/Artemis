@@ -20,7 +20,7 @@ describe('Exam Management Service Tests', () => {
     let httpMock: HttpTestingController;
 
     const course = { id: 456 } as Course;
-    const mockExam: Exam = {
+    const mockExamPopulated: Exam = {
         id: 1,
         startDate: undefined,
         endDate: undefined,
@@ -139,10 +139,10 @@ describe('Exam Management Service Tests', () => {
 
     it('should find all exams for course', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExam }];
+        const mockExamResponse = [{ ...mockExamPopulated }];
 
         // WHEN
-        service.findAllExamsForCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+        service.findAllExamsForCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal([mockExamPopulated]));
 
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams` });
@@ -152,10 +152,10 @@ describe('Exam Management Service Tests', () => {
 
     it('find all exams for which the instructors have access', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExam }];
+        const mockExamResponse = [{ ...mockExamPopulated }];
 
         // WHEN
-        service.findAllExamsAccessibleToUser(course.id!).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+        service.findAllExamsAccessibleToUser(course.id!).subscribe((res) => expect(res.body).to.deep.equal([mockExamPopulated]));
 
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id}/exams-for-user` });
@@ -165,10 +165,10 @@ describe('Exam Management Service Tests', () => {
 
     it('should find all current and upcoming exams', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExam }];
+        const mockExamResponse = [{ ...mockExamPopulated }];
 
         // WHEN
-        service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+        service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).to.deep.equal([mockExamPopulated]));
 
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/upcoming-exams` });
@@ -178,26 +178,30 @@ describe('Exam Management Service Tests', () => {
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=false', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExam }];
+        const mockExamResponse = [{ ...mockExamPopulated }];
 
         // WHEN
-        service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, false).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+        service
+            .getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExamPopulated.id!, false)
+            .subscribe((res) => expect(res.body).to.deep.equal([mockExamPopulated]));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-assessment-dashboard` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExamPopulated.id}/exam-for-assessment-dashboard` });
         req.flush(mockExamResponse);
         tick();
     }));
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExam }];
+        const mockExamResponse = [{ ...mockExamPopulated }];
 
         // WHEN
-        service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, true).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+        service
+            .getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExamPopulated.id!, true)
+            .subscribe((res) => expect(res.body).to.deep.equal([mockExamPopulated]));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-test-run-assessment-dashboard` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExamPopulated.id}/exam-for-test-run-assessment-dashboard` });
         req.flush(mockExamResponse);
         tick();
     }));
