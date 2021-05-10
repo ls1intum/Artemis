@@ -152,8 +152,10 @@ export class GradingSystemComponent implements OnInit {
                 this.dialogErrorSource.next('');
             });
         }
-        this.gradingScale = new GradingScale();
-        this.gradingScale.gradeType = GradeType.GRADE;
+        this.gradingScale = {
+            gradeSteps: [],
+            gradeType: GradeType.GRADE,
+        };
     }
 
     /**
