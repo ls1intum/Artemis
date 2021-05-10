@@ -105,12 +105,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         mockUpdatePlanRepositoryForParticipation(exercise, username);
         // Step 1c)
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
+
+        // Newly added mocking
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
     }
 
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException {
-        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
@@ -176,9 +179,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
-        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
+        // TODO: Delete? bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
@@ -237,7 +240,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, templateRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testsRepoName);
-        bitbucketRequestMockProvider.mockGetDefaultBranch("master", exerciseToBeImported.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exerciseToBeImported.getProjectKey());
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);

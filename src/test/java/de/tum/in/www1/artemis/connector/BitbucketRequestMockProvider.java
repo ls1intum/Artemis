@@ -305,13 +305,26 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
     }
 
-    public void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
+    public void mockDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
+        mockGetDefaultBranch(defaultBranch, projectKey);
+        mockPutDefaultBranch(defaultBranch, projectKey);
+    }
+
+    private void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
         var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
         mockResponse.setDisplayId(defaultBranch);
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
 
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(mockResponse)).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    private void mockPutDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException {
+        var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
+        mockResponse.setDisplayId(defaultBranch);
+        var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
+
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
