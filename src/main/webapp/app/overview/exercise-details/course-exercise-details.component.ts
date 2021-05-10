@@ -312,10 +312,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return result.rated ? 'badge-success' : 'badge-info';
     }
 
-    get exerciseIsOver(): boolean {
-        return this.exercise ? moment(this.exercise!.dueDate!).isBefore(moment()) : true;
-    }
-
     get hasMoreResults(): boolean {
         if (!this.studentParticipation || !this.studentParticipation.results) {
             return false;
