@@ -67,8 +67,7 @@
                         <div class="instructions">
                             <jhi-markdown-editor
                                 #markdownEditor
-                                [markdown]="generateInstructionText(instruction)"
-                                [editorMode]="editorMode"
+                                [markdown]=""
                                 [metaCommands]="[]"
                                 [defaultCommands]="[]"
                                 [headerCommands]="[]"
@@ -77,7 +76,7 @@
                                 [showPreviewButton]="false"
                                 [domainCommands]="domainCommandsGradingInstructions"
                                 (markdownChange)="prepareForSave()"
-                                (textWithDomainCommandsFound)="onInstructionChange($event, instruction, criteria)"
+                                (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
                                 class="editor"
                                 style="width: 65%"
                             ></jhi-markdown-editor>

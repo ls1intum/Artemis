@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, Input, ViewChildren, QueryList, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
@@ -11,7 +11,6 @@ import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainComm
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { cloneDeep } from 'lodash';
 
 @Component({
@@ -19,7 +18,7 @@ import { cloneDeep } from 'lodash';
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
 })
-export class GradingInstructionsDetailsComponent implements OnInit {
+export class GradingInstructionsDetailsComponent implements OnInit, AfterViewInit {
     /** Ace Editor configuration constants **/
     questionEditorText = '';
     @ViewChildren('markdownEditor')
@@ -29,7 +28,6 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     private instructions: GradingInstruction[];
     private criteria: GradingCriterion[];
 
-    editorMode = EditorMode.NONE;
     backupExercise: Exercise;
 
     gradingCriterionCommand = new GradingCriterionCommand();
@@ -58,12 +56,24 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.usageCountCommand,
     ];
 
-    constructor() {}
+    constructor(private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria || [];
         this.backupExercise = cloneDeep(this.exercise);
         this.questionEditorText = this.generateMarkdown();
+    }
+
+    ngAfterViewInit() {
+        if (this.exercise.gradingInstructionFeedbackUsed) {
+            let index = 0;
+            this.criteria!.forEach((criteria) => {
+                criteria.structuredGradingInstructions.forEach((instruction) => {
+                    this.markdownEditors.get(index)!.markdownTextChange(this.generateInstructionText(instruction));
+                    index += 1;
+                });
+            });
+        }
     }
 
     generateMarkdown(): string {
@@ -174,7 +184,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     prepareForSave(): void {
-        this.markdownEditors.forEach((component) => component.parse());
+        this.markdownEditors.forEach((component) => {
+            this.changeDetector.detectChanges();
+            component.parse();
+        });
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand | null][]): boolean {
@@ -316,17 +329,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param {GradingInstruction} instruction
      * @param {GradingCriterion} criteria
      */
-    onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction, criteria: GradingCriterion): void {
-        const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criteria.id;
-        });
-        const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
-            return sgi.id === instruction.id;
-        });
+    onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction): void {
         this.instructions = [];
         this.instructions.push(instruction);
         this.setInstructionParameters(domainCommands);
-        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex!] = this.instructions[0];
     }
 
     /**
@@ -376,6 +382,8 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         const instruction = new GradingInstruction();
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
+        const markdownText = this.generateInstructionText(instruction);
+        this.prepareForSave();
     }
 
     /**
