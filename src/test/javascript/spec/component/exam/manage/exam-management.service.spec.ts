@@ -85,14 +85,14 @@ describe('Exam Management Service Tests', () => {
     });
 
     it('should get the exam title', fakeAsync(() => {
-        //GIVEN
+        // GIVEN
         const mockExam: Exam = { id: 1 };
         const expectedTitle = 'expectedTitle';
 
-        //WHEN
+        // WHEN
         service.getTitle(mockExam.id!).subscribe((res) => expect(res.body).to.eq(expectedTitle));
 
-        //THEN
+        // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `api/exams/${mockExam.id!}/title` });
         req.flush(expectedTitle);
         tick();
@@ -341,7 +341,7 @@ describe('Exam Management Service Tests', () => {
         // WHEN
         service.removeAllStudentsFromExam(course.id!, mockExam.id!, false).subscribe((resp) => expect(resp.body).to.be.deep.equal({}));
 
-        //THEN
+        // THEN
         const req = httpMock.expectOne({
             method: 'DELETE',
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students?withParticipationsAndSubmission=false`,
