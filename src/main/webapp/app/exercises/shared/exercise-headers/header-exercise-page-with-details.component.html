@@ -21,7 +21,7 @@
                 </h4>
             </ng-template>
             <ng-template #courseMode>
-                <h4 *ngIf=exercise "notReleased()">
+                <h4 *ngIf="notReleased()">
                     <span class="mr-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }} : {{ (exercise.releaseDate | artemisDate) || 'N/A' }} </span>
                     <span class="ml-1 badge badge-warning"> {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }} </span>
                     <span [ngClass]="exerciseStatusBadge" class="badge">
