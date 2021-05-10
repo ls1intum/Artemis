@@ -33,7 +33,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     ngOnInit(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exercise?.categories || [];
-        this.setIcon(this.exercise.type);
+
+        if (this.exercise) {
+            this.setIcon(this.exercise.type);
+        }
     }
 
     /**
@@ -42,7 +45,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exercise?.categories || [];
-        this.setIcon(this.exercise.type);
+
+        if (this.exercise) {
+            this.setIcon(this.exercise.type);
+        }
 
         if (this.exam) {
             this.isExamMode = true;
