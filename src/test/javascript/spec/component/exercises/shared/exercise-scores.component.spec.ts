@@ -1,4 +1,3 @@
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -7,9 +6,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockTranslateService, TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
-import { AccountService } from 'app/core/auth/account.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -50,10 +47,7 @@ const expect = chai.expect;
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
     let fixture: ComponentFixture<ExerciseScoresComponent>;
-    let exerciseService: ExerciseService;
-    let accountService: AccountService;
     let resultService: ResultService;
-    let profileService: ProfileService;
     let programmingSubmissionService: ProgrammingSubmissionService;
 
     const exercise: Exercise = {
@@ -130,10 +124,7 @@ describe('Exercise Scores Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseScoresComponent);
                 component = fixture.componentInstance;
-                exerciseService = TestBed.inject(ExerciseService);
-                accountService = TestBed.inject(AccountService);
                 resultService = TestBed.inject(ResultService);
-                profileService = TestBed.inject(ProfileService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 component.exercise = exercise;
                 sinon.stub(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
