@@ -71,6 +71,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
+    /**
+     * fetch the course and course specific statistics for the page
+     */
     private fetchData() {
         // There is no course 0 -> will fetch no course if route does not provide different courseId
         let courseId = 0;

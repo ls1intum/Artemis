@@ -48,12 +48,8 @@ export class CourseDetailDoughnutChartComponent implements OnChanges {
         } else {
             this.receivedStats = true;
             this.stats = [this.currentAbsolute!, this.currentMax! - this.currentAbsolute!];
-            if (this.currentMax === 0) {
-                // [0, 0] will lead to the chart not being displayed - is further handled in the option tooltips
-                this.doughnutChartData[0].data = [-1, 0];
-            } else {
-                this.doughnutChartData[0].data = this.stats;
-            }
+            // [0, 0] will lead to the chart not being displayed - is further handled in the option tooltips
+            this.doughnutChartData[0].data = this.currentMax === 0 ? [-1, 0] : this.stats;
         }
     }
 }
