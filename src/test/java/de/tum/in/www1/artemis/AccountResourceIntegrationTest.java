@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
+import de.tum.in.www1.artemis.util.ConfigUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.AccountResource;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
@@ -53,28 +54,8 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         database.resetDatabase();
     }
 
-    /**
-     * Runs a test but changes the specified property beforehand and resets it to the previous property afterwards
-     *
-     * @param configName  the name of the attribute
-     * @param configValue the value it should be changed to
-     * @param test        the test to execute
-     * @throws Throwable if the test throws anything
-     */
-    private void testWithChangedConfig(String configName, Object configValue, Executable test) throws Throwable {
-        var oldValue = ReflectionTestUtils.getField(accountResource, configName);
-        ReflectionTestUtils.setField(accountResource, configName, configValue);
-
-        try {
-            test.execute();
-        }
-        finally {
-            ReflectionTestUtils.setField(accountResource, configName, oldValue);
-        }
-    }
-
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
-        testWithChangedConfig("registrationEnabled", Optional.of(Boolean.FALSE), test);
+        ConfigUtil.testWithChangedConfig(accountResource, "registrationEnabled", Optional.of(Boolean.FALSE), test);
     }
 
     private String getValidPassword() {
@@ -151,7 +132,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     public void registerAccountRegistrationConfigEmpty() throws Throwable {
-        testWithChangedConfig("registrationEnabled", Optional.empty(), () -> {
+        ConfigUtil.testWithChangedConfig(accountResource, "registrationEnabled", Optional.empty(), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             ManagedUserVM userVM = new ManagedUserVM(user);
@@ -165,7 +146,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     public void registerAccountInvalidEmail() throws Throwable {
         // Inject email-pattern to be independent of the config
-        testWithChangedConfig("allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
+        ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             user.setEmail("-");
@@ -179,7 +160,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     public void registerAccountEmptyEmailPattern() throws Throwable {
-        testWithChangedConfig("allowedEmailPattern", Optional.empty(), () -> {
+        ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.empty(), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             user.setEmail("-");
@@ -366,7 +347,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = "authenticateduser")
     public void changePasswordSaml2Disabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
-            testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
                 // create user in repo
                 User user = ModelFactory.generateActivatedUser("authenticateduser");
                 User createdUser = userCreationService.createUser(new ManagedUserVM(user));
@@ -384,7 +365,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = "authenticateduser")
     public void changePasswordSaml2ConfigEmpty() throws Throwable {
         testWithRegistrationDisabled(() -> {
-            testWithChangedConfig("saml2EnablePassword", Optional.empty(), () -> {
+            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.empty(), () -> {
                 // create user in repo
                 User user = ModelFactory.generateActivatedUser("authenticateduser");
                 User createdUser = userCreationService.createUser(new ManagedUserVM(user));
@@ -486,7 +467,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     public void passwordResetInitSaml2Disabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
-            testWithChangedConfig("saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
+            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
                 // attempt password reset
                 request.postWithoutLocation("/api/account/reset-password/init", "", HttpStatus.FORBIDDEN, null);
             });
