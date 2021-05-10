@@ -193,7 +193,36 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
         assertThat(course.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
+    }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testSetPermissionsForNewGroupMembersInCourseFails() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        course.setInstructorGroupName("new-instructor-group");
+
+        // Create editor in the course
+        User user = ModelFactory.generateActivatedUser("new-editor");
+        user.setGroups(Set.of("new-instructor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testSetPermissionsForNewGroupMembersInCourseMemberDoesntExist() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        course.setInstructorGroupName("new-instructor-group");
+
+        // Create editor in the course
+        User user = ModelFactory.generateActivatedUser("new-editor");
+        user.setGroups(Set.of("new-instructor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
