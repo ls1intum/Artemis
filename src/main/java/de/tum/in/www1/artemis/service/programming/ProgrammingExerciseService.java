@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
@@ -599,16 +598,15 @@ public class ProgrammingExerciseService {
     /**
      * Updates the problem statement of the given programming exercise.
      *
-     * @param programmingExerciseId ProgrammingExercise Id.
+     * @param programmingExercise   The ProgrammingExercise of which the problem statement is updated.
      * @param problemStatement      markdown of the problem statement.
      * @param notificationText      optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      */
-    public ProgrammingExercise updateProblemStatement(Long programmingExerciseId, String problemStatement, @Nullable String notificationText) throws EntityNotFoundException {
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+    public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
+            throws EntityNotFoundException {
+
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         if (notificationText != null) {

@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -53,6 +54,9 @@ public class ExamResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    @Value("${artemis.course-archives-path}")
+    private String examArchivesDirPath;
 
     private final UserRepository userRepository;
 
@@ -916,8 +920,10 @@ public class ExamResource {
             return notFound();
         }
 
-        // The path is stored in the course table
-        File zipFile = new File(exam.getExamArchivePath());
+        // The path is stored in the exam table
+        Path archive = Path.of(examArchivesDirPath, exam.getExamArchivePath());
+
+        File zipFile = archive.toFile();
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
