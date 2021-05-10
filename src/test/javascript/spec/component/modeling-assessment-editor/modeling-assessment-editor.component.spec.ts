@@ -436,7 +436,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.courseId = courseId;
             component.modelingExercise = { id: exerciseId } as Exercise;
             component.exerciseId = exerciseId;
-            const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'assessment'];
+            const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'submissions'];
             const queryParams = { queryParams: { 'correction-round': correctionRound } };
 
             tick(500);
