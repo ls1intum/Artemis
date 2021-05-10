@@ -420,7 +420,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * POST exercise/:exerciseId/feedbackConflict/:feedbackConflictId/solve-feedback-conflict : With given feedbackConflictId, finds the conflict and sets it as solved.
+     * POST exercise/:exerciseId/feedbackConflict/:feedbackConflictId/solve : With given feedbackConflictId, finds the conflict and sets it as solved.
      * Checks; if the feedback conflict is present, if the user is the assessor of one of the feedback or
      * if the user is at least the instructor for the exercise.
      *
