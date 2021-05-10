@@ -682,7 +682,7 @@ public class ProgrammingExerciseResource {
 
         List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        if(!feedbackList.isEmpty()) {
+        if (!feedbackList.isEmpty()) {
             programmingExercise.setGradingInstructionFeedbackUsed(true);
         }
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access

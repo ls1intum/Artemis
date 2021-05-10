@@ -260,7 +260,7 @@ public class ModelingExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        if(!feedbackList.isEmpty()) {
+        if (!feedbackList.isEmpty()) {
             modelingExercise.setGradingInstructionFeedbackUsed(true);
         }
         modelingExercise.setGradingCriteria(gradingCriteria);
