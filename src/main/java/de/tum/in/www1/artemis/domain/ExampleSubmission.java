@@ -41,7 +41,7 @@ public class ExampleSubmission extends DomainObject {
     private String assessmentExplanation;
 
     public Boolean isUsedForTutorial() {
-        return usedForTutorial;
+        return Boolean.TRUE.equals(usedForTutorial);
     }
 
     public void setUsedForTutorial(Boolean usedForTutorial) {
