@@ -1,7 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -26,14 +25,14 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
 
     icon: IconProp;
 
-    constructor(private exerciseService: ExerciseService) {}
+    constructor() {}
 
     /**
      * Sets the status badge and categories of the exercise on init
      */
     ngOnInit(): void {
         this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise.categories || [];
+        this.exerciseCategories = this.exercise?.categories || [];
         this.setIcon(this.exercise.type);
     }
 
@@ -42,7 +41,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
      */
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise.categories || [];
+        this.exerciseCategories = this.exercise?.categories || [];
         this.setIcon(this.exercise.type);
 
         if (this.exam) {
