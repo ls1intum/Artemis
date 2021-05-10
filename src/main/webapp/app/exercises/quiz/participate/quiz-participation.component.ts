@@ -573,7 +573,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         // apply submission if it exists
-        if (participation.results?.length) {
+        if (participation?.results?.length) {
             this.submission = participation.results[0].submission as QuizSubmission;
 
             // update submission time
