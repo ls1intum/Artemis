@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -58,61 +58,76 @@ describe('LearningGoalService', () => {
         httpTestingController.verify();
     });
 
-    it('should find a LearningGoal', async () => {
+    it('should find a LearningGoal', fakeAsync(() => {
         const returnedFromService = { ...defaultLearningGoal };
         learningGoalService
             .findById(1, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultLearningGoal = resp));
+
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(expectedResultLearningGoal.body).to.deep.equal(defaultLearningGoal);
-    });
+        tick();
 
-    it('should get Progress for a LearningGoal', async () => {
+        expect(expectedResultLearningGoal.body).to.deep.equal(defaultLearningGoal);
+    }));
+
+    it('should get Progress for a LearningGoal', fakeAsync(() => {
         const returnedFromService = { ...defaultLearningGoalProgress };
         learningGoalService
             .getProgress(1, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultLearningGoalProgress = resp));
+
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(expectedResultLearningGoalProgress.body).to.deep.equal(defaultLearningGoalProgress);
-    });
+        tick();
 
-    it('should get all learning goals for a course', async () => {
+        expect(expectedResultLearningGoalProgress.body).to.deep.equal(defaultLearningGoalProgress);
+    }));
+
+    it('should get all learning goals for a course', fakeAsync(() => {
         const returnedFromService = [{ ...defaultLearningGoalProgress }];
         let response: any = {} as HttpResponse<LearningGoal[]>;
         learningGoalService
             .getAllForCourse(1)
             .pipe(take(1))
             .subscribe((resp) => (response = resp));
+
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        expect(response.body).to.deep.equal([{ ...defaultLearningGoalProgress }]);
-    });
+        tick();
 
-    it('should create a LearningGoal', async () => {
+        expect(response.body).to.deep.equal([{ ...defaultLearningGoalProgress }]);
+    }));
+
+    it('should create a LearningGoal', fakeAsync(() => {
         const returnedFromService = { ...defaultLearningGoal, id: 0 };
         const expected = { ...returnedFromService };
         learningGoalService
             .create(new LearningGoal(), 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultLearningGoal = resp));
+
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        expect(expectedResultLearningGoal.body).to.deep.equal(expected);
-    });
+        tick();
 
-    it('should update a LearningGoal', async () => {
+        expect(expectedResultLearningGoal.body).to.deep.equal(expected);
+    }));
+
+    it('should update a LearningGoal', fakeAsync(() => {
         const returnedFromService = { ...defaultLearningGoal, title: 'Test' };
         const expected = { ...returnedFromService };
         learningGoalService
             .update(expected, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultLearningGoal = resp));
+
         const req = httpTestingController.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
+        tick();
+
         expect(expectedResultLearningGoal.body).to.deep.equal(expected);
-    });
+    }));
 });

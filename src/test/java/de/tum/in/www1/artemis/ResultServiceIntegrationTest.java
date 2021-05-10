@@ -95,7 +95,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     public void reset() {
-        database.addUsers(10, 2, 2);
+        database.addUsers(10, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);

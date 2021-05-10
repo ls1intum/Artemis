@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -208,6 +208,8 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 return this.course.studentGroupName;
             case CourseGroup.TUTORS:
                 return this.course.teachingAssistantGroupName;
+            case CourseGroup.EDITORS:
+                return this.course.editorGroupName;
             case CourseGroup.INSTRUCTORS:
                 return this.course.instructorGroupName;
         }

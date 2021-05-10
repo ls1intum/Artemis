@@ -46,6 +46,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                     this.fileUploadExercises.forEach((exercise) => {
                         exercise.course = this.course;
                         exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
+                        exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                         exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     });
                     this.emitExerciseCount(this.fileUploadExercises.length);

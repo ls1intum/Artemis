@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
@@ -26,10 +27,12 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -208,6 +211,9 @@ public class CourseService {
         if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
             userService.deleteGroup(course.getTeachingAssistantGroupName());
         }
+        if (course.getEditorGroupName().equals(course.getDefaultEditorGroupName())) {
+            userService.deleteGroup(course.getEditorGroupName());
+        }
         if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             userService.deleteGroup(course.getInstructorGroupName());
         }
@@ -300,35 +306,47 @@ public class CourseService {
      * Get the active students for these particular exercise ids
      *
      * @param exerciseIds the ids to get the active students for
+     * @param periodIndex the deviation from the current time
      * @return An Integer array containing active students for each index. An index corresponds to a week
      */
-    public Integer[] getActiveStudents(List<Long> exerciseIds) {
+    public Integer[] getActiveStudents(Set<Long> exerciseIds, Integer periodIndex) {
         ZonedDateTime now = ZonedDateTime.now();
         LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = now.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = now.getZone();
-        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3).withHour(0).withMinute(0).withSecond(0).withNano(0);
-        ZonedDateTime endDate = localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
-
-        List<Map<String, Object>> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
-        List<Map<String, Object>> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
-        return sortUserIntoWeeks(distinctOutcome, endDate);
+        // startDate is the starting point of the data collection which is the Monday 3 weeks ago +/- the deviation from the current timeframe
+        ZonedDateTime startDate = localStartDate.atZone(zone).minusWeeks(3 + (4 * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        // the endDate depends on whether the current week is shown. If it is, the endDate is the Sunday of the current week at 23:59.
+        // If the timeframe was adapted (periodIndex != 0), the endDate needs to be adapted according to the deviation
+        ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(4 * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
+                : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
+        List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
+        List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
+        return sortUserIntoWeeks(distinctOutcome, startDate);
     }
 
     /**
-     * The List of maps contains duplicated entries. This method compares the values and returns a List<Map<String, Object>>
-     * without duplicated entries
+     * The List of StatisticsEntries can contain duplicated entries, which means that a user has two entries in the same week.
+     * This method compares the values and returns a List<StatisticsEntry> without duplicated entries.
      *
-     * @param activeUserRows a list with a map for every submission of an user containing date and the username
+     * @param activeUserRows a list of entries
      * @param startDate the startDate of the period
-     * @return a List<Map<String, Object>> containing date and amount of active users in this period
+     * @return a List<StatisticsEntry> containing date and amount of active users in this period
      */
-    private List<Map<String, Object>> removeDuplicateActiveUserRows(List<Map<String, Object>> activeUserRows, ZonedDateTime startDate) {
+
+    private List<StatisticsEntry> removeDuplicateActiveUserRows(List<StatisticsEntry> activeUserRows, ZonedDateTime startDate) {
+        int startIndex = getWeekOfDate(startDate);
         Map<Object, List<String>> usersByDate = new HashMap<>();
-        for (Map<String, Object> listElement : activeUserRows) {
-            ZonedDateTime date = (ZonedDateTime) listElement.get("day");
+        for (StatisticsEntry listElement : activeUserRows) {
+            // listElement.date has the form "2021-05-04", to convert it to ZonedDateTime, it needs a time
+            String dateOfElement = listElement.getDate() + " 10:00";
+            var zone = startDate.getZone();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            ZonedDateTime date = LocalDateTime.parse(dateOfElement, formatter).atZone(zone);
             int index = getWeekOfDate(date);
-            String username = listElement.get("username").toString();
+            // the database stores entries in UTC, so it can happen that entries have a date one date before the startDate
+            index = index == startIndex - 1 ? startIndex : index;
+            String username = listElement.getUsername();
             List<String> usersInSameSlot = usersByDate.get(index);
             // if this index is not yet existing in users
             if (usersInSameSlot == null) {
@@ -340,14 +358,12 @@ public class CourseService {
                 usersInSameSlot.add(username);
             }
         }
-        List<Map<String, Object>> returnList = new ArrayList<>();
+        List<StatisticsEntry> returnList = new ArrayList<>();
         usersByDate.forEach((date, users) -> {
             int year = (Integer) date < getWeekOfDate(startDate) ? startDate.getYear() + 1 : startDate.getYear();
             ZonedDateTime firstDateOfYear = ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, startDate.getZone());
             ZonedDateTime start = getWeekOfDate(firstDateOfYear) == 1 ? firstDateOfYear.plusWeeks(((Integer) date) - 1) : firstDateOfYear.plusWeeks((Integer) date);
-            Map<String, Object> listElement = new HashMap<>();
-            listElement.put("day", start);
-            listElement.put("amount", (long) users.size());
+            StatisticsEntry listElement = new StatisticsEntry(start, users.size());
             returnList.add(listElement);
         });
         return returnList;
@@ -359,23 +375,21 @@ public class CourseService {
      * containing the values for each point of the graph. In the course management overview, we want to display the last
      * 4 weeks, each week represented by one point in the graph. (Beginning with the current week.)
      *
-     * @param outcome A List<Map<String, Object>>, containing the content which should be refactored into an array
-     * @param endDate the endDate
+     * @param outcome A List<StatisticsEntry>, containing the content which should be refactored into an array
+     * @param startDate the startDate
      * @return an array, containing the amount of active users. One entry corresponds to one week
      */
-    private Integer[] sortUserIntoWeeks(List<Map<String, Object>> outcome, ZonedDateTime endDate) {
+    private Integer[] sortUserIntoWeeks(List<StatisticsEntry> outcome, ZonedDateTime startDate) {
         Integer[] result = new Integer[4];
         Arrays.fill(result, 0);
-        int week;
-        for (Map<String, Object> map : outcome) {
-            ZonedDateTime date = (ZonedDateTime) map.get("day");
-            int amount = map.get("amount") != null ? ((Long) map.get("amount")).intValue() : 0;
-            week = getWeekOfDate(date);
-            for (int i = 0; i < result.length; i++) {
-                if (week == getWeekOfDate(endDate.minusWeeks(i))) {
-                    result[result.length - 1 - i] += amount;
-                }
-            }
+        for (StatisticsEntry map : outcome) {
+            ZonedDateTime date = (ZonedDateTime) map.getDay();
+            int amount = Math.toIntExact(map.getAmount());
+            int dateWeek = getWeekOfDate(date);
+            int startDateWeek = getWeekOfDate(startDate);
+            int weeksDifference;
+            weeksDifference = dateWeek < startDateWeek ? dateWeek == startDateWeek - 1 ? 0 : dateWeek + 53 - startDateWeek : dateWeek - startDateWeek;
+            result[weeksDifference] += amount;
         }
         return result;
     }
@@ -390,6 +404,27 @@ public class CourseService {
         LocalDate localDate = date.toLocalDate();
         TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
         return localDate.get(weekOfYear);
+    }
+
+    /**
+     * Fetches Course Management Detail View data from repository and returns a DTO
+     *
+     * @param courseId id of the course
+     * @param exerciseIds the ids of the exercises of the course
+     * @return The DTO for the course management detail view
+     */
+    public CourseManagementDetailViewDTO getStatsForDetailView(Long courseId, Set<Long> exerciseIds) {
+        var dto = new CourseManagementDetailViewDTO();
+        var course = this.courseRepository.findByIdElseThrow(courseId);
+        dto.setCourse(course);
+
+        dto.setNumberOfStudentsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName())));
+        dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));
+        dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
+        dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
+
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0));
+        return dto;
     }
 
     /**
@@ -422,7 +457,7 @@ public class CourseService {
 
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
-                course.setCourseArchivePath(archivedCoursePath.get().toString());
+                course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
                 courseRepository.save(course);
             }
             else {

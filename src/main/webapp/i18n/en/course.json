@@ -14,9 +14,6 @@
                 "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including the exams, exercises, repositories and build plans. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the course to confirm."
             },
-            "detail": {
-                "title": "Course"
-            },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",
@@ -57,12 +54,14 @@
             },
             "studentGroupName": "Students",
             "teachingAssistantGroupName": "Tutors",
+            "editorGroupName": "Editors",
             "instructorGroupName": "Instructors",
             "description": "Course Description",
             "organizations": "Course Organizations",
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "gradingSystem": "Grade Key",
             "testCourse": {
                 "title": "Test Course",
                 "description": "Activate this checkbox for courses used for testing.",
@@ -89,9 +88,11 @@
             "students": "Students",
             "participations": "Participations",
             "tutors": "Tutors",
+            "editors": "Editors",
             "instructors": "Instructors",
             "student": "Student",
             "tutor": "Tutor",
+            "editor": "Editor",
             "instructor": "Instructor",
             "form": {
                 "shortname": {
@@ -132,6 +133,13 @@
             "cleanup": {
                 "title": "Cleanup",
                 "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-danger'>NOT</strong> be undone!"
+            },
+            "detail": {
+                "title": "Course Details:",
+                "assessmentsTitle": "Total Assessments",
+                "complaintsTitle": "Total Complaints",
+                "moreFeedbackTitle": "More Feedback Requests",
+                "averageStudentScore": "Average Student Score"
             }
         },
         "courseStatistics": {

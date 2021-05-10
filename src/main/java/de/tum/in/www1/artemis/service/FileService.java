@@ -691,7 +691,7 @@ public class FileService implements DisposableBean {
         ScheduledFuture<?> future = executor.schedule(() -> {
             try {
                 if (Files.exists(path) && Files.isDirectory(path)) {
-                    log.info("Delete directory {}", path);
+                    log.debug("Delete directory {}", path);
                     FileUtils.deleteDirectory(path.toFile());
                 }
                 futures.remove(path);
@@ -733,5 +733,16 @@ public class FileService implements DisposableBean {
             }
         }
         return uniquePath;
+    }
+
+    /**
+     * Removes illegal characters for filenames from the string.
+     *
+     * See: https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#15075907
+     * @param string the string with the characters
+     * @return stripped string
+     */
+    public String removeIllegalCharacters(String string) {
+        return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
     }
 }

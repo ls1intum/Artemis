@@ -40,7 +40,7 @@ export class ExerciseHintStudentDialogComponent {
             [icon]="['far', 'question-circle']"
             (click)="openModal()"
             class="hint-icon text-secondary"
-            ngbTooltip="{{ 'artemisApp.exerciseHint.studentDialog.tooltip' | translate }}"
+            ngbTooltip="{{ 'artemisApp.exerciseHint.studentDialog.tooltip' | artemisTranslate }}"
         ></fa-icon>
     `,
     styleUrls: ['./exercise-hint-student-dialog.scss'],

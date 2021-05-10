@@ -59,12 +59,14 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
 
         this.exerciseService
             .find(this.exerciseId)
-            .map((exerciseResponse) => {
-                if (exerciseResponse.body!.type !== ExerciseType.FILE_UPLOAD) {
-                    throw new Error('Cannot use File-Upload Assessment Dashboard with non-file-upload Exercise type.');
-                }
-                return <FileUploadExercise>exerciseResponse.body!;
-            })
+            .pipe(
+                map((exerciseResponse) => {
+                    if (exerciseResponse.body!.type !== ExerciseType.FILE_UPLOAD) {
+                        throw new Error('Cannot use File-Upload Assessment Dashboard with non-file-upload Exercise type.');
+                    }
+                    return <FileUploadExercise>exerciseResponse.body!;
+                }),
+            )
             .subscribe((exercise) => {
                 this.exercise = exercise;
                 this.getSubmissions();

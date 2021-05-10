@@ -1,9 +1,10 @@
 import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
 import { SERVER_API_URL } from 'app/app.constants';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {
@@ -16,7 +17,7 @@ export class RepositoryService {
      * @param participationId The identifier of the participation.
      */
     isClean(participationId: number): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/${participationId}`).map((data) => ({ isClean: data.isClean }));
+        return this.http.get<any>(`${this.resourceUrl}/${participationId}`).pipe(map((data) => ({ isClean: data.isClean })));
     }
 
     /**
@@ -68,7 +69,7 @@ export class RepositoryFileService implements IRepositoryFileService {
     get(participationId: number, fileName: string): Observable<any> {
         return this.http
             .get(`${this.resourceUrl}/${participationId}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' })
-            .map((data) => ({ fileContent: data }));
+            .pipe(map((data) => ({ fileContent: data })));
     }
 
     /**

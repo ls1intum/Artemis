@@ -34,10 +34,10 @@ following dependencies/tools on your machine:
    server application. Alternatively, you can run the MySQL Database
    Server inside a Docker container using
    e.g. ``docker-compose -f src/main/docker/mysql.yml up``
-3. `Node.js <https://nodejs.org>`__: We use Node (>=15.10.0) to compile
+3. `Node.js <https://nodejs.org>`__: We use Node LTS (>=14.15.0 < 15) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn 1.x (>=1.22.10) to
+4. `Yarn <https://classic.yarnpkg.com>`__: We use Yarn (>=1.22.4 <2) to
    manage client side Node dependencies. Depending on your system, you
    can install Yarn either from source or as a pre-packaged bundle. To
    do so, please follow the instructions on the `Yarn installation
@@ -167,7 +167,7 @@ This is a service file that works on Debian/Ubuntu (using systemd):
 ::
 
    [Unit]
-   Description=ArTEMiS
+   Description=Artemis
    After=syslog.target
    [Service]
    User=artemis

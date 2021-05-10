@@ -16,7 +16,7 @@ import { Subscription } from 'rxjs';
                 icon="exclamation-triangle"
                 class="text-warning"
                 size="2x"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | translate }}"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.configureGrading.updatedGradingConfigTooltip' | artemisTranslate }}"
             >
             </fa-icon>
         </ng-container>

@@ -6,7 +6,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { JhiAlertService, JhiSortByDirective, JhiSortDirective } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -59,7 +59,7 @@ describe('CreateExerciseUnitComponent', () => {
                     useValue: {
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'lectureId':
@@ -68,7 +68,7 @@ describe('CreateExerciseUnitComponent', () => {
                                     },
                                 }),
                                 parent: {
-                                    paramMap: Observable.of({
+                                    paramMap: of({
                                         get: (key: string) => {
                                             switch (key) {
                                                 case 'courseId':
