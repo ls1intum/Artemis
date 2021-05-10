@@ -263,7 +263,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                 // Notify student about late submission result
-                if (changedParticipation.exercise?.dueDate && changedParticipation.exercise!.dueDate!.isBefore(moment.now()) && changedParticipation.results?.length! > this.studentParticipation?.results?.length!) {
+                if (
+                    changedParticipation.exercise?.dueDate &&
+                    changedParticipation.exercise!.dueDate!.isBefore(moment.now()) &&
+                    changedParticipation.results?.length! > this.studentParticipation?.results?.length!
+                ) {
                     this.jhiAlertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                 }
                 this.exercise.studentParticipations =
