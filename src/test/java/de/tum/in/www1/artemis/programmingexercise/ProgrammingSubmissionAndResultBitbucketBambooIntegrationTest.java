@@ -147,7 +147,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch("master", ((ProgrammingExercise) participationRepository.findById(participationId).get().getExercise()).getProjectKey());
         return postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
     }
 
@@ -640,6 +640,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Add a participation for the programming exercise
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
+
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 
         // set the author name to "Artemis"

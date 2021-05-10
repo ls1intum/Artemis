@@ -181,7 +181,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
-        // TODO: Delete? bitbucketRequestMockProvider.mockGetDefaultBranch("master", exercise.getProjectKey());
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
