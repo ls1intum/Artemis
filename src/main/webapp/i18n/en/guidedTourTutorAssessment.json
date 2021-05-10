@@ -21,7 +21,7 @@
             },
             "gradingProcess": {
                 "headline": "Grading Process",
-                "content": "This graph visualizes your current grading process and marks the nodes in green, if the underlying process steps are finished: <ol><li>Read the grading instructions</li><li>Train on the example submissions (if available)</li><li>Assess student submissions</li><li>Evaluate students' complaints and feedback requests</li></ol>"
+                "content": "This graph visualizes the current grading process and marks the nodes in green, if the underlying process steps are finished: <ol><li>Read the grading instructions</li><li>Practice using sample submissions (if available)</li><li>Assess student submissions</li><li>Evaluate students' complaints and feedback requests</li></ol>"
             },
             "exerciseDashboardButton": {
                 "headline": "Exercise Dashboard",
@@ -31,18 +31,18 @@
         "exerciseAssessmentDashboard": {
             "instructions": {
                 "headline": "Instructions",
-                "content": "This section contains the <tt>Problem statement</tt>, <tt>Example solution</tt> and <tt>Grading instructions</tt> of the exercise. Please read through them carefully and then proceed to the next step."
+                "content": "This section contains the <tt>Problem statement</tt>, <tt>Sample solution</tt> and <tt>Grading instructions</tt> for the exercise. Please read through them carefully and then proceed to the next step."
             },
             "instructionsButton": {
                 "headline": "Confirm instructions",
                 "content": "Click on this button and confirm only after you have read and understood the instructions."
             },
             "reviewExampleSubmission": {
-                "headline": "Review Example Submission",
                 "content": "Click here to see how a text submission and its assessment could look like."
+                "headline": "Review Sample Submission",
             },
             "assessExampleSubmission": {
-                "headline": "Assess Example Submission",
+                "headline": "Assess Sample Submission",
                 "content": "Click here to work on your first assessment for a text exercise."
             },
             "submissionsAndComplaints": {
@@ -56,8 +56,8 @@
         },
         "exampleReview": {
             "reviewSubmission": {
-                "headline": "Review Example Submission",
-                "content": "This is an example submission where three text blocks are already marked for assessment."
+                "headline": "Review Sample Submission",
+                "content": "This is a sample submission where three text blocks have already been marked for assessment."
             },
             "reviewAssessment": {
                 "headline": "Review Example Assessment",
@@ -70,7 +70,7 @@
         },
         "exampleAssessment": {
             "addAssessment": {
-                "headline": "Assess Example Submission",
+                "headline": "Assess Sample Submission",
                 "content": "Now you can start assessing this text exercise.",
                 "task": "Mark the text of one software pattern and assess it. Do the same for the remaining two patterns. In the end you should have three highlighted text blocks."
             },
