@@ -568,7 +568,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * Apply the data of the participation, replacing all old data
      */
     updateParticipationFromServer(participation: StudentParticipation) {
-        this.applyQuizFull(participation.exercise as QuizExercise);
+        if (participation) {
+            this.applyQuizFull(participation.exercise as QuizExercise);
+        }
 
         // apply submission if it exists
         if (participation.results?.length) {
