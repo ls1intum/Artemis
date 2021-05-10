@@ -87,13 +87,13 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Export programming exercise for instructors including instructor repositories, problem statement (.md) and exercise detail (.json).
+     * Export programming exercise material for instructors including instructor repositories, problem statement (.md) and exercise detail (.json).
      *
      * @param exercise     the programming exercise
      * @param exportErrors List of failures that occurred during the export
      * @return the path to the zip file
      */
-    public Path exportInstructorProgrammingExercise(ProgrammingExercise exercise, List<String> exportErrors) {
+    public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) {
         // Create export directory for programming exercises
         var exportPath = Path.of(repoDownloadClonePath);
         fileService.createDirectory(exportPath);
@@ -108,13 +108,15 @@ public class ProgrammingExerciseExportService {
         // Add problem statement as .md file
         var problemStatementFileExtension = ".md";
         String problemStatementFileName = EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getTitle() + problemStatementFileExtension;
-        var problemStatementExportPath = Path.of(repoDownloadClonePath, problemStatementFileName);
+        String cleanProblemStatementFileName = fileService.removeIllegalCharacters(problemStatementFileName);
+        var problemStatementExportPath = Path.of(repoDownloadClonePath, cleanProblemStatementFileName);
         zipFiles.add(fileService.writeStringToFile(exercise.getProblemStatement(), problemStatementExportPath).toFile());
 
         // Add programming exercise details (object) as .json file
         var exerciseDetailsFileExtension = ".json";
         String exerciseDetailsFileName = EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + exerciseDetailsFileExtension;
-        var exerciseDetailsExportPath = Path.of(repoDownloadClonePath, exerciseDetailsFileName);
+        String cleanExerciseDetailsFileName = fileService.removeIllegalCharacters(exerciseDetailsFileName);
+        var exerciseDetailsExportPath = Path.of(repoDownloadClonePath, cleanExerciseDetailsFileName);
         zipFiles.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath).toFile());
 
         // Setup path to store the zip file for the exported programming exercise
@@ -200,6 +202,8 @@ public class ProgrammingExerciseExportService {
         finally {
             // Delete the files that are now duplicated in the zip folder of the exported programming exercise
             includedFilePaths.forEach(zipFilePath -> fileService.scheduleForDeletion(zipFilePath, 1));
+            // Delete the created zip file
+            fileService.scheduleForDeletion(pathToZippedExercise, 5);
         }
     }
 
