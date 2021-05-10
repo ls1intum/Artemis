@@ -12,8 +12,7 @@ describe('The Login Page', () => {
         // @ts-ignore
         cy.get('#username').type(username);
         // @ts-ignore
-        cy.get('#password').type(password);
-        cy.get('.btn').click();
+        cy.get('#password').type(password).type('{enter}');
         cy.url()
             .should('include', '/courses')
             .then(() => {
