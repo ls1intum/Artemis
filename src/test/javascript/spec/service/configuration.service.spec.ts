@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 
 import { JhiConfigurationService } from 'app/admin/configuration/configuration.service';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -30,8 +30,10 @@ describe('Logs Service', () => {
             const resourceUrl = SERVER_API_URL + 'management/configprops';
             expect(req.request.url).toEqual(resourceUrl);
         });
-
-        it('should get the config', () => {
+        //TODO!!! try to understand .get() method of services (YT-> or google)
+        //TODO cont. -> try to maybe replace get with the other get... method but only if nothing works
+        //TODO cont. -> better ask someone with more experience! (e.g. Nicolas Ruscher)
+        it('should get the config', fakeAsync(() => {
             const angularConfig = {
                 contexts: {
                     angular: {
@@ -40,14 +42,15 @@ describe('Logs Service', () => {
                 },
             };
             service.get().subscribe((received) => {
-                expect(received.body[0]).toEqual(angularConfig);
+                expect(received).toEqual(angularConfig);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(angularConfig);
-        });
+            tick();
+        }));
 
-        it('should get the env', () => {
+        it('should get the env', fakeAsync(() => {
             const propertySources = new HttpResponse({
                 body: [
                     { name: 'test1', properties: 'test1' },
@@ -60,6 +63,7 @@ describe('Logs Service', () => {
 
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(propertySources);
-        });
+            tick();
+        }));
     });
 });
