@@ -26,7 +26,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     feedbacks: Feedback[];
     @Input() set resultFeedbacks(feedback: Feedback[]) {
         this.feedbacks = feedback;
-        console.log('setting resultFeedback');
+        this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+        console.log('refere', this.referencedFeedbacks);
+        this.updateApollonAssessments(this.referencedFeedbacks);
     }
 
     @Input() diagramType?: UMLDiagramType;
@@ -94,12 +96,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     ngOnChanges(changes: SimpleChanges): void {
         console.log('on changes');
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
-            console.log('1');
             this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
         }
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
-            console.log('2');
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
             this.applyStateConfiguration();
@@ -116,25 +116,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 this.scrollIntoView(this.centeredElementId);
             }
         }
-        if (changes.totalScore) {
-            this.enableLabels();
+        if (changes.highlightDifferences) {
+            this.updateApollonAssessments(this.referencedFeedbacks);
         }
-        console.log('changes:', changes);
-    }
-
-    private enableLabels() {
-        console.log('enable label');
-        this.model.assessments = this.referencedFeedbacks.map<Assessment>((feedback) => ({
-            modelElementId: feedback.referenceId!,
-            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-            score: feedback.credits!,
-            feedback: feedback.text || undefined,
-            label: this.calculateLabel(feedback),
-            labelColor: this.calculateLabelColor(feedback),
-        }));
-        if (this.apollonEditor) {
-            this.apollonEditor!.model = this.model;
-        }
+        console.log('chnages', changes);
     }
 
     /**
