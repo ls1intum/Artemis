@@ -20,11 +20,11 @@
                 "baseReposBuildPlans": "Additionally delete template, solution and test repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you backup these build plans and repos first!"
             },
             "cleanup": {
-                "successMessage": "Cleanup was successful. All build plans have been deleted. Students can resume their participation.",
-                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished."
+                "successMessage": "Cleanup was successful. All build plans have been deleted. Students may resume participating.",
+                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participation has been marked as Finished."
             },
             "reset": {
-                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participations, existing results, student repositories and student build plans will be deleted."
+                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participants, existing results, student repositories and student build plans will be deleted."
             },
             "detail": {
                 "title": "Programming Exercise",
@@ -201,17 +201,17 @@
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
             },
-            "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
-            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
-            "resubmitSingle": "Trigger build for participation",
-            "resubmitConfirmManualResultOverride": "The last result of this participation is manual, which means the submission was assessed by a teaching assistant. If you trigger the build for this submission again, the manual result will no longer be the latest result that is shown primarily to the student.",
             "resubmitAllConfirmAfterDeadline": "The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results would replace the manual results as the latest result for the participation. ",
             "resubmitUnsuccessful": "Resubmitting the last submission failed. Please contact your teaching assistant.",
+            "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
+            "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
+            "resubmitSingle": "Trigger new build for this participant",
+            "resubmitConfirmManualResultOverride": "The latest result for this participant is manual, which means the submission was assessed by a tutor. If you trigger the build for this submission again, the newly generated automatic result will be shown to the student instead.",
             "resubmitAll": "Trigger all",
-            "resubmitAllTooltip": "Trigger the last submission of all participations again. The results will be rated.",
-            "resubmitAllDialog": "WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",
+            "resubmitAllTooltip": "Trigger all participants' last submission again. The results will be marked as graded.",
+            "resubmitAllDialog": "WARNING: Triggering all participants' submissions again is a very expensive operation. This action will start a CI build for every participant in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",
             "resubmitFailed": "Trigger failed",
-            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. Failed submissions don't have a result for their latest submission. This can e.g. happen due to communication errors between the CI system and Artemis. The created results will be rated.",
+            "resubmitFailedTooltip": "Trigger failed submissions for all participants again. Failed submissions don't have a result for their latest submission. This can happen due to communication errors between the CI system and Artemis. The created results will be marked as graded.",
             "buildingSubmissions": "Building submissions: {{number}}",
             "failedSubmissions": "Failed submissions: {{number}}",
             "resultETA": "Result ETA: {{eta}}",
@@ -256,7 +256,7 @@
                 "openEditor": "Open Editor"
             },
             "reEvaluate": "Re-evaluate all",
-            "reEvaluateTooltip": "Re-evaluate the latest automatic results of all participations. Manual results are not affected.",
+            "reEvaluateTooltip": "Re-evaluate the automatic results of all participants' latest submissions. Manual results are not affected.",
             "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
             "reEvaluateFailed": "The re-evaluation failed: {{message}}",
             "editSelectedModal": {

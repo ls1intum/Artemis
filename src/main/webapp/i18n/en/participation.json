@@ -2,18 +2,18 @@
     "artemisApp": {
         "participation": {
             "home": {
-                "title": "Participations",
-                "createLabel": "Create a new Participation",
-                "createOrEditLabel": "Create or edit a Participation"
+                "title": "Participants",
+                "createLabel": "Create a new participant",
+                "createOrEditLabel": "Create or edit a participant"
             },
             "created": "Created new participant with identifier {{ param }}",
             "updated": "Updated participant {{ param }}",
             "deleted": "Deleted participant {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete the participation of <strong>{{ title }}</strong>?"
+                "question": "Are you sure you want to delete the participant <strong>{{ title }}</strong>?"
             },
             "cleanupBuildPlan": {
-                "question": "Are you sure you want to delete the build plan of the participation of <strong>{{ title }}</strong>?"
+                "question": "Are you sure you want to delete the build plan of the participant <strong>{{ title }}</strong>?"
             },
             "addPresentation": {
                 "label": "Add presentation",
@@ -24,7 +24,7 @@
                 "error": "Could not remove presentation. Please try again."
             },
             "detail": {
-                "title": "Participation"
+                "title": "Participant"
             },
             "repositoryUrl": "Repository Url",
             "buildPlanId": "Build Plan Id",
@@ -38,7 +38,7 @@
             "students": "Students",
             "templateParticipation": "Template Participation",
             "solutionParticipation": "Solution Participation",
-            "noParticipation": "The participation could not be found!",
+            "noParticipation": "The participant could not be found!",
             "exercise": "Exercise",
             "deleteRepository": "Delete repository",
             "deleteBuildPlan": "Delete build plan",

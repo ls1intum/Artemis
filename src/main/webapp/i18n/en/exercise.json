@@ -91,7 +91,7 @@
             },
             "categories": "Categories",
             "noCategory": "No Category",
-            "participations": "Participations",
+            "participations": "Participants",
             "submissions": "Submissions",
             "teams": "Teams",
             "exportNames": "Export Names",
@@ -139,7 +139,7 @@
             "resultCreationUnsuccessful": "The result was created unsuccessfully",
             "presentationScoreEnabled": {
                 "title": "Presentation",
-                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participations\" page of the exercise."
+                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participants\" page of the exercise."
             },
             "errors": {
                 "exerciseNotFound": "This exercise was not found"
