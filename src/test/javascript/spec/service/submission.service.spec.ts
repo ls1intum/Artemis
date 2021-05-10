@@ -1,5 +1,5 @@
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
@@ -21,6 +21,22 @@ describe('Submission Service', () => {
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
+    const submission = ({
+        id: 1,
+        submitted: true,
+        type: 'AUTOMATIC',
+        text: 'Test\n\nTest\n\nTest',
+    } as unknown) as TextSubmission;
+    submission.results = [
+        ({
+            id: 2374,
+            resultString: '1 of 12 points',
+            score: 8,
+            rated: true,
+            hasFeedback: true,
+            hasComplaint: false,
+        } as unknown) as Result,
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,24 +60,8 @@ describe('Submission Service', () => {
         expect(expectedResult).to.be.true;
     });
 
-    it('should find all submissions of a given participation', async () => {
+    it('should find all submissions of a given participation', fakeAsync(() => {
         const participationId = 1;
-        const submission = ({
-            id: 1,
-            submitted: true,
-            type: 'AUTOMATIC',
-            text: 'Test\n\nTest\n\nTest',
-        } as unknown) as TextSubmission;
-        submission.results = [
-            ({
-                id: 2374,
-                resultString: '1 of 12 points',
-                score: 8,
-                rated: true,
-                hasFeedback: true,
-                hasComplaint: false,
-            } as unknown) as Result,
-        ];
         getLatestSubmissionResult(submission)!.feedbacks = [
             {
                 id: 2,
@@ -74,30 +74,14 @@ describe('Submission Service', () => {
         service
             .findAllSubmissionsOfParticipation(participationId)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
+            .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
         const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/participations/${participationId}/submissions`, method: 'GET' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(expected);
-    });
+        tick();
+    }));
 
-    it('should get test run submission for a given exercise', async () => {
+    it('should get test run submission for a given exercise', fakeAsync(() => {
         const exerciseId = 1;
-        const submission = ({
-            id: 1,
-            submitted: true,
-            type: 'AUTOMATIC',
-            text: 'Test\n\nTest\n\nTest',
-        } as unknown) as TextSubmission;
-        submission.results = [
-            ({
-                id: 2374,
-                resultString: '1 of 12 points',
-                score: 8,
-                rated: true,
-                hasFeedback: true,
-                hasComplaint: false,
-            } as unknown) as Result,
-        ];
         getLatestSubmissionResult(submission)!.feedbacks = [
             {
                 id: 2,
@@ -110,11 +94,11 @@ describe('Submission Service', () => {
         service
             .getTestRunSubmissionsForExercise(exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
+            .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
         const req = httpMock.expectOne({ url: `api/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
         req.flush(returnedFromService);
-        expect(expectedResult.body).to.deep.equal(expected);
-    });
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

@@ -199,7 +199,7 @@ export class AssessmentDashboardComponent implements OnInit {
                     if (this.numberOfSubmissions.total > 0) {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
-                    // This is done here to make sure the whole page is already loaded when the guided tour step is startet on the page
+                    // This is done here to make sure the whole page is already loaded when the guided tour step is started on the page
                     this.guidedTourService.componentPageLoaded();
                 },
                 (response: string) => this.onError(response),

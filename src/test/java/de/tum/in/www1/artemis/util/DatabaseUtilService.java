@@ -1678,10 +1678,12 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneQuizExercise(){return addCourseWithOneQuizExercise("Title");}
+    public Course addCourseWithOneQuizExercise() {
+        return addCourseWithOneQuizExercise("Title");
+    }
 
-    public Course addCourseWithOneQuizExercise(String title){
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor","instructor");
+    public Course addCourseWithOneQuizExercise(String title) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp);
         quizExercise.setIsVisibleBeforeStart(false);
         quizExercise.setTitle(title);
@@ -2029,7 +2031,8 @@ public class DatabaseUtilService {
             var currentUser = tutors.get(i % 4);
 
             if ((i % 3) == 0) {
-                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, DiagramType.ClassDiagram,
+                        course);
                 modelingExercise.setTitle("Modeling" + i);
                 course.addExercises(modelingExercise);
                 course = courseRepo.save(course);
@@ -2051,7 +2054,7 @@ public class DatabaseUtilService {
 
             }
             else if ((i % 3) == 1) {
-                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, futureTimestamp, course);
+                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, course);
                 textExercise.setTitle("Text" + i);
                 course.addExercises(textExercise);
                 course = courseRepo.save(course);
@@ -2069,7 +2072,7 @@ public class DatabaseUtilService {
                 }
             }
             else if ((i % 3) == 2) {
-                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureTimestamp, "png,pdf", course);
+                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
                 course.addExercises(fileUploadExercise);
                 course = courseRepo.save(course);
@@ -2106,6 +2109,7 @@ public class DatabaseUtilService {
         result.resultString("3 of 10 points");
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
+        result.setRated(true);
         return result;
     }
 
@@ -2349,6 +2353,10 @@ public class DatabaseUtilService {
             result.setCompletionDate(ZonedDateTime.now());
         }
         result.setFeedbacks(feedbacks);
+        result = resultRepo.save(result);
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
         result = resultRepo.save(result);
         result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
@@ -3145,12 +3153,12 @@ public class DatabaseUtilService {
         gradeStep2.setGradingScale(gradingScale);
         gradeStep3.setGradingScale(gradingScale);
 
-        gradeStep1.setPassingGrade(false);
+        gradeStep1.setIsPassingGrade(false);
         gradeStep1.setGradeName("Fail");
         gradeStep1.setLowerBoundPercentage(0);
         gradeStep1.setUpperBoundPercentage(60);
 
-        gradeStep2.setPassingGrade(true);
+        gradeStep2.setIsPassingGrade(true);
         gradeStep2.setGradeName("Pass");
         gradeStep2.setLowerBoundPercentage(60);
         if (valid) {
@@ -3160,7 +3168,7 @@ public class DatabaseUtilService {
             gradeStep2.setUpperBoundPercentage(80);
         }
 
-        gradeStep3.setPassingGrade(true);
+        gradeStep3.setIsPassingGrade(true);
         gradeStep3.setGradeName("Excellent");
         gradeStep3.setLowerBoundPercentage(90);
         gradeStep3.setUpperBoundPercentage(100);

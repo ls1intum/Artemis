@@ -10,8 +10,8 @@ import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-s
     template: `
         <div>
             <div>
-                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | translate }}</h4>
-                <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | translate"></p>
+                <h4>{{ 'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate }}</h4>
+                <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
             <div class="bg-light">
                 <jhi-chart [preset]="chartPreset" [datasets]="chartDatasets"></jhi-chart>

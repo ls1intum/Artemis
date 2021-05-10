@@ -60,7 +60,11 @@ export class CourseCardComponent implements OnChanges {
     ngOnChanges() {
         if (this.course.exercises && this.course.exercises.length > 0) {
             this.exerciseCount = this.course.exercises.length;
-            const nextExercises = this.exerciseService.getNextExercisesForDays(this.course.exercises);
+
+            const nextExercisesWithAnyScore = this.exerciseService.getNextExercisesForDays(this.course.exercises!);
+            // filters out every already successful (100%) exercise, only exercises left that still need work
+            const nextExercises = nextExercisesWithAnyScore.filter((exercise: Exercise) => !exercise.studentParticipations?.[0]?.submissions?.[0]?.results?.[0]?.successful);
+
             if (nextExercises.length > 0 && nextExercises[0]) {
                 this.nextRelevantExercise = nextExercises[0];
                 this.nextExerciseIcon = getIcon(this.nextRelevantExercise!.type);

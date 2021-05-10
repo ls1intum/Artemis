@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-scores/participant-scores-average-table/participant-scores-average-table.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { TranslateModule, TranslatePipe } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import * as sinonChai from 'sinon-chai';
@@ -27,7 +27,7 @@ describe('ParticipantScoresAverageTable', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisDataTableModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
-            declarations: [ParticipantScoresAverageTableComponent, MockPipe(TranslatePipe), MockDirective(JhiTranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            declarations: [ParticipantScoresAverageTableComponent, MockDirective(JhiTranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 {

@@ -1,14 +1,16 @@
 <button class="btn btn-info mb-2" (click)="reload.emit()">Refresh</button>
 <div class="btn-group btn-group-toggle mb-2" ngbRadioGroup name="radioBasic" [(ngModel)]="mode">
-    <label ngbButtonLabel class="btn-primary"> <input ngbButton type="radio" [value]="'individual'" /> {{ 'artemisApp.participantScores.individual' | translate }} </label>
-    <label ngbButtonLabel class="btn-primary"> <input ngbButton type="radio" [value]="'average'" /> {{ 'artemisApp.participantScores.average' | translate }} </label>
+    <label ngbButtonLabel class="btn-primary"> <input ngbButton type="radio" [value]="'individual'" /> {{ 'artemisApp.participantScores.individual' | artemisTranslate }} </label>
+    <label ngbButtonLabel class="btn-primary"> <input ngbButton type="radio" [value]="'average'" /> {{ 'artemisApp.participantScores.average' | artemisTranslate }} </label>
 </div>
 
-<ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | translate }}</ng-template>
-<span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">{{ 'artemisApp.participantScores.averageScore' | translate: { avg: round(avgScore, 1) } }} </span>
+<ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
+<span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent"
+    >{{ 'artemisApp.participantScores.averageScore' | artemisTranslate: { avg: round(avgScore, 1) } }}
+</span>
 
 <span class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent"
-    >{{ 'artemisApp.participantScores.averageRatedScore' | translate: { avg: round(avgRatedScore, 1) } }}
+    >{{ 'artemisApp.participantScores.averageRatedScore' | artemisTranslate: { avg: round(avgRatedScore, 1) } }}
 </span>
 
 <div [ngSwitch]="mode">

@@ -235,6 +235,7 @@
             "examChecklist": "Klausurcheckliste",
             "studentExams": "Klausuren der Studenten",
             "students": "Studenten",
+            "gradingSystem": "Notenschlüssel",
             "testRun": {
                 "testRun": "Testlauf",
                 "title": "Testlaufverwaltung: ",

@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.in.www1.artemis.domain.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -28,7 +29,6 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
-import org.springframework.util.LinkedMultiValueMap;
 
 public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -1108,14 +1108,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateQuizExerciseAsTutorForbidden() throws Exception{
+    public void testCreateQuizExerciseAsTutorForbidden() throws Exception {
         final Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course,ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
-        //remove instructor rights
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
+        // remove instructor rights
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
-        request.postWithResponseBody("/api/quiz-exercises",quizExercise,QuizExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
         assertThat(course.getExercises()).isEmpty();
     }
 
@@ -1124,11 +1124,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllQuizExercisesAsStudentForbidden() throws Exception{
+    public void testGetAllQuizExercisesAsStudentForbidden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise("Titel");
         assertThat(course.getExercises()).isNotEmpty();
         List<QuizExercise> quizExercises;
-        //remove instructor rights
+        // remove instructor rights
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
@@ -1141,17 +1141,17 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testPerformPutActionAsTutorForbidden() throws Exception{
+    public void testPerformPutActionAsTutorForbidden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         assertThat(course.getExercises()).isNotEmpty();
         quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
         assertThat(quizExercise.isIsOpenForPractice()).isFalse();
-        //remove instructor rights
+        // remove instructor rights
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
 
-        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice",quizExercise,HttpStatus.FORBIDDEN);
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, HttpStatus.FORBIDDEN);
         assertThat(quizExerciseRepository.findByCourseId(course.getId()).get(0).isIsOpenForPractice()).isFalse();
     }
 
@@ -1160,11 +1160,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testViewQuizExerciseAsStudentNotVisible() throws Exception{
+    public void testViewQuizExerciseAsStudentNotVisible() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
         assertThat(quizExercise.isVisibleToStudents()).isFalse();
-        //remove instructor rights in course
+        // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
@@ -1176,10 +1176,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteQuizExerciseAsNonInstructor() throws Exception{
+    public void testDeleteQuizExerciseAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
-        //remove instructor rights in course
+        // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
@@ -1191,14 +1191,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testRecalculateStatisticsAsNonInstructor() throws Exception{
+    public void testRecalculateStatisticsAsNonInstructor() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
-        //remove instructor rights in course
+        // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
-        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN,QuizExercise.class);
+        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
@@ -1206,14 +1206,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception{
+    public void testGetQuizExerciseForStudentNotInCourseForbiden() throws Exception {
         final Course course = database.addCourseWithOneQuizExercise();
         quizExercise = quizExerciseRepository.findByCourseId(course.getId()).get(0);
-        //remove instructor rights in course
+        // remove instructor rights in course
         User user = database.getUserByLogin("student1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
-        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN,QuizExercise.class);
+        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.FORBIDDEN, QuizExercise.class);
     }
 
     /**
@@ -1221,7 +1221,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testReEvaluateQuizAsNonInstructorForbidden() throws Exception{
+    public void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
         quizExercise.setTitle("Titel");
@@ -1233,11 +1233,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        //remove instructor rights in course
+        // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
-        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate",quizExercise, HttpStatus.FORBIDDEN);
+        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -1245,7 +1245,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testUnfinishedExamReEvaluateBadRequest() throws Exception{
+    public void testUnfinishedExamReEvaluateBadRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setTitle("Titel");
@@ -1260,7 +1260,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception{
+    public void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
         quizExercise.setTitle("Titel");
@@ -1271,14 +1271,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course.addExercises(quizExercise);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        //change some stuff
+        // change some stuff
         quizExercise.setTitle("new Titel");
         quizExercise.setIsVisibleBeforeStart(true);
-        //remove instructor rights in course
+        // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
         userRepo.save(user);
-        request.put("/api/quiz-exercises" , quizExercise, HttpStatus.FORBIDDEN);
+        request.put("/api/quiz-exercises", quizExercise, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -1286,7 +1286,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testUpdateQuizExerciseInvalidBadRequest() throws Exception{
+    public void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
         final Course course = database.createCourse();
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
         quizExercise.setTitle("Titel");
@@ -1297,10 +1297,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course.addExercises(quizExercise);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
-        //change some stuff
+        // change some stuff
         quizExercise.setTitle(null);
         assertThat(quizExercise.isValid()).isFalse();
-        request.put("/api/quiz-exercises" , quizExercise, HttpStatus.BAD_REQUEST);
+        request.put("/api/quiz-exercises", quizExercise, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -1308,7 +1308,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testUpdateQuizExerciseWithNotificationText() throws Exception{
+    public void testUpdateQuizExerciseWithNotificationText() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -1329,7 +1329,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var params = new LinkedMultiValueMap<String, String>();
         params.add("notificationText", "NotificationTextTEST!");
         request.putWithResponseBodyAndParams("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK, params);
-        //TODO check if notifications arrived correctly
+        // TODO check if notifications arrived correctly
     }
 
     /**
@@ -1337,20 +1337,20 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * */
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testRedundantActionsBadRequest() throws Exception{
-        //set-visible
+    public void testRedundantActionsBadRequest() throws Exception {
+        // set-visible
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        //start-now
+        // start-now
         quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
         assertThat(quizExercise.isStarted()).isTrue();
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        //open-for-practice
+        // open-for-practice
         quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
         quizExercise.setIsOpenForPractice(true);
         quizExerciseRepository.save(quizExercise);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        //misspelled request
+        // misspelled request
         quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
