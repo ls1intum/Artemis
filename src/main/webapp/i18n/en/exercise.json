@@ -53,7 +53,6 @@
             "title": "Title",
             "shortName": "Short Name",
             "releaseDate": "Release Date",
-            "notReleased": "Not released",
             "dueDate": "Due Date",
             "dueDateError": "Due Date must be after Release Date. Please check your selection again",
             "assessmentDueDate": "Assessment Due Date",
