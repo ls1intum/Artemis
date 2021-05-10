@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../../test.module';
@@ -11,6 +11,8 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 const expect = chai.expect;
 describe('Exam Management Service Tests', () => {
@@ -82,70 +84,174 @@ describe('Exam Management Service Tests', () => {
         req.flush(mockExam);
     });
 
-    it('should get exam scores', () => {
+    it('should get the exam title', fakeAsync(() => {
+        //GIVEN
+        const mockExam: Exam = { id: 1 };
+        const expectedTitle = 'expectedTitle';
+
+        //WHEN
+        service.getTitle(mockExam.id!).subscribe((res) => expect(res.body).to.eq(expectedTitle));
+
+        //THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `api/exams/${mockExam.id!}/title` });
+        req.flush(expectedTitle);
+        tick();
+    }));
+
+    it('should get exam scores', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockExamScore: ExamScoreDTO = { examId: mockExam.id!, title: '', averagePointsAchieved: 1, exerciseGroups: [], maxPoints: 1, studentResults: [] };
+        const expectedExamScore = { ...mockExamScore };
 
         // WHEN
-        service.getExamScores(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.eq(mockExamScore));
+        service.getExamScores(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq(expectedExamScore));
 
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/scores` });
+        req.flush(mockExamScore);
+        tick();
+    }));
 
-        // CLEANUP
-        req.flush(mockExam);
-    });
-
-    it('should find all exams for course', () => {
-        // WHEN
-        service.findAllExamsForCourse(course.id!).subscribe((res) => expect(res.body).to.equal([]));
-
-        // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams` });
-    });
-
-    it('should find all current and upcoming exams', () => {
-        // WHEN
-        service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).to.equal([]));
-
-        // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/upcoming-exams` });
-    });
-
-    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=false', () => {
+    it('should get stats for exam assessment dashboard', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
+        const mockStatsForDashboard = new StatsForDashboard();
+        const expectedStatsForDashboard = { ...mockStatsForDashboard };
 
         // WHEN
-        service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, false).subscribe((res) => expect(res.body).to.equal([]));
+        service.getStatsForExamAssessmentDashboard(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq(expectedStatsForDashboard));
 
         // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-assessment-dashboard` });
-    });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/stats-for-exam-assessment-dashboard` });
+        req.flush(mockStatsForDashboard);
+        tick();
+    }));
 
-    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', () => {
+    it('should find all exams for course', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = { id: 1 };
+        const mockExam: Exam = {
+            id: 1,
+            startDate: undefined,
+            endDate: undefined,
+            visibleDate: undefined,
+            publishResultsDate: undefined,
+            examStudentReviewStart: undefined,
+            examStudentReviewEnd: undefined,
+        };
+        const mockExamResponse = [{ ...mockExam }];
 
         // WHEN
-        service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, true).subscribe((res) => expect(res.body).to.equal([]));
+        service.findAllExamsForCourse(course.id!).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
 
         // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-test-run-assessment-dashboard` });
-    });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams` });
+        req.flush(mockExamResponse);
+        tick();
+    }));
 
-    it('should get latest individual end date of exam', () => {
+    it('find all exams for which the instructors have access', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = {
+            id: 1,
+            startDate: undefined,
+            endDate: undefined,
+            visibleDate: undefined,
+            publishResultsDate: undefined,
+            examStudentReviewStart: undefined,
+            examStudentReviewEnd: undefined,
+        };
+        const mockExamResponse = [{ ...mockExam }];
+
+        // WHEN
+        service.findAllExamsAccessibleToUser(course.id!).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id}/exams-for-user` });
+        req.flush(mockExamResponse);
+        tick();
+    }));
+
+    it('should find all current and upcoming exams', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = {
+            id: 1,
+            startDate: undefined,
+            endDate: undefined,
+            visibleDate: undefined,
+            publishResultsDate: undefined,
+            examStudentReviewStart: undefined,
+            examStudentReviewEnd: undefined,
+        };
+        const mockExamResponse = [{ ...mockExam }];
+
+        // WHEN
+        service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/upcoming-exams` });
+        req.flush(mockExamResponse);
+        tick();
+    }));
+
+    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=false', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = {
+            id: 1,
+            startDate: undefined,
+            endDate: undefined,
+            visibleDate: undefined,
+            publishResultsDate: undefined,
+            examStudentReviewStart: undefined,
+            examStudentReviewEnd: undefined,
+        };
+        const mockExamResponse = [{ ...mockExam }];
+
+        // WHEN
+        service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, false).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-assessment-dashboard` });
+        req.flush(mockExamResponse);
+        tick();
+    }));
+
+    it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = {
+            id: 1,
+            startDate: undefined,
+            endDate: undefined,
+            visibleDate: undefined,
+            publishResultsDate: undefined,
+            examStudentReviewStart: undefined,
+            examStudentReviewEnd: undefined,
+        };
+        const mockExamResponse = [{ ...mockExam }];
+
+        // WHEN
+        service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExam.id!, true).subscribe((res) => expect(res.body).to.deep.equal([mockExam]));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/exam-for-test-run-assessment-dashboard` });
+        req.flush(mockExamResponse);
+        tick();
+    }));
+
+    it('should get latest individual end date of exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockResponse: ExamInformationDTO = { latestIndividualEndDate: moment() };
+        const expected = { ...mockResponse };
 
         // WHEN
-        service.getLatestIndividualEndDateOfExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.equal(mockResponse));
+        service.getLatestIndividualEndDateOfExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.equal(expected));
 
         // THEN
-        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/latest-end-date` });
-    });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/latest-end-date` });
+        req.flush(mockResponse);
+        tick();
+    }));
 
     it('should delete an exam', () => {
         // GIVEN
@@ -226,6 +332,23 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}?withParticipationsAndSubmission=true`,
         });
     });
+
+    it('remove all students from an exam', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockResponse = {};
+
+        // WHEN
+        service.removeAllStudentsFromExam(course.id!, mockExam.id!, false).subscribe((resp) => expect(resp.body).to.be.deep.equal({}));
+
+        //THEN
+        const req = httpMock.expectOne({
+            method: 'DELETE',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students?withParticipationsAndSubmission=false`,
+        });
+        req.flush(mockResponse);
+        tick();
+    }));
 
     it('should generate student exams', () => {
         // GIVEN
@@ -404,4 +527,47 @@ describe('Exam Management Service Tests', () => {
 
         httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/register-course-students` });
     });
+
+    it('should find all locked submissions from exam', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockResponse = [new TextSubmission()];
+        const expected = [new TextSubmission()];
+
+        // WHEN
+        service.findAllLockedSubmissionsOfExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.be.deep.equal(expected));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/lockedSubmissions` });
+        req.flush(mockResponse);
+        tick();
+    }));
+
+    it('should download the exam from archive', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockResponse = new Blob();
+        const expected = new Blob();
+
+        // WHEN
+        service.downloadExamArchive(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq(expected));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/download-archive` });
+        req.flush(mockResponse);
+        tick();
+    }));
+
+    it('should archive the exam', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+
+        // WHEN
+        service.archiveExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.deep.eq({}));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}/archive` });
+        req.flush({});
+        tick();
+    }));
 });
