@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { Graphs } from 'app/entities/statistics.model';
 import { CourseManagementService } from '../course-management.service';
+import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-course-detail-bar-chart',
@@ -140,6 +141,20 @@ export class CourseDetailBarChartComponent implements OnChanges {
             },
             animation: {
                 duration: 1,
+                onComplete() {
+                    const chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
+                        const meta = chartInstance.controller.getDatasetMeta(j);
+                        meta.data.forEach(function (bar: any, index: number) {
+                            const data = !!self.initialStats ? self.initialStats[index] : 0;
+                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
+                        });
+                    });
+                },
             },
             scales: {
                 yAxes: [
@@ -164,6 +179,11 @@ export class CourseDetailBarChartComponent implements OnChanges {
                         if (!self.initialStats) {
                             return ' 0';
                         }
+                        console.log('self.absoluteData:');
+                        console.log(self.absoluteData);
+
+                        console.log('self.absoluteData[tooltipItem.index]');
+                        console.log(self.absoluteData[tooltipItem.index]);
                         return ' ' + self.absoluteData[tooltipItem.index];
                     },
                 },

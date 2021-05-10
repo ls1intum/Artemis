@@ -1421,7 +1421,7 @@ public class CourseResource {
         double reachablePoints = includedExercises.stream().map(Exercise::getMaxPoints).collect(Collectors.toSet()).stream().mapToDouble(Double::doubleValue).sum();
 
         Set<Long> exerciseIdsOfCourse = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-        CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId);
+        CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
 
         setAssessments(dto, exerciseIdsOfCourse);
         setComplaints(dto, courseId);

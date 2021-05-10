@@ -2,8 +2,11 @@
     <h4 class="text-center">{{ doughnutChartTitle }}</h4>
     <div class="doughnut-chart-container">
         <div class="doughnut-chart-text">
-            <h2 class="text-center">{{ currentPercentage }} %</h2>
-            <h4 class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
+            <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }} %</h2>
+            <h4 *ngIf="receivedStats" class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
+            <h1 *ngIf="!receivedStats" class="text-center" style="z-index: 1">
+                <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+            </h1>
         </div>
         <canvas
             baseChart

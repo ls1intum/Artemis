@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { ChartType } from 'chart.js';
 
@@ -7,13 +7,14 @@ import { ChartType } from 'chart.js';
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
 })
-export class CourseDetailDoughnutChartComponent implements OnInit {
+export class CourseDetailDoughnutChartComponent implements OnChanges {
     @Input() doughnutChartTitle: string;
 
-    @Input() currentPercentage: number;
-    @Input() currentAbsolute: number;
-    @Input() currentMax: number;
+    @Input() currentPercentage: number | undefined;
+    @Input() currentAbsolute: number | undefined;
+    @Input() currentMax: number | undefined;
 
+    receivedStats = false;
     stats: number[];
 
     // Chart.js data
@@ -41,13 +42,18 @@ export class CourseDetailDoughnutChartComponent implements OnInit {
         },
     ];
 
-    ngOnInit(): void {
-        this.stats = [this.currentAbsolute, this.currentMax - this.currentAbsolute];
-        if (this.currentMax === 0) {
-            // [0, 0] will lead to the chart not being displayed - is further handled in the option tooltips
+    ngOnChanges(): void {
+        if (this.currentAbsolute == undefined && !this.receivedStats) {
             this.doughnutChartData[0].data = [-1, 0];
         } else {
-            this.doughnutChartData[0].data = this.stats;
+            this.receivedStats = true;
+            this.stats = [this.currentAbsolute!, this.currentMax! - this.currentAbsolute!];
+            if (this.currentMax === 0) {
+                // [0, 0] will lead to the chart not being displayed - is further handled in the option tooltips
+                this.doughnutChartData[0].data = [-1, 0];
+            } else {
+                this.doughnutChartData[0].data = this.stats;
+            }
         }
     }
 }

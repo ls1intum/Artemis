@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import de.tum.in.www1.artemis.domain.Course;
-
 public class CourseManagementDetailViewDTO {
-
-    private Course course;
 
     private Integer numberOfStudentsInCourse;
 
@@ -41,6 +37,8 @@ public class CourseManagementDetailViewDTO {
     private Double currentAbsoluteAverageScore;
 
     private Double currentMaxAverageScore;
+
+    private Integer[] activeStudents;
 
     public Integer getNumberOfStudentsInCourse() {
         return numberOfStudentsInCourse;
@@ -170,11 +168,11 @@ public class CourseManagementDetailViewDTO {
         this.currentMaxAverageScore = currentMaxAverageScore;
     }
 
-    public Course getCourse() {
-        return course;
+    public Integer[] getActiveStudents() {
+        return activeStudents;
     }
 
-    public void setCourse(Course course) {
-        this.course = course;
+    public void setActiveStudents(Integer[] activeStudents) {
+        this.activeStudents = activeStudents;
     }
 }
