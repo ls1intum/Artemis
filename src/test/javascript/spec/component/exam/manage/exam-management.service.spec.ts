@@ -20,6 +20,15 @@ describe('Exam Management Service Tests', () => {
     let httpMock: HttpTestingController;
 
     const course = { id: 456 } as Course;
+    const mockExam: Exam = {
+        id: 1,
+        startDate: undefined,
+        endDate: undefined,
+        visibleDate: undefined,
+        publishResultsDate: undefined,
+        examStudentReviewStart: undefined,
+        examStudentReviewEnd: undefined,
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -130,15 +139,6 @@ describe('Exam Management Service Tests', () => {
 
     it('should find all exams for course', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = {
-            id: 1,
-            startDate: undefined,
-            endDate: undefined,
-            visibleDate: undefined,
-            publishResultsDate: undefined,
-            examStudentReviewStart: undefined,
-            examStudentReviewEnd: undefined,
-        };
         const mockExamResponse = [{ ...mockExam }];
 
         // WHEN
@@ -152,15 +152,6 @@ describe('Exam Management Service Tests', () => {
 
     it('find all exams for which the instructors have access', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = {
-            id: 1,
-            startDate: undefined,
-            endDate: undefined,
-            visibleDate: undefined,
-            publishResultsDate: undefined,
-            examStudentReviewStart: undefined,
-            examStudentReviewEnd: undefined,
-        };
         const mockExamResponse = [{ ...mockExam }];
 
         // WHEN
@@ -174,15 +165,6 @@ describe('Exam Management Service Tests', () => {
 
     it('should find all current and upcoming exams', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = {
-            id: 1,
-            startDate: undefined,
-            endDate: undefined,
-            visibleDate: undefined,
-            publishResultsDate: undefined,
-            examStudentReviewStart: undefined,
-            examStudentReviewEnd: undefined,
-        };
         const mockExamResponse = [{ ...mockExam }];
 
         // WHEN
@@ -196,15 +178,6 @@ describe('Exam Management Service Tests', () => {
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=false', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = {
-            id: 1,
-            startDate: undefined,
-            endDate: undefined,
-            visibleDate: undefined,
-            publishResultsDate: undefined,
-            examStudentReviewStart: undefined,
-            examStudentReviewEnd: undefined,
-        };
         const mockExamResponse = [{ ...mockExam }];
 
         // WHEN
@@ -218,15 +191,6 @@ describe('Exam Management Service Tests', () => {
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = {
-            id: 1,
-            startDate: undefined,
-            endDate: undefined,
-            visibleDate: undefined,
-            publishResultsDate: undefined,
-            examStudentReviewStart: undefined,
-            examStudentReviewEnd: undefined,
-        };
         const mockExamResponse = [{ ...mockExam }];
 
         // WHEN
