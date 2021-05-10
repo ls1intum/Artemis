@@ -22,7 +22,13 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() explanation: string;
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
-    @Input() feedbacks: Feedback[] = [];
+
+    feedbacks: Feedback[];
+    @Input() set resultFeedbacks(feedback: Feedback[]) {
+        this.feedbacks = feedback;
+        console.log('setting resultFeedback');
+    }
+
     @Input() diagramType?: UMLDiagramType;
     @Input() maxScore: number;
     @Input() maxBonusPoints = 0;
@@ -109,6 +115,25 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             if (this.centeredElementId) {
                 this.scrollIntoView(this.centeredElementId);
             }
+        }
+        if (changes.totalScore) {
+            this.enableLabels();
+        }
+        console.log('changes:', changes);
+    }
+
+    private enableLabels() {
+        console.log('enable label');
+        this.model.assessments = this.referencedFeedbacks.map<Assessment>((feedback) => ({
+            modelElementId: feedback.referenceId!,
+            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+            score: feedback.credits!,
+            feedback: feedback.text || undefined,
+            label: this.calculateLabel(feedback),
+            labelColor: this.calculateLabelColor(feedback),
+        }));
+        if (this.apollonEditor) {
+            this.apollonEditor!.model = this.model;
         }
     }
 
@@ -272,20 +297,17 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         console.log('updating apollon editor!');
     }
 
-    // label: this.calculateLabel(feedback),
-    // labelColor: this.calculateLabelColor(feedback),
-
-    private calculateLabel(feedback: Feedback) {
+    private calculateLabel(feedback: any) {
         if (this.highlightDifferences) {
-            return feedback.copiedFeedbackId ? 'Second correction round' : 'First correction round';
+            return feedback.copiedFeedbackId ? 'First correction round' : 'Second correction round';
         }
         return undefined;
     }
 
-    private calculateLabelColor(feedback: Feedback) {
+    private calculateLabelColor(feedback: any) {
         if (this.highlightDifferences) {
-            return feedback.copiedFeedbackId ? 'orange' : 'blue';
+            return feedback.copiedFeedbackId ? 'blue' : 'orange';
         }
-        return undefined;
+        return '';
     }
 }

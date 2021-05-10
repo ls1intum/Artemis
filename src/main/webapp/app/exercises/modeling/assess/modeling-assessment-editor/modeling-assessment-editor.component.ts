@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnChanges } from '@angular/core';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -35,7 +35,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
     templateUrl: './modeling-assessment-editor.component.html',
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
-export class ModelingAssessmentEditorComponent implements OnInit {
+export class ModelingAssessmentEditorComponent implements OnInit, OnChanges {
     totalScore = 0;
     submission?: ModelingSubmission;
     model?: UMLModel;
@@ -123,6 +123,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.loadSubmission(Number(submissionId));
             }
         });
+    }
+
+    public ngOnChanges() {
+        console.log('referenced Feedback:', this.referencedFeedback, this.highlightDifferences);
     }
 
     private loadSubmission(submissionId: number): void {

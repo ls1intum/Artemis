@@ -81,7 +81,7 @@
                         class="col-12"
                         *ngIf="assessmentMode && exercise.diagramType"
                         [model]="umlModel"
-                        [feedbacks]="result?.feedbacks || []"
+                        [resultFeedbacks]="result?.feedbacks || []"
                         [diagramType]="exercise.diagramType!"
                         [maxScore]="exercise.maxPoints || 0"
                         [maxBonusPoints]="exercise.bonusPoints || 0"

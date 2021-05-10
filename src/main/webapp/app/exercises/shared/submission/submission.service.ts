@@ -124,6 +124,7 @@ export class SubmissionService {
      * @param submission current submission
      */
     public handleFeedbackCorrectionRoundTag(correctionRound: number, submission: Submission) {
+        console.log('badge update:', submission);
         if (correctionRound > 0 && submission?.results && submission.results.length > 1) {
             const firstResult = submission!.results![0] as Result;
             const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
