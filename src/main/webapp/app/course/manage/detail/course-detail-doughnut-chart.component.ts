@@ -43,12 +43,13 @@ export class CourseDetailDoughnutChartComponent implements OnChanges {
     ];
 
     ngOnChanges(): void {
+        // [0, 0] will lead to the chart not being displayed,
+        // assigning [-1, 0] works around this issue and displays 0 %, 0 / 0 with a green circle
         if (this.currentAbsolute == undefined && !this.receivedStats) {
             this.doughnutChartData[0].data = [-1, 0];
         } else {
             this.receivedStats = true;
             this.stats = [this.currentAbsolute!, this.currentMax! - this.currentAbsolute!];
-            // [0, 0] will lead to the chart not being displayed - is further handled in the option tooltips
             this.doughnutChartData[0].data = this.currentMax === 0 ? [-1, 0] : this.stats;
         }
     }
