@@ -43,13 +43,13 @@ describe('CourseDetailDoughnutChartComponent', () => {
     });
 
     it('should initialize', () => {
-        component.ngOnInit();
+        component.ngOnChanges();
         const expected = [absolute, max - absolute];
         expect(component.stats).to.deep.equal(expected);
         expect(component.doughnutChartData[0].data).to.deep.equal(expected);
 
         component.currentMax = 0;
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.doughnutChartData[0].data).to.deep.equal([-1, 0]);
     });
 });
