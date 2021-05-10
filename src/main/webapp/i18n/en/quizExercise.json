@@ -8,9 +8,9 @@
                 "createOrEditLabel": "Create or edit a Quiz Exercise",
                 "exportLabel": "Export Quiz Exercises"
             },
-            "created": "A new Quiz Exercise is created with identifier {{ param }}",
-            "updated": "A Quiz Exercise is updated with identifier {{ param }}",
-            "deleted": "A Quiz Exercise is deleted with identifier {{ param }}",
+            "created": "Created new Quiz Exercise with identifier {{ param }}",
+            "updated": "Updated Quiz Exercise with identifier {{ param }}",
+            "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!"
             },

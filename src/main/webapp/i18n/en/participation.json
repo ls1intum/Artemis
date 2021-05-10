@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Participation",
                 "createOrEditLabel": "Create or edit a Participation"
             },
-            "created": "A new participation is created with identifier {{ param }}",
-            "updated": "The Participation of {{ param }} was updated",
-            "deleted": "The Participation of {{ param }} was deleted",
+            "created": "Created new participant with identifier {{ param }}",
+            "updated": "Updated participant {{ param }}",
+            "deleted": "Deleted participant {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete the participation of <strong>{{ title }}</strong>?"
             },

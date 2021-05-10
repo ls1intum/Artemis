@@ -9,9 +9,9 @@
                     "loading": "Error while loading Apollon diagrams"
                 }
             },
-            "created": "Apollon Diagram created with ID {{ param }}",
-            "updated": "Apollon Diagram updated with ID {{ param }}",
-            "deleted": "Apollon Diagram deleted with ID {{ param }}",
+            "created": "Created new Apollon Diagram with ID {{ param }}",
+            "updated": "Updated Apollon Diagram with ID {{ param }}",
+            "deleted": "Deleted Apollon Diagram with ID {{ param }}",
             "create": {
                 "success": "Apollon diagram with title {{ title }} was created successfully",
                 "error": "Error while creating Apollon diagram"

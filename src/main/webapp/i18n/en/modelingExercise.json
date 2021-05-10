@@ -7,9 +7,9 @@
                 "editLabel": "Edit Modeling Exercise",
                 "importLabel": "Import Modeling Exercise"
             },
-            "created": "A new Modeling Exercise is created with identifier {{ param }}",
-            "updated": "A Modeling Exercise is updated with identifier {{ param }}",
-            "deleted": "A Modeling Exercise is deleted with identifier {{ param }}",
+            "created": "Created new Modeling Exercise with identifier {{ param }}",
+            "updated": "Updated Modeling Exercise with identifier {{ param }}",
+            "deleted": "Deleted Modeling Exercise with identifier {{ param }}",
             "detail": {
                 "title": "Modeling Exercise"
             },

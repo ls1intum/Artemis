@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Modeling Submission",
                 "createOrEditLabel": "Create or edit a Modeling Submission"
             },
-            "created": "A new Modeling Submission is created with identifier {{ param }}",
-            "updated": "A Modeling Submission is updated with identifier {{ param }}",
-            "deleted": "A Modeling Submission is deleted with identifier {{ param }}",
+            "created": "Created new Modeling Submission with identifier {{ param }}",
+            "updated": "Updated Modeling Submission with identifier {{ param }}",
+            "deleted": "Deleted Modeling Submission with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Modeling Submission {{ id }}?"
             },

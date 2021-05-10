@@ -7,9 +7,9 @@
                 "editLabel": "Edit course",
                 "createOrEditLabel": "Create or edit a course"
             },
-            "created": "A new course was created with title {{ param }}",
-            "updated": "A Course was updated with title {{ param }}",
-            "deleted": "A Course was deleted with title {{ param }}",
+            "created": "Created new course with title {{ param }}",
+            "updated": "Updated Course with title {{ param }}",
+            "deleted": "Deleted Course with title {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including the exams, exercises, repositories and build plans. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the course to confirm."
