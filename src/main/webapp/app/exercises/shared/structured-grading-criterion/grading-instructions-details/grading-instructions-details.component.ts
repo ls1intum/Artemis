@@ -382,8 +382,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         const instruction = new GradingInstruction();
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
-        const markdownText = this.generateInstructionText(instruction);
-        this.prepareForSave();
     }
 
     /**
