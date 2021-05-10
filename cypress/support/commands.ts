@@ -31,12 +31,13 @@ declare global {
         interface Chainable {
             loginWithGUI(username: String, password: String): any;
 
-            loginWithAPI(username: String, password: String): any;
+            loginWithAPI(username: String, password: String, url: String): any;
         }
     }
 }
 
 Cypress.Commands.add('loginWithGUI', (username, password) => {
+    cy.visit('/');
     cy.get('#username').type(username);
     cy.get('#password').type(password);
     cy.get('.btn').click();

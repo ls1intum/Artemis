@@ -1,6 +1,6 @@
 describe('/', () => {
     beforeEach(() => {
-        cy.visit('/');
+        localStorage.clear();
     });
 
     it('fails to access protected resource without login', () => {
@@ -9,12 +9,12 @@ describe('/', () => {
     });
 
     it('Log in using GUI', () => {
-        cy.loginWithGUI('artemis_admin', 'artemis_admin');
+        cy.loginWithGUI(Cypress.env('username'), Cypress.env('password'));
+        cy.wait(4);
         cy.location('pathname').should('eq', '/courses');
     });
 
     it('displays error messages on wrong password', () => {
-        // @ts-ignore
         cy.loginWithGUI('artemis_admin', 'lorem-ipsum');
         cy.location('pathname').should('eq', '/');
         cy.get('.alert').should('exist').and('have.text',
@@ -27,7 +27,6 @@ describe('/', () => {
     });
 
     it('logs in correctly using api request', () => {
-        // @ts-ignore
         cy.loginWithAPI(Cypress.env('username'), Cypress.env('password'), '/courses');
         cy.location('pathname').should('eq', '/courses');
     });
