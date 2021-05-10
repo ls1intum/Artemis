@@ -119,7 +119,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (changes.highlightDifferences) {
             this.updateApollonAssessments(this.referencedFeedbacks);
         }
-        console.log('chnages', changes);
     }
 
     /**
