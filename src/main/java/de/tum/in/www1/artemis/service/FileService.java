@@ -785,8 +785,9 @@ public class FileService implements DisposableBean {
     /**
      * Serializes and object to json format and writes into file at a given path
      *
-     * @param object    The object that is serialized and written into a json file
-     * @param path      The path where the file will be written to
+     * @param object        The object that is serialized and written into a json file
+     * @param objectMapper  The objectMapper that is used for serialization
+     * @param path          The path where the file will be written to
      * @return Path to the written file
      */
     public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
