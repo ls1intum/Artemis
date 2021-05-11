@@ -49,7 +49,7 @@
                     <div class="col-md-10 text-left">
                         <div class="input-group" style="height: 33px; width: 75%">
                             <input class="form-control" type="text" [(ngModel)]="criteria.title!" (change)="onCriteriaTitleChange($event, criteria)" placeholder="Criteria Title" />
-                            <span class="re-evaluate-button" id="reset-criteria-button" (click)="resetCriteriaTitle(criteria)">
+                            <span class="col-auto input-group-btn d-flex align-items-center" id="reset-criteria-button" (click)="resetCriteriaTitle(criteria)">
                                 <fa-icon [icon]="'undo'"></fa-icon>
                             </span>
                             <div class="col-12 col-sm-6 col-xl-3 mb-1">
@@ -67,7 +67,6 @@
                         <div class="instructions">
                             <jhi-markdown-editor
                                 #markdownEditor
-                                [markdown]=""
                                 [metaCommands]="[]"
                                 [defaultCommands]="[]"
                                 [headerCommands]="[]"

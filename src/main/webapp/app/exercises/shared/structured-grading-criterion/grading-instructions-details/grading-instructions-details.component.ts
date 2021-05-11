@@ -342,23 +342,26 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be reset
      */
     resetInstruction(instruction: GradingInstruction, criteria: GradingCriterion) {
-        const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criteria.id;
-        });
-        const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
-            return sgi.id === instruction.id;
-        });
-
-        const backupCriteriaIndex = this.backupExercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criteria.id;
-        });
-        const backupInstructionIndex = this.backupExercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
-            return sgi.id === instruction.id;
-        });
+        const criteriaIndex = this.findCriteriaIndex(criteria, this.exercise);
+        const backupCriteriaIndex = this.findCriteriaIndex(criteria, this.backupExercise);
+        const instructionIndex = this.findInstructionIndex(instruction, this.exercise, criteriaIndex);
+        const backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriteriaIndex);
 
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
             this.backupExercise.gradingCriteria![backupCriteriaIndex].structuredGradingInstructions![backupInstructionIndex],
         );
+    }
+
+    findCriteriaIndex(criteria: GradingCriterion, exercise: Exercise) {
+        return exercise.gradingCriteria!.findIndex((gradingCriteria) => {
+            return gradingCriteria.id === criteria.id;
+        });
+    }
+
+    findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criteriaIndex: number) {
+        return exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
+            return sgi.id === instruction.id;
+        });
     }
 
     /**
@@ -411,13 +414,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @param criteria {GradingCriterion} the criteria, which includes title that will be reset
      */
     resetCriteriaTitle(criteria: GradingCriterion) {
-        const criteriaIndex = this.exercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criteria.id;
-        });
-        const backupCriteriaIndex = this.backupExercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criteria.id;
-        });
-        this.exercise.gradingCriteria![criteriaIndex] = cloneDeep(this.backupExercise.gradingCriteria![backupCriteriaIndex]);
+        const criteriaIndex = this.findCriteriaIndex(criteria, this.exercise);
+        const backupCriteriaIndex = this.findCriteriaIndex(criteria, this.backupExercise);
+        this.exercise.gradingCriteria![criteriaIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriteriaIndex].title);
     }
 
     /**

@@ -1,11 +1,12 @@
-import { Component, OnInit, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-exercise-update-warning',
     templateUrl: './exercise-update-warning.component.html',
+    styleUrls: ['./exercise-update-warning.component.scss'],
 })
-export class ExerciseUpdateWarningComponent implements OnInit {
+export class ExerciseUpdateWarningComponent {
     instructionDeleted = false;
     scoringChanged = false;
 
@@ -13,8 +14,6 @@ export class ExerciseUpdateWarningComponent implements OnInit {
     confirmed = new EventEmitter<object>();
 
     constructor(public activeModal: NgbActiveModal) {}
-
-    ngOnInit(): void {}
 
     /**
      * Closes the modal
