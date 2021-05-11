@@ -3,7 +3,7 @@
         <h4 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h4>
     </a>
     <h4 *ngIf="!titleLink" class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h4>
-    <div class="doughnut-chart-container">
+    <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
             <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }}%</h2>
             <h4 *ngIf="receivedStats" class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
