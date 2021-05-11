@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
@@ -9,7 +9,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
 })
-export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges {
+export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input() public exercise: Exercise;
@@ -24,20 +24,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     public isExamMode = false;
 
     icon: IconProp;
-
-    constructor() {}
-
-    /**
-     * Sets the status badge and categories of the exercise on init
-     */
-    ngOnInit(): void {
-        this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise?.categories || [];
-
-        if (this.exercise) {
-            this.setIcon(this.exercise.type);
-        }
-    }
 
     /**
      * Sets the status badge and categories of the exercise on changes
