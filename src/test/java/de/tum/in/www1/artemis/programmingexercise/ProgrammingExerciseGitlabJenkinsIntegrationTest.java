@@ -272,26 +272,20 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void exportInstructorProgrammingExercise() throws Exception {
-        programmingExerciseTestService.exportInstructorProgrammingExercise_shouldReturnFile();
+    public void exportProgrammingExerciseInstructorMaterial() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void exportInstructorProgrammingExerciseAsTutor_forbidden() throws Exception {
-        programmingExerciseTestService.exportInstructorProgrammingExercise_forbidden();
+    public void exportProgrammingExerciseInstructorMaterialAsTutor_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void exportInstructorProgrammingExerciseAsStudent_forbidden() throws Exception {
-        programmingExerciseTestService.exportInstructorProgrammingExercise_forbidden();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void zipFilesAndCleanup_shouldReturnNull() throws Exception {
-        programmingExerciseTestService.testZipFilesAndCleanUp_shouldReturnNull();
+    public void exportProgrammingExerciseInstructorMaterialAsStudent_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
     @Test
