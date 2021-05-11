@@ -24,7 +24,6 @@ COPY --from=swift:latest /usr /usr
 RUN apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
     libxml2-dev
-# TODO: Master-Branch
 RUN git clone --branch master https://github.com/realm/SwiftLint.git && \
     cd SwiftLint && \
     swift build --configuration release -Xswiftc -static-stdlib && \

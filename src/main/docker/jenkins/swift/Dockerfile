@@ -61,7 +61,6 @@ RUN SWIFT_ARCHIVE_NAME=swift-$SWIFT_VERSION-$SWIFT_PLATFORM && \
     rm -rf $SWIFT_ARCHIVE_NAME* /tmp/* /var/tmp/* && \
     chmod -R o+r /usr/lib/swift
 # Install SwiftLint
-# TODO: Master-Branch
 RUN git clone --branch master https://github.com/realm/SwiftLint.git && \
     cd SwiftLint && \
     swift build --configuration release -Xswiftc -static-stdlib && \

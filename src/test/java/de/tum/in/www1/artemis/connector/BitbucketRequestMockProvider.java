@@ -11,6 +11,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +20,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -41,6 +44,8 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Component
 @Profile("bitbucket")
 public class BitbucketRequestMockProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(BitbucketRequestMockProvider.class);
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
@@ -83,11 +88,27 @@ public class BitbucketRequestMockProvider {
     public void enableMockingOfRequests(boolean ignoreExpectOrder) {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(ignoreExpectOrder);
+        // Can be replaced with getDebugMockServer() for debugging
         mockServer = builder.build();
 
         MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestTemplate);
         builderShortTimeout.ignoreExpectOrder(ignoreExpectOrder);
         mockServerShortTimeout = builderShortTimeout.build();
+    }
+
+    /**
+     * Get mockServer that also prints all incoming requests and their HTTP-methods.
+     * This builder always ignores the order of requests!
+     */
+    private static MockRestServiceServer getDebugMockServer(MockRestServiceServer.MockRestServiceServerBuilder builder) {
+        return builder.build(new UnorderedRequestExpectationManager() {
+
+            @Override
+            public ClientHttpResponse validateRequest(ClientHttpRequest request) throws IOException {
+                log.debug("{}: {}", request.getMethod(), request.getURI());
+                return super.validateRequest(request);
+            }
+        });
     }
 
     public void reset() {
@@ -307,7 +328,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
         mockGetDefaultBranch(defaultBranch, projectKey);
-        mockPutDefaultBranch(defaultBranch, projectKey);
+        // mockPutDefaultBranch(projectKey);
     }
 
     private void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
@@ -315,16 +336,14 @@ public class BitbucketRequestMockProvider {
         mockResponse.setDisplayId(defaultBranch);
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
 
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
+        mockServer.expect(ExpectedCount.once(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(mockResponse)).contentType(MediaType.APPLICATION_JSON));
     }
 
-    private void mockPutDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException {
-        var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
-        mockResponse.setDisplayId(defaultBranch);
+    private void mockPutDefaultBranch(String projectKey) throws BitbucketException {
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
 
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+        mockServer.expect(ExpectedCount.once(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {

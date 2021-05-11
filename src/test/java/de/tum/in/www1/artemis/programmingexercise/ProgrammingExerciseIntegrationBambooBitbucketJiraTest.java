@@ -673,6 +673,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void unlockAllRepositories() throws Exception {
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExerciseIntegrationServiceTest.programmingExercise.getProjectKey());
         programmingExerciseIntegrationServiceTest.unlockAllRepositories();
     }
 
