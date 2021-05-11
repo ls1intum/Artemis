@@ -1,5 +1,8 @@
 <div class="doughnut mx-3">
-    <h4 class="text-center">{{ doughnutChartTitle }}</h4>
+    <a *ngIf="titleLink" [routerLink]="['/course-management', courseId, titleLink]">
+        <h4 class="text-center text-dark">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h4>
+    </a>
+    <h4 *ngIf="!titleLink" class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h4>
     <div class="doughnut-chart-container">
         <div class="doughnut-chart-text">
             <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }}%</h2>

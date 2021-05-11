@@ -14,6 +14,13 @@ import { CourseManagementDetailViewDto } from 'app/course/manage/course-manageme
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 
+export enum DoughnutChartType {
+    ASSESSMENT = 'ASSESSMENT',
+    COMPLAINTS = 'COMPLAINTS',
+    FEEDBACK = 'FEEDBACK',
+    AVERAGESCORE = 'AVERAGESCORE',
+}
+
 @Component({
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
@@ -21,6 +28,7 @@ import { onError } from 'app/shared/util/global.utils';
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    readonly DoughnutChartType = DoughnutChartType;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;

@@ -1,21 +1,25 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { ChartType } from 'chart.js';
+import { round } from 'app/shared/util/utils';
+import { DoughnutChartType } from './course-detail.component';
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
 })
-export class CourseDetailDoughnutChartComponent implements OnChanges {
-    @Input() doughnutChartTitle: string;
-
+export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
+    @Input() courseId: number;
+    @Input() contentType: DoughnutChartType;
     @Input() currentPercentage: number | undefined;
     @Input() currentAbsolute: number | undefined;
     @Input() currentMax: number | undefined;
 
     receivedStats = false;
+    doughnutChartTitle: string;
     stats: number[];
+    titleLink: string | undefined;
 
     // Chart.js data
     doughnutChartType: ChartType = 'doughnut';
@@ -49,8 +53,36 @@ export class CourseDetailDoughnutChartComponent implements OnChanges {
             this.doughnutChartData[0].data = [-1, 0];
         } else {
             this.receivedStats = true;
-            this.stats = [this.currentAbsolute!, this.currentMax! - this.currentAbsolute!];
+            const remaining = round(this.currentMax! - this.currentAbsolute!, 1);
+            this.stats = [this.currentAbsolute!, remaining];
             this.doughnutChartData[0].data = this.currentMax === 0 ? [-1, 0] : this.stats;
+        }
+    }
+
+    /**
+     * Depending on the information we want to display in the doughnut chart, we need different titles and links
+     */
+    ngOnInit(): void {
+        switch (this.contentType) {
+            case DoughnutChartType.ASSESSMENT:
+                this.doughnutChartTitle = 'assessments';
+                this.titleLink = 'assessment-dashboard';
+                break;
+            case DoughnutChartType.COMPLAINTS:
+                this.doughnutChartTitle = 'complaints';
+                this.titleLink = 'complaints';
+                break;
+            case DoughnutChartType.FEEDBACK:
+                this.doughnutChartTitle = 'moreFeedback';
+                this.titleLink = undefined;
+                break;
+            case DoughnutChartType.AVERAGESCORE:
+                this.doughnutChartTitle = 'averageStudentScore';
+                this.titleLink = 'scores';
+                break;
+            default:
+                this.doughnutChartTitle = '';
+                this.titleLink = undefined;
         }
     }
 }
