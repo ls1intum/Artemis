@@ -1,5 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { ChartDataSets, ChartHoverOptions, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartTooltipOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
+import { plugins } from 'chart.js';
+import { ChartDataset, ChartHoverOptions, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartTooltipOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 
 export interface ChartPreset {
@@ -24,7 +25,7 @@ export class ChartComponent {
     @Input() set type(type: ChartType) {
         this.chartType = type;
     }
-    @Input() set datasets(datasets: ChartDataSets[]) {
+    @Input() set datasets(datasets: ChartDataset[]) {
         this.chartDatasets = datasets;
     }
     @Input() set labels(labels: Label[]) {
@@ -34,10 +35,11 @@ export class ChartComponent {
         this.chartOptions = options;
     }
 
-    chartDatasets: ChartDataSets[] = [];
+    chartDatasets: ChartDataset[] = [];
     chartType: ChartType = 'bar';
     chartLabels: Label[] = [];
     chartOptions: ChartOptions = {
+        plugins: {},
         responsive: true,
         maintainAspectRatio: false,
         layout: {
@@ -58,8 +60,8 @@ export class ChartComponent {
             enabled: false,
         },
         scales: {
-            yAxes: [],
-            xAxes: [],
+            y: {},
+            x: {},
         },
     };
 
@@ -87,9 +89,9 @@ export class ChartComponent {
     setLegend(legend: ChartLegendOptions | boolean, shouldUpdate = true) {
         this.applyOptions((options) => {
             if (typeof legend === 'boolean') {
-                Object.assign(options.legend, { display: legend });
+                Object.assign(options.plugins?.legend, { display: legend });
             } else {
-                Object.assign(options.legend, { display: true }, legend);
+                Object.assign(options.plugins?.legend, { display: true }, legend);
             }
         }, shouldUpdate);
     }
@@ -97,9 +99,9 @@ export class ChartComponent {
     setTooltip(tooltip: ChartTooltipOptions | boolean, shouldUpdate = true) {
         this.applyOptions((options) => {
             if (typeof tooltip === 'boolean') {
-                Object.assign(options.tooltips, { enabled: tooltip });
+                Object.assign(options.plugins?.tooltip, { enabled: tooltip });
             } else {
-                Object.assign(options.tooltips, { enabled: true }, tooltip);
+                Object.assign(options.plugins?.tooltip, { enabled: true }, tooltip);
             }
         }, shouldUpdate);
     }
@@ -134,7 +136,7 @@ export class ChartComponent {
         }, shouldUpdate);
     }
 
-    updateDataset(index: number, dataset: ChartDataSets) {
+    updateDataset(index: number, dataset: ChartDataset) {
         if (!this.chartDatasets[index]) {
             this.chartDatasets[index] = dataset;
         } else {
