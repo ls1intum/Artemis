@@ -50,7 +50,7 @@ fi
 
 # create groups
 
-declare -a group_names=("tutors" "instructors" "students")
+declare -a group_names=("tutors" "instructors" "students" "editors")
 
 jira_group_url="http://localhost:$jira_external_port/rest/api/latest/group"
 
@@ -73,13 +73,16 @@ base_user_name="artemis_test_user_"
 jira_user_url="http://localhost:$jira_external_port/rest/api/latest/user"
 jira_group_add_url="http://localhost:$jira_external_port/rest/api/2/group/user?groupname="
 
-for i in {1..15}; do
-    # User 1-5 are students, 6-10 are tutors, 11-15 are instructors
+for i in {1..20}; do
+    # User 1-5 are students, 6-10 are tutors, 11-15 are editors and 16-20 are instructors
     group="students"
     if ((i > 5)); then
       group="tutors"
     fi
     if ((i > 10)); then
+      group="editors"
+    fi
+    if ((i > 15)); then
       group="instructors"
     fi
 
