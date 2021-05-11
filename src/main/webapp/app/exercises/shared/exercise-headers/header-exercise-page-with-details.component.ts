@@ -12,6 +12,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly moment = moment;
 
     @Input() public exercise: Exercise;
     @Input() public onBackClick: () => void; // TODO: This can be removed once we are happy with the breadcrumb navigation
