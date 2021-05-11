@@ -36,6 +36,10 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private ZonedDateTime runDate;
 
+    private boolean isBuildSuccessful;
+
+    List<String> logs;
+
     public static TestResultsDTO convert(Object someResult) {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);
     }
@@ -82,6 +86,18 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     public ZonedDateTime getRunDate() {
         return runDate;
+    }
+
+    public void setIsBuildSuccessful(boolean isBuildSuccessful) {
+        this.isBuildSuccessful = isBuildSuccessful;
+    }
+
+    public List<String> getLogs() {
+        return this.logs;
+    }
+
+    public void setLogs(List<String> logs) {
+        this.logs = logs;
     }
 
     @Override

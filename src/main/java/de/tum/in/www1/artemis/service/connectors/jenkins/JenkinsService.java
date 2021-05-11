@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -302,9 +304,18 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
         latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
 
+        // var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+        // var buildLogs = filterUnnecessaryLogs(parseBuildLogsFromJenkinsLogs(buildResult.getLogs()), programmingLanguage);
+        // var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
+        //
+        // // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+        // latestSubmission.setBuildLogEntries(savedBuildLogs);
+        //
+
         // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
         newResult.setSubmission(latestSubmission);
         newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmission);
+
         return newResult;
     }
 
@@ -451,6 +462,61 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
         }
+    }
+
+    private List<BuildLogEntry> parseBuildLogsFromJenkinsLogs(List<String> logLines) {
+        final List<BuildLogEntry> buildLogs = new ArrayList<>();
+        for (final var logLine : logLines) {
+            // The build logs that we are interested in are the ones that start with a timestamp
+            // of format [timestamp] ...
+            final String possibleTimestamp = StringUtils.substringBetween(logLine, "[", "]");
+            if (possibleTimestamp == null) {
+                continue;
+            }
+
+            try {
+                final ZonedDateTime timestamp = ZonedDateTime.parse(possibleTimestamp);
+                final String log = logLine.substring(possibleTimestamp.length() + 2);
+
+                BuildLogEntry buildLogEntry = new BuildLogEntry(timestamp, stripLogEndOfLine(log).trim());
+                buildLogs.add(buildLogEntry);
+            }
+            catch (DateTimeParseException e) {
+                // The log line doesn't contain the timestamp so we ignore it
+            }
+        }
+        return buildLogs;
+    }
+
+    private List<BuildLogEntry> filterUnnecessaryLogs(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
+        List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
+        for (BuildLogEntry entry : buildLogEntries) {
+            String logString = entry.getLog();
+            if (logString.contains("Compilation failure")) {
+                break;
+            }
+
+            // filter unnecessary logs and illegal reflection logs
+            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
+                continue;
+            }
+
+            // Jenkins outputs each executed shell command with '+ <shell command>'
+            if (logString.startsWith("+")) {
+                continue;
+            }
+
+            // Remove the path from the log entries
+            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
+
+            // Avoid duplicate log entries
+            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, prunedBuildLogs, shortenedLogString)) {
+                entry.setLog(shortenedLogString);
+                prunedBuildLogs.add(entry);
+            }
+        }
+        return prunedBuildLogs;
     }
 
     private List<BuildLogEntry> parsePipelineLogs(Element logHtml) throws IllegalArgumentException {
