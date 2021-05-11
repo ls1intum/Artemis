@@ -426,7 +426,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     if (dueDate != null) {
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
-                    programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+
+                    programmingExerciseParticipationService.unlockStudentRepository(
+                            programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId()), participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
                         unlockAndCollectOperation, participation -> true, "add write permissions to all student repositories");
