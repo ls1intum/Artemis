@@ -124,9 +124,6 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
 
-    @Value("${artemis.repo-download-clone-path}")
-    private String repoDownloadClonePath;
-
     public Course course;
 
     public ProgrammingExercise exercise;
