@@ -1016,16 +1016,7 @@ public class GitService {
 
         Path zipFilePath = Paths.get(repositoryDir, zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(repositoryDir));
-        zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
-
-        // Schedule created files and directories for deletion
-        fileService.scheduleForDeletion(zipFilePath, 5);
-        fileService.scheduleForDeletion(repository.getLocalPath().getParent(), 5);
-        fileService.scheduleForDeletion(zipFilePath.getParent(), 6);
-        // Delete the zipped repository
-        deleteLocalRepository(repository);
-
-        return zipFilePath;
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
     }
 
     /**

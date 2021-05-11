@@ -28,7 +28,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
-import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -819,8 +818,8 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void exportInstructorProgrammingExercise_shouldReturnFile() throws Exception {
-        var zipFile = exportInstructorProgrammingExercise(HttpStatus.OK);
+    public void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
@@ -838,14 +837,14 @@ public class ProgrammingExerciseTestService {
         assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))).isTrue();
     }
 
-    public void exportInstructorProgrammingExercise_forbidden() throws Exception {
+    public void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        exportInstructorProgrammingExercise(HttpStatus.FORBIDDEN);
+        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN);
     }
 
-    private java.io.File exportInstructorProgrammingExercise(HttpStatus expectedStatus) throws Exception {
+    private java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
 
         // Mock template repo
@@ -872,19 +871,6 @@ public class ProgrammingExerciseTestService {
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
-    }
-
-    // Test
-    public void testZipFilesAndCleanUp_shouldReturnNull() {
-        Path resultingPath = Path.of("result.zip");
-        var includedFilePaths = new ArrayList<Path>();
-        includedFilePaths.add(Path.of("file1"));
-        includedFilePaths.add(Path.of("file2"));
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
-        Path resultingZipPath = programmingExerciseExportService.zipFilesAndCleanUp(resultingPath, includedFilePaths, false, new ArrayList<String>());
-        mockedFiles.close();
-        assertThat(resultingZipPath).isEqualTo(null);
     }
 
     // Test
