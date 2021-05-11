@@ -136,7 +136,7 @@ describe('Exercise Scores Component', () => {
         sinon.restore();
     });
 
-    it('get exercise participation link for exercise without an exercise group', () => {
+    it('should get exercise participation link for exercise without an exercise group', () => {
         const expectedLink = ['/course-management', course.id!.toString(), 'text-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
         component.course = course;
         component.exercise = exercise;
@@ -146,7 +146,7 @@ describe('Exercise Scores Component', () => {
         expect(returnedLink).to.have.same.members(expectedLink);
     });
 
-    it('get exercise participation link for exercise with an exercise group', () => {
+    it('should get exercise participation link for exercise with an exercise group', () => {
         const expectedLink = ['/course-management', course.id!.toString(), 'exams', '1', 'exercise-groups', '1', 'text-exercises', exercise.id!.toString(), 'participations', '2'];
         component.course = course;
         component.exercise = exercise;
