@@ -328,7 +328,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
         mockGetDefaultBranch(defaultBranch, projectKey);
-        // mockPutDefaultBranch(projectKey);
+        mockPutDefaultBranch(projectKey);
     }
 
     private void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
@@ -336,14 +336,14 @@ public class BitbucketRequestMockProvider {
         mockResponse.setDisplayId(defaultBranch);
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
 
-        mockServer.expect(ExpectedCount.once(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(mockResponse)).contentType(MediaType.APPLICATION_JSON));
     }
 
     private void mockPutDefaultBranch(String projectKey) throws BitbucketException {
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
 
-        mockServer.expect(ExpectedCount.once(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
