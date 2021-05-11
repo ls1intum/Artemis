@@ -4,7 +4,6 @@ import { ChartType } from 'chart.js';
 import { round } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
@@ -23,7 +22,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     stats: number[];
     titleLink: string | undefined;
 
-    constructor(private router: Router, private alertService: JhiAlertService) {}
+    constructor(private router: Router) {}
 
     // Chart.js data
     doughnutChartType: ChartType = 'doughnut';
@@ -94,11 +93,8 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * handles clicks onto the graph, which then redirects the user to the corresponding page, e.g. complaints page for the complaints chart
      */
     openCorrespondingPage() {
-        try {
+        if (this.courseId && this.titleLink) {
             this.router.navigate(['/course-management', this.courseId, this.titleLink]);
-        } catch (error) {
-            this.alertService.error('error.http.404');
-            throw error;
         }
     }
 }
