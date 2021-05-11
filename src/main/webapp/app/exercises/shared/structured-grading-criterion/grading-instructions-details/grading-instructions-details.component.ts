@@ -66,14 +66,19 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
 
     ngAfterViewInit() {
         if (this.exercise.gradingInstructionFeedbackUsed) {
-            let index = 0;
-            this.criteria!.forEach((criteria) => {
-                criteria.structuredGradingInstructions.forEach((instruction) => {
-                    this.markdownEditors.get(index)!.markdownTextChange(this.generateInstructionText(instruction));
-                    index += 1;
-                });
-            });
+            this.initializeMarkdown();
         }
+    }
+
+    initializeMarkdown() {
+        let index = 0;
+        this.changeDetector.detectChanges();
+        this.criteria!.forEach((criteria) => {
+            criteria.structuredGradingInstructions.forEach((instruction) => {
+                this.markdownEditors.get(index)!.markdownTextChange(this.generateInstructionText(instruction));
+                index += 1;
+            });
+        });
     }
 
     generateMarkdown(): string {
@@ -185,7 +190,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
 
     prepareForSave(): void {
         this.markdownEditors.forEach((component) => {
-            this.changeDetector.detectChanges();
             component.parse();
         });
     }
@@ -290,6 +294,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      *       instruction objects must be created before the method gets triggered
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
+
     setInstructionParameters(domainCommands: [string, DomainCommand | null][]): void {
         let index = 0;
         for (const [text, command] of domainCommands) {
@@ -344,12 +349,18 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
     resetInstruction(instruction: GradingInstruction, criteria: GradingCriterion) {
         const criteriaIndex = this.findCriteriaIndex(criteria, this.exercise);
         const backupCriteriaIndex = this.findCriteriaIndex(criteria, this.backupExercise);
-        const instructionIndex = this.findInstructionIndex(instruction, this.exercise, criteriaIndex);
-        const backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriteriaIndex);
 
-        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
-            this.backupExercise.gradingCriteria![backupCriteriaIndex].structuredGradingInstructions![backupInstructionIndex],
-        );
+        if (backupCriteriaIndex >= 0) {
+            const instructionIndex = this.findInstructionIndex(instruction, this.exercise, criteriaIndex);
+            const backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriteriaIndex);
+
+            if (backupInstructionIndex >= 0) {
+                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
+                    this.backupExercise.gradingCriteria![backupCriteriaIndex].structuredGradingInstructions![backupInstructionIndex],
+                );
+                this.initializeMarkdown();
+            }
+        }
     }
 
     findCriteriaIndex(criteria: GradingCriterion, exercise: Exercise) {
@@ -359,7 +370,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
     }
 
     findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criteriaIndex: number) {
-        return exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.findIndex((sgi) => {
+        return exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions?.findIndex((sgi) => {
             return sgi.id === instruction.id;
         });
     }
@@ -385,6 +396,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         const instruction = new GradingInstruction();
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
+        this.initializeMarkdown();
     }
 
     /**
@@ -396,6 +408,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         criteria.structuredGradingInstructions = [];
         criteria.structuredGradingInstructions.push(new GradingInstruction());
         this.exercise.gradingCriteria!.push(criteria);
+        this.initializeMarkdown();
     }
 
     /**
@@ -416,7 +429,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
     resetCriteriaTitle(criteria: GradingCriterion) {
         const criteriaIndex = this.findCriteriaIndex(criteria, this.exercise);
         const backupCriteriaIndex = this.findCriteriaIndex(criteria, this.backupExercise);
-        this.exercise.gradingCriteria![criteriaIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriteriaIndex].title);
+        if (backupCriteriaIndex >= 0) {
+            this.exercise.gradingCriteria![criteriaIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriteriaIndex].title);
+        }
     }
 
     /**
