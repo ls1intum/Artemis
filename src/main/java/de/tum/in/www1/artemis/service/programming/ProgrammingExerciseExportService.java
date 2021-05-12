@@ -201,7 +201,7 @@ public class ProgrammingExerciseExportService {
         }
         finally {
             // Delete the output directory
-            fileService.scheduleForDirectoryDeletion(outputDir, 5);
+            fileService.scheduleForDirectoryDeletion(outputDir, 2);
         }
     }
 
@@ -217,12 +217,7 @@ public class ProgrammingExerciseExportService {
      */
     public File exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
-        try {
-            return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, exportErrors);
-        }
-        finally {
-            fileService.scheduleForDirectoryDeletion(outputDir, 5);
-        }
+        return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, exportErrors);
     }
 
     /**
