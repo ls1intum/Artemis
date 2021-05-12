@@ -833,6 +833,7 @@ public class ProgrammingExerciseTestService {
         assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))).isTrue();
     }
 
+    // Test
     public void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");

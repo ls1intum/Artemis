@@ -172,9 +172,9 @@ public class ProgrammingExerciseExportService {
         }
 
         // Export the template, solution, and tests repositories and add them to list
-        pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, outputDir, exportErrors).toPath());
-        pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION, outputDir, exportErrors).toPath());
-        pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS, outputDir, exportErrors).toPath());
+        pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, outputDir, exportErrors).map(File::toPath).orElse(null));
+        pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION, outputDir, exportErrors).map(File::toPath).orElse(null));
+        pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS, outputDir, exportErrors).map(File::toPath).orElse(null));
 
         // Setup path to store the zip file for the exported repositories
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
@@ -212,7 +212,7 @@ public class ProgrammingExerciseExportService {
      * @param exportErrors List of failures that occurred during the export
      * @return a zipped file
      */
-    public File exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
+    public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
         return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, exportErrors);
     }
@@ -227,13 +227,13 @@ public class ProgrammingExerciseExportService {
      * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
      */
-    public File exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, Path outputDir, List<String> exportErrors) {
+    public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, Path outputDir, List<String> exportErrors) {
         var exerciseOrEmpty = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId);
         if (exerciseOrEmpty.isEmpty()) {
             var error = "Failed to export instructor repository " + repositoryType + " because the exercise " + exerciseId + " does not exist.";
             log.info(error);
             exportErrors.add(error);
-            return null;
+            return Optional.empty();
         }
 
         var exercise = exerciseOrEmpty.get();
@@ -252,12 +252,12 @@ public class ProgrammingExerciseExportService {
                 var error = "Failed to export instructor repository " + repositoryType + " because the repository url is not defined.";
                 log.info(error);
                 exportErrors.add(error);
-                return null;
+                return Optional.empty();
             }
 
             Path zippedRepo = createZipForRepository(repositoryUrl, zippedRepoName, outputDir);
             if (zippedRepo != null) {
-                return new File(zippedRepo.toString());
+                return Optional.of(new File(zippedRepo.toString()));
             }
         }
         catch (IOException | UncheckedIOException | GitAPIException | GitException | InterruptedException ex) {
@@ -265,7 +265,7 @@ public class ProgrammingExerciseExportService {
             log.info(error);
             exportErrors.add(error);
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
