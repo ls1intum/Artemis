@@ -40,8 +40,8 @@ public class ExampleSubmission extends DomainObject {
     @Column(name = "assessment_explanation")
     private String assessmentExplanation;
 
-    public Boolean isUsedForTutorial() {
-        return usedForTutorial;
+    public boolean isUsedForTutorial() {
+        return Boolean.TRUE.equals(usedForTutorial);
     }
 
     public void setUsedForTutorial(Boolean usedForTutorial) {
