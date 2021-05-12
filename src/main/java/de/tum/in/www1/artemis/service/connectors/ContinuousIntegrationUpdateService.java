@@ -18,5 +18,6 @@ public interface ContinuousIntegrationUpdateService {
      * @param vcsRepoName      The lower level identifier of the repository in the version control system
      * @param triggeredBy      Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
-    void updatePlanRepository(String projectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String vcsRepoName, Optional<List<String>> triggeredBy);
+    void updatePlanRepository(String projectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String vcsRepoName, String defaultBranchName,
+            Optional<List<String>> triggeredBy);
 }

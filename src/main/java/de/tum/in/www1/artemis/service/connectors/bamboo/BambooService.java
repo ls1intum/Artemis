@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
+import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Service
@@ -62,19 +63,22 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final BambooBuildPlanService bambooBuildPlanService;
 
+    private final BitbucketService bitbucketService;
+
     private final ObjectMapper mapper;
 
     private final UrlService urlService;
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
-            @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService) {
+            Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, BitbucketService bitbucketService,
+            FeedbackRepository feedbackRepository, @Qualifier("bambooRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper, UrlService urlService, BuildLogEntryService buildLogService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
+        this.bitbucketService = bitbucketService;
         this.mapper = mapper;
         this.urlService = urlService;
     }
@@ -450,7 +454,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
             final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
+            String defaultBranchName = bitbucketService.getDefaultBranch(new VcsRepositoryUrl(newRepoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, defaultBranchName,
+                    optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);
