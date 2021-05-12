@@ -32,6 +32,11 @@ public class JenkinsInternalUrlService {
      * @return the vcs repository url with the internal url
      */
     public VcsRepositoryUrl toInternalVcsUrl(VcsRepositoryUrl vcsRepositoryUrl) {
+        if (vcsRepositoryUrl.getURL() == null) {
+            log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
+            return vcsRepositoryUrl;
+        }
+
         try {
             String newInternalUrl = toInternalVcsUrl(vcsRepositoryUrl.getURL().toString());
             return new VcsRepositoryUrl(newInternalUrl);
