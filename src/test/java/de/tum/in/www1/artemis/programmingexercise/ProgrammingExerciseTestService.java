@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -73,9 +72,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private GitService gitService;
-
-    @Autowired
-    private ProgrammingExerciseExportService programmingExerciseExportService;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
