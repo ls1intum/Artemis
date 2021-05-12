@@ -43,7 +43,6 @@ describe('Course Management Detail Component', () => {
     const route = { params: of({ courseId: 1 }) };
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const dtoMock = {
-        course,
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,
         numberOfEditorsInCourse: 5,
@@ -102,8 +101,10 @@ describe('Course Management Detail Component', () => {
     });
 
     beforeEach(fakeAsync(() => {
-        const getStub = sinon.stub(courseService, 'getCourseForDetailView');
-        getStub.returns(of(new HttpResponse({ body: dtoMock })));
+        const statsStub = sinon.stub(courseService, 'getCourseStatisticsForDetailView');
+        statsStub.returns(of(new HttpResponse({ body: dtoMock })));
+        const infoStub = sinon.stub(courseService, 'find');
+        infoStub.returns(of(new HttpResponse({ body: course })));
 
         component.ngOnInit();
         tick();
@@ -119,7 +120,7 @@ describe('Course Management Detail Component', () => {
         fixture.detectChanges();
         component.ngOnInit();
         expect(component.courseDTO).to.deep.equal(dtoMock);
-        expect(component.course).to.deep.equal(dtoMock.course);
+        expect(component.course).to.deep.equal(course);
         expect(registerSpy).to.have.been.called;
     });
 
