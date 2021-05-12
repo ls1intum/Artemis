@@ -17,7 +17,7 @@
     <!--Submissions -->
     <a
         *ngIf="exercise.isAtLeastInstructor && exercise.course"
-        [routerLink]="['/course-management', courseId, exercise.type! + '-exercises', exercise.id!, 'assessment']"
+        [routerLink]="['/course-management', courseId, exercise.type! + '-exercises', exercise.id!, 'submissions']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
