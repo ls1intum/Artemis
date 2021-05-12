@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "rating": {
-            "label": "How useful is the feedback for you?"
+            "label": "How useful is this feedback to you?"
         },
         "ratingList": {
             "exercise": "Exercise",
