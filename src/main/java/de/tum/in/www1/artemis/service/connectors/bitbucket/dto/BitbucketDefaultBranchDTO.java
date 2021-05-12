@@ -13,10 +13,6 @@ public class BitbucketDefaultBranchDTO {
 
     private String latestCommit;
 
-    private String latestChangeset;
-
-    private String isDefault;
-
     /**
      * needed for Jackson
      */
@@ -57,21 +53,5 @@ public class BitbucketDefaultBranchDTO {
 
     public void setLatestCommit(String latestCommit) {
         this.latestCommit = latestCommit;
-    }
-
-    public String getLatestChangeset() {
-        return latestChangeset;
-    }
-
-    public void setLatestChangeset(String latestChangeset) {
-        this.latestChangeset = latestChangeset;
-    }
-
-    public String getIsDefault() {
-        return isDefault;
-    }
-
-    public void setIsDefault(String isDefault) {
-        this.isDefault = isDefault;
     }
 }

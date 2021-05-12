@@ -210,12 +210,8 @@ public class GitlabRequestMockProvider {
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
             throws GitLabApiException {
-        // TODO: Does it make sense to use the template repository URL here? .configureRepository() is only
-        // used by ParticipationService and ProgrammingExerciseParticipationService. At the moment
-        // the repositoryUrl that is used when the test runs is different to the one that we mock
-        // the Gitlab API methods for. In this case Mockito returns null instead.
         var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
-        for (de.tum.in.www1.artemis.domain.User user : users) {
+        for (var user : users) {
             String loginName = user.getLogin();
             if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
                 mockUserExists(loginName, ltiUserExists);
@@ -267,8 +263,6 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockGetDefaultBranch(String defaultBranch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
-        // TODO: Use explicit repositoryId when we supply it from the user Participation
-        // var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         var mockProject = new Project();
         mockProject.setDefaultBranch(defaultBranch);
         doReturn(mockProject).when(projectApi).getProject(notNull());

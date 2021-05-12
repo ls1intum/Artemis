@@ -147,7 +147,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", ((ProgrammingExercise) participationRepository.findById(participationId).get().getExercise()).getProjectKey());
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) participationRepository.findById(participationId).orElseThrow().getExercise();
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
         return postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
     }
 
@@ -594,16 +595,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 
-        // set the author name to "Artemis"
-        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
-                "\"displayName\": \"Artemis\"");
         // mock request for fetchCommitInfo()
         final String projectKey = "test201904bprogrammingexercise6";
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
-        // TODO: Default-Branch What line?
         // ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 

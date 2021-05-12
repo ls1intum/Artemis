@@ -28,6 +28,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
@@ -656,7 +657,7 @@ public class GitService {
      */
     public String getOriginHead(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
-        var originHeadRef = git.lsRemote().callAsMap().get("HEAD");
+        var originHeadRef = git.lsRemote().callAsMap().get(Constants.HEAD);
         git.close();
 
         // Empty Git repos don't have HEAD
@@ -704,7 +705,7 @@ public class GitService {
         // Get HEAD ref of repo without cloning it locally
         try {
             log.debug("getLastCommitHash {}", repoUrl);
-            var headRef = Git.lsRemoteRepository().setRemote(getGitUriAsString(repoUrl)).setTransportConfigCallback(sshCallback).callAsMap().get("HEAD");
+            var headRef = Git.lsRemoteRepository().setRemote(getGitUriAsString(repoUrl)).setTransportConfigCallback(sshCallback).callAsMap().get(Constants.HEAD);
 
             if (headRef == null) {
                 return null;

@@ -82,8 +82,8 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         doNothing().when(continuousIntegrationService).deleteProject(any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise1.getProjectKey());
-        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise2.getProjectKey());
+        mockDefaultBranch(programmingExercise1);
+        mockDefaultBranch(programmingExercise2);
         bambooRequestMockProvider.enableMockingOfRequests(true);
         mockTriggerFailedBuild(participation);
 

@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
@@ -411,35 +410,6 @@ public class ProgrammingExerciseExportService {
         catch (IOException ex) {
             log.warn("The project root directory '" + projectPath + "' could not be deleted.", ex);
         }
-    }
-
-    private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath) {
-        List<Repository> downloadedRepositories = new ArrayList<>();
-
-        participations.forEach(participation -> {
-            try {
-                Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
-                gitService.resetToOriginHead(repo); // start with clean state
-                downloadedRepositories.add(repo);
-            }
-            catch (GitException | GitAPIException | InterruptedException ex) {
-                log.error("clone student repository " + participation.getVcsRepositoryUrl() + " in exercise '" + programmingExercise.getTitle() + "' did not work as expected: "
-                        + ex.getMessage());
-            }
-        });
-
-        // clone the template repo
-        try {
-            Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
-            gitService.resetToOriginHead(templateRepo); // start with clean state
-            downloadedRepositories.add(templateRepo);
-        }
-        catch (GitException | GitAPIException | InterruptedException ex) {
-            log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
-                    programmingExercise.getTitle(), ex.getMessage());
-        }
-
-        return downloadedRepositories;
     }
 
     /**

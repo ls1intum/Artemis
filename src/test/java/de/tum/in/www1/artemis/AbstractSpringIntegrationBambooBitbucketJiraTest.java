@@ -106,7 +106,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         // Step 1c)
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
 
-        // Newly added mocking
+        // Mock Default Branch
         bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
     }
 
@@ -487,6 +487,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Override
     public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
+    }
+
+    @Override
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
     }
 
     @Override

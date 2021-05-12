@@ -430,6 +430,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws GitLabApiException {
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", programmingExercise.getVcsTemplateRepositoryUrl());
+    }
+
+    @Override
     public void resetMockProvider() {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
