@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -30,49 +30,53 @@ describe('Rating Service', () => {
         elemDefault = new Rating(new Result(), 3);
     });
 
-    it('should create a Rating', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 0,
-            },
-            elemDefault,
-        );
+    it('should create a Rating', fakeAsync(() => {
+        const returnedFromService = {
+            id: 0,
+            ...elemDefault,
+        };
         service.createRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should get a Rating', async () => {
+    it('should get a Rating', fakeAsync(() => {
         const returnedFromService = Object.assign({}, elemDefault);
         service.getRating(0).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should update a Rating', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 0,
-            },
-            elemDefault,
-        );
+    it('should update a Rating', fakeAsync(() => {
+        const returnedFromService = {
+            id: 0,
+            ...elemDefault,
+        };
         service.updateRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should get Ratings for Dashboard', async () => {
+    it('should get Ratings for Dashboard', fakeAsync(() => {
         const returnedFromService = Object.assign({}, [elemDefault]);
-        service.getRatingsForDashboard(0).subscribe((ratings: Rating[]) => {
-            expect(ratings.length).toEqual(1);
-        });
+        const expected = { ...returnedFromService };
+        service
+            .getRatingsForDashboard(0)
+            .pipe(take(1))
+            .subscribe((ratings) => {
+                expect(ratings).toEqual(expected);
+            });
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();
