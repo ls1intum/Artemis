@@ -5,10 +5,9 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.client.HttpResponseException;
@@ -302,8 +301,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         // Parse, filter, and save the build logs
         ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-        List<BuildLogEntry> buildLogEntries = JenkinsBuildLogUtils.parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
-        buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
+        List<BuildLogEntry> buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
+        buildLogEntries = filterUnnecessaryLogs(buildLogEntries, programmingLanguage);
         buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, latestSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs)
@@ -410,18 +409,21 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         try {
             final var build = jenkinsJobService.getJobInFolder(projectKey, buildPlanId).getLastBuild();
-            final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
-
             List<BuildLogEntry> buildLogEntries;
-            try {
-                buildLogEntries = JenkinsBuildLogUtils.parsePipelineLogs(logHtml);
+
+            // Attempt to parse pipeline logs
+            final String pipelineLogs = build.details().getConsoleOutputText();
+            if (pipelineLogs.contains("pipeline")) {
+                buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(List.of(pipelineLogs.split("\n")));
             }
-            catch (IllegalArgumentException e) {
-                buildLogEntries = JenkinsBuildLogUtils.parseLogsLegacy(logHtml);
+            else {
+                // Fallback to legacy logs
+                final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
+                buildLogEntries = JenkinsBuildLogParseUtils.parseLogsLegacy(logHtml);
             }
 
             // Filter and save build logs
-            buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
+            buildLogEntries = filterUnnecessaryLogs(buildLogEntries, programmingLanguage);
             buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
             programmingSubmission.setBuildLogEntries(buildLogEntries);
             programmingSubmissionRepository.save(programmingSubmission);
@@ -431,6 +433,32 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
         }
+    }
+
+    /**
+     * Removes the build logs that are not relevant to the student.
+     *
+     * @param buildLogEntries unfiltered build logs
+     * @param programmingLanguage the programming language of the build
+     * @return filtered build logs
+     */
+    private List<BuildLogEntry> filterUnnecessaryLogs(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        // There are color codes in the logs that need to be filtered out.
+        // This is needed for old programming exercises
+        // For example:[[1;34mINFO[m] is changed to [INFO]
+        Stream<BuildLogEntry> filteredBuildLogs = buildLogEntries.stream().peek(buildLog -> {
+            String log = buildLog.getLog();
+            log = log.replace("\u001B[1;34m", "");
+            log = log.replace("\u001B[m", "");
+            log = log.replace("\u001B[1;31m", "");
+            buildLog.setLog(log);
+        });
+
+        // Jenkins outputs each executed shell command with '+ <shell command>'
+        filteredBuildLogs = filteredBuildLogs.filter(buildLog -> !buildLog.getLog().startsWith("+"));
+
+        // Filter out the remainder of unnecessary logs
+        return removeUnnecessaryLogsForProgrammingLanguage(filteredBuildLogs.collect(Collectors.toList()), programmingLanguage);
     }
 
     @Override
