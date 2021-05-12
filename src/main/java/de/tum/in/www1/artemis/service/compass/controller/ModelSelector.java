@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import com.hazelcast.collection.ISet;
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 
@@ -28,19 +30,21 @@ public class ModelSelector {
      * not have a complete assessment. Models get removed from this set when they are locked by a tutor for assessment or a manual (complete) assessment exists. The key is the
      * ModelSubmission id.
      */
-    private Set<Long> modelsWaitingForAssessment = ConcurrentHashMap.newKeySet();
+    private ISet<Long> modelsWaitingForAssessment;
 
     /**
      * Tracks which models have already been assessed completely or which have been marked as optimal before (they do not necessarily need to be completely assessed though).
      * Basically this set contains all modelsWaitingForAssessment + all models that are already assessed. Models that are in this set are not considered by the ModelSelector when
      * selecting the next optimal model. The key is the ModelSubmission id.
      */
-    private Set<Long> alreadyHandledModels = ConcurrentHashMap.newKeySet();
+    private ISet<Long> alreadyHandledModels;
 
     private AutomaticAssessmentController automaticAssessmentController;
 
-    public ModelSelector(AutomaticAssessmentController automaticAssessmentController) {
+    public ModelSelector(AutomaticAssessmentController automaticAssessmentController, HazelcastInstance hazelcastInstance, long exerciseId) {
         this.automaticAssessmentController = automaticAssessmentController;
+        modelsWaitingForAssessment = hazelcastInstance.getSet("waiting-models - " + exerciseId);
+        alreadyHandledModels = hazelcastInstance.getSet("handled-models - " + exerciseId);
     }
 
     /**
@@ -156,4 +160,10 @@ public class ModelSelector {
     public void removeAlreadyHandledModel(long modelId) {
         alreadyHandledModels.remove(modelId);
     }
+
+    public void destroy() {
+        alreadyHandledModels.destroy();
+        modelsWaitingForAssessment.destroy();
+    }
+
 }

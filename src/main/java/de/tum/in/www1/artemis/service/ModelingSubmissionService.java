@@ -156,6 +156,14 @@ public class ModelingSubmissionService extends SubmissionService {
 
         participation.addSubmission(modelingSubmission);
 
+        try {
+            notifyCompass(modelingSubmission, modelingExercise);
+        }
+        catch (Exception ex) {
+            log.warn("There was an exception when notifying Compass about a new modeling submission with error message: " + ex.getMessage()
+                    + ". Artemis will ignore this error and continue to save the modeling submission", ex);
+        }
+
         participation.setInitializationState(InitializationState.FINISHED);
 
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
@@ -236,5 +244,17 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         return modelingSubmission;
+    }
+
+    /**
+     * Adds a model to compass service to include it in the automatic grading process.
+     *
+     * @param modelingSubmission the submission which contains the model
+     * @param modelingExercise   the exercise the submission belongs to
+     */
+    public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
+        if (compassService.isSupported(modelingExercise)) {
+            this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
+        }
     }
 }

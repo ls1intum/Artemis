@@ -18,7 +18,7 @@ public class SimilarityDetector {
     public static void analyzeSimilarity(UMLDiagram model, ModelIndex index) {
 
         for (UMLElement element : model.getAllModelElements()) {
-            index.retrieveSimilarityId(element);
+            index.retrieveSimilarityId(element, model);
         }
 
         setContextOfModelElements(model);

@@ -33,8 +33,8 @@ export class ModelingExercise extends Exercise {
         // NOTE: at the moment Compass does not work reliably and is therefore deactivated.
         // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         this.assessmentType = AssessmentType.MANUAL;
-        // if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {
-        //     this.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        // }
+        if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {
+            this.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        }
     }
 }

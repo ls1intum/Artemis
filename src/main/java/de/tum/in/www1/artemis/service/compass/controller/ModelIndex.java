@@ -2,10 +2,11 @@ package de.tum.in.www1.artemis.service.compass.controller;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Queue;
+import java.util.Set;
 
 import org.springframework.data.util.Pair;
 
+import com.hazelcast.config.*;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -15,20 +16,33 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class ModelIndex {
 
-    private Queue<UMLElement> uniqueModelElementList;
+    private IMap<String, Long> uniqueModelElementList;
 
     /**
      * Note: The key is the model submission id
      */
     private IMap<Long, UMLDiagram> modelMap;
 
-    private IMap<UMLElement, Integer> elementSimilarityMap;
+    private IMap<String, Integer> elementSimilarityMap;
+
+    private IMap<String, String> elementTypeMap;
+
+    /**
+     * Pending models that are submitted by users but did not get converted into Java classes to not effect submission time during exams
+     */
+    public Map<Long, String> pendingModels;
 
     public ModelIndex(Long exerciseId, HazelcastInstance hazelcastInstance) {
         elementSimilarityMap = hazelcastInstance.getMap("similarities - " + exerciseId);
-        uniqueModelElementList = hazelcastInstance.getQueue("elements - " + exerciseId);
-        modelMap = hazelcastInstance.getMap("models - " + exerciseId);
+        uniqueModelElementList = hazelcastInstance.getMap("elements - " + exerciseId);
 
+        MapConfig uniqueModelElementListConfig = new MapConfig("elements - " + exerciseId);
+        uniqueModelElementListConfig.setNearCacheConfig(getNearCacheConfig("models - " + exerciseId));
+        hazelcastInstance.getConfig().addMapConfig(uniqueModelElementListConfig);
+
+        modelMap = hazelcastInstance.getMap("models - " + exerciseId);
+        elementTypeMap = hazelcastInstance.getMap("element-types - " + exerciseId);
+        pendingModels = hazelcastInstance.getMap(("pending-models - " + exerciseId));
     }
 
     /**
@@ -38,34 +52,48 @@ public class ModelIndex {
      * @param element a model element for which the corresponding similarity ID should be retrieved
      * @return the similarity ID for the given model element, i.e. the ID of the similarity set the element belongs to
      */
-    int retrieveSimilarityId(UMLElement element) {
-        if (elementSimilarityMap.containsKey(element)) {
-            return elementSimilarityMap.get(element);
+    int retrieveSimilarityId(UMLElement element, UMLDiagram model) {
+        String jsonElementId = element.getJSONElementID();
+        if (elementSimilarityMap.containsKey(jsonElementId)) {
+            return elementSimilarityMap.get(jsonElementId);
+        }
+
+        if (!elementTypeMap.containsKey(jsonElementId)) {
+            elementTypeMap.set(jsonElementId, element.getType());
         }
 
         // Pair of similarity value and similarity ID
         var bestSimilarityFit = Pair.of(-1.0, -1);
 
-        for (final var knownElement : uniqueModelElementList) {
+        for (final var knownElementEntry : uniqueModelElementList.entrySet()) {
+            UMLDiagram modelToGetElement;
+            if (model.getModelSubmissionId() == knownElementEntry.getValue()) {
+                modelToGetElement = model;
+            }
+            else {
+                modelToGetElement = modelMap.get(knownElementEntry.getValue());
+            }
+            UMLElement knownElement = modelToGetElement.getElementByJSONID(knownElementEntry.getKey());
             final var similarity = knownElement.similarity(element);
             if (similarity > CompassConfiguration.EQUALITY_THRESHOLD && similarity > bestSimilarityFit.getFirst()) {
                 // element is similar to existing element and has a higher similarity than another element
-                bestSimilarityFit = Pair.of(similarity, knownElement.getSimilarityID());
+                bestSimilarityFit = Pair.of(similarity, getSimilarityId(knownElementEntry.getKey()));
             }
         }
 
         if (bestSimilarityFit.getFirst() != -1.0) {
             int similarityId = bestSimilarityFit.getSecond();
             element.setSimilarityID(similarityId);
-            elementSimilarityMap.put(element, similarityId);
-            return bestSimilarityFit.getSecond();
+            elementSimilarityMap.set(element.getJSONElementID(), similarityId);
+            return similarityId;
         }
 
         // element does not fit already known element / similarity set
         int similarityId = uniqueModelElementList.size();
         element.setSimilarityID(similarityId);
-        uniqueModelElementList.add(element);
-        elementSimilarityMap.put(element, similarityId);
+        uniqueModelElementList.set(element.getJSONElementID(), model.getModelSubmissionId());
+
+        elementSimilarityMap.set(element.getJSONElementID(), similarityId);
         return similarityId;
     }
 
@@ -75,7 +103,7 @@ public class ModelIndex {
      * @param model the new model that should be added
      */
     public void addModel(UMLDiagram model) {
-        modelMap.put(model.getModelSubmissionId(), model);
+        modelMap.set(model.getModelSubmissionId(), model);
     }
 
     /**
@@ -86,15 +114,6 @@ public class ModelIndex {
      */
     public UMLDiagram getModel(long modelSubmissionId) {
         return modelMap.get(modelSubmissionId);
-    }
-
-    /**
-     * Get the model map. It maps submission IDs to the models of the corresponding submissions.
-     *
-     * @return the model map
-     */
-    public Map<Long, UMLDiagram> getModelMap() {
-        return modelMap;
     }
 
     /**
@@ -129,7 +148,7 @@ public class ModelIndex {
      *
      * @return the model element to similarity id mapping
      */
-    public Map<UMLElement, Integer> getElementSimilarityMap() {
+    public Map<String, Integer> getElementSimilarityMap() {
         return elementSimilarityMap;
     }
 
@@ -138,7 +157,79 @@ public class ModelIndex {
      *
      * @return the collection of unique elements
      */
-    public Collection<UMLElement> getUniqueElements() {
-        return uniqueModelElementList;
+    public Set<Map.Entry<String, Long>> getUniqueElementEntries() {
+        return uniqueModelElementList.entrySet();
     }
+
+    /**
+     * Get the similarity id of element with given jsonElementId
+     *
+     * @return similarity id
+     */
+    public Integer getSimilarityId(String jsonElementId) {
+        return elementSimilarityMap.get(jsonElementId);
+    }
+
+    /**
+     * Get the entries in model map
+     *
+     * @return entry set of model map
+     */
+    public Set<Map.Entry<Long, UMLDiagram>> getModelEntries() {
+        return modelMap.entrySet();
+    }
+
+    /**
+     *  Check if given submission exists
+     *
+     * @return whether model map contains given id as key
+     */
+    public Boolean modelExists(long modelSubmissionId) {
+        return modelMap.containsKey(modelSubmissionId);
+    }
+
+    /**
+     * Get the collection of model ids
+     *
+     * @return the collection of model id
+     */
+    public Collection<Long> getModelIds() {
+        return modelMap.keySet();
+    }
+
+    public void addPendingModel(long modelId, String model) {
+        pendingModels.put(modelId, model);
+    };
+
+    public void removePendingModel(long modelId) {
+        pendingModels.remove(modelId);
+    };
+
+    public Set<Map.Entry<Long, String>> getPendingEntries() {
+        return pendingModels.entrySet();
+    }
+
+    public void destroy() {
+        modelMap.destroy();
+        elementTypeMap.destroy();
+        elementSimilarityMap.destroy();
+        uniqueModelElementList.destroy();
+    }
+
+    public NearCacheConfig getNearCacheConfig(String cacheName) {
+        EvictionConfig evictionConfig = new EvictionConfig() //
+                .setEvictionPolicy(EvictionPolicy.NONE);
+
+        NearCacheConfig nearCacheConfig = new NearCacheConfig() //
+                .setName(cacheName + "-local") //
+                .setInMemoryFormat(InMemoryFormat.OBJECT) //
+                .setSerializeKeys(true) //
+                .setInvalidateOnChange(true) //
+                .setTimeToLiveSeconds(0) //
+                .setMaxIdleSeconds(0) //
+                .setEvictionConfig(evictionConfig) //
+                .setCacheLocalEntries(true);
+        return nearCacheConfig;
+    }
+
 }

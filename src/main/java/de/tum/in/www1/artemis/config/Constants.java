@@ -189,6 +189,8 @@ public final class Constants {
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
+    public static final String HAZELCAST_COMPASS_CACHE = "compass-cache";
+
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
     private Constants() {

@@ -20,8 +20,8 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -75,27 +75,27 @@ public class CompassService {
     public boolean isSupported(ModelingExercise modelingExercise) {
 
         // NOTE: at the moment Compass is not working reliably and should not be used
-        return false;
+        // return false;
 
         // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
         // // only use compass for course exercises, in exam exercises the additional delay is too much so it is currently deactivated
         // // TODO: we should support compass also for the exam mode
-        // if (modelingExercise.isExamExercise()) {
-        // return false;
-        // }
-        //
-        // // In case the instructor specifies in the UI whether the semi-automatic assessment is possible or not.
-        // // NOTE: Currently, this is only possible for for exercises with class or activity diagrams
-        // DiagramType diagramType = modelingExercise.getDiagramType();
-        // if (modelingExercise.getAssessmentType() != null) {
-        // return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC)
-        // && (diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram);
-        // }
-        // // if the assessment mode is not specified (e.g. for legacy exercises), team exercises are not supported
-        // if (modelingExercise.isTeamMode()) {
-        // return false;
-        // }
-        // return diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram;
+        if (modelingExercise.isExamExercise()) {
+            return false;
+        }
+
+        // In case the instructor specifies in the UI whether the semi-automatic assessment is possible or not.
+        // NOTE: Currently, this is only possible for for exercises with class or activity diagrams
+        DiagramType diagramType = modelingExercise.getDiagramType();
+        if (modelingExercise.getAssessmentType() != null) {
+            return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC)
+                    && (diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram);
+        }
+        // if the assessment mode is not specified (e.g. for legacy exercises), team exercises are not supported
+        if (modelingExercise.isTeamMode()) {
+            return false;
+        }
+        return diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram;
     }
 
     /**
@@ -107,11 +107,11 @@ public class CompassService {
     private boolean isSupported(long exerciseId) {
 
         // NOTE: at the moment Compass is not working reliably and should not be used
-        return false;
+        // return false;
 
         // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // ModelingExercise modelingExercise = findModelingExerciseById(exerciseId);
-        // return modelingExercise != null && isSupported(modelingExercise);
+        ModelingExercise modelingExercise = findModelingExerciseById(exerciseId);
+        return modelingExercise != null && isSupported(modelingExercise);
     }
 
     /**
@@ -234,8 +234,7 @@ public class CompassService {
 
         CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
 
-        List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
-        engine.notifyNewModels(modelingSubmissions);
+        engine.buildPendingModels();
 
         engine.notifyNewAssessment(modelingAssessment, submissionId);
 
@@ -443,10 +442,11 @@ public class CompassService {
      * @param model      the new model as raw string
      */
     public void addModel(long exerciseId, long modelId, String model) {
-        if (!isSupported(exerciseId) || !loadExerciseIfSuspended(exerciseId)) {
+        CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
+        if (!isSupported(exerciseId) || engine == null) {
             return;
         }
-        compassCalculationEngines.get(exerciseId).notifyNewModel(model, modelId);
+        engine.notifyNewModel(model, modelId);
     }
 
     /**
@@ -511,9 +511,15 @@ public class CompassService {
     @Scheduled(cron = "0 0 2 * * *") // execute this every night at 2:00:00 am
     private static void cleanUpCalculationEngines() {
         LoggerFactory.getLogger(CompassService.class).info("Compass evaluates the need of keeping " + compassCalculationEngines.size() + " calculation engines in memory");
-        compassCalculationEngines = compassCalculationEngines.entrySet().stream()
-                .filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        compassCalculationEngines = compassCalculationEngines.entrySet().stream().filter(map -> {
+            CompassCalculationEngine engine = map.getValue();
+            if (Duration.between(engine.getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE) {
+                return true;
+            }
+            engine.destroy();
+            return false;
+        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
     }
 
@@ -536,12 +542,11 @@ public class CompassService {
      * @return a list of modelIds that should be assessed next
      */
     public List<Long> getCalculationEngineModelsWaitingForAssessment(Long exerciseId) {
-        List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
-
         CompassCalculationEngine engine = compassCalculationEngines.get(exerciseId);
-        engine.notifyNewModels(modelingSubmissions);
 
-        assessAllAutomatically(modelingSubmissions.stream().map(Submission::getId).collect(Collectors.toList()), exerciseId);
+        engine.buildPendingModels();
+
+        assessAllAutomatically(engine.getModelIds(), exerciseId);
 
         return engine.getModelsWaitingForAssessment();
     }
