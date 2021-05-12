@@ -259,6 +259,10 @@
             "photoDirectory": "public/images/about/Nicolas_Ruscher.jpg"
         },
         {
+            "fullName": "Simon Entholzer",
+            "photoDirectory": "public/images/about/Simon_Entholzer.jpg"
+        },
+        {
             "fullName": "İsmet Melih Özbeyli",
             "photoDirectory": "public/images/about/Ismet_Melih_Oezbeyli.jpg"
         },
