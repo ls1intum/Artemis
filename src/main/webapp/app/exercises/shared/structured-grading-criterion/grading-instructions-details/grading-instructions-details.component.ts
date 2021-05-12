@@ -417,7 +417,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         criteria.structuredGradingInstructions = [];
         criteria.structuredGradingInstructions.push(new GradingInstruction());
         this.exercise.gradingCriteria!.push(criteria);
-        this.initializeMarkdown();
     }
 
     /**
