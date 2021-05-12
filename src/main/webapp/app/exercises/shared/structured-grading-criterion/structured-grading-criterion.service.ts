@@ -37,8 +37,10 @@ export class StructuredGradingCriterionService {
             const maxCount = feedback.gradingInstruction!.usageCount;
             const encounters = gradingInstructions[feedback.gradingInstruction!.id!];
             if (maxCount && maxCount > 0) {
-                gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
-                if (encounters < maxCount) {
+                if (encounters >= maxCount) {
+                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
+                } else {
+                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
                     score += feedback.gradingInstruction!.credits;
                 }
             } else {
