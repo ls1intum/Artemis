@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 
 @Service
@@ -61,8 +60,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     // application link name --> Link
     private final Map<String, ApplicationLinksDTO.ApplicationLinkDTO> cachedApplicationLinks = new ConcurrentHashMap<>();
 
-    public BitbucketBambooUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate, @Qualifier("bitbucketRestTemplate") RestTemplate bitbucketRestTemplate,
-            BitbucketService bitbucketService) {
+    public BitbucketBambooUpdateService(@Qualifier("bambooRestTemplate") RestTemplate bambooRestTemplate, @Qualifier("bitbucketRestTemplate") RestTemplate bitbucketRestTemplate) {
         this.bambooRestTemplate = bambooRestTemplate;
         this.bitbucketRestTemplate = bitbucketRestTemplate;
     }

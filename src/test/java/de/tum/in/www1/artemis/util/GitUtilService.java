@@ -52,10 +52,17 @@ public class GitUtilService {
 
     private Git remoteGit;
 
+    /**
+     * Initializes the repository with three dummy files
+     */
     public void initRepo() {
         initRepo("main");
     }
 
+    /**
+     * Initializes the repository with three dummy files
+     * @param defaultBranch The default branch name of the repository
+     */
     public void initRepo(String defaultBranch) {
         try {
             deleteRepos();
@@ -68,7 +75,7 @@ public class GitUtilService {
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
 
-            if (!defaultBranch.equals("master")) {
+            if (!"master".equals(defaultBranch)) {
                 // set HEAD in remote repository
                 remoteGit.checkout().setCreateBranch(true).setName(defaultBranch).call();
             }
