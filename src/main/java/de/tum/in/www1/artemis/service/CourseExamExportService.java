@@ -228,7 +228,7 @@ public class CourseExamExportService {
     private List<Path> exportCourseExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
         Optional<Exam> firstExam = exams.stream().findFirst();
         if (firstExam.isEmpty()) {
-            logMessageAndAppendToList("Cannot export exams because the course is missing.", exportErrors);
+            log.warn("Skipping exam export since the course does not have any exams");
             return List.of();
         }
 
