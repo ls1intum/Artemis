@@ -12,7 +12,7 @@
             "yourStatus": "Your status",
             "toggleSecondCorrectionOn": "Enable second correction",
             "toggleSecondCorrectionOff": "Disable second correction",
-            "youAssessedSoFar": "You assessed {{numberOfTutorAssessments}} submissions so far",
+            "youAssessedSoFar": "You have assessed {{numberOfTutorAssessments}} submissions so far",
             "needToReadGradingInstructions": "You need to read the grading instructions before starting assessing",
             "readGradingInstructions": "Read grading instructions",
             "startYourParticipation": "Start participating in the exercise",
@@ -20,7 +20,7 @@
             "problemStatement": "Problem statement",
             "exampleSolution": "Sample solution",
             "close": "Close",
-            "readAndUnderstood": "I read and understood the instructions",
+            "readAndUnderstood": "I have read and understood the instructions",
             "totalExampleSubmissions": "There are {{total}} sample submissions: {{toReview}} to review and {{toAssess}} to assess.",
             "reviewSubmissions": "Review submissions",
             "start": "Start",
@@ -28,9 +28,9 @@
             "reviewingExampleSubmissions": "reviewing sample submissions",
             "reviewExampleSubmission": "Review sample submissions",
             "tutorialSubmissions": "Tutorial submission",
-            "studentsSubmissions": "Student's submissions",
             "assessingExampleSubmission": "assessing sample submission",
             "assessExampleSubmission": "Assess sample submission",
+            "studentsSubmissions": "Students' submissions",
             "testRunSubmissions": "Test Run submissions",
             "submissionDate": "Submission date",
             "result": "Result",
@@ -44,15 +44,15 @@
             "noSubmissions": "There are currently no submissions for you to grade.",
             "startAssessmentFromTeamPages": "Assessments for team exercises are started from the pages of your teams.",
             "complaints": "Complaints",
-            "noComplaints": "There are no complaints at this moment.",
-            "noComplaintsDisplayed": "There are no complaints at this moment (excluding complaints about your own assessment)",
+            "noComplaints": "There are no complaints at the moment.",
+            "noComplaintsDisplayed": "There are no complaints at the moment (excluding complaints about your own assessments)",
             "evaluateComplaint": "Evaluate the complaint",
             "showComplaint": "Show the complaint",
             "complaintEvaluated": "The complaint has already been evaluated",
             "complaintNotEvaluated": "The complaint still needs to be evaluated",
             "moreFeedback": "More Feedback Requests",
-            "noMoreFeedbackRequests": "There are no requests at this moment.",
-            "noMoreFeedbackRequestsDisplayed": "There are no requests at this moment (excluding request about your own assessment)",
+            "noMoreFeedbackRequests": "There are no requests at the moment.",
+            "noMoreFeedbackRequestsDisplayed": "There are no requests at the moment (excluding request about your own assessments)",
             "evaluateMoreFeedbackRequest": "Evaluate the request",
             "moreFeedbackRequestEvaluated": "More Feedback Request has already been evaluated",
             "moreFeedbackRequestNotEvaluated": "More Feedback Request still needs to be evaluated",
@@ -60,7 +60,7 @@
             "numberOfUnassessedSubmissions": "Unassessed submissions",
             "exerciseInformation": "Exercise information",
             "stats": {
-                "intime": "In time",
+                "intime": "On time",
                 "late": "Late"
             },
             "numberOfSubmissions": "Total submissions",
@@ -79,11 +79,11 @@
                 "GERMAN": "German",
                 "UNKNOWN": "Unknown"
             },
-            "complaintHint": "Shows complaints about assessments of other tutors. Note: complaints about your assessments are not shown here.",
+            "complaintHint": "Shows complaints about other tutors' assessments. Note: complaints about your own assessments will not be displayed here.",
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
-            "noSubmissionsInfo": "You can assess 0 submissions in this round. {{notYetAssessed}} submissions are not yet assessed, from which {{lockedSubmissionsByOtherTutor}} are locked by other tutors ",
+            "noSubmissionsInfo": "You may not assess any submissions this round. {{notYetAssessed}} submissions have yet to be assessed, of which {{lockedSubmissionsByOtherTutor}} are currently locked by other tutors ",
             "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round.",
-            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round, you can only assess submissions which you have not assessed in the first round."
+            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round."
         }
     }
 }
