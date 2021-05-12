@@ -86,7 +86,7 @@
                                 <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
                                     <fa-icon [icon]="'trash'" size="2x"></fa-icon>
                                 </span>
-                                <span class="re-evaluate-button" id="add-button" (click)="addNewInstruction(criteria)">
+                                <span class="re-evaluate-button" id="add-button" (click)="addInstruction(criteria)">
                                     <fa-icon [icon]="'plus'" size="2x"></fa-icon>
                                 </span>
                             </div>
@@ -97,7 +97,7 @@
         </div>
         <div class="row mt-2">
             <div class="col-12 col-sm-6 col-xl-3 mb-1">
-                <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addNewGradingCriteria()">
+                <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriteria()">
                     <fa-icon [icon]="'plus'"></fa-icon>
                     <span jhiTranslate="artemisApp.exercise.addGradingCriteria"></span>
                 </button>

@@ -387,6 +387,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.splice(instructionIndex, 1);
     }
 
+    addInstruction(criteria: GradingCriterion) {
+        this.addNewInstruction(criteria);
+        this.initializeMarkdown();
+    }
+
     /**
      * @function addNewInstruction
      * @desc Adds new grading instruction for desired grading criteria
@@ -396,6 +401,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         const instruction = new GradingInstruction();
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
+    }
+
+    addGradingCriteria() {
+        this.addNewGradingCriteria();
         this.initializeMarkdown();
     }
 

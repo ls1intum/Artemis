@@ -107,15 +107,6 @@ describe('Grading Instructions Management Component', () => {
         expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).to.equal(undefined);
     });
 
-    it('should reset the grading instruction', () => {
-        component.exercise.gradingCriteria = [gradingCriterion];
-        component.backupExercise.gradingCriteria = [gradingCriterion];
-        component.resetInstruction(gradingInstruction, gradingCriterion);
-        fixture.detectChanges();
-
-        expect(component.exercise.gradingCriteria).to.deep.equal(component.backupExercise.gradingCriteria);
-    });
-
     it('should add new grading instruction to criteria', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
         component.addNewInstruction(gradingCriterion);
