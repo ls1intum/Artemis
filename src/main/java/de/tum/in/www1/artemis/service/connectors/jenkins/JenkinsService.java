@@ -299,14 +299,16 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
         latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
 
-        // Parse, filter, and save the build logs
-        ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-        List<BuildLogEntry> buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
-        buildLogEntries = filterUnnecessaryLogs(buildLogEntries, programmingLanguage);
-        buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, latestSubmission);
+        // Parse, filter, and save the build logs if they exist
+        if (buildResult.getLogs() != null) {
+            ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+            List<BuildLogEntry> buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
+            buildLogEntries = filterUnnecessaryLogs(buildLogEntries, programmingLanguage);
+            buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, latestSubmission);
 
-        // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-        latestSubmission.setBuildLogEntries(buildLogEntries);
+            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+            latestSubmission.setBuildLogEntries(buildLogEntries);
+        }
 
         // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
         newResult.setSubmission(latestSubmission);
@@ -413,7 +415,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
             // Attempt to parse pipeline logs
             final String pipelineLogs = build.details().getConsoleOutputText();
-            if (pipelineLogs.contains("pipeline")) {
+            if (pipelineLogs != null && pipelineLogs.contains("pipeline")) {
                 buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(List.of(pipelineLogs.split("\n")));
             }
             else {

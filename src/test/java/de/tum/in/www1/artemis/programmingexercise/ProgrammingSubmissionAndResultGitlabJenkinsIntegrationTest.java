@@ -149,14 +149,24 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs.size()).isGreaterThan(0);
 
-        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        if (useLegacyBuildLogs) {
+            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        }
+        else {
+            verify(buildWithDetails, times(1)).getConsoleOutputText();
+        }
 
         // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
         receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs.size()).isGreaterThan(0);
 
-        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        if (useLegacyBuildLogs) {
+            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        }
+        else {
+            verify(buildWithDetails, times(1)).getConsoleOutputText();
+        }
 
         return result;
     }

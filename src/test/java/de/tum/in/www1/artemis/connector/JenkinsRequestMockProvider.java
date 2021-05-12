@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -261,16 +263,26 @@ public class JenkinsRequestMockProvider {
         final var job = mock(JobWithDetails.class);
         mockGetJob(projectKey, buildPlanId, job, false);
 
-        var buildLogFile = useLegacyLogs ? "legacy-failed-build-log.html" : "failed-build-log.html";
-        final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/" + buildLogFile);
-
         final var build = mock(Build.class);
         doReturn(build).when(job).getLastBuild();
 
         final var buildWithDetails = mock(BuildWithDetails.class);
         doReturn(buildWithDetails).when(build).details();
 
-        doReturn(buildLogResponse).when(buildWithDetails).getConsoleOutputHtml();
+        if (useLegacyLogs) {
+            doReturn(null).when(buildWithDetails).getConsoleOutputText();
+            String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
+            doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
+        }
+        else {
+            java.io.File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
+            StringBuilder builder = new StringBuilder();
+            Files.lines(file.toPath()).forEach(line -> {
+                builder.append(line);
+                builder.append("\n");
+            });
+            doReturn(builder.toString()).when(buildWithDetails).getConsoleOutputText();
+        }
         return buildWithDetails;
 
     }
