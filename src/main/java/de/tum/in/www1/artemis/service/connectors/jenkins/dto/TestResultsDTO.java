@@ -125,7 +125,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean isBuildSuccessful() {
-        return getSuccessful() == getSum();
+        return isBuildSuccessful;
     }
 
     @Override
