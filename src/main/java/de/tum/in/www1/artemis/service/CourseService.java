@@ -410,13 +410,12 @@ public class CourseService {
      * Fetches Course Management Detail View data from repository and returns a DTO
      *
      * @param courseId id of the course
-     * @param exerciseIds the ids of the exercises of the course
+     * @param exerciseIds the ids of the exercises the course contains
      * @return The DTO for the course management detail view
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Long courseId, Set<Long> exerciseIds) {
         var dto = new CourseManagementDetailViewDTO();
         var course = this.courseRepository.findByIdElseThrow(courseId);
-        dto.setCourse(course);
 
         dto.setNumberOfStudentsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName())));
         dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));

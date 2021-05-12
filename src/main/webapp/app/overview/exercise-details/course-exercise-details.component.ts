@@ -325,7 +325,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     get exerciseRouterLink(): string | null {
         if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type!)) {
-            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/assessment`;
+            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/submissions`;
         }
 
         return null;
