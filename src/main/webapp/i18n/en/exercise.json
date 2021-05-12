@@ -46,7 +46,7 @@
             "gradingInstructions": "Grading Instructions",
             "structuredGradingInstructions": "Structured Grading Instructions",
             "usageCount": "Max Count in Score",
-            "usageCountHint": "This number specifies how often points for this instruction will be added to the final score",
+            "usageCountHint": "This number specifies how many times points for this instruction may be added to the final score",
             "DragDropInstruction": "Drag & Drop instruction to feedback element",
             "gradingScale": "Grading Scale",
             "instrDescription": "Instruction Description",
@@ -136,7 +136,7 @@
             "lateSubmissionReceived": "Artemis received a late submission, please wait for the result and then scroll down to the result history to see more details.",
             "lateSubmissionResultReceived": "Artemis received an ungraded result for a late submission, please scroll down to see the score in the result history.",
             "resultCreationSuccessful": "The result was created successfully",
-            "resultCreationUnsuccessful": "The result was created unsuccessfully",
+            "resultCreationUnsuccessful": "The result could not be created",
             "presentationScoreEnabled": {
                 "title": "Presentation",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participants\" page of the exercise."
@@ -160,12 +160,12 @@
                     }
                 },
                 "points": {
-                    "customMin": "The points must be at least 1.",
-                    "customMax": "The points must be at max 9999."
+                    "customMin": "The number of points must be at least 1.",
+                    "customMax": "The number of points may not exceed 9999."
                 },
                 "bonusPoints": {
-                    "customMin": "The points must be at least 0.",
-                    "customMax": "The points must be at max 9999."
+                    "customMin": "The number of points must be at least 0.",
+                    "customMax": "The number of points may not exceed 9999."
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
