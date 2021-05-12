@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -125,6 +126,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) {
+        newRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUrl);
+        existingRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUrl);
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
@@ -304,13 +307,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
         latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
 
-        // var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-        // var buildLogs = filterUnnecessaryLogs(parseBuildLogsFromJenkinsLogs(buildResult.getLogs()), programmingLanguage);
-        // var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
-        //
-        // // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-        // latestSubmission.setBuildLogEntries(savedBuildLogs);
-        //
+        // Parse, filte, and save the build logs
+        ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+        List<BuildLogEntry> buildLogEntries = parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
+        buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
+        buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, latestSubmission);
+
+        // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+        latestSubmission.setBuildLogEntries(buildLogEntries);
 
         // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
         newResult.setSubmission(latestSubmission);
@@ -415,48 +419,20 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             final var build = jenkinsJobService.getJobInFolder(projectKey, buildPlanId).getLastBuild();
             final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
 
-            List<BuildLogEntry> buildLog;
+            List<BuildLogEntry> buildLogEntries;
             try {
-                buildLog = parsePipelineLogs(logHtml);
+                buildLogEntries = parsePipelineLogs(logHtml);
             }
             catch (IllegalArgumentException e) {
-                buildLog = parseLogsLegacy(logHtml);
+                buildLogEntries = parseLogsLegacy(logHtml);
             }
 
-            // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
-            List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
-            for (BuildLogEntry entry : buildLog) {
-                String logString = entry.getLog();
-                if (logString.contains("Compilation failure")) {
-                    break;
-                }
-
-                // filter unnecessary logs and illegal reflection logs
-                if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
-                    continue;
-                }
-
-                // Jenkins outputs each executed shell command with '+ <shell command>'
-                if (logString.startsWith("+")) {
-                    continue;
-                }
-
-                // Remove the path from the log entries
-                final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
-
-                // Avoid duplicate log entries
-                if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, prunedBuildLogs, shortenedLogString)) {
-                    entry.setLog(shortenedLogString);
-                    prunedBuildLogs.add(entry);
-                }
-            }
-
-            // Save build logs
-            var savedBuildLogs = buildLogService.saveBuildLogs(prunedBuildLogs, programmingSubmission);
-            programmingSubmission.setBuildLogEntries(savedBuildLogs);
+            // Filter and save build logs
+            buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
+            buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
+            programmingSubmission.setBuildLogEntries(buildLogEntries);
             programmingSubmissionRepository.save(programmingSubmission);
-
-            return prunedBuildLogs;
+            return buildLogEntries;
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -488,35 +464,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         return buildLogs;
     }
 
-    private List<BuildLogEntry> filterUnnecessaryLogs(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
-        // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
-        List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
-        for (BuildLogEntry entry : buildLogEntries) {
-            String logString = entry.getLog();
-            if (logString.contains("Compilation failure")) {
-                break;
-            }
-
-            // filter unnecessary logs and illegal reflection logs
-            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
-                continue;
-            }
-
-            // Jenkins outputs each executed shell command with '+ <shell command>'
-            if (logString.startsWith("+")) {
-                continue;
-            }
-
-            // Remove the path from the log entries
-            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
-
-            // Avoid duplicate log entries
-            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, prunedBuildLogs, shortenedLogString)) {
-                entry.setLog(shortenedLogString);
-                prunedBuildLogs.add(entry);
-            }
-        }
-        return prunedBuildLogs;
+    protected List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> buildLogs = super.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
+        // Jenkins outputs each executed shell command with '+ <shell command>'
+        return buildLogs.stream().filter(buildLog -> !buildLog.getLog().startsWith("+")).collect(Collectors.toList());
     }
 
     private List<BuildLogEntry> parsePipelineLogs(Element logHtml) throws IllegalArgumentException {
@@ -565,7 +516,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             }
         }
         return buildLog;
-
     }
 
     private List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
