@@ -139,7 +139,7 @@
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
-                "averageStudentScore": "Durchschnittliche Studentenpunktzahl"
+                "averageStudentScoreTitle": "Durchschnittliche Studentenpunktzahl"
             }
         },
         "courseStatistics": {
