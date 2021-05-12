@@ -895,7 +895,7 @@ public class ExamResource {
         }
 
         examService.archiveExam(exam);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, examId.toString())).build();
+        return ResponseEntity.ok().build();
     }
 
     /**

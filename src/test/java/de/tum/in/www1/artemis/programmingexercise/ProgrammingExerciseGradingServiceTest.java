@@ -934,11 +934,13 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCalculateCorrectStatistics() {
+    public void shouldCalculateCorrectStatistics() throws Exception {
         activateAllTestCases(false);
         createTestParticipationsWithResults();
 
-        var statistics = gradingService.generateGradingStatistics(programmingExerciseSCAEnabled.getId());
+        // get statistics
+        final var endpoint = ProgrammingExerciseGradingResource.STATISTICS.replace("{exerciseId}", programmingExerciseSCAEnabled.getId().toString());
+        final var statistics = request.get(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
         assertThat(statistics.getNumParticipations()).isEqualTo(5);
 
