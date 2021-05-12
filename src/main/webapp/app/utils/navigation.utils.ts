@@ -82,9 +82,9 @@ export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId:
             exerciseGroupId.toString(),
             exerciseType + '-exercises',
             exerciseId.toString(),
-            'assessment',
+            'submissions',
         ];
     }
 
-    return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'assessment'];
+    return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions'];
 };
