@@ -1,22 +1,18 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -71,9 +67,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final JenkinsJobService jenkinsJobService;
 
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
-
-    // Pattern of the DateTime that is included in the logs received from Jenkins
-    private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, FeedbackRepository feedbackRepository,
@@ -307,9 +300,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
         latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
 
-        // Parse, filte, and save the build logs
+        // Parse, filter, and save the build logs
         ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-        List<BuildLogEntry> buildLogEntries = parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
+        List<BuildLogEntry> buildLogEntries = JenkinsBuildLogUtils.parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
         buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
         buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, latestSubmission);
 
@@ -421,10 +414,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
             List<BuildLogEntry> buildLogEntries;
             try {
-                buildLogEntries = parsePipelineLogs(logHtml);
+                buildLogEntries = JenkinsBuildLogUtils.parsePipelineLogs(logHtml);
             }
             catch (IllegalArgumentException e) {
-                buildLogEntries = parseLogsLegacy(logHtml);
+                buildLogEntries = JenkinsBuildLogUtils.parseLogsLegacy(logHtml);
             }
 
             // Filter and save build logs
@@ -438,120 +431,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
         }
-    }
-
-    private List<BuildLogEntry> parseBuildLogsFromJenkinsLogs(List<String> logLines) {
-        final List<BuildLogEntry> buildLogs = new ArrayList<>();
-        for (final var logLine : logLines) {
-            // The build logs that we are interested in are the ones that start with a timestamp
-            // of format [timestamp] ...
-            final String possibleTimestamp = StringUtils.substringBetween(logLine, "[", "]");
-            if (possibleTimestamp == null) {
-                continue;
-            }
-
-            try {
-                final ZonedDateTime timestamp = ZonedDateTime.parse(possibleTimestamp);
-                final String log = logLine.substring(possibleTimestamp.length() + 2);
-
-                BuildLogEntry buildLogEntry = new BuildLogEntry(timestamp, stripLogEndOfLine(log).trim());
-                buildLogs.add(buildLogEntry);
-            }
-            catch (DateTimeParseException e) {
-                // The log line doesn't contain the timestamp so we ignore it
-            }
-        }
-        return buildLogs;
-    }
-
-    protected List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
-        List<BuildLogEntry> buildLogs = super.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
-        // Jenkins outputs each executed shell command with '+ <shell command>'
-        return buildLogs.stream().filter(buildLog -> !buildLog.getLog().startsWith("+")).collect(Collectors.toList());
-    }
-
-    private List<BuildLogEntry> parsePipelineLogs(Element logHtml) throws IllegalArgumentException {
-        final var buildLog = new LinkedList<BuildLogEntry>();
-        if (logHtml.childNodes().stream().noneMatch(child -> child.attr("class").contains("pipeline"))) {
-            throw new IllegalArgumentException("Log is not pipeline log");
-        }
-        for (Element elem : logHtml.children()) {
-            // Only pipeline-node-ID elements contain actual log entries
-            if (elem.attributes().get("class").contains("pipeline-node")) {
-                // At least one child must have a timestamp class
-                if (elem.childNodes().stream().anyMatch(child -> child.attr("class").contains("timestamp"))) {
-                    Iterator<Node> nodeIterator = elem.childNodes().iterator();
-
-                    while (nodeIterator.hasNext()) {
-                        Node node = nodeIterator.next();
-                        String log;
-                        if (node.attributes().get("class").contains("timestamp")) {
-                            final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                            final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
-                            var contentCandidate = nodeIterator.next();
-
-                            // Skip invisible entries (they contain only the timestamp, but we already got that above)
-                            if (contentCandidate.attr("style").contains("display: none")) {
-                                contentCandidate = nodeIterator.next();
-                            }
-                            log = reduceToText(contentCandidate);
-
-                            // There are color codes in the logs that need to be filtered out.
-                            // This is needed for old programming exercises
-                            // For example:[[1;34mINFO[m] is changed to [INFO]
-                            log = log.replace("\u001B[1;34m", "");
-                            log = log.replace("\u001B[m", "");
-                            log = log.replace("\u001B[1;31m", "");
-                            buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
-                        }
-                        else {
-                            // Log is from the same line as the last
-                            // Look for next text node in children
-                            log = reduceToText(node);
-                            final var lastLog = buildLog.getLast();
-                            lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log).trim());
-                        }
-                    }
-                }
-            }
-        }
-        return buildLog;
-    }
-
-    private List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
-        final var buildLog = new LinkedList<BuildLogEntry>();
-        final var iterator = logHtml.childNodes().iterator();
-        while (iterator.hasNext()) {
-            final var node = iterator.next();
-            final String log;
-            // For timestamps, parse the <b> tag containing the time as hh:mm:ss
-            if (node.attributes().get("class").contains("timestamp")) {
-                final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
-                log = reduceToText(iterator.next());
-                buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
-            }
-            else {
-                // Log is from the same line as the last
-                // Look for next text node in children
-                log = reduceToText(node);
-                final var lastLog = buildLog.getLast();
-                lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
-            }
-        }
-        return buildLog;
-    }
-
-    private String stripLogEndOfLine(String log) {
-        return log.replaceAll("[\\r\\n]", "");
-    }
-
-    private String reduceToText(Node node) {
-        if (node instanceof TextNode) {
-            return ((TextNode) node).getWholeText();
-        }
-
-        return reduceToText(node.childNode(node.childNodeSize() - 1));
     }
 
     @Override
