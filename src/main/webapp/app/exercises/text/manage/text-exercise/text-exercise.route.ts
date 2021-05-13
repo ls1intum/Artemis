@@ -117,7 +117,7 @@ export const textExerciseRoute: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'exercise-statistics.title',
+            pageTitle: 'statistics.exercise_statistics_title',
         },
         canActivate: [UserRouteAccessService],
     },
