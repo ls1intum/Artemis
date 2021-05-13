@@ -11,8 +11,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,8 +40,6 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Component
 @Profile("bitbucket")
 public class BitbucketRequestMockProvider {
-
-    private static final Logger log = LoggerFactory.getLogger(BitbucketRequestMockProvider.class);
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
