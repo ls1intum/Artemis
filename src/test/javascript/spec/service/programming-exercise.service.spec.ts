@@ -19,10 +19,6 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
