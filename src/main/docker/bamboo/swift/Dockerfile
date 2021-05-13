@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     apt-utils \
-    maven=3.6.0*
+    maven=3.6.*
 RUN add-apt-repository -y ppa:linuxuprising/java
 RUN echo debconf shared/accepted-oracle-license-v1-2 select true | debconf-set-selections && echo debconf shared/accepted-oracle-license-v1-2 seen true | debconf-set-selections
 RUN apt-get install -y oracle-java15-installer
