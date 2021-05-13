@@ -252,16 +252,23 @@ public class BambooBuildPlanService {
             planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug));
         }
 
-        return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
-                .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true)).planRepositories(planRepositories.toArray(VcsRepository[]::new))
-                .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(vcsTriggerRepositories.toArray(new VcsRepositoryIdentifier[0])))
-                .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
+        return new Plan(createBuildProject(projectName, projectKey), planKey, planKey)
+            .description(planDescription)
+            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
+            .planRepositories(planRepositories.toArray(VcsRepository[]::new))
+            .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(vcsTriggerRepositories.toArray(new VcsRepositoryIdentifier[0])))
+            .planBranchManagement(createPlanBranchManagement())
+            .notifications(createNotification());
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
         return createCheckoutTask(assignmentPath, testPath, Optional.empty());
     }
 
+
+    ///
+    /// Optional<List<Pair<RepositoryUrl, Checkout Directory>>>
+    ///
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Optional<String> solutionPath) {
         List<CheckoutItem> checkoutItems = new ArrayList<>();
         checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath));

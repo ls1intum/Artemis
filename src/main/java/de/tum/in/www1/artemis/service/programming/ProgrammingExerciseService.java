@@ -318,6 +318,23 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
     }
 
+    public AuxiliaryRepository createAuxiliaryRepositoryForExercise(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository) {
+        final var projectKey = programmingExercise.getProjectKey();
+        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(auxiliaryRepository.getName()), null);
+        continuousIntegrationService.get().addAuxiliaryRepositoryToExerciseBuildPlan(programmingExercise, projectKey, auxiliaryRepository);
+        programmingExercise.addAuxiliaryRepository(auxiliaryRepository);
+        save(programmingExercise);
+        return auxiliaryRepository;
+    }
+
+    public void removeAuxiliaryRepositoryForExercise(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository) {
+        if (!programmingExercise.containsAuxiliaryRepository(auxiliaryRepository)) {
+            throw new EntityNotFoundException("Auxiliary Repository " + auxiliaryRepository.getName() + " not found for programming exercise " + programmingExercise.getId());
+        }
+        programmingExercise.removeAuxiliaryRepository(auxiliaryRepository);
+        save(programmingExercise);
+    }
+
     /**
      * @param programmingExercise the changed programming exercise with its new values
      * @param notificationText    optional text about the changes for a notification

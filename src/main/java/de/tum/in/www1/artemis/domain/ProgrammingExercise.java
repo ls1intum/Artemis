@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,6 +34,10 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
+
+    @Column(name = "auxiliary_repositories")
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    private List<AuxiliaryRepository> auxiliaryRepositories;
 
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
@@ -197,6 +199,22 @@ public class ProgrammingExercise extends Exercise {
         return matcher.group(1);
     }
 
+    public void addAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
+        this.auxiliaryRepositories.add(auxiliaryRepository);
+    }
+
+    public void removeAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
+        this.auxiliaryRepositories.removeIf(aux -> Objects.equals(aux.getId(), auxiliaryRepository.getId()));
+    }
+
+    public boolean containsAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
+        return this.auxiliaryRepositories.stream().anyMatch(aux -> Objects.equals(aux.getId(), auxiliaryRepository.getId()));
+    }
+
+    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
+        return this.auxiliaryRepositories;
+    }
+
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateBuildPlanId() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
@@ -270,14 +288,24 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Generates the repository name for a given repository type.
+     * Generates the full repository name for a given repository type.
      *
      * @param repositoryType The repository type
      * @return The repository name
      */
     public String generateRepositoryName(RepositoryType repositoryType) {
+        return generateRepositoryName(repositoryType.name());
+    }
+
+    /**
+     * Generates the full repository name for a given repository name.
+     *
+     * @param repositoryName The simple name of the repository
+     * @return The full name of the repository
+     */
+    public String generateRepositoryName(String repositoryName) {
         generateAndSetProjectKey();
-        return this.projectKey.toLowerCase() + "-" + repositoryType.getName();
+        return this.projectKey.toLowerCase() + "-" + repositoryName;
     }
 
     /**

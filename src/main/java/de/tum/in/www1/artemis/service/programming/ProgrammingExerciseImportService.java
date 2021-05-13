@@ -277,6 +277,8 @@ public class ProgrammingExerciseImportService {
      * @param newExercise the new exercises that should be created during import
      */
     private void setupExerciseForImport(ProgrammingExercise newExercise) {
+
+        //TODO AUXREPOS
         newExercise.setId(null);
         newExercise.setTemplateParticipation(null);
         newExercise.setSolutionParticipation(null);

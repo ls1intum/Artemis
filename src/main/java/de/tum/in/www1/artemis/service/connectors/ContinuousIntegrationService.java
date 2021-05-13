@@ -42,6 +42,10 @@ public interface ContinuousIntegrationService {
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL);
 
+    void addAuxiliaryRepositoryToExerciseBuildPlan(ProgrammingExercise exercise, String planKey, AuxiliaryRepository repository);
+
+    void removeAuxiliaryRepositoryFromExerciseBuildPlan(ProgrammingExercise exercise, String planKey, AuxiliaryRepository repository);
+
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
      *

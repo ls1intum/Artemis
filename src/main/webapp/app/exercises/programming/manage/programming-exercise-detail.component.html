@@ -289,7 +289,7 @@
                     <span>{{ programmingExercise.packageName }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
-                <dd>
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation">
                     <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingTemplateParticipationResults"
@@ -331,7 +331,7 @@
                     </a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
-                <dd>
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation">
                     <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingSolutionParticipationResults && programmingExercise.solutionParticipation"

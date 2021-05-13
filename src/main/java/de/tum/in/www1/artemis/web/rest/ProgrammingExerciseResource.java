@@ -1115,6 +1115,28 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().build();
     }
 
+
+    @PostMapping(value = Endpoints.AUXILIARY_REPOSITORY)
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<AuxiliaryRepository> createAuxiliaryRepository(@PathVariable Long exerciseId, @RequestBody AuxiliaryRepository repository) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        try {
+            AuxiliaryRepository newAuxiliaryRepository = programmingExerciseService.createAuxiliaryRepositoryForExercise(exercise, repository);
+
+            return ResponseEntity.created(new URI("/api/programming-exercises" + newAuxiliaryRepository.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, "auxiliaryRepository", newAuxiliaryRepository.getName())).body(newAuxiliaryRepository);
+        } catch (Exception e) {
+            log.error("Error while setting up programming exercise", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
+        }
+    }
+
+    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
+
+    }
+
+
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
@@ -1158,6 +1180,8 @@ public class ProgrammingExerciseResource {
         public static final String UNLOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/unlock-all-repositories";
 
         public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
+
+        public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
 
         private Endpoints() {
         }
