@@ -3,7 +3,6 @@ import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { JhiConfigurationService } from 'app/admin/configuration/configuration.service';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
 
 describe('Logs Service', () => {
     let service: JhiConfigurationService;
@@ -39,8 +38,11 @@ describe('Logs Service', () => {
                     },
                 },
             };
+
+            const expected = angularConfig['contexts']['angular']['beans'];
+
             service.get().subscribe((received) => {
-                expect(received).toEqual(angularConfig['contexts']['angular']['beans']);
+                expect(received).toEqual(expected);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
@@ -49,14 +51,28 @@ describe('Logs Service', () => {
         }));
 
         it('should get the env', fakeAsync(() => {
-            const propertySources = new HttpResponse({
+            /*   const propertySources = new HttpResponse({
                 body: [
                     { name: 'test1', properties: 'test1' },
                     { name: 'test2', properties: 'test2' },
                 ],
             });
-            service.get().subscribe((received) => {
-                expect(received.body[0]).toEqual(propertySources);
+*/
+            const propertySources = {
+                propertySources: [
+                    { name: 'test1', properties: { testA: { value: 'AAA' } } },
+                    { name: 'test2', properties: { testB: { value: 'BBB' } } },
+                ],
+            };
+
+            const myResult = {
+                test1: [{ key: 'testA', val: 'AAA' }],
+                test2: [{ key: 'testB', val: 'BBB' }],
+            };
+
+            service.getEnv().subscribe((received) => {
+                //expect(received).toEqual(propertySources);
+                expect(received).toEqual(myResult);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
