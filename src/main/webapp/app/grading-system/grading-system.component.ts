@@ -72,7 +72,7 @@ export class GradingSystemComponent implements OnInit {
      */
     handleFindResponse(gradingScale?: GradingScale): void {
         if (gradingScale) {
-            gradingScale.gradeSteps = this.sortGradeSteps(gradingScale.gradeSteps);
+            gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(gradingScale.gradeSteps);
             this.gradingScale = gradingScale;
             this.existingGradingScale = true;
             this.setBoundInclusivity();
@@ -86,7 +86,7 @@ export class GradingSystemComponent implements OnInit {
      */
     save(): void {
         this.notFound = false;
-        this.gradingScale.gradeSteps = this.sortGradeSteps(this.gradingScale.gradeSteps);
+        this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setInclusivity(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
         // new grade steps shouldn't have ids set
@@ -125,7 +125,7 @@ export class GradingSystemComponent implements OnInit {
      */
     private handleSaveResponse(newGradingScale?: GradingScale): void {
         if (newGradingScale) {
-            newGradingScale.gradeSteps = this.sortGradeSteps(newGradingScale.gradeSteps);
+            newGradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(newGradingScale.gradeSteps);
             this.gradingScale = newGradingScale;
             this.existingGradingScale = true;
         }
@@ -150,21 +150,6 @@ export class GradingSystemComponent implements OnInit {
             });
         }
         this.gradingScale = new GradingScale();
-    }
-
-    /**
-     * Sorts grade steps by lower bound percentage
-     *
-     * @param gradeSteps the grade steps to be sorted
-     */
-    sortGradeSteps(gradeSteps: GradeStep[]): GradeStep[] {
-        if (gradeSteps) {
-            return gradeSteps.sort((gradeStep1, gradeStep2) => {
-                return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
-            });
-        } else {
-            return [];
-        }
     }
 
     /**

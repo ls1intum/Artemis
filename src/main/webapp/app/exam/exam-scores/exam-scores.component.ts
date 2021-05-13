@@ -26,6 +26,8 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import * as Sentry from '@sentry/browser';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -62,6 +64,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public barChartLegend = true;
     public barChartData: ChartDataSets[] = [];
 
+    gradingScaleExists = false;
+    gradingScale?: GradingScale;
+    isBonus?: boolean;
+    maxGrade?: string;
+    averageGrade?: string;
+
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     private languageChangeSubscription?: Subscription;
@@ -75,6 +83,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private localeConversionService: LocaleConversionService,
         private translateService: TranslateService,
         private participantScoresService: ParticipantScoresService,
+        private gradingSystemService: GradingSystemService,
     ) {}
 
     ngOnInit() {
@@ -114,6 +123,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         // Exam statistics must only be calculated once as they are not filter dependent
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
+                        this.calculateGradingScaleInformation(params['courseId'], params['examId']);
                     }
                     this.isLoading = false;
                     this.createChart();
@@ -228,6 +238,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 backgroundColor: 'rgba(0,0,0,0.5)',
             },
         ];
+    }
+
+    calculateGradingScaleInformation(courseId: number, examId: number) {
+        this.gradingSystemService.findGradingScaleForExam(courseId, examId).subscribe((gradingSystemResponse) => {
+            if (gradingSystemResponse.body) {
+                this.gradingScaleExists = true;
+                this.gradingScale = gradingSystemResponse.body!;
+                this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
+                this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+            }
+        });
     }
 
     /**

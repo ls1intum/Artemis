@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
@@ -13,9 +13,11 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { forkJoin } from 'rxjs';
 import { round } from 'app/shared/util/utils';
 import * as Sentry from '@sentry/browser';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStep } from 'app/entities/grade-step.model';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -26,6 +28,8 @@ export const OVERALL_COURSE_POINTS_KEY = 'Overall Course Points';
 export const OVERALL_COURSE_SCORE_KEY = 'Overall Course Score';
 export const POINTS_KEY = 'Points';
 export const SCORE_KEY = 'Score';
+export const GRADE_KEY = 'Grades';
+export const BONUS_KEY = 'Bonus Points';
 
 @Component({
     selector: 'jhi-course-scores',
@@ -71,6 +75,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     // calculation method completely if it is confirmed that it produces correct results
     studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
 
+    gradingScaleExists = false;
+    gradingScale?: GradingScale;
+    isBonus?: boolean;
+    maxGrade?: string;
+    averageGrade?: string;
+
     private languageChangeSubscription?: Subscription;
 
     constructor(
@@ -81,6 +91,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private languageHelper: JhiLanguageHelper,
         private localeConversionService: LocaleConversionService,
         private participantScoresService: ParticipantScoresService,
+        private gradingSystemService: GradingSystemService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -157,6 +168,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.allParticipationsOfCourse = participationsOfCourse;
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
+            this.calculateGradingScaleInformation(courseId);
 
             // comparing with calculation from course scores (using new participation score table)
             const courseScoreDTOs = courseScoresResult.body!;
@@ -366,6 +378,37 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.exportReady = true;
     }
 
+    calculateGradingScaleInformation(courseId: number) {
+        this.gradingSystemService.findGradingScaleForCourse(courseId).subscribe((gradingSystemResponse) => {
+            if (gradingSystemResponse.body) {
+                this.gradingScaleExists = true;
+                this.gradingScale = gradingSystemResponse.body!;
+                this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+                this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
+                this.maxGrade = this.gradingSystemService.maxGrade(this.gradingScale!.gradeSteps);
+                if (this.maxNumberOfOverallPoints >= 0) {
+                    const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+                    this.gradingSystemService.getGradeStepMappingForCourse(courseId, overallPercentage).subscribe((gradeStep) => {
+                        if (gradeStep.body) {
+                            this.averageGrade = gradeStep.body.gradeName;
+                            this.changeDetector.detectChanges();
+                        }
+                    });
+                    for (const student of this.students) {
+                        const overallPercentageForStudent =
+                            student.overallPoints > 0 && this.maxNumberOfOverallPoints > 0 ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+                        this.gradingSystemService.getGradeStepMappingForCourse(courseId, overallPercentageForStudent).subscribe((gradeStep) => {
+                            if (gradeStep.body) {
+                                student.gradeStep = gradeStep.body;
+                                this.changeDetector.detectChanges();
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    }
+
     /**
      * Method for exporting the csv with the needed data
      */
@@ -386,6 +429,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             keys.push(OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY);
             if (this.course.presentationScore) {
                 keys.push(PRESENTATION_SCORE_KEY);
+            }
+            if (this.gradingScaleExists) {
+                if (this.isBonus) {
+                    keys.push(BONUS_KEY);
+                } else {
+                    keys.push(GRADE_KEY);
+                }
             }
 
             for (const student of this.students.values()) {
@@ -420,6 +470,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 if (this.course.presentationScore) {
                     rowData[PRESENTATION_SCORE_KEY] = this.localeConversionService.toLocaleString(student.presentationScore);
                 }
+                if (this.gradingScaleExists) {
+                    if (this.isBonus) {
+                        rowData[BONUS_KEY] = student.gradeStep?.gradeName || '';
+                    } else {
+                        rowData[GRADE_KEY] = student.gradeStep?.gradeName || '';
+                    }
+                }
                 rows.push(rowData);
             }
 
@@ -444,6 +501,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rowDataMax[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(100);
             if (this.course.presentationScore) {
                 rowDataMax[PRESENTATION_SCORE_KEY] = '';
+            }
+            if (this.gradingScaleExists) {
+                if (this.isBonus) {
+                    rowDataMax[BONUS_KEY] = this.maxGrade || '';
+                } else {
+                    rowDataMax[GRADE_KEY] = this.maxGrade || '';
+                }
             }
             rows.push(rowDataMax);
 
@@ -471,6 +535,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const averageOverallScore = round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100, 1);
             rowDataAverage[OVERALL_COURSE_POINTS_KEY] = this.localeConversionService.toLocaleString(this.averageNumberOfOverallPoints);
             rowDataAverage[OVERALL_COURSE_SCORE_KEY] = this.localeConversionService.toLocalePercentageString(averageOverallScore);
+            if (this.gradingScaleExists) {
+                if (this.isBonus) {
+                    rowDataAverage[BONUS_KEY] = this.averageGrade || '';
+                } else {
+                    rowDataAverage[GRADE_KEY] = this.averageGrade || '';
+                }
+            }
             if (this.course.presentationScore) {
                 rowDataAverage[PRESENTATION_SCORE_KEY] = '';
             }
@@ -491,6 +562,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     rowDataParticipation[exerciseTypeName + ' ' + SCORE_KEY] = '';
                 }
             }
+            this.emptyLineForGrades(rowDataParticipation);
             rows.push(rowDataParticipation);
 
             // successful
@@ -508,6 +580,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     rowDataParticipationSuccuessful[exerciseTypeName + ' ' + SCORE_KEY] = '';
                 }
             }
+            this.emptyLineForGrades(rowDataParticipationSuccuessful);
             rows.push(rowDataParticipationSuccuessful);
             this.exportAsCsv(rows, keys);
         }
@@ -559,8 +632,19 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         if (this.course.presentationScore) {
             emptyLine[PRESENTATION_SCORE_KEY] = '';
         }
+        this.emptyLineForGrades(emptyLine);
 
         return emptyLine;
+    }
+
+    private emptyLineForGrades(emptyLine: Object) {
+        if (this.gradingScaleExists) {
+            if (this.isBonus) {
+                emptyLine[BONUS_KEY] = '';
+            } else {
+                emptyLine[GRADE_KEY] = '';
+            }
+        }
     }
 
     sortRows() {
@@ -593,6 +677,7 @@ class Student {
     sumPointsPerExerciseType = new Map<ExerciseType, number>(); // the absolute number (sum) of points the students received per exercise type
     scorePerExerciseType = new Map<ExerciseType, number>(); // the relative number of points the students received per exercise type (divided by the max points per exercise type)
     pointsPerExerciseType = new Map<ExerciseType, number[]>(); // a string containing the points for all exercises of a specific type
+    gradeStep?: GradeStep;
 
     constructor(user: User) {
         this.user = user;
