@@ -87,6 +87,16 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
+    public void addAuxiliaryRepositoryToExerciseBuildPlan(ProgrammingExercise exercise, String planKey, AuxiliaryRepository repository) {
+
+    }
+
+    @Override
+    public void removeAuxiliaryRepositoryFromExerciseBuildPlan(ProgrammingExercise exercise, String planKey, AuxiliaryRepository repository) {
+
+    }
+
+    @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         final var buildPlanId = participation.getBuildPlanId();
         final var repositoryUrl = participation.getVcsRepositoryUrl();
