@@ -60,7 +60,6 @@ export class BuildPlanLinkDirective implements OnInit {
      * Opens build plan link window.
      */
     @HostListener('click', ['$event'])
-    @HostListener('auxclick', ['$event'])
     openBuildPlanLink($event: any) {
         $event.preventDefault();
         if (this.linkToBuildPlan) {
