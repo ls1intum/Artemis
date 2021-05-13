@@ -30,9 +30,7 @@ describe('Logs Service', () => {
             const resourceUrl = SERVER_API_URL + 'management/configprops';
             expect(req.request.url).toEqual(resourceUrl);
         });
-        //TODO!!! try to understand .get() method of services (YT-> or google)
-        //TODO cont. -> try to maybe replace get with the other get... method but only if nothing works
-        //TODO cont. -> better ask someone with more experience! (e.g. Nicolas Ruscher)
+
         it('should get the config', fakeAsync(() => {
             const angularConfig = {
                 contexts: {
@@ -42,7 +40,7 @@ describe('Logs Service', () => {
                 },
             };
             service.get().subscribe((received) => {
-                expect(received).toEqual(angularConfig);
+                expect(received).toEqual(angularConfig['contexts']['angular']['beans']);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
