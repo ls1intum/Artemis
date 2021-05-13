@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
+import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
@@ -157,10 +158,10 @@ public class StatisticsService {
         var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         var numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
         var exerciseManagementStatisticsDTO = new ExerciseManagementStatisticsDTO();
-        var averageScoreForExercise = participantScoreRepository.findAvgScore(Set.of(exercise));
-        averageScoreForExercise = averageScoreForExercise != null ? round(averageScoreForExercise) : 0.0;
+        Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
+        double averageScoreForExercise = averageScore != null ? round(averageScore) : 0.0;
         exerciseManagementStatisticsDTO.setAverageScoreOfExercise(averageScoreForExercise);
-        var scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
+        List<ScoreDistribution> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];
         Arrays.fill(scoreDistribution, 0);
 
@@ -173,14 +174,9 @@ public class StatisticsService {
                 scoreDistribution[index] += 1;
             }
         });
-        for (int i = 0; i < scoreDistribution.length; i++) {
-            var amount = scoreDistribution[i];
-            if (amount > 0) {
-                scoreDistribution[i] = (amount * 100 / Math.toIntExact(numberOfStudents));
-            }
-        }
 
         exerciseManagementStatisticsDTO.setScoreDistribution(scoreDistribution);
+        exerciseManagementStatisticsDTO.setNumberOfExerciseScores(scores.size());
 
         return exerciseManagementStatisticsDTO;
     }

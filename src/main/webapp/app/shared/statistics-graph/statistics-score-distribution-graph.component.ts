@@ -4,8 +4,8 @@ import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
-import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
-import * as Chart from 'chart.js';
+import { GraphColors, SpanType } from 'app/entities/statistics.model';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
@@ -16,17 +16,17 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     averageScoreOfExercise: number;
     @Input()
     scoreDistribution: number[];
+    @Input()
+    numberOfExerciseScores: number;
 
     // Html properties
     LEFT = false;
     RIGHT = true;
     SpanType = SpanType;
-    Graphs = Graphs;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'bar';
-    lineChartType: ChartType = 'line';
     exerciseAverageLegend: string;
     distributionLegend: string;
     chartLegend = true;
@@ -34,10 +34,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     // Data
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
-    dataForSpanType: number[];
-
-    // Left arrow -> decrease, right arrow -> increase
-    currentPeriod = 0;
+    relativeChartData: number[] = [];
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -52,22 +49,30 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
 
     private initializeChart(): void {
         this.barChartLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
+        if (this.numberOfExerciseScores > 0) {
+            this.relativeChartData = [];
+            for (const value of this.scoreDistribution) {
+                this.relativeChartData.push(round((value * 100) / this.numberOfExerciseScores));
+            }
+        } else {
+            this.relativeChartData = new Array(4).fill(0);
+        }
         this.chartData = [
             {
                 // Average exercise score bars
                 label: this.distributionLegend,
-                data: this.scoreDistribution,
-                fill: false,
+                data: this.relativeChartData,
                 backgroundColor: GraphColors.DARK_BLUE,
                 borderColor: GraphColors.DARK_BLUE,
                 hoverBackgroundColor: GraphColors.DARK_BLUE,
-                barPercentage: 0.99,
+                barPercentage: 1.0,
                 categoryPercentage: 1.0,
             },
         ];
     }
 
     private createCharts() {
+        const self = this;
         this.barChartOptions = {
             layout: {
                 padding: {
@@ -106,18 +111,18 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                         },
                     },
                 ],
-                xAxes: [
-                    {
-                        gridLines: {
-                            offsetGridLines: false,
-                        },
-                        ticks: {
-                            autoSkip: false,
-                        },
-                        // barPercentage: 1.0,
-                        // categoryPercentage: 1.0,
+            },
+            tooltips: {
+                enabled: true,
+                callbacks: {
+                    label(tooltipItem: any) {
+                        if (!self.scoreDistribution) {
+                            return ' 0';
+                        }
+
+                        return ' ' + self.scoreDistribution[tooltipItem.index];
                     },
-                ],
+                },
             },
         };
     }

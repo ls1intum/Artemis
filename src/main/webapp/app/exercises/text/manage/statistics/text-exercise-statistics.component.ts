@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ExerciseStatisticsDTO } from 'app/exercises/text/manage/statistics/exercise-statistics-dto';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/text/manage/statistics/exercise-management-statistics-dto';
 
 @Component({
     selector: 'jhi-text-exercise-management-statistics',
@@ -27,7 +27,7 @@ export class TextExerciseStatisticsComponent implements OnInit {
     paramSub: Subscription;
     exerciseId: number;
 
-    exerciseStatistics: ExerciseStatisticsDTO;
+    exerciseStatistics: ExerciseManagementStatisticsDto;
 
     constructor(private service: StatisticsService, private route: ActivatedRoute) {}
 
@@ -35,7 +35,7 @@ export class TextExerciseStatisticsComponent implements OnInit {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = params['exerciseId'];
         });
-        this.service.getExerciseStatistics(this.exerciseId).subscribe((res: ExerciseStatisticsDTO) => {
+        this.service.getExerciseStatistics(this.exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
             this.exerciseStatistics = res;
         });
     }
