@@ -13,6 +13,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -69,9 +71,21 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
     }
 
-    @Test
-    public void getOriginHead() throws IOException, GitAPIException {
-        var defaultBranch = "test";
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "master", "main", "someOtherName" })
+    public void resetToOriginHead(String defaultBranch) throws GitAPIException {
+        gitUtilService.initRepo(defaultBranch);
+        gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1, "Some Change");
+        assertThat(gitUtilService.isLocalEqualToRemote()).isFalse();
+
+        gitService.resetToOriginHead(gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL));
+
+        assertThat(gitUtilService.isLocalEqualToRemote()).isTrue();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "master", "main", "someOtherName" })
+    public void getOriginHead(String defaultBranch) throws GitAPIException {
         gitUtilService.initRepo(defaultBranch);
         // Checkout a different branch in local repo
         gitUtilService.checkoutBranch(GitUtilService.REPOS.LOCAL, "other-branch");

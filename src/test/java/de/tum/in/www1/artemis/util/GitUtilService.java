@@ -15,12 +15,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
 public class GitUtilService {
@@ -40,9 +38,6 @@ public class GitUtilService {
     public enum REPOS {
         LOCAL, REMOTE
     }
-
-    @Autowired
-    GitService gitService;
 
     private Repository remoteRepo;
 
@@ -190,10 +185,20 @@ public class GitUtilService {
         }
     }
 
+    /**
+     * Checks out a branch of the repository. If the branch doesn't exist yet, it gets created
+     * @param repo The repository on which the action should be operated
+     * @param branch The branch that should be checked out
+     */
     public void checkoutBranch(REPOS repo, String branch) {
         checkoutBranch(repo, branch, true);
     }
 
+    /**
+     * @param repo The repository on which the action should be operated
+     * @param branch The branch that should be checked out
+     * @param createBranch indicator if a non existing branch should get created
+     */
     public void checkoutBranch(REPOS repo, String branch, boolean createBranch) {
         try {
             Git git = new Git(getRepoByType(repo));

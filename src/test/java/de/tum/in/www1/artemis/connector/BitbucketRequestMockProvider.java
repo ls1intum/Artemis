@@ -20,8 +20,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.*;
 import org.springframework.web.client.RestTemplate;
@@ -88,27 +86,11 @@ public class BitbucketRequestMockProvider {
     public void enableMockingOfRequests(boolean ignoreExpectOrder) {
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
         builder.ignoreExpectOrder(ignoreExpectOrder);
-        // Can be replaced with getDebugMockServer() for debugging
         mockServer = builder.build();
 
         MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestTemplate);
         builderShortTimeout.ignoreExpectOrder(ignoreExpectOrder);
         mockServerShortTimeout = builderShortTimeout.build();
-    }
-
-    /**
-     * Get mockServer that also prints all incoming requests and their HTTP-methods.
-     * This builder always ignores the order of requests!
-     */
-    private static MockRestServiceServer getDebugMockServer(MockRestServiceServer.MockRestServiceServerBuilder builder) {
-        return builder.build(new UnorderedRequestExpectationManager() {
-
-            @Override
-            public ClientHttpResponse validateRequest(ClientHttpRequest request) throws IOException {
-                log.debug("{}: {}", request.getMethod(), request.getURI());
-                return super.validateRequest(request);
-            }
-        });
     }
 
     public void reset() {

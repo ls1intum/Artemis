@@ -17,6 +17,7 @@ public class BitbucketDefaultBranchDTO {
      * needed for Jackson
      */
     public BitbucketDefaultBranchDTO() {
+        // intentionally left empty
     }
 
     public BitbucketDefaultBranchDTO(String id) {
