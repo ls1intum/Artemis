@@ -471,9 +471,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                     case COURSE -> {
                         return getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
                     }
-                    case EXERCISE -> {
-                        return null;
-                    }
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
             }
@@ -484,9 +481,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                     }
                     case COURSE -> {
                         return getExercisesDueForCourse(startDate, endDate, exerciseIds);
-                    }
-                    case EXERCISE -> {
-                        return null;
                     }
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
@@ -499,9 +493,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                     case COURSE -> {
                         return getConductedExamsForCourse(startDate, endDate, entityId);
                     }
-                    case EXERCISE -> {
-                        return null;
-                    }
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
             }
@@ -513,9 +504,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                     case COURSE -> {
                         return getExamParticipationsForCourse(startDate, endDate, entityId);
                     }
-                    case EXERCISE -> {
-                        return null;
-                    }
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
             }
@@ -526,9 +514,6 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                     }
                     case COURSE -> {
                         return getExamRegistrationsForCourse(startDate, endDate, entityId);
-                    }
-                    case EXERCISE -> {
-                        return null;
                     }
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
