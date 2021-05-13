@@ -1,5 +1,7 @@
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import * as chai from 'chai';
+import * as sinonChai from 'sinon-chai';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -18,6 +20,9 @@ import * as moment from 'moment';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
@@ -50,12 +55,21 @@ describe('ProgrammingExercise Service', () => {
 
     describe('Service methods', () => {
         it('should find an exercise', fakeAsync(() => {
-            const returnedFromService = Object.assign({}, defaultProgrammingExercise);
+            const returnedFromService = Object.assign(
+                {
+                    releaseDate: undefined,
+                    dueDate: undefined,
+                    assessmentDueDate: undefined,
+                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                    studentParticipations: [],
+                },
+                defaultProgrammingExercise,
+            );
             const expected = { ...returnedFromService };
             service
                 .find(123)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
             tick();
@@ -65,6 +79,11 @@ describe('ProgrammingExercise Service', () => {
             const returnedFromService = Object.assign(
                 {
                     id: 0,
+                    releaseDate: undefined,
+                    dueDate: undefined,
+                    assessmentDueDate: undefined,
+                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                    studentParticipations: [],
                 },
                 defaultProgrammingExercise,
             );
@@ -72,7 +91,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .automaticSetup(new ProgrammingExercise(undefined, undefined))
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
             tick();
@@ -85,12 +104,22 @@ describe('ProgrammingExercise Service', () => {
             tempResult.id = 2;
             tempSubmission.results = [tempResult];
             templateParticipation.submissions = [tempSubmission];
-            const returnedFromService = Object.assign({ id: 0 }, { ...defaultProgrammingExercise, templateParticipation });
+            const returnedFromService = Object.assign(
+                {
+                    id: 0,
+                    releaseDate: undefined,
+                    dueDate: undefined,
+                    assessmentDueDate: undefined,
+                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                    studentParticipations: [],
+                },
+                { ...defaultProgrammingExercise, templateParticipation },
+            );
             const expected = Object.assign({}, returnedFromService);
             service
                 .findWithTemplateAndSolutionParticipation(expected.id, true)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
             tick();
@@ -104,6 +133,11 @@ describe('ProgrammingExercise Service', () => {
                     templateBuildPlanId: 'BBBBBB',
                     publishBuildPlanUrl: true,
                     allowOnlineEditor: true,
+                    releaseDate: undefined,
+                    dueDate: undefined,
+                    assessmentDueDate: undefined,
+                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                    studentParticipations: [],
                 },
                 defaultProgrammingExercise,
             );
@@ -112,7 +146,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .update(expected)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
             tick();
@@ -124,6 +158,8 @@ describe('ProgrammingExercise Service', () => {
                     releaseDate: moment('2020-12-10 10:00:00'),
                     dueDate: moment('2021-01-01 10:00:00'),
                     assessmentDueDate: moment('2021-01-02 10:00:00'),
+                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                    studentParticipations: [],
                 },
                 defaultProgrammingExercise,
             );
@@ -131,7 +167,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .updateTimeline(expected)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
             tick();
@@ -156,7 +192,9 @@ describe('ProgrammingExercise Service', () => {
             service
                 .query(expected)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).toContainEqual(expected));
+                .subscribe((resp) => {
+                    expect(resp.body).to.include.deep.members([expected]);
+                });
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush([returnedFromService]);
             tick();
