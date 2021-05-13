@@ -60,6 +60,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService;
 
+    private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
+
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final FeedbackRepository feedbackRepository;
@@ -70,8 +72,9 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
-            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository) {
+            Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
+            FeedbackConflictRepository feedbackConflictRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            FeedbackRepository feedbackRepository) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository);
 
@@ -83,6 +86,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.atheneTrackingTokenProvider = atheneTrackingTokenProvider;
         this.automaticTextAssessmentConflictService = automaticTextAssessmentConflictService;
+        this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;
         this.feedbackRepository = feedbackRepository;
     }
@@ -204,6 +208,35 @@ public class TextAssessmentResource extends AssessmentResource {
 
         return response;
     }
+
+    // /**
+    // * Submits manual textAssessments for a given result and notify the user if it's before the Assessment Due Date
+    // *
+    // * @param exerciseId the exerciseId of the exercise which will be saved
+    // * @param resultId the resultId the assessment belongs to
+    // * @param textAssessment the assessments which should be submitted
+    // * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
+    // */
+    // @PutMapping("/exercise/{exerciseId}/result/{resultId}/getFeedbackImpact")
+    // @PreAuthorize("hasRole('TA')")
+    // public ResponseEntity<Result> getNumberOfSubmissionsAffectedByFeedback(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO
+    // textAssessment) {
+    // final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
+    // .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
+    // if (hasAssessmentWithTooLongReference) {
+    // throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
+    // "feedbackReferenceTooLong");
+    // }
+    // final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+    // final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(resultId);
+    // int counter = 0;
+    // // retrieve the number of affected feedbacks
+    // if (automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled() && exercise.isFeedbackImpactWarningEnabledEnabled()) {
+    //// counter = this.automaticTextFeedbackService.get().getNumberOfPotentialFeedbacks(resultRepository.findOne(resultId));
+    // }
+    //
+    // return ResponseEntity.ok(result);;
+    // }
 
     /**
      * Update an assessment after a complaint was accepted.

@@ -4,6 +4,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -30,6 +31,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
+    private static creditChanged = false;
+    protected assessmentsService: TextAssessmentService;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
@@ -132,8 +135,13 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
-        if (this.feedback.credits !== 0) {
-            console.warn('didChangeFired-->', this.feedback, this.feedback.credits);
+        if (this.feedback.credits !== 0 && !TextblockFeedbackEditorComponent.creditChanged) {
+            console.warn('Call backend and receive number affected', this.feedback, this.feedback.credits);
+            TextblockFeedbackEditorComponent.creditChanged = true;
+            // this.assessmentsService
+        } else if (this.feedback.credits === 0) {
+            console.warn('Reset value');
+            TextblockFeedbackEditorComponent.creditChanged = false;
         }
     }
 

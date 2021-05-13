@@ -8,6 +8,8 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -22,6 +24,8 @@ public class TextAssessmentService extends AssessmentService {
     private final TextBlockService textBlockService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
+
+    private final Logger log = LoggerFactory.getLogger(TextAssessmentService.class);
 
     private final FeedbackConflictRepository feedbackConflictRepository;
 
@@ -53,6 +57,11 @@ public class TextAssessmentService extends AssessmentService {
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
+        if (automaticTextFeedbackService.isPresent() && result != null) {
+            automaticTextFeedbackService.get().setNumberOfPotentialFeedbacks(result);
+            result.setSubmission(textSubmission);
+        }
+
         if (result != null) {
             // Load Feedback already created for this assessment
             final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : feedbackRepository.findByResult(result);
@@ -76,6 +85,10 @@ public class TextAssessmentService extends AssessmentService {
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {
+                // isWarningEnabled = true
+                // if (exercise.isFeedbackImpactWarningEnabledEnabled()){
+                // //
+                // }
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
         }
@@ -90,7 +103,7 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
-
+        log.debug("textassesmentservice-prepare", result);
         // Remove participation after storing in database because submission already has the participation set
         result.setParticipation(null);
     }

@@ -21,6 +21,10 @@ public class TextExercise extends Exercise {
     @Lob
     private String sampleSolution;
 
+    // @Nullable
+    // @Column(name = "feedback_impact_warning_enabled")
+    // private Boolean feedbackImpactWarningEnabled = false;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<TextCluster> clusters;
@@ -36,6 +40,10 @@ public class TextExercise extends Exercise {
     public boolean isAutomaticAssessmentEnabled() {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
     }
+
+    // public boolean isFeedbackImpactWarningEnabledEnabled() {
+    // return this.feedbackImpactWarningEnabled;
+    // }
 
     /**
      * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json

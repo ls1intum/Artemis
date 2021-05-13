@@ -55,6 +55,13 @@ export class TextAssessmentService {
             .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
     }
 
+    public getNumberOfSubmissionsAffectedByFeedback(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+        const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
+        return this.http
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/getFeedbackImpact`, body, { observe: 'response' })
+            .map((res: EntityResponseType) => TextAssessmentService.convertResponse(res));
+    }
+
     /**
      * Updates an assessment after a complaint.
      * @param feedbacks list of feedback made during assessment of type {Feedback[]}
@@ -116,6 +123,7 @@ export class TextAssessmentService {
                 // Wire up Result and Submission
                 tap((response) => {
                     const participation = response.body!;
+                    console.warn('participation', participation);
                     const submission = participation.submissions![0];
                     let result;
                     if (resultId) {
@@ -289,6 +297,7 @@ export class TextAssessmentService {
         result.participation = participation;
         // Make sure Feedbacks Array is initialized
         result.feedbacks = result.feedbacks || [];
+        console.warn('++++', result, submission);
         TextAssessmentService.convertFeedbackConflictsFromServer(result.feedbacks);
     }
 }

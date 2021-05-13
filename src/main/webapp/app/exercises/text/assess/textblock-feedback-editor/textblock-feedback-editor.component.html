@@ -42,9 +42,9 @@
                 [readOnly]="readOnly && !isConflictingFeedbackEditable"
                 (ngModelChange)="didChange()"
             ></textarea>
-            <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0">
+            <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock.numberOfAffectedSubmissions > 0 && feedback.type === FeedbackType.MANUAL">
                 <fa-icon [icon]="'exclamation-triangle'" size="2x" class="text-warning" placement="bottom"></fa-icon>
-                <div jhiTranslate="artemisApp.textAssessment.feedbackImpactWarning" [translateValues]="{ affectedSubmissionsCount: 20 }"></div>
+                <div jhiTranslate="artemisApp.textAssessment.feedbackImpactWarning" [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"></div>
             </div>
         </div>
         <div class="form-group col-2 text-right">
