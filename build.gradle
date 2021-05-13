@@ -75,6 +75,10 @@ springBoot {
     mainClass = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
+bootRun {
+    jvmArgs = ["--illegal-access=warn"]
+}
+
 // Execute the test cases: ./gradlew executeTests
 
 test {
