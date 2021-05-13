@@ -287,6 +287,24 @@ public class JenkinsRequestMockProvider {
 
     }
 
+    public void mockGetLegacyBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
+        String projectKey = participation.getProgrammingExercise().getProjectKey();
+        String buildPlanId = participation.getBuildPlanId();
+
+        final var job = mock(JobWithDetails.class);
+        mockGetJob(projectKey, buildPlanId, job, false);
+
+        final var build = mock(Build.class);
+        doReturn(build).when(job).getLastBuild();
+
+        final var buildWithDetails = mock(BuildWithDetails.class);
+        doReturn(buildWithDetails).when(build).details();
+
+        String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
+        doReturn(htmlString).when(buildWithDetails).getConsoleOutputText();
+        doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
+    }
+
     public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins)
             throws IOException, URISyntaxException {
         if (!oldLogin.equals(user.getLogin())) {

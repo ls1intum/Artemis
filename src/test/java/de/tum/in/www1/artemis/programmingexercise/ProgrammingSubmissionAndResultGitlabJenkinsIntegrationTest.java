@@ -76,11 +76,6 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         gitlabRequestMockProvider.reset();
     }
 
-    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
-        return Arrays.stream(ProgrammingLanguage.values())
-                .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
-    }
-
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldReceiveBuildLogsOnNewStudentParticipationResult() throws Exception {
@@ -108,6 +103,27 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(buildLogEntries).hasSize(2);
         assertThat(buildLogEntries.get(0).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
         assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, true);
+
+        jenkinsRequestMockProvider.mockGetLegacyBuildLogs(participation);
+        database.changeUser(userLogin);
+        var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs.size()).isGreaterThan(0);
+    }
+
+    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
+        return Arrays.stream(ProgrammingLanguage.values())
+                .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

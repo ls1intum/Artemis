@@ -415,7 +415,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
             // Attempt to parse pipeline logs
             final String pipelineLogs = build.details().getConsoleOutputText();
-            if (pipelineLogs != null && pipelineLogs.contains("pipeline")) {
+            if (pipelineLogs != null && pipelineLogs.contains("[Pipeline] Start of Pipeline")) {
                 buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(List.of(pipelineLogs.split("\n")));
             }
             else {
