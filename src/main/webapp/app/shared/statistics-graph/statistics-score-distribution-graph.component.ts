@@ -55,7 +55,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                 this.relativeChartData.push(round((value * 100) / this.numberOfExerciseScores));
             }
         } else {
-            this.relativeChartData = new Array(4).fill(0);
+            this.relativeChartData = new Array(10).fill(0);
         }
         this.chartData = [
             {
@@ -108,6 +108,9 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                             min: 0,
                             max: 100,
                             stepSize: 20,
+                            callback(value: number) {
+                                return value + '%';
+                            },
                         },
                     },
                 ],

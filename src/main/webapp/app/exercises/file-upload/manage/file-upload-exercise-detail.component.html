@@ -12,6 +12,13 @@
                     [courseId]="fileUploadExercise.course.id!"
                     [exercise]="fileUploadExercise"
                 ></jhi-non-programming-exercise-detail-common-actions>
+                <a
+                    *ngIf="fileUploadExercise.isAtLeastTutor && fileUploadExercise.course"
+                    [routerLink]="['/course-management', fileUploadExercise.course!.id!, 'file-upload-exercises', fileUploadExercise.id!, 'exercise-statistics']"
+                    class="btn btn-info btn-sm mr-1"
+                >
+                    <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+                </a>
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="fileUploadExercise"></jhi-exercise-details>

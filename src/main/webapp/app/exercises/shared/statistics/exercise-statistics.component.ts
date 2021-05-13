@@ -3,13 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/text/manage/statistics/exercise-management-statistics-dto';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 
 @Component({
-    selector: 'jhi-text-exercise-management-statistics',
-    templateUrl: './text-exercise-statistics.component.html',
+    selector: 'jhi-exercise-statistics',
+    templateUrl: './exercise-statistics.component.html',
 })
-export class TextExerciseStatisticsComponent implements OnInit {
+export class ExerciseStatisticsComponent implements OnInit {
     // html properties
     SpanType = SpanType;
     graph = Graphs;

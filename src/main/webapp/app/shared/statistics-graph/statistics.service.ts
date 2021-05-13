@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/text/manage/statistics/exercise-management-statistics-dto';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {

@@ -14,7 +14,7 @@
                 ></jhi-non-programming-exercise-detail-common-actions>
                 <!-- Statistics -->
                 <a
-                    *ngIf="textExercise.isAtLeastTutor"
+                    *ngIf="textExercise.isAtLeastTutor && textExercise.course"
                     [routerLink]="['/course-management', textExercise.course!.id!, 'text-exercises', textExercise.id!, 'exercise-statistics']"
                     class="btn btn-info btn-sm mr-1"
                 >
