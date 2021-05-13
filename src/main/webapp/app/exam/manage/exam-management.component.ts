@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { JhiEventManager } from 'ng-jhipster';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { Subject } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';

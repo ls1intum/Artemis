@@ -27,7 +27,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.11.8"
+version = "4.12.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -73,6 +73,10 @@ defaultTasks "bootRun"
 
 springBoot {
     mainClass = "de.tum.in.www1.artemis.ArtemisApp"
+}
+
+bootRun {
+    jvmArgs = ["--illegal-access=warn"]
 }
 
 // Execute the test cases: ./gradlew executeTests
@@ -124,7 +128,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.883
+                minimum = 0.86
             }
             limit {
                 counter = "CLASS"

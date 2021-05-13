@@ -89,6 +89,7 @@ public class LtiResource {
             String message = "LTI not configured on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.";
             log.warn(message);
             response.sendError(HttpServletResponse.SC_FORBIDDEN, message);
+            return;
         }
 
         log.info("Request header X-Forwarded-Proto: {}", request.getHeader("X-Forwarded-Proto"));
@@ -133,10 +134,10 @@ public class LtiResource {
 
         log.info("handleLaunchRequest done");
 
-        // If the current user was created within the last 15 seconds, we just created the user
+        // If the current user was created within the last 15 minutes, we just created the user
         // Display a welcome message to the user
         boolean isNewUser = SecurityUtils.isAuthenticated()
-                && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userRepository.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
+                && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userRepository.getUser().getCreatedDate().getEpochSecond()) < 15;
 
         log.info("isNewUser: {}", isNewUser);
 
@@ -172,9 +173,11 @@ public class LtiResource {
         if (exercise.isEmpty()) {
             return notFound();
         }
+
         if (!authCheckService.isAtLeastInstructorForExercise(exercise.get(), null)) {
             return forbidden();
         }
+
         if (LTI_ID.isEmpty() || LTI_OAUTH_KEY.isEmpty() || LTI_OAUTH_SECRET.isEmpty()) {
             log.warn(
                     "lti/configuration is not supported on this Artemis instance, no artemis.lti.id, artemis.lti.oauth-key or artemis.lti.oauth-secret were specified in the yml configuration");

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -55,7 +55,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             organization1.shortName = 'oO1';
             organization1.emailPattern = '.*1';
 
-            spyOn(organizationService, 'getOrganizationById').and.returnValue(Observable.of(organization1));
+            spyOn(organizationService, 'getOrganizationById').and.returnValue(of(organization1));
 
             component.ngOnInit();
 
@@ -67,7 +67,7 @@ describe('OrganizationManagementUpdateComponent', () => {
         it('should update the current edited organization', fakeAsync(() => {
             organization1.name = 'updatedName';
             component.organization = organization1;
-            spyOn(organizationService, 'update').and.returnValue(Observable.of(organization1));
+            spyOn(organizationService, 'update').and.returnValue(of(organization1));
 
             component.save();
             tick();
@@ -83,7 +83,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             newOrganization.emailPattern = '.*';
 
             component.organization = newOrganization;
-            spyOn(organizationService, 'add').and.returnValue(Observable.of(newOrganization));
+            spyOn(organizationService, 'add').and.returnValue(of(newOrganization));
 
             component.save();
             tick();

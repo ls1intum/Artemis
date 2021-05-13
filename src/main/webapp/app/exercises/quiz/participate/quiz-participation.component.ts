@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/
 import * as moment from 'moment';
 import * as _ from 'lodash';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -568,10 +568,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * Apply the data of the participation, replacing all old data
      */
     updateParticipationFromServer(participation: StudentParticipation) {
-        this.applyQuizFull(participation.exercise as QuizExercise);
+        if (participation) {
+            this.applyQuizFull(participation.exercise as QuizExercise);
+        }
 
         // apply submission if it exists
-        if (participation.results?.length) {
+        if (participation?.results?.length) {
             this.submission = participation.results[0].submission as QuizSubmission;
 
             // update submission time

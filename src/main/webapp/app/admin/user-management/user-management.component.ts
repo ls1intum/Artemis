@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
 import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';

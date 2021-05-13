@@ -21,7 +21,7 @@
                     <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                 </a>
                 <!-- Check Plagiarism -->
-                <a *ngIf="textExercise.isAtLeastInstructor" class="btn btn-primary btn-sm mr-1" id="check-plagiarism-download" routerLink="plagiarism">
+                <a *ngIf="textExercise.isAtLeastEditor" class="btn btn-primary btn-sm mr-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>

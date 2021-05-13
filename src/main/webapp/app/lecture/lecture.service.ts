@@ -36,15 +36,17 @@ export class LectureService {
     find(lectureId: number): Observable<EntityResponseType> {
         return this.http
             .get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => {
-                if (res.body) {
-                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.studentQuestions === undefined) {
-                        res.body.studentQuestions = [];
+            .pipe(
+                map((res: EntityResponseType) => {
+                    if (res.body) {
+                        // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                        if (res.body.studentQuestions === undefined) {
+                            res.body.studentQuestions = [];
+                        }
                     }
-                }
-                return res;
-            })
+                    return res;
+                }),
+            )
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -122,6 +124,7 @@ export class LectureService {
             res.body.forEach((lecture: Lecture) => {
                 if (lecture.course) {
                     lecture.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(lecture.course);
+                    lecture.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(lecture.course);
                 }
             });
         }
