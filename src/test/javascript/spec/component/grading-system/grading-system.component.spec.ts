@@ -203,14 +203,6 @@ describe('Grading System Component', () => {
         expect(comp.lowerBoundInclusivity).to.be.equal(true);
     });
 
-    it('should sort correctly', () => {
-        comp.sortGradeSteps(comp.gradingScale.gradeSteps);
-
-        expect(comp.gradingScale.gradeSteps[0]).to.deep.equal(gradeStep1);
-        expect(comp.gradingScale.gradeSteps[1]).to.deep.equal(gradeStep2);
-        expect(comp.gradingScale.gradeSteps[2]).to.deep.equal(gradeStep3);
-    });
-
     it('should delete grading scale for course', () => {
         comp.existingGradingScale = true;
         comp.isExam = false;

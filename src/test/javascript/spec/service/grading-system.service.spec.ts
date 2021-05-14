@@ -4,6 +4,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
 import { RouterTestingModule } from '@angular/router/testing';
+import { GradeStep } from 'app/entities/grade-step.model';
 
 describe('Grading System Service', () => {
     let injector: TestBed;
@@ -102,4 +103,37 @@ describe('Grading System Service', () => {
         httpMock.expectOne({ method: 'DELETE' }).flush(elemDefault);
         tick();
     }));
+
+    it('should sort correctly', () => {
+        const gradeStep1: GradeStep = {
+            gradeName: 'Fail',
+            lowerBoundPercentage: 0,
+            upperBoundPercentage: 40,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: false,
+        };
+        const gradeStep2: GradeStep = {
+            gradeName: 'Pass',
+            lowerBoundPercentage: 40,
+            upperBoundPercentage: 80,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: true,
+        };
+        const gradeStep3: GradeStep = {
+            gradeName: 'Excellent',
+            lowerBoundPercentage: 80,
+            upperBoundPercentage: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        };
+        const gradeSteps = [gradeStep2, gradeStep3, gradeStep1];
+        service.sortGradeSteps(gradeSteps);
+
+        expect(gradeSteps[0]).toEqual(gradeStep1);
+        expect(gradeSteps[1]).toEqual(gradeStep2);
+        expect(gradeSteps[2]).toEqual(gradeStep3);
+    });
 });

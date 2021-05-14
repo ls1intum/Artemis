@@ -67,8 +67,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
-    maxGrade?: string;
-    averageGrade?: string;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -247,8 +245,66 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 this.gradingScale = gradingSystemResponse.body!;
                 this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
                 this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+                this.calculateMeanAndMedianGrades(courseId, examId);
+                this.calculateExerciseGroupGrades(courseId, examId);
+                this.calculateStudentGrades(courseId, examId);
             }
         });
+    }
+
+    calculateMeanAndMedianGrades(courseId: number, examId: number) {
+        const meanGradeObservable = this.gradingSystemService.getGradeStepMappingForExam(courseId, examId, this.aggregatedExamResults.meanPointsRelative);
+        const medianGradeObservable = this.gradingSystemService.getGradeStepMappingForExam(courseId, examId, this.aggregatedExamResults.medianRelative);
+        const meanGradeTotalObservable = this.gradingSystemService.getGradeStepMappingForExam(courseId, examId, this.aggregatedExamResults.meanPointsRelativeTotal);
+        const medianGradeTotalObservable = this.gradingSystemService.getGradeStepMappingForExam(courseId, examId, this.aggregatedExamResults.medianRelativeTotal);
+        forkJoin([meanGradeObservable, medianGradeObservable, meanGradeTotalObservable, medianGradeTotalObservable]).subscribe(
+            ([meanGradeResponse, medianGradeResponse, meanGradeTotalResponse, medianGradeTotalResponse]) => {
+                if (meanGradeResponse.body && medianGradeResponse.body && meanGradeTotalResponse.body && medianGradeTotalResponse.body) {
+                    this.aggregatedExamResults.meanGrade = meanGradeResponse.body.gradeName;
+                    this.aggregatedExamResults.medianGrade = medianGradeResponse.body.gradeName;
+                    this.aggregatedExamResults.meanGradeTotal = meanGradeTotalResponse.body.gradeName;
+                    this.aggregatedExamResults.medianGradeTotal = medianGradeTotalResponse.body.gradeName;
+                    this.changeDetector.detectChanges();
+                }
+            },
+        );
+    }
+
+    calculateExerciseGroupGrades(courseId: number, examId: number) {
+        for (const exerciseGroupResult of this.aggregatedExerciseGroupResults) {
+            if (exerciseGroupResult.averagePercentage) {
+                this.gradingSystemService.getGradeStepMappingForExam(courseId, examId, exerciseGroupResult.averagePercentage).subscribe((gradeStepResponse) => {
+                    if (gradeStepResponse.body) {
+                        exerciseGroupResult.averageGrade = gradeStepResponse.body.gradeName;
+                        this.changeDetector.detectChanges();
+                    }
+                });
+                for (const exerciseResult of exerciseGroupResult.exerciseResults) {
+                    if (exerciseResult.averagePercentage) {
+                        this.gradingSystemService.getGradeStepMappingForExam(courseId, examId, exerciseResult.averagePercentage).subscribe((gradeStepResponse) => {
+                            if (gradeStepResponse.body) {
+                                exerciseResult.averageGrade = gradeStepResponse.body.gradeName;
+                                this.changeDetector.detectChanges();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    calculateStudentGrades(courseId: number, examId: number) {
+        for (const studentResult of this.studentResults) {
+            if (studentResult.overallScoreAchieved) {
+                this.gradingSystemService.getGradeStepMappingForExam(courseId, examId, studentResult.overallScoreAchieved).subscribe((gradeStepResponse) => {
+                    if (gradeStepResponse.body) {
+                        studentResult.overallGrade = gradeStepResponse.body.gradeName;
+                        studentResult.hasPassed = gradeStepResponse.body.isPassingGrade;
+                        this.changeDetector.detectChanges();
+                    }
+                });
+            }
+        }
     }
 
     /**
