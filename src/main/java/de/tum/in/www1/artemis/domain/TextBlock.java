@@ -196,7 +196,7 @@ public class TextBlock implements Serializable {
     @Override
     public String toString() {
         return "TextBlock{" + "id=" + getId() + ", text='" + getText() + "'" + ", startIndex='" + getStartIndex() + "'" + ", endIndex='" + getEndIndex() + "'" + ", type='"
-                + getType() + "'" + "numberOfAffected" + getNumberOfAffectedSubmissions() + "}";
+                + getType() + "'" + "}";
     }
 
     @JsonIgnore
@@ -217,7 +217,6 @@ public class TextBlock implements Serializable {
     }
 
     public void setNumberOfAffectedSubmissions(int numberOfAffectedSubmissions) {
-        System.err.println("NUMBER--->" + numberOfAffectedSubmissions);
         this.numberOfAffectedSubmissions = numberOfAffectedSubmissions;
     }
 }
