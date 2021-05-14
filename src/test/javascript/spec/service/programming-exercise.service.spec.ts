@@ -20,6 +20,7 @@ import * as moment from 'moment';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
+import { SERVER_API_URL } from 'app/app.constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,6 +30,7 @@ describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
     let defaultProgrammingExercise: ProgrammingExercise;
+    const resourceUrl = SERVER_API_URL + 'api/programming-exercises';
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
@@ -205,6 +207,14 @@ describe('ProgrammingExercise Service', () => {
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
+            tick();
+        }));
+
+        it('should make get request', fakeAsync(() => {
+            const expectedBlob = new Blob(['abc', 'cfe']);
+            service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).to.deep.equal(expectedBlob));
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
+            req.flush(expectedBlob);
             tick();
         }));
     });
