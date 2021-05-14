@@ -313,14 +313,20 @@ public class GitLabService extends AbstractVersionControlService {
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws VersionControlException {
         createGitlabGroupForExercise(programmingExercise);
 
-        final var tutors = userRepository.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        addUsersToExerciseGroup(tutors, programmingExercise, REPORTER);
+        final Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
-        final var editors = userRepository.getEditors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        final var instructors = userRepository.getInstructors(course);
+        addUsersToExerciseGroup(instructors, programmingExercise, OWNER);
+
+        // Get editors that are not instructors at the same time
+        final var editors = userRepository.findAllInGroupContainingAndNotIn(course.getEditorGroupName(), new HashSet<>(instructors));
         addUsersToExerciseGroup(editors, programmingExercise, MAINTAINER);
 
-        final var instructors = userRepository.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        addUsersToExerciseGroup(instructors, programmingExercise, OWNER);
+        // Get teaching assistants that are not instructors nor editors
+        final var instructorsAndEditors = new HashSet<>(instructors);
+        instructorsAndEditors.addAll(editors);
+        final var tutors = userRepository.findAllInGroupContainingAndNotIn(course.getTeachingAssistantGroupName(), instructorsAndEditors);
+        addUsersToExerciseGroup(tutors, programmingExercise, REPORTER);
     }
 
     /**
