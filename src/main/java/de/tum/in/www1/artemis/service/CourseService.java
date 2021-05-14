@@ -205,16 +205,16 @@ public class CourseService {
 
     private void deleteDefaultGroups(Course course) {
         // only delete (default) groups which have been created by Artemis before
-        if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
+        if (Objects.equals(course.getStudentGroupName(), course.getDefaultStudentGroupName())) {
             userService.deleteGroup(course.getStudentGroupName());
         }
-        if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
+        if (Objects.equals(course.getTeachingAssistantGroupName(), course.getDefaultTeachingAssistantGroupName())) {
             userService.deleteGroup(course.getTeachingAssistantGroupName());
         }
-        if (course.getEditorGroupName().equals(course.getDefaultEditorGroupName())) {
+        if (Objects.equals(course.getEditorGroupName(), course.getDefaultEditorGroupName())) {
             userService.deleteGroup(course.getEditorGroupName());
         }
-        if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
+        if (Objects.equals(course.getInstructorGroupName(), course.getDefaultInstructorGroupName())) {
             userService.deleteGroup(course.getInstructorGroupName());
         }
     }
@@ -410,13 +410,12 @@ public class CourseService {
      * Fetches Course Management Detail View data from repository and returns a DTO
      *
      * @param courseId id of the course
-     * @param exerciseIds the ids of the exercises of the course
+     * @param exerciseIds the ids of the exercises the course contains
      * @return The DTO for the course management detail view
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Long courseId, Set<Long> exerciseIds) {
         var dto = new CourseManagementDetailViewDTO();
         var course = this.courseRepository.findByIdElseThrow(courseId);
-        dto.setCourse(course);
 
         dto.setNumberOfStudentsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName())));
         dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));
