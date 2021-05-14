@@ -29,7 +29,6 @@ public class AuxiliaryRepository extends DomainObject {
     @Column(name = "description")
     private String description;
 
-
     public String getRepositoryUrl() {
         return repositoryUrl;
     }

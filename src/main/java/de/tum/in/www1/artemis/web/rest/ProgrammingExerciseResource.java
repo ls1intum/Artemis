@@ -65,6 +65,8 @@ public class ProgrammingExerciseResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
+    private static final String AUX_REPO_ENTITY_NAME = "programmingExercise";
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -1120,6 +1122,8 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AuxiliaryRepository> createAuxiliaryRepository(@PathVariable Long exerciseId, @RequestBody AuxiliaryRepository repository) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        validateAuxiliaryRepository(repository);
         try {
             AuxiliaryRepository newAuxiliaryRepository = programmingExerciseService.createAuxiliaryRepositoryForExercise(exercise, repository);
 
@@ -1133,6 +1137,55 @@ public class ProgrammingExerciseResource {
     }
 
     private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
+
+        // We want to force the user to set a name of the auxiliary repository, otherwise we
+        // cannot determine which name we should use for setting up the repo on the VCS.
+        if (auxiliaryRepository.getName() == null || auxiliaryRepository.getName().isEmpty()) {
+            throw new BadRequestAlertException("Cannot set empty name for auxiliary repositories!",
+                AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+        }
+
+        // The name must not be longer than 100 characters, since the database column is
+        // limited to 100 characters.
+        if (auxiliaryRepository.getName().length() > 100) {
+            throw new BadRequestAlertException("The name of an auxiliary repository must not be longer than 100 characters!",
+                AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+        }
+
+        // The name must not match any of the names of the already present repositories, otherwise
+        // we get an undefined state.
+        // Currently, the names "exercise", "solution", and "tests" are restricted.
+        for (RepositoryType repositoryType : RepositoryType.values()) {
+            String repositoryName = repositoryType.getName();
+            if(auxiliaryRepository.getName().equals(repositoryName)) {
+                throw new BadRequestAlertException("The name '" + repositoryName + "' is not allowed for auxiliary repositories!",
+                    AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+            }
+        }
+
+        if (auxiliaryRepository.getCheckoutDirectory() != null) {
+            String checkoutDirectory = auxiliaryRepository.getCheckoutDirectory();
+
+            // We want to make sure, that the checkout directory path is valid.
+            if (checkoutDirectory.contains(".")) {
+                throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!",
+                    AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+            }
+
+            // The checkout directory path must not be longer than 100 characters, since the database column is
+            // limited to 100 characters.
+            if (checkoutDirectory.length() > 100) {
+                throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!",
+                    AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+            }
+        }
+
+        // The description must not be longer than 100 characters, since the database column is
+        // limited to 500 characters.
+        if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > 500) {
+            throw new BadRequestAlertException("The provided description is too long!",
+                AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION);
+        }
 
     }
 
@@ -1196,6 +1249,12 @@ public class ProgrammingExerciseResource {
         public static final String INVALID_TEMPLATE_BUILD_PLAN_ID = "invalid.template.build.plan.id";
 
         public static final String INVALID_SOLUTION_BUILD_PLAN_ID = "invalid.solution.build.plan.id";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_NAME = "invalid.auxiliary.repository.name";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY = "invalid.auxiliary.repository.checkout.directory";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_DESCRIPTION = "invalid.auxiliary.repository.description";
 
         private ErrorKeys() {
         }
