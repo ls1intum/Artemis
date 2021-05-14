@@ -222,7 +222,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exerciseRatedBadge(result)).to.equal('badge-info');
 
         // has correct router link
-        expect(comp.exerciseRouterLink).to.equal(`/course-management/1/text-exercises/42/assessment`);
+        expect(comp.exerciseRouterLink).to.equal(`/course-management/1/text-exercises/42/submissions`);
     }));
 
     it('should not allow to publish a build plan for text exercises', () => {

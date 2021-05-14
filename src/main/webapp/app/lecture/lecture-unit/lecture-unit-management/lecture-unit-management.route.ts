@@ -15,7 +15,7 @@ export const lectureUnitRoute: Routes = [
         path: 'unit-management',
         component: LectureUnitManagementComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.lectureUnit.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -31,7 +31,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'exercise-units/create',
                 component: CreateExerciseUnitComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.exerciseUnit.createExerciseUnit.title',
                 },
             },
@@ -39,7 +39,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'attachment-units/create',
                 component: CreateAttachmentUnitComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnit.title',
                 },
             },
@@ -47,7 +47,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'video-units/create',
                 component: CreateVideoUnitComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.videoUnit.createVideoUnit.title',
                 },
             },
@@ -55,7 +55,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'text-units/create',
                 component: CreateTextUnitComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.textUnit.createTextUnit.title',
                 },
             },
@@ -63,7 +63,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'attachment-units/:attachmentUnitId/edit',
                 component: EditAttachmentUnitComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.attachmentUnit.editAttachmentUnit.title',
                 },
             },
@@ -71,7 +71,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'video-units/:videoUnitId/edit',
                 component: EditVideoUnitComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
                 },
             },
@@ -79,7 +79,7 @@ export const lectureUnitRoute: Routes = [
                 path: 'text-units/:textUnitId/edit',
                 component: EditTextUnitComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.textUnit.editTextUnit.title',
                 },
             },

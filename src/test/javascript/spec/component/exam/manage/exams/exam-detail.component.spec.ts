@@ -89,6 +89,7 @@ describe('ExamDetailComponent', () => {
                 },
                 MockProvider(AccountService, {
                     isAtLeastInstructorInCourse: () => true,
+                    isAtLeastEditorInCourse: () => true,
                 }),
                 MockProvider(ArtemisMarkdownService, {
                     safeHtmlForMarkdown: () => exampleHTML,

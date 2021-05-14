@@ -10,7 +10,7 @@ export const routes: Routes = [
         path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: ModelingAssessmentEditorComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
@@ -27,10 +27,10 @@ export const routes: Routes = [
     },
 
     {
-        path: ':courseId/modeling-exercises/:exerciseId/assessment',
+        path: ':courseId/modeling-exercises/:exerciseId/submissions',
         component: ModelingAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],

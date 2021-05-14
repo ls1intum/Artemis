@@ -10,7 +10,7 @@ import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
-import { Observable, Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -99,8 +99,8 @@ describe('CodeEditorFileBrowserComponent', () => {
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         const expectedFileTreeItems: TreeviewItem[] = [];
-        getRepositoryContentStub.returns(Observable.of(repositoryContent));
-        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContentStub.returns(of(repositoryContent));
+        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -117,8 +117,8 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
         const repositoryContent: { [fileName: string]: string } = { file: 'FILE', folder: 'FOLDER' };
-        getRepositoryContentStub.returns(Observable.of(repositoryContent));
-        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContentStub.returns(of(repositoryContent));
+        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -190,8 +190,8 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'file1',
             } as any),
         ].map((x) => x.toString());
-        getRepositoryContentStub.returns(Observable.of(repositoryContent));
-        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
+        getRepositoryContentStub.returns(of(repositoryContent));
+        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
@@ -321,7 +321,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
         const setupTreeviewStub = stub(comp, 'setupTreeview');
-        createFileStub.returns(Observable.of(undefined));
+        createFileStub.returns(of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FILE];
@@ -370,7 +370,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
         const setupTreeviewStub = stub(comp, 'setupTreeview');
-        createFolderStub.returns(Observable.of(undefined));
+        createFolderStub.returns(of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FOLDER];
@@ -440,7 +440,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        renameFileStub.returns(Observable.of(undefined));
+        renameFileStub.returns(of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [fileName, fileName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
@@ -514,7 +514,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         ];
         const repositoryFiles = { 'folder/file1': FileType.FILE, 'folder/file2': FileType.FILE, folder: FileType.FOLDER, folder2: FileType.FOLDER };
         const onFileChangeSpy = spy(comp.onFileChange, 'emit');
-        renameFileStub.returns(Observable.of(undefined));
+        renameFileStub.returns(of(undefined));
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [folderName, folderName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
@@ -650,8 +650,8 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should disable action buttons if there is a git conflict', () => {
         const repositoryContent: { [fileName: string]: string } = {};
-        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CONFLICT }));
-        getRepositoryContentStub.returns(Observable.of(repositoryContent));
+        isCleanStub.returns(of({ repositoryStatus: CommitState.CONFLICT }));
+        getRepositoryContentStub.returns(of(repositoryContent));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -665,7 +665,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         // Resolve conflict.
         conflictService.notifyConflictState(GitConflictState.OK);
-        isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
+        isCleanStub.returns(of({ repositoryStatus: CommitState.CLEAN }));
 
         comp.commitState = CommitState.UNDEFINED;
 

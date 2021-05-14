@@ -23,6 +23,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
      */
 
     exercise?: TextExercise;
+    isAtLeastEditor: boolean;
     isAtLeastInstructor: boolean;
     protected userId?: number;
     textBlockRefs: TextBlockRef[];
@@ -44,6 +45,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity?.id;
+        this.isAtLeastEditor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR]);
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
     }
 

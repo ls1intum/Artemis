@@ -71,7 +71,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(numberOfStudentsInCourse, 5, 1);
+        database.addUsers(numberOfStudentsInCourse, 5, 0, 1);
         course = database.addCourseWithOneProgrammingExercise();
 
         // Make exercise team-based and already released to students

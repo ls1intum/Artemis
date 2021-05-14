@@ -71,7 +71,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void init() {
-        users = database.addUsers(numberOfParticipants, 1, 1);
+        users = database.addUsers(numberOfParticipants, 1, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));

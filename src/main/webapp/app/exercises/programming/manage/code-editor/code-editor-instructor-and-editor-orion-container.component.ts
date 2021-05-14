@@ -16,10 +16,10 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
-    templateUrl: './code-editor-instructor-orion-container.component.html',
+    templateUrl: './code-editor-instructor-and-editor-orion-container.component.html',
     styles: ['.instructions-orion { height: 700px }'],
 })
-export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
+export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnInit {
     orionState: OrionState;
 
     constructor(

@@ -65,6 +65,8 @@ public class DatabaseUtilService {
 
     private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
 
+    private static final Authority editorAuthority = new Authority(Role.EDITOR.getAuthority());
+
     private static final Authority instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
 
     private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
@@ -73,9 +75,11 @@ public class DatabaseUtilService {
 
     private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
 
-    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority);
+    private static final Set<Authority> editorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority);
 
-    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, instructorAuthority, adminAuthority);
+    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
+
+    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
 
     @Autowired
     private CourseRepository courseRepo;
@@ -218,6 +222,10 @@ public class DatabaseUtilService {
     @Value("${info.guided-tour.course-group-tutors:#{null}}")
     private Optional<String> tutorialGroupTutors;
 
+    // TODO: Research what we have to do here
+    @Value("${info.guided-tour.course-group-editors:#{null}}")
+    private Optional<String> tutorialGroupEditors;
+
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
@@ -247,14 +255,16 @@ public class DatabaseUtilService {
      *
      * @param numberOfStudents    the number of students that will be added to the database
      * @param numberOfTutors      the number of tutors that will be added to the database
+     * @param numberOfEditors     the number of editors that will be added to the database
      * @param numberOfInstructors the number of instructors that will be added to the database
      */
-    public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
+    public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
 
         authorityRepository.saveAll(adminAuthorities);
 
         List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, studentAuthorities, numberOfStudents);
         List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
+        List<User> editors = ModelFactory.generateActivatedUsers("editor", new String[] { "editor", "testgroup" }, editorAuthorities, numberOfEditors);
         List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
         User admin = ModelFactory.generateActivatedUser("admin");
         admin.setGroups(Set.of("admin"));
@@ -262,14 +272,16 @@ public class DatabaseUtilService {
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
+        usersToAdd.addAll(editors);
         usersToAdd.addAll(instructors);
         usersToAdd.add(admin);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
+        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
         final var users = new ArrayList<>(students);
         users.addAll(tutors);
+        users.addAll(editors);
         users.addAll(instructors);
         users.add(admin);
         return users;
@@ -339,7 +351,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -352,7 +364,7 @@ public class DatabaseUtilService {
     }
 
     public Course createCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
@@ -517,8 +529,8 @@ public class DatabaseUtilService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
@@ -684,7 +696,7 @@ public class DatabaseUtilService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
@@ -737,7 +749,7 @@ public class DatabaseUtilService {
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
@@ -1451,7 +1463,7 @@ public class DatabaseUtilService {
     public Course addCourseWithOneModelingExercise(String title) {
         long currentCourseRepoSize = courseRepo.count();
         long currentExerciseRepoSize = exerciseRepo.count();
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle(title);
         course.addExercises(modelingExercise);
@@ -1474,7 +1486,7 @@ public class DatabaseUtilService {
      * @return A course with one specified text exercise
      */
     public Course addCourseWithOneReleasedTextExercise(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
@@ -1549,7 +1561,7 @@ public class DatabaseUtilService {
     }
 
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
@@ -1582,7 +1594,7 @@ public class DatabaseUtilService {
     }
 
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
         final var courseNrBefore = courseRepo.count();
@@ -1618,7 +1630,7 @@ public class DatabaseUtilService {
         long numberOfCourses = courseRepo.count();
         long numberOfExercises = exerciseRepo.count();
 
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         TextExercise finishedTextExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
@@ -1632,7 +1644,7 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithDifferentModelingExercises() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         classExercise.setTitle("ClassDiagram");
         course.addExercises(classExercise);
@@ -1666,6 +1678,29 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseWithOneQuizExercise() {
+        return addCourseWithOneQuizExercise("Title");
+    }
+
+    public Course addCourseWithOneQuizExercise(String title) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp);
+        quizExercise.setIsVisibleBeforeStart(false);
+        quizExercise.setTitle(title);
+        quizExercise.setDuration(120);
+        assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
+        assertThat(quizExercise.isValid()).isTrue();
+        course.addExercises(quizExercise);
+        final var exercisesNrBefore = exerciseRepo.count();
+        final var courseNrBefore = courseRepo.count();
+        courseRepo.save(course);
+        exerciseRepo.save(quizExercise);
+        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
+        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
+        assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
+        return course;
+    }
+
     public Course addCourseWithOneProgrammingExercise() {
         return addCourseWithOneProgrammingExercise(false);
     }
@@ -1675,7 +1710,7 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
-        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage);
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
@@ -1706,7 +1741,7 @@ public class DatabaseUtilService {
      * @return A course with named exercise
      */
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle) {
-        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
@@ -1772,7 +1807,7 @@ public class DatabaseUtilService {
      * @return A empty course
      */
     public Course addEmptyCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
         return course;
@@ -1783,7 +1818,7 @@ public class DatabaseUtilService {
      */
     public Course addTutorialCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.get(), tutorialGroupTutors.get(),
-                tutorialGroupInstructors.get());
+                tutorialGroupEditors.get(), tutorialGroupInstructors.get());
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
         return course;
@@ -1794,7 +1829,7 @@ public class DatabaseUtilService {
      * @return A course that is added in other group different from the group that created in beforeEach() method
      */
     public Course addCourseInOtherInstructionGroupAndExercise(String title) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "other-instructors");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
 
@@ -1908,7 +1943,7 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithModelingAndTextExercise() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle("Modeling");
         course.addExercises(modelingExercise);
@@ -1922,7 +1957,7 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle("Modeling");
@@ -1944,7 +1979,7 @@ public class DatabaseUtilService {
     }
 
     public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
@@ -1990,13 +2025,14 @@ public class DatabaseUtilService {
      */
     public Course addCourseWithExercisesAndSubmissions(int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
             boolean typeComplaint, int numberComplaintResponses, String validModel) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         var tutors = userRepo.getTutors(course);
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
 
             if ((i % 3) == 0) {
-                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+                ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, DiagramType.ClassDiagram,
+                        course);
                 modelingExercise.setTitle("Modeling" + i);
                 course.addExercises(modelingExercise);
                 course = courseRepo.save(course);
@@ -2018,7 +2054,7 @@ public class DatabaseUtilService {
 
             }
             else if ((i % 3) == 1) {
-                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp, futureTimestamp, course);
+                TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, course);
                 textExercise.setTitle("Text" + i);
                 course.addExercises(textExercise);
                 course = courseRepo.save(course);
@@ -2036,7 +2072,7 @@ public class DatabaseUtilService {
                 }
             }
             else if ((i % 3) == 2) {
-                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureTimestamp, "png,pdf", course);
+                FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
                 course.addExercises(fileUploadExercise);
                 course = courseRepo.save(course);
@@ -2073,6 +2109,7 @@ public class DatabaseUtilService {
         result.resultString("3 of 10 points");
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
+        result.setRated(true);
         return result;
     }
 
@@ -2316,6 +2353,10 @@ public class DatabaseUtilService {
             result.setCompletionDate(ZonedDateTime.now());
         }
         result.setFeedbacks(feedbacks);
+        result = resultRepo.save(result);
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
         result = resultRepo.save(result);
         result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
@@ -3112,12 +3153,12 @@ public class DatabaseUtilService {
         gradeStep2.setGradingScale(gradingScale);
         gradeStep3.setGradingScale(gradingScale);
 
-        gradeStep1.setPassingGrade(false);
+        gradeStep1.setIsPassingGrade(false);
         gradeStep1.setGradeName("Fail");
         gradeStep1.setLowerBoundPercentage(0);
         gradeStep1.setUpperBoundPercentage(60);
 
-        gradeStep2.setPassingGrade(true);
+        gradeStep2.setIsPassingGrade(true);
         gradeStep2.setGradeName("Pass");
         gradeStep2.setLowerBoundPercentage(60);
         if (valid) {
@@ -3127,7 +3168,7 @@ public class DatabaseUtilService {
             gradeStep2.setUpperBoundPercentage(80);
         }
 
-        gradeStep3.setPassingGrade(true);
+        gradeStep3.setIsPassingGrade(true);
         gradeStep3.setGradeName("Excellent");
         gradeStep3.setLowerBoundPercentage(90);
         gradeStep3.setUpperBoundPercentage(100);
@@ -3212,7 +3253,7 @@ public class DatabaseUtilService {
     }
 
     public Course createCourseWithProgrammingExerciseAndIllegalAndLegalSubmissions() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(null, null, course);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

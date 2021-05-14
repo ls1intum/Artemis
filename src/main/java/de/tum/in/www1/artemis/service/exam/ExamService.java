@@ -683,7 +683,7 @@ public class ExamService {
 
             // Attach the path to the archive to the exam and save it in the database
             if (archivedExamPath.isPresent()) {
-                exam.setExamArchivePath(archivedExamPath.get().toString());
+                exam.setExamArchivePath(archivedExamPath.get().getFileName().toString());
                 examRepository.save(exam);
             }
             else {

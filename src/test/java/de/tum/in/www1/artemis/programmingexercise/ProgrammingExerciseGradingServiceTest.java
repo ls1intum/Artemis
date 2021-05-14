@@ -69,7 +69,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void setUp() {
-        database.addUsers(5, 1, 1);
+        database.addUsers(5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExerciseSCAEnabled = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
@@ -133,7 +133,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(result.getFeedbacks().size()).isEqualTo(countOfNewFeedbacks);
         assertThat(result.getResultString()).isEqualTo("Error: Found duplicated tests!");
         String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test3, test1";
-        verify(groupNotificationService).notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
     }
 
     @Test
@@ -934,11 +934,13 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCalculateCorrectStatistics() {
+    public void shouldCalculateCorrectStatistics() throws Exception {
         activateAllTestCases(false);
         createTestParticipationsWithResults();
 
-        var statistics = gradingService.generateGradingStatistics(programmingExerciseSCAEnabled.getId());
+        // get statistics
+        final var endpoint = ProgrammingExerciseGradingResource.STATISTICS.replace("{exerciseId}", programmingExerciseSCAEnabled.getId().toString());
+        final var statistics = request.get(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
         assertThat(statistics.getNumParticipations()).isEqualTo(5);
 

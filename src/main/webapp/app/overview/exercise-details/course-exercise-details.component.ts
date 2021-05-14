@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
@@ -263,7 +263,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                 // Notify student about late submission result
-                if (changedParticipation.exercise?.dueDate?.isBefore(moment.now()) && changedParticipation.results?.length! > this.studentParticipation?.results?.length!) {
+                if (
+                    changedParticipation.exercise?.dueDate &&
+                    changedParticipation.exercise!.dueDate!.isBefore(moment.now()) &&
+                    changedParticipation.results?.length! > this.studentParticipation?.results?.length!
+                ) {
                     this.jhiAlertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                 }
                 this.exercise.studentParticipations =
@@ -312,10 +316,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return result.rated ? 'badge-success' : 'badge-info';
     }
 
-    get exerciseIsOver(): boolean {
-        return this.exercise ? moment(this.exercise!.dueDate!).isBefore(moment()) : true;
-    }
-
     get hasMoreResults(): boolean {
         if (!this.studentParticipation || !this.studentParticipation.results) {
             return false;
@@ -325,7 +325,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     get exerciseRouterLink(): string | null {
         if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type!)) {
-            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/assessment`;
+            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/submissions`;
         }
 
         return null;

@@ -11,7 +11,7 @@
         <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
     </div>
 
-    <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
+    <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastEditor && !readOnly && !toComplete">
         <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
                 <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
@@ -21,7 +21,7 @@
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ml-2 button-resize">
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission">Create new example submission</span>
-                <span *ngIf="!isNewSubmission" jhiTranslate="artemisApp.modelingExercise.updateExampleSubmission">Update modeling submission</span>
+                <span *ngIf="!isNewSubmission" jhiTranslate="artemisApp.modelingExercise.saveExampleSubmission">Save modeling submission</span>
             </button>
         </div>
 

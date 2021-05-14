@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
@@ -42,6 +42,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
+    // TODO: Melih Oezbeyli(iozbeyli) Make it true after compass hazelcast problem is resolved
+    semiAutomaticAssessmentAvailable = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,

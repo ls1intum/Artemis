@@ -189,7 +189,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/course/{courseId}/apollon-diagrams/{id}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", id);
 
@@ -197,7 +197,7 @@ public class ApollonDiagramResource {
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             throw new AccessForbiddenException(NOT_ALLOWED);
         }
 

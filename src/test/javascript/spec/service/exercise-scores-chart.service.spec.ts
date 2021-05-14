@@ -42,7 +42,7 @@ describe('Exercise Scores Chart Service', () => {
         expect(service).to.be.ok;
     });
 
-    it('should find all by course id', async () => {
+    it('should find all by course id', () => {
         const returnedFromService = [
             Object.assign(
                 {

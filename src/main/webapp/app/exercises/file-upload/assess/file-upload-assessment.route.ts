@@ -10,7 +10,7 @@ export const routes: Routes = [
         path: ':courseId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: FileUploadAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -19,16 +19,16 @@ export const routes: Routes = [
         path: ':courseId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
         component: FileUploadAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/file-upload-exercises/:exerciseId/assessment',
+        path: ':courseId/file-upload-exercises/:exerciseId/submissions',
         component: FileUploadAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],

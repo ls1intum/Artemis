@@ -84,16 +84,24 @@
             [activeIndex]="selectedComparisonIndex"
         ></jhi-plagiarism-sidebar>
 
-        <jhi-plagiarism-details [hidden]="showRunDetails" [comparison]="plagiarismResult!.comparisons[selectedComparisonIndex]" [exercise]="exercise"></jhi-plagiarism-details>
+        <jhi-plagiarism-details
+            [hidden]="showRunDetails"
+            [comparison]="
+                plagiarismResult.comparisons && plagiarismResult.comparisons.length > selectedComparisonIndex ? plagiarismResult!.comparisons[selectedComparisonIndex] : undefined
+            "
+            [exercise]="exercise"
+        ></jhi-plagiarism-details>
 
         <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult"></jhi-plagiarism-run-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult || detectionInProgress">
-        <div class="spinner-border text-primary" role="status" *ngIf="detectionInProgress">
-            <span class="sr-only">Loading...</span>
+        <div class="d-flex flex-column" *ngIf="detectionInProgress">
+            <div class="spinner-border text-primary align-self-center mb-1" role="status">
+                <span class="sr-only"></span>
+            </div>
+            <p>{{ detectionInProgressMessage }}</p>
         </div>
-
         <span class="plagiarism-empty-label" *ngIf="!detectionInProgress">
             {{ 'artemisApp.plagiarism.empty' | artemisTranslate }}
         </span>

@@ -52,7 +52,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(1, 0, 1);
+        List<User> users = database.addUsers(1, 0, 0, 1);
         user = users.get(0);
         exercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();

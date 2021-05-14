@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -45,10 +44,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -91,17 +92,20 @@ public class GitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
+    private final FileService fileService;
+
     private final ZipFileService zipFileService;
 
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
 
-    public GitService(ZipFileService zipFileService) {
+    public GitService(FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+        this.fileService = fileService;
         this.zipFileService = zipFileService;
     }
 
@@ -288,8 +292,10 @@ public class GitService {
      * @return the repository if it could be checked out
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath) throws InterruptedException, GitAPIException {
+    public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath)
+            throws InterruptedException, GitAPIException, InvalidPathException {
         var repoUrl = participation.getVcsRepositoryUrl();
         String repoFolderName = folderNameForRepositoryUrl(repoUrl);
 
@@ -335,12 +341,13 @@ public class GitService {
     }
 
     public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUrl repoUrl, VcsRepositoryUrl targetUrl, boolean pullOnGet)
-            throws InterruptedException, GitAPIException, GitException {
+            throws InterruptedException, GitAPIException, GitException, InvalidPathException {
         Path localPath = getDefaultLocalPathOfRepo(targetUrl);
         return getOrCheckoutRepository(repoUrl, targetUrl, localPath, pullOnGet);
     }
 
-    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet) throws InterruptedException, GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, Path localPath, boolean pullOnGet)
+            throws InterruptedException, GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet);
     }
 
@@ -355,9 +362,10 @@ public class GitService {
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
+     * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet)
-            throws InterruptedException, GitAPIException, GitException {
+            throws InterruptedException, GitAPIException, GitException, InvalidPathException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl);
@@ -394,7 +402,7 @@ public class GitService {
                 Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 result.close();
             }
-            catch (IOException | URISyntaxException | GitAPIException e) {
+            catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
                 FileUtils.deleteQuietly(localPath.toFile());
@@ -960,12 +968,12 @@ public class GitService {
      * Zip the content of a git repository that contains a participation.
      *
      * @param repo            Local Repository Object.
-     * @param targetPath      path where the repo is located on disk
+     * @param repositoryDir      path where the repo is located on disk
      * @param hideStudentName option to hide the student name for the zip file
      * @return path to zip file.
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepositoryWithParticipation(Repository repo, String targetPath, boolean hideStudentName) throws IOException {
+    public Path zipRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName) throws IOException, UncheckedIOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
@@ -979,26 +987,26 @@ public class GitService {
             studentTeamOrDefault = participation.getTeam().get().getName();
         }
 
-        String zipRepoName = courseShortName + "-" + exercise.getTitle();
+        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }
         else {
             zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
-        return zipRepository(repo.getLocalPath(), zipRepoName, targetPath);
+        return zipRepository(repo, zipRepoName, repositoryDir);
     }
 
     /**
      * Zips the contents of a git repository.
      *
-     * @param repoLocalPath The local path to the repository contents (e.g Repository::getLocalPath())
+     * @param repository The repository
      * @param zipFilename   the name of the zipped file
-     * @param targetPath    path where the repo is located on disk
+     * @param repositoryDir    path where the repo is located on disk
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Path repoLocalPath, String zipFilename, String targetPath) throws IOException {
+    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir) throws IOException, UncheckedIOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
@@ -1006,20 +1014,10 @@ public class GitService {
             zipFilenameWithoutSlash += ".zip";
         }
 
-        Path zipFilePath = Paths.get(targetPath, "zippedRepos", zipFilenameWithoutSlash);
-        Files.createDirectories(Paths.get(targetPath, "zippedRepos"));
+        Path zipFilePath = Paths.get(repositoryDir, "zippedRepos", zipFilenameWithoutSlash);
+        Files.createDirectories(Paths.get(repositoryDir, "zippedRepos"));
 
-        // Remove lock file from git carbage collections
-        Files.walk(repoLocalPath).filter(path -> path.endsWith("gc.log.lock")).forEach(path -> {
-            try {
-                Files.deleteIfExists(path);
-            }
-            catch (IOException ignored) {
-                log.error("Cannot delete gc.log.lock from {}", path);
-            }
-        });
-
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, repoLocalPath);
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
     }
 
     /**

@@ -23,6 +23,7 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -104,6 +105,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
+            this.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.exercise);
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
             this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
@@ -133,7 +135,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         return new Promise((resolve) => {
             this.assessmentsService
                 .getExampleResult(this.exerciseId, this.submission?.id!)
-                .filter(notUndefined)
+                .pipe(filter(notUndefined))
                 .subscribe((result) => {
                     this.result = result;
                     this.exampleSubmission.submission = this.submission = result.submission;
