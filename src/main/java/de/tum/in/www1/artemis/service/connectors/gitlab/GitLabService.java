@@ -323,7 +323,8 @@ public class GitLabService extends AbstractVersionControlService {
         addUsersToExerciseGroup(editors, programmingExercise, MAINTAINER);
 
         // Get teaching assistants that are not instructors nor editors
-        final var instructorsAndEditors = new HashSet<>(instructors);
+        final HashSet<User> instructorsAndEditors = new HashSet<>();
+        instructorsAndEditors.addAll(instructors);
         instructorsAndEditors.addAll(editors);
         final var tutors = userRepository.findAllInGroupContainingAndNotIn(course.getTeachingAssistantGroupName(), instructorsAndEditors);
         addUsersToExerciseGroup(tutors, programmingExercise, REPORTER);
