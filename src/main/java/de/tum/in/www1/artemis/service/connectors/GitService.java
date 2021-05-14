@@ -1014,9 +1014,8 @@ public class GitService {
             zipFilenameWithoutSlash += ".zip";
         }
 
-        Path zipFilePath = Paths.get(repositoryDir, "zippedRepos", zipFilenameWithoutSlash);
-        Files.createDirectories(Paths.get(repositoryDir, "zippedRepos"));
-
+        Path zipFilePath = Paths.get(repositoryDir, zipFilenameWithoutSlash);
+        Files.createDirectories(Paths.get(repositoryDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
     }
 
