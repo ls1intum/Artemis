@@ -48,7 +48,13 @@
                 <div class="row">
                     <div class="col-md-10 text-left">
                         <div class="input-group" style="height: 33px; width: 75%">
-                            <input class="form-control" type="text" [(ngModel)]="criteria.title!" (change)="onCriterionTitleChange($event, criteria)" placeholder="Criterion Title" />
+                            <input
+                                class="form-control"
+                                type="text"
+                                [(ngModel)]="criteria.title!"
+                                (change)="onCriterionTitleChange($event, criteria)"
+                                placeholder="Criterion Title"
+                            />
                             <span class="col-auto input-group-btn d-flex align-items-center" id="reset-criteria-button" (click)="resetCriteriaTitle(criteria)">
                                 <fa-icon [icon]="'undo'"></fa-icon>
                             </span>
