@@ -87,7 +87,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
             this.criteria = [];
             const dummyCriterion = new GradingCriterion();
             const exampleCriterion = new GradingCriterion();
-            exampleCriterion.title = 'This is an Example criterion';
+            exampleCriterion.title = 'This is an example criterion';
             const exampleInstr = new GradingInstruction();
             exampleCriterion.structuredGradingInstructions = [];
             exampleCriterion.structuredGradingInstructions.push(exampleInstr);
@@ -403,8 +403,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
     }
 
-    addGradingCriteria() {
-        this.addNewGradingCriteria();
+    addGradingCriterion() {
+        this.addNewGradingCriterion();
         this.initializeMarkdown();
     }
 
@@ -412,7 +412,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @function addNewGradingCriteria
      * @desc Adds new grading criteria for the exercise
      */
-    addNewGradingCriteria() {
+    addNewGradingCriterion() {
         const criteria = new GradingCriterion();
         criteria.structuredGradingInstructions = [];
         criteria.structuredGradingInstructions.push(new GradingInstruction());
@@ -424,7 +424,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @desc Detects changes for grading criteria title
      * @param {GradingCriterion} criteria the criteria, which includes title that will be changed
      */
-    onCriteriaTitleChange($event: any, criteria: GradingCriterion) {
+    onCriterionTitleChange($event: any, criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         this.exercise.gradingCriteria![criteriaIndex].title = $event.target.value;
     }
@@ -447,7 +447,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @desc Deletes the grading criteria with sub-grading instructions
      * @param criteria {GradingCriterion} the criteria, which will be deleted
      */
-    deleteGradingCriteria(criteria: GradingCriterion) {
+    deleteGradingCriterion(criteria: GradingCriterion) {
         const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
         this.exercise.gradingCriteria!.splice(criteriaIndex, 1);
     }

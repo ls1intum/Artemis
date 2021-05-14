@@ -43,7 +43,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
 
     @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
-    List<Feedback> findFeedbackCountByStructuredGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
+    List<Feedback> findFeedbacksByStructuredGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 
     /**
      * Delete all feedbacks that belong to the given result
@@ -167,7 +167,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      */
     default List<Feedback> findFeedbackByStructuredGradingInstructionId(List<GradingCriterion> gradingCriteria) {
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap( gradingCriterion ->  gradingCriterion.getStructuredGradingInstructions().stream()).map(GradingInstruction::getId).collect(toList());
-        return findFeedbackCountByStructuredGradingInstructionIds(gradingInstructionsIds);
+        return findFeedbacksByStructuredGradingInstructionIds(gradingInstructionsIds);
     }
 
     /**
