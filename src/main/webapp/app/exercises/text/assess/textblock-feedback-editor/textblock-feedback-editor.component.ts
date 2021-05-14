@@ -32,7 +32,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
     private static creditChanged = false;
-    protected assessmentsService: TextAssessmentService;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
