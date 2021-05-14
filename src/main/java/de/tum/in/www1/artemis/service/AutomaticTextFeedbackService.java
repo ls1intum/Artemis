@@ -7,8 +7,6 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +25,6 @@ public class AutomaticTextFeedbackService {
     private static final double DISTANCE_THRESHOLD = 1;
 
     private final TextBlockRepository textBlockRepository;
-
-    private final Logger log = LoggerFactory.getLogger(AutomaticTextFeedbackService.class);
 
     public AutomaticTextFeedbackService(FeedbackRepository feedbackRepository, TextBlockRepository textBlockRepository) {
         this.feedbackRepository = feedbackRepository;
@@ -83,12 +79,14 @@ public class AutomaticTextFeedbackService {
     }
 
     /**
-     * Get Number of potential automatic Feedback's for a Submission based on its cluster.
-     * For each TextBlock of the submission, this method finds already existing Feedback elements in the same cluster and counts the ones with 0 distance.
-     * Otherwise, an empty Feedback Element is created for simplicity.
-     * Feedbacks are stored inline with the provided Result object.
+     * Sets number of potential automatic Feedback's for each block belonging to the `Result`'s submission.
+     * This number determines how many other submissions would be affected if the user were to submit a certain block feedback.
+     * For each TextBlock of the submission, this method finds if it is referred to as minimum-distance-block by any other blocks.
+     * The number of times it is referred to by other blocks as minimum is counted and saved onto the blocks
+     * `numberOfAffectedSubmissions` field.
+     * The updated
      *
-     * @param result result of submission
+     * @param result Result for the Submission acting as a reference for the text submission to be searched.
      */
     @Transactional()
     public void setNumberOfPotentialFeedbacks(@NotNull Result result) {
@@ -98,35 +96,40 @@ public class AutomaticTextFeedbackService {
 
         // iterate over blocks of the referenced submission
         blocks.forEach(block -> {
-            // If affected submissions number already calculated then skip
+            // If affected submissions number is already calculated then skip
             if (block.getNumberOfAffectedSubmissions() > 0) {
                 return;
             }
             final TextCluster cluster = block.getCluster();
-            // if TextBlock is part of a cluster, we try to find how many other submissions it will affect
+            // if TextBlock is part of a cluster, we find how many other submissions of that cluster it will affect
             if (cluster != null) {
                 // Find all blocks in the defined cluster
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().collect(toList());
-                int numberOfAffectedSubmissions = 0;
-                var allBlocksToCheck = allBlocksInCluster.parallelStream().filter(elem -> !elem.equals(block)).toList();
+                // We filter out the 'block' itself to avoid self-comparison
+                var allClusterBlocksToCheck = allBlocksInCluster.parallelStream().filter(elem -> !elem.equals(block)).toList();
 
-                for (TextBlock clusterBlockRef : allBlocksToCheck) {
-                    final Optional<TextBlock> minimalElement = allBlocksInCluster.parallelStream().filter(elem -> !elem.equals(clusterBlockRef))
+                int numberOfAffectedSubmissions = 0;
+                // Iterate over the other cluster blocks - excluding the main 'block'
+                for (TextBlock clusterBlockRef : allClusterBlocksToCheck) {
+                    // For current cluster block, find which is it's minimal block - the block with the minimum cluster distance
+                    final Optional<TextBlock> minimalBlock = allBlocksInCluster.parallelStream().filter(elem -> !elem.equals(clusterBlockRef))
                             .min(comparing(element -> cluster.distanceBetweenBlocks(element, clusterBlockRef)));
 
-                    if (minimalElement.isPresent()) {
-                        final double distanceWithMainBlock = cluster.distanceBetweenBlocks(minimalElement.get(), block);
+                    if (minimalBlock.isPresent()) {
+                        final double distanceWithMainBlock = cluster.distanceBetweenBlocks(minimalBlock.get(), block);
                         final double distanceWithRefBlock = cluster.distanceBetweenBlocks(clusterBlockRef, block);
 
-                        if (minimalElement.get().equals(block) && distanceWithMainBlock < DISTANCE_THRESHOLD) {
+                        if (minimalBlock.get().equals(block) && distanceWithMainBlock < DISTANCE_THRESHOLD) {
                             numberOfAffectedSubmissions++;
                         }
+                        // In cases where there are multiple identical blocks, there exist multiple minimum distanced blocks
+                        // Handle the case by handling them as interchangeable. The compared value is there to circumvent some
+                        // weird distance numbers - TODO discuss it
                         else if (distanceWithMainBlock - distanceWithRefBlock <= 1.0E-10) {
                             numberOfAffectedSubmissions++;
                         }
                     }
                 }
-                ;
                 block.setNumberOfAffectedSubmissions(numberOfAffectedSubmissions);
             }
         });
