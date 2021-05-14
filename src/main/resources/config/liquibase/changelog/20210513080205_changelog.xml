@@ -4,5 +4,8 @@
         <addColumn tableName="text_block">
             <column name="number_of_affected_submissions" type="INT"/>
         </addColumn>
+        <addColumn tableName="text_block">
+            <column name="number_of_affected_submissions" type="INT"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>
