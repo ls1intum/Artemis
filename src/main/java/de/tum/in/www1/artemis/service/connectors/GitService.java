@@ -1056,16 +1056,4 @@ public class GitService {
         git.stashCreate().call();
         git.close();
     }
-
-    /**
-     * Disables auto garbage collection for the given repository.
-     *
-     * @param repository the repository
-     */
-    public void disableAutoGC(org.eclipse.jgit.lib.Repository repository) {
-        // See https://www.eclipse.org/lists/jgit-dev/msg03734.html
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-        repository.getConfig().setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-    }
 }
