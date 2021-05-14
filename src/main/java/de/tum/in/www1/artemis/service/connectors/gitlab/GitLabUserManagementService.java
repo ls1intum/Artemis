@@ -375,16 +375,16 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param course the course to get the access level from
      * @return the access level
      */
-    private Optional<AccessLevel> getAccessLevelFromUserGroups(Set<String> userGroups, Course course) {
+    public Optional<AccessLevel> getAccessLevelFromUserGroups(Set<String> userGroups, Course course) {
         String instructorGroup = course.getInstructorGroupName();
         String editorGroup = course.getEditorGroupName();
         String teachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         if (userGroups.contains(instructorGroup)) {
-            return Optional.of(MAINTAINER);
+            return Optional.of(OWNER);
         }
         else if (userGroups.contains(editorGroup)) {
-            return Optional.of(DEVELOPER);
+            return Optional.of(MAINTAINER);
         }
         else if (userGroups.contains(teachingAssistantGroup)) {
             return Optional.of(REPORTER);

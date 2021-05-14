@@ -162,7 +162,7 @@ public class GitLabService extends AbstractVersionControlService {
         scheduler.schedule(() -> {
             try {
                 log.info("Protecting branch {} for Gitlab repository {}", branch, repositoryPath);
-                gitlab.getProtectedBranchesApi().protectBranch(repositoryPath, branch, DEVELOPER, DEVELOPER, MAINTAINER, false);
+                gitlab.getProtectedBranchesApi().protectBranch(repositoryPath, branch, DEVELOPER, DEVELOPER, OWNER, false);
             }
             catch (GitLabApiException e) {
                 throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryPath, e);
@@ -311,10 +311,28 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws VersionControlException {
-        final var exercisePath = programmingExercise.getProjectKey();
-        final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
+        createGitlabGroupForExercise(programmingExercise);
 
-        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        final var tutors = userRepository.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        addUsersToExerciseGroup(tutors, programmingExercise, REPORTER);
+
+        final var editors = userRepository.getEditors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        addUsersToExerciseGroup(editors, programmingExercise, MAINTAINER);
+
+        final var instructors = userRepository.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        addUsersToExerciseGroup(instructors, programmingExercise, OWNER);
+    }
+
+    /**
+     * Creates a new group in Gitlab for the specified programming exercise.
+     *
+     * @param programmingExercise the programming exercise
+     */
+    private void createGitlabGroupForExercise(ProgrammingExercise programmingExercise) {
+        final String exercisePath = programmingExercise.getProjectKey();
+        final String exerciseName = exercisePath + " " + programmingExercise.getTitle();
+        final Group group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+
         try {
             gitlab.getGroupApi().addGroup(group);
         }
@@ -327,31 +345,20 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException("Unable to create new group for course " + exerciseName, e);
             }
         }
-        final var instructors = userRepository.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        final var editors = userRepository.getEditors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        final var tutors = userRepository.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        for (final var instructor : instructors) {
+    }
+
+    /**
+     * Adds the users to the exercise's group with the specified access level.
+     *
+     * @param users The users to add
+     * @param exercise the exercise
+     * @param accessLevel the access level to give
+     */
+    private void addUsersToExerciseGroup(List<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
+        for (final var user : users) {
             try {
-                final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
-                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(programmingExercise), MAINTAINER);
-            }
-            catch (GitLabException ignored) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
-            }
-        }
-        for (final var editor : editors) {
-            try {
-                final var userId = gitLabUserManagementService.getUserId(editor.getLogin());
-                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(programmingExercise), DEVELOPER);
-            }
-            catch (GitLabException ignored) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
-            }
-        }
-        for (final var tutor : tutors) {
-            try {
-                final var userId = gitLabUserManagementService.getUserId(tutor.getLogin());
-                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(programmingExercise), REPORTER);
+                final var userId = gitLabUserManagementService.getUserId(user.getLogin());
+                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(exercise), accessLevel);
             }
             catch (GitLabException ignored) {
                 // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
