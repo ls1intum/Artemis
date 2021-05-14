@@ -4,7 +4,6 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -14,7 +13,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
     readonly FeedbackType = FeedbackType;
 
-    @Input() textBlock: TextBlock;
+    @Input() textBlock: TextBlock = new TextBlock();
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
     @Output() close = new EventEmitter<void>();
@@ -31,7 +30,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
-    private static creditChanged = false;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
@@ -133,12 +131,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
-        // Set a static boolean to be able to check when the credit is updated
-        if (this.feedback.credits !== 0 && !TextblockFeedbackEditorComponent.creditChanged) {
-            TextblockFeedbackEditorComponent.creditChanged = true;
-        } else if (this.feedback.credits === 0) {
-            TextblockFeedbackEditorComponent.creditChanged = false;
-        }
     }
 
     connectFeedbackWithInstruction(event: Event) {
