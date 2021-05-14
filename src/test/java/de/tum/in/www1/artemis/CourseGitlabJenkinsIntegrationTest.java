@@ -229,7 +229,6 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testFailToUpdateOldMembersInCourse() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
-        var oldInstructorGroup = course.getInstructorGroupName();
         course.setInstructorGroupName("new-editor-group");
 
         changeUserGroup("tutor1", Set.of(course.getTeachingAssistantGroupName()));

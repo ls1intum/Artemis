@@ -360,8 +360,10 @@ public class GitLabService extends AbstractVersionControlService {
                 final var userId = gitLabUserManagementService.getUserId(user.getLogin());
                 gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(exercise), accessLevel);
             }
-            catch (GitLabException ignored) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
+            catch (GitLabException e) {
+                // ignore the exception and continue with the next user, one non existing user or issue here should not
+                // prevent the creation of the whole programming exercise
+                log.warn("Skipped adding user {} to groups of exercise {}: {}", user.getLogin(), exercise, e.getMessage());
             }
         }
     }
