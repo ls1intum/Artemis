@@ -8,8 +8,6 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -24,8 +22,6 @@ public class TextAssessmentService extends AssessmentService {
     private final TextBlockService textBlockService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
-
-    private final Logger log = LoggerFactory.getLogger(TextAssessmentService.class);
 
     private final FeedbackConflictRepository feedbackConflictRepository;
 
@@ -42,11 +38,13 @@ public class TextAssessmentService extends AssessmentService {
     }
 
     /**
-     * Load entities from database needed for text assessment & compute Feedback suggestions (Athene):
+     * Load entities from database needed for text assessment, set potential feedback impact count & compute
+     * Feedback suggestions (Athene):
      *   1. Create or load the result
-     *   2. Compute Feedback Suggestions
-     *   3. Load Text Blocks
-     *   4. Compute Fallback Text Blocks if needed
+     *   2. Set potential Feedback impact
+     *   3. Compute Feedback Suggestions
+     *   4. Load Text Blocks
+     *   5. Compute Fallback Text Blocks if needed
      *
      * @param textSubmission Text Submission to be assessed
      * @param result for which we prepare the submission
@@ -57,7 +55,8 @@ public class TextAssessmentService extends AssessmentService {
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
-        if (automaticTextFeedbackService.isPresent() && result != null) {
+        // Set each block's impact on other submissions for the current 'textSubmission'
+        if (computeFeedbackSuggestions && result != null) {
             automaticTextFeedbackService.get().setNumberOfPotentialFeedbacks(result);
             result.setSubmission(textSubmission);
         }
@@ -85,10 +84,6 @@ public class TextAssessmentService extends AssessmentService {
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {
-                // isWarningEnabled = true
-                // if (exercise.isFeedbackImpactWarningEnabledEnabled()){
-                // //
-                // }
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
         }
@@ -103,7 +98,6 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
-        log.debug("textassesmentservice-prepare", result);
         // Remove participation after storing in database because submission already has the participation set
         result.setParticipation(null);
     }

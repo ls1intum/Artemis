@@ -84,7 +84,6 @@ public class AutomaticTextFeedbackService {
      * For each TextBlock of the submission, this method finds if it is referred to as minimum-distance-block by any other blocks.
      * The number of times it is referred to by other blocks as minimum is counted and saved onto the blocks
      * `numberOfAffectedSubmissions` field.
-     * The updated
      *
      * @param result Result for the Submission acting as a reference for the text submission to be searched.
      */

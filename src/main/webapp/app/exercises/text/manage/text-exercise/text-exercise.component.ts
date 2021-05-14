@@ -51,7 +51,6 @@ export class TextExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                 });
-                console.warn('---><----', this.textExercises);
                 this.emitExerciseCount(this.textExercises.length);
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),

@@ -126,7 +126,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     onScoreClick(event: MouseEvent): void {
         event.preventDefault();
-        console.warn('Clicked on Score-->', this.feedback.credits);
     }
 
     /**
@@ -135,12 +134,10 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
+        // Set a static boolean to be able to check when the credit is updated
         if (this.feedback.credits !== 0 && !TextblockFeedbackEditorComponent.creditChanged) {
-            console.warn('Call backend and receive number affected', this.feedback, this.feedback.credits);
             TextblockFeedbackEditorComponent.creditChanged = true;
-            // this.assessmentsService
         } else if (this.feedback.credits === 0) {
-            console.warn('Reset value');
             TextblockFeedbackEditorComponent.creditChanged = false;
         }
     }
