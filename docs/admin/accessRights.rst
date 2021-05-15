@@ -1,6 +1,34 @@
 Access Rights
 =============
 
+Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (Teaching Assistant), USER and ANONYMOUS.
+The roles are sorted in descending order. An INSTRUCTOR has at least all the permissions that an EDITOR has.
+An ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
+
+- **ADMIN:** can access all features that Artemis provides (includes features regarding the server administration, e.g. server health checks, user management and creating new courses)
+- **INSTRUCTOR:** can access all features related to the content of a course (includes creating and deleting exercises/exams/lectures and monitoring scores and submissions)
+- **EDITOR:** can create and edit the content of a course but cannot delete content and monitoring other course participants is limited
+- **TEACHING ASSISTANT:** can assess student submissions and view course content before the release date
+- **USER:** participates as a Student in courses, can view course content after the release date
+- **ANONYMOUS:** can sign up for courses
+
+
+In the following, the respective permissions illustrated. If a role does not have any access rights or a subordinated role has all permissions, it is not explicitly displayed.
+
+Navigation
+----------
++-----------------------+-------+------------+--------+--------------------+---------+
+|                       | Admin | Instructor | Editor | Teaching Assistant | Student |
++-----------------------+-------+------------+--------+--------------------+---------+
+| Course Overview       |   ✔   |      ✔     |    ✔   |          ✔         |    ✔    |
++-----------------------+-------+------------+--------+--------------------+---------+
+| Course Management     |   ✔   |      ✔     |    ✔   |          ✔         |         |
++-----------------------+-------+------------+--------+--------------------+---------+
+| Create new course     |   ✔   |            |        |                    |         |
++-----------------------+-------+------------+--------+--------------------+---------+
+| Server Administration |   ✔   |            |        |                    |         |
++-----------------------+-------+------------+--------+--------------------+---------+
+
 Course
 ------
 +-----------------------------+------------+--------+--------------------+
