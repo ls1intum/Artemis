@@ -5,7 +5,9 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="name" type="VARCHAR(100)"/>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
             <column name="checkout_directory" type="VARCHAR(100)"/>
             <column name="repository_url" type="VARCHAR(500)"/>
             <column name="description" type="VARCHAR(500)"/>

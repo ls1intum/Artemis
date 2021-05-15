@@ -287,7 +287,7 @@ public class ProgrammingExercise extends Exercise {
      * @return The repository name
      */
     public String generateRepositoryName(RepositoryType repositoryType) {
-        return generateRepositoryName(repositoryType.name());
+        return generateRepositoryName(repositoryType.getName());
     }
 
     /**
