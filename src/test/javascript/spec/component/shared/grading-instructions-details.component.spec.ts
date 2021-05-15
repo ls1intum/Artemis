@@ -55,7 +55,7 @@ describe('Grading Instructions Management Component', () => {
                     '\t[feedback]  Add feedback for students here (visible for students)\n' +
                     '\t[maxCountInScore]  0\n' +
                     '\n' +
-                    '[gradingCriterion]This is an Example criterion\n' +
+                    '[gradingCriterion]This is an example criterion\n' +
                     '\t[gradingInstruction]\n' +
                     '\t[credits]  0\n' +
                     '\t[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
@@ -117,7 +117,7 @@ describe('Grading Instructions Management Component', () => {
 
     it('should delete the grading criterion', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
-        component.deleteGradingCriteria(gradingCriterion);
+        component.deleteGradingCriterion(gradingCriterion);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria.length).to.equal(0);
@@ -134,7 +134,7 @@ describe('Grading Instructions Management Component', () => {
 
     it('should add new grading criteria to corresponding exercise', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
-        component.addNewGradingCriteria();
+        component.addNewGradingCriterion();
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria.length).to.equal(2);
