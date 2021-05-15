@@ -86,12 +86,16 @@ export class Feedback implements BaseEntity {
         return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
     }
 
-    public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
+    public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string, dropInfo?: any): Feedback {
         const that = new Feedback();
         that.referenceId = referenceId;
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
+        if (dropInfo) {
+            that.gradingInstruction = new GradingInstruction();
+            that.gradingInstruction.id = dropInfo.instructionId;
+        }
         if (referenceType && referenceId) {
             that.reference = referenceType + ':' + referenceId;
         }
