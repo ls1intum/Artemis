@@ -91,6 +91,9 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         const filesToMatchedElements = new Map();
 
         matches.forEach(({ start, length }) => {
+            if (length === 0) {
+                return;
+            }
             const file = submission.elements[start].file || 'none';
 
             if (!filesToMatchedElements.has(file)) {
