@@ -96,7 +96,7 @@
             "instructor": "Instructor",
             "form": {
                 "shortname": {
-                    "minlength": "Short Name must have a length of 3 or more characters.",
+                    "minlength": "Short Name must contain at least 3 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
                 }
             },
