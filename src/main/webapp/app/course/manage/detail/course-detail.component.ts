@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -12,6 +12,14 @@ import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { onError } from 'app/shared/util/global.utils';
+
+export enum DoughnutChartType {
+    ASSESSMENT = 'ASSESSMENT',
+    COMPLAINTS = 'COMPLAINTS',
+    FEEDBACK = 'FEEDBACK',
+    AVERAGESCORE = 'AVERAGESCORE',
+}
 
 @Component({
     selector: 'jhi-course-detail',
@@ -20,13 +28,15 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    readonly DoughnutChartType = DoughnutChartType;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
     readonly isOrion = isOrion;
-
     CachingStrategy = CachingStrategy;
+
     courseDTO: CourseManagementDetailViewDto;
+    activeStudents: number[];
     course: Course;
     private eventSubscriber: Subscription;
 
@@ -34,22 +44,20 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
     paramSub: Subscription;
 
-    constructor(private eventManager: JhiEventManager, private courseService: CourseManagementService, private route: ActivatedRoute, private router: Router) {}
+    constructor(
+        private eventManager: JhiEventManager,
+        private courseService: CourseManagementService,
+        private route: ActivatedRoute,
+        private router: Router,
+        private jhiAlertService: JhiAlertService,
+    ) {}
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        // There is no course 0 -> will fetch no course if route does not provide different courseId
-        let courseId = 0;
-        this.paramSub = this.route.params.subscribe((params) => {
-            courseId = params['courseId'];
-        });
-        this.courseService.getCourseForDetailView(courseId).subscribe((courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
-            this.courseDTO = courseResponse.body!;
-            this.course = this.courseDTO.course;
-            this.registerChangeInCourses();
-        });
+        this.fetchData();
+        this.registerChangeInCourses();
     }
 
     /**
@@ -57,9 +65,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInCourses() {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.courseService.find(this.courseDTO.course.id!).subscribe((courseResponse: HttpResponse<Course>) => {
-                this.course = courseResponse.body!;
-            });
+            this.fetchData();
         });
     }
 
@@ -71,6 +77,29 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.paramSub.unsubscribe();
         }
         this.eventManager.destroy(this.eventSubscriber);
+    }
+
+    /**
+     * fetch the course and course specific statistics for the page
+     */
+    private fetchData() {
+        // There is no course 0 -> will fetch no course if route does not provide different courseId
+        let courseId = 0;
+        this.paramSub = this.route.params.subscribe((params) => {
+            courseId = params['courseId'];
+        });
+        // Get course first for basic course information
+        this.courseService.find(courseId).subscribe((courseResponse) => {
+            this.course = courseResponse.body!;
+        });
+        // fetch statistics separately because it takes quite long for larger courses
+        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe(
+            (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
+                this.courseDTO = courseResponse.body!;
+                this.activeStudents = courseResponse.body!.activeStudents;
+            },
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error, false),
+        );
     }
 
     /**
