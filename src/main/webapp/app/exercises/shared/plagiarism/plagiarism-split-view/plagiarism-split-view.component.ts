@@ -91,6 +91,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         const filesToMatchedElements = new Map();
 
         matches.forEach(({ start, length }) => {
+            // skip empty jplag (whitespace) matches
             if (length === 0) {
                 return;
             }
