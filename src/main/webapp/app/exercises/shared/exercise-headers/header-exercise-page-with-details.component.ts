@@ -5,6 +5,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -20,6 +21,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     @Input() public exam?: Exam;
     @Input() public isTestRun = false;
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
+    @Input() public notReleasedTag: NotReleasedTagComponent
 
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];

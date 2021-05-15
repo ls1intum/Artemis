@@ -1,0 +1,9 @@
+<div>
+    <span
+        class="badge badge-warning"
+        *ngIf="exercise.releaseDate != undefined && !moment(exercise.releaseDate).isBefore(moment())"
+        placement="right"
+        ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
+    >
+    {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}</span>
+</div>
