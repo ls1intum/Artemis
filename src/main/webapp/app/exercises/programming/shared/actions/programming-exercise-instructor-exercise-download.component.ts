@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
-    selector: 'jhi-programming-exercise-instructor-repo-download',
+    selector: 'jhi-programming-exercise-instructor-exercise-download',
     template: `
         <jhi-button
             [disabled]="!exerciseId"
@@ -15,12 +15,12 @@ import { JhiAlertService } from 'ng-jhipster';
             [shouldSubmit]="false"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [icon]="'download'"
-            [title]="'artemisApp.programmingExercise.export.downloadRepo'"
-            (onClick)="exportRepository()"
+            [title]="'artemisApp.programmingExercise.export.downloadExercise'"
+            (onClick)="exportExercise()"
         ></jhi-button>
     `,
 })
-export class ProgrammingExerciseInstructorRepoDownloadComponent {
+export class ProgrammingExerciseInstructorExerciseDownloadComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
@@ -28,16 +28,13 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input()
     exerciseId: number;
 
-    @Input()
-    repositoryType: ProgrammingExerciseInstructorRepositoryType;
-
     constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: JhiAlertService) {}
 
-    exportRepository() {
-        if (this.exerciseId && this.repositoryType) {
-            this.programmingExerciseService.exportInstructorRepository(this.exerciseId, this.repositoryType).subscribe((response) => {
+    exportExercise() {
+        if (this.exerciseId) {
+            this.programmingExerciseService.exportInstructorExercise(this.exerciseId).subscribe((response) => {
                 downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageExercise');
             });
         }
     }

@@ -28,6 +28,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -744,5 +745,58 @@ public class FileService implements DisposableBean {
      */
     public String removeIllegalCharacters(String string) {
         return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+    }
+
+    /**
+     * create a directory at a given path
+     *
+     * @param path the original path, e.g. /opt/artemis/repos-download
+     */
+    public void createDirectory(Path path) {
+        try {
+            Files.createDirectories(path);
+        }
+        catch (IOException e) {
+            var error = "Failed to create temporary directory at path " + path + " : " + e.getMessage();
+            log.info(error);
+        }
+    }
+
+    /**
+     * Write a given string into a file at a given path
+     *
+     * @param stringToWrite     The string that will be written into a file
+     * @param path              The path where the file will be written to
+     * @return Path to the written file
+     */
+    public Path writeStringToFile(String stringToWrite, Path path) {
+        try {
+            var fos = new FileOutputStream(path.toString());
+            var outStream = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+            outStream.write(stringToWrite);
+            outStream.close();
+        }
+        catch (IOException e) {
+            log.warn("Could not write given string in file {}.", path);
+        }
+        return path;
+    }
+
+    /**
+     * Serialize an object and write into file at a given path
+     *
+     * @param object        The object that is serialized and written into a file
+     * @param objectMapper  The objectMapper that is used for serialization
+     * @param path          The path where the file will be written to
+     * @return Path to the written file
+     */
+    public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
+        try {
+            objectMapper.writeValue(new File(path.toString()), object);
+        }
+        catch (IOException e) {
+            log.warn("Could not write given object in file {}", path);
+        }
+        return path;
     }
 }
