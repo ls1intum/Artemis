@@ -73,8 +73,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
     initializeMarkdown() {
         let index = 0;
         this.changeDetector.detectChanges();
-        this.criteria!.forEach((criteria) => {
-            criteria.structuredGradingInstructions.forEach((instruction) => {
+        this.criteria!.forEach((criterion) => {
+            criterion.structuredGradingInstructions.forEach((instruction) => {
                 this.markdownEditors.get(index)!.markdownTextChange(this.generateInstructionText(instruction));
                 index += 1;
             });
@@ -344,33 +344,33 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @function resetInstruction
      * @desc Resets the whole instruction
      * @param instruction {GradingInstruction} the instruction, which will be reset
-     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be reset
+     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be reset
      */
-    resetInstruction(instruction: GradingInstruction, criteria: GradingCriterion) {
-        const criteriaIndex = this.findCriteriaIndex(criteria, this.exercise);
-        const backupCriteriaIndex = this.findCriteriaIndex(criteria, this.backupExercise);
+    resetInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
+        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
 
-        if (backupCriteriaIndex >= 0) {
-            const instructionIndex = this.findInstructionIndex(instruction, this.exercise, criteriaIndex);
-            const backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriteriaIndex);
+        if (backupCriterionIndex >= 0) {
+            const instructionIndex = this.findInstructionIndex(instruction, this.exercise, criterionIndex);
+            const backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
             if (backupInstructionIndex >= 0) {
-                this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
-                    this.backupExercise.gradingCriteria![backupCriteriaIndex].structuredGradingInstructions![backupInstructionIndex],
+                this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
+                    this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions![backupInstructionIndex],
                 );
                 this.initializeMarkdown();
             }
         }
     }
 
-    findCriteriaIndex(criteria: GradingCriterion, exercise: Exercise) {
+    findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
         return exercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criteria.id;
+            return gradingCriteria.id === criterion.id;
         });
     }
 
-    findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criteriaIndex: number) {
-        return exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions?.findIndex((sgi) => {
+    findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criterionIndex: number) {
+        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((sgi) => {
             return sgi.id === instruction.id;
         });
     }
@@ -379,28 +379,28 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @function deleteInstruction
      * @desc Deletes selected instruction
      * @param instruction {GradingInstruction} the instruction which should be deleted
-     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be deleted
+     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be deleted
      */
-    deleteInstruction(instruction: GradingInstruction, criteria: GradingCriterion) {
-        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
-        const instructionIndex = this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.indexOf(instruction);
-        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.splice(instructionIndex, 1);
+    deleteInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.splice(instructionIndex, 1);
     }
 
-    addInstruction(criteria: GradingCriterion) {
-        this.addNewInstruction(criteria);
+    addInstruction(criterion: GradingCriterion) {
+        this.addNewInstruction(criterion);
         this.initializeMarkdown();
     }
 
     /**
      * @function addNewInstruction
      * @desc Adds new grading instruction for desired grading criteria
-     * @param criteria {GradingCriterion} the criteria, which includes the instruction that will be inserted
+     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be inserted
      */
-    addNewInstruction(criteria: GradingCriterion) {
-        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
+    addNewInstruction(criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instruction = new GradingInstruction();
-        this.exercise.gradingCriteria![criteriaIndex].structuredGradingInstructions.push(instruction);
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.push(instruction);
     }
 
     addGradingCriterion() {
@@ -413,42 +413,42 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
      * @desc Adds new grading criteria for the exercise
      */
     addNewGradingCriterion() {
-        const criteria = new GradingCriterion();
-        criteria.structuredGradingInstructions = [];
-        criteria.structuredGradingInstructions.push(new GradingInstruction());
-        this.exercise.gradingCriteria!.push(criteria);
+        const criterion = new GradingCriterion();
+        criterion.structuredGradingInstructions = [];
+        criterion.structuredGradingInstructions.push(new GradingInstruction());
+        this.exercise.gradingCriteria!.push(criterion);
     }
 
     /**
      * @function onCriteriaTitleChange
      * @desc Detects changes for grading criteria title
-     * @param {GradingCriterion} criteria the criteria, which includes title that will be changed
+     * @param {GradingCriterion} criterion the criteria, which includes title that will be changed
      */
-    onCriterionTitleChange($event: any, criteria: GradingCriterion) {
-        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
-        this.exercise.gradingCriteria![criteriaIndex].title = $event.target.value;
+    onCriterionTitleChange($event: any, criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        this.exercise.gradingCriteria![criterionIndex].title = $event.target.value;
     }
 
     /**
      * @function resetCriteriaTitle
      * @desc Resets the whole grading criteria title
-     * @param criteria {GradingCriterion} the criteria, which includes title that will be reset
+     * @param criterion {GradingCriterion} the criteria, which includes title that will be reset
      */
-    resetCriteriaTitle(criteria: GradingCriterion) {
-        const criteriaIndex = this.findCriteriaIndex(criteria, this.exercise);
-        const backupCriteriaIndex = this.findCriteriaIndex(criteria, this.backupExercise);
-        if (backupCriteriaIndex >= 0) {
-            this.exercise.gradingCriteria![criteriaIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriteriaIndex].title);
+    resetCriterionTitle(criterion: GradingCriterion) {
+        const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
+        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
+        if (backupCriterionIndex >= 0) {
+            this.exercise.gradingCriteria![criterionIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
         }
     }
 
     /**
      * @function deleteGradingCriteria
      * @desc Deletes the grading criteria with sub-grading instructions
-     * @param criteria {GradingCriterion} the criteria, which will be deleted
+     * @param criterion {GradingCriterion} the criteria, which will be deleted
      */
-    deleteGradingCriterion(criteria: GradingCriterion) {
-        const criteriaIndex = this.exercise.gradingCriteria!.indexOf(criteria);
-        this.exercise.gradingCriteria!.splice(criteriaIndex, 1);
+    deleteGradingCriterion(criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        this.exercise.gradingCriteria!.splice(criterionIndex, 1);
     }
 }

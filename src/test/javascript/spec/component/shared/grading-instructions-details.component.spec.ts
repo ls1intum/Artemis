@@ -126,7 +126,7 @@ describe('Grading Instructions Management Component', () => {
     it('should reset the grading criterion', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
         component.backupExercise.gradingCriteria = [gradingCriterion];
-        component.resetCriteriaTitle(gradingCriterion);
+        component.resetCriterionTitle(gradingCriterion);
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria).to.deep.equal(component.backupExercise.gradingCriteria);
