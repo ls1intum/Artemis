@@ -51,13 +51,6 @@ describe('Logs Service', () => {
         }));
 
         it('should get the env', fakeAsync(() => {
-            /*   const propertySources = new HttpResponse({
-                body: [
-                    { name: 'test1', properties: 'test1' },
-                    { name: 'test2', properties: 'test2' },
-                ],
-            });
-*/
             const propertySources = {
                 propertySources: [
                     { name: 'test1', properties: { testA: { value: 'AAA' } } },
@@ -65,14 +58,13 @@ describe('Logs Service', () => {
                 ],
             };
 
-            const myResult = {
+            const expectedResult = {
                 test1: [{ key: 'testA', val: 'AAA' }],
                 test2: [{ key: 'testB', val: 'BBB' }],
             };
 
             service.getEnv().subscribe((received) => {
-                //expect(received).toEqual(propertySources);
-                expect(received).toEqual(myResult);
+                expect(received).toEqual(expectedResult);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
