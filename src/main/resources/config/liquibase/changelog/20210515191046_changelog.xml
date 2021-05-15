@@ -9,6 +9,7 @@
             <column name="checkout_directory" type="VARCHAR(100)"/>
             <column name="repository_url" type="VARCHAR(500)"/>
             <column name="description" type="VARCHAR(500)"/>
+            <column name="exercise_id" type="BIGINT"/>
         </createTable>
         <createIndex indexName="fk_auxiliary_repository_exercise" tableName="programming_exercise_auxiliary_repositories">
             <column name="exercise_id"/>
