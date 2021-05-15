@@ -61,6 +61,7 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "gradingSystem": "Grade Key",
             "testCourse": {
                 "title": "Test Course",
                 "description": "Activate this checkbox for courses used for testing.",
@@ -138,7 +139,7 @@
                 "assessmentsTitle": "Total Assessments",
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
-                "averageStudentScore": "Average Student Score"
+                "averageStudentScoreTitle": "Average Student Score"
             }
         },
         "courseStatistics": {

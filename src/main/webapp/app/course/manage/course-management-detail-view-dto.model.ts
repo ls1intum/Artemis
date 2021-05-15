@@ -1,7 +1,4 @@
-import { Course } from 'app/entities/course.model';
-
 export class CourseManagementDetailViewDto {
-    course: Course;
     numberOfStudentsInCourse: number;
     numberOfTeachingAssistantsInCourse: number;
     numberOfEditorsInCourse: number;

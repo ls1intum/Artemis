@@ -1,6 +1,5 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
@@ -21,13 +20,11 @@ describe('StudentQuestion Service', () => {
     let exerciseDefault: TextExercise;
     let lectureDefault: Lecture;
     let studentQuestionList: StudentQuestion[];
-    let expectedResult: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
         });
-        expectedResult = {} as HttpResponse<StudentQuestion>;
         injector = getTestBed();
         service = injector.get(StudentQuestionService);
         httpMock = injector.get(HttpTestingController);
@@ -60,64 +57,64 @@ describe('StudentQuestion Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should create a StudentQuestion', async () => {
+        it('should create a StudentQuestion', fakeAsync(() => {
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };
             service
                 .create(1, new StudentQuestion())
                 .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
-        });
+            tick();
+        }));
 
-        it('should update a StudentQuestion', async () => {
+        it('should update a StudentQuestion', fakeAsync(() => {
             const returnedFromService = { ...elemDefault, questionText: 'This is another test question' };
 
             const expected = { ...returnedFromService };
             service
                 .update(1, expected)
                 .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
-        });
+            tick();
+        }));
 
-        it('should delete a StudentQuestion', async () => {
-            service.delete(1, 123).subscribe((resp) => (expectedResult = resp.ok));
+        it('should delete a StudentQuestion', fakeAsync(() => {
+            service.delete(1, 123).subscribe((resp) => expect(resp.ok).to.be.true);
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            expect(expectedResult).to.be.true;
-        });
+            tick();
+        }));
 
-        it('should update the votes of a StudentQuestion', async () => {
+        it('should update the votes of a StudentQuestion', fakeAsync(() => {
             const returnedFromService = { ...elemDefault, votes: 42 };
 
             const expected = { ...returnedFromService };
             service
                 .updateVotes(1, expected.id!, 0)
                 .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
-        });
+            tick();
+        }));
 
-        it('should return all student questions for a course', async () => {
+        it('should return all student questions for a course', fakeAsync(() => {
             const returnedFromService = [...studentQuestionList];
 
             const expected = [...studentQuestionList];
             service
                 .findQuestionsForCourse(courseDefault.id!)
                 .pipe(take(2))
-                .subscribe((resp) => (expectedResult = resp));
+                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            expect(expectedResult.body).to.deep.equal(expected);
-        });
+            tick();
+        }));
     });
 
     afterEach(() => {
