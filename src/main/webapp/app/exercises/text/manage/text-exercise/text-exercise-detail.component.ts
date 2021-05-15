@@ -9,6 +9,9 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -23,6 +26,11 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     formattedSampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
+    doughnutStats: ExerciseManagementStatisticsDto;
+    absoluteAveragePoints = 0;
+    participationsInPercent = 0;
+    questionsAnsweredInPercent = 0;
+
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
@@ -31,6 +39,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         private textExerciseService: TextExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        private statisticsService: StatisticsService,
     ) {}
 
     /**
@@ -57,6 +66,12 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.sampleSolution);
+        });
+        this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats = statistics;
+            this.participationsInPercent = statistics.numberOfStudentsInCourse > 0 ? round((statistics.numberOfParticipations / statistics.numberOfStudentsInCourse) * 100, 1) : 0;
+            this.questionsAnsweredInPercent = statistics.numberOfQuestions > 0 ? round((statistics.numberOfAnsweredQuestions / statistics.numberOfQuestions) * 100, 1) : 0;
+            this.absoluteAveragePoints = round((statistics.averageScoreOfExercise * statistics.maxPointsOfExercise) / 100, 1);
         });
     }
 

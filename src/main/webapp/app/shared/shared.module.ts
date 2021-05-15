@@ -28,6 +28,7 @@ import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
+import { DoughnutChartComponent } from 'app/shared/statistics-graph/doughnut-chart.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -54,6 +55,7 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
         StatisticsAverageScoreGraphComponent,
         StatisticsScoreDistributionGraphComponent,
         ExerciseStatisticsComponent,
+        DoughnutChartComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -84,6 +86,7 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
         StatisticsAverageScoreGraphComponent,
         StatisticsScoreDistributionGraphComponent,
         ExerciseStatisticsComponent,
+        DoughnutChartComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

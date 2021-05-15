@@ -368,6 +368,20 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<StatisticsEntry> getQuestionsAskedForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
 
     @Query("""
+            select count(sq)
+            from StudentQuestion sq left join sq.exercise exercise
+            where exercise.id = :#{#exerciseId}
+            """)
+    long getNumberOfQuestionsAskedForExercise(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select count(sq)
+            from StudentQuestion sq left join sq.exercise as exercise left join sq.answers as answers on answers.verified = true or answers.tutorApproved = true
+            where exercise.id = :#{#exerciseId}
+            """)
+    long getNumberOfQuestionsAnsweredForExercise(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 a.answerDate, count(a.id)

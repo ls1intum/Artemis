@@ -1,6 +1,6 @@
 <div>
     <div class="row mb-5">
-        <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="statistics.exercise_statistics_title">Course statistics</h2>
+        <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title">Course statistics</h2>
         <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
                 <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | artemisTranslate }}
@@ -19,6 +19,31 @@
             </label>
         </div>
     </div>
+
+    <jhi-doughnut-chart
+        class="mb-4 d-inline-flex"
+        [doughnutChartTitle]="'exercise-statistics.averageScore' | artemisTranslate"
+        [currentPercentage]="exerciseStatistics.averageScoreOfExercise"
+        [currentAbsolute]="absoluteAveragePoints"
+        [currentMax]="exerciseStatistics.maxPointsOfExercise"
+    >
+    </jhi-doughnut-chart>
+    <jhi-doughnut-chart
+        class="mb-4 d-inline-flex"
+        [doughnutChartTitle]="'exercise-statistics.participationRate' | artemisTranslate"
+        [currentPercentage]="participationsInPercent"
+        [currentAbsolute]="exerciseStatistics.numberOfParticipations"
+        [currentMax]="exerciseStatistics.numberOfStudentsInCourse"
+    >
+    </jhi-doughnut-chart>
+    <jhi-doughnut-chart
+        class="mb-4 d-inline-flex"
+        [doughnutChartTitle]="'exercise-statistics.questionsAnswered' | artemisTranslate"
+        [currentPercentage]="questionsAnsweredInPercent"
+        [currentAbsolute]="exerciseStatistics.numberOfAnsweredQuestions"
+        [currentMax]="exerciseStatistics.numberOfQuestions"
+    >
+    </jhi-doughnut-chart>
 
     <jhi-statistics-score-distribution-graph
         *ngIf="exerciseStatistics"

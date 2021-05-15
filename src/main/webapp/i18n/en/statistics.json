@@ -11,7 +11,6 @@
         },
         "title": "User statistics",
         "course_statistics_title": "Course statistics",
-        "exercise_statistics_title": "Exercise statistics",
         "submissions": "Submissions",
         "active_users": "Active users",
         "logged_in_users": "Logged in users",
@@ -70,5 +69,11 @@
         "october": "October",
         "november": "November",
         "december": "December"
+    },
+    "exercise-statistics": {
+        "title": "Exercise statistics",
+        "averageScore": "Average Score",
+        "participationRate": "Participation rate",
+        "questionsAnswered": "Questions answered"
     }
 }

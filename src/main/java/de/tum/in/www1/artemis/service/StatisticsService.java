@@ -30,14 +30,20 @@ public class StatisticsService {
 
     private final CourseRepository courseRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final UserRepository userRepository;
 
+    private final ParticipationRepository participationRepository;
+
     public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository, CourseRepository courseRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository) {
         this.statisticsRepository = statisticsRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -156,8 +162,27 @@ public class StatisticsService {
      */
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
         var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        var numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
         var exerciseManagementStatisticsDTO = new ExerciseManagementStatisticsDTO();
+        // number of students
+        var numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
+        exerciseManagementStatisticsDTO.setNumberOfStudentsInCourse(Objects.requireNonNullElse(numberOfStudents, 0L));
+        // number of participations
+        var numberOfParticipations = participationRepository.getNumberOfParticipationsForExercise(exercise.getId());
+        exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipations);
+        // questions stats
+        var questionsAsked = statisticsRepository.getNumberOfQuestionsAskedForExercise(exercise.getId());
+        exerciseManagementStatisticsDTO.setNumberOfQuestions(questionsAsked);
+        var answeredQuestions = statisticsRepository.getNumberOfQuestionsAnsweredForExercise(exercise.getId());
+        exerciseManagementStatisticsDTO.setNumberOfAnsweredQuestions(answeredQuestions);
+
+        // average score & max points
+        Double maxPoints = exercise.getMaxPoints();
+        if (maxPoints != null) {
+            exerciseManagementStatisticsDTO.setMaxPointsOfExercise(maxPoints);
+        }
+        else {
+            exerciseManagementStatisticsDTO.setMaxPointsOfExercise(0);
+        }
         Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
         double averageScoreForExercise = averageScore != null ? round(averageScore) : 0.0;
         exerciseManagementStatisticsDTO.setAverageScoreOfExercise(averageScoreForExercise);

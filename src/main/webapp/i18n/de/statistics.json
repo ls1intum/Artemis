@@ -11,7 +11,6 @@
         },
         "title": "Benutzerstatistiken",
         "course_statistics_title": "Kursstatistiken",
-        "exercise_statistics_title": "Aufgabenstatistiken",
         "submissions": "Abgaben",
         "active_users": "Aktive Nutzer",
         "logged_in_users": "Eingeloggte Nutzer",
@@ -70,5 +69,11 @@
         "october": "Oktober",
         "november": "November",
         "december": "Dezember"
+    },
+    "exercise-statistics": {
+        "title": "Aufgabenstatistiken",
+        "averageScore": "Duschnittspunktzahl",
+        "participationRate": "Teilnahmen",
+        "questionsAnswered": "Beantwortete Fragen"
     }
 }

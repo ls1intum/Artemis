@@ -25,6 +25,30 @@
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>
+            <jhi-doughnut-chart
+                class="my-4 d-inline-flex"
+                [doughnutChartTitle]="'exercise-statistics.averageScore' | artemisTranslate"
+                [currentPercentage]="doughnutStats.averageScoreOfExercise"
+                [currentAbsolute]="absoluteAveragePoints"
+                [currentMax]="doughnutStats.maxPointsOfExercise"
+            >
+            </jhi-doughnut-chart>
+            <jhi-doughnut-chart
+                class="my-4 d-inline-flex"
+                [doughnutChartTitle]="'exercise-statistics.participationRate' | artemisTranslate"
+                [currentPercentage]="participationsInPercent"
+                [currentAbsolute]="doughnutStats.numberOfParticipations"
+                [currentMax]="doughnutStats.numberOfStudentsInCourse"
+            >
+            </jhi-doughnut-chart>
+            <jhi-doughnut-chart
+                class="my-4 d-inline-flex"
+                [doughnutChartTitle]="'exercise-statistics.questionsAnswered' | artemisTranslate"
+                [currentPercentage]="questionsAnsweredInPercent"
+                [currentAbsolute]="doughnutStats.numberOfAnsweredQuestions"
+                [currentMax]="doughnutStats.numberOfQuestions"
+            >
+            </jhi-doughnut-chart>
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>

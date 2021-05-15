@@ -101,7 +101,7 @@ const routes: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'statistics.exercise_statistics_title',
+            pageTitle: 'exercise-statistics.title',
         },
         canActivate: [UserRouteAccessService],
     },

@@ -1,0 +1,21 @@
+<div class="mx-3">
+    <h4 class="text-center">{{ doughnutChartTitle }}</h4>
+    <div class="doughnut-chart-container">
+        <div class="doughnut-chart-text">
+            <h2 class="text-center">{{ currentPercentage }} %</h2>
+            <h4 class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
+        </div>
+        <canvas
+            baseChart
+            id="doughnut"
+            height="200"
+            width="200"
+            [legend]="false"
+            [datasets]="doughnutChartData"
+            [options]="totalScoreOptions"
+            [colors]="doughnutChartColors"
+            [labels]="doughnutChartLabels"
+            [chartType]="doughnutChartType"
+        ></canvas>
+    </div>
+</div>

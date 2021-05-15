@@ -116,7 +116,7 @@ public class StatisticsResource {
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, null)) {
             return forbidden();
         }
-        ExerciseManagementStatisticsDTO temp = service.getExerciseStatistics(exercise);
-        return ResponseEntity.ok(temp);
+        var exerciseManagementStatisticsDTO = service.getExerciseStatistics(exercise);
+        return ResponseEntity.ok(exerciseManagementStatisticsDTO);
     }
 }
