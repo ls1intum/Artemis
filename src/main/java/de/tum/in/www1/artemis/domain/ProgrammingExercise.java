@@ -35,9 +35,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
 
-    @Column(name = "auxiliary_repositories")
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-    private List<AuxiliaryRepository> auxiliaryRepositories;
+    @JsonIgnoreProperties("exercise")
+    private Set<AuxiliaryRepository> auxiliaryRepositories;
 
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
@@ -199,20 +199,13 @@ public class ProgrammingExercise extends Exercise {
         return matcher.group(1);
     }
 
-    public void addAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
-        this.auxiliaryRepositories.add(auxiliaryRepository);
-    }
-
-    public void removeAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
-        this.auxiliaryRepositories.removeIf(aux -> Objects.equals(aux.getId(), auxiliaryRepository.getId()));
-    }
-
-    public boolean containsAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
-        return this.auxiliaryRepositories.stream().anyMatch(aux -> Objects.equals(aux.getId(), auxiliaryRepository.getId()));
-    }
-
-    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
+    @JsonIgnore
+    public Set<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
+    }
+
+    public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
+        this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter

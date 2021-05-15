@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.Size;
 import java.net.MalformedURLException;
 
 @Entity
@@ -17,17 +20,25 @@ import java.net.MalformedURLException;
 public class AuxiliaryRepository extends DomainObject {
 
     // The name must not be the same as a name registered in the course
+    @Size(max = 100)
     @Column(name = "name")
     private String name;
 
+    @Size(max = 500)
     @Column(name = "repository_url")
     private String repositoryUrl;
 
+    @Size(max = 100)
     @Column(name = "checkout_directory")
     private String checkoutDirectory;
 
+    @Size(max = 500)
     @Column(name = "description")
     private String description;
+
+    @ManyToOne
+    @JsonIgnoreProperties("auxiliaryRepositories")
+    private ProgrammingExercise exercise;
 
     public String getRepositoryUrl() {
         return repositoryUrl;
