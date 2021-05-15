@@ -30,4 +30,9 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     Set<TextBlock> findAllBySubmissionIdIn(Set<Long> submissionIdList);
 
     void deleteAllBySubmission_Id(Long submissionId);
+
+    // @Query("select ...")
+    // List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
+    //
+    // Map<TextBlock, Integer> countDistinctByCluster
 }
