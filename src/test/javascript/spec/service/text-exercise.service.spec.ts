@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -47,7 +47,7 @@ describe('TextExercise Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should find an element', fakeAsync(() => {
+        it('should find an element', () => {
             const returnedFromService = Object.assign({}, elemDefault);
             service
                 .find(123)
@@ -56,7 +56,7 @@ describe('TextExercise Service', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
             expect(requestResult.body).to.deep.eq(elemDefault);
-        }));
+        });
 
         it('should create a TextExercise', () => {
             const returnedFromService = Object.assign({ id: 0 }, elemDefault);
