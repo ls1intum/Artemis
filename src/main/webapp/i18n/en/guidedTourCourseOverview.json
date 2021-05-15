@@ -16,7 +16,7 @@
             },
             "adminMenu": {
                 "headline": "Server administration",
-                "content": "Get an insight in the application administration."
+                "content": "Get insight into application administration."
             },
             "notificationMenu": {
                 "headline": "Your notifications",
@@ -32,11 +32,11 @@
             },
             "course": {
                 "headline": "Your current courses",
-                "content": "This is a course you are signed up to. You can check out the course details afterwards by clicking on the panel."
+                "content": "This is a course you are signed up for. You can check out the course details afterwards by clicking on this panel."
             },
             "courseFooter": {
-                "headline": "Next due exercise",
-                "content": "See what exercise has to be completed in the next few days."
+                "headline": "Next exercise due",
+                "content": "See which exercise has to be completed in the next few days."
             },
             "courseClick": {
                 "headline": "View course details",
@@ -44,7 +44,7 @@
             },
             "register": {
                 "headline": "Sign up for other courses",
-                "content": "You can click here and see whether you can sign up for other courses additionally."
+                "content": "Click here to see other courses you can sign up for."
             },
             "contact": {
                 "headline": "Contact the Artemis team",
