@@ -66,8 +66,4 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
             this.icon = getIcon(exerciseType) as IconProp;
         }
     }
-
-    notReleased(): boolean {
-        return this.exercise.releaseDate != undefined && !moment(this.exercise.releaseDate).isBefore(moment())!;
-    }
 }
