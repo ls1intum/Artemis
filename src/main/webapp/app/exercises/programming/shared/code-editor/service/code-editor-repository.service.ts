@@ -18,6 +18,7 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
+import { downloadFile } from 'app/shared/util/download.util';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -139,6 +140,19 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      */
     ngOnDestroy() {
         super.ngOnDestroy();
+    }
+
+    /**
+     * downloads a file from the repository to the users device.
+     * @param fileName
+     */
+    downloadFile(fileName: string) {
+        this.http
+            .get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
+            .pipe(handleErrorResponse(this.conflictService))
+            .subscribe((res) => {
+                downloadFile(res, fileName);
+            });
     }
 
     /**

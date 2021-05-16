@@ -56,6 +56,11 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     public tokenEnd = '</span>';
 
+    /**
+     * True if currently selected file is not a text file.
+     */
+    binaryFile?: boolean;
+
     constructor(private repositoryService: CodeEditorRepositoryFileService, private textSubmissionService: TextSubmissionService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -104,7 +109,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
         this.repositoryService.getFileType(file).subscribe((fileType) => {
             if (!fileType.startsWith('text')) {
-                alert('this is not a text file.');
+                this.binaryFile = true;
             } else {
                 this.repositoryService.getFile(file).subscribe(
                     ({ fileContent }) => {
