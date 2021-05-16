@@ -114,7 +114,12 @@ public class RepositoryService {
         if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
-        return Files.probeContentType(file.get().toPath());
+        String type = Files.probeContentType(file.get().toPath());
+        // fallback to text/plain in case content type can not be determined
+        if (type == null) {
+            return "text/plain";
+        }
+        return type;
     }
 
     /**
