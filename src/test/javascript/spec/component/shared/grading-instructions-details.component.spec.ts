@@ -151,7 +151,7 @@ describe('Grading Instructions Management Component', () => {
 
     it('should change grading criteria title', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
-        const event = { target: { value: 'changed Title'}};
+        const event = { target: { value: 'changed Title' } };
         component.onCriterionTitleChange(event, gradingCriterion);
         fixture.detectChanges();
 

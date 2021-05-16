@@ -2,9 +2,9 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { getTestBed } from '@angular/core/testing';
-import {GradingInstruction} from "app/exercises/shared/structured-grading-criterion/grading-instruction.model";
-import {GradingCriterion} from "app/exercises/shared/structured-grading-criterion/grading-criterion.model";
-import {Exercise} from "app/entities/exercise.model";
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -13,7 +13,14 @@ describe('Exercise Update Warning Service', () => {
     let updateWarningService: ExerciseUpdateWarningService;
 
     const gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
-    const gradingInstructionCreditsChanged = { id: 1, credits: 3, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
+    const gradingInstructionCreditsChanged = {
+        id: 1,
+        credits: 3,
+        gradingScale: 'scale',
+        instructionDescription: 'description',
+        feedback: 'feedback',
+        usageCount: 0,
+    } as GradingInstruction;
     const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
     const gradingCriterionCreditsChanged = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstructionCreditsChanged] } as GradingCriterion;
     const gradingCriterionWithoutInstruction = { id: 1, title: 'testCriteria' } as GradingCriterion;
@@ -26,7 +33,6 @@ describe('Exercise Update Warning Service', () => {
 
         updateWarningService.instructionDeleted = false;
         updateWarningService.scoringChanged = false;
-
     });
 
     it('should set instructionDeleted as true', () => {
@@ -42,6 +48,4 @@ describe('Exercise Update Warning Service', () => {
         updateWarningService.loadExercise(exercise, backupExercise);
         expect(updateWarningService.scoringChanged).to.equal(true);
     });
-
-
 });
