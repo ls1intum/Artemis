@@ -12,7 +12,7 @@
             "exerciseOrLecture": "Exercise / Lecture",
             "overview": {
                 "title": "Questions",
-                "noQuestions": "There are no questions for this course",
+                "noQuestions": "There are no questions in this course",
                 "showApproved": "Show questions with approved answers",
                 "hideApproved": "Hide questions with approved answers"
             }
