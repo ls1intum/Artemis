@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChildren, QueryList, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, ViewChildren, QueryList, ChangeDetectorRef, AfterContentInit } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
@@ -18,7 +18,7 @@ import { cloneDeep } from 'lodash';
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
 })
-export class GradingInstructionsDetailsComponent implements OnInit, AfterViewInit {
+export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     /** Ace Editor configuration constants **/
     questionEditorText = '';
     @ViewChildren('markdownEditor')
@@ -64,7 +64,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterViewIni
         this.questionEditorText = this.generateMarkdown();
     }
 
-    ngAfterViewInit() {
+    ngAfterContentInit() {
         if (this.exercise.gradingInstructionFeedbackUsed) {
             this.initializeMarkdown();
         }
