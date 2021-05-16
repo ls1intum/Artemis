@@ -9,13 +9,12 @@ describe('Authentication tests', () => {
     beforeEach(() => {
         expect(username, 'username was set').to.be.a('string').and.not.be.empty;
         expect(password, 'password was set').to.be.a('string').and.not.be.empty;
+        // @ts-ignore
         cy.logout();
     });
 
     it('logs in via the ui', function () {
-        // @ts-ignore
         cy.get('#username').type(username);
-        // @ts-ignore
         cy.get('#password').type(password).type('{enter}');
         cy.url()
             .should('include', '/courses')
@@ -25,6 +24,7 @@ describe('Authentication tests', () => {
     });
 
     it('logs in programmatically and logs out via the ui', function () {
+        // @ts-ignore
         cy.login(username, password);
         cy.url().should('include', '/courses');
         cy.get('#account-menu').click().get('#logout').click();
