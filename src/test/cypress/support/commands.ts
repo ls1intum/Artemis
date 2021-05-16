@@ -30,14 +30,14 @@ Cypress.Commands.add('login', (email, password) => {
     cy.request('POST', '/api/authenticate', { username: email, password: password, rememberMe: false })
         .its('body')
         .then((body) => {
-            localStorage.setItem(authTokenKey, '"' + body.id_token + '"')
-        })
-    cy.visit('/')
-    cy.log('Logged in')
+            localStorage.setItem(authTokenKey, '"' + body.id_token + '"');
+        });
+    cy.visit('/');
+    cy.log(`Logged in as '${email}'`);
 });
 
 Cypress.Commands.add('logout', () => {
-    localStorage.removeItem(authTokenKey)
-    cy.visit('/')
-    cy.log('Logged out')
+    localStorage.removeItem(authTokenKey);
+    cy.visit('/');
+    cy.log('Logged out');
 });
