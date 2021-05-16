@@ -80,11 +80,25 @@ describe('Text Submission Viewer Component', () => {
         comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
+        spyOn(repositoryService, 'getFileType').and.returnValue(of('text/java-x'));
         spyOn(repositoryService, 'getFile').and.returnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
 
         expect(repositoryService.getFile).toHaveBeenCalledWith(fileName);
+        expect(comp.currentFile).toEqual(fileName);
+    });
+
+    it('handles binary file selection', () => {
+        comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
+
+        const fileName = Object.keys(files)[1];
+        spyOn(repositoryService, 'getFileType').and.returnValue(of('audio/x-pn-wav'));
+        spyOn(repositoryService, 'getFile').and.returnValue(of({ fileContent: 'Test' }));
+
+        comp.handleFileSelect(fileName);
+
+        expect(repositoryService.getFile).toBeCalledTimes(0);
         expect(comp.currentFile).toEqual(fileName);
     });
 
