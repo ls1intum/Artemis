@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
 /**
@@ -100,26 +99,6 @@ public class RepositoryService {
         byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
         inputStream.close();
         return fileInBytes;
-    }
-
-    /**
-     * Get a single file/folder from repository.
-     *
-     * @param repository in which the requested file is located.
-     * @param filename   of the file to be retrieved.
-     * @return The file if found or throw an exception.
-     * @throws IOException if the file can't be found, is corrupt, etc.
-     */
-    public Tuple<byte[], String> getFileWithContentType(Repository repository, String filename) throws IOException {
-        Optional<File> file = gitService.getFileByName(repository, filename);
-        if (file.isEmpty()) {
-            throw new FileNotFoundException();
-        }
-        InputStream inputStream = new FileInputStream(file.get());
-        byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
-        Tuple<byte[], String> res = new Tuple<>(fileInBytes, Files.probeContentType(file.get().toPath()));
-        inputStream.close();
-        return res;
     }
 
     /**
