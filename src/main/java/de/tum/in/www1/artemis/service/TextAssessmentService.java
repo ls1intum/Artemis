@@ -57,7 +57,7 @@ public class TextAssessmentService extends AssessmentService {
 
         // Set each block's impact on other submissions for the current 'textSubmission'
         if (computeFeedbackSuggestions && result != null) {
-            automaticTextFeedbackService.get().setNumberOfAffectedSubmissions(result);
+            automaticTextFeedbackService.get().setNumberOfAffectedSubmissionsPerBlock(result);
             result.setSubmission(textSubmission);
         }
 

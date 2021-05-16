@@ -88,7 +88,7 @@ public class AutomaticTextFeedbackService {
      * @param result Result for the Submission acting as a reference for the text submission to be searched.
      */
     @Transactional()
-    public void setNumberOfAffectedSubmissions(@NotNull Result result) {
+    public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
         textSubmission.setBlocks(blocks);
