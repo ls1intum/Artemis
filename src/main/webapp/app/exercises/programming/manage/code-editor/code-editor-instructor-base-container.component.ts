@@ -86,7 +86,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         private participationService: ParticipationService,
         protected route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-    ) {}
+    ) {
+    }
 
     /**
      * Initialize the route params subscription.
@@ -317,7 +318,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 }),
             )
             .subscribe(
-                () => {},
+                () => {
+                },
                 (err) => this.onError(err),
             );
     }
@@ -341,7 +343,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 }),
             )
             .subscribe(
-                () => {},
+                () => {
+                },
                 (err) => this.onError(err),
             );
     }
@@ -355,7 +358,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
     }
 
+    /**
+     * Returns whether the component can be left. Returns false if the code editor has unsaved changes
+     * or true if not or if there is no code editor
+     */
     canDeactivate() {
-        return this.codeEditorContainer.canDeactivate();
+        return this.codeEditorContainer?.canDeactivate() ?? true;
     }
 }
