@@ -12,5 +12,5 @@
 
 <div class="binaryFileDialogue" *ngIf="binaryFile">
     <span class="text-primary">Binary file not rendered.</span>
-    <a download [href]="repositoryService.">Download</a>
+    <a (click)="downloadCurrentFile()">Download</a>
 </div>

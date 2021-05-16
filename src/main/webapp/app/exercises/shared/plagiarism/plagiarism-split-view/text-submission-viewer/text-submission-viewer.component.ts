@@ -110,6 +110,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.repositoryService.getFileType(file).subscribe((fileType) => {
             if (!fileType.startsWith('text')) {
                 this.binaryFile = true;
+                this.loading = false;
             } else {
                 this.repositoryService.getFile(file).subscribe(
                     ({ fileContent }) => {
@@ -122,6 +123,10 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 );
             }
         });
+    }
+
+    downloadCurrentFile() {
+        this.repositoryService.downloadFile(this.currentFile);
     }
 
     getMatchesForCurrentFile() {
