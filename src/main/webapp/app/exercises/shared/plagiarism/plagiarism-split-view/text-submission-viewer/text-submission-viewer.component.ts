@@ -101,15 +101,22 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.loading = true;
 
         this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
-        this.repositoryService.getFile(file).subscribe(
-            ({ fileContent }) => {
-                this.loading = false;
-                this.fileContent = this.insertMatchTokens(fileContent);
-            },
-            () => {
-                this.loading = false;
-            },
-        );
+
+        this.repositoryService.getFileType(file).subscribe((fileType) => {
+            if (!fileType.startsWith('text')) {
+                alert('this is not a text file.');
+            } else {
+                this.repositoryService.getFile(file).subscribe(
+                    ({ fileContent }) => {
+                        this.loading = false;
+                        this.fileContent = this.insertMatchTokens(fileContent);
+                    },
+                    () => {
+                        this.loading = false;
+                    },
+                );
+            }
+        });
     }
 
     getMatchesForCurrentFile() {

@@ -102,6 +102,22 @@ public class RepositoryService {
     }
 
     /**
+     * Get a single file/folder from repository.
+     *
+     * @param repository in which the requested file is located.
+     * @param filename   of the file to be retrieved.
+     * @return The file if found or throw an exception.
+     * @throws IOException if the file can't be found, is corrupt, etc.
+     */
+    public String getFileType(Repository repository, String filename) throws IOException {
+        Optional<File> file = gitService.getFileByName(repository, filename);
+        if (file.isEmpty()) {
+            throw new FileNotFoundException();
+        }
+        return Files.probeContentType(file.get().toPath());
+    }
+
+    /**
      * Gets the files of the repository and checks whether they were changed during a student participation.
      * Compares the files from the students repository with the files of the template repository.
      *

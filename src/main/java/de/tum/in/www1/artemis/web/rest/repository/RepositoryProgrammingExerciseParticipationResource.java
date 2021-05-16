@@ -170,6 +170,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return super.getFile(participationId, filename);
     }
 
+    @Override
+    @GetMapping(value = "/repository/{participationId}/fileType", produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> getFileType(@PathVariable Long participationId, @RequestParam("file") String filename) {
+        return super.getFileType(participationId, filename);
+    }
+
     /**
      * GET /repository/{participationId}/files-content
      *

@@ -132,6 +132,25 @@ public abstract class RepositoryResource {
     }
 
     /**
+     * Get the content of a file.
+     *
+     * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @param filename of the file to retrieve.
+     * @return the file if available.
+     */
+    public ResponseEntity<String> getFileType(Long domainId, String filename) {
+        log.debug("REST request to type of file {} for domainId : {}", filename, domainId);
+
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            String out = repositoryService.getFileType(repository, filename);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+            return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
+        });
+    }
+
+    /**
      * Create new file.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.

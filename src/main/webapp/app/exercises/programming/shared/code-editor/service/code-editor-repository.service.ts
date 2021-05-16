@@ -173,20 +173,22 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
+    getFileType = (fileName: string) => {
+        return this.http
+            .get(`${this.restResourceUrl}/fileType`, { params: new HttpParams().set('file', fileName), responseType: 'text' })
+            .pipe(handleErrorResponse(this.conflictService));
+    };
+
     getFilesWithContent = () => {
         return this.http.get(`${this.restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
     };
 
     createFile = (fileName: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
     };
 
     createFolder = (folderName: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) }).pipe(handleErrorResponse(this.conflictService));
     };
 
     updateFileContent = (fileName: string, fileContent: string) => {
@@ -230,14 +232,10 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }).pipe(handleErrorResponse(this.conflictService));
     };
 
     deleteFile = (fileName: string) => {
-        return this.http
-            .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
     };
 }
