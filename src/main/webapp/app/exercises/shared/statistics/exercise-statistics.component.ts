@@ -5,12 +5,17 @@ import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { round } from 'app/shared/util/utils';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
 })
 export class ExerciseStatisticsComponent implements OnInit {
+    readonly DoughnutChartType = DoughnutChartType;
+    readonly ExerciseType = ExerciseType;
+
     // html properties
     SpanType = SpanType;
     graph = Graphs;
@@ -18,6 +23,7 @@ export class ExerciseStatisticsComponent implements OnInit {
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.EXERCISE;
     paramSub: Subscription;
+    courseId: number;
     exerciseId: number;
 
     exerciseStatistics: ExerciseManagementStatisticsDto;
@@ -32,6 +38,7 @@ export class ExerciseStatisticsComponent implements OnInit {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = params['exerciseId'];
+            this.courseId = params['courseId'];
         });
         this.service.getExerciseStatistics(this.exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
             this.exerciseStatistics = res;

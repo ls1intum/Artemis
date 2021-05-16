@@ -6,6 +6,7 @@
                 "createLabel": "Übung erstellen",
                 "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
+            "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
             "resultCount": "{{resultsLength}} Ergebnisse",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",

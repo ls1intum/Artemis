@@ -13,11 +13,11 @@ import { round } from 'app/shared/util/utils';
 })
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     @Input()
-    averageScoreOfExercise: number;
+    averageScoreOfExercise: number | undefined;
     @Input()
-    scoreDistribution: number[];
+    scoreDistribution: number[] | undefined;
     @Input()
-    numberOfExerciseScores: number;
+    numberOfExerciseScores: number | undefined;
 
     // Html properties
     LEFT = false;
@@ -49,9 +49,9 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
 
     private initializeChart(): void {
         this.barChartLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
-        if (this.numberOfExerciseScores > 0) {
+        if (this.numberOfExerciseScores && this.numberOfExerciseScores > 0) {
             this.relativeChartData = [];
-            for (const value of this.scoreDistribution) {
+            for (const value of this.scoreDistribution!) {
                 this.relativeChartData.push(round((value * 100) / this.numberOfExerciseScores));
             }
         } else {

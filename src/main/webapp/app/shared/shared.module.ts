@@ -28,10 +28,11 @@ import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
-import { DoughnutChartComponent } from 'app/shared/statistics-graph/doughnut-chart.component';
+import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
         ArtemisDatePipe,
         CircularProgressBarComponent,
