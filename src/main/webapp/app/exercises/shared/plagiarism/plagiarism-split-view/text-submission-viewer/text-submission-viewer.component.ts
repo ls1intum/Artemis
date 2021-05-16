@@ -112,6 +112,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.binaryFile = true;
                 this.loading = false;
             } else {
+                this.binaryFile = false;
                 this.repositoryService.getFile(file).subscribe(
                     ({ fileContent }) => {
                         this.loading = false;

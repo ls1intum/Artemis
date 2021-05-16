@@ -132,11 +132,11 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * Get the content of a file.
+     * Get the mimetype of a file.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @param filename of the file to retrieve.
-     * @return the file if available.
+     * @param filename of the file to probed.
+     * @return the files mimetype if available.
      */
     public ResponseEntity<String> getFileType(Long domainId, String filename) {
         log.debug("REST request to type of file {} for domainId : {}", filename, domainId);

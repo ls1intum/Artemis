@@ -102,11 +102,11 @@ public class RepositoryService {
     }
 
     /**
-     * Get a single file/folder from repository.
+     * Get the mimetype of a single file from the repository
      *
      * @param repository in which the requested file is located.
-     * @param filename   of the file to be retrieved.
-     * @return The file if found or throw an exception.
+     * @param filename   of the file to be probed.
+     * @return The mimetype of the file if found or throw an exception.
      * @throws IOException if the file can't be found, is corrupt, etc.
      */
     public String getFileType(Repository repository, String filename) throws IOException {
