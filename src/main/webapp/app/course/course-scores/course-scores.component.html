@@ -42,12 +42,12 @@
                         </th>
                     </ng-container>
                     <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th *ngIf="gradingScaleExists" jhiSortBy="gradeStep.lowerBoundPercentage">
+                    <th *ngIf="gradingScaleExists" jhiSortBy="overallPoints">
                         <span>
                             {{
                                 isBonus
-                                    ? ('artemisApp.courseScoreCalculation.gradingSystemGrade' | artemisTranslate)
-                                    : ('artemisApp.courseScoreCalculation.gradingSystemBonus' | artemisTranslate)
+                                    ? ('artemisApp.courseScoreCalculation.gradingSystemBonus' | artemisTranslate)
+                                    : ('artemisApp.courseScoreCalculation.gradingSystemGrade' | artemisTranslate)
                             }}
                         </span>
                         <fa-icon [icon]="'sort'"></fa-icon>

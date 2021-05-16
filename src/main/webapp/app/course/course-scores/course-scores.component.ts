@@ -168,7 +168,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.allParticipationsOfCourse = participationsOfCourse;
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
-            this.calculateGradingScaleInformation(courseId);
+            this.gradingSystemService.findGradingScaleForCourse(courseId).subscribe(
+                (gradingScaleResponse) => {
+                    if (gradingScaleResponse.body) {
+                        this.calculateGradingScaleInformation(gradingScaleResponse.body, courseId);
+                    }
+                },
+                () => {},
+            );
 
             // comparing with calculation from course scores (using new participation score table)
             const courseScoreDTOs = courseScoresResult.body!;
@@ -378,35 +385,22 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.exportReady = true;
     }
 
-    calculateGradingScaleInformation(courseId: number) {
-        this.gradingSystemService.findGradingScaleForCourse(courseId).subscribe((gradingSystemResponse) => {
-            if (gradingSystemResponse.body) {
-                this.gradingScaleExists = true;
-                this.gradingScale = gradingSystemResponse.body!;
-                this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
-                this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
-                this.maxGrade = this.gradingSystemService.maxGrade(this.gradingScale!.gradeSteps);
-                if (this.maxNumberOfOverallPoints >= 0) {
-                    const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
-                    this.gradingSystemService.getGradeStepMappingForCourse(courseId, overallPercentage).subscribe((gradeStep) => {
-                        if (gradeStep.body) {
-                            this.averageGrade = gradeStep.body.gradeName;
-                            this.changeDetector.detectChanges();
-                        }
-                    });
-                    for (const student of this.students) {
-                        const overallPercentageForStudent =
-                            student.overallPoints > 0 && this.maxNumberOfOverallPoints > 0 ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
-                        this.gradingSystemService.getGradeStepMappingForCourse(courseId, overallPercentageForStudent).subscribe((gradeStep) => {
-                            if (gradeStep.body) {
-                                student.gradeStep = gradeStep.body;
-                                this.changeDetector.detectChanges();
-                            }
-                        });
-                    }
-                }
+    calculateGradingScaleInformation(gradingScale: GradingScale, courseId: number) {
+        this.gradingScaleExists = true;
+        this.gradingScale = gradingScale;
+        this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+        this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
+        this.maxGrade = this.gradingSystemService.maxGrade(this.gradingScale!.gradeSteps);
+        if (this.maxNumberOfOverallPoints >= 0) {
+            const overallPercentage = this.maxNumberOfOverallPoints > 0 ? (this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+            this.averageGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentage)!.gradeName;
+            for (const student of this.students) {
+                const overallPercentageForStudent =
+                    student.overallPoints > 0 && this.maxNumberOfOverallPoints > 0 ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+                student.gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale.gradeSteps, overallPercentageForStudent);
             }
-        });
+        }
+        this.changeDetector.detectChanges();
     }
 
     /**

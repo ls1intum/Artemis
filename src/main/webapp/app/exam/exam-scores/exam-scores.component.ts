@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, Subscription, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
@@ -12,7 +13,7 @@ import {
     ExerciseGroup,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
@@ -90,7 +91,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             // alternative exam scores calculation using participant scores table
             const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']);
 
-            const gradingScaleObservable = this.gradingSystemService.findGradingScaleForExam(params['courseId'], params['examId']);
+            const gradingScaleObservable = this.gradingSystemService
+                .findGradingScaleForExam(params['courseId'], params['examId'])
+                .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe(
                 ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
@@ -118,6 +121,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             }
                         }
                     }
+                    this.gradingSystemService.findGradingScaleForExam(params['courseId'], params['examId']);
                     if (gradingScaleResponse.body) {
                         this.gradingScaleExists = true;
                         this.gradingScale = gradingScaleResponse.body!;
@@ -348,6 +352,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Calculates statistics on exam granularity for submitted exams and for all exams.
      */
     private calculateExamStatistics() {
+        const studentPointsPassed: number[] = [];
         const studentPointsSubmitted: number[] = [];
         const studentPointsTotal: number[] = [];
 
@@ -356,10 +361,26 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
             if (studentResult.submitted) {
                 studentPointsSubmitted.push(studentResult.overallPointsAchieved!);
+                if (studentResult.hasPassed) {
+                    studentPointsPassed.push(studentResult.overallPointsAchieved!);
+                }
             }
         }
 
         const examStatistics = new AggregatedExamResult();
+        // Calculate statistics for passed exams
+        if (studentPointsPassed.length && this.gradingScaleExists && !this.isBonus) {
+            examStatistics.meanPointsPassed = SimpleStatistics.mean(studentPointsPassed);
+            examStatistics.medianPassed = SimpleStatistics.median(studentPointsPassed);
+            examStatistics.standardDeviationPassed = SimpleStatistics.standardDeviation(studentPointsPassed);
+            examStatistics.noOfExamsFilteredForPassed = studentPointsPassed.length;
+            if (this.examScoreDTO.maxPoints) {
+                examStatistics.meanPointsRelativePassed = (examStatistics.meanPointsPassed / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.medianRelativePassed = (examStatistics.medianPassed / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.meanGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
+                examStatistics.medianGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
+            }
+        }
         // Calculate statistics for submitted exams
         if (studentPointsSubmitted.length) {
             examStatistics.meanPoints = SimpleStatistics.mean(studentPointsSubmitted);
