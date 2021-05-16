@@ -41,7 +41,6 @@ public class TextBlock implements Serializable {
     @Column(name = "end_index", nullable = false)
     private int endIndex;
 
-    @Column(name = "number_of_affected_submissions", nullable = false)
     private int numberOfAffectedSubmissions;
 
     /**

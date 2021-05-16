@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
@@ -31,8 +33,16 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
 
     void deleteAllBySubmission_Id(Long submissionId);
 
-    // @Query("select ...")
-    // List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
-    //
-    // Map<TextBlock, Integer> countDistinctByCluster
+    /**
+     * For the given TextBlock `id` finds it's respective cluster and retrieves the number of other blocks
+     * @param id the id of the TextBlock
+     * @return
+     */
+    @Query("""
+            SELECT COUNT(c) - 1
+            FROM TextBlock c
+            WHERE c.cluster.id IN
+            (SELECT DISTINCT cluster.id FROM TextBlock WHERE id = :#{#id} )""")
+    int getNumberOfOtherBlocksInCluster(@Param("id") String id);
+
 }
