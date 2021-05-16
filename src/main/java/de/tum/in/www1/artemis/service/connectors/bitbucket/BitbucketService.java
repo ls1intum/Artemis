@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -446,16 +447,16 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects", HttpMethod.POST, entity, Void.class);
             grantGroupPermissionToProject(projectKey, adminGroupName, BitbucketPermission.PROJECT_ADMIN); // admins get administrative permissions
 
-            if (course.getInstructorGroupName() != null && !course.getInstructorGroupName().isEmpty()) {
+            if (StringUtils.hasText(course.getInstructorGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), BitbucketPermission.PROJECT_ADMIN); // instructors get administrative permissions
             }
 
             // editors get write permissions
-            if (course.getEditorGroupName() != null && !course.getEditorGroupName().isEmpty()) {
+            if (StringUtils.hasText(course.getEditorGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getEditorGroupName(), BitbucketPermission.PROJECT_WRITE);
             }
             // tutors get read permissions
-            if (course.getTeachingAssistantGroupName() != null && !course.getTeachingAssistantGroupName().isEmpty()) {
+            if (StringUtils.hasText(course.getTeachingAssistantGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getTeachingAssistantGroupName(), BitbucketPermission.PROJECT_READ);
             }
         }

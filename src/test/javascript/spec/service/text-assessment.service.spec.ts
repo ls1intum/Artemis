@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -29,28 +29,6 @@ describe('TextAssessment Service', () => {
         mockResponse = {
             type: 'student',
             id: 1,
-            results: [
-                {
-                    id: 6,
-                    resultString: '1 of 1 points',
-                    completionDate: '2020-07-09T16:28:18.138615+02:00',
-                    successful: true,
-                    score: 100,
-                    rated: true,
-                    hasFeedback: false,
-                    feedbacks: [
-                        {
-                            id: 6,
-                            detailText: 'Test',
-                            reference: '8c8d2463ec548efca05e66423bee537b6357e880',
-                            credits: 1.0,
-                            positive: true,
-                            type: 'MANUAL',
-                        },
-                    ],
-                    assessmentType: 'MANUAL',
-                },
-            ],
             submissions: [
                 {
                     submissionExerciseType: 'text',
@@ -60,6 +38,28 @@ describe('TextAssessment Service', () => {
                     submissionDate: '2020-07-07T14:34:25.194518+02:00',
                     durationInMinutes: 0,
                     text: 'Test\n\nTest\n\nTest',
+                    results: [
+                        {
+                            id: 6,
+                            resultString: '1 of 1 points',
+                            completionDate: '2020-07-09T16:28:18.138615+02:00',
+                            successful: true,
+                            score: 100,
+                            rated: true,
+                            hasFeedback: false,
+                            feedbacks: [
+                                {
+                                    id: 6,
+                                    detailText: 'Test',
+                                    reference: '8c8d2463ec548efca05e66423bee537b6357e880',
+                                    credits: 1.0,
+                                    positive: true,
+                                    type: 'MANUAL',
+                                },
+                            ],
+                            assessmentType: 'MANUAL',
+                        },
+                    ],
                 },
             ],
         };
@@ -81,38 +81,40 @@ describe('TextAssessment Service', () => {
         httpMock.expectOne({ url: `${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, method: 'POST' });
     });
 
-    it('should not parse jwt from header', async () => {
+    it('should not parse jwt from header', fakeAsync(() => {
         service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
             expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeUndefined();
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
         mockRequest.flush(mockResponse);
-    });
+        tick();
+    }));
 
-    it('should parse jwt from header', async () => {
+    it('should parse jwt from header', fakeAsync(() => {
         service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
             expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toEqual('12345');
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
-
         mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
-    });
+        tick();
+    }));
 
-    it('should get feedback data for submission', async () => {
+    it('should get feedback data for submission', fakeAsync(() => {
         const submissionId = 42;
         const returnedFromService = Object.assign({}, mockResponse);
         service
             .getFeedbackDataForExerciseSubmission(submissionId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: mockResponse }));
+            .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(mockResponse.submissions[0].results[0].feedbacks));
 
         const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-assessments/submission/${submissionId}?correction-round=0`, method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should get conflicting text submissions', async () => {
+    it('should get conflicting text submissions', fakeAsync(() => {
         const submissionId = 42;
         const feedbackId = 42;
         const submission = ({
@@ -138,17 +140,18 @@ describe('TextAssessment Service', () => {
                 credits: 1,
             } as Feedback,
         ];
-        const returnedFromService = Object.assign({}, [submission]);
+        const returnedFromService = [...[submission]];
         service
             .getConflictingTextSubmissions(submissionId, feedbackId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: [submission] }));
+            .subscribe((resp) => expect(resp).toEqual([submission]));
 
         const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-assessments/submission/${submissionId}/feedback/${feedbackId}/feedback-conflicts`, method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should solve feedback conflicts', async () => {
+    it('should solve feedback conflicts', fakeAsync(() => {
         const exerciseId = 1;
         const feedbackConflict = ({
             id: 1,
@@ -161,14 +164,15 @@ describe('TextAssessment Service', () => {
         service
             .solveFeedbackConflict(exerciseId, feedbackConflict.id!)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: feedbackConflict }));
+            .subscribe((resp) => expect(resp).toEqual(feedbackConflict));
 
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/text-assessments/exercise/${exerciseId}/feedbackConflict/${feedbackConflict.id}/solve-feedback-conflict`,
             method: 'GET',
         });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

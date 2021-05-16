@@ -125,6 +125,8 @@ public final class Constants {
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 
+    public static final String EDIT_EXERCISE = "EDIT_EXERCISE";
+
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
     public static final String DELETE_EXAM = "DELETE_EXAM";

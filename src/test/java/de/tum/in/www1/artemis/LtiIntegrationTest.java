@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,9 +17,13 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.util.ConfigUtil;
+import de.tum.in.www1.artemis.web.rest.LtiResource;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
 public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -27,6 +32,14 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private ProgrammingExercise programmingExercise;
+
+    private Course course;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private LtiResource ltiResource;
 
     private final String requestBody = """
             custom_component_display_name=Exercise\
@@ -62,7 +75,7 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         database.addUsers(1, 1, 0, 1);
 
-        database.addCourseWithOneProgrammingExercise();
+        course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
     }
 
@@ -82,6 +95,15 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertTrue(header.toString().contains("/courses/" + courseId + "/exercises/" + exerciseId));
 
         this.checkExceptions();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void launchAsAnonymousUser_withEmptyConfig() throws Throwable {
+        ConfigUtil.testWithChangedConfig(ltiResource, "LTI_ID", Optional.empty(), () -> {
+            Long exerciseId = programmingExercise.getId();
+            request.postWithoutLocation("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FORBIDDEN, null);
+        });
     }
 
     @Test
@@ -108,9 +130,25 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "TA")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void exerciseLtiConfiguration() throws Exception {
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
         request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void exerciseLtiConfiguration_withEmptyConfig() throws Throwable {
+        ConfigUtil.testWithChangedConfig(ltiResource, "LTI_OAUTH_KEY", Optional.empty(), () -> {
+            request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.FORBIDDEN, ExerciseLtiConfigurationDTO.class);
+        });
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void exerciseLtiConfigurationAsStudent() throws Exception {
+        course.setInstructorGroupName("123");
+        courseRepository.save(course);
+        request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.FORBIDDEN, ExerciseLtiConfigurationDTO.class);
     }
 }

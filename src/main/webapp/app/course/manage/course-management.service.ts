@@ -24,6 +24,7 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise-util
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -79,6 +80,21 @@ export class CourseManagementService {
                 map((res: EntityResponseType) => this.checkAccessRightsCourse(res)),
                 tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
             );
+    }
+
+    /**
+     * gets course information required for the course management detail page
+     * @param courseId the id of the course of which the detailed data should be fetched
+     */
+    getCourseStatisticsForDetailView(courseId: number): Observable<HttpResponse<CourseManagementDetailViewDto>> {
+        return this.http
+            .get<CourseManagementDetailViewDto>(`${this.resourceUrl}/${courseId}/management-detail`, { observe: 'response' })
+            .pipe(filter((res: HttpResponse<CourseManagementDetailViewDto>) => !!res.body));
+    }
+
+    getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
+        const params = new HttpParams().set('periodIndex', '' + periodIndex);
+        return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }
 
     /**

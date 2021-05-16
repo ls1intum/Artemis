@@ -37,7 +37,7 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
         if (this.exerciseId && this.repositoryType) {
             this.programmingExerciseService.exportInstructorRepository(this.exerciseId, this.repositoryType).subscribe((response) => {
                 downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessage');
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });
         }
     }

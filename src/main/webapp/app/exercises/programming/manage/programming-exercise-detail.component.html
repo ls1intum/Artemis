@@ -50,7 +50,7 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastInstructor"
+                    *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastEditor"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
@@ -80,12 +80,16 @@
                 </a>
 
                 <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
+                <jhi-programming-exercise-instructor-exercise-download
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [exerciseId]="programmingExercise.id!"
+                    class="mr-1"
+                ></jhi-programming-exercise-instructor-exercise-download>
                 <jhi-programming-assessment-repo-export
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [exerciseId]="programmingExercise.id!"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
-
                 <button
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"

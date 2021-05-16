@@ -47,9 +47,13 @@ export function getLatestResult(artemis, participationId) {
     }
 
     const results = JSON.parse(res[0].body).results;
-    console.log(JSON.stringify(results[results.length - 1]));
+    if (!results || results.length === 0) {
+        fail('FAILTEST: Did not receive result for test user ' + __VU);
+    }
+    const lastResult = results[results.length - 1];
+    console.log(JSON.stringify(lastResult));
 
-    return results[results.length - 1];
+    return lastResult;
 }
 
 export const TestResult = {

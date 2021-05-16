@@ -122,7 +122,6 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
     addQuestion(): void {
         const studentQuestion = new StudentQuestion();
         studentQuestion.questionText = this.studentQuestionText;
-        studentQuestion.author = this.currentUser;
         studentQuestion.visibleForStudents = true;
         if (this.exercise) {
             studentQuestion.exercise = Object.assign({}, this.exerciseService.convertExerciseForServer(this.exercise), {});
