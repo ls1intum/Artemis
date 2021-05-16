@@ -91,6 +91,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             // alternative exam scores calculation using participant scores table
             const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']);
 
+            // find grading scale if one exists and handle case when it doesn't
             const gradingScaleObservable = this.gradingSystemService
                 .findGradingScaleForExam(params['courseId'], params['examId'])
                 .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
@@ -121,7 +122,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                             }
                         }
                     }
-                    this.gradingSystemService.findGradingScaleForExam(params['courseId'], params['examId']);
+                    // set the grading scale if it exists for the exam
                     if (gradingScaleResponse.body) {
                         this.gradingScaleExists = true;
                         this.gradingScale = gradingScaleResponse.body!;
@@ -256,6 +257,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         ];
     }
 
+    /**
+     * Find the grade step index for the corresponding grade step to the given percentage
+     * @param percentage the percentage which will be mapped to a grade step
+     */
     findGradeStepIndex(percentage: number): number {
         let index: number | undefined;
         this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
@@ -349,7 +354,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Calculates statistics on exam granularity for submitted exams and for all exams.
+     * Calculates statistics on exam granularity for passed exams, submitted exams, and for all exams.
      */
     private calculateExamStatistics() {
         const studentPointsPassed: number[] = [];

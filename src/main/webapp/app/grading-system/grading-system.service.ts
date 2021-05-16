@@ -109,6 +109,12 @@ export class GradingSystemService {
         }
     }
 
+    /**
+     * Determines whether a given percentage matches the corresponding grade step
+     *
+     * @param gradeStep the grade step
+     * @param percentage the percentage to be matched
+     */
     matchGradePercentage(gradeStep: GradeStep, percentage: number): boolean {
         if (percentage === gradeStep.lowerBoundPercentage) {
             return gradeStep.lowerBoundInclusive;
@@ -119,12 +125,23 @@ export class GradingSystemService {
         }
     }
 
+    /**
+     * Finds a matching grade step inside a grade step set for the given percentage or returns undefined
+     *
+     * @param gradeSteps the grade step set
+     * @param percentage the percentage to be matched
+     */
     findMatchingGradeStep(gradeSteps: GradeStep[], percentage: number) {
         return gradeSteps.find((gradeStep) => {
             return this.matchGradePercentage(gradeStep, percentage);
         });
     }
 
+    /**
+     * Returns the max grade from a given grade step set
+     *
+     * @param gradeSteps the grade step set
+     */
     maxGrade(gradeSteps: GradeStep[]): string {
         if (gradeSteps) {
             const maxGradeStep = gradeSteps.find((gradeStep) => {

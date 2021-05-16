@@ -168,10 +168,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.allParticipationsOfCourse = participationsOfCourse;
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
+            // find grading scale if it exists for course and set properties
             this.gradingSystemService.findGradingScaleForCourse(courseId).subscribe(
                 (gradingScaleResponse) => {
                     if (gradingScaleResponse.body) {
-                        this.calculateGradingScaleInformation(gradingScaleResponse.body, courseId);
+                        this.calculateGradingScaleInformation(gradingScaleResponse.body);
                     }
                 },
                 () => {},
@@ -385,7 +386,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.exportReady = true;
     }
 
-    calculateGradingScaleInformation(gradingScale: GradingScale, courseId: number) {
+    /**
+     * Sets grading scale related properties
+     *
+     * @param gradingScale the grading scale for the course
+     */
+    calculateGradingScaleInformation(gradingScale: GradingScale) {
         this.gradingScaleExists = true;
         this.gradingScale = gradingScale;
         this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
@@ -631,6 +637,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         return emptyLine;
     }
 
+    /**
+     * Adds an empty line for the grading scale columns in csv
+     *
+     * @param emptyLine the empty line object
+     * @private
+     */
     private emptyLineForGrades(emptyLine: Object) {
         if (this.gradingScaleExists) {
             if (this.isBonus) {
