@@ -14,6 +14,6 @@
                 "open": "Assess model"
             }
         },
-        "notFound": "We haven't found any new modeling submission without an assessment, please go back to the dashboard."
+        "notFound": "We couldn't find any unassessed modeling submissions. Please return to the dashboard."
     }
 }
