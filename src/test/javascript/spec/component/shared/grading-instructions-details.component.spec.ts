@@ -47,6 +47,7 @@ describe('Grading Instructions Management Component', () => {
             tick(); // simulate async
 
             // THEN
+            expect(component.backupExercise.id).to.equal(component.exercise.id);
             expect(component.questionEditorText).to.equal(
                 '[gradingInstruction]\n' +
                     '\t[credits]  0\n' +
@@ -99,12 +100,20 @@ describe('Grading Instructions Management Component', () => {
         }));
     });
 
-    it('should delete a grading instruction', () => {
+    it('should return grading criteria index', () => {
         component.exercise.gradingCriteria = [gradingCriterion];
-        component.deleteInstruction(gradingInstruction, gradingCriterion);
+        const index = component.findCriterionIndex(gradingCriterion, component.exercise);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).to.equal(undefined);
+        expect(index).to.equal(0);
+    });
+
+    it('should return grading instruction index', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const index = component.findInstructionIndex(gradingInstruction, component.exercise, 0);
+        fixture.detectChanges();
+
+        expect(index).to.equal(0);
     });
 
     it('should add new grading instruction to criteria', () => {
@@ -138,5 +147,22 @@ describe('Grading Instructions Management Component', () => {
         fixture.detectChanges();
 
         expect(component.exercise.gradingCriteria.length).to.equal(2);
+    });
+
+    it('should change grading criteria title', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        const event = { target: { value: 'changed Title'}};
+        component.onCriterionTitleChange(event, gradingCriterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].title).to.equal(event.target.value);
+    });
+
+    it('should delete a grading instruction', () => {
+        component.exercise.gradingCriteria = [gradingCriterion];
+        component.deleteInstruction(gradingInstruction, gradingCriterion);
+        fixture.detectChanges();
+
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).to.equal(undefined);
     });
 });
