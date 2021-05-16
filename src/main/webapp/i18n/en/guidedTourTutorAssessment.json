@@ -9,15 +9,15 @@
         "assessmentDashboard": {
             "overview": {
                 "headline": "Overview",
-                "content": "Here you can see the statistics of your <tt>assessments</tt> and received <tt>complaints</tt> and <tt>feedback requests</tt> about your assessments."
+                "content": "Here you can see the statistics of your <tt>assessments</tt> and <tt>complaints</tt> and <tt>feedback requests</tt> about your assessments."
             },
             "showFinished": {
                 "headline": "Show Finished Exercises",
-                "content": "Finished exercises are not displayed in the exercise table. In order to see all exercises, including the finished ones, just have tick the checkbox <tt>Show finished exercises</tt>."
+                "content": "Finished exercises are not displayed in the exercise table. In order to see all exercises, including the finished ones, just tick the checkbox <tt>Show finished exercises</tt>."
             },
             "exerciseTable": {
                 "headline": "Exercise Table",
-                "content": "This table displays all exercises of this course, including their <tt>exercise type</tt>, <tt>exercise title</tt>, the <tt>status</tt> of the grading process and the exercise and assessment <tt>due dates</tt>."
+                "content": "This table displays all exercises in this course, including their <tt>exercise type</tt>, <tt>exercise title</tt>, the <tt>status</tt> of the grading process and the exercise and assessment <tt>due dates</tt>."
             },
             "gradingProcess": {
                 "headline": "Grading Process",
@@ -38,8 +38,8 @@
                 "content": "Click on this button and confirm only after you have read and understood the instructions."
             },
             "reviewExampleSubmission": {
-                "content": "Click here to see how a text submission and its assessment could look like."
                 "headline": "Review Sample Submission",
+                "content": "Click here to see how a text submission and its assessment could look."
             },
             "assessExampleSubmission": {
                 "headline": "Assess Sample Submission",
@@ -47,11 +47,11 @@
             },
             "submissionsAndComplaints": {
                 "headline": "Student submission",
-                "content": "The student submissions that have to be assessed will be displayed here after the exercise due date."
+                "content": "Student submissions will be displayed here to be assessed after the exercise due date."
             },
             "assessSubmissions": {
                 "headline": "Assess Student Submissions",
-                "content": "To start an actual assessment you need to click on the button <tt>Start new assessment</tt>. In this case the button is disabled for tutorial reasons."
+                "content": "To start an actual assessment, click on the button <tt>Start new assessment</tt>. This button is disabled during the tutorial."
             }
         },
         "exampleReview": {
@@ -61,7 +61,7 @@
             },
             "reviewAssessment": {
                 "headline": "Review Example Assessment",
-                "content": "This is an example assessment of the submission. Each text block is graded with the point 1."
+                "content": "This is an example assessment of the submission. Every text block has been marked with one point."
             },
             "confirm": {
                 "headline": "Confirm",
