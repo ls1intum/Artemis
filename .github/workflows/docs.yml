@@ -30,3 +30,11 @@ jobs:
       with:
         name: Documentation
         path: docs/_build/html/
+
+    - uses: peaceiris/actions-gh-pages@v3.8
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs/_build/html/
+        user_name: 'artemis-bot'
+        user_email: 'artemis-bot@users.noreply.github.com'
+        full_commit_message: ${{ github.event.head_commit.message }}
