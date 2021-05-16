@@ -71,8 +71,6 @@ describe('Programming exercise', () => {
 
         // Login as the student
         // @ts-ignore
-        cy.logout();
-        // @ts-ignore
         cy.login(username, password);
 
         cy.url().should('include', '/courses');
@@ -107,8 +105,6 @@ describe('Programming exercise', () => {
 
         // Login is admin again
         // @ts-ignore
-        cy.logout();
-        // @ts-ignore
         cy.login(adminUsername, adminPassword);
 
         openCourseManagement();
@@ -131,8 +127,8 @@ describe('Programming exercise', () => {
 function openCourseManagement() {
     cy.log('Opening course-management page...');
     cy.get('#course-admin-menu').should(beVisible).click();
-    cy.wait('@courseManagementQuery');
-    cy.url().should('include', '/course-management');
+    cy.wait('@courseManagementQuery', { timeout: 30000 });
+    cy.url({ timeout: 10000 }).should('include', '/course-management');
 }
 
 /**
