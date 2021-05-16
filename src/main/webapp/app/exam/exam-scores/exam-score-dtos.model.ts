@@ -105,7 +105,6 @@ export class AggregatedExerciseResult {
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
-    public averageGrade?: string;
 
     constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number) {
         this.exerciseId = exerciseId;

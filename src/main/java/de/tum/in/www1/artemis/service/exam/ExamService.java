@@ -92,12 +92,14 @@ public class ExamService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final GradingScaleService gradingScaleService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository) {
+            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, GradingScaleService gradingScaleService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -117,6 +119,7 @@ public class ExamService {
         this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.gradingScaleService = gradingScaleService;
     }
 
     /**
@@ -271,6 +274,12 @@ public class ExamService {
 
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+                Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
+                if (gradingScale.isPresent()) {
+                    GradeStep studentGrade = gradingScaleService.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                    studentResult.overallGrade = studentGrade.getGradeName();
+                    studentResult.hasPassed = studentGrade.getIsPassingGrade();
+                }
             }
             scores.studentResults.add(studentResult);
         }

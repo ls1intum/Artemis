@@ -117,6 +117,22 @@ export class GradingSystemService {
         }
     }
 
+    matchGradePercentage(gradeStep: GradeStep, percentage: number): boolean {
+        if (percentage === gradeStep.lowerBoundPercentage) {
+            return gradeStep.lowerBoundInclusive;
+        } else if (percentage === gradeStep.upperBoundPercentage) {
+            return gradeStep.upperBoundInclusive;
+        } else {
+            return percentage > gradeStep.lowerBoundPercentage && percentage < gradeStep.upperBoundPercentage;
+        }
+    }
+
+    findMatchingGradeStep(gradeSteps: GradeStep[], percentage: number) {
+        return gradeSteps.find((gradeStep) => {
+            return this.matchGradePercentage(gradeStep, percentage);
+        });
+    }
+
     maxGrade(gradeSteps: GradeStep[]): string {
         if (gradeSteps) {
             const maxGradeStep = gradeSteps.find((gradeStep) => {

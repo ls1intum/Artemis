@@ -133,7 +133,6 @@
                             {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
                             <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
                         </th>
-                        <th *ngIf="gradingScaleExists">Average Grade</th>
                     </tr>
                 </thead>
                 <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults; let i = index">
@@ -174,9 +173,6 @@
                             {{ toLocaleString(exerciseResult.maxPoints) }}
                             ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }}
                             %)
-                        </td>
-                        <td *ngIf="gradingScaleExists">
-                            {{ exerciseResult.averageGrade }}
                         </td>
                     </tr>
                 </tbody>
