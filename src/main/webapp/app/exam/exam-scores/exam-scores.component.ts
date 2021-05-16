@@ -457,7 +457,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         });
         headers.push('Overall Points');
         headers.push('Overall Score (%)');
+        if (this.gradingScaleExists) {
+            if (this.isBonus) {
+                headers.push('Overall Bonus Points');
+            } else {
+                headers.push('Overall Grade');
+            }
+        }
         headers.push('Submitted');
+        if (this.gradingScaleExists && !this.isBonus) {
+            headers.push('Passed');
+        }
 
         const rows = this.studentResults.map((studentResult) => {
             return this.convertToCSVRow(studentResult);
@@ -517,7 +527,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         csvRow.overAllPoints = studentResult.overallPointsAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallPointsAchieved, 1));
         csvRow.overAllScore = studentResult.overallScoreAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallScoreAchieved, 2), 2);
+        if (this.gradingScaleExists) {
+            if (this.isBonus) {
+                csvRow['Overall Bonus Points'] = studentResult.overallGrade;
+            } else {
+                csvRow['Overall Grade'] = studentResult.overallGrade;
+            }
+        }
         csvRow.submitted = studentResult.submitted ? 'yes' : 'no';
+        if (this.gradingScaleExists && !this.isBonus) {
+            csvRow['Passed'] = studentResult.hasPassed ? 'yes' : 'no';
+        }
         return csvRow;
     }
 
