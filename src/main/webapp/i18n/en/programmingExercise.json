@@ -190,6 +190,7 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",
@@ -199,7 +200,8 @@
                 "addTeamOrStudentName": "Add team/student name to project (allows importing multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
-                "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
+                "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
+                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",

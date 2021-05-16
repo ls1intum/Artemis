@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { map, take } from 'rxjs/operators';
@@ -46,7 +46,7 @@ describe('Course Service', () => {
         elemDefault.studentQuestionsEnabled = false;
     });
 
-    it('should find an element', async () => {
+    it('should find an element', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 startDate: currentDate.format(DATE_TIME_FORMAT),
@@ -60,10 +60,11 @@ describe('Course Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should create a Course', async () => {
+    it('should create a Course', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 id: 0,
@@ -84,10 +85,11 @@ describe('Course Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should update a Course', async () => {
+    it('should update a Course', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 title: 'BBBBBB',
@@ -113,10 +115,11 @@ describe('Course Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should return a list of Course', async () => {
+    it('should return a list of Course', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 title: 'BBBBBB',
@@ -133,6 +136,7 @@ describe('Course Service', () => {
             {
                 startDate: currentDate,
                 endDate: currentDate,
+                exercises: [],
             },
             returnedFromService,
         );
@@ -144,16 +148,17 @@ describe('Course Service', () => {
             )
             .subscribe((body) => expect(body).toContainEqual(expected));
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify([returnedFromService]));
-        httpMock.verify();
-    });
+        req.flush([returnedFromService]);
+        tick();
+    }));
 
-    it('should delete a Course', async () => {
+    it('should delete a Course', fakeAsync(() => {
         service.delete(123).subscribe((resp) => expect(resp.ok));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-    });
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

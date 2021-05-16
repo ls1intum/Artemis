@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 
 import { AuditsService } from 'app/admin/audits/audits.service';
 import { Audit } from 'app/admin/audits/audit.model';
@@ -31,7 +31,7 @@ describe('Audits Service', () => {
             expect(req.request.url).toEqual(resourceUrl);
         });
 
-        it('should return Audits', () => {
+        it('should return Audits', fakeAsync(() => {
             const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
 
             service.query({}).subscribe((received) => {
@@ -40,9 +40,10 @@ describe('Audits Service', () => {
 
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush([audit]);
-        });
+            tick();
+        }));
 
-        it('should propagate not found response', () => {
+        it('should propagate not found response', fakeAsync(() => {
             service.query({}).subscribe(null, (_error: any) => {
                 expect(_error.status).toEqual(404);
             });
@@ -52,6 +53,7 @@ describe('Audits Service', () => {
                 status: 404,
                 statusText: 'Bad Request',
             });
-        });
+            tick();
+        }));
     });
 });
