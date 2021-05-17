@@ -13,6 +13,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -43,6 +44,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     paramSub: Subscription;
+
+    searchTermString = '';
+    exerciseType = ExerciseType;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -118,5 +122,14 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
         this.router.navigate(['/course-management']);
+    }
+
+    /**
+     * Returns the unique identifier the exercises in the collection
+     * @param index of the exercise in the collection
+     * @param exercise current exercise
+     */
+    trackExercise(index: number, exercise: Exercise) {
+        return exercise.id;
     }
 }

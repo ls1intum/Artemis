@@ -141,6 +141,84 @@
             ></jhi-course-detail-bar-chart>
         </div>
         <hr />
+        <table class="table table-striped" aria-describedby="course-exercises">
+            <thead>
+                <tr jhiSort>
+                    <th jhiSortBy="type"><span jhiTranslate="artemisApp.exercise.type">Type</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.detail.title">Title</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.course.releaseDate">Email</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.course.dueDate">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.course.assessmentDueDate">Lang Key</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody *ngIf="course.exercises">
+                <tr *ngFor="let exercise of course.exercises; trackBy: trackExercise">
+                    <td>
+                        <ngb-highlight [result]="exercise.type" [term]="searchTermString"></ngb-highlight>
+                    </td>
+                    <td>
+                        <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</a>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="exercise.releaseDate"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="exercise.dueDate"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="exercise.assessmentDueDate"></ngb-highlight>
+                    </td>
+                    <td>
+                        <!-- TODO: statistic -->
+                    </td>
+                    <td>
+                        <!-- TODO: reduce duplication -->
+                        <div class="row-flex button-row">
+                            <a
+                                *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ"
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'edit']"
+                                class="btn btn-warning mr-1 mb-1"
+                                [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                            ><fa-icon [icon]="'wrench'"></fa-icon
+                            ></a>
+                            <!-- if the quiz is past
+                            <a
+                                *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
+                                [routerLink]="['/course-management', course.id, details.type + '-exercises', exercise.id, 're-evaluate']"
+                                class="btn btn-warning mr-1 mb-1"
+                                [ngbTooltip]="'entity.action.re-evaluate' | artemisTranslate"
+                            ><fa-icon [icon]="'wrench'"></fa-icon
+                            ></a>
+                            -->
+                            <a
+                                *ngIf="course.isAtLeastTutor"
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'scores']"
+                                class="btn btn-info mr-1 mb-1"
+                                [ngbTooltip]="'entity.action.scores' | artemisTranslate"
+                            ><fa-icon [icon]="'table'"></fa-icon
+                            ></a>
+                            <a
+                                *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.QUIZ"
+                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'submissions']"
+                                class="btn btn-success mr-1 mb-1"
+                                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | artemisTranslate"
+                            ><fa-icon [icon]="'book'"></fa-icon
+                            ></a>
+                            <a
+                                *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
+                                [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
+                                class="btn btn-info mr-1 mb-1"
+                                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
+                            ><fa-icon class="grading-icon" [icon]="'file-signature'"></fa-icon
+                            ></a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <hr />
         <div>
             <h2><span jhiTranslate="artemisApp.course.detail.title">Course Details:</span></h2>
         </div>
