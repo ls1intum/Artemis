@@ -478,6 +478,7 @@ public class ProgrammingExerciseGradingService {
             double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
             if (weightSum == 0) {
                 result.setScore(0D);
+                return;
             }
 
             // calculate the achieved points from the passed test cases
