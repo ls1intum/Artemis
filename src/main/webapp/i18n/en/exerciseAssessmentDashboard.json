@@ -5,7 +5,7 @@
                 "title": "Exercise Assessment Dashboard"
             },
             "participation": {
-                "instructionsReviewed": "You have reviewed the instructions. You may now read the sample submissions"
+                "instructionsReviewed": "You have reviewed the instructions. You may now read the example submissions"
             },
             "pageHeader": "Exercise Assessment Dashboard for:",
             "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
@@ -18,18 +18,18 @@
             "startYourParticipation": "Start participating in the exercise",
             "gradingInstructions": "Grading instructions",
             "problemStatement": "Problem statement",
-            "exampleSolution": "Sample solution",
+            "exampleSolution": "Example solution",
             "close": "Close",
             "readAndUnderstood": "I have read and understood the instructions",
-            "totalExampleSubmissions": "There are {{total}} sample submissions: {{toReview}} to review and {{toAssess}} to assess.",
+            "totalExampleSubmissions": "There are {{total}} example submissions: {{toReview}} to review and {{toAssess}} to assess.",
             "reviewSubmissions": "Review submissions",
             "start": "Start",
             "continue": "Continue",
-            "reviewingExampleSubmissions": "reviewing sample submissions",
-            "reviewExampleSubmission": "Review sample submissions",
+            "reviewingExampleSubmissions": "reviewing example submissions",
+            "reviewExampleSubmission": "Review example submissions",
             "tutorialSubmissions": "Tutorial submission",
-            "assessingExampleSubmission": "assessing sample submission",
-            "assessExampleSubmission": "Assess sample submission",
+            "assessingExampleSubmission": "assessing example submission",
+            "assessExampleSubmission": "Assess example submission",
             "studentsSubmissions": "Students' submissions",
             "testRunSubmissions": "Test Run submissions",
             "submissionDate": "Submission date",
@@ -70,7 +70,7 @@
             "numberOfManualAssessedSubmissions": "Manual Assessed Submissions",
             "nextAssessment": "Assess next submission",
             "programmingExercise": {
-                "exampleSolution": "Sample solution repository",
+                "exampleSolution": "Example solution repository",
                 "goToRepo": "Go to repository"
             },
             "language": "Language",

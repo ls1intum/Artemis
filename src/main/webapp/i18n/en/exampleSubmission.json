@@ -2,37 +2,37 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Sample Submission Editor"
+                "title": "Example Submission Editor"
             },
             "assessScore": {
                 "success": "Congratulations! This is a good assessment!",
                 "tooLow": "The number of points in your assessment of this submission is too low. Please carefully review the grading criteria and the submission again, and submit your improved assessment.",
                 "tooHigh": "The number of points in your assessment of this submission is too high. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
             },
-            "submitSuccessful": "Your sample submission has been successfully submitted",
-            "saveSuccessful": "Your sample submission has been saved",
-            "readSuccessfully": "You have read the grading instructions, you may now start reviewing the sample submission",
+            "submitSuccessful": "Your example submission has been successfully submitted",
+            "saveSuccessful": "Your example submission has been saved",
+            "readSuccessfully": "You have read the grading instructions, you may now start reviewing the example submission",
             "createNew": "Create new",
-            "pageHeader": "Sample Text Submission for Exercise",
+            "pageHeader": "Example Text Submission for Exercise",
             "usedForTutorial": "Tutors need to assess this submission",
-            "createNewSubmission": "Create new sample submission",
+            "createNewSubmission": "Create new example submission",
             "editSampleSolution": "Edit sample submission",
             "updateSampleSolution": "Update sample submission",
             "problemStatement": "Problem Statement",
-            "sampleSolution": "Sample Solution",
-            "exampleAssessment": "Sample Assessment",
+            "sampleSolution": "Example Solution",
+            "exampleAssessment": "Example Assessment",
             "createNewAssessment": "Create new assessment",
             "saveNewAssessment": "Save new assessment",
             "updateAssessment": "Update assessment",
-            "youNeedToCreate": "You must create the sample text submission before creating the sample assessment",
+            "youNeedToCreate": "You must create the example text submission before creating the example assessment",
             "score": "Points",
             "submitAssessment": "Submit Assessment",
             "readAndUnderstood": "I have read and understood the example",
-            "exampleSubmission": "Sample Submission",
+            "exampleSubmission": "Example Submission",
             "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment.",
-            "deleted": "Sample submission deleted successfully",
+            "deleted": "Example submission deleted successfully",
             "assessmentExplanation": "Explanation",
-            "assessmentExplanationInfo": "Additional explanation for this sample assessment"
+            "assessmentExplanationInfo": "Additional explanation for this example assessment"
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"
