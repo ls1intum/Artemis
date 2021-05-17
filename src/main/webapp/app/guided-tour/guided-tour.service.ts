@@ -877,7 +877,7 @@ export class GuidedTourService {
             return false;
         }
         const currentTourStep = this.currentTour.steps[this.currentTourStepIndex];
-        const selector = currentTourStep.highlightSelector;
+        const selector = currentTourStep.highlightSelector || undefined;
         if (selector) {
             const selectedElement = document.querySelector(selector);
             if (!selectedElement) {
