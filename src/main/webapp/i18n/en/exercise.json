@@ -172,7 +172,8 @@
                 }
             },
             "exam": "Exam",
-            "isTeamExercise": "This is a team exercise."
+            "isTeamExercise": "This is a team exercise.",
+            "isUsedForTutorial": "Tutor needs to review"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

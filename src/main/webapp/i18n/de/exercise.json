@@ -172,7 +172,8 @@
                 }
             },
             "exam": "Klausur",
-            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe."
+            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
+            "isUsedForTutorial": "Soll es vom Tutor benotet werden"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

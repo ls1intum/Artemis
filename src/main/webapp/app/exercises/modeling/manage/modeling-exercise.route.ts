@@ -14,6 +14,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ModelingExerciseExampleSubmissionsComponent } from 'app/exercises/modeling/manage/modeling-exercise-example-submissions.component';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
@@ -84,6 +85,18 @@ export const routes: Routes = [
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/modeling-exercises/:exerciseId/example-submissions',
+        component: ModelingExerciseExampleSubmissionsComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
