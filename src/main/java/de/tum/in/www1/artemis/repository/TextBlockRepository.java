@@ -36,7 +36,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     /**
      * For the given TextBlock `id` finds it's respective cluster and retrieves the number of other blocks
      * @param id the id of the TextBlock
-     * @return
+     * @return the number of other blocks in the same cluster as the block with given `id`
      */
     @Query("""
             SELECT COUNT(c) - 1
