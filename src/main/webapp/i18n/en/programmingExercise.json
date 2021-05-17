@@ -275,7 +275,8 @@
             "auxiliaryRepository": {
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
-                "checkoutDirectory": "Checkout Directory"
+                "checkoutDirectory": "Checkout Directory",
+                "repositoryNameRequired": "The repository name is required."
             }
         },
         "error": {

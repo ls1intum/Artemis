@@ -21,6 +21,9 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
 
     @Input() exercise: Exercise;
 
+    repositoryName: String;
+    checkoutDirectory: String;
+    description: String;
     student: User = new User();
     result: Result;
     feedbacks: Feedback[] = [];
@@ -95,21 +98,5 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      */
     onSaveError() {
         this.isSaving = false;
-    }
-
-    /**
-     * Add new feedback to feedbacks
-     */
-    pushFeedback() {
-        this.feedbacks.push(new Feedback());
-    }
-
-    /**
-     * Remove last added feedback if there is one.
-     */
-    popFeedback() {
-        if (this.feedbacks.length > 0) {
-            this.feedbacks.pop();
-        }
     }
 }
