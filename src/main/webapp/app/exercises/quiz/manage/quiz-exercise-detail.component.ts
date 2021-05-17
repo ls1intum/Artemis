@@ -46,6 +46,7 @@ import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/m
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { onError } from 'app/shared/util/global.utils';
 
 export interface Reason {
     translateKey: string;
@@ -246,7 +247,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 (res: HttpResponse<string[]>) => {
                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
         }
         this.updateDuration();
@@ -453,7 +454,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -473,7 +474,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );
     }
 
@@ -490,10 +491,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 this.applyFilter();
             });
         }
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

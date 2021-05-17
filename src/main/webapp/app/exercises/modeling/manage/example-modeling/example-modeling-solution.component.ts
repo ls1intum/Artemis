@@ -9,6 +9,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-example-modeling-solution',
@@ -64,7 +65,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
                 this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
             },
             (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
+                onError(this.jhiAlertService, error);
             },
         );
     }

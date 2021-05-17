@@ -9,6 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
 import { navigateBack } from 'app/utils/navigation.utils';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -35,7 +36,7 @@ export class ExamUpdateComponent implements OnInit {
                     this.exam.course = response.body!;
                     this.course = response.body!;
                 },
-                (err: HttpErrorResponse) => this.onError(err),
+                (err: HttpErrorResponse) => onError(this.jhiAlertService, err),
             );
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
@@ -81,12 +82,8 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        onError(this.jhiAlertService, error);
         this.isSaving = false;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     get isValidConfiguration(): boolean {

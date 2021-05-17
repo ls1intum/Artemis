@@ -11,6 +11,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { navigateBack } from 'app/utils/navigation.utils';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -64,7 +65,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                         }),
                         catchError((res: HttpErrorResponse) => {
                             this.exerciseNotFound = true;
-                            this.onError(res.message);
+                            onError(this.jhiAlertService, res);
                             return of(null);
                         }),
                     )
@@ -140,8 +141,5 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     protected onSaveError() {
         this.isSaving = false;
-    }
-    protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage);
     }
 }
