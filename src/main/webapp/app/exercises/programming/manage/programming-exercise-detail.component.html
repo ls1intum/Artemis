@@ -79,7 +79,7 @@
                     <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
 
-                <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
+                <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="mr-1"> </jhi-external-submission>
                 <jhi-programming-exercise-instructor-exercise-download
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [exerciseId]="programmingExercise.id!"
@@ -248,6 +248,7 @@
                         ></jhi-programming-exercise-instructor-repo-download>
                     </div>
                 </dd>
+                <jhi-auxiliary-repository *ngIf="programmingExercise.isAtLeastEditor" [exercise]="programmingExercise" class="mr-1"> </jhi-auxiliary-repository>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"

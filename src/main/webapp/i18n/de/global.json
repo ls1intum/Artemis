@@ -231,6 +231,7 @@
             "exams": "Klausuren",
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
+            "addAuxiliaryRepository": "Hilfsrepository anlegen",
             "questionsAndAnswers": "Q&A",
             "toggleToUnsubmitted": "Setze Studentenklauszur auf nicht abgegeben",
             "toggleToSubmitted": "Setze Studentenklauszur auf abgegeben"
