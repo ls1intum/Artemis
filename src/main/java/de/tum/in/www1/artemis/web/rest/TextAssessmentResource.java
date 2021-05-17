@@ -427,7 +427,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param feedbackConflictId - feedback conflict id to set the conflict as solved
      * @return - solved feedback conflict
      */
-    @PostMapping("/exercise/{exerciseId}/feedbackConflict/{feedbackConflictId}/solve")
+    @PostMapping("/exercise/{exerciseId}/feedback-conflict/{feedbackConflictId}/solve")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long exerciseId, @PathVariable long feedbackConflictId) {
         log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);

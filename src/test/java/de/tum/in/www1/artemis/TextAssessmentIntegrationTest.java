@@ -1005,14 +1005,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(value = "tutor1", roles = "TA")
     public void solveFeedbackConflict_forNonExistingConflict() throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
-        FeedbackConflict feedbackConflict = request.postWithResponseBody("/api/exercise/" + textExercise.getId() + "/feedbackConflict/2/solve", null, FeedbackConflict.class,
+        FeedbackConflict feedbackConflict = request.postWithResponseBody("/api/exercise/" + textExercise.getId() + "/feedback-conflict/2/solve", null, FeedbackConflict.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
     }
 
     private FeedbackConflict solveFeedbackConflict(HttpStatus expectedStatus) throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
-        return request.postWithResponseBody("/api/exercise/" + textExercise.getId() + "/feedbackConflict/" + feedbackConflictRepository.findAll().get(0).getId() + "/solve", null,
+        return request.postWithResponseBody("/api/exercise/" + textExercise.getId() + "/feedback-conflict/" + feedbackConflictRepository.findAll().get(0).getId() + "/solve", null,
                 FeedbackConflict.class, expectedStatus);
     }
 
