@@ -36,8 +36,7 @@ import io.swagger.annotations.ApiResponses;
  * REST controller for managing TextAssessment.
  */
 @RestController
-// TODO: remove 'text-assessments' here
-@RequestMapping("/api/text-assessments")
+@RequestMapping("/api")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -89,23 +88,23 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT exercise/:exerciseId/result/:resultId : Saves a given manual textAssessment
-     * TODO SE: refactor this REST call to not use the exerciseId anymore, and make uniform with other save..Assessment calls
-     * @param exerciseId the exerciseId of the exercise which will be saved
+     * PUT text-submissions/:submissionId/result/:resultId/assessment : Saves a given manual textAssessment
+     *
+     * @param submissionId the submissionId of the submission being assessed
      * @param resultId the resultId the assessment belongs to
      * @param textAssessment the assessments
      * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
      */
-    @PutMapping("/exercise/{exerciseId}/result/{resultId}")
+    @PutMapping("text-submissions/{submissionId}/result/{resultId}/assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<Result> saveTextAssessment(@PathVariable Long resultId, @PathVariable Long submissionId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks() != null
                 && textAssessment.getFeedbacks().stream().filter(Feedback::hasReference).anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
+        final var textSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(submissionId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -181,7 +180,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textAssessment the assessments which should be submitted
      * @return 200 Ok if successful with the corresponding result as a body, but sensitive information are filtered out
      */
-    @PostMapping("/exercise/{exerciseId}/result/{resultId}/submit")
+    @PostMapping("/text-submissions/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
@@ -262,7 +261,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param resultId if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
-    @GetMapping("/submission/{submissionId}")
+    @GetMapping("/text-submissions/{submissionId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {

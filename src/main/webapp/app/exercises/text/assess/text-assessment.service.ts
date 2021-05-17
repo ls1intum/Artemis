@@ -23,7 +23,7 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
     providedIn: 'root',
 })
 export class TextAssessmentService {
-    private readonly resourceUrl = SERVER_API_URL + 'api/text-assessments';
+    private readonly resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
@@ -51,7 +51,7 @@ export class TextAssessmentService {
     public submit(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .post<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, body, { observe: 'response' })
+            .post<Result>(`${this.resourceUrl}/text-submissions/exercise/${exerciseId}/result/${resultId}/submit`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
@@ -74,17 +74,13 @@ export class TextAssessmentService {
             textBlocks,
             complaintResponse,
         };
-        return this.http
-            .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
     saveExampleAssessment(exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/text-submissions/${exampleSubmissionId}/example-assessment`;
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
-        return this.http
-            .put<Result>(url, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
+        return this.http.put<Result>(url, body, { observe: 'response' }).pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
     /**
@@ -110,24 +106,22 @@ export class TextAssessmentService {
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response', params })
-            .pipe(
-                // Wire up Result and Submission
-                tap((response) => {
-                    const participation = response.body!;
-                    const submission = participation.submissions![0];
-                    let result;
-                    if (resultId) {
-                        result = getSubmissionResultById(submission, resultId);
-                    } else {
-                        result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
-                    }
-                    TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
-                    (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
-                }),
-                map((response) => response.body!),
-            );
+        return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response', params }).pipe(
+            // Wire up Result and Submission
+            tap((response) => {
+                const participation = response.body!;
+                const submission = participation.submissions![0];
+                let result;
+                if (resultId) {
+                    result = getSubmissionResultById(submission, resultId);
+                } else {
+                    result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
+                }
+                TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
+                (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
+            }),
+            map((response) => response.body!),
+        );
     }
 
     /**
