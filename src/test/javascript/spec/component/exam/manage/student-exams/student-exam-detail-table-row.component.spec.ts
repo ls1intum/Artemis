@@ -102,7 +102,7 @@ describe('StudentExamDetailTableRowComponent', () => {
         };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(programmingExercise);
         expect(getAssessmentLinkSpy).to.have.been.calledOnce;
-        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'assessment']);
+        expect(route).to.deep.equal(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'submissions']);
     });
 
     it('should route to modeling submission', () => {

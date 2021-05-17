@@ -363,4 +363,15 @@ export class ProgrammingExerciseService {
             responseType: 'blob',
         });
     }
+
+    /**
+     * Exports all instructor repositories (solution, template, test), the problem statement and the exercise details.
+     * @param exerciseId
+     */
+    exportInstructorExercise(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-exercise`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
 }
