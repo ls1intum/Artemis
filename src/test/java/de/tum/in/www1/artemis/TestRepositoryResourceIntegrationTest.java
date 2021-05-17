@@ -98,17 +98,6 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetFileType() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("file", currentLocalFileName);
-        var contentType = request.get(testRepoBaseUrl + programmingExercise.getId() + "/fileType", HttpStatus.OK, byte[].class, params);
-        assertThat(contentType).isNotEmpty();
-        assertThat(new String(contentType)).isEqualTo("text/plain");
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
