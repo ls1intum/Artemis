@@ -24,13 +24,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     repositoryName: String;
     checkoutDirectory: String;
     description: String;
-    student: User = new User();
-    result: Result;
-    feedbacks: Feedback[] = [];
     isSaving = false;
-    userId: number;
-    isAssessor: boolean;
-    complaint: Complaint;
 
     constructor(
         private participationService: ParticipationService,
@@ -50,7 +44,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      * Initialize result with initial manual result.
      */
     initializeForResultCreation() {
-        this.result = this.externalSubmissionService.generateInitialManualResult();
+        this.externalSubmissionService.generateInitialManualResult();
     }
 
     /**
@@ -64,12 +58,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      * Add manual feedbacks to the result and create external submission.
      */
     save() {
-        this.result.feedbacks = this.feedbacks;
-        this.isSaving = true;
-        for (let i = 0; i < this.result.feedbacks.length; i++) {
-            this.result.feedbacks[i].type = FeedbackType.MANUAL;
-        }
-        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.student, this.result));
+        // this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.student, this.result));
     }
 
     /**
