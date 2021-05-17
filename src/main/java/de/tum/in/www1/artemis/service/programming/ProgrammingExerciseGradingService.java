@@ -476,7 +476,7 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-            if (weightSum == 0) {
+            if (Math.abs(weightSum - 0) < 1E-8) {
                 result.setScore(0D);
                 return;
             }
