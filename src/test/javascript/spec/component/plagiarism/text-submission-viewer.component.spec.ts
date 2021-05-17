@@ -16,6 +16,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { HttpResponse } from '@angular/common/http';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;
@@ -80,7 +81,8 @@ describe('Text Submission Viewer Component', () => {
         comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
-        spyOn(repositoryService, 'getFileType').and.returnValue(of('text/java-x'));
+        const expectedHeaders = new Headers([['content-type', 'text/plain']]);
+        spyOn(repositoryService, 'getFileHeaders').and.returnValue(of({ headers: expectedHeaders }));
         spyOn(repositoryService, 'getFile').and.returnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
@@ -93,7 +95,8 @@ describe('Text Submission Viewer Component', () => {
         comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
-        spyOn(repositoryService, 'getFileType').and.returnValue(of('audio/x-pn-wav'));
+        const expectedHeaders = new Headers([['content-type', 'audio/mpeg']]);
+        spyOn(repositoryService, 'getFileHeaders').and.returnValue(of({ headers: expectedHeaders }));
         spyOn(repositoryService, 'getFile').and.returnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
