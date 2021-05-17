@@ -13,6 +13,8 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
+import { Exercise, ExerciseType, icons, iconTooltips } from 'app/entities/exercise.model';
+import { SortService } from 'app/shared/service/sort.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -47,12 +49,20 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
     paramSub: Subscription;
 
+    searchTermString = '';
+    exerciseType = ExerciseType;
+    predicate: string = 'id';
+    reverse: boolean = false;
+    icons = icons;
+    iconTooltips = iconTooltips;
+
     constructor(
         private eventManager: JhiEventManager,
         private courseService: CourseManagementService,
         private route: ActivatedRoute,
         private router: Router,
         private jhiAlertService: JhiAlertService,
+        private sortService: SortService,
     ) {}
 
     /**
@@ -92,7 +102,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             courseId = params['courseId'];
         });
         // Get course first for basic course information
-        this.courseService.find(courseId).subscribe((courseResponse) => {
+        this.courseService.findWithExercises(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
         // fetch statistics separately because it takes quite long for larger courses
@@ -122,4 +132,22 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         );
         this.router.navigate(['/course-management']);
     }
+
+    /**
+     * Returns the unique identifier the exercises in the collection
+     * @param index of the exercise in the collection
+     * @param exercise current exercise
+     */
+    trackExercise(index: number, exercise: Exercise) {
+        return exercise.id;
+    }
+
+    sortRows() {
+        this.sortService.sortByProperty(this.course.exercises!, this.predicate, this.reverse);
+    }
+
+    /**
+     * Used in the template for jhiSort
+     */
+    callback() {}
 }
