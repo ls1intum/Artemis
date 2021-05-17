@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -109,10 +110,11 @@ public class TextBlockService {
      * This number is represented with the `numberOfAffectedSubmissions` field which is set here for each
      * TextBlock of this submission
      *
-     * @param textSubmission Result for the Submission acting as a reference for the text submission to be searched.
+     * @param result Result for the Submission acting as a reference for the text submission to be searched.
      */
     @Transactional()
-    public void setNumberOfAffectedSubmissionsPerBlock(@NotNull TextSubmission textSubmission) {
+    public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result) {
+        final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
         textSubmission.setBlocks(blocks);
 

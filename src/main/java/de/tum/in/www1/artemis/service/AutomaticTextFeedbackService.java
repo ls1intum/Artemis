@@ -78,30 +78,4 @@ public class AutomaticTextFeedbackService {
         result.setFeedbacks(suggestedFeedback);
     }
 
-    /**
-     * Sets number of potential automatic Feedback's for each block belonging to the `Result`'s submission.
-     * This number determines how many other submissions would be affected if the user were to submit a certain block feedback.
-     * For each TextBlock of the submission, this method finds how many other TextBlocks exist in the same cluster.
-     * This number is represented with the `numberOfAffectedSubmissions` field which is set here for each
-     * TextBlock of this submission
-     *
-     * @param result Result for the Submission acting as a reference for the text submission to be searched.
-     */
-    @Transactional()
-    public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result) {
-        final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
-        textSubmission.setBlocks(blocks);
-
-        // iterate over blocks of the referenced submission
-        blocks.forEach(block -> {
-            final TextCluster cluster = block.getCluster();
-            final String blockID = block.getId();
-            // if TextBlock is part of a cluster, we find how many other submissions of that cluster it will affect
-            if (cluster != null) {
-                final int numberOfAffectedSubmissions = textBlockRepository.getNumberOfOtherBlocksInCluster(blockID);
-                block.setNumberOfAffectedSubmissions(numberOfAffectedSubmissions);
-            }
-        });
-    }
 }

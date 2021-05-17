@@ -874,6 +874,13 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         return asList(textSubmission1, textSubmission2);
     }
 
+    // @Test
+    // @WithMockUser(value = "tutor1", roles = "TA")
+    // public void checkNumberOfAffectedSubmissionsPerBlock() throws Exception {
+    // List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
+    //
+    // }
+
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void checkTextBlockSavePreservesClusteringInformation() throws Exception {
