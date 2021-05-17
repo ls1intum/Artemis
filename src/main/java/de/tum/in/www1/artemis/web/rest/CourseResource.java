@@ -31,6 +31,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -183,14 +184,19 @@ public class CourseResource {
         validateComplaintsAndRequestMoreFeedbackConfig(course);
         validateOnlineCourseAndRegistrationEnabled(course);
 
-        try {
+        createOrValidateGroups(course);
+        Course result = courseRepository.save(course);
+        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
 
+    private void createOrValidateGroups(Course course) {
+        try {
             // We use default names if a group was not specified by the ADMIN.
             // NOTE: instructors cannot change the group of a course, because this would be a security issue!
-
             // only create default group names, if the ADMIN has used a custom group names, we assume that it already exists.
 
-            if (course.getStudentGroupName() == null) {
+            if (!StringUtils.hasText(course.getStudentGroupName())) {
                 course.setStudentGroupName(course.getDefaultStudentGroupName());
                 artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
             }
@@ -198,7 +204,7 @@ public class CourseResource {
                 checkIfGroupsExists(course.getStudentGroupName());
             }
 
-            if (course.getTeachingAssistantGroupName() == null) {
+            if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
                 course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
                 artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
             }
@@ -206,7 +212,7 @@ public class CourseResource {
                 checkIfGroupsExists(course.getTeachingAssistantGroupName());
             }
 
-            if (course.getEditorGroupName() == null) {
+            if (!StringUtils.hasText(course.getEditorGroupName())) {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
             }
@@ -214,7 +220,7 @@ public class CourseResource {
                 checkIfGroupsExists(course.getEditorGroupName());
             }
 
-            if (course.getInstructorGroupName() == null) {
+            if (!StringUtils.hasText(course.getInstructorGroupName())) {
                 course.setInstructorGroupName(course.getDefaultInstructorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
             }
@@ -232,9 +238,6 @@ public class CourseResource {
             // a specified group does not exist, notify the client
             throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
         }
-        Course result = courseRepository.save(course);
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
     /**
@@ -1237,7 +1240,7 @@ public class CourseResource {
         // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
         // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
         // To increase the usability the group is automatically generated when a user is added.
-        if (course.getEditorGroupName() == null) {
+        if (!StringUtils.hasText(course.getEditorGroupName())) {
             try {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
                 if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
