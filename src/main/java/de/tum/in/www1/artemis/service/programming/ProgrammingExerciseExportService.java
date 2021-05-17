@@ -262,7 +262,7 @@ public class ProgrammingExerciseExportService {
         }
         catch (IOException | UncheckedIOException | GitAPIException | GitException | InterruptedException ex) {
             var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
-            log.info(error);
+            log.info(error + ": " + ex.getMessage());
             exportErrors.add(error);
         }
         return Optional.empty();

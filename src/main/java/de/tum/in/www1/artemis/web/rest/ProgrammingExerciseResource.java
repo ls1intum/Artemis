@@ -1150,22 +1150,32 @@ public class ProgrammingExerciseResource {
     @PostMapping(value = Endpoints.AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AuxiliaryRepository> createAuxiliaryRepository(@PathVariable Long exerciseId, @RequestBody AuxiliaryRepository repository) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesAndTemplateUrlAndSolutionUrlAndTestUrlById(exerciseId);
+        if(optionalProgrammingExercise.isEmpty()) {
+            notFound();
+        }
+        ProgrammingExercise exercise = optionalProgrammingExercise.get();
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        validateAuxiliaryRepository(repository);
+        validateAuxiliaryRepository(repository, exercise);
         try {
             AuxiliaryRepository newAuxiliaryRepository = programmingExerciseService.createAuxiliaryRepositoryForExercise(exercise, repository);
 
-            return ResponseEntity.created(new URI("/api/programming-exercises" + newAuxiliaryRepository.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, "auxiliaryRepository", newAuxiliaryRepository.getName())).body(newAuxiliaryRepository);
+            return ResponseEntity.created(new URI("/api/programming-exercises/" + exercise.getId() + "/auxiliary-repository/" + newAuxiliaryRepository.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, AUX_REPO_ENTITY_NAME, newAuxiliaryRepository.getName())).body(newAuxiliaryRepository);
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
+                .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(),
+                    "errorProgrammingExerciseAuxiliaryRepository")).body(null);
         }
     }
 
-    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
+    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
+
+        if (auxiliaryRepository.getId() != null) {
+            throw new BadRequestAlertException("Auxiliary repositories must not have an id.", AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
+        }
 
         // We want to force the user to set a name of the auxiliary repository, otherwise we
         // cannot determine which name we should use for setting up the repo on the VCS.
@@ -1179,6 +1189,14 @@ public class ProgrammingExerciseResource {
         if (auxiliaryRepository.getName().length() > 100) {
             throw new BadRequestAlertException("The name of an auxiliary repository must not be longer than 100 characters!",
                 AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+        }
+
+        // We want to avoid using the same auxiliary repository name multiple times
+        for (AuxiliaryRepository existingRepository : exercise.getAuxiliaryRepositories()) {
+            if (existingRepository.getName().equals(auxiliaryRepository.getName())) {
+                throw new BadRequestAlertException("The name '" + auxiliaryRepository.getName() + "' is not allowed for auxiliary repositories!",
+                    AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+            }
         }
 
         // The name must not match any of the names of the already present repositories, otherwise
@@ -1280,6 +1298,8 @@ public class ProgrammingExerciseResource {
         public static final String INVALID_TEMPLATE_BUILD_PLAN_ID = "invalid.template.build.plan.id";
 
         public static final String INVALID_SOLUTION_BUILD_PLAN_ID = "invalid.solution.build.plan.id";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_ID = "invalid.auxiliary.repository.id";
 
         public static final String INVALID_AUXILIARY_REPOSITORY_NAME = "invalid.auxiliary.repository.name";
 

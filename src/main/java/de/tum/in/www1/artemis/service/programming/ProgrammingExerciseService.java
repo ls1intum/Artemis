@@ -70,12 +70,15 @@ public class ProgrammingExerciseService {
 
     private final ResultRepository resultRepository;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
-            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService) {
+            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -90,6 +93,7 @@ public class ProgrammingExerciseService {
         this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -320,10 +324,14 @@ public class ProgrammingExerciseService {
 
     public AuxiliaryRepository createAuxiliaryRepositoryForExercise(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository) {
         final var projectKey = programmingExercise.getProjectKey();
-        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(auxiliaryRepository.getName()), null);
-        continuousIntegrationService.get().addAuxiliaryRepositoryToExerciseBuildPlan(programmingExercise, projectKey, auxiliaryRepository);
-
-        save(programmingExercise);
+        programmingExercise.addAuxiliaryRepository(auxiliaryRepository);
+        String repositoryUrl = versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), auxiliaryRepository.getRepositoryName()).toString();
+        auxiliaryRepository.setRepositoryUrl(repositoryUrl);
+        auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
+        versionControlService.get().createRepository(projectKey, auxiliaryRepository.getRepositoryName(), null);
+        if (auxiliaryRepository.shouldBeIncludedInBuildPlan()) {
+            continuousIntegrationService.get().addAuxiliaryRepositoryToExercise(programmingExercise, auxiliaryRepository);
+        }
         return auxiliaryRepository;
     }
 

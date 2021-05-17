@@ -126,7 +126,8 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
             byte[] out = repositoryService.getFile(repository, filename);
             HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+            var contentType = repositoryService.getFileType(repository, filename);
+            responseHeaders.add("Content-Type", contentType);
             return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);
         });
     }
