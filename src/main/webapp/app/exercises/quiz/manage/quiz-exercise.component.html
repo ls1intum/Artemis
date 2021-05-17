@@ -71,7 +71,7 @@
                     </td>
                     <td>{{ quizExercise.maxPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(quizExercise) }}</td>
-                    <td class="text-right">
+                    <td class="text-right" *ngIf="quizExercise.isAtLeastEditor">
                         <div class="btn-group flex-btn-group-container">
                             <button
                                 type="submit"
