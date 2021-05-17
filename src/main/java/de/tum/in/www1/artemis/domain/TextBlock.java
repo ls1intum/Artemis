@@ -14,6 +14,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A TextBlock.
@@ -41,6 +42,8 @@ public class TextBlock implements Serializable {
     @Column(name = "end_index", nullable = false)
     private int endIndex;
 
+    @Transient
+    @JsonSerialize
     private int numberOfAffectedSubmissions;
 
     /**

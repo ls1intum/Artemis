@@ -55,12 +55,6 @@ public class TextAssessmentService extends AssessmentService {
 
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
-        // Set each block's impact on other submissions for the current 'textSubmission'
-        if (computeFeedbackSuggestions && result != null) {
-            automaticTextFeedbackService.get().setNumberOfAffectedSubmissionsPerBlock(result);
-            result.setSubmission(textSubmission);
-        }
-
         if (result != null) {
             // Load Feedback already created for this assessment
             final List<Feedback> assessments = exercise.isAutomaticAssessmentEnabled() ? getAssessmentsForResultWithConflicts(result) : feedbackRepository.findByResult(result);
@@ -98,8 +92,15 @@ public class TextAssessmentService extends AssessmentService {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
+
         // Remove participation after storing in database because submission already has the participation set
         result.setParticipation(null);
+
+        // Set each block's impact on other submissions for the current 'textSubmission'
+        if (computeFeedbackSuggestions) {
+            automaticTextFeedbackService.get().setNumberOfAffectedSubmissionsPerBlock(result);
+            result.setSubmission(textSubmission);
+        }
     }
 
     private List<Feedback> getAssessmentsForResultWithConflicts(Result result) {
