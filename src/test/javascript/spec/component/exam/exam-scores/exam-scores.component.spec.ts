@@ -21,6 +21,7 @@ import { JhiAlertService, JhiSortByDirective, JhiSortDirective, JhiTranslateDire
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { empty, of } from 'rxjs';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -165,6 +166,15 @@ describe('ExamScoresComponent', () => {
                 MockProvider(SortService),
                 MockProvider(JhiAlertService),
                 MockProvider(ParticipantScoresService),
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForExam: () => {
+                        return of(
+                            new HttpResponse({
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
             ],
         })
