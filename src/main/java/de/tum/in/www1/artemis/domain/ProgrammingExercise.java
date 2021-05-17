@@ -37,7 +37,7 @@ public class ProgrammingExercise extends Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
-    private Set<AuxiliaryRepository> auxiliaryRepositories;
+    private Set<AuxiliaryRepository> auxiliaryRepositories = new HashSet<>();
 
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
@@ -204,8 +204,18 @@ public class ProgrammingExercise extends Exercise {
         return this.auxiliaryRepositories;
     }
 
+    @JsonIgnore
+    public Set<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
+        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toSet());
+    }
+
     public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
         this.auxiliaryRepositories = auxiliaryRepositories;
+    }
+
+    public void addAuxiliaryRepository(AuxiliaryRepository repository) {
+        this.getAuxiliaryRepositories().add(repository);
+        repository.setExercise(this);
     }
 
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter

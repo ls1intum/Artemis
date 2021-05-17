@@ -37,7 +37,6 @@ public class AuxiliaryRepository extends DomainObject {
     private String description;
 
     @ManyToOne
-    @JsonIgnoreProperties("auxiliaryRepositories")
     private ProgrammingExercise exercise;
 
     public String getRepositoryUrl() {
@@ -46,6 +45,11 @@ public class AuxiliaryRepository extends DomainObject {
 
     public void setRepositoryUrl(String repositoryUrl) {
         this.repositoryUrl = repositoryUrl;
+    }
+
+    @JsonIgnore
+    public String getRepositoryName() {
+        return exercise.generateRepositoryName(getName());
     }
 
     public String getCheckoutDirectory() {
@@ -91,5 +95,19 @@ public class AuxiliaryRepository extends DomainObject {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @JsonIgnore
+    public boolean shouldBeIncludedInBuildPlan() {
+        return getCheckoutDirectory() != null && !getCheckoutDirectory().isBlank() &&
+            getRepositoryUrl() != null && !getRepositoryUrl().isBlank();
+    }
+
+    public ProgrammingExercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(ProgrammingExercise exercise) {
+        this.exercise = exercise;
     }
 }

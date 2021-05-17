@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.util.Pair;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -82,18 +84,21 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
+        var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
+            .map(repo -> Pair.of(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsTemplateRepositoryUrl())))
+            .collect(Collectors.toList());
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL));
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
     }
 
     @Override
-    public void addAuxiliaryRepositoryToExerciseBuildPlan(ProgrammingExercise exercise, String planKey, AuxiliaryRepository repository) {
-
-    }
-
-    @Override
-    public void removeAuxiliaryRepositoryFromExerciseBuildPlan(ProgrammingExercise exercise, String planKey, AuxiliaryRepository repository) {
-
+    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise, AuxiliaryRepository repository) {
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
+        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(),
+            exercise.getVcsTestRepositoryUrl(), exercise.getVcsSolutionRepositoryUrl());
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
+        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(),
+            exercise.getVcsTestRepositoryUrl(), exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Override
