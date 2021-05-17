@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
 import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -144,14 +144,15 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     /**
      * downloads a file from the repository to the users device.
-     * @param fileName
+     * @param fileName the name of the file in the repository
+     * @param downloadName the name of the file as suggested to the browser
      */
-    downloadFile(fileName: string) {
+    downloadFile(fileName: string, downloadName: string) {
         this.http
             .get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
             .pipe(handleErrorResponse(this.conflictService))
             .subscribe((res) => {
-                downloadFile(res, fileName);
+                downloadFile(res, downloadName);
             });
     }
 
@@ -187,9 +188,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
-    getFileType = (fileName: string) => {
+    getFileHeaders = (fileName: string) => {
         return this.http
-            .get(`${this.restResourceUrl}/fileType`, { params: new HttpParams().set('file', fileName), responseType: 'text' })
+            .head<Observable<HttpResponse<Blob>>>(`${this.restResourceUrl}/file`, { observe: 'response', params: new HttpParams().set('file', fileName) })
             .pipe(handleErrorResponse(this.conflictService));
     };
 

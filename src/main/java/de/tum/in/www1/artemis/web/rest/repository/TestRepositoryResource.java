@@ -76,12 +76,6 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "/test-repository/{exerciseId}/fileType", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> getFileType(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
-        return super.getFileType(exerciseId, filename);
-    }
-
-    @Override
     @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request) {

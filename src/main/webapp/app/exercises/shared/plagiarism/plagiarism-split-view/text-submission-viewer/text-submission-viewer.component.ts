@@ -107,8 +107,9 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
         this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
 
-        this.repositoryService.getFileType(file).subscribe((fileType) => {
-            if (!fileType.startsWith('text')) {
+        this.repositoryService.getFileHeaders(file).subscribe((r) => {
+            let contentType = r.headers.get('content-type');
+            if (contentType && !contentType.startsWith('text')) {
                 this.binaryFile = true;
                 this.loading = false;
             } else {
@@ -126,8 +127,11 @@ export class TextSubmissionViewerComponent implements OnChanges {
         });
     }
 
+    /**
+     * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
+     */
     downloadCurrentFile() {
-        this.repositoryService.downloadFile(this.currentFile);
+        this.repositoryService.downloadFile(this.currentFile, this.exercise.shortName + '_' + this.plagiarismSubmission.studentLogin + '_' + this.currentFile);
     }
 
     getMatchesForCurrentFile() {
