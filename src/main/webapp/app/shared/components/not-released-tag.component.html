@@ -1,4 +1,4 @@
-<jhi-not-released-tag>
+<jhi-not-released-tag [exercise]="exercise">
     <span
         class="badge badge-warning"
         *ngIf="exercise.releaseDate != undefined && !moment(exercise.releaseDate).isBefore(moment())"
@@ -8,3 +8,4 @@
         {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
     </span>
 </jhi-not-released-tag>
+

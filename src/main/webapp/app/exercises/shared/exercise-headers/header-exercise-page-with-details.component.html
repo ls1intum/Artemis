@@ -4,6 +4,7 @@
             <h3>
                 <fa-icon *ngIf="displayBackButton" [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
                 <ng-content select="[pagetitle]"></ng-content>
+                <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
             </h3>
 
             <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
@@ -21,7 +22,8 @@
                 </h4>
             </ng-template>
             <ng-template #courseMode>
-                <jhi-not-released-tag/>
+
+
                 <!--This is a comment. Comments are not displayed in the browser
                 <h4 *ngIf="exercise.releaseDate != undefined && !moment(exercise.releaseDate).isBefore(moment())">
                     <span class="mr-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }} : {{ (exercise.releaseDate | artemisDate) || 'N/A' }} </span>
