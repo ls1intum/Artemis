@@ -4,7 +4,7 @@ import { Exercise, getIconTooltip } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-not-released-tag',
-    templateUrl: 'app/shared/components/not-released-tag.component.html',
+    templateUrl: './not-released-tag.component.html',
 })
 
 export class NotReleasedTagComponent {
