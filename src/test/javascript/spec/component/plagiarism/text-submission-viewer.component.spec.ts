@@ -16,7 +16,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { HttpResponse } from '@angular/common/http';
 
 describe('Text Submission Viewer Component', () => {
     let comp: TextSubmissionViewerComponent;

@@ -108,7 +108,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
 
         this.repositoryService.getFileHeaders(file).subscribe((r) => {
-            let contentType = r.headers.get('content-type');
+            const contentType = r.headers.get('content-type');
             if (contentType && !contentType.startsWith('text')) {
                 this.binaryFile = true;
                 this.loading = false;
