@@ -7,7 +7,7 @@ import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programmi
 
 export const routes: Routes = [
     {
-        path: ':courseId/programming-exercises/:exerciseId/assessment',
+        path: ':courseId/programming-exercises/:exerciseId/submissions',
         component: ProgrammingAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

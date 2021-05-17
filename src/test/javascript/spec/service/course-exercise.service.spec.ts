@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -129,71 +129,88 @@ describe('Course Management Service', () => {
         expectDateConversionToBeDone(exerciseToCheck, withoutAssessmentDueDate);
     };
 
-    it('should find all programming exercises', async () => {
+    it('should find all programming exercises', fakeAsync(() => {
         returnedFromService = [programmingExercise];
         service
             .findAllProgrammingExercisesForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).to.eq([programmingExercise]));
+            .subscribe((res) => expect(res.body).to.deep.equal([programmingExercise]));
 
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/programming-exercises/`, returnedFromService, programmingExercise);
-    });
+        tick();
+    }));
 
-    it('should find all modeling exercises', async () => {
+    it('should find all modeling exercises', fakeAsync(() => {
         returnedFromService = [modelingExercise];
         service
             .findAllModelingExercisesForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).to.eq([modelingExercise]));
+            .subscribe((res) => expect(res.body).to.deep.equal([modelingExercise]));
 
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/modeling-exercises/`, returnedFromService, modelingExercise);
-    });
+        tick();
+    }));
 
-    it('should find all text exercises', async () => {
+    it('should find all text exercises', fakeAsync(() => {
         returnedFromService = [textExercise];
         service
             .findAllTextExercisesForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).to.eq([textExercise]));
+            .subscribe((res) => expect(res.body).to.deep.equals([textExercise]));
 
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/text-exercises/`, returnedFromService, textExercise);
-    });
+        tick();
+    }));
 
-    it('should find all file upload exercises', async () => {
+    it('should find all file upload exercises', fakeAsync(() => {
         returnedFromService = [fileUploadExercise];
         service
             .findAllFileUploadExercisesForCourse(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).to.eq([fileUploadExercise]));
+            .subscribe((res) => expect(res.body).to.deep.equals([fileUploadExercise]));
 
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/file-upload-exercises/`, returnedFromService, fileUploadExercise);
-    });
+        tick();
+    }));
 
-    it('should start exercise', async () => {
+    it('should start exercise', fakeAsync(() => {
         const participationId = 12345;
         const participation = new StudentParticipation();
         participation.id = participationId;
         participation.exercise = programmingExercise;
         returnedFromService = { ...participation };
+        const expected = Object.assign(
+            {
+                initializationDate: undefined,
+            },
+            participation,
+        );
         service
             .startExercise(course.id!, exerciseId)
             .pipe(take(1))
-            .subscribe((res) => expect(res).to.eq([programmingExercise]));
+            .subscribe((res) => expect(res).to.deep.equals(expected));
 
         requestAndExpectDateConversion('POST', `${resourceUrl}/${course.id}/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).to.eq(participationId);
-    });
+        tick();
+    }));
 
-    it('should resume programming exercise', async () => {
+    it('should resume programming exercise', fakeAsync(() => {
         const participationId = 12345;
         const participation = new StudentParticipation();
         participation.id = participationId;
         participation.exercise = programmingExercise;
         returnedFromService = { ...participation };
+        const expected = Object.assign(
+            {
+                initializationDate: undefined,
+            },
+            participation,
+        );
         service
             .resumeProgrammingExercise(course.id!, exerciseId)
             .pipe(take(1))
-            .subscribe((res) => expect(res).to.eq([programmingExercise]));
+            .subscribe((res) => expect(res).to.deep.equals(expected));
 
         requestAndExpectDateConversion(
             'PUT',
@@ -203,7 +220,8 @@ describe('Course Management Service', () => {
             true,
         );
         expect(programmingExercise.studentParticipations?.[0]?.id).to.eq(participationId);
-    });
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

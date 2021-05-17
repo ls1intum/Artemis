@@ -65,7 +65,7 @@
             <div class="guided-tour exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
                 <div
                     class="control-label"
-                    [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey].isCurrentWeek }"
+                    [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey] ? weeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
                     (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
                 >
                     <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
