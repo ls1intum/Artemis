@@ -21,6 +21,9 @@ public class TextExercise extends Exercise {
     @Lob
     private String sampleSolution;
 
+    @Column(name = "imported_exercise_id")
+    private Long importedExerciseId;
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<TextCluster> clusters;
@@ -32,6 +35,10 @@ public class TextExercise extends Exercise {
     public void setSampleSolution(String sampleSolution) {
         this.sampleSolution = sampleSolution;
     }
+
+    public Long getImportedExerciseId() { return importedExerciseId;}
+
+    public void setImportedExerciseId(Long importedExerciseId) { this.importedExerciseId = importedExerciseId; }
 
     public boolean isAutomaticAssessmentEnabled() {
         return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC;
