@@ -250,7 +250,11 @@ public class Result extends DomainObject {
     }
 
     public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
-        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
+        // We perform a non-null check to avoid null pointer exceptions for (irregularly) missing submission dates,
+        // which seem to have occurred in the past due to database schema inconsistencies.
+        if (submissionDate != null) {
+            this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
+        }
     }
 
     /**
