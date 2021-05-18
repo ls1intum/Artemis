@@ -10,10 +10,10 @@ An ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
 - **EDITOR:** can create and edit the content of a course but cannot delete content and monitoring other course participants is limited
 - **TEACHING ASSISTANT:** can assess student submissions and view course content before the release date
 - **USER:** participates as a Student in courses, can view course content after the release date
-- **ANONYMOUS:** can sign up for courses
+- **ANONYMOUS:** role before login
 
 
-In the following, the respective permissions illustrated. If a role does not have any access rights or a subordinated role has all permissions, it is not explicitly displayed.
+In the following, the respective permissions illustrated. If a subordinated role has all permissions or a role does not have any access rights, it is not explicitly displayed.
 
 Navigation
 ----------
