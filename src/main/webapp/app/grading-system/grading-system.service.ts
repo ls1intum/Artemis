@@ -100,13 +100,9 @@ export class GradingSystemService {
      * @param gradeSteps the grade steps to be sorted
      */
     sortGradeSteps(gradeSteps: GradeStep[]): GradeStep[] {
-        if (gradeSteps) {
-            return gradeSteps.sort((gradeStep1, gradeStep2) => {
-                return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
-            });
-        } else {
-            return [];
-        }
+        return gradeSteps.sort((gradeStep1, gradeStep2) => {
+            return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
+        });
     }
 
     /**
@@ -143,13 +139,9 @@ export class GradingSystemService {
      * @param gradeSteps the grade step set
      */
     maxGrade(gradeSteps: GradeStep[]): string {
-        if (gradeSteps) {
-            const maxGradeStep = gradeSteps.find((gradeStep) => {
-                return gradeStep.upperBoundInclusive && gradeStep.upperBoundPercentage === 100;
-            });
-            return maxGradeStep?.gradeName || '';
-        } else {
-            return '';
-        }
+        const maxGradeStep = gradeSteps.find((gradeStep) => {
+            return gradeStep.upperBoundInclusive && gradeStep.upperBoundPercentage === 100;
+        });
+        return maxGradeStep?.gradeName || '';
     }
 }

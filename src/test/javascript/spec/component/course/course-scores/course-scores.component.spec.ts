@@ -27,6 +27,7 @@ import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
+import { GradingScale } from 'app/entities/grading-scale.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -384,6 +385,25 @@ describe('CourseScoresComponent', () => {
         validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
         expect(maxRow[OVERALL_COURSE_POINTS_KEY]).to.equal('30');
+    });
+
+    it('should set grading scale properties correctly', () => {
+        const gradingScale = new GradingScale();
+        gradingScale.gradeSteps = [
+            {
+                gradeName: 'A',
+                lowerBoundInclusive: true,
+                lowerBoundPercentage: 0,
+                upperBoundInclusive: true,
+                upperBoundPercentage: 100,
+                isPassingGrade: true,
+            },
+        ];
+        component.calculateGradingScaleInformation(gradingScale);
+
+        expect(component.gradingScaleExists).to.be.true;
+        expect(component.gradingScale).to.equal(gradingScale);
+        expect(component.isBonus).to.be.false;
     });
 
     function validateUserRow(

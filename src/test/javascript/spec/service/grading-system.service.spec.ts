@@ -12,6 +12,32 @@ describe('Grading System Service', () => {
     let httpMock: HttpTestingController;
     let elemDefault: GradingScale;
 
+    const gradeStep2: GradeStep = {
+        gradeName: 'Pass',
+        lowerBoundPercentage: 40,
+        upperBoundPercentage: 80,
+        lowerBoundInclusive: true,
+        upperBoundInclusive: false,
+        isPassingGrade: true,
+    };
+    const gradeStep1: GradeStep = {
+        gradeName: 'Fail',
+        lowerBoundPercentage: 0,
+        upperBoundPercentage: 40,
+        lowerBoundInclusive: true,
+        upperBoundInclusive: false,
+        isPassingGrade: false,
+    };
+    const gradeStep3: GradeStep = {
+        gradeName: 'Excellent',
+        lowerBoundPercentage: 80,
+        upperBoundPercentage: 100,
+        lowerBoundInclusive: true,
+        upperBoundInclusive: true,
+        isPassingGrade: true,
+    };
+    const gradeSteps = [gradeStep2, gradeStep3, gradeStep1];
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, RouterTestingModule],
@@ -105,35 +131,28 @@ describe('Grading System Service', () => {
     }));
 
     it('should sort correctly', () => {
-        const gradeStep1: GradeStep = {
-            gradeName: 'Fail',
-            lowerBoundPercentage: 0,
-            upperBoundPercentage: 40,
-            lowerBoundInclusive: true,
-            upperBoundInclusive: false,
-            isPassingGrade: false,
-        };
-        const gradeStep2: GradeStep = {
-            gradeName: 'Pass',
-            lowerBoundPercentage: 40,
-            upperBoundPercentage: 80,
-            lowerBoundInclusive: true,
-            upperBoundInclusive: false,
-            isPassingGrade: true,
-        };
-        const gradeStep3: GradeStep = {
-            gradeName: 'Excellent',
-            lowerBoundPercentage: 80,
-            upperBoundPercentage: 100,
-            lowerBoundInclusive: true,
-            upperBoundInclusive: true,
-            isPassingGrade: true,
-        };
-        const gradeSteps = [gradeStep2, gradeStep3, gradeStep1];
         service.sortGradeSteps(gradeSteps);
 
         expect(gradeSteps[0]).toEqual(gradeStep1);
         expect(gradeSteps[1]).toEqual(gradeStep2);
         expect(gradeSteps[2]).toEqual(gradeStep3);
+    });
+
+    it('should match grade percentage correctly', () => {
+        expect(service.matchGradePercentage(gradeStep2, 40)).toEqual(true);
+        expect(service.matchGradePercentage(gradeStep2, 70)).toEqual(true);
+        expect(service.matchGradePercentage(gradeStep2, 80)).toEqual(false);
+    });
+
+    it('should find matching grade step', () => {
+        expect(service.findMatchingGradeStep(gradeSteps, 30)).toEqual(gradeStep1);
+        expect(service.findMatchingGradeStep(gradeSteps, 90)).toEqual(gradeStep3);
+        expect(service.findMatchingGradeStep(gradeSteps, 150)).toEqual(undefined);
+        expect(service.findMatchingGradeStep(gradeSteps, -10)).toEqual(undefined);
+    });
+
+    it('should find max grade correctly', () => {
+        expect(service.maxGrade(gradeSteps)).toEqual(gradeStep3.gradeName);
+        expect(service.maxGrade([])).toEqual('');
     });
 });
