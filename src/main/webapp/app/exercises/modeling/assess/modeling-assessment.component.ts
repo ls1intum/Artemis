@@ -4,6 +4,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import * as $ from 'jquery';
+import { JhiLanguageService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -45,7 +46,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
+    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private languageService: JhiLanguageService) {}
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {
@@ -282,15 +283,17 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     private calculateLabel(feedback: any) {
-        if (this.highlightDifferences) {
+        if (this.highlightDifferences && this.languageService.getCurrentLanguage() === 'en') {
             return feedback.copiedFeedbackId ? 'First correction round' : 'Second correction round';
+        } else if (this.highlightDifferences && this.languageService.getCurrentLanguage() === 'de') {
+            return feedback.copiedFeedbackId ? 'Erste Korrekturrunde' : 'Zweite Korrekturrunde';
         }
         return undefined;
     }
 
     private calculateLabelColor(feedback: any) {
         if (this.highlightDifferences) {
-            return feedback.copiedFeedbackId ? 'blue' : 'orange';
+            return feedback.copiedFeedbackId ? '#3e8acc' : '#ffa561';
         }
         return '';
     }
