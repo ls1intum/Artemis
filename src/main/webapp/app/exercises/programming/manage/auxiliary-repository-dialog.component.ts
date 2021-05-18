@@ -11,6 +11,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
+import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
 
 @Component({
     selector: 'jhi-auxiliary-repository-dialog',
@@ -26,9 +27,11 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     description: String;
     isSaving = false;
 
+    repositoryNamePattern = /^(?!(solution|exercise|tests)\b)\b\w+$/;
+
     constructor(
         private participationService: ParticipationService,
-        private externalSubmissionService: ExternalSubmissionService,
+        private auxiliaryRepositoryService: AuxiliaryRepositoryService,
         private activeModal: NgbActiveModal,
         private eventManager: JhiEventManager,
     ) {}
@@ -43,9 +46,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     /**
      * Initialize result with initial manual result.
      */
-    initializeForResultCreation() {
-        this.externalSubmissionService.generateInitialManualResult();
-    }
+    initializeForResultCreation() {}
 
     /**
      * Close modal window.
@@ -58,7 +59,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      * Add manual feedbacks to the result and create external submission.
      */
     save() {
-        // this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.student, this.result));
+        this.subscribeToSaveResponse(this.auxiliaryRepositoryService.save(this.repositoryName, this.checkoutDirectory, this.description));
     }
 
     /**

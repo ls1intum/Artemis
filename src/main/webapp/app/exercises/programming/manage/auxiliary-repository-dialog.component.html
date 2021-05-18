@@ -10,8 +10,18 @@
         <jhi-alert-error></jhi-alert-error>
         <jhi-alert></jhi-alert>
         <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.repositoryName">Repository Name</h4>
-            <input type="text" required class="form-control" name="Repository Name" id="repositoryName" [(ngModel)]="repositoryName" #repoName="ngModel" />
+            <label class="control-label" jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.repositoryName">Repository Name</label>
+            <jhi-help-icon placement="right" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
+            <input
+                type="text"
+                required
+                class="form-control"
+                name="Repository Name"
+                id="repositoryName"
+                [(ngModel)]="repositoryName"
+                [pattern]="repositoryNamePattern"
+                #repoName="ngModel"
+            />
             <span
                 class="text-danger"
                 *ngIf="repoName?.invalid && repoName?.errors?.required"
@@ -21,12 +31,14 @@
             </span>
         </div>
         <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.checkoutDirectory">Checkout Directory</h4>
+            <label class="control-label" jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.checkoutDirectory">Checkout Directory</label>
+            <jhi-help-icon placement="right" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
             <input type="text" class="form-control" name="checkoutDirectory" id="checkoutDirectory" [(ngModel)]="checkoutDirectory" />
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">
                 <label class="control-label"> Description </label>
+                <jhi-help-icon placement="top" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
                 <textarea type="text" class="form-control" id="description" name="description" [(ngModel)]="description"></textarea>
             </div>
         </div>
