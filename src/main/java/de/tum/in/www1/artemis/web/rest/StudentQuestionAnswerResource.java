@@ -85,8 +85,12 @@ public class StudentQuestionAnswerResource {
         if (!studentQuestion.getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the StudentQuestionAnswer in the body that should be added");
         }
-        // answer to approved if written by an instructor
+        // answer is automatically approved if written by an instructor
         studentQuestionAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
+        // use question from database rather than user input
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        // set author to current user
+        studentQuestionAnswer.setAuthor(user);
         StudentQuestionAnswer result = answerRepository.save(studentQuestionAnswer);
         if (result.getQuestion().getExercise() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(result);
@@ -116,13 +120,18 @@ public class StudentQuestionAnswerResource {
         if (studentQuestionAnswer.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        courseRepository.findByIdElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
         var existingAnswer = answerRepository.findByIdElseThrow(studentQuestionAnswer.getId());
         if (!existingAnswer.getQuestion().getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the StudentQuestionAnswer in the body");
         }
         mayUpdateOrDeleteStudentQuestionAnswerElseThrow(existingAnswer, user);
-        StudentQuestionAnswer result = answerRepository.save(studentQuestionAnswer);
+        // allow overwriting of values only for depicted fields: answerText, verified, tutorApproved
+        existingAnswer.setAnswerText(studentQuestionAnswer.getAnswerText());
+        existingAnswer.setVerified(studentQuestionAnswer.isVerified());
+        // tutor approval can only be given by a tutor
+        existingAnswer.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
+        StudentQuestionAnswer result = answerRepository.save(existingAnswer);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
     }
 
