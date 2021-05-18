@@ -40,6 +40,15 @@ public interface VcsUserManagementService {
     void deleteVcsUser(String login) throws VersionControlException;
 
     /**
+     * Returns true if the user can be created in the VCS. Returns false
+     * if the user already exists.
+     *
+     * @param user The Artemis user to create
+     * @return whether the user can be created in the VCS.
+     */
+    boolean canCreateVcsUser(User user);
+
+    /**
      * Updates all exercises in a course based on the new instructors, editors and teaching assistant groups. This entails removing
      * all users from exercises, that are no longer part of any relevant group and adding all users to exercises in the course
      * that are part of the updated groups.

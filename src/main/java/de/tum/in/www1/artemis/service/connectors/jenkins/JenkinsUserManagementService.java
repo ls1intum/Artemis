@@ -128,6 +128,28 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         return new HttpEntity<>(formData, headers);
     }
 
+    /**
+     * Checks if the Artemis you can be created in Jenkins. The
+     * function first checks if the user exists and if it doesn't
+     * attempts to create it. If the creation is successful, the
+     * Jenkins user is deleted and a boolean value is returned.
+     *
+     * @param user The user to check
+     * @return whether the user can be created in Jenkins or not
+     */
+    @Override
+    public boolean canCreateUser(User user) {
+        try {
+            createUser(user);
+            deleteUser(user);
+            return true;
+        }
+        catch (JenkinsException e) {
+            log.error("Cannot check if the user {} can be created in the CIS: {}", user.getLogin(), e.getMessage());
+            return false;
+        }
+    }
+
     @Override
     public void deleteUser(User user) throws ContinuousIntegrationException {
         var userLogin = user.getLogin();

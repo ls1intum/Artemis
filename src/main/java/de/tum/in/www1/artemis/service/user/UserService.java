@@ -21,7 +21,9 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exception.CIAccountExistsException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
+import de.tum.in.www1.artemis.exception.VCSAccountExistsException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -146,7 +148,9 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneByActivationKey(key).map(user -> {
+        return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
             // activate given user for the registration key.
             userCreationService.activateUser(user);
             return user;
@@ -236,10 +240,26 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
-        saveUser(newUser);
+
         // we need to save first so that the user can be found in the database in the subsequent method
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser));
+        saveUser(newUser);
+
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
+            if (!vcsUserManagementService.canCreateVcsUser(newUser)) {
+                // Delete the user that was previously saved and throw
+                deleteUser(newUser);
+                throw new VCSAccountExistsException();
+            }
+        });
+
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
+            if (!ciUserManagementService.canCreateUser(newUser)) {
+                // Delete the user that was previously saved and throw
+                deleteUser(newUser);
+                throw new CIAccountExistsException();
+            }
+        });
+
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }

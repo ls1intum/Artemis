@@ -64,6 +64,32 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
     }
 
+    /**
+     * Checks if the Artemis you can be created in Gitlab. The
+     * function first checks if the user exists and if it doesn't
+     * attempts to create it. If the creation is successful, the
+     * Gitlab user is deleted and a boolean value is returned.
+     *
+     * @param user The user to check
+     * @return whether the user can be created in Gitlab or not
+     */
+    @Override
+    public boolean canCreateVcsUser(User user) {
+        try {
+            getUserId(user.getLogin());
+            return false;
+        }
+        catch (GitLabUserDoesNotExistException e) {
+            createVcsUser(user);
+            deleteVcsUser(user.getLogin());
+            return true;
+        }
+        catch (GitLabException e) {
+            log.error("Cannot check if the user {} can be created in the VCS: {}", user.getLogin(), e.getMessage());
+            return false;
+        }
+    }
+
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
         try {
