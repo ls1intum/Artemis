@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -34,6 +33,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -85,20 +85,19 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-            .map(repo -> Pair.of(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsTemplateRepositoryUrl())))
-            .collect(Collectors.toList());
+                .map(repo -> Pair.of(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsTemplateRepositoryUrl()))).collect(Collectors.toList());
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
                 urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
     }
 
     @Override
-    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise, AuxiliaryRepository repository) {
+    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise) {
         deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
-        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(),
-            exercise.getVcsTestRepositoryUrl(), exercise.getVcsSolutionRepositoryUrl());
+        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
         deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
-        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(),
-            exercise.getVcsTestRepositoryUrl(), exercise.getVcsSolutionRepositoryUrl());
+        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Override

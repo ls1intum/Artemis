@@ -77,8 +77,7 @@ public class ProgrammingExerciseService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
-            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -330,7 +329,7 @@ public class ProgrammingExerciseService {
         auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
         versionControlService.get().createRepository(projectKey, auxiliaryRepository.getRepositoryName(), null);
         if (auxiliaryRepository.shouldBeIncludedInBuildPlan()) {
-            continuousIntegrationService.get().addAuxiliaryRepositoryToExercise(programmingExercise, auxiliaryRepository);
+            continuousIntegrationService.get().addAuxiliaryRepositoryToExercise(programmingExercise);
         }
         return auxiliaryRepository;
     }

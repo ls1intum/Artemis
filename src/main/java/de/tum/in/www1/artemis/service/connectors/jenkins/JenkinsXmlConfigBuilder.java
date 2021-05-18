@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import java.util.Set;
+
 import org.w3c.dom.Document;
 
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
@@ -20,5 +23,5 @@ public interface JenkinsXmlConfigBuilder {
      * @return The parsed XML document containing the Jenkins build config
      */
     Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns);
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, Set<AuxiliaryRepository> auxiliaryRepositories);
 }

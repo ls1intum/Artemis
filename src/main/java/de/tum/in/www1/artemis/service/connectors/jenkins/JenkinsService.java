@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -93,8 +94,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise, AuxiliaryRepository repository) {
-
+    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise) {
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
+        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
+        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Override
