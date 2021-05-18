@@ -1225,6 +1225,15 @@ public class ProgrammingExerciseResource {
                 throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!",
                     AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
             }
+
+            // Multiple auxiliary repositories might not share one checkout directory, since
+            // Bamboo does not allow this.
+            for (AuxiliaryRepository repo : exercise.getAuxiliaryRepositories()) {
+                if (repo.getCheckoutDirectory().equals(auxiliaryRepository.getCheckoutDirectory())) {
+                    throw new BadRequestAlertException("The checkout directory path is already defined for another additional repository!",
+                        AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+                }
+            }
         }
 
         // The description must not be longer than 100 characters, since the database column is
