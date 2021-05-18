@@ -338,7 +338,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockGetUserId(String username, boolean userExists) throws GitLabApiException {
+    public void mockGetUserId(String username, boolean userExists) throws GitLabApiException {
         if (userExists) {
             doReturn(new User().withId(1)).when(userApi).getUser(username);
         }

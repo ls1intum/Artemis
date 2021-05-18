@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
+import org.gitlab4j.api.UserApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,7 +74,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
         SecurityUtils.setAuthorizationObject();
         jenkinsRequestMockProvider.mockDeleteUser(user, true, false);
-        jenkinsRequestMockProvider.mockCanCreateUser(user);
+        jenkinsRequestMockProvider.mockCanCreateUser(user, false);
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
@@ -115,4 +117,67 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         assertThat(updatedUser.get().getActivated()).isTrue();
     }
 
+    @Test
+    public void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
+        // create unactivated user in repo
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setActivated(false);
+        user.setActivationKey("testActivationKey");
+
+        // setup user to register
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("password");
+
+        // make request and assert
+        gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        // The account shouldn't be saved
+        assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
+
+        // make another request
+        doReturn(new org.gitlab4j.api.models.User().withId(1)).when(mock(UserApi.class)).getUser(user.getLogin());
+        gitlabRequestMockProvider.mockCreateVcsUser(user, true);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        // The account shouldn't be saved
+        assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
+    }
+
+    @Test
+    public void testShouldNotRegisterUserIfCannotCreateInJenkins() throws Exception {
+        // create unactivated user in repo
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setActivated(false);
+        user.setActivationKey("testActivationKey");
+
+        // setup user to register
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("password");
+
+        gitlabRequestMockProvider.mockCanCreateVcsUser(user);
+        jenkinsRequestMockProvider.mockCanCreateUser(user, true);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        // The account shouldn't be saved
+        assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
+    }
+
+    @Test
+    public void testShouldRegisterUserIfCanCreateInJenkinsAndGitlab() throws Exception {
+        // create unactivated user in repo
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setActivated(false);
+        user.setActivationKey("testActivationKey");
+
+        // setup user to register
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("password");
+
+        gitlabRequestMockProvider.mockCanCreateVcsUser(user);
+        jenkinsRequestMockProvider.mockCanCreateUser(user, false);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+
+        assertThat(userRepo.findOneByLogin(user.getLogin())).isPresent();
+    }
 }

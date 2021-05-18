@@ -76,15 +76,16 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Override
     public boolean canCreateVcsUser(User user) {
         try {
-            getUserId(user.getLogin());
-            return false;
-        }
-        catch (GitLabUserDoesNotExistException e) {
+            var gitlabUser = gitlabApi.getUserApi().getUser(user.getLogin());
+            if (gitlabUser != null) {
+                return false;
+            }
+
             createVcsUser(user);
             deleteVcsUser(user.getLogin());
             return true;
         }
-        catch (GitLabException e) {
+        catch (GitLabApiException | GitLabException e) {
             log.error("Cannot check if the user {} can be created in the VCS: {}", user.getLogin(), e.getMessage());
             return false;
         }
