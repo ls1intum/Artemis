@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
@@ -18,6 +18,8 @@ import * as Sentry from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { catchError } from 'rxjs/operators';
+import { HttpResponse } from '@angular/common/http';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -164,19 +166,16 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
         // alternative course scores calculation using participant scores table
         const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
-        forkJoin([findParticipationsObservable, courseScoresObservable]).subscribe(([participationsOfCourse, courseScoresResult]) => {
+        // find grading scale if it exists for course
+        const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+        forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable]).subscribe(([participationsOfCourse, courseScoresResult, gradingScaleResponse]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
             this.calculateExerciseLevelStatistics();
             this.calculateStudentLevelStatistics();
-            // find grading scale if it exists for course and set properties
-            this.gradingSystemService.findGradingScaleForCourse(courseId).subscribe(
-                (gradingScaleResponse) => {
-                    if (gradingScaleResponse.body) {
-                        this.calculateGradingScaleInformation(gradingScaleResponse.body);
-                    }
-                },
-                () => {},
-            );
+            // if grading scale exists set properties
+            if (gradingScaleResponse.body) {
+                this.calculateGradingScaleInformation(gradingScaleResponse.body);
+            }
 
             // comparing with calculation from course scores (using new participation score table)
             const courseScoreDTOs = courseScoresResult.body!;
