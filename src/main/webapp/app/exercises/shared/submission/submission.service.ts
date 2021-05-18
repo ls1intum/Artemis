@@ -35,17 +35,15 @@ export class SubmissionService {
      * @param {number} participationId - The id of the participation to be searched for
      */
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
-            .pipe(
-                map((res) => this.convertDateArrayFromServer(res)),
-                filter((res) => !!res.body),
-                tap((res) =>
-                    res.body!.forEach((submission) => {
-                        this.reconnectSubmissionAndResult(submission);
-                    }),
-                ),
-            );
+        return this.http.get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' }).pipe(
+            map((res) => this.convertDateArrayFromServer(res)),
+            filter((res) => !!res.body),
+            tap((res) =>
+                res.body!.forEach((submission) => {
+                    this.reconnectSubmissionAndResult(submission);
+                }),
+            ),
+        );
     }
 
     /**
@@ -124,7 +122,6 @@ export class SubmissionService {
      * @param submission current submission
      */
     public handleFeedbackCorrectionRoundTag(correctionRound: number, submission: Submission) {
-        console.log('badge update:', submission);
         if (correctionRound > 0 && submission?.results && submission.results.length > 1) {
             const firstResult = submission!.results![0] as Result;
             const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
