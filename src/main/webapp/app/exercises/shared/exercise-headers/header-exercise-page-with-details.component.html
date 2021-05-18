@@ -23,26 +23,6 @@
             </ng-template>
             <ng-template #courseMode>
                 <h4>
-                    <span class="mr-2">
-                        <jhi-not-released-tag [exercise]="exercise">
-                            <span [ngClass]="exerciseStatusBadge" class="badge">
-                                {{ exercise.releaseDate | artemisTimeAgo }}
-                            </span>
-                        </jhi-not-released-tag>
-                    </span>
-                </h4>
-
-
-                <!--This is a comment. Comments are not displayed in the browser
-                <h4 *ngIf="exercise.releaseDate != undefined && !moment(exercise.releaseDate).isBefore(moment())">
-                    <span class="mr-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }} : {{ (exercise.releaseDate | artemisDate) || 'N/A' }} </span>
-                    <span class="ml-1 badge badge-warning"> {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }} </span>
-                    <span [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exercise.releaseDate | artemisTimeAgo }}
-                    </span>
-                </h4>
-                -->
-                <h4>
                     <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
                     <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
                         {{ exercise.dueDate | artemisTimeAgo }}
