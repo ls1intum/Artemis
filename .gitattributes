@@ -1,3 +1,6 @@
+# Union Merge Liquibase Changelog
+/src/main/resources/config/liquibase/master.xml merge=union
+
 # This file is inspired by https://github.com/alexkaratarakis/gitattributes
 #
 # Auto detect text files and perform LF normalization
