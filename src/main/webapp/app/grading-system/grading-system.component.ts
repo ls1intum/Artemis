@@ -216,9 +216,13 @@ export class GradingSystemComponent implements OnInit {
     }
 
     gradeStepsWithNonemptyNames(): GradeStep[] {
-        return this.gradingScale.gradeSteps.filter((gradeStep) => {
-            return gradeStep.gradeName !== '';
-        });
+        if (this.gradingScale.gradeSteps) {
+            return this.gradingScale.gradeSteps.filter((gradeStep) => {
+                return gradeStep.gradeName !== '';
+            });
+        } else {
+            return [];
+        }
     }
 
     /**
