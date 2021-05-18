@@ -139,7 +139,7 @@
                 "assessmentsTitle": "Total Assessments",
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
-                "averageStudentScore": "Average Student Score"
+                "averageStudentScoreTitle": "Average Student Score"
             }
         },
         "courseStatistics": {

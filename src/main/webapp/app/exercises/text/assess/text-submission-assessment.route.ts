@@ -77,7 +77,7 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
 export const NEW_ASSESSMENT_PATH = 'submissions/new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
-        path: 'assessment',
+        path: 'submissions',
         component: TextAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

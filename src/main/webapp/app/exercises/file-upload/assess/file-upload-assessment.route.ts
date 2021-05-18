@@ -25,7 +25,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/file-upload-exercises/:exerciseId/assessment',
+        path: ':courseId/file-upload-exercises/:exerciseId/submissions',
         component: FileUploadAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
