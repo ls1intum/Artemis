@@ -11,6 +11,7 @@ export class NotReleasedTagComponent implements OnInit, OnChanges {
     readonly moment = moment;
 
     @Input() public exercise: Exercise;
+    public exerciseStatusBadge = 'badge-success';
 
     constructor() {}
 

@@ -1,11 +1,12 @@
-<jhi-not-released-tag [exercise]="exercise">
-    <span
-        class="badge badge-warning"
-        *ngIf="exercise.releaseDate != undefined && !moment(exercise.releaseDate).isBefore(moment())"
-        placement="right"
-        ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
-    >
-        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
-    </span>
-</jhi-not-released-tag>
+<span
+    class="ml-1 badge badge-warning"
+    *ngIf="exercise.releaseDate != undefined && !moment(exercise.releaseDate).isBefore(moment())"
+    placement="right"
+    ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
+>
+    {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
+</span>
+<span [ngClass]="exerciseStatusBadge" class="badge">
+        {{ exercise.releaseDate | artemisTimeAgo }}
+</span>
 

@@ -22,6 +22,15 @@
                 </h4>
             </ng-template>
             <ng-template #courseMode>
+                <h4>
+                    <span class="mr-2">
+                        <jhi-not-released-tag [exercise]="exercise">
+                            <span [ngClass]="exerciseStatusBadge" class="badge">
+                                {{ exercise.releaseDate | artemisTimeAgo }}
+                            </span>
+                        </jhi-not-released-tag>
+                    </span>
+                </h4>
 
 
                 <!--This is a comment. Comments are not displayed in the browser
