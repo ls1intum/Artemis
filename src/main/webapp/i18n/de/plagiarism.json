@@ -14,6 +14,7 @@
             "unknown-student": "Unbekannt",
             "generate-jplag-report": "JPlag Report generieren",
             "no-file-selected": "Keine Datei ausgewählt",
+            "binary-file-not-rendered": "Binäre Datei nicht angezeigt.",
             "no-files-found": "Keine Dateien gefunden",
             "duration": "Dauer",
             "similarity-distribution": "Ähnlichkeitsverteilung",

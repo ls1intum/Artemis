@@ -102,6 +102,27 @@ public class RepositoryService {
     }
 
     /**
+     * Get the mimetype of a single file from the repository
+     *
+     * @param repository in which the requested file is located.
+     * @param filename   of the file to be probed.
+     * @return The mimetype of the file if found or throw an exception.
+     * @throws IOException if the file can't be found, is corrupt, etc.
+     */
+    public String getFileType(Repository repository, String filename) throws IOException {
+        Optional<File> file = gitService.getFileByName(repository, filename);
+        if (file.isEmpty()) {
+            throw new FileNotFoundException();
+        }
+        String type = Files.probeContentType(file.get().toPath());
+        // fallback to text/plain in case content type can not be determined
+        if (type == null) {
+            return "text/plain";
+        }
+        return type;
+    }
+
+    /**
      * Gets the files of the repository and checks whether they were changed during a student participation.
      * Compares the files from the students repository with the files of the template repository.
      *

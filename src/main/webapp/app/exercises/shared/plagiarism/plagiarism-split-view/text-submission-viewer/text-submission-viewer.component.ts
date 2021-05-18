@@ -56,6 +56,11 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     public tokenEnd = '</span>';
 
+    /**
+     * True if currently selected file is not a text file.
+     */
+    binaryFile?: boolean;
+
     constructor(private repositoryService: CodeEditorRepositoryFileService, private textSubmissionService: TextSubmissionService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -101,15 +106,32 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.loading = true;
 
         this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
-        this.repositoryService.getFile(file).subscribe(
-            ({ fileContent }) => {
+
+        this.repositoryService.getFileHeaders(file).subscribe((r) => {
+            const contentType = r.headers.get('content-type');
+            if (contentType && !contentType.startsWith('text')) {
+                this.binaryFile = true;
                 this.loading = false;
-                this.fileContent = this.insertMatchTokens(fileContent);
-            },
-            () => {
-                this.loading = false;
-            },
-        );
+            } else {
+                this.binaryFile = false;
+                this.repositoryService.getFile(file).subscribe(
+                    ({ fileContent }) => {
+                        this.loading = false;
+                        this.fileContent = this.insertMatchTokens(fileContent);
+                    },
+                    () => {
+                        this.loading = false;
+                    },
+                );
+            }
+        });
+    }
+
+    /**
+     * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
+     */
+    downloadCurrentFile() {
+        this.repositoryService.downloadFile(this.currentFile, this.exercise.shortName + '_' + this.plagiarismSubmission.studentLogin + '_' + this.currentFile);
     }
 
     getMatchesForCurrentFile() {
