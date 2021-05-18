@@ -84,8 +84,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-                .map(repo -> Pair.of(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsTemplateRepositoryUrl()))).collect(Collectors.toList());
+        var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan()
+            .stream()
+            .map(repo -> Pair.of(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl())))
+            .collect(Collectors.toList());
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
                 urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
     }
@@ -93,11 +95,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise) {
         deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
         createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
                 exercise.getVcsSolutionRepositoryUrl());
-        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
         createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
-                exercise.getVcsSolutionRepositoryUrl());
+            exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Override

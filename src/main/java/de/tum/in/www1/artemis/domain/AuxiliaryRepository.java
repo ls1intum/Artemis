@@ -82,7 +82,7 @@ public class AuxiliaryRepository extends DomainObject {
      * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
      */
     @JsonIgnore
-    public VcsRepositoryUrl getVcsTemplateRepositoryUrl() {
+    public VcsRepositoryUrl getVcsRepositoryUrl() {
         String repositoryUrl = getRepositoryUrl();
         if (repositoryUrl == null || repositoryUrl.isEmpty()) {
             return null;

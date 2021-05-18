@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
 import java.io.FileNotFoundException;
@@ -321,13 +322,20 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
     }
 
-    public AuxiliaryRepository createAuxiliaryRepositoryForExercise(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository) {
+    public AuxiliaryRepository createAuxiliaryRepositoryForExercise(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository)
+            throws GitAPIException, InterruptedException {
+
         final var projectKey = programmingExercise.getProjectKey();
         programmingExercise.addAuxiliaryRepository(auxiliaryRepository);
         String repositoryUrl = versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), auxiliaryRepository.getRepositoryName()).toString();
         auxiliaryRepository.setRepositoryUrl(repositoryUrl);
         auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
+
         versionControlService.get().createRepository(projectKey, auxiliaryRepository.getRepositoryName(), null);
+
+        Repository repo = gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUrl(), true);
+        gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, null);
+
         if (auxiliaryRepository.shouldBeIncludedInBuildPlan()) {
             continuousIntegrationService.get().addAuxiliaryRepositoryToExercise(programmingExercise);
         }

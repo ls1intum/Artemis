@@ -279,9 +279,6 @@ public class BambooBuildPlanService {
         return createCheckoutTask(assignmentPath, testPath, Optional.empty(), auxiliaryRepositories);
     }
 
-    ///
-    /// Optional<List<Pair<RepositoryUrl, Checkout Directory>>>
-    ///
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Optional<String> solutionPath, Set<AuxiliaryRepository> auxiliaryRepositories) {
         List<CheckoutItem> checkoutItems = new ArrayList<>();
         checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath));
