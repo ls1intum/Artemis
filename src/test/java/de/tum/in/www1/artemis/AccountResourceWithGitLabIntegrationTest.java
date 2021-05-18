@@ -68,11 +68,11 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         // Simulate failure to delete GitLab user, this should not keep Artemis from creating a new user
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
         // Simulate creation of GitLab user
-        gitlabRequestMockProvider.mockCreationOfUser(user.getLogin());
+        gitlabRequestMockProvider.mockCanCreateVcsUser(user);
 
         SecurityUtils.setAuthorizationObject();
         jenkinsRequestMockProvider.mockDeleteUser(user, true, false);
-        jenkinsRequestMockProvider.mockCreateUser(user, false, false, false);
+        jenkinsRequestMockProvider.mockCanCreateUser(user);
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);

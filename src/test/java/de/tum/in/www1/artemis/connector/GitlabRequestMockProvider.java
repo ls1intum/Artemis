@@ -201,6 +201,11 @@ public class GitlabRequestMockProvider {
         }).when(userApi).createUser(any(), any(), anyBoolean());
     }
 
+    public void mockCanCreateVcsUser(de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        mockCreationOfUser(user.getLogin());
+        mockDeleteVcsUser(user.getLogin(), false);
+    }
+
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
         final var projectKey = exercise.getProjectKey();
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
