@@ -104,7 +104,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     result.submission!.id = 1;
 
     const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-    const exercise = ({
+    const exercise = {
         id: 1,
         templateParticipation: {
             id: 3,
@@ -114,7 +114,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         maxPoints: 100,
         gradingInstructions: 'Grading Instructions',
         course: <Course>{ instructorGroupName: 'instructorGroup' },
-    } as unknown) as ProgrammingExercise;
+    } as unknown as ProgrammingExercise;
 
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
     participation.results = [result];
@@ -136,7 +136,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const afterComplaintResult = new Result();
     afterComplaintResult.score = 100;
 
-    const route = ({ params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any) as ActivatedRoute;
+    const route = { params: of({ submissionId: 123 }), queryParamMap: of(convertToParamMap({ testRun: false })) } as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
