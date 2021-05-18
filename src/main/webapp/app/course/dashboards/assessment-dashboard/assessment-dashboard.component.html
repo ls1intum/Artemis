@@ -108,14 +108,7 @@
                     </td>
                     <td>
                         <span>{{ exercise.title }}</span>
-                        <span
-                            class="badge badge-warning"
-                            *ngIf="!asQuizExercise(exercise).visibleToStudents"
-                            placement="right"
-                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
-                        >
-                            {{ 'artemisApp.assessmentDashboard.notReleased' | artemisTranslate }}</span
-                        >
+                        <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
                         <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
                     </td>
                     <td *ngIf="!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]">
