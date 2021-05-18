@@ -9,6 +9,11 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { round } from 'app/shared/util/utils';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -23,11 +28,19 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     sampleSolution: SafeHtml;
     sampleSolutionUML: UMLModel;
 
+    readonly DoughnutChartType = DoughnutChartType;
+    readonly ExerciseType = ExerciseType;
+    doughnutStats: ExerciseManagementStatisticsDto;
+    absoluteAveragePoints = 0;
+    participationsInPercent = 0;
+    questionsAnsweredInPercent = 0;
+
     constructor(
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        private statisticsService: StatisticsService,
     ) {}
 
     ngOnInit() {
@@ -46,6 +59,12 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
             }
+        });
+        this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats = statistics;
+            this.participationsInPercent = statistics.numberOfStudentsInCourse > 0 ? round((statistics.numberOfParticipations / statistics.numberOfStudentsInCourse) * 100, 1) : 0;
+            this.questionsAnsweredInPercent = statistics.numberOfQuestions > 0 ? round((statistics.numberOfAnsweredQuestions / statistics.numberOfQuestions) * 100, 1) : 0;
+            this.absoluteAveragePoints = round((statistics.averageScoreOfExercise * statistics.maxPointsOfExercise) / 100, 1);
         });
     }
 

@@ -20,6 +20,44 @@
                     <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                 </a>
             </div>
+            <jhi-doughnut-chart
+                class="my-4 d-inline-flex"
+                [courseId]="fileUploadExercise.course?.id!"
+                [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
+                [exerciseId]="fileUploadExercise.id!"
+                [exerciseType]="ExerciseType.TEXT"
+                [currentPercentage]="doughnutStats?.averageScoreOfExercise"
+                [currentAbsolute]="absoluteAveragePoints"
+                [currentMax]="doughnutStats?.maxPointsOfExercise"
+            >
+            </jhi-doughnut-chart>
+            <jhi-doughnut-chart
+                class="my-4 d-inline-flex"
+                [courseId]="fileUploadExercise.course?.id!"
+                [contentType]="DoughnutChartType.PARTICIPATIONS"
+                [exerciseId]="fileUploadExercise.id!"
+                [exerciseType]="ExerciseType.TEXT"
+                [currentPercentage]="participationsInPercent"
+                [currentAbsolute]="doughnutStats?.numberOfParticipations"
+                [currentMax]="doughnutStats?.numberOfStudentsInCourse"
+            >
+            </jhi-doughnut-chart>
+            <jhi-doughnut-chart
+                class="my-4 d-inline-flex"
+                [courseId]="fileUploadExercise.course?.id!"
+                [contentType]="DoughnutChartType.QUESTIONS"
+                [exerciseId]="fileUploadExercise.id!"
+                [exerciseType]="ExerciseType.TEXT"
+                [currentPercentage]="questionsAnsweredInPercent"
+                [currentAbsolute]="doughnutStats?.numberOfAnsweredQuestions"
+                [currentMax]="doughnutStats?.numberOfQuestions"
+            >
+            </jhi-doughnut-chart>
+            <hr />
+            <div>
+                <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+            </div>
+            <hr />
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="fileUploadExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>

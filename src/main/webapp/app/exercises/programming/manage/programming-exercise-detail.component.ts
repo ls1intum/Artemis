@@ -18,6 +18,10 @@ import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -31,6 +35,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly DoughnutChartType = DoughnutChartType;
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -38,6 +43,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     lockingOrUnlockingRepositories = false;
+
+    doughnutStats: ExerciseManagementStatisticsDto;
+    absoluteAveragePoints = 0;
+    participationsInPercent = 0;
+    questionsAnsweredInPercent = 0;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -52,6 +62,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
+        private statisticsService: StatisticsService,
     ) {}
 
     ngOnInit() {
@@ -79,6 +90,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.loadingSolutionParticipationResults = false;
                 });
             }
+            this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+                this.doughnutStats = statistics;
+                this.participationsInPercent =
+                    statistics.numberOfStudentsInCourse > 0 ? round((statistics.numberOfParticipations / statistics.numberOfStudentsInCourse) * 100, 1) : 0;
+                this.questionsAnsweredInPercent = statistics.numberOfQuestions > 0 ? round((statistics.numberOfAnsweredQuestions / statistics.numberOfQuestions) * 100, 1) : 0;
+                this.absoluteAveragePoints = round((statistics.averageScoreOfExercise * statistics.maxPointsOfExercise) / 100, 1);
+            });
         });
     }
 
