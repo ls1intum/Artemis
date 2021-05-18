@@ -109,7 +109,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(mockResponse.submissions[0].results[0].feedbacks));
 
-        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/submission/${submissionId}?correction-round=0`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/submission/${submissionId}/for-assessment?correction-round=0`, method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));
@@ -146,7 +146,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual([submission]));
 
-        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/submission/${submissionId}/feedback/${feedbackId}/feedback-conflicts`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`, method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));

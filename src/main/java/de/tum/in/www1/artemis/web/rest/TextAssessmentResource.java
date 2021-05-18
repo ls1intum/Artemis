@@ -88,23 +88,22 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT text-submissions/:submissionId/result/:resultId/assessment : Saves a given manual textAssessment
+     * PUT text-submissions/result/:resultId/assessment : Saves a given manual textAssessment
      *
-     * @param submissionId the submissionId of the submission being assessed
      * @param resultId the resultId the assessment belongs to
      * @param textAssessment the assessments
      * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
      */
-    @PutMapping("text-submissions/{submissionId}/result/{resultId}/assessment")
+    @PutMapping("text-submissions/result/{resultId}/assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> saveTextAssessment(@PathVariable Long resultId, @PathVariable Long submissionId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<Result> saveTextAssessment(@PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks() != null
                 && textAssessment.getFeedbacks().stream().filter(Feedback::hasReference).anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        final var textSubmission = textSubmissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(submissionId);
+        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId);
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -250,7 +249,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * GET submission/:submissionId : Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
+     * GET text-submissions/:submissionId/for-assessment : Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
@@ -261,7 +260,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param resultId if result already exists, we want to get the submission for this specific result
      * @return a Participation of the tutor in the submission
      */
-    @GetMapping("/text-submissions/{submissionId}")
+    @GetMapping("/text-submissions/{submissionId}/for-assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
@@ -383,14 +382,14 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * GET submission/:submissionId/feedback/:feedbackId/feedback-conflicts : Retrieves all the text submissions that have conflicting feedback with the given feedback id.
+     * GET text-submissions/:submissionId/feedback/:feedbackId/feedback-conflicts : Retrieves all the text submissions that have conflicting feedback with the given feedback id.
      * User needs to be either assessor of the submission (with given feedback id) or an instructor for the exercise to check the conflicts.
      *
      * @param submissionId - id of the submission with the feedback that has conflicts
      * @param feedbackId - id of the feedback that has conflicts
      * @return - Set of text submissions
      */
-    @GetMapping("/submission/{submissionId}/feedback/{feedbackId}/feedback-conflicts")
+    @GetMapping("/text-submissions/{submissionId}/feedback/{feedbackId}/feedback-conflicts")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<TextSubmission>> getConflictingTextSubmissions(@PathVariable long submissionId, @PathVariable long feedbackId) {
         log.debug("REST request to get conflicting text assessments for feedback id: {}", feedbackId);

@@ -37,7 +37,7 @@ export class TextAssessmentService {
     public save(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, body, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/text-submissions/result/${resultId}/assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
@@ -106,7 +106,7 @@ export class TextAssessmentService {
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`, { observe: 'response', params }).pipe(
+        return this.http.get<StudentParticipation>(`${this.resourceUrl}/text-submissions/${submissionId}/for-assessment`, { observe: 'response', params }).pipe(
             // Wire up Result and Submission
             tap((response) => {
                 const participation = response.body!;
@@ -144,7 +144,7 @@ export class TextAssessmentService {
      * @param feedbackId id of the feedback to search for conflicts of type {number}
      */
     public getConflictingTextSubmissions(submissionId: number, feedbackId: number): Observable<TextSubmission[]> {
-        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/submission/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
+        return this.http.get<TextSubmission[]>(`${this.resourceUrl}/text-submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`);
     }
 
     /**
