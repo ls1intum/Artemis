@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
@@ -118,6 +119,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -145,6 +147,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testShouldNotRegisterUserIfCannotCreateInJenkins() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -164,6 +167,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testShouldRegisterUserIfCanCreateInJenkinsAndGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
