@@ -19,7 +19,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
 
     @Input() exercise: Exercise;
 
-    auxiliaryRepository: AuxiliaryRepository;
+    auxiliaryRepository: AuxiliaryRepository = new AuxiliaryRepository();
     isSaving = false;
 
     repositoryNamePattern = /^(?!(solution|exercise|tests)\b)\b\w+$/;
