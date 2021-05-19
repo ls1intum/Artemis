@@ -140,4 +140,26 @@ describe('TextblockFeedbackEditorComponent', () => {
         fixture.detectChanges();
         expect(component.escKeyup).toHaveBeenCalled();
     });
+
+    it('should show warning when numberOfAffectedSubmissions > 0', () => {
+        component.feedback.credits = 1;
+        component.conflictMode = false;
+        textBlock.numberOfAffectedSubmissions = 5;
+        fixture.detectChanges();
+
+        const warningIcon = compiled.querySelector('.text-warning fa-icon[ng-reflect-icon="exclamation-triangle"]');
+        expect(warningIcon).toBeTruthy();
+        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
+        expect(text).toBeTruthy();
+    });
+
+    it('should not show warning when numberOfAffectedSubmissions = 0', () => {
+        textBlock.numberOfAffectedSubmissions = 5;
+        fixture.detectChanges();
+
+        const warningIcon = compiled.querySelector('.text-warning fa-icon[ng-reflect-icon="exclamation-triangle"]');
+        expect(warningIcon).toBeFalsy();
+        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
+        expect(text).toBeFalsy();
+    });
 });
