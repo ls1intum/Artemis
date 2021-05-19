@@ -25,6 +25,16 @@
                         >
                         <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
                     </li>
+                    <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0">
+                        <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
+                            <li>
+                                <code class="text-white badge badge-primary label-preview">
+                                    {{ auxiliaryRepository.repositoryUrl }}
+                                </code>
+                                <jhi-help-icon placement="right" text="{{ auxiliaryRepository.description }}"></jhi-help-icon>
+                            </li>
+                        </div>
+                    </div>
                 </ul>
             </div>
         </div>
