@@ -7,13 +7,14 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { Exercise } from 'app/entities/exercise.model';
 import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-auxiliary-repository-dialog',
     templateUrl: './auxiliary-repository-dialog.component.html',
 })
 export class AuxiliaryRepositoryDialogComponent implements OnInit {
-    @Input() exercise: Exercise;
+    @Input() exercise: ProgrammingExercise;
 
     auxiliaryRepository: AuxiliaryRepository = new AuxiliaryRepository();
     isCreating = false;
@@ -66,6 +67,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
         this.activeModal.close(result.body);
         this.isCreating = false;
         this.eventManager.broadcast({ name: 'repositoryAdded', content: 'Added an AuxiliaryRepository' });
+        this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.exercise);
     }
 
     /**
