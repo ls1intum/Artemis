@@ -18,6 +18,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     auxiliaryRepository: AuxiliaryRepository = new AuxiliaryRepository();
     isCreating = false;
     invalidRepositoryNamePattern: RegExp;
+    invalidDirectoryNamePattern: RegExp;
 
     constructor(
         private participationService: ParticipationService,
@@ -68,7 +69,8 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
         this.isCreating = false;
         this.eventManager.broadcast({ name: 'repositoryAdded', content: 'Added an AuxiliaryRepository' });
         this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.exercise);
-        alert(this.auxiliaryRepository.name);
+        this.setInvalidRepoNamePattern();
+        this.setInvalidDirectoryNamePattern();
     }
 
     /**
@@ -96,7 +98,11 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     private setInvalidDirectoryNamePattern() {
         let invalidDirectoryNames = '';
         this.exercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
-        this.invalidRepositoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b\\w+$');
+        if (invalidDirectoryNames.length > 1) {
+            invalidDirectoryNames = invalidDirectoryNames.slice(1);
+        }
+        // TODO: AUX REPOS consider / etc
+        this.invalidDirectoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b\\w+$');
         console.log();
     }
 }
