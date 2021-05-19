@@ -6,7 +6,6 @@ import { Exercise } from 'app/entities/exercise.model';
     selector: 'jhi-not-released-tag',
     templateUrl: './not-released-tag.component.html',
 })
-
 export class NotReleasedTagComponent {
     readonly moment = moment;
 
