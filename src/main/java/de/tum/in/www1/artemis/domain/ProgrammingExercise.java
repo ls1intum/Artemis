@@ -37,7 +37,7 @@ public class ProgrammingExercise extends Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("exercise")
-    @OrderColumn
+    @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
     private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
 
     @Column(name = "publish_build_plan_url")
