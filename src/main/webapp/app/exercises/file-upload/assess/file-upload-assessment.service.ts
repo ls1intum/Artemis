@@ -33,9 +33,7 @@ export class FileUploadAssessmentsService {
             feedbacks,
             complaintResponse,
         };
-        return this.http
-            .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     // TODO refactor all asssessment.service getAssessment calls to make similar REST calls

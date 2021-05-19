@@ -44,10 +44,10 @@ describe('SystemNotificationManagementComponent', () => {
     let managementComponent: SystemNotificationManagementComponent;
     let router: any;
 
-    const route = ({
+    const route = {
         data: of({ pagingParams: {} }),
         children: [],
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         router = new MockRouter();
