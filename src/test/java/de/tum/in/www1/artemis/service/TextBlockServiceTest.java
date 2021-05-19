@@ -74,7 +74,6 @@ public class TextBlockServiceTest {
 
     @Test
     public void splitSubmissionIntoBlocksForManySentencesWithoutPunctuation() {
-
         final TextSubmission submission = new TextSubmission(0L).text("Example:\nThis is the first example\n\nSection 2:\n- Here is a list\n- Of many bullet  points\n\n");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
