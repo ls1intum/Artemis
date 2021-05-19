@@ -664,7 +664,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * On destroy unsubscribe.
      */
     ngOnDestroy() {
-        this.paramSub.unsubscribe();
+        if (this.paramSub) {
+            this.paramSub.unsubscribe();
+        }
         if (this.languageChangeSubscription) {
             this.languageChangeSubscription.unsubscribe();
         }
