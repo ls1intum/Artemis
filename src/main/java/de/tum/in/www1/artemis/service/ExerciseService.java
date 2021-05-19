@@ -373,6 +373,14 @@ public class ExerciseService {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
+
+        // set importedExerciseId to NULL for all exercises which have been imported from this exercise
+        List<Exercise> importedExercises = exerciseRepository.findAllExercisesByImportedExerciseID(exerciseId);
+        for (Exercise exe: importedExercises) {
+            exe.setImportedExerciseId(null);
+        }
+        exerciseRepository.saveAll(importedExercises);
+
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {

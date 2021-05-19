@@ -46,6 +46,7 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(copyGradingCriteria(importedExercise));
+        newExercise.setImportedExerciseId(importedExercise.getId());
         if (newExercise.getExerciseGroup() != null) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
         }

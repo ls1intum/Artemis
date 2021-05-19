@@ -79,7 +79,7 @@ describe('Plagiarism Split View Component', () => {
 
     it('should collapse the left pane', () => {
         comp.exercise = textExercise;
-        comp.split = ({ collapse } as unknown) as Split.Instance;
+        comp.split = { collapse } as unknown as Split.Instance;
 
         comp.handleSplitControl('left');
 
@@ -88,7 +88,7 @@ describe('Plagiarism Split View Component', () => {
 
     it('should collapse the right pane', () => {
         comp.exercise = textExercise;
-        comp.split = ({ collapse } as unknown) as Split.Instance;
+        comp.split = { collapse } as unknown as Split.Instance;
 
         comp.handleSplitControl('right');
 
@@ -97,7 +97,7 @@ describe('Plagiarism Split View Component', () => {
 
     it('should reset the split panes', () => {
         comp.exercise = textExercise;
-        comp.split = ({ setSizes } as unknown) as Split.Instance;
+        comp.split = { setSizes } as unknown as Split.Instance;
 
         comp.handleSplitControl('even');
 

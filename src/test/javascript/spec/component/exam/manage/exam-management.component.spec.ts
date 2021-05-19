@@ -41,7 +41,7 @@ describe('Exam Management Component', () => {
     let accountService: AccountService;
     let eventManager: JhiEventManager;
 
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -120,6 +120,9 @@ public abstract class Exercise extends DomainObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
+    @Column(name = "imported_exercise_id")
+    private Long importedExerciseId;
+
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
@@ -833,6 +836,10 @@ public abstract class Exercise extends DomainObject {
     public void setSecondCorrectionEnabled(boolean secondCorrectionEnabled) {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
+
+    public Long getImportedExerciseId() { return importedExerciseId;}
+
+    public void setImportedExerciseId(Long importedExerciseId) { this.importedExerciseId = importedExerciseId; }
 
     public List<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
