@@ -277,7 +277,7 @@ describe('CourseStatisticsComponent', () => {
         expect(exercise.overallMaxPoints).to.equal(60);
 
         const newExercise = [
-            ({
+            {
                 type: 'text',
                 id: 200,
                 title: 'Until 18:20 too',
@@ -317,8 +317,8 @@ describe('CourseStatisticsComponent', () => {
                 numberOfSubmissions: new DueDateStat(),
                 totalNumberOfAssessments: new DueDateStat(),
                 numberOfComplaints: 0,
-            } as unknown) as TextExercise,
-            ({
+            } as unknown as TextExercise,
+            {
                 type: 'text',
                 id: 999,
                 title: 'Until 18:20 tooo',
@@ -345,7 +345,7 @@ describe('CourseStatisticsComponent', () => {
                 numberOfSubmissions: new DueDateStat(),
                 totalNumberOfAssessments: new DueDateStat(),
                 numberOfComplaints: 0,
-            } as unknown) as TextExercise,
+            } as unknown as TextExercise,
         ];
         courseToAdd.exercises = [...modelingExercises, ...newExercise];
         fixture.detectChanges();

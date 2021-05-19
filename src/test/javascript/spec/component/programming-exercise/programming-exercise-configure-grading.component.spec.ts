@@ -267,8 +267,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             getExerciseTestCasteStateDTO(released, hasStudentResult, testCasesChanged, hasBuildAndTestAfterDueDate ? buildAndTestAfterDueDate : undefined),
         );
 
-        ((gradingService as unknown) as MockProgrammingExerciseGradingService).nextTestCases(testCases1);
-        ((gradingService as unknown) as MockProgrammingExerciseGradingService).nextCategories(codeAnalysisCategories1);
+        (gradingService as unknown as MockProgrammingExerciseGradingService).nextTestCases(testCases1);
+        (gradingService as unknown as MockProgrammingExerciseGradingService).nextCategories(codeAnalysisCategories1);
     };
 
     it('should create a datatable with the correct amount of rows when test cases come in (hide inactive tests)', fakeAsync(() => {
