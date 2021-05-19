@@ -47,8 +47,6 @@
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.invalid || isCreating" class="btn btn-primary">
-            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.generate">Generate</span>
-        </button>
+        <jhi-button id="generate-entity" [disabled]="editForm.form.invalid" [isLoading]="isCreating" [icon]="'save'" [title]="'entity.action.generate'"> </jhi-button>
     </div>
 </form>
