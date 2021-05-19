@@ -249,6 +249,35 @@
                     </div>
                 </dd>
                 <jhi-auxiliary-repository *ngIf="programmingExercise.isAtLeastEditor" [exercise]="programmingExercise" class="mr-1"> </jhi-auxiliary-repository>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositoryUrls">Auxiliary Repository Urls</span></dt>
+                <dd>
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.testRepositoryUrl">
+                        <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUrl }}</a>
+                        <jhi-clone-repo-button class="ml-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl" [isTeamParticipation]="false">
+                        </jhi-clone-repo-button>
+                        <jhi-programming-exercise-instructor-repo-download
+                            class="ml-2"
+                            [exerciseId]="programmingExercise.id!"
+                            [repositoryType]="'TESTS'"
+                        ></jhi-programming-exercise-instructor-repo-download>
+                    </div>
+
+                    <div *ngIf="programmingExercise.auxiliaryRepositories == undefined">auxiliaryRepositories UNDEFINED</div>
+
+                    <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0">
+                        <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
+                            <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ auxiliaryRepository.repositoryUrl }}</a>
+                            <jhi-clone-repo-button class="ml-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl" [isTeamParticipation]="false">
+                            </jhi-clone-repo-button>
+                            <jhi-programming-exercise-instructor-repo-download
+                                class="ml-2"
+                                [exerciseId]="programmingExercise.id!"
+                                [repositoryType]="'TESTS'"
+                            ></jhi-programming-exercise-instructor-repo-download>
+                        </div>
+                    </div>
+                </dd>
+
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
