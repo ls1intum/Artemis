@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -52,8 +54,19 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      */
     @NotNull
     default GradingScale findByCourseIdOrElseThrow(Long courseId) {
-        return findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Grading scale with course ID " + courseId + " doesn't exist"));
+        try {
+            return findByCourseId(courseId).orElseThrow(() -> new EntityNotFoundException("Grading scale with course ID " + courseId + " doesn't exist"));
+        }
+        catch (IncorrectResultSizeDataAccessException exception) {
+            List<GradingScale> gradingScales = findAllByCourseId(courseId);
+            for (int i = 1; i < gradingScales.size(); i++) {
+                deleteById(gradingScales.get(i).getId());
+            }
+            return gradingScales.get(0);
+        }
     }
+
+    List<GradingScale> findAllByCourseId(@Param("courseId") Long courseId);
 
     /**
      * Finds a grading scale for exam by id or throws an exception if now such grading scale exists
@@ -63,7 +76,18 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      */
     @NotNull
     default GradingScale findByExamIdOrElseThrow(Long examId) {
-        return findByExamId(examId).orElseThrow(() -> new EntityNotFoundException("Grading scale with exam ID " + examId + " doesn't exist"));
+        try {
+            return findByExamId(examId).orElseThrow(() -> new EntityNotFoundException("Grading scale with exam ID " + examId + " doesn't exist"));
+        }
+        catch (IncorrectResultSizeDataAccessException exception) {
+            List<GradingScale> gradingScales = findAllByExamId(examId);
+            for (int i = 1; i < gradingScales.size(); i++) {
+                deleteById(gradingScales.get(i).getId());
+            }
+            return gradingScales.get(0);
+        }
     }
+
+    List<GradingScale> findAllByExamId(@Param("examId") Long examId);
 
 }
