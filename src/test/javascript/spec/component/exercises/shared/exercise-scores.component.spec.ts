@@ -90,7 +90,7 @@ describe('Exercise Scores Component', () => {
 
     const router = new MockRouter();
 
-    const route = ({ data: of({ courseId: 1 }), children: [] } as any) as ActivatedRoute;
+    const route = { data: of({ courseId: 1 }), children: [] } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -285,11 +285,7 @@ describe('Exercise Scores Component', () => {
     });
 
     it('should refresh properly', () => {
-        const resultServiceStub = sinon.stub(resultService, 'getResults').returns(
-            of(
-                new HttpResponse<Result[]>({ body: [result] }),
-            ),
-        );
+        const resultServiceStub = sinon.stub(resultService, 'getResults').returns(of(new HttpResponse<Result[]>({ body: [result] })));
 
         component.refresh();
 

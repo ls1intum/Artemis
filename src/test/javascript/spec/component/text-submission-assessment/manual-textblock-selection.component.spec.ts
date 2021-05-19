@@ -23,13 +23,13 @@ describe('ManualTextblockSelectionComponent', () => {
     let component: ManualTextblockSelectionComponent;
     let fixture: ComponentFixture<ManualTextblockSelectionComponent>;
 
-    const submission = ({
+    const submission = {
         submissionExerciseType: SubmissionExerciseType.TEXT,
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
         text: 'First text. Second text. Third text. Fourth text. Fifth text.',
-    } as unknown) as TextSubmission;
+    } as unknown as TextSubmission;
     const blocks = [
         {
             text: 'First text.',
