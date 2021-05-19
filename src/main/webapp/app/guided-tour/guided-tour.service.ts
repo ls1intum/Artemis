@@ -967,9 +967,9 @@ export class GuidedTourService {
      * @param step passed on tour step of a guided tour
      * @return guided tour step with defined orientation
      */
-    private setTourOrientation(step: TourStep): TourStep {
-        const convertedStep = cloneDeep(step);
-        if (convertedStep.orientation && !(typeof convertedStep.orientation === 'string') && (convertedStep.orientation as OrientationConfiguration[]).length) {
+    private setTourOrientation(step: TourStep): TourStep | undefined {
+        const convertedStep = step ? cloneDeep(step) : undefined;
+        if (convertedStep?.orientation && !(typeof convertedStep?.orientation === 'string') && (convertedStep?.orientation as OrientationConfiguration[]).length) {
             (convertedStep.orientation as OrientationConfiguration[]).sort((a: OrientationConfiguration, b: OrientationConfiguration) => {
                 if (!b.maximumSize) {
                     return 1;
