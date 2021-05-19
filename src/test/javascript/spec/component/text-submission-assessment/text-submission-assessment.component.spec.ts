@@ -50,11 +50,11 @@ describe('TextSubmissionAssessmentComponent', () => {
         problemStatement: '',
         course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
-    const participation: StudentParticipation = ({
+    const participation: StudentParticipation = {
         type: ParticipationType.STUDENT,
         exercise,
-    } as unknown) as StudentParticipation;
-    const submission = ({
+    } as unknown as StudentParticipation;
+    const submission = {
         submissionExerciseType: SubmissionExerciseType.TEXT,
         id: 2278,
         submitted: true,
@@ -62,9 +62,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
         text: 'First text. Second text.',
         participation,
-    } as unknown) as TextSubmission;
+    } as unknown as TextSubmission;
     submission.results = [
-        ({
+        {
             id: 2374,
             resultString: '1 of 12 points',
             completionDate: moment('2019-07-09T11:51:23.251Z'),
@@ -75,7 +75,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             hasComplaint: true,
             submission,
             participation,
-        } as unknown) as Result,
+        } as unknown as Result,
     ];
 
     getLatestSubmissionResult(submission)!.feedbacks = [
@@ -104,7 +104,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     ];
     submission.participation!.submissions = [submission];
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
-    const route = ({
+    const route = {
         snapshot: { path: '' },
         paramMap: of(
             convertToParamMap({
@@ -117,7 +117,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         data: of({
             studentParticipation: participation,
         }),
-    } as unknown) as ActivatedRoute;
+    } as unknown as ActivatedRoute;
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [

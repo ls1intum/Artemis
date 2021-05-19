@@ -27,8 +27,7 @@ export class MockUserService {
             ],
             headers: new HttpHeaders({
                 'X-Total-Count': '1',
-                link:
-                    '<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="last",<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="first"',
+                link: '<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="last",<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="first"',
             }),
         } as HttpResponse<User[]>);
     }
