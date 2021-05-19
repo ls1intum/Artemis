@@ -5,8 +5,6 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { SCORE_PATTERN } from 'app/app.constants';
-
 import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
@@ -15,8 +13,6 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
     templateUrl: './auxiliary-repository-dialog.component.html',
 })
 export class AuxiliaryRepositoryDialogComponent implements OnInit {
-    readonly SCORE_PATTERN = SCORE_PATTERN;
-
     @Input() exercise: Exercise;
 
     auxiliaryRepository: AuxiliaryRepository = new AuxiliaryRepository();

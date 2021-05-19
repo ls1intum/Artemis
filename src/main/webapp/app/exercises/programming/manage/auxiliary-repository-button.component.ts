@@ -5,7 +5,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/auxiliary-repository-dialog.component';
 
 @Component({
-    selector: 'jhi-auxiliary-repository',
+    selector: 'jhi-add-auxiliary-repository-button',
     template: `
         <jhi-button
             [btnType]="ButtonType.SUCCESS"
