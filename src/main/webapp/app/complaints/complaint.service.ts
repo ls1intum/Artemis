@@ -78,9 +78,7 @@ export class ComplaintService implements IComplaintService {
                 .post<Complaint>(`${this.resourceUrl}/exam/${examId}`, copy, { observe: 'response' })
                 .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
         }
-        return this.http
-            .post<Complaint>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<Complaint>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
@@ -88,9 +86,7 @@ export class ComplaintService implements IComplaintService {
      * @param resultId
      */
     findByResultId(resultId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Complaint>(`${this.resourceUrl}/result/${resultId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<Complaint>(`${this.resourceUrl}/result/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
@@ -185,9 +181,7 @@ export class ComplaintService implements IComplaintService {
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
-        return this.http
-            .get<Complaint[]>(url, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
+        return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
     }
 
     private convertDateFromClient(complaint: Complaint): Complaint {

@@ -42,10 +42,10 @@ describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponent: SystemNotificationManagementDetailComponent;
     let router: any;
 
-    const route = ({
+    const route = {
         data: of({ notification: { id: 1, title: 'test' } as SystemNotification }),
         children: [],
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         router = new MockRouter();

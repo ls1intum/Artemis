@@ -39,9 +39,9 @@ const mockCourse = { id: 1 };
 export const mockExercise = { id: 1, title: 'Programming exercise', teamAssignmentConfig, course: mockCourse } as ProgrammingExercise;
 export const mockSourceExercise = { id: 2, title: 'Source Programming exercise', teamAssignmentConfig, course: mockCourse } as ProgrammingExercise;
 
-export const mockEmptyTeam = ({
+export const mockEmptyTeam = {
     students: [],
-} as unknown) as Team;
+} as unknown as Team;
 
 const mockTeamFromServer = {
     id: 1,
