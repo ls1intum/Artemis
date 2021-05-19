@@ -781,7 +781,14 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             int amount = (int) map.getAmount();
             int monthOfDate = date.getMonth().getValue();
             int monthOfStartDate = startDate.getMonth().getValue();
-            result[(monthOfDate + monthOfStartDate + 2) % 12] += amount;
+            if (monthOfDate >= monthOfStartDate) {
+                // Date is in same year as startDate
+                result[monthOfDate - monthOfStartDate] += amount;
+            }
+            else {
+                // Date is in different year as startDate
+                result[12 - monthOfStartDate + monthOfDate] += amount;
+            }
         }
         return result;
     }
