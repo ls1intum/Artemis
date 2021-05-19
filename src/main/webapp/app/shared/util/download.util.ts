@@ -32,7 +32,7 @@ export function downloadFile(blob: Blob, filename: string) {
     }
 }
 
-export function downloadStream(data: any, type: string) {
+export function downloadStream(data: any, type: string, filename: string) {
     const blob = new Blob([data], { type });
-    downloadFile(blob, 'file.pdf');
+    downloadFile(blob, `${filename || 'file'}.pdf`);
 }

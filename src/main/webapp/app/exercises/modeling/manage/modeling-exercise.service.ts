@@ -27,12 +27,10 @@ export class ModelingExerciseService {
         let copy = this.exerciseService.convertDateFromClient(modelingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
@@ -40,21 +38,17 @@ export class ModelingExerciseService {
         let copy = this.exerciseService.convertDateFromClient(modelingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     find(modelingExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     getStatistics(modelingExerciseId: number): Observable<HttpResponse<ModelingStatistic>> {
@@ -76,12 +70,10 @@ export class ModelingExerciseService {
         let copy = this.exerciseService.convertDateFromClient(adaptedSourceModelingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     /**
@@ -95,10 +87,10 @@ export class ModelingExerciseService {
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
 
-    convertToPdf(model: string): Observable<any> {
+    convertToPdf(model: string, filename: string): Observable<any> {
         return this.http
             .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
-            .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf')));
+            .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 
     /**

@@ -53,7 +53,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     downloadAsPDf() {
         const model = this.modelingExercise.sampleSolutionModel;
         if (model) {
-            this.modelingExerciseService.convertToPdf(model).subscribe(
+            this.modelingExerciseService.convertToPdf(model, `${this.modelingExercise.title}-example-solution`).subscribe(
                 () => {},
                 () => {
                     this.jhiAlertService.error('artemisApp.modelingExercise.apollonConversion.error');
