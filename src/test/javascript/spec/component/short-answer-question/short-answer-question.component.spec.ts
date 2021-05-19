@@ -82,7 +82,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.fnOnSubmittedTextUpdate = function () {
             return true;
         };
-        const returnValue = ({ value: text } as unknown) as HTMLElement;
+        const returnValue = { value: text } as unknown as HTMLElement;
         const getNavigationStub = stub(document, 'getElementById').returns(returnValue);
 
         component.question = alternativeQuestion;
