@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,8 +131,8 @@ public class ProgrammingExerciseImportService {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
             auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
-            programmingExerciseRepository.save(newExercise);
         }
+        programmingExerciseRepository.save(newExercise);
 
         return newExercise;
     }
@@ -157,10 +158,13 @@ public class ProgrammingExerciseImportService {
             versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName());
         }
 
-        for (AuxiliaryRepository auxiliaryRepository : templateExercise.getAuxiliaryRepositories()) {
-            versionControlService.get().copyRepository(sourceProjectKey, auxiliaryRepository.getRepositoryName(), targetProjectKey, auxiliaryRepository.getName());
-            String repositoryUrl = versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), auxiliaryRepository.getRepositoryName()).toString();
-            auxiliaryRepository.setRepositoryUrl(repositoryUrl);
+        List<AuxiliaryRepository> auxiliaryRepositories = templateExercise.getAuxiliaryRepositories();
+        for (int i = 0; i < auxiliaryRepositories.size(); i++) {
+            AuxiliaryRepository auxiliaryRepository = auxiliaryRepositories.get(i);
+            String repositoryUrl = versionControlService.get().copyRepository(sourceProjectKey, auxiliaryRepository.getRepositoryName(), targetProjectKey, auxiliaryRepository.getName()).toString();
+            AuxiliaryRepository newAuxiliaryRepository = newExercise.getAuxiliaryRepositories().get(i);
+            newAuxiliaryRepository.setRepositoryUrl(repositoryUrl);
+            auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
         }
 
         // Unprotect the master branch of the template exercise repo.
@@ -195,7 +199,7 @@ public class ProgrammingExerciseImportService {
         cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
         updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(),
-                templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl());
+                templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         try {
             continuousIntegrationService.get().triggerBuild(templateParticipation);
@@ -209,7 +213,7 @@ public class ProgrammingExerciseImportService {
 
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
-            String oldTestRepoUrl) {
+            String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
         // update 2 repositories for the template (BASE) build plan --> adapt the triggers so that only the assignment repo (and not the tests repo) will trigger the BASE build
         // plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
@@ -217,11 +221,26 @@ public class ProgrammingExerciseImportService {
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
 
+        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation, targetExerciseProjectKey);
+
         // update 2 repositories for the solution (SOLUTION) build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, Optional.empty());
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
+
+        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation, targetExerciseProjectKey);
+    }
+
+    private void updateAuxiliaryRepositoriesForNewExercise(List<AuxiliaryRepository> newRepositories, List<AuxiliaryRepository> oldRepositories,
+                                                           AbstractBaseProgrammingExerciseParticipation participation, String targetExerciseProjectKey) {
+        for (int i = 0; i < newRepositories.size(); i++) {
+            AuxiliaryRepository newAuxiliaryRepository = newRepositories.get(i);
+            AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
+            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(),
+                newAuxiliaryRepository.getName(), targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(),
+                oldAuxiliaryRepository.getRepositoryUrl(), Optional.empty());
+        }
     }
 
     private void cloneAndEnableAllBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) {
