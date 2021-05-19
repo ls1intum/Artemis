@@ -37,6 +37,7 @@ public class AuxiliaryRepository extends DomainObject {
     private String description;
 
     @ManyToOne
+    @JsonIgnore
     private ProgrammingExercise exercise;
 
     public String getRepositoryUrl() {
