@@ -4,7 +4,6 @@ import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Exercise } from 'app/entities/exercise.model';
 import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -18,8 +17,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
 
     auxiliaryRepository: AuxiliaryRepository = new AuxiliaryRepository();
     isCreating = false;
-
-    repositoryNamePattern = /^(?!(solution|exercise|tests)\b)\b\w+$/;
+    invalidRepositoryNamePattern: RegExp;
 
     constructor(
         private participationService: ParticipationService,
@@ -31,7 +29,9 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     /**
      *
      */
-    ngOnInit() {}
+    ngOnInit() {
+        this.setInvalidRepoNamePattern();
+    }
 
     /**
      * Close modal window.
@@ -68,6 +68,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
         this.isCreating = false;
         this.eventManager.broadcast({ name: 'repositoryAdded', content: 'Added an AuxiliaryRepository' });
         this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.exercise);
+        alert(this.auxiliaryRepository.name);
     }
 
     /**
@@ -75,5 +76,27 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      */
     onCreateError() {
         this.isCreating = false;
+    }
+
+    validRepoName(newRepositoryName: String): boolean {
+        this.exercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => {
+            if (auxiliaryRepository.name === newRepositoryName) {
+                return true;
+            }
+        });
+        return false;
+    }
+
+    private setInvalidRepoNamePattern() {
+        let invalidRepoNames = '';
+        this.exercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidRepoNames += '|' + auxiliaryRepository.name));
+        this.invalidRepositoryNamePattern = new RegExp('^(?!(solution|exercise|tests' + invalidRepoNames + ')\\b)\\b\\w+$');
+    }
+
+    private setInvalidDirectoryNamePattern() {
+        let invalidDirectoryNames = '';
+        this.exercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
+        this.invalidRepositoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b\\w+$');
+        console.log();
     }
 }
