@@ -84,7 +84,7 @@ describe('QuizExercise Management Detail Component', () => {
 
     resetQuizExercise();
 
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) } } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) } } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -193,21 +193,9 @@ describe('QuizExercise Management Detail Component', () => {
             courseManagementServiceStub = stub(courseManagementService, 'find');
             exerciseGroupServiceStub = stub(exerciseGroupService, 'find');
             initStub = stub(comp, 'init');
-            quizExerciseServiceStub.returns(
-                of(
-                    new HttpResponse<QuizExercise>({ body: quizExercise }),
-                ),
-            );
-            courseManagementServiceStub.returns(
-                of(
-                    new HttpResponse<Course>({ body: course }),
-                ),
-            );
-            exerciseGroupServiceStub.returns(
-                of(
-                    new HttpResponse<ExerciseGroup>({ body: undefined }),
-                ),
-            );
+            quizExerciseServiceStub.returns(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            courseManagementServiceStub.returns(of(new HttpResponse<Course>({ body: course })));
+            exerciseGroupServiceStub.returns(of(new HttpResponse<ExerciseGroup>({ body: undefined })));
         };
 
         const restoreStubs = () => {
@@ -239,9 +227,9 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('with exam id', () => {
-            const testRoute = ({
+            const testRoute = {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
-            } as any) as ActivatedRoute;
+            } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -258,7 +246,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
         describe('with exam id but without exercise id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) } } as any) as ActivatedRoute;
+            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) } } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -275,7 +263,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
         describe('without exam id and  exercise id', () => {
-            const testRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -309,11 +297,7 @@ describe('QuizExercise Management Detail Component', () => {
             beforeEach(() => {
                 comp.course = course;
                 courseServiceStub = stub(courseManagementService, 'findAllCategoriesOfCourse');
-                courseServiceStub.returns(
-                    of(
-                        new HttpResponse<string[]>({ body: ['category1', 'category2'] }),
-                    ),
-                );
+                courseServiceStub.returns(of(new HttpResponse<string[]>({ body: ['category1', 'category2'] })));
                 exerciseServiceCategoriesAsStringStub = stub(exerciseService, 'convertExerciseCategoriesAsStringFromServer');
                 exerciseServiceCategoriesAsStringStub.returns(testExistingCategories);
                 prepareEntitySpy = spy(comp, 'prepareEntity');
@@ -648,17 +632,9 @@ describe('QuizExercise Management Detail Component', () => {
                     resetQuizExercise();
                     comp.quizExercise = quizExercise;
                     quizExerciseServiceFindForCourseStub = stub(quizExerciseService, 'findForCourse');
-                    quizExerciseServiceFindForCourseStub.returns(
-                        of(
-                            new HttpResponse<QuizExercise[]>({ body: [quizExercise] }),
-                        ),
-                    );
+                    quizExerciseServiceFindForCourseStub.returns(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
                     quizExerciseServiceFindStub = stub(quizExerciseService, 'find');
-                    quizExerciseServiceFindStub.returns(
-                        of(
-                            new HttpResponse<QuizExercise>({ body: quizExercise }),
-                        ),
-                    );
+                    quizExerciseServiceFindStub.returns(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 });
 
                 afterEach(() => {
@@ -704,17 +680,9 @@ describe('QuizExercise Management Detail Component', () => {
                     resetQuizExercise();
                     comp.quizExercise = quizExercise;
                     quizExerciseServiceFindForExamStub = stub(quizExerciseService, 'findForExam');
-                    quizExerciseServiceFindForExamStub.returns(
-                        of(
-                            new HttpResponse<QuizExercise[]>({ body: [quizExercise] }),
-                        ),
-                    );
+                    quizExerciseServiceFindForExamStub.returns(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
                     quizExerciseServiceFindStub = stub(quizExerciseService, 'find');
-                    quizExerciseServiceFindStub.returns(
-                        of(
-                            new HttpResponse<QuizExercise>({ body: quizExercise }),
-                        ),
-                    );
+                    quizExerciseServiceFindStub.returns(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 });
 
                 afterEach(() => {
@@ -1001,17 +969,9 @@ describe('QuizExercise Management Detail Component', () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
                 quizExerciseServiceCreateStub = stub(quizExerciseService, 'create');
-                quizExerciseServiceCreateStub.returns(
-                    of(
-                        new HttpResponse<QuizExercise>({ body: quizExercise }),
-                    ),
-                );
+                quizExerciseServiceCreateStub.returns(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceUpdateStub = stub(quizExerciseService, 'update');
-                quizExerciseServiceUpdateStub.returns(
-                    of(
-                        new HttpResponse<QuizExercise>({ body: quizExercise }),
-                    ),
-                );
+                quizExerciseServiceUpdateStub.returns(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 exerciseStub = stub(Exercise, 'sanitize');
             });
 
@@ -1137,17 +1097,9 @@ describe('QuizExercise Management Detail Component', () => {
             beforeEach(() => {
                 comp.courseRepository = courseManagementService;
                 courseManagementServiceStub = stub(comp.courseRepository, 'getAllCoursesWithQuizExercises');
-                courseManagementServiceStub.returns(
-                    of(
-                        new HttpResponse<Course>({ body: course }),
-                    ),
-                );
+                courseManagementServiceStub.returns(of(new HttpResponse<Course>({ body: course })));
                 examManagementServiceStub = stub(examManagementService, 'findAllExamsAccessibleToUser');
-                examManagementServiceStub.returns(
-                    of(
-                        new HttpResponse<Exam>({ body: exam }),
-                    ),
-                );
+                examManagementServiceStub.returns(of(new HttpResponse<Exam>({ body: exam })));
             });
             it('should show existing questions if not already shown', () => {
                 comp.courses = [];

@@ -86,8 +86,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         private participationService: ParticipationService,
         protected route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-    ) {
-    }
+    ) {}
 
     /**
      * Initialize the route params subscription.
@@ -318,8 +317,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 }),
             )
             .subscribe(
-                () => {
-                },
+                () => {},
                 (err) => this.onError(err),
             );
     }
@@ -343,8 +341,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 }),
             )
             .subscribe(
-                () => {
-                },
+                () => {},
                 (err) => this.onError(err),
             );
     }
