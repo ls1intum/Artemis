@@ -20,7 +20,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     @Input() exercise: Exercise;
 
     auxiliaryRepository: AuxiliaryRepository = new AuxiliaryRepository();
-    isSaving = false;
+    isCreating = false;
 
     repositoryNamePattern = /^(?!(solution|exercise|tests)\b)\b\w+$/;
 
@@ -32,16 +32,9 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     ) {}
 
     /**
-     * Initialize Component by calling a helper that generates an initial manual result.
+     *
      */
-    ngOnInit() {
-        this.initializeForResultCreation();
-    }
-
-    /**
-     * Initialize result with initial manual result.
-     */
-    initializeForResultCreation() {}
+    ngOnInit() {}
 
     /**
      * Close modal window.
@@ -51,40 +44,38 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     }
 
     /**
-     * Add manual feedbacks to the result and create external submission.
+     * Create an auxiliary repository and add it to the template and solution build plan
      */
-    save() {
-        //alert(this.exercise.id)
-        alert(this.auxiliaryRepository.name);
-        this.isSaving = true;
-        this.subscribeToSaveResponse(this.auxiliaryRepositoryService.save(this.exercise, this.auxiliaryRepository));
+    create() {
+        this.isCreating = true;
+        this.subscribeToCreateResponse(this.auxiliaryRepositoryService.save(this.exercise, this.auxiliaryRepository));
     }
 
     /**
      * If http request is successful, pass it to onSaveSuccess, otherwise call onSaveError.
      * @param { Observable<HttpResponse<Result>> } result - Observable of Http request
      */
-    private subscribeToSaveResponse(result: Observable<HttpResponse<AuxiliaryRepository>>) {
+    private subscribeToCreateResponse(result: Observable<HttpResponse<AuxiliaryRepository>>) {
         result.subscribe(
-            (res) => this.onSaveSuccess(res),
-            () => this.onSaveError(),
+            (res) => this.onCreateSuccess(res),
+            () => this.onCreateError(),
         );
     }
 
     /**
-     * Close modal window, indicate saving is done and broadcast that manual result is added.
+     * Close modal window, indicate creating is done and broadcast that auxiliary repository is added.
      * @param { HttpResponse<Result> } result - Result of successful http request
      */
-    onSaveSuccess(result: HttpResponse<AuxiliaryRepository>) {
+    onCreateSuccess(result: HttpResponse<AuxiliaryRepository>) {
         this.activeModal.close(result.body);
-        this.isSaving = false;
-        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added an AuxiliaryRepository' });
+        this.isCreating = false;
+        this.eventManager.broadcast({ name: 'repositoryAdded', content: 'Added an AuxiliaryRepository' });
     }
 
     /**
-     * Indicate that saving didn't work by setting isSaving to false.
+     * Indicate that creating didn't work by setting isCreating to false.
      */
-    onSaveError() {
-        this.isSaving = false;
+    onCreateError() {
+        this.isCreating = false;
     }
 }

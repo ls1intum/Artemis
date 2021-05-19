@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form name="editForm" role="form" novalidate (ngSubmit)="create()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.addAuxiliaryRepository">Add Auxiliary Repository</span>
@@ -39,7 +39,7 @@
             <div class="col-md-6">
                 <label class="control-label"> Description </label>
                 <jhi-help-icon placement="top" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
-                <textarea type="text" class="form-control" id="description" name="description" [(ngModel)]="auxiliaryRepository.description"></textarea>
+                <textarea type="text" class="form-control" id="description" name="description" [(ngModel)]="auxiliaryRepository.description"> </textarea>
             </div>
         </div>
     </div>
@@ -47,8 +47,8 @@
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
-            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        <button type="submit" [disabled]="editForm.invalid || isCreating" class="btn btn-primary">
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.generate">Generate</span>
         </button>
     </div>
 </form>
