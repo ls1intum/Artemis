@@ -18,6 +18,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -52,6 +53,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
+        private auxiliaryRepositoryService: AuxiliaryRepositoryService,
     ) {}
 
     ngOnInit() {
@@ -79,6 +81,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.loadingSolutionParticipationResults = false;
                 });
             }
+
+            this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.programmingExercise);
         });
     }
 

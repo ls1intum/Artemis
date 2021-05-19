@@ -254,7 +254,6 @@
                     </jhi-add-auxiliary-repository-button>
                 </dt>
                 <dd>
-                    <div *ngIf="programmingExercise.auxiliaryRepositories == undefined">auxiliaryRepositories UNDEFINED</div>
                     <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0">
                         <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ auxiliaryRepository.repositoryUrl }}</a>
