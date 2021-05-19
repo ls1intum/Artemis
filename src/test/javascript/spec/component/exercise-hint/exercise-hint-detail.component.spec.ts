@@ -11,7 +11,7 @@ describe('ExerciseHint Management Detail Component', () => {
     let fixture: ComponentFixture<ExerciseHintDetailComponent>;
     const exerciseHint = new ExerciseHint();
     exerciseHint.id = 123;
-    const route = ({ data: of({ exerciseHint }), params: of({ exerciseId: 1 }) } as any) as ActivatedRoute;
+    const route = { data: of({ exerciseHint }), params: of({ exerciseId: 1 }) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

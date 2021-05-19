@@ -21,7 +21,7 @@ describe('FileUploadExercise Management Component', () => {
     const course: Course = { id: 123 } as Course;
     const fileUploadExercise = new FileUploadExercise(course, undefined);
     fileUploadExercise.id = 456;
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

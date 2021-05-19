@@ -26,9 +26,9 @@ describe('OrganizationManagementDetailComponent', () => {
 
     const organization1 = new Organization();
     organization1.id = 5;
-    const route = ({
+    const route = {
         data: of({ organization: organization1 }),
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -29,9 +29,7 @@ export class ProgrammingAssessmentManualResultService {
 
         const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
         const copy = this.resultService.convertDateFromClient(result);
-        return this.http
-            .put<Result>(url, copy, { params, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.resultService.convertDateFromServer(res)));
+        return this.http.put<Result>(url, copy, { params, observe: 'response' }).pipe(map((res: EntityResponseType) => this.resultService.convertDateFromServer(res)));
     }
 
     /**
