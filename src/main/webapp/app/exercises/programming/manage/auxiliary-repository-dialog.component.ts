@@ -1,17 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Complaint } from 'app/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
-import { User } from 'app/core/user/user.model';
+
 import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
+import { AuxiliaryRepository } from 'app/entities/auxiliary-repository-model';
 
 @Component({
     selector: 'jhi-auxiliary-repository-dialog',
@@ -22,9 +19,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
 
     @Input() exercise: Exercise;
 
-    repositoryName: String;
-    checkoutDirectory: String;
-    description: String;
+    auxiliaryRepository: AuxiliaryRepository;
     isSaving = false;
 
     repositoryNamePattern = /^(?!(solution|exercise|tests)\b)\b\w+$/;
@@ -59,14 +54,17 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      * Add manual feedbacks to the result and create external submission.
      */
     save() {
-        this.subscribeToSaveResponse(this.auxiliaryRepositoryService.save(this.repositoryName, this.checkoutDirectory, this.description));
+        //alert(this.exercise.id)
+        alert(this.auxiliaryRepository.name);
+        this.isSaving = true;
+        this.subscribeToSaveResponse(this.auxiliaryRepositoryService.save(this.exercise, this.auxiliaryRepository));
     }
 
     /**
      * If http request is successful, pass it to onSaveSuccess, otherwise call onSaveError.
      * @param { Observable<HttpResponse<Result>> } result - Observable of Http request
      */
-    private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
+    private subscribeToSaveResponse(result: Observable<HttpResponse<AuxiliaryRepository>>) {
         result.subscribe(
             (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
@@ -77,10 +75,10 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      * Close modal window, indicate saving is done and broadcast that manual result is added.
      * @param { HttpResponse<Result> } result - Result of successful http request
      */
-    onSaveSuccess(result: HttpResponse<Result>) {
+    onSaveSuccess(result: HttpResponse<AuxiliaryRepository>) {
         this.activeModal.close(result.body);
         this.isSaving = false;
-        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
+        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added an AuxiliaryRepository' });
     }
 
     /**

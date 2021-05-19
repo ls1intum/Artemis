@@ -18,7 +18,7 @@
                 class="form-control"
                 name="Repository Name"
                 id="repositoryName"
-                [(ngModel)]="repositoryName"
+                [(ngModel)]="auxiliaryRepository.name"
                 [pattern]="repositoryNamePattern"
                 #repoName="ngModel"
             />
@@ -33,13 +33,13 @@
         <div class="form-group">
             <label class="control-label" jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.checkoutDirectory">Checkout Directory</label>
             <jhi-help-icon placement="right" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
-            <input type="text" class="form-control" name="checkoutDirectory" id="checkoutDirectory" [(ngModel)]="checkoutDirectory" />
+            <input type="text" class="form-control" name="checkoutDirectory" id="checkoutDirectory" [(ngModel)]="auxiliaryRepository.checkoutDirectory" />
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">
                 <label class="control-label"> Description </label>
                 <jhi-help-icon placement="top" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
-                <textarea type="text" class="form-control" id="description" name="description" [(ngModel)]="description"></textarea>
+                <textarea type="text" class="form-control" id="description" name="description" [(ngModel)]="auxiliaryRepository.description"></textarea>
             </div>
         </div>
     </div>
