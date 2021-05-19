@@ -37,6 +37,7 @@
             "templateRepositoryUrl": "Vorlagen-Repository-Url",
             "testRepositoryUrl": "Test-Repository-Url",
             "solutionRepositoryUrl": "Lösungs-Repository-Url",
+            "auxiliaryRepositoryUrls": "Hilfs-Repository-Urls",
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
