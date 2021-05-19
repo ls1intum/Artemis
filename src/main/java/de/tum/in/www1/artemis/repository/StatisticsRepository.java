@@ -375,9 +375,9 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     long getNumberOfQuestionsAskedForExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            select count(sq)
-            from StudentQuestion sq left join sq.exercise exercise join sq.answers answers
-            where exercise.id = :#{#exerciseId} and (answers.verified = true or answers.tutorApproved = true)
+            select count(distinct sq.id)
+            from StudentQuestion sq left join sq.exercise exercise left join sq.answers answers
+            where exercise.id = :#{#exerciseId} and answers.tutorApproved = true
             """)
     long getNumberOfQuestionsAnsweredForExercise(@Param("exerciseId") Long exerciseId);
 
