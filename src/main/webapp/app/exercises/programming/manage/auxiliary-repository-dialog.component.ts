@@ -8,7 +8,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SCORE_PATTERN } from 'app/app.constants';
 
 import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
-import { AuxiliaryRepository } from 'app/entities/auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 @Component({
     selector: 'jhi-auxiliary-repository-dialog',

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
 import { EntityResponseType } from 'app/exercises/shared/result/result.service';
-import { AuxiliaryRepository } from 'app/entities/auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 @Injectable({ providedIn: 'root' })
 export class AuxiliaryRepositoryService {
