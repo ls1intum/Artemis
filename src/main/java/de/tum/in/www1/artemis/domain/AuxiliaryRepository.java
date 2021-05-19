@@ -103,6 +103,15 @@ public class AuxiliaryRepository extends DomainObject {
             getRepositoryUrl() != null && !getRepositoryUrl().isBlank();
     }
 
+    @JsonIgnore
+    public AuxiliaryRepository cloneObjectForNewExercise() {
+        AuxiliaryRepository newAuxiliaryRepository = new AuxiliaryRepository();
+        newAuxiliaryRepository.name = this.name;
+        newAuxiliaryRepository.checkoutDirectory = this.checkoutDirectory;
+        newAuxiliaryRepository.description = this.description;
+        return newAuxiliaryRepository;
+    }
+
     public ProgrammingExercise getExercise() {
         return exercise;
     }

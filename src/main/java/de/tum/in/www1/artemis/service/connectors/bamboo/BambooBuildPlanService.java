@@ -140,11 +140,11 @@ public class BambooBuildPlanService {
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
                                    boolean checkoutSolutionRepository) {
-        return createBuildStage(programmingLanguage, sequentialBuildRuns, staticCodeAnalysisEnabled, checkoutSolutionRepository, Set.of());
+        return createBuildStage(programmingLanguage, sequentialBuildRuns, staticCodeAnalysisEnabled, checkoutSolutionRepository, List.of());
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
-                                   boolean checkoutSolutionRepository, Set<AuxiliaryRepository> auxiliaryRepositories) {
+                                   boolean checkoutSolutionRepository, List<AuxiliaryRepository> auxiliaryRepositories) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask;
@@ -272,14 +272,14 @@ public class BambooBuildPlanService {
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
-        return createCheckoutTask(assignmentPath, testPath, Set.of());
+        return createCheckoutTask(assignmentPath, testPath, List.of());
     }
 
-    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Set<AuxiliaryRepository> auxiliaryRepositories) {
+    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, List<AuxiliaryRepository> auxiliaryRepositories) {
         return createCheckoutTask(assignmentPath, testPath, Optional.empty(), auxiliaryRepositories);
     }
 
-    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Optional<String> solutionPath, Set<AuxiliaryRepository> auxiliaryRepositories) {
+    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Optional<String> solutionPath, List<AuxiliaryRepository> auxiliaryRepositories) {
         List<CheckoutItem> checkoutItems = new ArrayList<>();
         checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath));
         checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath));

@@ -479,6 +479,9 @@ public class ProgrammingExerciseResource {
         }
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
 
+        //TODO Maybe change that
+        originalProgrammingExercise.setAuxiliaryRepositories(programmingExerciseRepository.findWithAuxiliaryRepositoriesById(sourceExerciseId).get().getAuxiliaryRepositories());
+
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
         if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
             throw new BadRequestAlertException("Static code analysis can only change, if the recreation of build plans and update of template files is activated", ENTITY_NAME,
@@ -1144,6 +1147,18 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.lockAllRepositories(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = Endpoints.AUXILIARY_REPOSITORY)
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId);
+        if(optionalProgrammingExercise.isEmpty()) {
+            notFound();
+        }
+        ProgrammingExercise exercise = optionalProgrammingExercise.get();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        return ResponseEntity.ok(exercise.getAuxiliaryRepositories());
     }
 
 

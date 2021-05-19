@@ -35,9 +35,10 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("exercise")
-    private Set<AuxiliaryRepository> auxiliaryRepositories = new HashSet<>();
+    @OrderColumn
+    private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
 
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
@@ -200,16 +201,16 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @JsonIgnore
-    public Set<AuxiliaryRepository> getAuxiliaryRepositories() {
+    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
     }
 
     @JsonIgnore
-    public Set<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
-        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toSet());
+    public List<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
+        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toList());
     }
 
-    public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
+    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
         this.auxiliaryRepositories = auxiliaryRepositories;
     }
 

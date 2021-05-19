@@ -326,10 +326,14 @@ public class ProgrammingExerciseService {
             throws GitAPIException, InterruptedException {
 
         final var projectKey = programmingExercise.getProjectKey();
+
+        auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
+
         programmingExercise.addAuxiliaryRepository(auxiliaryRepository);
         String repositoryUrl = versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), auxiliaryRepository.getRepositoryName()).toString();
         auxiliaryRepository.setRepositoryUrl(repositoryUrl);
-        auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
+
+        save(programmingExercise);
 
         versionControlService.get().createRepository(projectKey, auxiliaryRepository.getRepositoryName(), null);
 

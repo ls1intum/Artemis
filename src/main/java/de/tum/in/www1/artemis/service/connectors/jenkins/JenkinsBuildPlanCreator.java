@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,14 +106,14 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     public String getPipelineScript(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, Set<AuxiliaryRepository> auxiliaryRepositories) {
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, List<AuxiliaryRepository> auxiliaryRepositories) {
         var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled, isSequentialRuns);
         var replacements = getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, auxiliaryRepositories);
         return replacePipelineScriptParameters(pipelinePath, replacements, auxiliaryRepositories.size());
     }
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, Set<AuxiliaryRepository> auxiliaryRepositories) {
+            boolean isStaticCodeAnalysisEnabled, List<AuxiliaryRepository> auxiliaryRepositories) {
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURL().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURL().toString());
@@ -147,7 +148,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, Set<AuxiliaryRepository> auxiliaryRepositories) {
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, List<AuxiliaryRepository> auxiliaryRepositories) {
         final var resourcePath = Paths.get("templates", "jenkins", "config.xml");
 
         String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns,

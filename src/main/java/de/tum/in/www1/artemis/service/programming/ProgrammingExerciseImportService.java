@@ -56,11 +56,13 @@ public class ProgrammingExerciseImportService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     public ProgrammingExerciseImportService(ExerciseHintRepository exerciseHintRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService) {
+            UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -73,6 +75,7 @@ public class ProgrammingExerciseImportService {
         this.fileService = fileService;
         this.userRepository = userRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -122,6 +125,14 @@ public class ProgrammingExerciseImportService {
             newExercise.setTeamAssignmentConfig(null);
         }
 
+        // Re-adding auxiliary repositories
+        for (AuxiliaryRepository auxiliaryRepository : templateExercise.getAuxiliaryRepositories()) {
+            AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
+            auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
+            newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            programmingExerciseRepository.save(newExercise);
+        }
+
         return newExercise;
     }
 
@@ -142,7 +153,15 @@ public class ProgrammingExerciseImportService {
         final var reposToCopy = List.of(Pair.of(RepositoryType.TEMPLATE, templateExercise.getTemplateRepositoryName()),
                 Pair.of(RepositoryType.SOLUTION, templateExercise.getSolutionRepositoryName()), Pair.of(RepositoryType.TESTS, templateExercise.getTestRepositoryName()));
 
-        reposToCopy.forEach(repo -> versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName()));
+        for (Pair<RepositoryType, String> repo : reposToCopy) {
+            versionControlService.get().copyRepository(sourceProjectKey, repo.getSecond(), targetProjectKey, repo.getFirst().getName());
+        }
+
+        for (AuxiliaryRepository auxiliaryRepository : templateExercise.getAuxiliaryRepositories()) {
+            versionControlService.get().copyRepository(sourceProjectKey, auxiliaryRepository.getRepositoryName(), targetProjectKey, auxiliaryRepository.getName());
+            String repositoryUrl = versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), auxiliaryRepository.getRepositoryName()).toString();
+            auxiliaryRepository.setRepositoryUrl(repositoryUrl);
+        }
 
         // Unprotect the master branch of the template exercise repo.
         versionControlService.get().unprotectBranch(newExercise.getVcsTemplateRepositoryUrl(), "master");
