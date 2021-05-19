@@ -8,10 +8,9 @@ import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/ma
     selector: 'jhi-auxiliary-repository',
     template: `
         <jhi-button
-            *ngIf="!exercise.teamMode"
-            [btnType]="ButtonType.WARNING"
+            [btnType]="ButtonType.SUCCESS"
             [btnSize]="ButtonSize.SMALL"
-            [icon]="'asterisk'"
+            [icon]="'plus'"
             [title]="'entity.action.addAuxiliaryRepository'"
             (onClick)="openExternalSubmissionDialog($event)"
         ></jhi-button>
