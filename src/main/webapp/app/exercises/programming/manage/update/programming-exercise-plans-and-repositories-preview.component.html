@@ -8,28 +8,28 @@
                 <hr class="pt-0 pb-0 mt-1 mb-1" />
                 <ul>
                     <li>
-                        <code class="text-white badge badge-primary label-preview"
-                            >{{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-exercise</code
-                        >
+                        <code class="text-white badge badge-primary label-preview">
+                            {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-exercise
+                        </code>
                         <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.templateRepoTooltip"></jhi-help-icon>
                     </li>
                     <li>
-                        <code class="text-white badge badge-primary label-preview"
-                            >{{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-solution</code
-                        >
+                        <code class="text-white badge badge-primary label-preview">
+                            {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-solution
+                        </code>
                         <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.solutionRepoTooltip"></jhi-help-icon>
                     </li>
                     <li>
-                        <code class="text-white badge badge-primary label-preview"
-                            >{{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-tests</code
-                        >
+                        <code class="text-white badge badge-primary label-preview">
+                            {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-tests
+                        </code>
                         <jhi-help-icon placement="right" text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
                     </li>
                     <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0">
                         <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <li>
                                 <code class="text-white badge badge-primary label-preview">
-                                    {{ auxiliaryRepository.repositoryUrl }}
+                                    {{ getCourseShortName()?.toLowerCase() }} {{ auxiliaryRepository.name.toLowerCase() }}
                                 </code>
                                 <jhi-help-icon placement="right" text="{{ auxiliaryRepository.description }}"></jhi-help-icon>
                             </li>
