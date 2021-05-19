@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
 
@@ -38,33 +38,25 @@ export class GradingSystemComponent implements OnInit {
                 this.isExam = true;
             }
             if (this.isExam) {
-                this.gradingSystemService
-                    .findGradingScaleForExam(this.courseId!, this.examId!)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
-                        }),
-                    )
-                    .subscribe((gradingSystemResponse) => {
-                        if (gradingSystemResponse.body) {
-                            this.handleFindResponse(gradingSystemResponse.body);
-                        }
-                    }, this.handleErrorResponse());
+                this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
             } else {
-                this.gradingSystemService
-                    .findGradingScaleForCourse(this.courseId!)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
-                        }),
-                    )
-                    .subscribe((gradingSystemResponse) => {
-                        if (gradingSystemResponse.body) {
-                            this.handleFindResponse(gradingSystemResponse.body);
-                        }
-                    }, this.handleErrorResponse());
+                this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
             }
         });
+    }
+
+    private handleFindObservable(findObservable: Observable<EntityResponseType>) {
+        findObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe((gradingSystemResponse) => {
+                if (gradingSystemResponse.body) {
+                    this.handleFindResponse(gradingSystemResponse.body);
+                }
+            }, this.handleErrorResponse());
     }
 
     /**
@@ -113,53 +105,29 @@ export class GradingSystemComponent implements OnInit {
         });
         if (this.existingGradingScale) {
             if (this.isExam) {
-                this.gradingSystemService
-                    .updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
-                        }),
-                    )
-                    .subscribe((gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    });
+                this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
             } else {
-                this.gradingSystemService
-                    .updateGradingScaleForCourse(this.courseId!, this.gradingScale)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
-                        }),
-                    )
-                    .subscribe((gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    });
+                this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale));
             }
         } else {
             if (this.isExam) {
-                this.gradingSystemService
-                    .createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
-                        }),
-                    )
-                    .subscribe((gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    });
+                this.handleSaveObservable(this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
             } else {
-                this.gradingSystemService
-                    .createGradingScaleForCourse(this.courseId!, this.gradingScale)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
-                        }),
-                    )
-                    .subscribe((gradingSystemResponse) => {
-                        this.handleSaveResponse(gradingSystemResponse.body!);
-                    });
+                this.handleSaveObservable(this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale));
             }
         }
+    }
+
+    private handleSaveObservable(saveObservable: Observable<EntityResponseType>) {
+        saveObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe((gradingSystemResponse) => {
+                this.handleSaveResponse(gradingSystemResponse.body!);
+            });
     }
 
     /**
@@ -186,31 +154,24 @@ export class GradingSystemComponent implements OnInit {
         }
         this.isLoading = true;
         if (this.isExam) {
-            this.gradingSystemService
-                .deleteGradingScaleForExam(this.courseId!, this.examId!)
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe(() => {
-                    this.existingGradingScale = false;
-                    this.dialogErrorSource.next('');
-                });
+            this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!));
         } else {
-            this.gradingSystemService
-                .deleteGradingScaleForCourse(this.courseId!)
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe(() => {
-                    this.existingGradingScale = false;
-                    this.dialogErrorSource.next('');
-                });
+            this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!));
         }
         this.gradingScale = new GradingScale();
+    }
+
+    handleDeleteObservable(deleteObservable: Observable<EntityResponseType>) {
+        deleteObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(() => {
+                this.existingGradingScale = false;
+                this.dialogErrorSource.next('');
+            });
     }
 
     /**

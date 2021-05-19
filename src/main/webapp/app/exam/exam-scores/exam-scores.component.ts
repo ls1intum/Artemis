@@ -180,6 +180,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 labels[i] = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
                 labels[i] += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
                 labels[i] += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
+                labels[i] += ` {${gradeStep.gradeName}}`;
             });
         } else {
             for (let i = 0; i < this.histogramData.length; i++) {

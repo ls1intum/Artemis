@@ -113,7 +113,7 @@
                         {{ isBonus ? ('artemisApp.examScores.medianBonusColumn' | artemisTranslate) : ('artemisApp.examScores.medianGradeColumn' | artemisTranslate) }}
                     </th>
                     <td *ngIf="!isBonus">{{ aggregatedExamResults.medianGradePassed !== null ? aggregatedExamResults.medianGradePassed : '-' }}</td>
-                    <td>{{ aggregatedExamResults.medianGrade !== null ? aggregatedExamResults.medianGradePassed : '-' }}</td>
+                    <td>{{ aggregatedExamResults.medianGrade !== null ? aggregatedExamResults.medianGrade : '-' }}</td>
                     <td>{{ aggregatedExamResults.medianGradeTotal !== null ? aggregatedExamResults.medianGradeTotal : '-' }}</td>
                 </tr>
                 <tr>
