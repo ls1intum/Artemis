@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 
@@ -7,17 +7,9 @@ import { Exercise } from 'app/entities/exercise.model';
     templateUrl: './not-released-tag.component.html',
 })
 
-export class NotReleasedTagComponent implements OnInit, OnChanges {
+export class NotReleasedTagComponent {
     readonly moment = moment;
 
     @Input() public exercise: Exercise;
     public exerciseStatusBadge = 'badge-success';
-
-    constructor() {}
-
-    ngOnInit(): void {
-    }
-
-    ngOnChanges(): void {
-    }
 }
