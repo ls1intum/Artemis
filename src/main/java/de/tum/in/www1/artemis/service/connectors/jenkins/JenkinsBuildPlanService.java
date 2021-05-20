@@ -75,8 +75,7 @@ public class JenkinsBuildPlanService {
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
 
         final var configBuilder = builderFor(programmingLanguage);
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, statisCodeAnalysisEnabled, isSequentialTestRuns,
-                exercise.getAuxiliaryRepositoriesForBuildPlan());
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, statisCodeAnalysisEnabled, isSequentialTestRuns);
 
         var jobFolder = exercise.getProjectKey();
         var job = jobFolder + "-" + planKey;

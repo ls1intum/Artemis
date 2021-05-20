@@ -28,7 +28,6 @@
         <submoduleCfg class="list"/>
         <extensions/>
       </hudson.plugins.git.GitSCM>
-      #TODO: When refactoring to Jenkinsfile syntax also include auxiliary repositories
       <hudson.plugins.git.GitSCM plugin="git">
         <configVersion>2</configVersion>
         <userRemoteConfigs>

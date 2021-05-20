@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import java.util.List;
 import org.w3c.dom.Document;
 
-import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
@@ -19,9 +17,8 @@ public interface JenkinsXmlConfigBuilder {
      * @param assignmentRepositoryURL The URL of the assignment repository, i.e. template or participation repo
      * @param isStaticCodeAnalysisEnabled Flag which determines whether a build plan with or without static code analysis is created
      * @param isSequentialRuns Should activate sequential test runs options
-     * @param auxiliaryRepositories Auxiliary repositories to be included in config
      * @return The parsed XML document containing the Jenkins build config
      */
     Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, List<AuxiliaryRepository> auxiliaryRepositories);
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns);
 }

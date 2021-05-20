@@ -19,7 +19,6 @@ pipeline {
                     dir('#assignmentCheckoutPath') {
                         checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
                     }
-                    #auxiliaryRepositories
                 }
             }
             stage('Build') {

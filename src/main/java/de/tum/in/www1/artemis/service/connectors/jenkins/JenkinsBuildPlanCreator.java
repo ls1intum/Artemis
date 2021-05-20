@@ -6,9 +6,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -60,23 +58,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_JENKINS_TIMEOUT = "#jenkinsTimeout";
 
-    private static final String REPLACE_AUXILIARY_REPOSITORY_NAME = "#axiliaryName";
-
-    private static final String REPLACE_AUXILIARY_REPOSITORY_REPO = "#auxiliaryRepository";
-
-    private static final String REPLACE_AUXILIARY_REPOSITORY_CHECKOUT_PATH = "#auxiliaryCheckoutPath";
-
-    private static final String REPLACE_AUXILIARY_REPOSITORY = "#auxiliaryRepositories";
-
-    private static final String REPLACE_AUXILIARY_REPOSITORY_ID = "#ID";
-
-    private static final String REPLACE_AUXILIARY_REPOSITORY_JENKINS_SYNTAX = """
-            dir('#auxiliaryCheckoutPath#ID') {
-                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: '#axiliaryName#ID', url: '#auxiliaryRepository#ID']]])
-            }
-            """
-            + REPLACE_AUXILIARY_REPOSITORY;
-
     private String artemisNotificationUrl;
 
     @Value("${artemis.continuous-integration.secret-push-token}")
@@ -106,14 +87,14 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     public String getPipelineScript(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, List<AuxiliaryRepository> auxiliaryRepositories) {
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
         var pipelinePath = getResourcePath(programmingLanguage, isStaticCodeAnalysisEnabled, isSequentialRuns);
-        var replacements = getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, auxiliaryRepositories);
-        return replacePipelineScriptParameters(pipelinePath, replacements, auxiliaryRepositories.size());
+        var replacements = getReplacements(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
+        return replacePipelineScriptParameters(pipelinePath, replacements);
     }
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, List<AuxiliaryRepository> auxiliaryRepositories) {
+            boolean isStaticCodeAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURL().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURL().toString());
@@ -129,13 +110,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage);
             replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
         }
-        int counterOfAuxiliaries = 0;
-        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-            replacements.put(REPLACE_AUXILIARY_REPOSITORY_NAME + counterOfAuxiliaries, auxiliaryRepository.getName());
-            replacements.put(REPLACE_AUXILIARY_REPOSITORY_REPO + counterOfAuxiliaries, auxiliaryRepository.getRepositoryUrl());
-            replacements.put(REPLACE_AUXILIARY_REPOSITORY_CHECKOUT_PATH + counterOfAuxiliaries, auxiliaryRepository.getCheckoutDirectory());
-        }
-
         return replacements;
     }
 
@@ -148,11 +122,10 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, VcsRepositoryUrl testRepositoryURL, VcsRepositoryUrl assignmentRepositoryURL,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, List<AuxiliaryRepository> auxiliaryRepositories) {
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
         final var resourcePath = Paths.get("templates", "jenkins", "config.xml");
 
-        String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns,
-                auxiliaryRepositories);
+        String pipeLineScript = getPipelineScript(programmingLanguage, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
         pipeLineScript = pipeLineScript.replace("<", "&lt;");
         pipeLineScript = pipeLineScript.replace(">", "&gt;");
@@ -164,17 +137,10 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return XmlFileUtils.readXmlFile(xmlResource, replacements);
     }
 
-    private String replacePipelineScriptParameters(String[] pipelineScriptPath, Map<String, String> variablesToReplace, int numberOfAuxiliaryRepositories) {
+    private String replacePipelineScriptParameters(String[] pipelineScriptPath, Map<String, String> variablesToReplace) {
         final var resource = resourceLoaderService.getResource(pipelineScriptPath);
         try {
             var pipelineScript = StreamUtils.copyToString(resource.getInputStream(), Charset.defaultCharset());
-
-            for (int i = 0; i < numberOfAuxiliaryRepositories; i++) {
-                pipelineScript = pipelineScript.replace(REPLACE_AUXILIARY_REPOSITORY, REPLACE_AUXILIARY_REPOSITORY_JENKINS_SYNTAX);
-                pipelineScript = pipelineScript.replace(REPLACE_AUXILIARY_REPOSITORY_ID, Integer.toString(i));
-            }
-            pipelineScript = pipelineScript.replace(REPLACE_AUXILIARY_REPOSITORY, "");
-
             if (variablesToReplace != null) {
                 for (final var replacement : variablesToReplace.entrySet()) {
                     pipelineScript = pipelineScript.replace(replacement.getKey(), replacement.getValue());
