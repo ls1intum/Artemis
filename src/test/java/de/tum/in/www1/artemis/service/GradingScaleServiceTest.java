@@ -15,8 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
+import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -186,5 +189,38 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("exam", "course", "gradeSteps", "id").isEqualTo(gradingScale);
         assertThat(savedGradingScale.getGradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradingScale.getGradeSteps());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetGradingScaleForCourseIfMultipleScalesAreSaved() {
+        Course course = database.addEmptyCourse();
+        GradingScale gradingScale1 = new GradingScale();
+        gradingScale1.setCourse(course);
+        gradingScale1.setGradeType(GradeType.GRADE);
+        GradingScale gradingScale2 = new GradingScale();
+        gradingScale2.setCourse(course);
+        gradingScale2.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(gradingScale1);
+        gradingScaleRepository.save(gradingScale2);
+
+        assertThat(gradingScaleRepository.findByCourseIdOrElseThrow(course.getId())).isEqualTo(gradingScale1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetGradingScaleForExamIfMultipleScalesAreSaved() {
+        Course course = database.addEmptyCourse();
+        Exam exam = database.addExam(course);
+        GradingScale gradingScale1 = new GradingScale();
+        gradingScale1.setExam(exam);
+        gradingScale1.setGradeType(GradeType.BONUS);
+        GradingScale gradingScale2 = new GradingScale();
+        gradingScale2.setExam(exam);
+        gradingScale2.setGradeType(GradeType.GRADE);
+        gradingScaleRepository.save(gradingScale1);
+        gradingScaleRepository.save(gradingScale2);
+
+        assertThat(gradingScaleRepository.findByExamIdOrElseThrow(exam.getId())).isEqualTo(gradingScale1);
     }
 }
