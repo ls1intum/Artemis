@@ -27,7 +27,9 @@
 
                 <dt>
                     <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
-                    <button *ngIf="modelingExercise && modelingExercise.sampleSolutionModel" (click)="downloadAsPDf()" class="btn btn-primary">Export</button>
+                    <button *ngIf="modelingExercise && modelingExercise.sampleSolutionModel" (click)="downloadAsPDf()" class="btn btn-primary" jhiTranslate="entity.action.export">
+                        Export
+                    </button>
                 </dt>
                 <dd class="editor-outline-background">
                     <jhi-modeling-editor
