@@ -26,7 +26,7 @@ describe('ModelingExercise Management Detail Component', () => {
 
     const model = { element: { id: '33' } };
     const modelingExercise = { id: 123, sampleSolutionModel: JSON.stringify(model) } as ModelingExercise;
-    const route = ({ params: of({ exerciseId: modelingExercise.id }) } as any) as ActivatedRoute;
+    const route = { params: of({ exerciseId: modelingExercise.id }) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

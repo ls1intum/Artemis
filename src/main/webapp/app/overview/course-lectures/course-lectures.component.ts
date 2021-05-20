@@ -87,7 +87,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                     groupedLectures[dateIndex] = {
                         start: moment(dateValue).startOf('week'),
                         end: moment(dateValue).endOf('week'),
-                        isCollapsed: dateValue.isBefore(moment(), 'week'),
+                        isCollapsed: dateValue.isBefore(moment(), 'week') || dateValue.isAfter(moment(), 'week'),
                         isCurrentWeek: dateValue.isSame(moment(), 'week'),
                         lectures: [],
                     };

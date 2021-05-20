@@ -7,5 +7,6 @@ export class MockProgrammingExerciseService {
     findWithTemplateAndSolutionParticipationAndResults = (exerciseId: number) => of();
     find = (exerciseId: number) => of({ body: { id: 4 } });
     getProgrammingExerciseTestCaseState = (exerciseId: number) => of({ body: { released: true, hasStudentResult: true, testCasesChanged: false } });
+    exportInstructorExercise = (exerciseId: number) => of({ body: undefined });
     exportInstructorRepository = (exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType) => of({ body: undefined });
 }

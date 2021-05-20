@@ -228,7 +228,7 @@ public class CourseExamExportService {
     private List<Path> exportCourseExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
         Optional<Exam> firstExam = exams.stream().findFirst();
         if (firstExam.isEmpty()) {
-            logMessageAndAppendToList("Cannot export exams because the course is missing.", exportErrors);
+            log.warn("Skipping exam export since the course does not have any exams");
             return List.of();
         }
 
@@ -312,7 +312,9 @@ public class CourseExamExportService {
 
             // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
-                exportedExercices.add(programmingExerciseExportService.exportProgrammingExercise((ProgrammingExercise) exercise, Path.of(outputDir), exportErrors));
+                // Download the repositories template, solution, tests and students' repositories
+                exportedExercices
+                        .add(programmingExerciseExportService.exportProgrammingExerciseRepositories((ProgrammingExercise) exercise, true, Path.of(outputDir), exportErrors));
                 continue;
             }
 

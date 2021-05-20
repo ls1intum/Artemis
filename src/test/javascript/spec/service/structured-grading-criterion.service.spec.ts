@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import * as chai from 'chai';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -23,7 +23,7 @@ describe('Structured Grading Criteria Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should calculate the total score', async () => {
+        it('should calculate the total score', fakeAsync(() => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
             limitedSGI.id = 1;
@@ -39,18 +39,19 @@ describe('Structured Grading Criteria Service', () => {
             bigLimitSGI.usageCount = 3;
 
             feedbacks = [];
-            feedbacks.push(createFeedbacK(limitedSGI)); // +1P
-            feedbacks.push(createFeedbacK(limitedSGI)); // +1P will not be counted because limit exceeded
-            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P
-            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P will be counted -> limit not exceeded yet
-            feedbacks.push(createFeedbacK(unlimitedSGI)); // +1P
-            feedbacks.push(createFeedbacK(unlimitedSGI)); // +1P
+            feedbacks.push(createFeedback(limitedSGI)); // +1P
+            feedbacks.push(createFeedback(limitedSGI)); // +1P will not be counted because limit exceeded
+            feedbacks.push(createFeedback(bigLimitSGI)); // +1P
+            feedbacks.push(createFeedback(bigLimitSGI)); // +1P will be counted -> limit not exceeded yet
+            feedbacks.push(createFeedback(unlimitedSGI)); // +1P
+            feedbacks.push(createFeedback(unlimitedSGI)); // +1P
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).to.deep.equal(5.0);
-        });
-        it('should calculate the total score', async () => {
+            tick();
+        }));
+        it('should calculate the total score', fakeAsync(() => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
             limitedSGI.id = 1;
@@ -66,17 +67,18 @@ describe('Structured Grading Criteria Service', () => {
             bigLimitSGI.usageCount = 3;
 
             feedbacks = [];
-            feedbacks.push(createFeedbacK(limitedSGI)); // +1.5P
-            feedbacks.push(createFeedbacK(limitedSGI)); // +1.5P will not be counted because limit exceeded
-            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P
-            feedbacks.push(createFeedbacK(bigLimitSGI)); // +1P will be counted -> limit not exceeded yet
-            feedbacks.push(createFeedbacK(unlimitedSGI)); // -0.5P
-            feedbacks.push(createFeedbacK(unlimitedSGI)); // -0.5P can be applied as often as possible -> unlimited
+            feedbacks.push(createFeedback(limitedSGI)); // +1.5P
+            feedbacks.push(createFeedback(limitedSGI)); // +1.5P will not be counted because limit exceeded
+            feedbacks.push(createFeedback(bigLimitSGI)); // +1P
+            feedbacks.push(createFeedback(bigLimitSGI)); // +1P will be counted -> limit not exceeded yet
+            feedbacks.push(createFeedback(unlimitedSGI)); // -0.5P
+            feedbacks.push(createFeedback(unlimitedSGI)); // -0.5P can be applied as often as possible -> unlimited
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).to.deep.equal(2.5);
-        });
+            tick();
+        }));
     });
 
     afterEach(() => {
@@ -84,9 +86,9 @@ describe('Structured Grading Criteria Service', () => {
     });
 });
 
-function createFeedbacK(instr: GradingInstruction) {
+function createFeedback(instruction: GradingInstruction) {
     const feedback = new Feedback();
-    feedback.gradingInstruction = instr;
-    feedback.credits = instr.credits;
+    feedback.gradingInstruction = instruction;
+    feedback.credits = instruction.credits;
     return feedback;
 }
