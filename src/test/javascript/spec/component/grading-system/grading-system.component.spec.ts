@@ -91,11 +91,6 @@ describe('Grading System Component', () => {
         sinon.restore();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).to.be.ok;
-    });
-
     it('should handle find response for exam', () => {
         const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(new HttpResponse<GradingScale>({ body: comp.gradingScale })));
 
@@ -106,12 +101,13 @@ describe('Grading System Component', () => {
     });
 
     it('should handle find response for exam and not find a grading scale', () => {
-        const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(new HttpResponse<GradingScale>({ status: 404 })));
+        const findGradingScaleForExamAndReturnNotFoundStub = sinon
+            .stub(gradingSystemService, 'findGradingScaleForExam')
+            .returns(of(new HttpResponse<GradingScale>({ status: 404 })));
 
         fixture.detectChanges();
 
-        expect(comp).to.be.ok;
-        expect(findGradingScaleForExamStub).to.have.been.calledOnceWithExactly(1, 1);
+        expect(findGradingScaleForExamAndReturnNotFoundStub).to.have.been.calledOnceWithExactly(1, 1);
     });
 
     it('should generate default grading scale', () => {
