@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -19,7 +19,13 @@ import java.net.MalformedURLException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AuxiliaryRepository extends DomainObject {
 
-    // The name must not be the same as a name registered in the course
+    /**
+     * Name of the repository.
+     *
+     * Must NOT be one of the following: exercise, solution or tests
+     * One programming exercise must not have multiple repositories
+     * sharing one name.
+     */
     @Size(max = 100)
     @Column(name = "name")
     private String name;
@@ -28,6 +34,10 @@ public class AuxiliaryRepository extends DomainObject {
     @Column(name = "repository_url")
     private String repositoryUrl;
 
+    /**
+     * One programming exercise must not have multiple repositories
+     * sharing the same checkout directory. Bamboo does not allow that.
+     */
     @Size(max = 100)
     @Column(name = "checkout_directory")
     private String checkoutDirectory;
@@ -46,11 +56,6 @@ public class AuxiliaryRepository extends DomainObject {
 
     public void setRepositoryUrl(String repositoryUrl) {
         this.repositoryUrl = repositoryUrl;
-    }
-
-    @JsonIgnore
-    public String getRepositoryName() {
-        return exercise.generateRepositoryName(getName());
     }
 
     public String getCheckoutDirectory() {
@@ -77,33 +82,44 @@ public class AuxiliaryRepository extends DomainObject {
         this.description = description;
     }
 
-    /**
-     * Gets a URL of the  templateRepositoryUrl if there is one
-     *
-     * @return a URL object of the  templateRepositoryUrl or null if there is no templateRepositoryUrl
-     */
-    @JsonIgnore
-    public VcsRepositoryUrl getVcsRepositoryUrl() {
-        String repositoryUrl = getRepositoryUrl();
-        if (repositoryUrl == null || repositoryUrl.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return new VcsRepositoryUrl(repositoryUrl);
-        }
-        catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public ProgrammingExercise getExercise() {
+        return exercise;
     }
 
+    public void setExercise(ProgrammingExercise exercise) {
+        this.exercise = exercise;
+    }
+
+    /**
+     * Returns the fully qualified name of the repository, which looks like
+     * [exercise identifier]-[repository name]
+     *
+     * @return Fully qualified name of the repository
+     */
+    @JsonIgnore
+    public String getRepositoryName() {
+        return exercise.generateRepositoryName(getName());
+    }
+
+    /**
+     * Returns whether this auxiliary repository should be included in the exercise's build plan or not.
+     * The repository is included when the repository url and the checkout directory have appropriate
+     * values.
+     *
+     * @return true or false whether this repository should be included in the exercise build plan or not
+     */
     @JsonIgnore
     public boolean shouldBeIncludedInBuildPlan() {
         return getCheckoutDirectory() != null && !getCheckoutDirectory().isBlank() &&
             getRepositoryUrl() != null && !getRepositoryUrl().isBlank();
     }
 
+    /**
+     * Returns a copy of this auxiliary repository object without including the repository url.
+     * This is used when importing auxiliary repositories from an old exercise to a new exercise.
+     *
+     * @return A clone of this auxiliary repository object except the repository url
+     */
     @JsonIgnore
     public AuxiliaryRepository cloneObjectForNewExercise() {
         AuxiliaryRepository newAuxiliaryRepository = new AuxiliaryRepository();
@@ -113,11 +129,24 @@ public class AuxiliaryRepository extends DomainObject {
         return newAuxiliaryRepository;
     }
 
-    public ProgrammingExercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(ProgrammingExercise exercise) {
-        this.exercise = exercise;
+    /**
+     * Gets a URL of the repositoryUrl if there is one
+     *
+     * @return a URL object of the repositoryUrl or null if there is no repositoryUrl
+     */
+    @JsonIgnore
+    public VcsRepositoryUrl getVcsRepositoryUrl() {
+        String repositoryUrl = getRepositoryUrl();
+        if (repositoryUrl == null || repositoryUrl.isEmpty()) {
+            return null;
+        }
+        try {
+            return new VcsRepositoryUrl(repositoryUrl);
+        }
+        catch (MalformedURLException e) {
+            LoggerFactory.getLogger(AuxiliaryRepository.class).error("Malformed URL " + getRepositoryUrl() +
+                " you could not be used to instantiate VcsRepositoryUrl.", e);
+        }
+        return null;
     }
 }
