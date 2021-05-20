@@ -22,6 +22,7 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -109,6 +110,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private router: Router,
+        private auxiliaryRepositoryService: AuxiliaryRepositoryService,
     ) {}
 
     /**
@@ -189,6 +191,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             this.selectedProjectTypeValue = this.programmingExercise.projectType!;
         });
+        this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.programmingExercise);
+
         // If it is an import, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
             .pipe(
