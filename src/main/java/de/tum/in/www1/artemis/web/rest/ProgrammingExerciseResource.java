@@ -633,7 +633,7 @@ public class ProgrammingExerciseResource {
      * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
-    @PatchMapping(value = Endpoints.PROBLEM)
+    @PatchMapping(Endpoints.PROBLEM)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -1131,7 +1131,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PutMapping(value = Endpoints.UNLOCK_ALL_REPOSITORIES)
+    @PutMapping(Endpoints.UNLOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         log.info("REST request to unlock all repositories of programming exercise {}", exerciseId);
@@ -1148,7 +1148,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PutMapping(value = Endpoints.LOCK_ALL_REPOSITORIES)
+    @PutMapping(Endpoints.LOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         log.info("REST request to lock all repositories of programming exercise {}", exerciseId);
@@ -1159,7 +1159,14 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = Endpoints.AUXILIARY_REPOSITORY)
+    /**
+     * Returns a list of auxiliary repositories for a given programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return the ResponseEntity with status 200 (OK) and the list of auxiliary repositories for the
+     *          given programming exercise. 404 when the programming exercise was not found.
+     */
+    @GetMapping(Endpoints.AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId);
@@ -1172,7 +1179,14 @@ public class ProgrammingExerciseResource {
     }
 
 
-    @PostMapping(value = Endpoints.AUXILIARY_REPOSITORY)
+    /**
+     * Creates a new auxiliary repository for the given programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @param repository data for the new auxiliary repository
+     * @return the ResponseEntity with status 201 (Created) and the created auxiliary repository
+     */
+    @PostMapping(Endpoints.AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AuxiliaryRepository> createAuxiliaryRepository(@PathVariable Long exerciseId, @RequestBody AuxiliaryRepository repository) {
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesAndTemplateUrlAndSolutionUrlAndTestUrlById(exerciseId);
@@ -1188,45 +1202,44 @@ public class ProgrammingExerciseResource {
 
             return ResponseEntity.created(new URI("/api/programming-exercises/" + exercise.getId() + "/auxiliary-repository/" + newAuxiliaryRepository.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, AUX_REPO_ENTITY_NAME, newAuxiliaryRepository.getName())).body(newAuxiliaryRepository);
-        } catch (Exception e) {
+        } catch (InterruptedException | URISyntaxException | GitAPIException e) {
             log.error("Error while setting up programming exercise", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(),
+                .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up an auxiliary repository for exercise: " + e.getMessage(),
                     "errorProgrammingExerciseAuxiliaryRepository")).body(null);
         }
     }
 
-    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
-
+    private void validateAuxiliaryRepositoryId(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getId() != null) {
             throw new BadRequestAlertException("Auxiliary repositories must not have an id.", AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
         }
+    }
 
-        // We want to force the user to set a name of the auxiliary repository, otherwise we
-        // cannot determine which name we should use for setting up the repo on the VCS.
+    private void validateAuxiliaryRepositoryNameExists(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getName() == null || auxiliaryRepository.getName().isEmpty()) {
             throw new BadRequestAlertException("Cannot set empty name for auxiliary repositories!",
                 AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
+    }
 
-        // The name must not be longer than 100 characters, since the database column is
-        // limited to 100 characters.
+    private void validateAuxiliaryRepositoryNameLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getName().length() > 100) {
             throw new BadRequestAlertException("The name of an auxiliary repository must not be longer than 100 characters!",
                 AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
+    }
 
-        // We want to avoid using the same auxiliary repository name multiple times
+    private void validateAuxiliaryRepositoryNameDuplication(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
         for (AuxiliaryRepository existingRepository : exercise.getAuxiliaryRepositories()) {
             if (existingRepository.getName().equals(auxiliaryRepository.getName())) {
                 throw new BadRequestAlertException("The name '" + auxiliaryRepository.getName() + "' is not allowed for auxiliary repositories!",
                     AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
             }
         }
+    }
 
-        // The name must not match any of the names of the already present repositories, otherwise
-        // we get an undefined state.
-        // Currently, the names "exercise", "solution", and "tests" are restricted.
+    private void validateAuxiliaryRepositoryNameRestricted(AuxiliaryRepository auxiliaryRepository) {
         for (RepositoryType repositoryType : RepositoryType.values()) {
             String repositoryName = repositoryType.getName();
             if(auxiliaryRepository.getName().equals(repositoryName)) {
@@ -1234,40 +1247,77 @@ public class ProgrammingExerciseResource {
                     AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
             }
         }
+    }
 
-        if (auxiliaryRepository.getCheckoutDirectory() != null) {
-            String checkoutDirectory = auxiliaryRepository.getCheckoutDirectory();
+    private void validateAuxiliaryRepositoryCheckoutDirectoryValid(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getCheckoutDirectory().contains(".")) {
+            throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!",
+                AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+        }
+    }
 
-            // We want to make sure, that the checkout directory path is valid.
-            if (checkoutDirectory.contains(".")) {
-                throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!",
+    private void validateAuxiliaryRepositoryCheckoutDirectoryLength(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getCheckoutDirectory().length() > 100) {
+            throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!",
+                AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+        }
+    }
+
+    private void validateAuxiliaryRepositoryCheckoutDirectoryDuplication(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
+        for (AuxiliaryRepository repo : exercise.getAuxiliaryRepositories()) {
+            if (repo.getCheckoutDirectory() != null && repo.getCheckoutDirectory().equals(auxiliaryRepository.getCheckoutDirectory())) {
+                throw new BadRequestAlertException("The checkout directory path is already defined for another additional repository!",
                     AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
-            }
-
-            // The checkout directory path must not be longer than 100 characters, since the database column is
-            // limited to 100 characters.
-            if (checkoutDirectory.length() > 100) {
-                throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!",
-                    AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
-            }
-
-            // Multiple auxiliary repositories might not share one checkout directory, since
-            // Bamboo does not allow this.
-            for (AuxiliaryRepository repo : exercise.getAuxiliaryRepositories()) {
-                if (repo.getCheckoutDirectory() != null && repo.getCheckoutDirectory().equals(auxiliaryRepository.getCheckoutDirectory())) {
-                    throw new BadRequestAlertException("The checkout directory path is already defined for another additional repository!",
-                        AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
-                }
             }
         }
+    }
 
-        // The description must not be longer than 100 characters, since the database column is
-        // limited to 500 characters.
+    private void validateAuxiliaryRepositoryDescriptionLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > 500) {
             throw new BadRequestAlertException("The provided description is too long!",
                 AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION);
         }
+    }
 
+    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
+
+        // Id of the auxiliary repository must not be set, because the id is set
+        // by the database.
+        validateAuxiliaryRepositoryId(auxiliaryRepository);
+
+        // We want to force the user to set a name of the auxiliary repository, otherwise we
+        // cannot determine which name we should use for setting up the repo on the VCS.
+        validateAuxiliaryRepositoryNameExists(auxiliaryRepository);
+
+        // The name must not be longer than 100 characters, since the database column is
+        // limited to 100 characters.
+        validateAuxiliaryRepositoryNameLength(auxiliaryRepository);
+
+        // We want to avoid using the same auxiliary repository name multiple times
+        validateAuxiliaryRepositoryNameDuplication(auxiliaryRepository, exercise);
+
+        // The name must not match any of the names of the already present repositories, otherwise
+        // we get an undefined state.
+        // Currently, the names "exercise", "solution", and "tests" are restricted.
+        validateAuxiliaryRepositoryNameRestricted(auxiliaryRepository);
+
+        if (auxiliaryRepository.getCheckoutDirectory() != null) {
+
+            // We want to make sure, that the checkout directory path is valid.
+            validateAuxiliaryRepositoryCheckoutDirectoryValid(auxiliaryRepository);
+
+            // The checkout directory path must not be longer than 100 characters, since the database column is
+            // limited to 100 characters.
+            validateAuxiliaryRepositoryCheckoutDirectoryLength(auxiliaryRepository);
+
+            // Multiple auxiliary repositories might not share one checkout directory, since
+            // Bamboo does not allow this.
+            validateAuxiliaryRepositoryCheckoutDirectoryDuplication(auxiliaryRepository, exercise);
+        }
+
+        // The description must not be longer than 100 characters, since the database column is
+        // limited to 500 characters.
+        validateAuxiliaryRepositoryDescriptionLength(auxiliaryRepository);
     }
 
 
