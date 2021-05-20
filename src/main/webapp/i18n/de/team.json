@@ -24,7 +24,13 @@
                 "participationsTable": {
                     "title": "Teilnahmen in \"{{ courseTitle }}\" für",
                     "columns": {
-                        "assessment": "Bewertung"
+                        "assessment": {
+                            "label": "Bewertung",
+                            "tooltip": "Die Bewertung kann erst vorgenommen werden, wenn die Abgabe beendet wurde."
+                        },
+                        "participationId": {
+                            "label": "Teilnahme ID"
+                        }
                     },
                     "complaintOrMoreFeedbackRequest": "Beschwerde oder weitere Feedback-Anfrage"
                 }
