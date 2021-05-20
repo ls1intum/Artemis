@@ -115,6 +115,20 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         return super.cancelAssessment(submissionId);
     }
 
+    /**
+     * Delete an assessment of a given submission.
+     *
+     * @param submissionId - the id of the submission for which the current assessment should be deleted
+     * @param resultId     - the id of the result which should get deleted
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
+    @DeleteMapping("/file-upload-submissions/{submissionId}/delete/{resultId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> deleteAssessment(@PathVariable Long submissionId, @PathVariable Long resultId) {
+        return super.deleteAssessment(submissionId, resultId);
+    }
+
+
     @Override
     String getEntityName() {
         return ENTITY_NAME;

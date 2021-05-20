@@ -201,6 +201,19 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(newManualResult);
     }
 
+    /**
+     * Delete an assessment of a given submission.
+     *
+     * @param submissionId - the id of the submission for which the current assessment should be deleted
+     * @param resultId     - the id of the result which should get deleted
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
+    @DeleteMapping("/programming-submissions/{submissionId}/delete/{resultId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> deleteAssessment(@PathVariable Long submissionId, @PathVariable Long resultId) {
+        return super.deleteAssessment(submissionId, resultId);
+    }
+
     @Override
     String getEntityName() {
         return ENTITY_NAME;

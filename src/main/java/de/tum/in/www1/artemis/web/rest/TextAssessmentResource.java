@@ -248,6 +248,19 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
+     * Delete an assessment of a given submission.
+     *
+     * @param submissionId - the id of the submission for which the current assessment should be deleted
+     * @param resultId     - the id of the result which should get deleted
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     */
+    @DeleteMapping("/text-submissions/{submissionId}/delete/{resultId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> deleteAssessment(@PathVariable Long submissionId, @PathVariable Long resultId) {
+        return super.deleteAssessment(submissionId, resultId);
+    }
+
+    /**
      * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
      * returns an error
