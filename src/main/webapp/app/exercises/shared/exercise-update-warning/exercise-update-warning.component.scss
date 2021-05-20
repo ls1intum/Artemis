@@ -1,0 +1,36 @@
+.warning-problem {
+    padding-top: 5px;
+
+    .warning-problem-result-wrapper {
+        padding-top: 5px;
+
+        .warning-problem-result {
+            padding-left: 15px;
+
+            .warning-problem-result-element {
+                margin-bottom: -10px;
+            }
+        }
+    }
+}
+
+.edit-modal-footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .form-control,
+    .input-group-btn {
+        width: auto;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+
+        > * {
+            margin: 0 4px;
+        }
+    }
+}
