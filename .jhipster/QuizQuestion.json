@@ -40,7 +40,8 @@
         },
         {
             "fieldName": "matchLetterCase",
-            "fieldType": "Boolean",
+            "fieldType": "Boolean"
+        }
     ],
     "relationships": [
         {
