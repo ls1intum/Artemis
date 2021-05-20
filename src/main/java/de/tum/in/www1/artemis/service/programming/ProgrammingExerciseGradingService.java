@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class ProgrammingExerciseGradingService {
@@ -513,7 +514,9 @@ public class ProgrammingExerciseGradingService {
 
             // The score is calculated as a percentage of the maximum points
             double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
-
+            if (Double.isNaN(score)) {
+                throw new InternalServerErrorException("maxPoints are set to 0.0");
+            }
             result.setScore(score);
         }
     }
