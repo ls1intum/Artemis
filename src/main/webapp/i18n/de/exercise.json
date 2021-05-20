@@ -45,10 +45,14 @@
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
+            "addGradingCriterion": "Benotungskriterium hinzufügen",
+            "deleteGradingCriterion": "Benotungskriterium löschen",
             "usageCount": "Maximale Zählung in der Bewertung",
             "DragDropInstruction": "Drag & Drop Benotungshinweis zum Feedback-Element",
             "gradingScale": "Benotungsskala",
-            "instrDescription": "Beschreibung der Anweisung",
+            "instructionDescription": "Beschreibung der Anweisung",
+            "credits": "Credits",
+            "feedback": "Feedback",
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden",
             "title": "Titel",
             "shortName": "Kurzname",
@@ -172,7 +176,18 @@
                 }
             },
             "exam": "Klausur",
-            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe."
+            "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
+            "update": {
+                "warning": {
+                    "warning": "Warnung!",
+                    "confirm": "Änderungen bestätigen",
+                    "problems": "Folgende Probleme können auftreten:",
+                    "instructionDeleted": "Benotungshinweise gelöscht:",
+                    "scoringChange": "Bewertungsart verändert:",
+                    "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
+                    "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?"
+                }
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

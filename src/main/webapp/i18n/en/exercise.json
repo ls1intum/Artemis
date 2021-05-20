@@ -45,11 +45,15 @@
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
             "structuredGradingInstructions": "Structured Grading Instructions",
+            "addGradingCriterion": "Add Grading Criterion",
+            "deleteGradingCriterion": "Delete This Criterion",
             "usageCount": "Max Count in Score",
             "usageCountHint": "This number specifies how often points for this instruction will be added to the final score",
             "DragDropInstruction": "Drag & Drop instruction to feedback element",
             "gradingScale": "Grading Scale",
-            "instrDescription": "Instruction Description",
+            "instructionDescription": "Instruction Description",
+            "credits": "Credits",
+            "feedback": "Feedback",
             "title": "Title",
             "shortName": "Short Name",
             "releaseDate": "Release Date",
@@ -172,7 +176,18 @@
                 }
             },
             "exam": "Exam",
-            "isTeamExercise": "This is a team exercise."
+            "isTeamExercise": "This is a team exercise.",
+            "update": {
+                "warning": {
+                    "warning": "Warning!",
+                    "confirm": "Confirm changes",
+                    "problems": "The following problems may occur:",
+                    "instructionDeleted": "Grading Instruction deleted:",
+                    "scoringChange": "Scoring changed:",
+                    "results": "The existing results must be recalculated!",
+                    "confirmtext": "Do you really want to perform these changes?"
+                }
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",
