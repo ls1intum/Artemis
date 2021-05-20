@@ -68,6 +68,9 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             // groups of the same course.
             removeOrUpdateUserFromGroups(gitlabUser.getId(), user.getGroups(), removedGroups);
         }
+        catch (GitLabException e) {
+            log.info("Skipped updating VCS user  {} because there was a problem with Gitlab groups: {}", user.getLogin(), e.getMessage());
+        }
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
         }
