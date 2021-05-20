@@ -39,6 +39,7 @@
             "solutionRepositoryUrl": "Lösungs-Repository-Url",
             "auxiliaryRepositoryUrls": "Hilfs-Repository-Urls",
             "noCheckoutDirectorySet": "Es wurde kein Checkout-Verzeichnis gesetzt.",
+            "noCheckoutDirectorySetTooltip": "Da kein Checkout-Verzeichnis angegeben wurde, wurde das repository nicht automatisch zu einem Build-Plan hinzugefügt.",
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
