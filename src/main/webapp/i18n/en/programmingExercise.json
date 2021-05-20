@@ -38,6 +38,7 @@
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Solution Repository Url",
             "auxiliaryRepositoryUrls": "Auxiliary Repository Urls",
+            "noCheckoutDirectorySet": "No Checkout Directory was set.",
             "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
