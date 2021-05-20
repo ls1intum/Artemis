@@ -199,7 +199,7 @@
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span>
-                    <div *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
+                    <div class="clone-buttons" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                         <jhi-clone-repo-button
                             class="ml-2"
                             [smallButtons]="true"
@@ -222,7 +222,7 @@
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span>
-                    <div *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
+                    <div class="clone-buttons" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
                         <jhi-clone-repo-button
                             class="ml-2"
                             [smallButtons]="true"
@@ -245,7 +245,7 @@
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span>
-                    <div *ngIf="programmingExercise.testRepositoryUrl">
+                    <div class="clone-buttons" *ngIf="programmingExercise.testRepositoryUrl">
                         <jhi-clone-repo-button
                             class="ml-2"
                             [smallButtons]="true"
