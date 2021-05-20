@@ -276,10 +276,12 @@
             "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "auxiliaryRepository": {
-                "addAuxiliaryRepository": "Hilfsrepository hinzufügen",
+                "addAuxiliaryRepository": "Hilfsrepository anlegen",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout Verzeichnis",
-                "repositoryNameRequired": "Der Name des Repositorys wird benötigt"
+                "repositoryNameRequired": "Der Name des Repositorys wird benötigt",
+                "invalidRepositoryName": "Es existiert bereits ein Repository mit dem angegebenen Namen für diese Aufgabe!",
+                "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!"
             }
         },
         "error": {

@@ -279,7 +279,9 @@
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
-                "repositoryNameRequired": "The repository name is required."
+                "repositoryNameRequired": "The repository name is required.",
+                "invalidRepositoryName": "The repository name does already exist for this exercise!",
+                "invalidDirectoryName": "An existing repository is already checked out into this directory!"
             }
         },
         "error": {
