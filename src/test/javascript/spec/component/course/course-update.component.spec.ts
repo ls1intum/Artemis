@@ -78,10 +78,10 @@ describe('Course Management Update Component', () => {
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
 
-        const parentRoute = ({
+        const parentRoute = {
             data: of({ course }),
-        } as any) as ActivatedRoute;
-        const route = ({ parent: parentRoute } as any) as ActivatedRoute;
+        } as any as ActivatedRoute;
+        const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, ImageCropperModule],
             providers: [
@@ -242,11 +242,11 @@ describe('Course Management Update Component', () => {
     describe('setCourseImage', () => {
         it('should change course image', () => {
             const file = new File([''], 'testFilename');
-            const fileList = ({
+            const fileList = {
                 0: file,
                 length: 1,
                 item: () => file,
-            } as unknown) as FileList;
+            } as unknown as FileList;
             const event = { target: { files: fileList } };
             comp.setCourseImage(event);
             expect(comp.courseImageFile).to.equal(file);

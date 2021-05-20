@@ -117,21 +117,21 @@ describe('TextAssessment Service', () => {
     it('should get conflicting text submissions', fakeAsync(() => {
         const submissionId = 42;
         const feedbackId = 42;
-        const submission = ({
+        const submission = {
             id: 1,
             submitted: true,
             type: 'AUTOMATIC',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown) as TextSubmission;
+        } as unknown as TextSubmission;
         submission.results = [
-            ({
+            {
                 id: 2374,
                 resultString: '1 of 12 points',
                 score: 8,
                 rated: true,
                 hasFeedback: true,
                 hasComplaint: false,
-            } as unknown) as Result,
+            } as unknown as Result,
         ];
         getLatestSubmissionResult(submission)!.feedbacks = [
             {
@@ -153,13 +153,13 @@ describe('TextAssessment Service', () => {
 
     it('should solve feedback conflicts', fakeAsync(() => {
         const exerciseId = 1;
-        const feedbackConflict = ({
+        const feedbackConflict = {
             id: 1,
             conflict: false,
             type: 'INCONSISTENT_COMMENT',
             firstFeedback: new Feedback(),
             secondFeedback: new Feedback(),
-        } as unknown) as FeedbackConflict;
+        } as unknown as FeedbackConflict;
         const returnedFromService = Object.assign({}, feedbackConflict);
         service
             .solveFeedbackConflict(exerciseId, feedbackConflict.id!)
