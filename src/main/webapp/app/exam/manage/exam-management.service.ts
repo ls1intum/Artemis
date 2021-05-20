@@ -143,21 +143,17 @@ export class ExamManagementService {
         } else {
             url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
-        return this.http
-            .get<Exam>(url, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
     getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
         const url = `${this.resourceUrl}/${courseId}/exams/${examId}/latest-end-date`;
-        return this.http
-            .get<ExamInformationDTO>(url, { observe: 'response' })
-            .pipe(
-                map((res: HttpResponse<ExamInformationDTO>) => {
-                    res.body!.latestIndividualEndDate = moment(res.body!.latestIndividualEndDate);
-                    return res;
-                }),
-            );
+        return this.http.get<ExamInformationDTO>(url, { observe: 'response' }).pipe(
+            map((res: HttpResponse<ExamInformationDTO>) => {
+                res.body!.latestIndividualEndDate = moment(res.body!.latestIndividualEndDate);
+                return res;
+            }),
+        );
     }
 
     /**
@@ -374,23 +370,21 @@ export class ExamManagementService {
     }
 
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
-        return this.http
-            .get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' })
-            .pipe(
-                filter((res) => !!res.body),
-                tap((res) =>
-                    res.body!.forEach((submission: Submission) => {
-                        // reconnect some associations
-                        const latestResult = getLatestSubmissionResult(submission);
-                        if (latestResult) {
-                            latestResult.submission = submission;
-                            latestResult.participation = submission.participation;
-                            submission.participation!.results = [latestResult!];
-                            setLatestSubmissionResult(submission, latestResult);
-                        }
-                    }),
-                ),
-            );
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' }).pipe(
+            filter((res) => !!res.body),
+            tap((res) =>
+                res.body!.forEach((submission: Submission) => {
+                    // reconnect some associations
+                    const latestResult = getLatestSubmissionResult(submission);
+                    if (latestResult) {
+                        latestResult.submission = submission;
+                        latestResult.participation = submission.participation;
+                        submission.participation!.results = [latestResult!];
+                        setLatestSubmissionResult(submission, latestResult);
+                    }
+                }),
+            ),
+        );
     }
 
     /**

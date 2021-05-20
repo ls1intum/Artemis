@@ -31,8 +31,8 @@ describe('Course Management Exercises Component', () => {
     let courseService: CourseManagementService;
     const course = new Course();
     course.id = 123;
-    const parentRoute = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
-    const route = ({ parent: parentRoute } as any) as ActivatedRoute;
+    const parentRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
+    const route = { parent: parentRoute } as any as ActivatedRoute;
     let findStub: sinon.SinonStub;
     beforeEach(() => {
         TestBed.configureTestingModule({

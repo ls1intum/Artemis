@@ -37,18 +37,16 @@ export class ExerciseScoresChartService {
             throw new Error('Invalid courseId provided: ' + courseId);
         }
 
-        return this.http
-            .get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/charts/exercise-scores`, { observe: 'response' })
-            .pipe(
-                map((response: HttpResponse<ExerciseScoresDTO[]>) => {
-                    if (response.body) {
-                        for (const exerciseScoreDTO of response.body) {
-                            exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? moment(exerciseScoreDTO.releaseDate) : undefined;
-                            exerciseScoreDTO.exerciseType = exerciseScoreDTO.exerciseType ? splitCamelCase(exerciseScoreDTO.exerciseType) : undefined;
-                        }
+        return this.http.get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/charts/exercise-scores`, { observe: 'response' }).pipe(
+            map((response: HttpResponse<ExerciseScoresDTO[]>) => {
+                if (response.body) {
+                    for (const exerciseScoreDTO of response.body) {
+                        exerciseScoreDTO.releaseDate = exerciseScoreDTO.releaseDate ? moment(exerciseScoreDTO.releaseDate) : undefined;
+                        exerciseScoreDTO.exerciseType = exerciseScoreDTO.exerciseType ? splitCamelCase(exerciseScoreDTO.exerciseType) : undefined;
                     }
-                    return response;
-                }),
-            );
+                }
+                return response;
+            }),
+        );
     }
 }
