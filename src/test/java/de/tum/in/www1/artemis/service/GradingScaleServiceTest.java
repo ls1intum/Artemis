@@ -191,6 +191,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(savedGradingScale.getGradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradingScale.getGradeSteps());
     }
 
+    /**
+     * Test fetching a grading scale for course if more than one has been saved to the database
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForCourseIfMultipleScalesAreSaved() {
@@ -207,6 +210,9 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(gradingScaleRepository.findByCourseIdOrElseThrow(course.getId())).isEqualTo(gradingScale1);
     }
 
+    /**
+     * Test fetching a grading scale for exam if more than one has been saved to the database
+     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForExamIfMultipleScalesAreSaved() {
