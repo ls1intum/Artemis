@@ -194,7 +194,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         modelingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // return forbidden if caller is not allowed to assess
         if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
+            return forbidden();
+        }
+
+        // return forbidden if assessment cannot be started since the submission is not yet submitted
+        if (!modelingSubmission.isSubmitted()) {
             return forbidden();
         }
 
