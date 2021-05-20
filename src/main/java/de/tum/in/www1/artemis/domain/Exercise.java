@@ -196,6 +196,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private Boolean testRunParticipationsExistTransient;
 
+    @Transient
+    private boolean isGradingInstructionFeedbackUsedTransient = false;
+
     public String getTitle() {
         return title;
     }
@@ -816,6 +819,12 @@ public abstract class Exercise extends DomainObject {
 
     public void setStudentAssignedTeamIdComputed(boolean studentAssignedTeamIdComputedTransient) {
         this.studentAssignedTeamIdComputedTransient = studentAssignedTeamIdComputedTransient;
+    }
+
+    public boolean isGradingInstructionFeedbackUsed() { return isGradingInstructionFeedbackUsedTransient; }
+
+    public void setGradingInstructionFeedbackUsed(boolean isGradingInstructionFeedbackUsedTransient) {
+        this.isGradingInstructionFeedbackUsedTransient = isGradingInstructionFeedbackUsedTransient;
     }
 
     public Boolean getPresentationScoreEnabled() {
