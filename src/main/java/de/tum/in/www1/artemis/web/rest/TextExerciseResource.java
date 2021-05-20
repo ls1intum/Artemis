@@ -293,14 +293,10 @@ public class TextExerciseResource {
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            textExercise.setGradingInstructionFeedbackUsed(true);
-        }
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
+
+        exerciseService.checkExerciseIfGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
 
         return ResponseEntity.ok().body(textExercise);
     }
@@ -590,5 +586,44 @@ public class TextExerciseResource {
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
+    }
+
+    // do not forget to documentation
+    @PutMapping("/text-exercises/{exerciseId}/re-evaluate")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<TextExercise> reEvaluateTextExercise(@PathVariable Long exerciseId, @RequestBody TextExercise textExercise) {
+        log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
+
+        // Check that the user is authorized to update the exercise
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
+            return forbidden();
+        }
+
+        // Validate score settings
+        exerciseService.validateScoreSettings(textExercise);
+
+        TextExercise originalTextExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+
+        exerciseService.reEvaluateExercise(textExercise, originalTextExercise);
+
+        TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
+        exerciseService.logUpdate(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(originalTextExercise, updatedTextExercise);
+
+        instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
+
+        // Avoid recursions
+        if (textExercise.getExampleSubmissions().size() != 0) {
+            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(textExercise.getId());
+            updatedTextExercise.setExampleSubmissions(exampleSubmissionsWithResults);
+            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
+        }
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(textExercise);
     }
 }

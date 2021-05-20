@@ -75,13 +75,11 @@ public class ModelingExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -96,7 +94,6 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -258,12 +255,10 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            modelingExercise.setGradingInstructionFeedbackUsed(true);
-        }
         modelingExercise.setGradingCriteria(gradingCriteria);
+
+        exerciseService.checkExerciseIfGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
+
         return ResponseEntity.ok().body(modelingExercise);
     }
 

@@ -96,6 +96,10 @@ public class ExerciseService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final FeedbackRepository feedbackRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
@@ -103,7 +107,7 @@ public class ExerciseService {
             ProgrammingExerciseRepository programmingExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository) {
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -128,6 +132,8 @@ public class ExerciseService {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -764,5 +770,36 @@ public class ExerciseService {
         if (!exercise.getIncludedInOverallScore().validateBonusPoints(exercise.getBonusPoints())) {
             throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
+    }
+
+    // documentation
+    public void checkExerciseIfGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+
+        if (!feedbackList.isEmpty()) {
+            exercise.setGradingInstructionFeedbackUsed(true);
+        }
+    }
+
+    //do not forget to documentation
+    public void reEvaluateExercise (Exercise exercise, Exercise originalExercise) {
+
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+
+        // Check the grading instructions are used as feedback. The feedbacks should also re-evaluated
+        if (feedbackList.size() > 0) {
+            List<GradingInstruction> instructionList = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
+            for (GradingInstruction instruction : instructionList) {
+                for (Feedback feedback : feedbackList) {
+                    if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
+                        feedback.setCredits(instruction.getCredits());
+                        feedback.setDetailText(instruction.getFeedback());
+                    }
+                }
+            }
+            feedbackRepository.saveFeedbacks(feedbackList);
+        }
+
     }
 }

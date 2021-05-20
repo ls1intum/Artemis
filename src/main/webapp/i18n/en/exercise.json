@@ -185,7 +185,8 @@
                     "instructionDeleted": "Grading Instruction deleted:",
                     "scoringChange": "Scoring changed:",
                     "results": "The existing results must be recalculated!",
-                    "confirmtext": "Do you really want to perform these changes?"
+                    "confirmtext": "Do you really want to perform these changes?",
+                    "reevaluate": "Re-evaluate"
                 }
             }
         },

@@ -13,6 +13,9 @@ export class ExerciseUpdateWarningComponent {
     @Output()
     confirmed = new EventEmitter<object>();
 
+    @Output()
+    reEvaluated = new EventEmitter<object>();
+
     constructor(public activeModal: NgbActiveModal) {}
 
     /**
@@ -27,6 +30,14 @@ export class ExerciseUpdateWarningComponent {
      */
     confirmChange(): void {
         this.confirmed.emit();
+        this.activeModal.close();
+    }
+
+    /**
+     * Re-evaluate the exercise
+     */
+    reEvaluate(): void {
+        this.reEvaluated.emit();
         this.activeModal.close();
     }
 }

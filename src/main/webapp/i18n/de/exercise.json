@@ -185,7 +185,8 @@
                     "instructionDeleted": "Benotungshinweise gelöscht:",
                     "scoringChange": "Bewertungsart verändert:",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
-                    "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?"
+                    "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?",
+                    "reevaluate": "Neu bewerten"
                 }
             }
         },
