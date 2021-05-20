@@ -43,7 +43,7 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
 
     @BeforeEach
     void setUp() {
-        database.addUsers(3, 2, 0, 2);
+        database.addUsers(3, 2, 1, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
@@ -63,12 +63,11 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     /**
      * This tests if the submission is created for programming exercises without local setup
      */
-
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     void shouldCreateSubmissionWithoutConnectionToVCSandCI() throws Exception {
         assertThat(submissionRepository.findAll()).hasSize(0);
-        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
+        final ProgrammingSubmission returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
                 ProgrammingSubmission.class, HttpStatus.CREATED);
         assertThat(submissionRepository.findAll()).hasSize(1);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
@@ -79,14 +78,20 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
         assertThat(submission.isSubmitted()).isTrue();
     }
 
+    // The tutor has the editor role, but does not have the permissions for the repository since the tutor is not part of the editor group.
+    @Test
+    @WithMockUser(username = "tutor1", roles = "EDITOR")
+    void shouldCreateSubmissionWithoutConnectionToVCSandCI_forbidden() throws Exception {
+        request.post(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null, HttpStatus.FORBIDDEN);
+    }
+
     /**
      * This tests if the result is created for programming exercises without local setup
      */
-
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     void shouldCreateResultWithoutConnectionToVCSandCI() throws Exception {
-        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
+        final ProgrammingSubmission returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
                 ProgrammingSubmission.class, HttpStatus.CREATED);
         assertThat(resultRepository.findAll()).hasSize(0);
         Result returnedResult = request.postWithResponseBody(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null, Result.class, HttpStatus.CREATED);
@@ -96,5 +101,12 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
         Result result = resultRepository.findAll().get(0);
         assertThat(returnedResult).isEqualTo(result);
         assertThat(result.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());
+    }
+
+    // The tutor has the editor role, but does not have the permissions for the repository since the tutor is not part of the editor group.
+    @Test
+    @WithMockUser(username = "tutor1", roles = "EDITOR")
+    void shouldCreateResultWithoutConnectionToVCSandCI_forbidden() throws Exception {
+        request.post(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null, HttpStatus.FORBIDDEN);
     }
 }
