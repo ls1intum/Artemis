@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -48,9 +48,7 @@ export class FileUploadSubmissionService {
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http
-            .get<FileUploadSubmission>(url, { params, observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res)));
+        return this.http.get<FileUploadSubmission>(url, { params, observe: 'response' }).pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res)));
     }
 
     /**
@@ -93,9 +91,7 @@ export class FileUploadSubmissionService {
             params = params.set('lock', 'true');
         }
 
-        return this.http
-            .get<FileUploadSubmission>(url, { params })
-            .pipe(map((res: FileUploadSubmission) => FileUploadSubmissionService.convertItemFromServer(res)));
+        return this.http.get<FileUploadSubmission>(url, { params }).pipe(map((res: FileUploadSubmission) => FileUploadSubmissionService.convertItemFromServer(res)));
     }
 
     /**

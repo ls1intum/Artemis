@@ -53,7 +53,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 1);
+        database.addUsers(2, 2, 0, 1);
         course = database.addCourseWithThreeFileUploadExercise();
         afterReleaseFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
     }
@@ -97,7 +97,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
                 Course.class);
         Exercise exercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
     }
 
     @Test
@@ -527,7 +527,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(1);
         assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
         assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());

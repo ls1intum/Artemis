@@ -9,6 +9,7 @@ export class ConfirmAutofocusModalComponent {
     title: string;
     text: string;
     translateText: boolean;
+    textIsMarkdown: boolean;
 
     constructor(public modal: NgbActiveModal) {}
 }
@@ -27,6 +28,7 @@ export class ConfirmAutofocusButtonComponent {
     @Input() confirmationTitle: string;
     @Input() confirmationText: string;
     @Input() translateText?: boolean;
+    @Input() textIsMarkdown?: boolean;
     @Output() onConfirm = new EventEmitter<void>();
     @Output() onCancel = new EventEmitter<void>();
 
@@ -43,6 +45,11 @@ export class ConfirmAutofocusButtonComponent {
             modalRef.componentInstance.translateText = this.translateText;
         } else {
             modalRef.componentInstance.translateText = false;
+        }
+        if (this.textIsMarkdown !== undefined) {
+            modalRef.componentInstance.textIsMarkdown = this.textIsMarkdown;
+        } else {
+            modalRef.componentInstance.textIsMarkdown = false;
         }
         modalRef.result.then(
             () => {

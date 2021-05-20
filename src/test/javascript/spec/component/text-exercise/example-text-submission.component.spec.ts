@@ -194,7 +194,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
-        comp.isAtLeastInstructor = true;
+        comp.isAtLeastEditor = true;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
         comp.submission = submission;

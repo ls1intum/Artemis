@@ -8,10 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -35,8 +30,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 
 @Service
 public class CourseTestService {
@@ -80,11 +77,16 @@ public class CourseTestService {
     @Autowired
     private SubmissionRepository submissionRepository;
 
-    private final int numberOfStudents = 8;
+    @Autowired
+    private ComplaintRepository complaintRepo;
 
-    private final int numberOfTutors = 5;
+    private final static int numberOfStudents = 8;
 
-    private final int numberOfInstructors = 1;
+    private final static int numberOfTutors = 5;
+
+    private final static int numberOfEditors = 1;
+
+    private final static int numberOfInstructors = 1;
 
     private MockDelegate mockDelegate;
 
@@ -94,7 +96,7 @@ public class CourseTestService {
         this.mockDelegate = mockDelegate;
         this.groupNotificationService = groupNotificationService;
 
-        database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
@@ -114,6 +116,7 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
 
         request.post("/api/courses", course, HttpStatus.CREATED);
@@ -131,12 +134,13 @@ public class CourseTestService {
         course1.setShortName("shortName");
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
 
         request.post("/api/courses", course1, HttpStatus.CREATED);
         assertThat(courseRepo.findAll().size()).as("Course got stored").isEqualTo(1);
 
-        Course course2 = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course2.setShortName("shortName");
         request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
         assertThat(courseRepo.findAll().size()).as("Course has not been stored").isEqualTo(1);
@@ -148,6 +152,7 @@ public class CourseTestService {
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxComplaints(-1);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
@@ -161,6 +166,7 @@ public class CourseTestService {
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxComplaintTimeDays(-1);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
@@ -174,6 +180,7 @@ public class CourseTestService {
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxTeamComplaints(-1);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
@@ -187,6 +194,7 @@ public class CourseTestService {
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxComplaintTimeDays(0);
         course.setMaxComplaints(1);
@@ -216,6 +224,7 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setStudentGroupName("StudentGroupName");
         course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
+        course.setEditorGroupName("EditorGroupName");
         course.setInstructorGroupName("InstructorGroupName");
         request.post("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
@@ -225,10 +234,11 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 5, 14, false, 0);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, false, 0);
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
@@ -255,9 +265,10 @@ public class CourseTestService {
     public void testDeleteCourseWithPermission() throws Exception {
         // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
         List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(true));
-        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null);
+        Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null);
         course3.setStudentGroupName(course3.getDefaultStudentGroupName());
         course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
+        course3.setEditorGroupName(course3.getDefaultEditorGroupName());
         course3.setInstructorGroupName(course3.getDefaultInstructorGroupName());
         course3 = courseRepo.save(course3);
         courses.add(course3);
@@ -269,6 +280,9 @@ public class CourseTestService {
             }
             if (course.getTeachingAssistantGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 mockDelegate.mockDeleteGroupInUserManagement(course.getTeachingAssistantGroupName());
+            }
+            if (course.getEditorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
+                mockDelegate.mockDeleteGroupInUserManagement(course.getEditorGroupName());
             }
             if (course.getInstructorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 mockDelegate.mockDeleteGroupInUserManagement(course.getInstructorGroupName());
@@ -339,6 +353,7 @@ public class CourseTestService {
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         request.put("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
@@ -354,7 +369,7 @@ public class CourseTestService {
     // Test
     public void testEditCourseWithPermission() throws Exception {
 
-        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         course.setTitle("Test Course");
@@ -371,15 +386,18 @@ public class CourseTestService {
     public void testUpdateCourseGroups() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
+        var oldEditorGroup = course.getEditorGroupName();
         var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
+        course.setEditorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
-        mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldTeachingAssistantGroup);
+        mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
 
         assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
+        assertThat(updatedCourse.getEditorGroupName()).isEqualTo("new-editor-group");
         assertThat(updatedCourse.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
     }
 
@@ -387,12 +405,14 @@ public class CourseTestService {
     public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
+        var oldEditorGroup = course.getEditorGroupName();
         var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
+        course.setInstructorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
-        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, false, true);
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, false, true);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
@@ -402,12 +422,14 @@ public class CourseTestService {
     public void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
+        var oldEditorGroup = course.getEditorGroupName();
         var oldTeachingAssistantGroup = course.getTeachingAssistantGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
+        course.setInstructorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
-        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldTeachingAssistantGroup, true, false);
+        mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, true, false);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
@@ -534,7 +556,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
-        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Only one course is returned").isEqualTo(1);
@@ -544,11 +566,11 @@ public class CourseTestService {
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
         Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), "tumuser", "tutor",
-                "instructor");
+                "editor", "instructor");
         Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
-                "instructor");
+                "editor", "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
-                "instructor");
+                "editor", "instructor");
         courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
@@ -581,15 +603,15 @@ public class CourseTestService {
     // Test
     public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "tumuser", "tutor", "instructor");
+                "tumuser", "tutor", "editor", "instructor");
         courseActiveRegistrationEnabled.setRegistrationEnabled(true);
         Course courseActiveRegistrationDisabled = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "tumuser", "tutor", "instructor");
+                "tumuser", "tutor", "editor", "instructor");
         courseActiveRegistrationDisabled.setRegistrationEnabled(false);
         Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
-                "instructor");
+                "editor", "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
-                "instructor");
+                "editor", "instructor");
         courseRepo.save(courseActiveRegistrationEnabled);
         courseRepo.save(courseActiveRegistrationDisabled);
         courseRepo.save(courseNotActivePast);
@@ -606,25 +628,25 @@ public class CourseTestService {
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
-                assertThat(exercise.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isZero();
-                assertThat(exercise.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
+                assertThat(exercise.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
                 // Mock data contains exactly two submissions for the modeling exercise
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(2);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(2);
                 }
                 // Mock data contains exactly one submission for the text exercise
                 if (exercise instanceof TextExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(1);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(1);
                 }
                 // Mock data contains no submissions for the file upload and programming exercise
                 if (exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise) {
-                    assertThat(exercise.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(0);
+                    assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(0);
                 }
 
-                assertThat(exercise.getNumberOfSubmissions().getLate()).as("Number of late submissions is correct").isEqualTo(0);
+                assertThat(exercise.getNumberOfSubmissions().late()).as("Number of late submissions is correct").isEqualTo(0);
                 assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-                assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+                assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
                 // Check tutor participation
                 if (exercise.getTutorParticipations().size() > 0) {
                     TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
@@ -634,12 +656,12 @@ public class CourseTestService {
 
             StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
             long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
-            assertThat(stats.getNumberOfSubmissions().getInTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
-            assertThat(stats.getNumberOfSubmissions().getLate()).as("Number of latte submissions is correct").isEqualTo(0);
-            assertThat(stats.getTotalNumberOfAssessments().getInTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-            assertThat(stats.getTotalNumberOfAssessments().getLate()).as("Number of late assessments is correct").isEqualTo(0);
+            assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
+            assertThat(stats.getNumberOfSubmissions().late()).as("Number of latte submissions is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isEqualTo(0);
+            assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isEqualTo(0);
             assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard", isInstructor ? HttpStatus.OK : HttpStatus.FORBIDDEN,
@@ -846,7 +868,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfComplaintResponses()).isEqualTo(0);
         assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfComplaintResponses()).isEqualTo(0);
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfComplaintResponses()).isEqualTo(0);
-        // 9 exercises, for each one there are 5 complaintResponese
+        // 9 exercises, for each one there are 5 complaintResponses
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(9 * 5);
     }
 
@@ -862,6 +884,7 @@ public class CourseTestService {
             // Check course properties on courseOnly
             assertThat(courseOnly.getStudentGroupName()).as("Student group name is correct").isEqualTo("tumuser");
             assertThat(courseOnly.getTeachingAssistantGroupName()).as("Teaching assistant group name is correct").isEqualTo("tutor");
+            assertThat(courseOnly.getEditorGroupName()).as("Editor group name is correct").isEqualTo("editor");
             assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo("instructor");
             assertThat(courseOnly.getEndDate()).as("End date is after start date").isAfter(courseOnly.getStartDate());
             assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
@@ -869,11 +892,12 @@ public class CourseTestService {
             assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
             assertThat(courseOnly.getNumberOfStudents()).as("Amount of students is correct").isEqualTo(8);
             assertThat(courseOnly.getNumberOfTeachingAssistants()).as("Amount of teaching assistants is correct").isEqualTo(5);
+            assertThat(courseOnly.getNumberOfEditors()).as("Amount of editors is correct").isEqualTo(1);
             assertThat(courseOnly.getNumberOfInstructors()).as("Amount of instructors is correct").isEqualTo(1);
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
             String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "numberOfInstructorsTransient", "numberOfStudentsTransient",
-                    "numberOfTeachingAssistantsTransient" };
+                    "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
             assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
             assertThat(courseWithExercisesAndRelevantParticipations).as("courseWithExercisesAndRelevantParticipations same as courseOnly").usingRecursiveComparison()
                     .ignoringFields(ignoringFields).isEqualTo(courseOnly);
@@ -914,8 +938,8 @@ public class CourseTestService {
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "instructor");
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         course1.setRegistrationEnabled(true);
 
         course1 = courseRepo.save(course1);
@@ -942,8 +966,8 @@ public class CourseTestService {
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course notYetStartedCourse = ModelFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "instructor");
-        Course finishedCourse = ModelFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "instructor");
+        Course notYetStartedCourse = ModelFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course finishedCourse = ModelFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         notYetStartedCourse.setRegistrationEnabled(true);
 
         notYetStartedCourse = courseRepo.save(notYetStartedCourse);
@@ -958,7 +982,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
-        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         request.put("/api/courses", course, HttpStatus.FORBIDDEN);
@@ -966,7 +990,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         // Get all students for course
@@ -984,14 +1008,14 @@ public class CourseTestService {
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
         testGetAllStudentsOrTutorsOrInstructorsInCourse__forbidden(course);
     }
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         testGetAllStudentsOrTutorsOrInstructorsInCourse__forbidden(course);
     }
@@ -1003,72 +1027,79 @@ public class CourseTestService {
     }
 
     // Test
-    public void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+    public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.OK);
+        testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
 
         // TODO check that the roles have changed accordingly
     }
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
+        testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testAddStudentOrTutorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
+        testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_WithNonExistingUser() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/editors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/maxMustermann", null, HttpStatus.NOT_FOUND, null);
     }
 
-    private void testAddStudentOrTutorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
+    private void testAddStudentOrTutorOrEditorOrInstructorToCourse(Course course, HttpStatus httpStatus) throws Exception {
         var student = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student1").get();
         var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("tutor1").get();
+        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("editor1").get();
         var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
 
         mockDelegate.mockAddUserToGroupInUserManagement(student, course.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), false);
+        mockDelegate.mockAddUserToGroupInUserManagement(editor1, course.getEditorGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course.getInstructorGroupName(), false);
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, httpStatus, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/editors/editor1", null, httpStatus, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, httpStatus, null);
     }
 
     // Test
-    public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus expectedFailureCode) throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+    public void testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus expectedFailureCode) throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         database.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
 
         var tutor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("tutor1").get();
+        var editor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("editor1").get();
         var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
 
         mockDelegate.mockAddUserToGroupInUserManagement(tutor1, course.getTeachingAssistantGroupName(), true);
+        mockDelegate.mockAddUserToGroupInUserManagement(editor1, course.getEditorGroupName(), true);
         mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course.getInstructorGroupName(), true);
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, expectedFailureCode, null);
+        request.postWithoutLocation("/api/courses/" + course.getId() + "/editors/editor1", null, expectedFailureCode, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, expectedFailureCode, null);
     }
 
     // Test
     public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         database.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
@@ -1080,49 +1111,53 @@ public class CourseTestService {
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
+        testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
         // TODO check that the roles have changed accordingly
     }
 
     // Test
-    public void testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+    public void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         request.delete("/api/courses/" + course.getId() + "/students/maxMustermann", HttpStatus.NOT_FOUND);
         request.delete("/api/courses/" + course.getId() + "/tutors/maxMustermann", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/" + course.getId() + "/editors/maxMustermann", HttpStatus.NOT_FOUND);
         request.delete("/api/courses/" + course.getId() + "/instructors/maxMustermann", HttpStatus.NOT_FOUND);
     }
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
+        testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
+        testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
-    private void testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
+    private void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(Course course, HttpStatus httpStatus) throws Exception {
         // Retrieve users from whom to remove groups
         User student = userRepo.findOneWithGroupsByLogin("student1").get();
         User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
+        User editor = userRepo.findOneWithGroupsByLogin("editor1").get();
         User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
 
         // Mock remove requests
         mockDelegate.mockRemoveUserFromGroup(student, course.getStudentGroupName(), false);
         mockDelegate.mockRemoveUserFromGroup(tutor, course.getTeachingAssistantGroupName(), false);
+        mockDelegate.mockRemoveUserFromGroup(editor, course.getEditorGroupName(), false);
         mockDelegate.mockRemoveUserFromGroup(instructor, course.getInstructorGroupName(), false);
 
         // Remove users from their group
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), httpStatus);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), httpStatus);
+        request.delete("/api/courses/" + course.getId() + "/editors/" + editor.getLogin(), httpStatus);
         request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), httpStatus);
     }
 
@@ -1192,7 +1227,7 @@ public class CourseTestService {
     // Test
     public void testDownloadCourseArchiveAsInstructor_not_found() throws Exception {
         // Generate a course that has no archive and assert that an 404 status is thrown
-        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         var downloadedArchive = request.get("/api/courses/" + course.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
@@ -1516,5 +1551,147 @@ public class CourseTestService {
         // The one specific exercise should not be included
         var statisticsOptional = exerciseDTOS.stream().filter(exercise -> exercise.getExerciseId().equals(exerciseId)).findFirst();
         assertThat(statisticsOptional.isEmpty()).isTrue();
+    }
+
+    // Test
+    public void testGetCourseManagementDetailData() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        // add courses with exercises
+
+        var course = database.createCoursesWithExercisesAndLectures(true).get(0);
+
+        var student1 = ModelFactory.generateActivatedUser("user1");
+        var student2 = ModelFactory.generateActivatedUser("user2");
+        // Fetch and update an instructor
+        var instructor = database.getUserByLogin("instructor1");
+        var groups = new HashSet<String>();
+        groups.add("instructor");
+        instructor.setGroups(groups);
+
+        userRepo.save(instructor);
+        userRepo.save(student1);
+        userRepo.save(student2);
+
+        var releaseDate = now.minusDays(7);
+        var dueDate = now.minusDays(2);
+        var assessmentDueDate = now.minusDays(1);
+        var exercise = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
+        exercise.setMaxPoints(5.0);
+        exercise = exerciseRepo.save(exercise);
+
+        // Add a single participation to that exercise
+        final var exerciseId = exercise.getId();
+
+        var result1 = database.createParticipationSubmissionAndResult(exerciseId, student1, 5.0, 0.0, 60, true);
+        var result2 = database.createParticipationSubmissionAndResult(exerciseId, student2, 5.0, 0.0, 40, true);
+
+        Submission submission1 = result1.getSubmission();
+        submission1.setSubmissionDate(now.minusDays(3));
+        submissionRepository.save(submission1);
+
+        Submission submission2 = result2.getSubmission();
+        submission2.setSubmissionDate(now.minusDays(3));
+        submissionRepository.save(submission2);
+
+        result1.setAssessor(instructor);
+        resultRepo.saveAndFlush(result1);
+        result2.setAssessor(instructor);
+        resultRepo.saveAndFlush(result2);
+        course.addExercises(exercise);
+        courseRepo.save(course);
+
+        // Complaint
+        Complaint complaint = new Complaint().complaintType(ComplaintType.COMPLAINT);
+        complaint.setResult(result1);
+        complaint = complaintRepo.save(complaint);
+
+        complaint.getResult().setParticipation(null);
+
+        // Accept Complaint and update Assessment
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
+        Feedback feedback1 = new Feedback();
+        feedback1.setCredits(2.5);
+        Feedback feedback2 = new Feedback();
+        feedback2.setCredits(-0.5);
+        Feedback feedback3 = new Feedback();
+        feedback3.setCredits(1.5);
+        Feedback feedback4 = new Feedback();
+        feedback4.setCredits(-1.5);
+        Feedback feedback5 = new Feedback();
+        feedback5.setCredits(2.0);
+        var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
+
+        var assessmentUpdate = new TextAssessmentUpdateDTO();
+        assessmentUpdate.feedbacks(feedbackListForComplaint).complaintResponse(complaintResponse);
+        assessmentUpdate.setTextBlocks(new HashSet<>());
+
+        request.putWithResponseBody("/api/text-assessments/text-submissions/" + result1.getSubmission().getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+                HttpStatus.OK);
+
+        // Feedback request
+        Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
+        feedbackRequest.setResult(result2);
+        feedbackRequest = complaintRepo.save(feedbackRequest);
+
+        feedbackRequest.getResult().setParticipation(null);
+
+        ComplaintResponse feedbackResponse = database.createInitialEmptyResponse("tutor2", feedbackRequest);
+        feedbackResponse.getComplaint().setAccepted(true);
+        feedbackResponse.setResponseText("accepted");
+        var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4);
+
+        var feedbackUpdate = new TextAssessmentUpdateDTO();
+        feedbackUpdate.feedbacks(feedbackListForMoreFeedback).complaintResponse(feedbackResponse);
+        feedbackUpdate.setTextBlocks(new HashSet<>());
+
+        request.putWithResponseBody("/api/text-assessments/text-submissions/" + result2.getSubmission().getId() + "/assessment-after-complaint", feedbackUpdate, Result.class,
+                HttpStatus.OK);
+
+        // API call
+        var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        // Check results
+        assertThat(courseDTO).isNotNull();
+
+        assertThat(courseDTO.getActiveStudents().length).isEqualTo(4);
+
+        // number of users in course
+        assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
+        assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
+        assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(1);
+
+        // Assessments
+        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(66.7);
+        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(2);
+        assertThat(courseDTO.getCurrentMaxAssessments()).isEqualTo(3);
+
+        // Complaints
+        assertThat(courseDTO.getCurrentPercentageComplaints()).isEqualTo(100);
+        assertThat(courseDTO.getCurrentAbsoluteComplaints()).isEqualTo(1);
+        assertThat(courseDTO.getCurrentMaxComplaints()).isEqualTo(1);
+
+        // More feedback requests
+        assertThat(courseDTO.getCurrentPercentageMoreFeedbacks()).isEqualTo(100);
+        assertThat(courseDTO.getCurrentAbsoluteMoreFeedbacks()).isEqualTo(1);
+        assertThat(courseDTO.getCurrentMaxMoreFeedbacks()).isEqualTo(1);
+
+        // Average Score
+        assertThat(courseDTO.getCurrentPercentageAverageScore()).isEqualTo(60);
+        assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(3);
+        assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(5);
+
+        // Active Users
+        int periodIndex = 0;
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("periodIndex", "" + periodIndex);
+
+        var activeStudents = request.get("/api/courses/" + course.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+
+        assertThat(activeStudents).isNotNull();
+        assertThat(activeStudents.length).isEqualTo(4);
+
     }
 }

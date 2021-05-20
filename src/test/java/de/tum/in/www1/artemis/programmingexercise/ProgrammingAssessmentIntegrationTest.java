@@ -73,7 +73,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(3, 2, 2);
+        database.addUsers(3, 2, 0, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -295,13 +295,14 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(manualResult.getFeedbacks().size());
         assertThat(response.isRated()).isEqualTo(Boolean.TRUE);
-        assertThat(response.getCompletionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        var now = ZonedDateTime.now();
+        assertThat(response.getCompletionDate()).isBetween(now.minusSeconds(1), now.plusSeconds(1));
 
         Course course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);
         Exercise exercise = (Exercise) course.getExercises().toArray()[0];
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds().length).isEqualTo(1L);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(1L);
+        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
     }
 
     @Test
@@ -731,7 +732,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(fetchedParticipation.getSubmissions().size()).isEqualTo(3);
         assertThat(fetchedParticipation.findLatestSubmission().isPresent()).isTrue();
         assertThat(fetchedParticipation.findLatestSubmission().get()).isEqualTo(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());

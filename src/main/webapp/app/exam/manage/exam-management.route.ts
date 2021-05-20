@@ -45,6 +45,13 @@ import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/ass
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-assessment-dashboard.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
+import { exerciseTypes } from 'app/entities/exercise.model';
+import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
+import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/modeling-exercise-detail.component';
+import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
+import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
+import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
+import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -121,7 +128,7 @@ export const examManagementRoute: Routes = [
         path: '',
         component: ExamManagementComponent,
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -178,7 +185,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups',
         component: ExerciseGroupsComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -191,7 +198,7 @@ export const examManagementRoute: Routes = [
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -204,7 +211,7 @@ export const examManagementRoute: Routes = [
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -230,6 +237,15 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/grading-system',
+        component: GradingSystemComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -314,164 +330,249 @@ export const examManagementRoute: Routes = [
     },
     // Create Modeling Exercise
     {
-        path: ':examId/exercise-groups/:groupId/modeling-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/new',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Import Modeling Exercise
     {
-        path: ':examId/exercise-groups/:groupId/modeling-exercises/import/:exerciseId',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Edit Modeling Exercise
     {
-        path: ':examId/exercise-groups/:groupId/modeling-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/edit',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Create Text Exercise
     {
-        path: ':examId/exercise-groups/:groupId/text-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/new',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Import Text Exercise
     {
-        path: ':examId/exercise-groups/:groupId/text-exercises/import/:exerciseId',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/import/:exerciseId',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Edit Text Exercise
     {
-        path: ':examId/exercise-groups/:groupId/text-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Create File Upload Exercise
     {
-        path: ':examId/exercise-groups/:groupId/file-upload-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/new',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Edit File Upload Exercise
     {
-        path: ':examId/exercise-groups/:groupId/file-upload-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Create Quiz Exercise
     {
-        path: ':examId/exercise-groups/:groupId/quiz-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
         component: QuizExerciseDetailComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Edit Quiz Exercise
     {
-        path: ':examId/exercise-groups/:groupId/quiz-exercises/:exerciseId/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit',
         component: QuizExerciseDetailComponent,
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Create Programming Exercise
     {
-        path: ':examId/exercise-groups/:groupId/programming-exercises/new',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/new',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     // Import programming exercise
     {
-        path: ':examId/exercise-groups/:groupId/programming-exercises/import/:id',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/import/:exerciseId',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
     },
     // Edit Programming Exercise
     {
-        path: ':examId/exercise-groups/:groupId/programming-exercises/:id/edit',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
+        component: TextExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId',
+        component: FileUploadExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId',
+        component: ModelingExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId',
+        component: ProgrammingExerciseDetailComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/plagiarism',
+        component: PlagiarismInspectorComponent,
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -479,7 +580,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/assessment-dashboard',
         component: AssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
@@ -488,7 +589,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/assessment-dashboard/:exerciseId',
         component: ExerciseAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -502,56 +603,62 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/exercises/:exerciseId/scores',
-        component: ExerciseScoresComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
-            pageTitle: 'instructorDashboard.exerciseDashboard',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/exercises/:exerciseId/participations',
-        component: ParticipationComponent,
-        data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.participation.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/exercises/:exerciseId/participations/:participationId',
-        component: ParticipationSubmissionComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.participation.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/scores',
+            component: ExerciseScoresComponent,
+            data: {
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                pageTitle: 'instructorDashboard.exerciseDashboard',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations',
+            component: ParticipationComponent,
+            data: {
+                authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                pageTitle: 'artemisApp.participation.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations/:participationId',
+            component: ParticipationSubmissionComponent,
+            data: {
+                authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                pageTitle: 'artemisApp.participation.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: FileUploadAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/assessment',
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions',
         component: FileUploadAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/assessment',
+        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/submissions',
         component: TextAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -569,10 +676,10 @@ export const examManagementRoute: Routes = [
         loadChildren: () => import('../../exercises/text/manage/example-text-submission/example-text-submission.module').then((m) => m.ArtemisExampleTextSubmissionModule),
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/assessment',
+        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions',
         component: ModelingAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -581,16 +688,16 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: ModelingAssessmentEditorComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/assessment',
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions',
         component: ProgrammingAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -599,7 +706,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -608,7 +715,7 @@ export const examManagementRoute: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
         component: FileUploadAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

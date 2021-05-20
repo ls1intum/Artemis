@@ -52,7 +52,6 @@ describe('JhiCloneRepoButtonComponent', () => {
         externalUserManagementName: '',
         externalUserManagementURL: '',
         features: [],
-        imprint: '',
         inProduction: false,
         programmingLanguageFeatures: [],
         ribbonEnv: '',

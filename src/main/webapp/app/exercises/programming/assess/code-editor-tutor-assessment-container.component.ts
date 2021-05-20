@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import * as moment from 'moment';
 import { now } from 'moment';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,6 +40,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { Observable } from 'rxjs';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
+import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -210,6 +211,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.submission = submission;
         this.manualResult = getLatestSubmissionResult(this.submission);
         this.participation = submission.participation!;
+        addUserIndependentRepositoryUrl(this.participation);
         this.exercise = this.participation.exercise as ProgrammingExercise;
         this.hasAssessmentDueDatePassed = !!this.exercise!.assessmentDueDate && moment(this.exercise!.assessmentDueDate).isBefore(now());
 

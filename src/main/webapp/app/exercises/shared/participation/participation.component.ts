@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
@@ -56,6 +56,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     };
 
     exerciseSubmissionState: ExerciseSubmissionState;
+
+    isAdmin = false;
 
     isLoading: boolean;
 
@@ -128,6 +130,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         } else if (this.exercise.exerciseGroup) {
             this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.exerciseGroup.exam?.course!);
         }
+        this.isAdmin = this.accountService.isAdmin();
     }
 
     updateParticipationFilter(newValue: FilterProp) {

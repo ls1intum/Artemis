@@ -587,6 +587,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
+        // Notify parent of changes
+        this.questionUpdated.emit();
     }
 
     /**
@@ -598,6 +600,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem));
+        // Notify parent of changes
+        this.questionUpdated.emit();
     }
 
     /**
@@ -609,6 +613,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter((mapping) => mapping !== mappingToDelete);
+        // Notify parent of changes
+        this.questionUpdated.emit();
     }
 
     /**

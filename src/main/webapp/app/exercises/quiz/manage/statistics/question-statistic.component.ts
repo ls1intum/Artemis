@@ -74,7 +74,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuiz(res.body!, false);
                 });
@@ -165,7 +165,7 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
     loadQuizCommon(quiz: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
@@ -219,7 +219,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
         // if show Solution is true use the label, backgroundColor and Data, which show the solution
         if (this.showSolution) {
             // show Solution: use the backgroundColor which shows the solution
-            this.colors = this.backgroundSolutionColors.map((backgroundColor) => ({ backgroundColor }));
+            this.colors = [{ backgroundColor: this.backgroundSolutionColors }];
+
             if (this.rated) {
                 this.participants = this.questionStatistic.participantsRated!;
                 // if rated is true use the rated Data and add the rated CorrectCounter
@@ -237,7 +238,8 @@ export abstract class QuestionStatisticComponent implements DataSetProvider, OnI
             this.chartLabels = this.solutionLabels;
         } else {
             // don't show Solution: use the backgroundColor which doesn't show the solution
-            this.colors = this.backgroundColors.map((backgroundColor) => ({ backgroundColor }));
+            this.colors = [{ backgroundColor: this.backgroundColors }];
+
             // if rated is true use the rated Data
             if (this.rated) {
                 this.participants = this.questionStatistic.participantsRated!;

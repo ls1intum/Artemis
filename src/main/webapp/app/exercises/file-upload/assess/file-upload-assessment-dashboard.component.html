@@ -57,7 +57,15 @@
                         <ng-container *ngIf="submission.participation!.submissions">
                             <a
                                 *ngIf="exercise.isAtLeastInstructor && !examId"
-                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation!.id!, 'submissions']"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    exercise.type + '-exercises',
+                                    exercise.id,
+                                    'participations',
+                                    submission.participation!.id,
+                                    'submissions'
+                                ]"
                             >
                                 {{ submission.participation!.submissions!.length }}
                             </a>
@@ -70,7 +78,7 @@
                                     examId,
                                     'exercise-groups',
                                     exerciseGroupId,
-                                    'exercises',
+                                    exercise.type + '-exercises',
                                     exercise.id,
                                     'participations',
                                     submission.participation!.id!
@@ -91,7 +99,7 @@
                         <div *ngIf="submission.latestResult && submission.latestResult!.assessor">{{ submission.latestResult!.assessor!.name }}</div>
                     </td>
                     <td *ngFor="let item of [].constructor(numberOfCorrectionrounds); let correctionRound = index">
-                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
+                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
                             <!-- exercise without exam-->
                             <span *ngIf="exercise.type === ExerciseType.FILE_UPLOAD && exercise.course && submission">
                                 <a *ngIf="!submission.latestResult" [class.disabled]="busy" [routerLink]="getAssessmentLink(submission.id!)" class="btn btn-success btn-sm mb-1">

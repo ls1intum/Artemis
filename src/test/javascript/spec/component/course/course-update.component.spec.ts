@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { Course } from 'app/entities/course.model';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -36,6 +37,13 @@ import { base64StringToBlob } from 'blob-util';
 
 chai.use(sinonChai);
 const expect = chai.expect;
+
+@Component({ selector: 'jhi-markdown-editor', template: '' })
+class MarkdownEditorStubComponent {
+    @Input() markdown: string;
+    @Input() enableResize = false;
+    @Output() markdownChange = new EventEmitter<string>();
+}
 
 describe('Course Management Update Component', () => {
     let comp: CourseUpdateComponent;
@@ -70,10 +78,10 @@ describe('Course Management Update Component', () => {
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
 
-        const parentRoute = ({
+        const parentRoute = {
             data: of({ course }),
-        } as any) as ActivatedRoute;
-        const route = ({ parent: parentRoute } as any) as ActivatedRoute;
+        } as any as ActivatedRoute;
+        const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, ImageCropperModule],
             providers: [
@@ -87,6 +95,7 @@ describe('Course Management Update Component', () => {
             ],
             declarations: [
                 CourseUpdateComponent,
+                MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(AlertErrorComponent),
@@ -130,12 +139,14 @@ describe('Course Management Update Component', () => {
             expect(comp.customizeGroupNames).to.equal(true);
             expect(comp.course.studentGroupName).to.equal('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).to.equal('artemis-dev');
+            expect(comp.course.editorGroupName).to.equal('artemis-dev');
             expect(comp.course.instructorGroupName).to.equal('artemis-dev');
             expect(comp.courseForm.get(['id'])?.value).to.equal(course.id);
             expect(comp.courseForm.get(['title'])?.value).to.equal(course.title);
             expect(comp.shortName.value).to.equal(course.shortName);
             expect(comp.courseForm.get(['studentGroupName'])?.value).to.equal(course.studentGroupName);
             expect(comp.courseForm.get(['teachingAssistantGroupName'])?.value).to.equal(course.teachingAssistantGroupName);
+            expect(comp.courseForm.get(['editorGroupName'])?.value).to.equal(course.editorGroupName);
             expect(comp.courseForm.get(['instructorGroupName'])?.value).to.equal(course.instructorGroupName);
             expect(comp.courseForm.get(['startDate'])?.value).to.equal(course.startDate);
             expect(comp.courseForm.get(['endDate'])?.value).to.equal(course.endDate);
@@ -177,6 +188,7 @@ describe('Course Management Update Component', () => {
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
+                isAtLeastEditor: new FormControl(entity.isAtLeastEditor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
             });
             // WHEN
@@ -205,6 +217,7 @@ describe('Course Management Update Component', () => {
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
+                isAtLeastEditor: new FormControl(entity.isAtLeastEditor),
                 isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
             }); // mocking reactive form
             // WHEN
@@ -229,11 +242,11 @@ describe('Course Management Update Component', () => {
     describe('setCourseImage', () => {
         it('should change course image', () => {
             const file = new File([''], 'testFilename');
-            const fileList = ({
+            const fileList = {
                 0: file,
                 length: 1,
                 item: () => file,
-            } as unknown) as FileList;
+            } as unknown as FileList;
             const event = { target: { files: fileList } };
             comp.setCourseImage(event);
             expect(comp.courseImageFile).to.equal(file);
@@ -380,17 +393,20 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 studentGroupName: new FormControl('noname'),
                 teachingAssistantGroupName: new FormControl('noname'),
+                editorGroupName: new FormControl('noname'),
                 instructorGroupName: new FormControl('noname'),
             });
             comp.customizeGroupNames = false;
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).to.equal('artemis-dev');
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).to.equal('artemis-dev');
+            expect(comp.courseForm.controls['editorGroupName'].value).to.equal('artemis-dev');
             expect(comp.courseForm.controls['instructorGroupName'].value).to.equal('artemis-dev');
             expect(comp.customizeGroupNames).to.equal(true);
             comp.changeCustomizeGroupNames();
             expect(comp.courseForm.controls['studentGroupName'].value).to.equal(undefined);
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).to.equal(undefined);
+            expect(comp.courseForm.controls['editorGroupName'].value).to.equal(undefined);
             expect(comp.courseForm.controls['instructorGroupName'].value).to.equal(undefined);
             expect(comp.customizeGroupNames).to.equal(false);
         });

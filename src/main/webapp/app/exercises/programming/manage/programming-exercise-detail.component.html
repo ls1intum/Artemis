@@ -6,13 +6,13 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <div class="text-left">
-                <a *ngIf="programmingExercise.isAtLeastInstructor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1" style="margin-bottom: 10px">
+                <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1" style="margin-bottom: 10px">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>
 
                 <a
                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.templateParticipation && programmingExercise.course !== undefined"
+                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation && programmingExercise.course !== undefined"
                     jhiOrionFilter
                     [showInOrionWindow]="false"
                     [routerLink]="[
@@ -32,7 +32,7 @@
 
                 <a
                     *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'participations']"
+                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'participations']"
                     class="btn btn-primary btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -41,7 +41,7 @@
                 </a>
                 <a
                     *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'exercises', programmingExercise.id, 'scores']"
+                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'scores']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -50,7 +50,7 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastInstructor"
+                    *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastEditor"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
@@ -60,8 +60,8 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.isAtLeastInstructor && programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course?.id, 'exercises', programmingExercise.id, 'hints']"
+                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course !== undefined"
+                    [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
                     class="btn btn-info btn-sm mr-1"
                     style="margin-bottom: 10px"
                 >
@@ -70,7 +70,7 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    *ngIf="programmingExercise.isAtLeastEditor"
                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                     class="btn btn-outline-primary btn-sm mr-1"
                     routerLink="plagiarism"
@@ -80,12 +80,16 @@
                 </a>
 
                 <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
+                <jhi-programming-exercise-instructor-exercise-download
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [exerciseId]="programmingExercise.id!"
+                    class="mr-1"
+                ></jhi-programming-exercise-instructor-exercise-download>
                 <jhi-programming-assessment-repo-export
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [exerciseId]="programmingExercise.id!"
                     class="mr-1"
                 ></jhi-programming-assessment-repo-export>
-
                 <button
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -128,7 +132,7 @@
                     class="mr-1"
                 >
                 </span>
-                <span class="mr-1" *ngIf="programmingExercise.isAtLeastInstructor">
+                <span class="mr-1" *ngIf="programmingExercise.isAtLeastEditor">
                     <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="combineTemplateCommits()" class="btn btn-secondary btn-sm">
                         <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
                     </button>
@@ -138,7 +142,7 @@
                         ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
                     ></fa-icon>
                 </span>
-                <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastInstructor" class="mr-1">
+                <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor" class="mr-1">
                     <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary btn-sm">
                         <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                     </button>
@@ -172,7 +176,7 @@
                 </button>
             </div>
             <dl class="row-md jh-entity-details">
-                <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
+                <jhi-exercise-details [exercise]="programmingExercise"> </jhi-exercise-details>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
@@ -189,6 +193,10 @@
                         <span>{{ programmingExercise.maxStaticCodeAnalysisPenalty == undefined ? '-' : programmingExercise.maxStaticCodeAnalysisPenalty }}</span>
                     </dd>
                 </ng-container>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
+                <dd>
+                    <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
                     <div class="d-flex align-items-center" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
@@ -310,12 +318,12 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.templateParticipation">
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation">
                     <a
                         [routerLink]="[
                             '/course-management',
                             programmingExercise.course.id,
-                            'exercises',
+                            'programming-exercises',
                             programmingExercise.id,
                             'participations',
                             programmingExercise.templateParticipation?.id,
@@ -352,12 +360,12 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor && programmingExercise?.solutionParticipation">
+                <dd *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation">
                     <a
                         [routerLink]="[
                             '/course-management',
                             programmingExercise.course.id,
-                            'exercises',
+                            'programming-exercises',
                             programmingExercise.id,
                             'participations',
                             programmingExercise.solutionParticipation?.id,

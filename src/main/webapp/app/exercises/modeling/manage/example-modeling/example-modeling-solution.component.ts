@@ -22,6 +22,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
     exercise: ModelingExercise;
     exerciseId: number;
     exampleSolution: UMLModel;
+    isAtLeastEditor = false;
     isAtLeastInstructor = false;
     formattedProblemStatement: SafeHtml | null;
 
@@ -42,6 +43,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
             if (this.exercise.sampleSolutionModel) {
                 this.exampleSolution = JSON.parse(this.exercise.sampleSolutionModel);
             }
+            this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course || this.exercise.exerciseGroup!.exam!.course);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
         });

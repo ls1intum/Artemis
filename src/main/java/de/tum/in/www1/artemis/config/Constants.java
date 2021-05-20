@@ -117,17 +117,13 @@ public final class Constants {
 
     public static final String SOLUTION_CHECKOUT_PATH = "solution";
 
-    // TODO: the following numbers should be configurable in the yml files
-
-    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 50;
-
-    public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 30 * 1000; // 30s
-
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
+
+    public static final String EDIT_EXERCISE = "EDIT_EXERCISE";
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
@@ -170,6 +166,8 @@ public final class Constants {
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
 
     public static final String REGISTRATION_ENABLED = "registrationEnabled";
+
+    public static final String NEEDS_TO_ACCEPT_TERMS = "needsToAcceptTerms";
 
     public static final String ALLOWED_EMAIL_PATTERN = "allowedEmailPattern";
 

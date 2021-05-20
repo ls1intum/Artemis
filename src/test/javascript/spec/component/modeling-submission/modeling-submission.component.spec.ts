@@ -59,7 +59,7 @@ describe('Component Tests', () => {
         let service: ModelingSubmissionService;
         let router: Router;
 
-        const route = ({ params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any) as ActivatedRoute;
+        const route = { params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any as ActivatedRoute;
         const participation = new StudentParticipation();
         participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         participation.id = 1;

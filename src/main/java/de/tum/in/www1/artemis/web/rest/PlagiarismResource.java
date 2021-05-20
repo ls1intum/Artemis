@@ -35,9 +35,9 @@ public class PlagiarismResource {
      * parameters are invalid
      */
     @PutMapping("/plagiarism-comparisons/{comparisonId}/status")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable long comparisonId, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-        // TODO: check that the instructor has access to the corresponding course (add the exerciseId to the URL)
+        // TODO: check that the editor has access to the corresponding course (add the exerciseId to the URL)
         log.debug("REST request to update the status of the plagiarism comparison with id: {}", comparisonId);
         var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), statusDTO.getStatus());

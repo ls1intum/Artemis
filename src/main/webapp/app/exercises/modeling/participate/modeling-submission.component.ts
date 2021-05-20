@@ -29,7 +29,7 @@ import { omit } from 'lodash';
 import * as moment from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({

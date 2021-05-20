@@ -37,6 +37,8 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
+export const exerciseTypes: string[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
+
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum IncludedInOverallScore {
     INCLUDED_COMPLETELY = 'INCLUDED_COMPLETELY',
@@ -108,6 +110,7 @@ export abstract class Exercise implements BaseEntity {
     // helper attributes
     public secondCorrectionEnabled = false;
     public isAtLeastTutor?: boolean;
+    public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
     public teamMode?: boolean;
     public assessmentDueDateError?: boolean;
@@ -117,11 +120,13 @@ export abstract class Exercise implements BaseEntity {
     public numberOfSuccessfulParticipations?: number;
     public averagePoints?: number;
     public presentationScoreEnabled?: boolean;
+    public gradingInstructionFeedbackUsed?: boolean;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
         this.bonusPoints = 0; // default value
         this.isAtLeastTutor = false; // default value
+        this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
         this.teamMode = false; // default value
         this.assessmentDueDateError = false;

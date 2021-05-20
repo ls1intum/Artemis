@@ -20,12 +20,16 @@ describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
+    const programmingExercise2 = new ProgrammingExercise(course, undefined);
+    programmingExercise2.id = 457;
+    const programmingExercise3 = new ProgrammingExercise(course, undefined);
+    programmingExercise3.id = 458;
 
     let comp: ProgrammingExerciseComponent;
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
     let service: CourseExerciseService;
 
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,6 +50,8 @@ describe('ProgrammingExercise Management Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseComponent);
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(CourseExerciseService);
+
+        comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
     });
 
     it('Should call load all on init', () => {
@@ -86,6 +92,32 @@ describe('ProgrammingExercise Management Component', () => {
 
             // THEN
             expect(comp.selectedProgrammingExercises.length).toEqual(0);
+        });
+
+        it('Should select all', () => {
+            // WHEN
+            comp.toggleAllProgrammingExercises();
+
+            // THEN
+            expect(comp.selectedProgrammingExercises.length).toEqual(comp.programmingExercises.length);
+        });
+
+        it('Should deselect all', () => {
+            // WHEN
+            comp.toggleAllProgrammingExercises(); // Select all
+            comp.toggleAllProgrammingExercises(); // Deselect all
+
+            // THEN
+            expect(comp.selectedProgrammingExercises.length).toEqual(0);
+        });
+
+        it('Should check correctly if selected', () => {
+            // WHEN
+            comp.toggleProgrammingExercise(programmingExercise);
+
+            // THEN
+            expect(comp.isExerciseSelected(programmingExercise)).toBeTruthy();
+            expect(comp.isExerciseSelected(programmingExercise2)).toBeFalsy();
         });
     });
 });

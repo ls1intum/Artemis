@@ -23,9 +23,7 @@ export class SystemNotificationService {
      */
     create(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
-        return this.http
-            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<SystemNotification>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
@@ -34,9 +32,7 @@ export class SystemNotificationService {
      */
     update(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
-        return this.http
-            .put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /**
@@ -44,9 +40,7 @@ export class SystemNotificationService {
      * @param id The id of the notification to get.
      */
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<SystemNotification>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<SystemNotification>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

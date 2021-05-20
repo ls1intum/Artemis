@@ -21,13 +21,13 @@ public class ZipFileService {
      *
      * @param zipFilePath       path where the zip file should be saved
      * @param paths             multiple paths that should be zipped
-     * @param createDirsInZipFile if set to true, the zip file will contain all directories included in the paths.
+     * @param createParentDir if set to true, each zip file entry will be placed within its parent directory
      * @throws IOException if an error occurred while zipping
      */
-    public void createZipFile(Path zipFilePath, List<Path> paths, boolean createDirsInZipFile) throws IOException {
+    public void createZipFile(Path zipFilePath, List<Path> paths, boolean createParentDir) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path) && Files.exists(path)).forEach(path -> {
-                var zipPath = createDirsInZipFile ? path : path.getFileName();
+            paths.stream().filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
+                var zipPath = createParentDir ? path : path.getFileName();
                 ZipEntry zipEntry = new ZipEntry(zipPath.toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });
@@ -44,7 +44,7 @@ public class ZipFileService {
      */
     public void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path) && Files.exists(path)).forEach(path -> {
+            paths.stream().filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });
@@ -61,19 +61,21 @@ public class ZipFileService {
      */
     public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            Files.walk(contentRootPath).filter(path -> !Files.isDirectory(path) && Files.exists(path)).forEach(path -> {
+            Files.walk(contentRootPath).filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(contentRootPath.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });
+            return zipFilePath;
         }
-        return zipFilePath;
     }
 
     private void copyToZipFile(ZipOutputStream zipOutputStream, Path path, ZipEntry zipEntry) {
         try {
-            zipOutputStream.putNextEntry(zipEntry);
-            Files.copy(path, zipOutputStream);
-            zipOutputStream.closeEntry();
+            if (Files.exists(path)) {
+                zipOutputStream.putNextEntry(zipEntry);
+                Files.copy(path, zipOutputStream);
+                zipOutputStream.closeEntry();
+            }
         }
         catch (IOException e) {
             log.error("Create zip file error", e);

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
@@ -144,10 +143,9 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             return notFound();
         }
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)
                 || (submissionType.equals(SubmissionType.INSTRUCTOR) && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise()))) {
             return forbidden();
@@ -177,10 +175,9 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             return notFound();
         }
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participation;
         if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             return forbidden();
         }
@@ -268,24 +265,8 @@ public class ProgrammingSubmissionResource {
 
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
-        List<ProgrammingExerciseParticipation> participations = new LinkedList<>(
-                programmingExerciseStudentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds));
-
-        var index = 0;
-        for (var participation : participations) {
-            // Execute requests in batches instead all at once.
-            if (index > 0 && index % EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE == 0) {
-                try {
-                    log.info("Sleep for {}s during triggerBuild", EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS / 1000);
-                    Thread.sleep(EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS);
-                }
-                catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
-                }
-            }
-            programmingSubmissionService.triggerBuildAndNotifyUser(participation);
-            index++;
-        }
+        var participations = programmingExerciseStudentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
+        programmingSubmissionService.triggerBuildForParticipations(new ArrayList<>(participations));
 
         return ResponseEntity.ok().build();
     }

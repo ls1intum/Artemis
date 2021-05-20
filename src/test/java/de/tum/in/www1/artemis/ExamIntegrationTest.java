@@ -114,7 +114,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(numberOfStudents, 5, 1);
+        users = database.addUsers(numberOfStudents, 5, 0, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
@@ -757,7 +757,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExam_asInstructor() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam1.getId());
     }
 
     @Test
@@ -781,7 +781,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam returnedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
 
         assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course.getId(), exam.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course.getId(), exam.getId());
     }
 
     @Test
@@ -1128,7 +1128,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Should save new order
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam.getId());
         List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get().getExerciseGroups();
         assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
         assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
@@ -1874,8 +1874,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
-        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(0L);
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(0L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
         var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
@@ -1930,8 +1930,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
-        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(0L);
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
@@ -1964,9 +1964,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(75L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
-        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
         // the 15 quiz submissions are already assessed
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(15L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(15L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
 
@@ -1975,7 +1975,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.getExerciseGroups().forEach(group -> {
             var locks = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
-                            .getInTime())
+                            .inTime())
                     .reduce(Long::sum).get();
             if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
                 assertThat(locks).isEqualTo(15L);
@@ -2001,9 +2001,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
-        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
         // 75 + the 15 quiz submissions
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(90L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 
@@ -2043,10 +2043,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(75L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
-        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
         // the 15 quiz submissions are already assessed - and all are assessed in the first correctionRound
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[1].getInTime()).isEqualTo(15L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(90L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[1].inTime()).isEqualTo(15L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
 
@@ -2055,14 +2055,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.getExerciseGroups().forEach(group -> {
             var locksRound1 = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
-                            .getInTime())
+                            .inTime())
                     .reduce(Long::sum).get();
             if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
                 assertThat(locksRound1).isEqualTo(0L);
 
             var locksRound2 = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[1]
-                            .getInTime())
+                            .inTime())
                     .reduce(Long::sum).get();
             if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
                 assertThat(locksRound2).isEqualTo(15L);
@@ -2088,9 +2088,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
-        assertThat(stats.getNumberOfSubmissions().getInTime()).isEqualTo(75L);
+        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
         // 75 + the 15 quiz submissions
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].getInTime()).isEqualTo(90L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(90L);
         assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
 

@@ -58,16 +58,18 @@ public class UserTestService {
 
     private User student;
 
-    private final int numberOfStudents = 50;
+    private final static int numberOfStudents = 50;
 
-    private final int numberOfTutors = 1;
+    private final static int numberOfTutors = 1;
 
-    private final int numberOfInstructors = 1;
+    private final static int numberOfEditors = 1;
+
+    private final static int numberOfInstructors = 1;
 
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
 
-        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
+        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
         student = users.get(0);
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }
@@ -181,6 +183,31 @@ public class UserTestService {
     }
 
     // Test
+    public void updateUserInvalidId() throws Exception {
+        long oldId = student.getId();
+        student.setId(oldId + 1);
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+
+        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        final var userInDB = userRepository.findById(oldId).get();
+        assertThat(userInDB).isNotEqualTo(student);
+        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
+    }
+
+    // Test
+    public void updateUserExistingEmail() throws Exception {
+        long oldId = student.getId();
+        student.setId(oldId + 1);
+        student.setEmail("newEmail@testing.user");
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+
+        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        final var userInDB = userRepository.findById(oldId).get();
+        assertThat(userInDB).isNotEqualTo(student);
+        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
+    }
+
+    // Test
     public void updateUser_withExternalUserManagement() throws Exception {
         student.setFirstName("changed");
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
@@ -235,6 +262,53 @@ public class UserTestService {
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+    }
+
+    // Test
+    public void createUser_asAdmin_hasId() throws Exception {
+        student.setId((long) 1337);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.BAD_REQUEST);
+        assertThat(response).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_existingLogin() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+        student.setEmail("batman@secret.invalid");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        assertThat(response).isNotNull();
+
+        User student2 = new User();
+        student2.setId(null);
+        student2.setLogin("batman");
+        student2.setPassword("barfoo");
+        student2.setEmail("batman2@secret.stillinvalid");
+
+        final var response2 = request.postWithResponseBody("/api/users", new ManagedUserVM(student2), User.class, HttpStatus.BAD_REQUEST);
+        assertThat(response2).isNull();
+    }
+
+    // Test
+    public void createUser_asAdmin_existingEmail() throws Exception {
+        student.setId(null);
+        student.setLogin("batman");
+        student.setPassword("foobar");
+
+        mockDelegate.mockCreateUserInUserManagement(student, false);
+
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.BAD_REQUEST);
+        assertThat(response).isNull();
     }
 
     // Test
@@ -368,7 +442,7 @@ public class UserTestService {
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfInstructors + 1); // +1 for admin user himself
+        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1); // +1 for admin user himself
     }
 
     // Test
@@ -406,7 +480,7 @@ public class UserTestService {
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).isEqualTo(List.of("ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).isEqualTo(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
     }
 
     // Test

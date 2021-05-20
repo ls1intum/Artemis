@@ -1,7 +1,7 @@
 <div class="btn-group flex-btn-group-container">
     <a
         *ngIf="course.isAtLeastInstructor"
-        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'exercises', exercise.id, 'scores']"
+        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'scores']"
         class="btn btn-info btn-sm mr-1"
     >
         <fa-icon [icon]="'table'"></fa-icon>
@@ -19,7 +19,7 @@
 
     <a
         *ngIf="course.isAtLeastInstructor"
-        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'exercises', exercise.id, 'participations']"
+        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'participations']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -28,7 +28,7 @@
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
-        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'assessment']"
+        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'submissions']"
         class="btn btn-success btn-sm mr-1"
     >
         <fa-icon [icon]="'book'"></fa-icon>
@@ -46,7 +46,7 @@
 
     <a
         *ngIf="course.isAtLeastInstructor && exercise.teamMode"
-        [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']"
+        [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'teams']"
         class="btn btn-primary btn-sm mr-1"
     >
         <fa-icon [icon]="'users'"></fa-icon>
@@ -57,7 +57,7 @@
     participations, we pass a hardcoded number. The code editor component will load the proper ProgrammingExercise, choose
     a participation and update the url displayed in the browser -->
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING"
+        *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.PROGRAMMING"
         [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'code-editor', -1]"
         class="btn btn-warning btn-sm mr-1"
     >
@@ -66,7 +66,7 @@
     </a>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'preview']"
         class="btn btn-success btn-sm mr-1"
     >
@@ -75,7 +75,7 @@
     </a>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ"
+        *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 'solution']"
         class="btn btn-success btn-sm mr-1"
     >
@@ -83,19 +83,23 @@
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
     </a>
 
-    <button *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ" class="btn btn-warning btn-sm mr-1" (click)="exportQuizById(true)">
+    <button *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ" class="btn btn-warning btn-sm mr-1" (click)="exportQuizById(true)">
         <fa-icon [icon]="'file-export'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
     </button>
 
     <!-- Edit or re-evaluate for quizzes -->
-    <ng-container *ngIf="course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ">
+    <ng-container *ngIf="course.isAtLeastEditor && exercise.type === exerciseType.QUIZ">
         <!-- Only show the re-evaluate button after the exam has ended -->
-        <a *ngIf="isExamOver()" [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']" class="btn btn-warning btn-sm mr-1">
+        <a
+            *ngIf="isExamOver() && course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'quiz-exercises', exercise.id, 're-evaluate']"
+            class="btn btn-warning btn-sm mr-1"
+        >
             <fa-icon [icon]="'wrench'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
         </a>
-        <!-- Only show the the edit button if the exam has not ended. Disable the button if the exam is running -->
+        <!-- Only show the edit button if the exam has not ended. Disable the button if the exam is running -->
         <div *ngIf="!isExamOver()" style="display: flex">
             <!-- Display a warning next to the edit button if test run participations for this exercise exist -->
             <fa-icon
@@ -120,7 +124,7 @@
     </ng-container>
 
     <a
-        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
+        *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
         class="btn btn-warning btn-sm mr-1"
     >

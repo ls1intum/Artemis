@@ -20,10 +20,14 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -60,12 +64,14 @@ public class ProgrammingExerciseGradingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final ResultService resultService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService) {
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -79,6 +85,7 @@ public class ProgrammingExerciseGradingService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
+        this.resultService = resultService;
     }
 
     /**
@@ -165,10 +172,8 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
-            Feedback newFeedback = feedback.copyFeedback();
-            latestSemiAutomaticResult.addFeedback(newFeedback);
-        }
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
         latestSemiAutomaticResult.setResultString(resultString);
@@ -258,12 +263,12 @@ public class ProgrammingExerciseGradingService {
         ArrayList<Result> updatedResults = new ArrayList<>();
 
         templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);
                 });
         solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestResult())).ifPresent(result -> {
+                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
                     calculateScoreForResult(testCases, testCases, result, exercise);
                     updatedResults.add(result);
                 });
@@ -274,7 +279,7 @@ public class ProgrammingExerciseGradingService {
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
 
         for (StudentParticipation studentParticipation : participations) {
-            Result result = studentParticipation.findLatestResult();
+            Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
                 calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
                 updatedResults.add(result);
@@ -284,7 +289,7 @@ public class ProgrammingExerciseGradingService {
         // Update also manual results
         List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
         for (StudentParticipation studentParticipation : participationsWithManualResult) {
-            Result result = studentParticipation.findLatestResult();
+            Result result = studentParticipation.findLatestLegalResult();
             if (result != null) {
                 calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise);
                 updatedResults.add(result);
@@ -446,7 +451,7 @@ public class ProgrammingExerciseGradingService {
             // Enables to view the result details in case all test cases are positive
             result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
-            groupNotificationService.notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
             return true;
         }
         return false;

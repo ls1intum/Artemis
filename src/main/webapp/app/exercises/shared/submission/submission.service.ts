@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -35,17 +35,15 @@ export class SubmissionService {
      * @param {number} participationId - The id of the participation to be searched for
      */
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
-            .pipe(
-                map((res) => this.convertDateArrayFromServer(res)),
-                filter((res) => !!res.body),
-                tap((res) =>
-                    res.body!.forEach((submission) => {
-                        this.reconnectSubmissionAndResult(submission);
-                    }),
-                ),
-            );
+        return this.http.get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' }).pipe(
+            map((res) => this.convertDateArrayFromServer(res)),
+            filter((res) => !!res.body),
+            tap((res) =>
+                res.body!.forEach((submission) => {
+                    this.reconnectSubmissionAndResult(submission);
+                }),
+            ),
+        );
     }
 
     /**

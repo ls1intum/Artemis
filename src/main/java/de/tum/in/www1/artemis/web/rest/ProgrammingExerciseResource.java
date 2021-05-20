@@ -42,12 +42,14 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.ProgrammingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 import jplag.ExitException;
@@ -100,7 +102,11 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final GitService gitService;
+
+    private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
 
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -124,7 +130,8 @@ public class ProgrammingExerciseResource {
             PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            CourseRepository courseRepository, GitService gitService) {
+            CourseRepository courseRepository, FeedbackRepository feedbackRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService) {
+
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -142,7 +149,9 @@ public class ProgrammingExerciseResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
+        this.feedbackRepository = feedbackRepository;
         this.gitService = gitService;
+        this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
     }
 
     /**
@@ -311,7 +320,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
      */
     @PostMapping(Endpoints.SETUP)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
@@ -322,7 +331,7 @@ public class ProgrammingExerciseResource {
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         validateGeneralSettings(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
@@ -443,7 +452,7 @@ public class ProgrammingExerciseResource {
      * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
      */
     @PostMapping(Endpoints.IMPORT)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
             @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate) {
@@ -460,7 +469,7 @@ public class ProgrammingExerciseResource {
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Validate course settings
         validateCourseSettings(newExercise, course);
@@ -480,7 +489,7 @@ public class ProgrammingExerciseResource {
 
         // Check if the user has the rights to access the original programming exercise
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, originalCourse, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
 
         newExercise.generateAndSetProjectKey();
         Optional<ResponseEntity<ProgrammingExercise>> projectExistsError = checkIfProjectExists(newExercise);
@@ -537,7 +546,7 @@ public class ProgrammingExerciseResource {
      * is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
     @PutMapping(Endpoints.PROGRAMMING_EXERCISES)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -551,8 +560,9 @@ public class ProgrammingExerciseResource {
         validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
         // fetch course from database to make sure client didn't change groups
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
@@ -582,6 +592,7 @@ public class ProgrammingExerciseResource {
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
+        exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(existingProgrammingExercise, updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(savedProgrammingExercise);
@@ -595,17 +606,18 @@ public class ProgrammingExerciseResource {
      * if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
      */
     @PutMapping(Endpoints.TIMELINE)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
         var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, existingProgrammingExercise, null);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
         updatedProgrammingExercise = programmingExerciseService.updateTimeline(updatedProgrammingExercise, notificationText);
+        exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
-
     }
 
     /**
@@ -617,11 +629,16 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
     @PatchMapping(value = Endpoints.PROBLEM)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
-        var updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(exerciseId, updatedProblemStatement, notificationText);
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+        var updatedProgrammingExercise = programmingExerciseService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
+        exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
     }
@@ -662,6 +679,12 @@ public class ProgrammingExerciseResource {
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
+
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+
+        if (!feedbackList.isEmpty()) {
+            programmingExercise.setGradingInstructionFeedbackUsed(true);
+        }
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -679,12 +702,12 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
         Set<StudentParticipation> participations = new HashSet<>();
         assignmentParticipation.ifPresent(participations::add);
@@ -747,12 +770,12 @@ public class ProgrammingExerciseResource {
      * 500 (Internal Server Error)
      */
     @PutMapping(value = Endpoints.COMBINE_COMMITS, produces = MediaType.TEXT_PLAIN_VALUE)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
         log.debug("REST request to combine the commits of the template repository of ProgrammingExercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         try {
             var exerciseRepoURL = programmingExercise.getVcsTemplateRepositoryUrl();
             gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
@@ -764,7 +787,36 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
+     * GET /programming-exercises/:exerciseId/export-instructor-exercise
+     * @param exerciseId The id of the programming exercise
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(Endpoints.EXPORT_INSTRUCTOR_EXERCISE)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+
+        long start = System.nanoTime();
+        var path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
+        if (path == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+        var finalZipFile = path.toFile();
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(finalZipFile));
+
+        log.info("Export of the programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
+                formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
      * @param exerciseId The id of the programming exercise
      * @param repositoryType The type of repository to zip and send
      * @return ResponseEntity with status
@@ -778,18 +830,18 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         long start = System.nanoTime();
-        File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
-        if (zipFile == null) {
+        Optional<File> zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
+        if (zipFile.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
 
         log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType.getName(), programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
 
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
 
     /**
@@ -898,13 +950,13 @@ public class ProgrammingExerciseResource {
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping(value = Endpoints.GENERATE_TESTS, produces = MediaType.TEXT_PLAIN_VALUE)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
@@ -966,7 +1018,7 @@ public class ProgrammingExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping(Endpoints.PROGRAMMING_EXERCISES)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, user));
@@ -981,12 +1033,12 @@ public class ProgrammingExerciseResource {
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
     @GetMapping(Endpoints.PLAGIARISM_RESULT)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
@@ -1004,13 +1056,13 @@ public class ProgrammingExerciseResource {
      * @throws IOException   is thrown for file handling errors
      */
     @GetMapping(Endpoints.CHECK_PLAGIARISM)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
@@ -1021,13 +1073,8 @@ public class ProgrammingExerciseResource {
         }
 
         long start = System.nanoTime();
-        TextPlagiarismResult result = programmingExerciseExportService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
+        TextPlagiarismResult result = programmingPlagiarismDetectionService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
-        result.sortAndLimit(500);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
-        start = System.nanoTime();
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
-        log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
 
@@ -1039,21 +1086,19 @@ public class ProgrammingExerciseResource {
      *                            executed
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
-     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the
-     * parameters are invalid
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
     @GetMapping(value = Endpoints.CHECK_PLAGIARISM_JPLAG_REPORT, produces = MediaType.TEXT_PLAIN_VALUE)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
             throws ExitException, IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
-        long start = System.nanoTime();
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         var language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language);
@@ -1063,7 +1108,7 @@ public class ProgrammingExerciseResource {
                     "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
         }
 
-        File zipFile = programmingExerciseExportService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
+        File zipFile = programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
 
         if (zipFile == null) {
             return ResponseEntity.badRequest().headers(
@@ -1072,10 +1117,6 @@ public class ProgrammingExerciseResource {
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-
-        log.info("Check plagiarism of programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
-                formatDurationFrom(start));
-
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
@@ -1140,6 +1181,8 @@ public class ProgrammingExerciseResource {
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPANTS = PROGRAMMING_EXERCISE + "/export-repos-by-participant-identifiers/{participantIdentifiers}";
 
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
+
+        public static final String EXPORT_INSTRUCTOR_EXERCISE = PROGRAMMING_EXERCISE + "/export-instructor-exercise";
 
         public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";
 

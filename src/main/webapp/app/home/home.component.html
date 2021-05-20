@@ -65,24 +65,24 @@
                                     <span jhiTranslate="login.form.rememberme">Remember me</span>
                                 </label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check" *ngIf="needsToAcceptTerms">
                                 <label class="form-check-label" for="acceptTerms">
-                                    <input class="form-check-input" type="checkbox" name="acceptTerms" id="acceptTerms" [(ngModel)]="acceptTerms" checked />
-                                    <a [routerLink]="['datenschutz']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
+                                    <input class="form-check-input" type="checkbox" name="acceptTerms" id="acceptTerms" [(ngModel)]="userAcceptTerms" checked />
+                                    <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
                                 </label>
                             </div>
                         </div>
                         <div class="btn-toolbar">
                             <button
                                 type="submit"
-                                [disabled]="isSubmittingLogin || !acceptTerms || !password || password.length < 4 || !username || username.length < 4"
+                                [disabled]="isSubmittingLogin || (!userAcceptTerms && needsToAcceptTerms) || !password || password.length < 4 || !username || username.length < 4"
                                 class="btn btn-primary btn-space"
                             >
                                 <span *ngIf="isSubmittingLogin" class="mr-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
                                 <span jhiTranslate="login.form.button"> Sign in </span>
                             </button>
                             <div *ngIf="profileInfo && profileInfo.saml2">
-                                <jhi-saml2-login [acceptTerms]="acceptTerms" [rememberMe]="rememberMe" [saml2Profile]="profileInfo.saml2"> </jhi-saml2-login>
+                                <jhi-saml2-login [acceptTerms]="userAcceptTerms" [rememberMe]="rememberMe" [saml2Profile]="profileInfo.saml2"> </jhi-saml2-login>
                             </div>
                         </div>
                     </form>

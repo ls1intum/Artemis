@@ -21,13 +21,9 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private FileService fileService;
 
     @Autowired
     private FileUploadSubmissionRepository fileUploadSubmissionRepository;
@@ -38,6 +34,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     private FileUploadExercise releasedFileUploadExercise;
 
     private FileUploadExercise finishedFileUploadExercise;
+
+    private FileUploadExercise assessedFileUploadExercise;
 
     private FileUploadSubmission submittedFileUploadSubmission;
 
@@ -51,10 +49,11 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(3, 1, 1);
+        database.addUsers(3, 1, 0, 1);
         Course course = database.addCourseWithThreeFileUploadExercise();
         releasedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         finishedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
+        assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
         lateFileUploadSubmission = ModelFactory.generateLateFileUploadSubmission();
@@ -301,7 +300,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
-        assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.getLatestResult().getFeedbacks()).isEmpty();
     }
 
     @Test
@@ -326,6 +326,21 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission submission = request.get("/api/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,
                 FileUploadSubmission.class);
         assertThat(submission).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getDataForFileUpload_afterAssessmentDueDate_showsFeedback() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
+
+        FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
+                FileUploadSubmission.class);
+        assertThat(submission).isNotNull();
+        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.isSubmitted()).isTrue();
+        assertThat(submission.getLatestResult().getFeedbacks()).isEqualTo(feedbacks);
     }
 
     @Test

@@ -66,7 +66,15 @@
                         <ng-container *ngIf="submission.participation?.submissions">
                             <a
                                 *ngIf="exercise.isAtLeastInstructor && !examId"
-                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'participations', submission.participation!.id, 'submissions']"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    exercise.type + '-exercises',
+                                    exercise.id,
+                                    'participations',
+                                    submission.participation!.id,
+                                    'submissions'
+                                ]"
                             >
                                 {{ submission.participation?.submissions?.length || '--' }}
                             </a>
@@ -79,7 +87,7 @@
                                     examId,
                                     'exercise-groups',
                                     exerciseGroupId,
-                                    'exercises',
+                                    exercise.type + '-exercises',
                                     exercise.id,
                                     'participations',
                                     submission.participation!.id
@@ -100,7 +108,7 @@
                     </td>
                     <ng-container *ngIf="newManualResultAllowed">
                         <td *ngFor="let item of [].constructor(numberOfCorrectionrounds); let correctionRound = index">
-                            <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
+                            <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
                                 <!-- exercise without exam-->
                                 <span *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.course && submission">
                                     <!-- New assessment button -->

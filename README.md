@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
 [![Test Status](https://github.com/ls1intum/Artemis/workflows/Test/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ATest)
-[![Documentation Status](https://readthedocs.org/projects/artemis-platform/badge/?version=latest)](https://artemis-platform.readthedocs.io/en/latest/?badge=latest)
+[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg)](https://docs.artemis.ase.in.tum.de)
 [![Dependency Status](https://img.shields.io/david/ls1intum/Artemis)](package.json)
 [![Dev Dependency Status](https://img.shields.io/david/dev/ls1intum/Artemis)](package.json)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
@@ -14,11 +14,11 @@ Artemis was initially generated using JHipster 6.10.3. ([Documentation and help]
 
 ## Main features
 Artemis supports the following exercises:
-1. **[Programming exercises](docs/user/exercises/programming.rst)** with version control and automatic assessment with test cases and continuous integration
-2. **[Quiz exercises](docs/user/exercises/quiz.rst)** with multiple choice, drag and drop and short answer quiz questions
-3. **[Modeling exercises](docs/user/exercises/modeling.rst)** with semi-automatic assessment using machine learning concepts
-4. **[Text exercises](docs/user/exercises/textual.rst)** with manual (and experimental semi-automatic) assessment
-5. **[File upload exercises](docs/user/exercises/file-upload.rst)** with manual assessment
+1. **[Programming exercises](https://docs.artemis.ase.in.tum.de/user/exercises/programming/)** with version control and automatic assessment with test cases and continuous integration
+2. **[Quiz exercises](https://docs.artemis.ase.in.tum.de/user/exercises/quiz/)** with multiple choice, drag and drop and short answer quiz questions
+3. **[Modeling exercises](https://docs.artemis.ase.in.tum.de/user/exercises/modeling/)** with semi-automatic assessment using machine learning concepts
+4. **[Text exercises](https://docs.artemis.ase.in.tum.de/user/exercises/textual/)** with manual (and experimental semi-automatic) assessment
+5. **[File upload exercises](https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/)** with manual assessment
 
 Artemis supports all these exercises to run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
@@ -28,10 +28,10 @@ Artemis also supports an exam mode now. You can find more information on [Exam m
 
 ### Development setup, coding and design guidelines
 
-* [How to set up your local development environment](docs/dev/setup.rst)
-* [Server coding and design guidelines](docs/dev/guidelines/server.rst)
-* [Client coding and design guidelines](docs/dev/guidelines/client.rst)
-* [Code Review Guidelines](docs/dev/guidelines/code-review.rst)
+* [How to set up your local development environment](https://docs.artemis.ase.in.tum.de/dev/setup/)
+* [Server coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/)
+* [Client coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client/)
+* [Code Review Guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/code-review/)
 
 ### Documentation
 
@@ -40,12 +40,12 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-You can find the guide for setting up Artemis in conjunction with either `GitLab and Jenkins` [here](docs/dev/setup/jenkins-gitlab.rst) or with `Jira, Bitbucket and Bamboo` [here](docs/dev/setup/bamboo-bitbucket-jira.rst).
+You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.ase.in.tum.de/dev/setup/jenkins-gitlab/) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira/).
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
 ### Administration setup
 
-You can find information on how to set up user registration [here](docs/admin/registration.rst)
+If needed, you can configure self-service [user registration](https://docs.artemis.ase.in.tum.de/admin/registration/).
 
 ### Contributing 
 
@@ -55,17 +55,17 @@ Please read the guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
 
 To build and optimize the Artemis application for production, run:
 
-```
+```shell
 ./gradlew -Pprod -Pwar clean bootWar
 ```
 
 This will create a Artemis-<version>.war file in the folder `build/libs`. The build command compiles the TypeScript into JavaScript files, concatenates and minifies the created files (including HTML and CSS files). It will also modify `index.html` so it references these new files. To ensure everything worked, run the following command to start the application on your local computer:
 
-```
+```shell
 java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira
 ```
 
-(You might need to copy a yml file into the folder build/libs before, also see [development setup](/docs/dev/setup.rst))
+(You might need to copy a yml file into the folder build/libs before, also see [development setup](https://docs.artemis.ase.in.tum.de/dev/setup/))
 
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
@@ -73,7 +73,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
-```
+```shell
 ./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-4.4.5.war
 ```
 

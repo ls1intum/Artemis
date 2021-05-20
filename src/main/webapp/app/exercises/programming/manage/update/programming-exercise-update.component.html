@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-lg-8 col-sm-12">
-        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
-            <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
+        <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
+            <h4 *ngIf="!isImport && !programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
                 Generate new Programming Exercise
             </h4>
             <h4 *ngIf="!isImport && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
@@ -60,6 +60,12 @@
                             <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
                         </div>
                     </ng-container>
+                </div>
+                <div class="form-group-narrow mt-2">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label" for="preview"></label>
+                        <jhi-help-icon placement="top" text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
+                    </div>
                 </div>
                 <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
                 <div *ngIf="!isExamMode" class="form-group-narrow position-relative">
@@ -147,12 +153,17 @@
                         </label>
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
                     </div>
-                    <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode"></jhi-programming-exercise-lifecycle>
+                    <jhi-programming-exercise-lifecycle
+                        id="timeline"
+                        [exercise]="programmingExercise"
+                        [isExamMode]="isExamMode"
+                        [readOnly]="false"
+                    ></jhi-programming-exercise-lifecycle>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
                     <div>
-                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore!"></jhi-included-in-overall-score-picker>
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
                     </div>
                 </div>
                 <div class="row">
@@ -319,7 +330,7 @@
                             <input
                                 class="form-check-input"
                                 type="checkbox"
-                                name="heckoutSolutionRepository"
+                                name="checkoutSolutionRepository"
                                 id="field_checkoutSolutionRepository"
                                 [(ngModel)]="programmingExercise.checkoutSolutionRepository"
                             />
@@ -474,6 +485,7 @@
                     [isLoading]="isSaving"
                     [icon]="'save'"
                     [title]="submitButtonTitle"
+                    (click)="save()"
                 >
                 </jhi-button>
             </div>

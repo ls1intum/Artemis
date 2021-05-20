@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
@@ -11,6 +11,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text-assessment-dashboard/text-assessment-dashboard.component';
+import { catchError, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
@@ -26,10 +27,10 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
         if (exerciseId) {
             return this.textSubmissionService
                 .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock', correctionRound)
-                .map((submission) => <StudentParticipation>submission.participation)
-                .catch(() => Observable.of(undefined));
+                .pipe(map((submission) => <StudentParticipation>submission.participation))
+                .pipe(catchError(() => of(undefined)));
         }
-        return Observable.of(undefined);
+        return of(undefined);
     }
 }
 
@@ -46,12 +47,12 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         const resultId = Number(route.paramMap.get('resultId'));
         if (resultId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).catch(() => Observable.of(undefined));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).pipe(catchError(() => of(undefined)));
         }
         if (submissionId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).catch(() => Observable.of(undefined));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).pipe(catchError(() => of(undefined)));
         }
-        return Observable.of(undefined);
+        return of(undefined);
     }
 }
 
@@ -67,19 +68,19 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
         const submissionId = Number(route.paramMap.get('submissionId'));
         const feedbackId = Number(route.paramMap.get('feedbackId'));
         if (submissionId && feedbackId) {
-            return this.textAssessmentService.getConflictingTextSubmissions(submissionId, feedbackId).catch(() => Observable.of(undefined));
+            return this.textAssessmentService.getConflictingTextSubmissions(submissionId, feedbackId).pipe(catchError(() => of(undefined)));
         }
-        return Observable.of(undefined);
+        return of(undefined);
     }
 }
 
 export const NEW_ASSESSMENT_PATH = 'submissions/new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
-        path: 'assessment',
+        path: 'submissions',
         component: TextAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -88,7 +89,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: NEW_ASSESSMENT_PATH,
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -101,7 +102,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: 'submissions/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
@@ -127,7 +128,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         path: 'submissions/:submissionId/text-feedback-conflict/:feedbackId',
         component: TextFeedbackConflictsComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {

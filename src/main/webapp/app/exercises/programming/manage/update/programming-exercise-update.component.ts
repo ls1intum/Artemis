@@ -22,6 +22,9 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { cloneDeep } from 'lodash';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -42,6 +45,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
+    backupExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
@@ -98,6 +102,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
+        private modalService: NgbModal,
+        private popupService: ExerciseUpdateWarningService,
         private courseService: CourseManagementService,
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
@@ -138,6 +144,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
+
+        // Automatically enable the checkout of the solution repository for Haskell exercises
+        if (this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL) {
+            this.programmingExercise.checkoutSolutionRepository = true;
+        } else {
+            this.programmingExercise.checkoutSolutionRepository = false;
+        }
+
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language, this.programmingExercise.projectType!);
@@ -178,6 +192,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             this.selectedProjectTypeValue = this.programmingExercise.projectType!;
         });
@@ -190,8 +205,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImport) {
                         this.createProgrammingExerciseForImport(params);
                     } else {
-                        if (params['courseId'] && params['examId'] && params['groupId']) {
-                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+                        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
@@ -258,8 +273,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isImport = true;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
-        if (params['courseId'] && params['examId'] && params['groupId']) {
-            this.exerciseGroupService.find(params['courseId'], params['examId'], params['groupId']).subscribe((res) => {
+        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
                 // Set course to undefined if a normal exercise is imported
                 this.programmingExercise.course = undefined;
@@ -300,10 +315,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.categories = categories;
     }
 
+    save() {
+        if (this.programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && this.programmingExercise.gradingInstructionFeedbackUsed) {
+            const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise);
+            if (!this.modalService.hasOpenModals()) {
+                this.saveExercise();
+            } else {
+                ref.then((reference) => {
+                    reference.componentInstance.confirmed.subscribe(() => {
+                        this.saveExercise();
+                    });
+                });
+            }
+        } else {
+            this.saveExercise();
+        }
+    }
+
     /**
      * Saves the programming exercise with the provided input
      */
-    save() {
+    saveExercise() {
         // If no release date is set, we warn the user.
         if (!this.programmingExercise.releaseDate && !this.isExamMode) {
             const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');

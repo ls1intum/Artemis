@@ -39,7 +39,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
      */
     @BeforeEach
     public void init() {
-        database.addUsers(0, 0, 1);
+        database.addUsers(0, 0, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
@@ -423,7 +423,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
      * @return true if grade steps are equal and false otherwise
      */
     private static boolean equalGradeSteps(GradeStep gradeStep1, GradeStep gradeStep2) {
-        return gradeStep1.isPassingGrade() == gradeStep2.isPassingGrade() && gradeStep1.isLowerBoundInclusive() == gradeStep2.isLowerBoundInclusive()
+        return gradeStep1.getIsPassingGrade() == gradeStep2.getIsPassingGrade() && gradeStep1.isLowerBoundInclusive() == gradeStep2.isLowerBoundInclusive()
                 && gradeStep1.isUpperBoundInclusive() == gradeStep2.isUpperBoundInclusive() && gradeStep1.getLowerBoundPercentage() == gradeStep2.getLowerBoundPercentage()
                 && gradeStep1.getUpperBoundPercentage() == gradeStep2.getUpperBoundPercentage() && gradeStep1.getGradeName().equals(gradeStep2.getGradeName());
     }

@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -24,14 +25,12 @@ export class ModelingAssessmentService {
             params = params.set('submit', 'true');
         }
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/result/${resultId}/assessment`;
-        return this.http
-            .put<Result>(url, feedbacks, { params })
-            .map((res: Result) => this.convertResult(res));
+        return this.http.put<Result>(url, feedbacks, { params }).pipe(map((res: Result) => this.convertResult(res)));
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/example-assessment`;
-        return this.http.put<Result>(url, feedbacks).map((res) => this.convertResult(res));
+        return this.http.put<Result>(url, feedbacks).pipe(map((res) => this.convertResult(res)));
     }
 
     updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
@@ -40,18 +39,16 @@ export class ModelingAssessmentService {
             feedbacks,
             complaintResponse,
         };
-        return this.http
-            .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     getAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map((res) => this.convertResult(res));
+        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).pipe(map((res) => this.convertResult(res)));
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
-        return this.http.get<Result>(url).map((res) => this.convertResult(res));
+        return this.http.get<Result>(url).pipe(map((res) => this.convertResult(res)));
     }
 
     /**

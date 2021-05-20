@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -374,7 +375,7 @@ public class ModelFactory {
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        return generateCourse(id, startDate, endDate, exercises, null, null, null);
+        return generateCourse(id, startDate, endDate, exercises, null, null, null, null);
     }
 
     public static TextSubmission generateTextSubmission(String text, Language language, boolean submitted) {
@@ -395,6 +396,17 @@ public class ModelFactory {
         textSubmission.setSubmitted(true);
         textSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
         return textSubmission;
+    }
+
+    public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted, String commitHash, SubmissionType type, @Nullable ZonedDateTime submissionDate) {
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setSubmitted(submitted);
+        if (submitted) {
+            programmingSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        programmingSubmission.setCommitHash(commitHash);
+        programmingSubmission.setType(type);
+        return programmingSubmission;
     }
 
     public static ProgrammingSubmission generateProgrammingSubmission(boolean submitted) {
@@ -418,6 +430,9 @@ public class ModelFactory {
     public static FileUploadSubmission generateFileUploadSubmissionWithFile(boolean submitted, String filePath) {
         FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
         fileUploadSubmission.setFilePath(filePath);
+        if (submitted) {
+            fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
         return fileUploadSubmission;
     }
 
@@ -456,12 +471,12 @@ public class ModelFactory {
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 3, 7, true, 7);
+            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, true, 7);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-            String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
+            String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
             boolean studentQuestionsEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
@@ -476,6 +491,7 @@ public class ModelFactory {
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
+        course.setEditorGroupName(editorGroupName);
         course.setInstructorGroupName(instructorGroupName);
         course.setStartDate(startDate);
         course.setEndDate(endDate);

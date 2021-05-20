@@ -12,7 +12,6 @@ export class FooterComponent implements OnInit {
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
-    imprintUrl: string;
 
     constructor(private profileService: ProfileService) {}
 
@@ -23,7 +22,6 @@ export class FooterComponent implements OnInit {
                 filter(Boolean),
                 tap((info: ProfileInfo) => {
                     this.contact = info.contact;
-                    this.imprintUrl = info.imprint;
                 }),
             )
             .subscribe();

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +52,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         course.addExercises(exercise);
         exercise = exerciseRepo.save(exercise);
 
-        var users = database.addUsers(2, 0, 0);
+        var users = database.addUsers(2, 0, 0, 0);
         var student1 = users.get(0);
         var participation1 = new StudentParticipation();
         participation1.setParticipant(student1);
@@ -106,9 +105,9 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         submissionRepository.save(submission3);
         submissionRepository.save(submission4);
 
-        var exerciseList = new ArrayList<Long>();
+        var exerciseList = new HashSet<Long>();
         exerciseList.add(exercise.getId());
-        var activeStudents = courseService.getActiveStudents(exerciseList);
+        var activeStudents = courseService.getActiveStudents(exerciseList, 0);
         assertThat(activeStudents.length).isEqualTo(4);
         assertThat(activeStudents).isEqualTo(new Integer[] { 0, 1, 1, 2 });
     }
@@ -124,7 +123,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         courseRepository.save(inactiveCourse);
 
         // 'addUsers' adds the admin as well
-        database.addUsers(0, 0, 0);
+        database.addUsers(0, 0, 0, 0);
 
         var courses = courseService.getAllCoursesForManagementOverview(false);
         assertThat(courses.size()).isEqualTo(2);
@@ -147,7 +146,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepository.save(instructorsCourse);
 
-        var users = database.addUsers(0, 0, 1);
+        var users = database.addUsers(0, 0, 0, 1);
         var instructor = users.get(0);
         var groups = new HashSet<String>();
         groups.add("test-instructors");
@@ -175,7 +174,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         instructorsCourse.setStudentGroupName("test-students");
         courseRepository.save(instructorsCourse);
 
-        var users = database.addUsers(1, 0, 0);
+        var users = database.addUsers(1, 0, 0, 0);
         var student = users.get(0);
         var groups = new HashSet<String>();
         groups.add("test-students");
