@@ -263,13 +263,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @param percentage the percentage which will be mapped to a grade step
      */
     findGradeStepIndex(percentage: number): number {
-        let index: number | undefined;
+        let index = 0;
         this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
             if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
                 index = i;
             }
         });
-        return index || this.gradingScale!.gradeSteps.length - 1;
+        return index;
     }
 
     /**
@@ -304,7 +304,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             // Update histogram data structure
             let histogramIndex: number;
             if (this.gradingScaleExists) {
-                histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved!);
+                histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
             } else {
                 histogramIndex = Math.floor(studentResult.overallScoreAchieved! / this.binWidth);
                 if (histogramIndex >= 100 / this.binWidth) {
@@ -350,6 +350,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         if (this.chart) {
             this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
+            this.barChartData[0].data = this.histogramData;
             this.chart.update(0);
         }
     }

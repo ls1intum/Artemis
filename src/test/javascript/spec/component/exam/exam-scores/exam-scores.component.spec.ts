@@ -447,7 +447,7 @@ describe('ExamScoresComponent', () => {
         spyOn(gradingSystemService, 'matchGradePercentage').and.callThrough();
         comp.gradingScale = gradingScale;
 
-        expect(comp.findGradeStepIndex(80)).to.equal(3);
+        expect(comp.findGradeStepIndex(20)).to.equal(0);
     });
 
     it('should set grading scale properties', () => {
