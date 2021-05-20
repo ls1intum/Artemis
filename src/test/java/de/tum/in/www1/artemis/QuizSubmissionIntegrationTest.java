@@ -183,7 +183,46 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void testQuizSubmitLiveMode() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
+        Course course = courses.get(0);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // at the beginning there are no submissions and no participants
+        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+        assertThat(participationRepository.findAll().size()).isEqualTo(0);
+
+        int numberOfParticipants = 10;
+
+        for (int i = 1; i <= numberOfParticipants; i++) {
+            database.changeUser("student" + i);
+            QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
+            assertThat(quizSubmission.getSubmittedAnswers().size()).isEqualTo(3);
+            assertThat(quizSubmission.isSubmitted()).isFalse();
+            assertThat(quizSubmission.getSubmissionDate()).isNull();
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class,
+                    HttpStatus.OK);
+            // check whether submission flag was updated
+            assertThat(updatedSubmission.isSubmitted()).isTrue();
+            // check whether all answers were submitted properly
+            assertThat(updatedSubmission.getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
+            // check whether submission date was set
+            assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
+        }
+
+        // process cached submissions
+        quizScheduleService.processCachedQuizSubmissions();
+
+        // check whether all submissions were saved to the database
+        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
+        assertThat(participationRepository.findAll().size()).isEqualTo(numberOfParticipants);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPractice() throws Exception {
+
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null);
@@ -194,6 +233,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
+        // at the beginning there are no submissions and participants
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
         assertThat(participationRepository.findAll().size()).isEqualTo(0);
 
