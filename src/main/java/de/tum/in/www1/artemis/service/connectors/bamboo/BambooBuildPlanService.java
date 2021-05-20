@@ -97,6 +97,8 @@ public class BambooBuildPlanService {
      *                               unique identifier
      * @param solutionRepositoryName the slug of the solution repository, i.e. the
      *                               unique identifier
+     * @param auxiliaryRepositories  List of auxiliary repositories to be included in
+     *                               the build plan
      */
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName,
                                            String solutionRepositoryName, List<Pair<String, String>> auxiliaryRepositories) {
@@ -136,11 +138,6 @@ public class BambooBuildPlanService {
 
     private Project createBuildProject(String name, String key) {
         return new Project().key(key).name(name);
-    }
-
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
-                                   boolean checkoutSolutionRepository) {
-        return createBuildStage(programmingLanguage, sequentialBuildRuns, staticCodeAnalysisEnabled, checkoutSolutionRepository, List.of());
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
@@ -201,7 +198,7 @@ public class BambooBuildPlanService {
                 // Final tasks:
                 final TestParserTask testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
                 final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
-                defaultJob.finalTasks(new Task[] { testParserTask, cleanupTask });
+                defaultJob.finalTasks(testParserTask, cleanupTask);
                 defaultStage.jobs(defaultJob);
                 return defaultStage;
             }
@@ -269,10 +266,6 @@ public class BambooBuildPlanService {
             .triggers(new BitbucketServerTrigger().selectedTriggeringRepositories(vcsTriggerRepositories.toArray(new VcsRepositoryIdentifier[0])))
             .planBranchManagement(createPlanBranchManagement())
             .notifications(createNotification());
-    }
-
-    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
-        return createCheckoutTask(assignmentPath, testPath, List.of());
     }
 
     private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, List<AuxiliaryRepository> auxiliaryRepositories) {
