@@ -26,18 +26,46 @@
 
 import { authTokenKey } from './constants';
 
-Cypress.Commands.add('login', (email, password) => {
-    cy.request('POST', '/api/authenticate', { username: email, password: password, rememberMe: false })
+export {};
+
+declare global {
+    namespace Cypress {
+        interface Chainable {
+            login(username: String, password: String, url: String): any;
+            logout(): any;
+            loginWithGUI(username: String, password: String): any;
+        }
+    }
+}
+
+Cypress.Commands.add('login', (username, password, url) => {
+    let token = '';
+    cy.request({
+        url: '/api/authenticate',
+        method: 'POST',
+        followRedirect: true,
+        body: {
+            username,
+            password,
+            rememberMe: true,
+        },
+    })
         .its('body')
-        .then((body) => {
-            localStorage.setItem(authTokenKey, '"' + body.id_token + '"');
+        .then((res) => {
+            localStorage.setItem(authTokenKey, '"' + res.id_token + '"');
+            token = res.id_token;
         });
-    cy.visit('/');
-    cy.log(`Logged in as '${email}'`);
+    cy.visit({ url, method: 'GET', headers: { Authorization: `Bearer ${token}` } });
 });
 
 Cypress.Commands.add('logout', () => {
     localStorage.removeItem(authTokenKey);
     cy.visit('/');
     cy.log('Logged out');
+});
+
+Cypress.Commands.add('loginWithGUI', (username, password) => {
+    cy.visit('/');
+    cy.get('#username').type(username);
+    cy.get('#password').type(password).type('{enter}');
 });
