@@ -18,6 +18,8 @@ import { GradeStep } from 'app/entities/grade-step.model';
 import { cloneDeep } from 'lodash';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -26,6 +28,8 @@ describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
     let fixture: ComponentFixture<GradingSystemComponent>;
     let gradingSystemService: GradingSystemService;
+
+    const route = { params: of({ courseId: 1, examId: 1 }) } as any as ActivatedRoute;
 
     const gradeStep1: GradeStep = {
         gradeName: 'Fail',
@@ -55,7 +59,7 @@ describe('Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, FormsModule],
+            imports: [ArtemisTestModule, TranslateTestingModule, FormsModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 GradingSystemComponent,
                 MockComponent(AlertComponent),
@@ -63,6 +67,10 @@ describe('Grading System Component', () => {
                 MockComponent(GradingSystemInfoModalComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useValue: route },
             ],
         }).compileComponents();
 
@@ -81,6 +89,29 @@ describe('Grading System Component', () => {
 
     afterEach(() => {
         sinon.restore();
+    });
+
+    it('should initialize', () => {
+        fixture.detectChanges();
+        expect(comp).to.be.ok;
+    });
+
+    it('should handle find response for exam', () => {
+        const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(new HttpResponse<GradingScale>({ body: comp.gradingScale })));
+
+        fixture.detectChanges();
+
+        expect(comp).to.be.ok;
+        expect(findGradingScaleForExamStub).to.have.been.calledOnceWithExactly(1, 1);
+    });
+
+    it('should handle find response for exam and not find a grading scale', () => {
+        const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(new HttpResponse<GradingScale>({ status: 404 })));
+
+        fixture.detectChanges();
+
+        expect(comp).to.be.ok;
+        expect(findGradingScaleForExamStub).to.have.been.calledOnceWithExactly(1, 1);
     });
 
     it('should generate default grading scale', () => {
@@ -203,6 +234,17 @@ describe('Grading System Component', () => {
         expect(comp.lowerBoundInclusivity).to.be.equal(true);
     });
 
+    it('should not delete non-exisitng grading scale', () => {
+        comp.existingGradingScale = false;
+        const gradingSystemDeleteForCourseStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForCourse');
+        const gradingSystemDeleteForExamStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForExam');
+
+        comp.delete();
+
+        expect(gradingSystemDeleteForCourseStub).to.not.have.been.called;
+        expect(gradingSystemDeleteForExamStub).to.not.have.been.called;
+    });
+
     it('should delete grading scale for course', () => {
         comp.existingGradingScale = true;
         comp.isExam = false;
@@ -224,6 +266,17 @@ describe('Grading System Component', () => {
 
         expect(gradingSystemDeleteForExamStub).to.have.been.calledOnceWith(comp.courseId, comp.examId);
         expect(comp.existingGradingScale).to.equal(false);
+    });
+
+    it('should not update grading scale', () => {
+        comp.existingGradingScale = false;
+        comp.isExam = false;
+        const gradingSystemServiceStub = sinon.stub(gradingSystemService, 'createGradingScaleForCourse').returns(of(new HttpResponse<GradingScale>({ body: undefined })));
+
+        comp.save();
+
+        expect(gradingSystemServiceStub).to.have.been.calledOnceWith(comp.courseId);
+        expect(comp.existingGradingScale).to.be.false;
     });
 
     it('should create grading scale correctly for course', () => {
