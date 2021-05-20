@@ -19,23 +19,17 @@ export class AttachmentService {
 
     create(attachment: Attachment): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(attachment);
-        return this.http
-            .post<Attachment>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<Attachment>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(attachment: Attachment, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertDateFromClient(attachment);
-        return this.http
-            .put<Attachment>(this.resourceUrl, copy, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<Attachment>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Attachment>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<Attachment>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

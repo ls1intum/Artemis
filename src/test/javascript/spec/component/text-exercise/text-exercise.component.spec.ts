@@ -20,7 +20,7 @@ describe('TextExercise Management Component', () => {
 
     const course = { id: 123 } as Course;
     const textExercise: TextExercise = { id: 456 } as TextExercise;
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

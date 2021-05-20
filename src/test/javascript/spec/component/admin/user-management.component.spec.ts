@@ -17,10 +17,10 @@ describe('UserManagementComponent', () => {
     let fixture: ComponentFixture<UserManagementComponent>;
     let service: UserService;
 
-    const route = ({
+    const route = {
         params: of({ courseId: 123, sort: 'id,desc' }),
         children: [],
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
