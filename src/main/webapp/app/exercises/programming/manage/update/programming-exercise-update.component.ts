@@ -191,7 +191,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             this.selectedProjectTypeValue = this.programmingExercise.projectType!;
         });
-        this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.programmingExercise);
 
         // If it is an import, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
@@ -228,6 +227,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
                         this.submitButtonTitle = 'entity.action.save';
+                        this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.programmingExercise);
                     } else {
                         this.submitButtonTitle = 'entity.action.generate';
                     }
