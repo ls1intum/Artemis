@@ -116,13 +116,13 @@ public class Complaint extends DomainObject {
         return result;
     }
 
-    public Complaint result(Result Result) {
-        this.result = Result;
+    public Complaint result(Result result) {
+        this.result = result;
         return this;
     }
 
-    public void setResult(Result Result) {
-        this.result = Result;
+    public void setResult(Result result) {
+        this.result = result;
     }
 
     public User getStudent() {

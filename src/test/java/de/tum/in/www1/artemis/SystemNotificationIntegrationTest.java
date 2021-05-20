@@ -69,7 +69,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         getActiveSystemNotification();
     }
 
-    public void getActiveSystemNotification() throws Exception {
+    private void getActiveSystemNotification() throws Exception {
         // Do the actual request that is tested here.
         SystemNotification notification = request.get("/api/system-notifications/active-notification", HttpStatus.OK, SystemNotification.class);
 
@@ -117,7 +117,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
         systemNotification.setText(updatedText);
         SystemNotification response = request.putWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class, HttpStatus.OK);
         assertThat(response.getText()).as("response has updated text").isEqualTo(updatedText);
-        assertThat(systemNotificationRepo.findById(systemNotification.getId()).get()).as("repository contains updated notification").isEqualTo(response);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().as("repository contains updated notification").isEqualTo(response);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -147,7 +147,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testGetSystemNotification() throws Exception {
         SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
-        assertThat(systemNotificationRepo.findById(response.getId()).get()).as("system notification is not null").isNotNull();
+        assertThat(systemNotificationRepo.findById(response.getId())).get().as("system notification is not null").isNotNull();
         request.get("/api/system-notifications/" + response.getId(), HttpStatus.OK, SystemNotification.class);
         request.get("/api/system-notifications/" + response.getId() + 1, HttpStatus.NOT_FOUND, SystemNotification.class);
     }
@@ -156,7 +156,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testDeleteSystemNotification() throws Exception {
         SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
-        assertThat(systemNotificationRepo.findById(response.getId()).get()).as("system notification is not null").isNotNull();
+        assertThat(systemNotificationRepo.findById(response.getId())).get().as("system notification is not null").isNotNull();
         request.delete("/api/system-notifications/" + response.getId(), HttpStatus.OK);
     }
 
@@ -165,7 +165,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
         SystemNotification notification = systemNotificationRepo.save(systemNotification);
-        assertThat(systemNotificationRepo.findById(notification.getId()).get()).as("system notification is not null").isNotNull();
+        assertThat(systemNotificationRepo.findById(notification.getId())).get().as("system notification is not null").isNotNull();
         request.delete(endpoint + notification.getId(), HttpStatus.FORBIDDEN);
     }
 }
