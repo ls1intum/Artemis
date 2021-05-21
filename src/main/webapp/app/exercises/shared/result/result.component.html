@@ -41,6 +41,19 @@
             <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
                 {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
             </span>
+            <span
+                *ngIf="deletable"
+                class="badge"
+                jhiDeleteButton
+                [buttonSize]="buttonSizeSmall"
+                [actionType]="actionTypeEmpty"
+                [entityTitle]="'deleteResultButton'"
+                deleteQuestion="artemisApp.result.delete.question2"
+                (delete)="delete(result)"
+                [dialogError]="dialogError$"
+            >
+                {{ 'artemisApp.result.delete.buttonText' | artemisTranslate | uppercase }}
+            </span>
         </ng-container>
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.LATE">

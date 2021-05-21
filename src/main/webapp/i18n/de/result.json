@@ -10,7 +10,9 @@
             "updated": "Result aktualisiert mit ID {{ param }}",
             "deleted": "Result gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Result {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Result {{ id }} wirklich dauerhaft gelöscht werden?",
+                "question2": "Soll die Bewertung wirklich gelöscht werden? Es kann nicht rückgängig gemacht werden!",
+                "buttonText": "Löschen"
             },
             "detail": {
                 "title": "Result"

@@ -19,6 +19,9 @@ import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { round } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { Subject } from 'rxjs/internal/Subject';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -48,6 +51,12 @@ export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly round = round;
+    readonly buttonSizeSmall = ButtonSize.SMALL;
+    readonly actionTypeEmpty = ActionType.NoButtonTextDelete;
+
+    // These two variables are used to emit errors to the delete dialog
+    protected dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -56,6 +65,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults: boolean;
     @Input() showGradedBadge = false;
     @Input() showTestDetails = false;
+    @Input() deletable = false;
 
     ParticipationType = ParticipationType;
     textColorClass: string;
@@ -376,5 +386,10 @@ export class ResultComponent implements OnInit, OnChanges {
             return ['far', 'check-circle'];
         }
         return ['far', 'times-circle'];
+    }
+
+    delete(result: Result) {
+        console.log(result.id);
+        this.dialogErrorSource.next('');
     }
 }

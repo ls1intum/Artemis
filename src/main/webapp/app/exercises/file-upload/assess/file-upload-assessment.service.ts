@@ -45,6 +45,15 @@ export class FileUploadAssessmentsService {
         return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null);
     }
 
+    /**
+     * Deletes an assessment.
+     * @param submissionId id of the submission, to which the assessment belongs to
+     * @param resultId     id of the result which is deleted
+     */
+    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/delete/${resultId}`);
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const result = this.convertItemFromServer(res.body!);
 
