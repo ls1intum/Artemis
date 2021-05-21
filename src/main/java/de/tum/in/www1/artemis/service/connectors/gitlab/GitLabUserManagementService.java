@@ -68,9 +68,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             // groups of the same course.
             removeOrUpdateUserFromGroups(gitlabUser.getId(), user.getGroups(), removedGroups);
         }
-        catch (GitLabException e) {
-            log.info("Skipped updating VCS user  {} because there was a problem with Gitlab groups: {}", user.getLogin(), e.getMessage());
-        }
         catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to update user in GitLab: " + user, e);
         }
@@ -292,7 +289,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param gitlabUserId the user id of the Gitlab user
      * @param groups the new groups
      */
-    private void addUserToGroups(int gitlabUserId, Set<String> groups) throws GitLabException {
+    private void addUserToGroups(int gitlabUserId, Set<String> groups) {
         if (groups == null || groups.isEmpty()) {
             return;
         }
@@ -301,9 +298,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         for (var exercise : exercises) {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(groups, course);
-            if (accessLevel.isPresent()) {
-                addUserToGroup(exercise.getProjectKey(), gitlabUserId, accessLevel.get());
-            }
+            accessLevel.ifPresent(level -> addUserToGroup(exercise.getProjectKey(), gitlabUserId, level));
         }
     }
 
@@ -347,7 +342,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param gitlabUserId the Gitlab user id
      * @param userGroups groups that the user belongs to
      * @param groupsToRemove groups where the user should be removed from
-     * @throws GitLabApiException if an error occurred while updating the user
      */
     private void removeOrUpdateUserFromGroups(int gitlabUserId, Set<String> userGroups, Set<String> groupsToRemove) throws GitLabApiException {
         if (groupsToRemove == null || groupsToRemove.isEmpty()) {
