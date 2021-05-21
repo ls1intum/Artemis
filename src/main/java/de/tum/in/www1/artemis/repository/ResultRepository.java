@@ -591,14 +591,29 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         }
     }
 
+    default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
+        return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
+    }
+
     /**
-     * Get a result from the database by its id,
+     * Get a result from the database by its id, else throws an EntityNotFoundException
      *
      * @param resultId the id of the result to load from the database
      * @return the result
      */
-    default Result findOne(long resultId) {
+    default Result findOneElseThrow(long resultId) {
         return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    }
+
+    /**
+     * Get a distinct result from the database by its submissionId, else throws an EntityNotFoundException
+     *
+     * @param submissionId the id of the result to load from the database
+     * @return the result
+     */
+    default Result findDistinctBySubmissionIdElseThrow(Long submissionId) {
+        return findDistinctBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("Result with submissionId", submissionId));
     }
 
     /**
@@ -609,5 +624,15 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findOneWithEagerSubmissionAndFeedback(long resultId) {
         return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
+    }
+
+    /**
+     * Get a result from the database by its id together with the list of feedback items.
+     *
+     * @param resultId the id of the result to load from the database
+     * @return the result with submission and feedback list
+     */
+    default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
+        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
     }
 }

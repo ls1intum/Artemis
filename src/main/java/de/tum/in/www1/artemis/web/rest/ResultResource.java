@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exception.BitbucketException;
+import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -36,7 +38,6 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Result.
@@ -150,6 +151,21 @@ public class ResultResource {
         }
         // TODO: How can we catch a more specific exception here? Because of the adapter pattern this is always just Exception...
         catch (Exception ex) {
+            if (ex instanceof BitbucketException) {
+                log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {} :"
+                        + "BitBucket encountered an Exception while trying to retrieve the build plan ", ex, requestBody);
+                return badRequest();
+            }
+            if (ex instanceof IndexOutOfBoundsException) {
+                log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}:"
+                        + " The full name of the Jenkins build plan was malformed!", ex, requestBody);
+                return badRequest();
+            }
+            if (ex instanceof JenkinsException) {
+                log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}:"
+                        + " The full name of the Jenkins build plan was malformed!", ex, requestBody);
+                return badRequest();
+            }
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             return badRequest();
         }
@@ -222,10 +238,10 @@ public class ResultResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         List<Result> results = new ArrayList<>();
-        var examMode = exercise.isExamExercise();
+        var isExamMode = exercise.isExamExercise();
 
         List<StudentParticipation> participations;
-        if (examMode) {
+        if (isExamMode) {
             participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
         }
         else {
@@ -275,15 +291,11 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResult(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Optional<Result> result = resultRepository.findById(resultId);
-        if (result.isPresent()) {
-            Participation participation = result.get().getParticipation();
-            Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-                return forbidden();
-            }
-        }
-        return result.map(foundResult -> new ResponseEntity<>(foundResult, HttpStatus.OK)).orElse(notFound());
+        Result result = resultRepository.findOneElseThrow(resultId);
+        Participation participation = result.getParticipation();
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /**
@@ -305,8 +317,8 @@ public class ResultResource {
             return forbidden();
         }
 
-        Optional<Result> result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
-        return result.map(ResponseEntity::ok).orElse(notFound());
+        Result result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /**
@@ -320,11 +332,8 @@ public class ResultResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Optional<Result> optionalResult = resultRepository.findByIdWithEagerFeedbacks(resultId);
-        if (optionalResult.isEmpty()) {
-            return notFound();
-        }
-        Result result = optionalResult.get();
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
+
         Participation participation = result.getParticipation();
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
@@ -379,17 +388,12 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> deleteResult(@PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
-        Optional<Result> result = resultRepository.findById(resultId);
-        if (result.isPresent()) {
-            Participation participation = result.get().getParticipation();
-            Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-                return forbidden();
-            }
-            resultRepository.deleteById(resultId);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
-        }
-        return ResponseEntity.notFound().build();
+        Result result = resultRepository.findOneElseThrow(resultId);
+        Participation participation = result.getParticipation();
+        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        resultRepository.deleteById(resultId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
     }
 
     /**
@@ -402,8 +406,8 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResultForSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get Result for submission : {}", submissionId);
-        Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
-        return ResponseUtil.wrapOrNotFound(result);
+        Result result = resultRepository.findDistinctBySubmissionIdElseThrow(submissionId);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /**
@@ -438,6 +442,7 @@ public class ResultResource {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (!exercise.isExamExercise()) {
             if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
