@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
 import javax.validation.constraints.NotNull;
@@ -88,6 +89,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
     private DatabaseUtilService database;
@@ -1372,5 +1376,93 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         TextPlagiarismResult result = request.get("/api/programming-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
         assertThat(result).isNull();
+    }
+
+    public void testValidateValidAuxiliaryRepositoryWithName() throws Exception {
+        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(), AuxiliaryRepositoryBuilder.defaults(), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
+        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(), AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
+        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(), AuxiliaryRepositoryBuilder.defaults().withoutName(), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
+        // TODO
+    }
+
+    public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
+        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(),
+            AuxiliaryRepositoryBuilder.defaults().withName(generateStringWithMoreThanNCharacters(100)), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
+        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(),
+            AuxiliaryRepositoryBuilder.defaults().withDescription(generateStringWithMoreThanNCharacters(500)), HttpStatus.BAD_REQUEST);
+    }
+
+    private String generateStringWithMoreThanNCharacters(int n) {
+        return IntStream.range(0,n + 1).mapToObj(unused -> "a").reduce("", String::concat);
+    }
+
+    private String defaultAuxiliaryRepositoryEndpoint() {
+        return AUXILIARY_REPOSITORY.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+    }
+
+    private static class AuxiliaryRepositoryBuilder {
+
+        private AuxiliaryRepository repository;
+
+        private AuxiliaryRepositoryBuilder() {
+            this.repository = new AuxiliaryRepository();
+        }
+
+        static AuxiliaryRepositoryBuilder of() {
+            return new AuxiliaryRepositoryBuilder();
+        }
+
+        static AuxiliaryRepositoryBuilder defaults() {
+            return new AuxiliaryRepositoryBuilder()
+                .withoutId()
+                .withName("DefaultName")
+                .withDescription("DefaultDescription");
+        }
+
+        public AuxiliaryRepositoryBuilder withName(String name) {
+            repository.setName(name);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withoutName() {
+            repository.setName(null);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withDescription(String description) {
+            repository.setDescription(description);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withoutDescription() {
+            repository.setDescription(null);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withId(Long id) {
+            repository.setId(id);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withoutId() {
+            repository.setId(null);
+            return this;
+        }
+
+        public AuxiliaryRepository get() {
+            return repository;
+        }
     }
 }
