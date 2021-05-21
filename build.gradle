@@ -173,6 +173,7 @@ dependencies {
     implementation "io.sentry:sentry-spring-boot-starter:4.3.0"
     implementation "io.sentry:sentry-logback:4.3.0"
     implementation "org.jsoup:jsoup:1.13.1"
+    implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.5.8"
 
