@@ -1395,7 +1395,7 @@ public class ProgrammingExerciseResource {
 
         public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";
 
-        public static final String EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-auxiliary-repository/{repositoryName}";
+        public static final String EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-auxiliary-repository/{repositoryId}";
 
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 
