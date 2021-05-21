@@ -200,11 +200,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             return forbidden();
         }
 
-        // return forbidden if assessment cannot be started since the submission is not yet submitted
-        if (!modelingSubmission.isSubmitted()) {
-            return forbidden();
-        }
-
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
             // load the submission with additional needed properties

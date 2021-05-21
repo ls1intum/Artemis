@@ -375,11 +375,6 @@ public class ProgrammingSubmissionResource {
             return forbidden();
         }
 
-        // return forbidden if assessment cannot be started since the submission is not yet submitted
-        if (!programmingSubmission.isSubmitted()) {
-            return forbidden();
-        }
-
         if (!programmingExercise.areManualResultsAllowed()) {
             return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
         }

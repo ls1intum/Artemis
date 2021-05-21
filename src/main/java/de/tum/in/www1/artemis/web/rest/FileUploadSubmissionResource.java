@@ -164,16 +164,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var fileUploadSubmission = fileUploadSubmissionRepository.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(fileUploadExercise, user);
 
         // return forbidden if caller is not allowed to assess
         if (!authCheckService.isAllowedToAssesExercise(fileUploadExercise, user, resultId)) {
-            return forbidden();
-        }
-
-        // return forbidden if assessment cannot be started since the submission is not yet submitted
-        if (!fileUploadSubmission.isSubmitted()) {
             return forbidden();
         }
 

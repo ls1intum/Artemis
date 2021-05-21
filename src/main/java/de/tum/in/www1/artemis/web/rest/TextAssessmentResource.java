@@ -278,11 +278,6 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        // return forbidden if assessment cannot be started since the submission is not yet submitted
-        if (!textSubmission.isSubmitted()) {
-            return forbidden();
-        }
-
         Result result;
         if (resultId != null) {
             // in case resultId is set we get result by id
