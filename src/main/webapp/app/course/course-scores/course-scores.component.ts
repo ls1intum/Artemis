@@ -430,11 +430,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 keys.push(PRESENTATION_SCORE_KEY);
             }
             if (this.gradingScaleExists) {
-                if (this.isBonus) {
-                    keys.push(BONUS_KEY);
-                } else {
-                    keys.push(GRADE_KEY);
-                }
+                keys.push(this.isBonus ? BONUS_KEY : GRADE_KEY);
             }
 
             for (const student of this.students.values()) {
