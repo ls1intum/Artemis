@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +19,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
+import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
+import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
+import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -28,9 +33,19 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
+
+    @Autowired
+    private StudentQuestionRepository studentQuestionRepository;
+
+    @Autowired
+    private StudentQuestionAnswerRepository studentQuestionAnswerRepository;
 
     Course course;
+
+    List<GraphType> artemisGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.LOGGED_IN_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE,
+            GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
+            GraphType.CREATED_FEEDBACKS);
 
     @BeforeEach
     public void initTestCase() {
@@ -41,6 +56,20 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
         course.addExercises(textExercise);
         textExerciseRepository.save(textExercise);
+        StudentQuestion studentQuestion = new StudentQuestion();
+        studentQuestion.setExercise(textExercise);
+        studentQuestion.setQuestionText("Test Student Question 1");
+        studentQuestion.setVisibleForStudents(true);
+        studentQuestion.setCreationDate(ZonedDateTime.now().minusSeconds(11));
+        studentQuestion.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        studentQuestionRepository.save(studentQuestion);
+
+        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        studentQuestionAnswer.setAnswerText("Test Answer");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusSeconds(10));
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        studentQuestionAnswerRepository.save(studentQuestionAnswer);
 
         // one submission today
         TextSubmission textSubmission = new TextSubmission();
@@ -66,7 +95,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testDataForDayEachGraph() throws Exception {
 
         SpanType span = SpanType.DAY;
-        for (GraphType graph : GraphType.values()) {
+        for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
             LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
             parameters.add("span", "" + span);
@@ -82,7 +111,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testDataForWeekEachGraph() throws Exception {
 
         SpanType span = SpanType.WEEK;
-        for (GraphType graph : GraphType.values()) {
+        for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
             LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
             parameters.add("span", "" + span);
@@ -98,7 +127,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testDataForMonthEachGraph() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
         SpanType span = SpanType.MONTH;
-        for (GraphType graph : GraphType.values()) {
+        for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
             LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
             parameters.add("span", "" + span);
@@ -113,7 +142,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDataForQuarterEachGraph() throws Exception {
         SpanType span = SpanType.QUARTER;
-        for (GraphType graph : GraphType.values()) {
+        for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
             LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
             parameters.add("span", "" + span);
@@ -129,7 +158,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testDataForYearEachGraph() throws Exception {
 
         SpanType span = SpanType.YEAR;
-        for (GraphType graph : GraphType.values()) {
+        for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
             LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
             parameters.add("span", "" + span);
@@ -147,15 +176,39 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         SpanType span = SpanType.WEEK;
         int periodIndex = 0;
         var graph = GraphType.SUBMISSIONS;
+        var view = StatisticsView.COURSE;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("span", "" + span);
         parameters.add("periodIndex", "" + periodIndex);
         parameters.add("graphType", "" + graph);
-        parameters.add("courseId", "" + courseId);
-        Integer[] result = request.get("/api/management/statistics/data-for-course", HttpStatus.OK, Integer[].class, parameters);
+        parameters.add("view", "" + view);
+        parameters.add("entityId", "" + courseId);
+        Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
         assertThat(result.length).isEqualTo(7);
         // one submission was manually added right before the request
         assertThat(result[6]).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetQuestionsAskedForCourse() throws Exception {
+        List<GraphType> questionStats = Arrays.asList(GraphType.QUESTIONS_ASKED, GraphType.QUESTIONS_ANSWERED);
+        for (GraphType questionGraph : questionStats) {
+            var courseId = course.getId();
+            SpanType span = SpanType.WEEK;
+            int periodIndex = 0;
+            var view = StatisticsView.COURSE;
+            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+            parameters.add("span", "" + span);
+            parameters.add("periodIndex", "" + periodIndex);
+            parameters.add("graphType", "" + questionGraph);
+            parameters.add("view", "" + view);
+            parameters.add("entityId", "" + courseId);
+            Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
+            assertThat(result.length).isEqualTo(7);
+            // one question and one answer was manually added
+            assertThat(result[6]).isEqualTo(1);
+        }
     }
 
     @Test
