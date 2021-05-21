@@ -102,6 +102,6 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
         if (invalidDirectoryNames.length > 1) {
             invalidDirectoryNames = invalidDirectoryNames.slice(1);
         }
-        this.invalidDirectoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b(\\w|-)+$');
+        this.invalidDirectoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b(\\w|-|/)+$');
     }
 }
