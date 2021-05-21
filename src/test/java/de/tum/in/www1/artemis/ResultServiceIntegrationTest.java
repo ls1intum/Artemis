@@ -376,6 +376,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
             else if (i % 4 == 0) {
                 database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
             }
+            else if (i % 5 == 0) {
+                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
+            }
         }
 
         List<Result> results = request.getList("/api/exercises/" + programmingExercise.getId() + "/results", HttpStatus.OK, Result.class);

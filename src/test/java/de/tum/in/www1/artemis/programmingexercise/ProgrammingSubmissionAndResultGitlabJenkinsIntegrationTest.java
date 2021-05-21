@@ -73,13 +73,36 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         gitlabRequestMockProvider.reset();
     }
 
-    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
         return Arrays.stream(ProgrammingLanguage.values())
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldReturnBadRequestWhenPlanKeyDoesntExist(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = database.createProgrammingSubmission(participation, false);
+
+        // Call programming-exercises/new-result which do not include build log entries yet
+        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());
+        postResult(notification);
+
+        var result = assertBuildError(participation.getId(), userLogin, false);
+        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+
+        // Call again and assert that no new submissions have been created
+        postResult(notification);
+        assertNoNewSubmissions(submission);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
@@ -102,7 +125,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
