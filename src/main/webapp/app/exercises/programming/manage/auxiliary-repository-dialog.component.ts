@@ -32,6 +32,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
      */
     ngOnInit() {
         this.setInvalidRepoNamePattern();
+        this.setInvalidDirectoryNamePattern();
     }
 
     /**
@@ -92,7 +93,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     private setInvalidRepoNamePattern() {
         let invalidRepoNames = '';
         this.exercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidRepoNames += '|' + auxiliaryRepository.name));
-        this.invalidRepositoryNamePattern = new RegExp('^(?!(solution|exercise|tests' + invalidRepoNames + ')\\b)\\b\\w+$');
+        this.invalidRepositoryNamePattern = new RegExp('^(?!(solution|exercise|tests' + invalidRepoNames + ')\\b)\\b(\\w|-)+$');
     }
 
     private setInvalidDirectoryNamePattern() {
@@ -101,8 +102,6 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
         if (invalidDirectoryNames.length > 1) {
             invalidDirectoryNames = invalidDirectoryNames.slice(1);
         }
-        // TODO: AUX REPOS consider / etc
-        this.invalidDirectoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b\\w+$');
-        console.log();
+        this.invalidDirectoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b(\\w|-)+$');
     }
 }
