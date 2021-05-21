@@ -13,7 +13,6 @@ import { restore, SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
-import { TranslatePipe } from '@ngx-translate/core';
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -31,7 +30,7 @@ describe('TeamsExportButtonComponent', () => {
         waitForAsync(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(NgJhipsterModule), MockModule(FeatureToggleModule)],
-                declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockPipe(TranslatePipe)],
+                declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe)],
                 providers: [MockProvider(TeamService)],
             }).compileComponents();
         }),

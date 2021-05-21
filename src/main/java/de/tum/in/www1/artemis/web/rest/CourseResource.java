@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.round;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
@@ -9,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -29,12 +31,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -69,6 +73,9 @@ public class CourseResource {
 
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
@@ -114,13 +121,16 @@ public class CourseResource {
 
     private final ResultRepository resultRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            ParticipantScoreRepository participantScoreRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -143,6 +153,7 @@ public class CourseResource {
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.participantScoreRepository = participantScoreRepository;
     }
 
     /**
@@ -173,14 +184,19 @@ public class CourseResource {
         validateComplaintsAndRequestMoreFeedbackConfig(course);
         validateOnlineCourseAndRegistrationEnabled(course);
 
-        try {
+        createOrValidateGroups(course);
+        Course result = courseRepository.save(course);
+        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
 
+    private void createOrValidateGroups(Course course) {
+        try {
             // We use default names if a group was not specified by the ADMIN.
             // NOTE: instructors cannot change the group of a course, because this would be a security issue!
-
             // only create default group names, if the ADMIN has used a custom group names, we assume that it already exists.
 
-            if (course.getStudentGroupName() == null) {
+            if (!StringUtils.hasText(course.getStudentGroupName())) {
                 course.setStudentGroupName(course.getDefaultStudentGroupName());
                 artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
             }
@@ -188,7 +204,7 @@ public class CourseResource {
                 checkIfGroupsExists(course.getStudentGroupName());
             }
 
-            if (course.getTeachingAssistantGroupName() == null) {
+            if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
                 course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
                 artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
             }
@@ -196,7 +212,7 @@ public class CourseResource {
                 checkIfGroupsExists(course.getTeachingAssistantGroupName());
             }
 
-            if (course.getEditorGroupName() == null) {
+            if (!StringUtils.hasText(course.getEditorGroupName())) {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
             }
@@ -204,7 +220,7 @@ public class CourseResource {
                 checkIfGroupsExists(course.getEditorGroupName());
             }
 
-            if (course.getInstructorGroupName() == null) {
+            if (!StringUtils.hasText(course.getInstructorGroupName())) {
                 course.setInstructorGroupName(course.getDefaultInstructorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
             }
@@ -222,9 +238,6 @@ public class CourseResource {
             // a specified group does not exist, notify the client
             throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
         }
-        Course result = courseRepository.save(course);
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
 
     /**
@@ -965,8 +978,8 @@ public class CourseResource {
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
-            var exerciseIds = exerciseRepository.getExerciseIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds));
+            var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0));
             courseDTOs.add(courseDTO);
         }
 
@@ -1024,7 +1037,7 @@ public class CourseResource {
         // Note: Questions and answers are not part of the archive at the moment and will be included in a future version
         // 1) Get all questions and answers for exercises and lectures and store those in structured text files
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, course.getId().toString())).build();
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -1042,8 +1055,11 @@ public class CourseResource {
         if (!course.hasCourseArchive()) {
             return notFound();
         }
+
         // The path is stored in the course table
-        File zipFile = new File(course.getCourseArchivePath());
+        Path archive = Path.of(courseArchivesDirPath, course.getCourseArchivePath());
+
+        File zipFile = archive.toFile();
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
@@ -1224,7 +1240,7 @@ public class CourseResource {
         // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
         // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
         // To increase the usability the group is automatically generated when a user is added.
-        if (course.getEditorGroupName() == null) {
+        if (!StringUtils.hasText(course.getEditorGroupName())) {
             try {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
                 if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
@@ -1385,5 +1401,110 @@ public class CourseResource {
             }
         }
         return isMember;
+    }
+
+    /**
+     * GET /courses/{courseId}/management-detail : Gets the data needed for the course management detail view
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
+     */
+    @GetMapping("/courses/{courseId}/management-detail")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
+        // For the average score we need to only consider scores which are included completely or as bonus
+        Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
+                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
+        double reachablePoints = includedExercises.stream().map(Exercise::getMaxPoints).collect(Collectors.toSet()).stream().mapToDouble(Double::doubleValue).sum();
+
+        Set<Long> exerciseIdsOfCourse = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
+
+        setAssessments(dto, exerciseIdsOfCourse);
+        setComplaints(dto, courseId);
+        setMoreFeedbackRequests(dto, courseId);
+        setAverageScore(dto, reachablePoints, averageScoreForCourse);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     *  Helper method for setting the assessments in the CourseManagementDetailViewDTO
+     *  Only counting assessments and submissions which are handed in in time
+     */
+    private void setAssessments(CourseManagementDetailViewDTO dto, Set<Long> exerciseIdsOfCourse) {
+        DueDateStat assessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
+        long numberOfAssessments = assessments.inTime() + assessments.late();
+        dto.setCurrentAbsoluteAssessments(numberOfAssessments);
+
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse)
+                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
+        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIdsOfCourse);
+
+        long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
+        dto.setCurrentMaxAssessments(numberOfSubmissions);
+        dto.setCurrentPercentageAssessments(calculatePercentage(numberOfAssessments, numberOfSubmissions));
+    }
+
+    /**
+     *  Helper method for setting the complaints in the CourseManagementDetailViewDTO
+     */
+    private void setComplaints(CourseManagementDetailViewDTO dto, Long courseId) {
+        long numberOfAnsweredComplaints = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.COMPLAINT);
+        dto.setCurrentAbsoluteComplaints(numberOfAnsweredComplaints);
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        dto.setCurrentMaxComplaints(numberOfComplaints);
+        dto.setCurrentPercentageComplaints(calculatePercentage(numberOfAnsweredComplaints, numberOfComplaints));
+    }
+
+    /**
+     *  Helper method for setting the more feedback requests in the CourseManagementDetailViewDTO
+     */
+    private void setMoreFeedbackRequests(CourseManagementDetailViewDTO dto, Long courseId) {
+        long numberOfAnsweredFeedbackRequests = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.MORE_FEEDBACK);
+        dto.setCurrentAbsoluteMoreFeedbacks(numberOfAnsweredFeedbackRequests);
+        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        dto.setCurrentMaxMoreFeedbacks(numberOfMoreFeedbackRequests);
+        dto.setCurrentPercentageMoreFeedbacks(calculatePercentage(numberOfAnsweredFeedbackRequests, numberOfMoreFeedbackRequests));
+    }
+
+    /**
+     *  Helper method for setting the average score in the CourseManagementDetailViewDTO
+     */
+    private void setAverageScore(CourseManagementDetailViewDTO dto, double reachablePoints, Double averageScoreForCourse) {
+        dto.setCurrentMaxAverageScore(reachablePoints);
+        dto.setCurrentAbsoluteAverageScore(round((averageScoreForCourse / 100.0) * reachablePoints));
+        if (reachablePoints > 0.0) {
+            dto.setCurrentPercentageAverageScore(round(averageScoreForCourse));
+        }
+        else {
+            dto.setCurrentPercentageAverageScore(0.0);
+        }
+    }
+
+    private double calculatePercentage(double positive, double total) {
+        return total > 0.0 ? Math.round(positive * 1000.0 / total) / 10.0 : 0.0;
+    }
+
+    /**
+     * GET /courses/:courseId/statistics : Get the active students for this particular course
+     *
+     * @param courseId the id of the course
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
+     */
+    @GetMapping(value = "/courses/{courseId}/statistics")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Integer[]> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Integer periodIndex) {
+        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex));
     }
 }

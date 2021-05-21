@@ -9,9 +9,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { getIcon, getIconTooltip, ExerciseType } from 'app/entities/exercise.model';
+import { getIcon, getIconTooltip, ExerciseType, Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -130,6 +131,10 @@ export class InstructorCourseDashboardComponent implements OnInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.course.exercises!, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+    }
+
+    getSubmissionsLinkForExercise(exercise: Exercise): string[] {
+        return getExerciseSubmissionsLink(exercise.type!, this.course.id!, exercise.id!);
     }
 
     /**

@@ -94,9 +94,11 @@ export class TeamParticipationTableComponent implements OnInit {
      *
      * @param exercise Exercise is passed in from the template (instead of doing this.exercise) to trigger the ngx-datatable change detection
      */
-    rowClass = (exercise: Exercise) => (row: Exercise): string => {
-        return exercise.id === row.id ? currentExerciseRowClass : '';
-    };
+    rowClass =
+        (exercise: Exercise) =>
+        (row: Exercise): string => {
+            return exercise.id === row.id ? currentExerciseRowClass : '';
+        };
 
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission

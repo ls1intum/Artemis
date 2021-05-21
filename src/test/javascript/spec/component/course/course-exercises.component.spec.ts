@@ -52,8 +52,8 @@ describe('CourseExercisesComponent', () => {
     let exercise: Exercise;
     let courseCalculationSpy: sinon.SinonStub;
 
-    const parentRoute = ({ params: of({ courseId: '123' }) } as any) as ActivatedRoute;
-    const route = ({ parent: parentRoute } as any) as ActivatedRoute;
+    const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
+    const route = { parent: parentRoute } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -106,11 +106,7 @@ describe('TeamsImportDialogComponent', () => {
             resetComponent();
             teamServiceStub = stub(teamService, 'findAllByExerciseId');
             computeSourceStub = stub(comp, 'computeSourceTeamsFreeOfConflicts');
-            teamServiceStub.returns(
-                of(
-                    new HttpResponse<Team[]>({ body: mockSourceTeams }),
-                ),
-            );
+            teamServiceStub.returns(of(new HttpResponse<Team[]>({ body: mockSourceTeams })));
         });
 
         afterEach(() => {

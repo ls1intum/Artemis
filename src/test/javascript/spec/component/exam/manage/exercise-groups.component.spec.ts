@@ -54,7 +54,7 @@ describe('Exercise Groups Component', () => {
     let router: Router;
 
     const data = of({ exam });
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

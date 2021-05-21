@@ -75,7 +75,7 @@ describe('CoursesComponent', () => {
     let exerciseService: ExerciseService;
     const router = new MockRouter();
 
-    const route = ({ data: of({ courseId: course1.id }), children: [] } as any) as ActivatedRoute;
+    const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({

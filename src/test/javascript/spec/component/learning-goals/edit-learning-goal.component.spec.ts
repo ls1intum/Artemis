@@ -121,8 +121,9 @@ describe('EditLearningGoalComponent', () => {
         const findAllByCourseStub = sinon.stub(lectureService, 'findAllByCourseId').returns(of(lecturesResponse));
 
         editLearningGoalComponentFixture.detectChanges();
-        const learningGoalFormStubComponent: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(By.directive(LearningGoalFormStubComponent))
-            .componentInstance;
+        const learningGoalFormStubComponent: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(
+            By.directive(LearningGoalFormStubComponent),
+        ).componentInstance;
         expect(findByIdStub).to.have.been.calledOnce;
         expect(findAllByCourseStub).to.have.been.calledOnce;
 

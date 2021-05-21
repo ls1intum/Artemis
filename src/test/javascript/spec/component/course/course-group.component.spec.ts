@@ -41,10 +41,10 @@ describe('Course Management Detail Component', () => {
     let userService: UserService;
     const courseGroup = CourseGroup.STUDENTS;
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
-    const parentRoute = ({
+    const parentRoute = {
         data: of({ course }),
-    } as any) as ActivatedRoute;
-    const route = ({ parent: parentRoute, params: of({ courseGroup }) } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
+    const route = { parent: parentRoute, params: of({ courseGroup }) } as any as ActivatedRoute;
     const courseGroupUser = new User(1, 'user');
     const courseGroupUser2 = new User(2, 'user2');
 

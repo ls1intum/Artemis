@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -326,7 +327,7 @@ public class ProgrammingPlagiarismDetectionService {
                 gitService.resetToOriginMaster(repo); // start with clean state
                 downloadedRepositories.add(repo);
             }
-            catch (GitException | GitAPIException | InterruptedException ex) {
+            catch (GitException | GitAPIException | InterruptedException | InvalidPathException ex) {
                 log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUrl(), programmingExercise.getTitle(),
                         ex.getMessage());
             }

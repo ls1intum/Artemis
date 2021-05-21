@@ -89,7 +89,7 @@ describe('CourseExerciseDetailsComponent', () => {
     let getTeamPayloadStub: SinonStub;
     let mergeStudentParticipationStub: SinonStub;
     let subscribeForParticipationChangesStub: SinonStub;
-    const exercise = ({ id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown) as Exercise;
+    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
     beforeEach(async(() => {
@@ -222,7 +222,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exerciseRatedBadge(result)).to.equal('badge-info');
 
         // has correct router link
-        expect(comp.exerciseRouterLink).to.equal(`/course-management/1/text-exercises/42/assessment`);
+        expect(comp.exerciseRouterLink).to.equal(`/course-management/1/text-exercises/42/submissions`);
     }));
 
     it('should not allow to publish a build plan for text exercises', () => {

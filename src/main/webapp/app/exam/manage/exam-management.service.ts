@@ -105,7 +105,7 @@ export class ExamManagementService {
      * Find all exams for the given course.
      * @param courseId The course id.
      */
-    findAllExamsForCourse(courseId: number): Observable<HttpResponse<Exam[]>> {
+    findAllExamsForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
@@ -115,7 +115,7 @@ export class ExamManagementService {
      * Find all exams where the in the course they are conducted the user has instructor rights
      * @param courseId The course id where the quiz should be created
      */
-    findAllExamsAccessibleToUser(courseId: number): Observable<HttpResponse<Exam[]>> {
+    findAllExamsAccessibleToUser(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
@@ -124,7 +124,7 @@ export class ExamManagementService {
     /**
      * Find all exams that are held today and in the future.
      */
-    findAllCurrentAndUpcomingExams(): Observable<HttpResponse<Exam[]>> {
+    findAllCurrentAndUpcomingExams(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
@@ -143,21 +143,17 @@ export class ExamManagementService {
         } else {
             url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
-        return this.http
-            .get<Exam>(url, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
     }
 
     getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
         const url = `${this.resourceUrl}/${courseId}/exams/${examId}/latest-end-date`;
-        return this.http
-            .get<ExamInformationDTO>(url, { observe: 'response' })
-            .pipe(
-                map((res: HttpResponse<ExamInformationDTO>) => {
-                    res.body!.latestIndividualEndDate = moment(res.body!.latestIndividualEndDate);
-                    return res;
-                }),
-            );
+        return this.http.get<ExamInformationDTO>(url, { observe: 'response' }).pipe(
+            map((res: HttpResponse<ExamInformationDTO>) => {
+                res.body!.latestIndividualEndDate = moment(res.body!.latestIndividualEndDate);
+                return res;
+            }),
+        );
     }
 
     /**
@@ -352,48 +348,43 @@ export class ExamManagementService {
 
     private static convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = res.body.startDate ? moment(res.body.startDate) : undefined;
-            res.body.endDate = res.body.endDate ? moment(res.body.endDate) : undefined;
-            res.body.visibleDate = res.body.visibleDate ? moment(res.body.visibleDate) : undefined;
-            res.body.publishResultsDate = res.body.publishResultsDate ? moment(res.body.publishResultsDate) : undefined;
-            res.body.examStudentReviewStart = res.body.examStudentReviewStart ? moment(res.body.examStudentReviewStart) : undefined;
-            res.body.examStudentReviewEnd = res.body.examStudentReviewEnd ? moment(res.body.examStudentReviewEnd) : undefined;
+            this.convertExamDate(res.body);
         }
         return res;
     }
 
     private static convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((exam: Exam) => {
-                exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
-                exam.endDate = exam.endDate ? moment(exam.endDate) : undefined;
-                exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
-                exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : undefined;
-                exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : undefined;
-                exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : undefined;
-            });
+            res.body.forEach(this.convertExamDate);
         }
         return res;
     }
 
+    private static convertExamDate(exam: Exam) {
+        exam.startDate = exam.startDate ? moment(exam.startDate) : undefined;
+        exam.endDate = exam.endDate ? moment(exam.endDate) : undefined;
+        exam.visibleDate = exam.visibleDate ? moment(exam.visibleDate) : undefined;
+        exam.publishResultsDate = exam.publishResultsDate ? moment(exam.publishResultsDate) : undefined;
+        exam.examStudentReviewStart = exam.examStudentReviewStart ? moment(exam.examStudentReviewStart) : undefined;
+        exam.examStudentReviewEnd = exam.examStudentReviewEnd ? moment(exam.examStudentReviewEnd) : undefined;
+    }
+
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
-        return this.http
-            .get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' })
-            .pipe(
-                filter((res) => !!res.body),
-                tap((res) =>
-                    res.body!.forEach((submission: Submission) => {
-                        // reconnect some associations
-                        const latestResult = getLatestSubmissionResult(submission);
-                        if (latestResult) {
-                            latestResult.submission = submission;
-                            latestResult.participation = submission.participation;
-                            submission.participation!.results = [latestResult!];
-                            setLatestSubmissionResult(submission, latestResult);
-                        }
-                    }),
-                ),
-            );
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' }).pipe(
+            filter((res) => !!res.body),
+            tap((res) =>
+                res.body!.forEach((submission: Submission) => {
+                    // reconnect some associations
+                    const latestResult = getLatestSubmissionResult(submission);
+                    if (latestResult) {
+                        latestResult.submission = submission;
+                        latestResult.participation = submission.participation;
+                        submission.participation!.results = [latestResult!];
+                        setLatestSubmissionResult(submission, latestResult);
+                    }
+                }),
+            ),
+        );
     }
 
     /**

@@ -3,8 +3,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
-import { JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
@@ -28,6 +28,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnInit() {
@@ -47,6 +48,18 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
             }
         });
+    }
+
+    downloadAsPDf() {
+        const model = this.modelingExercise.sampleSolutionModel;
+        if (model) {
+            this.modelingExerciseService.convertToPdf(model, `${this.modelingExercise.title}-example-solution`).subscribe(
+                () => {},
+                () => {
+                    this.jhiAlertService.error('artemisApp.modelingExercise.apollonConversion.error');
+                },
+            );
+        }
     }
 
     ngOnDestroy() {

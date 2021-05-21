@@ -151,10 +151,10 @@ under ``localhost:7990``.
 
 5. The script has already created users and groups but you need to
    manually assign the users into their respective group in Jira. In our
-   test setup, users 1-5 are students, 6-10 are tutors and 11-15 are
-   instructors. The usernames are artemis_test_user_{1-15} and the
-   password is again the username. When you create a course in artemis
-   you have to manually choose the created groups(students, tutors,
+   test setup, users 1-5 are students, 6-10 are tutors, 11-15 are
+   editors and 16-20 are instructors. The usernames are artemis_test_user_{1-20}
+   and the password is again the username. When you create a course in artemis
+   you have to manually choose the created groups (students, tutors, editors
    instructors).
 
 6. Use the `user directories in

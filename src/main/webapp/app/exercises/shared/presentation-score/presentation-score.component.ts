@@ -23,7 +23,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
                         icon="question-circle"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | translate }}"
+                        ngbTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
             </div>

@@ -31,6 +31,9 @@
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
         "nosubmissions": "No existing user was specified or no submission exists.",
-        "feedbackCreditsNull": "Error! In case feedback is present, feedback must contain points."
+        "feedbackCreditsNull": "Error! In case feedback is present, feedback must contain points.",
+        "invalidGradeStepFormat": "One or more grade steps are not following the correct format. Click on the \"?\" for more information.",
+        "invalidGradeStepAdjacency": "The grade steps don't map to a valid grade key. Click on the \"?\" for more information.",
+        "emptyGradeSteps": "Grade steps can't be empty. Click on the \"?\" for more information."
     }
 }

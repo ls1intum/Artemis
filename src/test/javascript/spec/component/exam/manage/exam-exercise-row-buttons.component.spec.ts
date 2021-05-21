@@ -166,11 +166,7 @@ describe('Exam Exercise Row Buttons Component', () => {
     describe('check exercise deletion', () => {
         it('should delete textExercise', () => {
             comp.exercise = textExercise;
-            const textExerciseServiceDeleteStub = sinon.stub(textExerciseService, 'delete').returns(
-                of(
-                    new HttpResponse<{}>({ body: [] }),
-                ),
-            );
+            const textExerciseServiceDeleteStub = sinon.stub(textExerciseService, 'delete').returns(of(new HttpResponse<{}>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -179,11 +175,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete modelingExercise', () => {
             comp.exercise = modelingExercise;
-            const modelingExerciseServiceDeleteStub = sinon.stub(modelingExerciseService, 'delete').returns(
-                of(
-                    new HttpResponse<{}>({ body: [] }),
-                ),
-            );
+            const modelingExerciseServiceDeleteStub = sinon.stub(modelingExerciseService, 'delete').returns(of(new HttpResponse<{}>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -192,11 +184,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete fileExercise', () => {
             comp.exercise = fileExercise;
-            const fileExerciseServiceDeleteStub = sinon.stub(fileUploadExerciseService, 'delete').returns(
-                of(
-                    new HttpResponse<{}>({ body: [] }),
-                ),
-            );
+            const fileExerciseServiceDeleteStub = sinon.stub(fileUploadExerciseService, 'delete').returns(of(new HttpResponse<{}>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -205,11 +193,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete quizExercise', () => {
             comp.exercise = quizExercise;
-            const quizExerciseServiceDeleteStub = sinon.stub(quizExerciseService, 'delete').returns(
-                of(
-                    new HttpResponse<{}>({ body: [] }),
-                ),
-            );
+            const quizExerciseServiceDeleteStub = sinon.stub(quizExerciseService, 'delete').returns(of(new HttpResponse<{}>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -218,11 +202,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete programmingExercise', () => {
             comp.exercise = programmingExercise;
-            const programmingExerciseServiceDeleteStub = sinon.stub(programmingExerciseService, 'delete').returns(
-                of(
-                    new HttpResponse<{}>({ body: [] }),
-                ),
-            );
+            const programmingExerciseServiceDeleteStub = sinon.stub(programmingExerciseService, 'delete').returns(of(new HttpResponse<{}>({ body: [] })));
 
             comp.deleteProgrammingExercise({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
 
@@ -233,11 +213,7 @@ describe('Exam Exercise Row Buttons Component', () => {
     describe('check quiz is being exported', () => {
         it('should export quiz exercise by id', () => {
             comp.exercise = quizExercise;
-            const quizExerciseServiceFindStub = sinon.stub(quizExerciseService, 'find').returns(
-                of(
-                    new HttpResponse<QuizExercise>({ body: quizExercise }),
-                ),
-            );
+            const quizExerciseServiceFindStub = sinon.stub(quizExerciseService, 'find').returns(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
             const quizExerciseServiceExportQuizStub = sinon.stub(quizExerciseService, 'exportQuiz');
 
             comp.exportQuizById(true);

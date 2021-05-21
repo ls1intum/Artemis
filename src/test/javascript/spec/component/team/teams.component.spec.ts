@@ -45,10 +45,10 @@ describe('TeamsComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
 
-    const route = ({
+    const route = {
         params: of({ exerciseId: 1 }),
         snapshot: { queryParamMap: convertToParamMap({}) },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

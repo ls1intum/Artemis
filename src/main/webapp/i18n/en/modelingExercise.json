@@ -25,13 +25,16 @@
             "exampleSubmissions": "Example Submissions",
             "createExampleSubmission": "Create Example Submission",
             "createNewExampleSubmission": "Create new Example Submission",
-            "updateExampleSubmission": "Update Example Submission",
+            "saveExampleSubmission": "Save Example Submission",
             "saveExampleAssessment": "Save Example Assessment",
             "showExampleSubmission": "Show Submission",
             "showExampleAssessment": "Show Assessment",
             "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the modeling exercise.",
             "exampleSubmissionForModelingExercise": "Example Submission for Modeling Exercise {{ exerciseTitle }}",
-            "usedForTutorial": "Used for Tutorial"
+            "usedForTutorial": "Used for Tutorial",
+            "apollonConversion": {
+                "error": "Apollon conversion is not available"
+            }
         }
     }
 }
