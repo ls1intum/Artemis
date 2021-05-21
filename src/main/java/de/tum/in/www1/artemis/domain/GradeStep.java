@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import javax.persistence.*;
 
+import org.apache.commons.math3.util.Precision;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -111,10 +112,10 @@ public class GradeStep extends DomainObject {
      */
     public boolean matchingGradePercentage(double percentage) {
         double epsilon = 0.01d;
-        if (Math.abs(percentage - lowerBoundPercentage) < epsilon) {
+        if (Precision.equals(percentage, lowerBoundPercentage, epsilon)) {
             return lowerBoundInclusive;
         }
-        else if (Math.abs(percentage - upperBoundPercentage) < epsilon) {
+        else if (Precision.equals(percentage, upperBoundPercentage, epsilon)) {
             return upperBoundInclusive;
         }
         else {
