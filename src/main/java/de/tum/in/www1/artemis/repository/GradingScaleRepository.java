@@ -127,17 +127,17 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     /**
      * Deletes all excessive grading scales but the first saved for a course/exam
      *
-     * @param id the id of the course/exam
+     * @param entityId the id of the course/exam
      * @param isExam determines if the method is handling a grading scale for course or exam
      * @return the only remaining grading scale for the course/exam
      */
-    default GradingScale deleteExcessiveGradingScales(Long id, boolean isExam) {
+    default GradingScale deleteExcessiveGradingScales(Long entityId, boolean isExam) {
         List<GradingScale> gradingScales;
         if (isExam) {
-            gradingScales = findAllByExamId(id);
+            gradingScales = findAllByExamId(entityId);
         }
         else {
-            gradingScales = findAllByCourseId(id);
+            gradingScales = findAllByCourseId(entityId);
         }
         for (int i = 1; i < gradingScales.size(); i++) {
             deleteById(gradingScales.get(i).getId());

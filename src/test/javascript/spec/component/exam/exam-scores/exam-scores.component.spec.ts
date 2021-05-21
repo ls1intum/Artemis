@@ -393,6 +393,9 @@ describe('ExamScoresComponent', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
+        comp.gradingScale = gradingScale;
+        comp.gradingScale.gradeSteps = [gradeStep1];
+        comp.gradingScaleExists = true;
 
         const exportAsCsvStub = sinon.stub(comp, 'exportAsCsv');
         // create csv
@@ -443,6 +446,15 @@ describe('ExamScoresComponent', () => {
         );
     });
 
+    it('should export as csv', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        fixture.detectChanges();
+
+        comp.exportToCsv();
+
+        expect(comp).to.be.ok;
+    });
+
     it('should find grade step index correctly', () => {
         spyOn(gradingSystemService, 'matchGradePercentage').and.callThrough();
         comp.gradingScale = gradingScale;
@@ -460,6 +472,20 @@ describe('ExamScoresComponent', () => {
         expect(comp.gradingScaleExists).to.be.true;
         expect(comp.gradingScale).to.deep.equal(gradingScale);
         expect(comp.isBonus).to.be.false;
+    });
+
+    it('should filter non-empty submissions', () => {
+        comp.filterForNonEmptySubmissions = false;
+        comp.gradingScale = gradingScale;
+        comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
+        comp.gradingScaleExists = true;
+        comp.exerciseGroups = examScoreDTO.exerciseGroups;
+        comp.studentResults = examScoreDTO.studentResults;
+        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradingScale.gradeSteps[0]);
+
+        comp.toggleFilterForNonEmptySubmission();
+
+        expect(comp.filterForNonEmptySubmissions).to.be.true;
     });
 });
 
