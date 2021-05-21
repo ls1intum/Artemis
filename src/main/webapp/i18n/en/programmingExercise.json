@@ -282,7 +282,8 @@
                 "checkoutDirectory": "Checkout Directory",
                 "repositoryNameRequired": "The repository name is required.",
                 "invalidRepositoryName": "The repository name does already exist for this exercise!",
-                "invalidDirectoryName": "An existing repository is already checked out into this directory!"
+                "invalidDirectoryName": "An existing repository is already checked out into this directory!",
+                "noModificationPossibleWarning": "It is not possible to modify the entered details (repository name, checkout directory, description) after the generation of the auxiliary repository."
             }
         },
         "error": {
