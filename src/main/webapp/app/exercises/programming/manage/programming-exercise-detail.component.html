@@ -290,21 +290,24 @@
                                     [exerciseId]="programmingExercise.id!"
                                     [repositoryType]="'TESTS'"
                                 ></jhi-programming-exercise-instructor-repo-download>
+
+                                <div class="auxiliaryRepositoryDescription">
+                                    <span *ngIf="auxiliaryRepository.checkoutDirectory != undefined; else noCheckoutDirectorySet"
+                                        >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
+                                    </span>
+                                    <ng-template #noCheckoutDirectorySet>
+                                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
+                                    </ng-template>
+                                    <ng-template #noCheckoutDirectorySetTooltip>
+                                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
+                                    </ng-template>
+                                </div>
                             </dt>
                             <dd>
                                 <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
                                     auxiliaryRepository.repositoryUrl
                                 }}</a>
-                                <span *ngIf="auxiliaryRepository.checkoutDirectory != undefined; else noCheckoutDirectorySet"
-                                    >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}</span
-                                >
-                                <ng-template #noCheckoutDirectorySet>
-                                    <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
-                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
-                                </ng-template>
-                                <ng-template #noCheckoutDirectorySetTooltip>
-                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
-                                </ng-template>
                             </dd>
                         </li>
                     </ul>
