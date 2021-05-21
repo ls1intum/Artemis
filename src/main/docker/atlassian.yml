@@ -24,7 +24,7 @@ services:
         hostname: bitbucket
         networks:
             artemis:
-                ipv4_address: 172.30.0.3
+                ipv4_address: 172.20.0.3
     bamboo:
         container_name: artemis_bamboo
         build: bamboo
@@ -36,7 +36,7 @@ services:
         hostname: bamboo
         networks:
             artemis:
-                ipv4_address: 172.30.0.4
+                ipv4_address: 172.20.0.4
 
 networks:
   artemis:
@@ -44,7 +44,7 @@ networks:
       ipam:
         driver: default
         config:
-            - subnet: 172.30.0.0/24
+            - subnet: 172.20.0.0/24
 
 volumes:
     artemis-jira:
