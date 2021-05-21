@@ -840,17 +840,8 @@ public class ProgrammingExerciseResource {
 
         long start = System.nanoTime();
         Optional<File> zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
-        if (zipFile.isEmpty()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
-
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType.getName(), programmingExercise.getId(),
-                programmingExercise.getTitle(), formatDurationFrom(start));
-
-        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
+        return returnZipFileForRepositoryExport(zipFile, repositoryType.getName(), programmingExercise, start);
     }
 
     /**
@@ -879,15 +870,19 @@ public class ProgrammingExerciseResource {
         long start = System.nanoTime();
         Optional<File> zipFile = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExercise(programmingExercise.getId(), auxiliaryRepository,
                 new ArrayList<>());
+        return returnZipFileForRepositoryExport(zipFile, auxiliaryRepository.getName(), programmingExercise, start);
+    }
+
+    private ResponseEntity<Resource> returnZipFileForRepositoryExport(Optional<File> zipFile, String repositoryName, ProgrammingExercise exercise, long startTime) throws IOException {
         if (zipFile.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
+                "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
 
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", auxiliaryRepository.getName(), programmingExercise.getId(),
-                programmingExercise.getTitle(), formatDurationFrom(start));
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, exercise.getId(),
+            exercise.getTitle(), formatDurationFrom(startTime));
 
         return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
