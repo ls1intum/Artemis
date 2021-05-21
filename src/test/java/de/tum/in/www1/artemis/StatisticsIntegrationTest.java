@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
 public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -248,5 +249,54 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
         assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(secondTextExerciseId);
         assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(secondTextExercise.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExerciseStatistics() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+
+        var firstTextExerciseId = textExercise.getId();
+        User student1 = userRepository.findOneByLogin("student1").orElseThrow();
+        User student2 = userRepository.findOneByLogin("student2").orElseThrow();
+
+        // Creating result for student1 and student2 for firstExercise
+        database.createParticipationSubmissionAndResult(firstTextExerciseId, student1, 10.0, 0.0, 50, true);
+        database.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
+
+        StudentQuestion studentQuestion = new StudentQuestion();
+        studentQuestion.setExercise(textExercise);
+        studentQuestion.setQuestionText("Test Student Question 1");
+        studentQuestion.setVisibleForStudents(true);
+        studentQuestion.setCreationDate(ZonedDateTime.now().minusHours(2));
+        studentQuestion.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        studentQuestionRepository.save(studentQuestion);
+
+        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        studentQuestionAnswer.setAnswerText("Test Answer");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        studentQuestionAnswer.setTutorApproved(true);
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        studentQuestionAnswerRepository.save(studentQuestionAnswer);
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("exerciseId", "" + firstTextExerciseId);
+        ExerciseManagementStatisticsDTO result = request.get("/api/management/statistics/exercise-statistics", HttpStatus.OK, ExerciseManagementStatisticsDTO.class, parameters);
+
+        assertThat(result.getAverageScoreOfExercise()).isEqualTo(75.0);
+        assertThat(result.getMaxPointsOfExercise()).isEqualTo(10);
+        assertThat(result.getNumberOfExerciseScores()).isEqualTo(2);
+        assertThat(result.getNumberOfParticipations()).isEqualTo(2);
+        assertThat(result.getNumberOfStudentsInCourse()).isEqualTo(12);
+        assertThat(result.getNumberOfQuestions()).isEqualTo(1);
+        assertThat(result.getNumberOfAnsweredQuestions()).isEqualTo(1);
+        var expectedScoresResult = new int[10];
+        Arrays.fill(expectedScoresResult, 0);
+        // We have one assessment with 50% and one with 100%
+        expectedScoresResult[5] = 1;
+        expectedScoresResult[9] = 1;
+        assertThat(result.getScoreDistribution()).isEqualTo(expectedScoresResult);
     }
 }
