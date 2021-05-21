@@ -40,14 +40,14 @@ describe('TextExercise Management Detail Component', () => {
         const textExerciseWithCourse: TextExercise = new TextExercise(course, undefined);
         textExerciseWithCourse.id = 123;
         const textExerciseStatistics = {
-            averageScoreOfExercise: 4,
-            maxPointsOfExercise: 4,
-            scoreDistribution: [4],
-            numberOfExerciseScores: 4,
-            numberOfParticipations: 4,
-            numberOfStudentsInCourse: 4,
-            numberOfQuestions: 4,
-            numberOfAnsweredQuestions: 4,
+            averageScoreOfExercise: 50,
+            maxPointsOfExercise: 10,
+            scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+            numberOfExerciseScores: 10,
+            numberOfParticipations: 10,
+            numberOfStudentsInCourse: 10,
+            numberOfQuestions: 3,
+            numberOfAnsweredQuestions: 2,
         } as ExerciseManagementStatisticsDto;
 
         beforeEach(() => {
