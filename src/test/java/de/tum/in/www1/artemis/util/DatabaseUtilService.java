@@ -15,8 +15,10 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -2001,13 +2003,14 @@ public class DatabaseUtilService {
 
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
+        assertThat(fileUploadExercises.size()).as("created three exercises").isEqualTo(3);
         exerciseRepo.saveAll(fileUploadExercises);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(3);
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
-        assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
-        return courseRepoContent.get(0);
+        long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
+        Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
+        List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
+        assertThat(exercises.size()).as("three exercises got stored").isEqualTo(3);
+        assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
+        return course;
     }
 
     /** With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text exercises in a cyclic manner.
