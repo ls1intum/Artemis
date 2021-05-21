@@ -626,7 +626,7 @@ public class AuthorizationCheckService {
             return true;
         }
         // if the user is not the owner of the participation, the user can only see it in case he is
-        // a teaching assistant or an instructor of the course, or in case he is admin
+        // a teaching assistant, an editor or an instructor of the course, or in case he is admin
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return isAtLeastTeachingAssistantInCourse(course, user);

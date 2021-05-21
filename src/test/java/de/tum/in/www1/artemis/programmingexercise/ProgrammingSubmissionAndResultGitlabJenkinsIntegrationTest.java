@@ -91,14 +91,10 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());
-        postResult(notification);
+        postResult(notification, HttpStatus.BAD_REQUEST);
 
         var result = assertBuildError(participation.getId(), userLogin, false);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
-
-        // Call again and assert that no new submissions have been created
-        postResult(notification);
-        assertNoNewSubmissions(submission);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -114,13 +110,13 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         var result = assertBuildError(participation.getId(), userLogin, false);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Call again and assert that no new submissions have been created
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
         assertNoNewSubmissions(submission);
     }
 
@@ -136,7 +132,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         assertBuildError(participation.getId(), userLogin, true);
     }
@@ -190,14 +186,14 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
     }
 
-    private void postResult(TestResultsDTO requestBodyMap) throws Exception {
+    private void postResult(TestResultsDTO requestBodyMap, HttpStatus status) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
+        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, status, httpHeaders);
     }
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests) {
