@@ -24,7 +24,7 @@ export class StatisticsService {
     }
 
     /**
-     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the courseId
+     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the id of the entity (e.g. course, exercise)
      */
     getChartDataForContent(span: SpanType, periodIndex: number, graphType: Graphs, view: StatisticsView, entityId: number): Observable<number[]> {
         const params = new HttpParams()

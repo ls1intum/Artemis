@@ -12,11 +12,14 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
     let fixture: ComponentFixture<TextExerciseDetailComponent>;
-    let service: TextExerciseService;
+    let exerciseService: TextExerciseService;
+    let statisticsService: StatisticsService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -28,13 +31,24 @@ describe('TextExercise Management Detail Component', () => {
             .compileComponents();
         fixture = TestBed.createComponent(TextExerciseDetailComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(TextExerciseService);
+        exerciseService = fixture.debugElement.injector.get(TextExerciseService);
+        statisticsService = fixture.debugElement.injector.get(StatisticsService);
     });
 
     describe('OnInit with course exercise', () => {
         const course: Course = { id: 123 } as Course;
         const textExerciseWithCourse: TextExercise = new TextExercise(course, undefined);
         textExerciseWithCourse.id = 123;
+        const textExerciseStatistics = {
+            averageScoreOfExercise: 4,
+            maxPointsOfExercise: 4,
+            scoreDistribution: [4],
+            numberOfExerciseScores: 4,
+            numberOfParticipations: 4,
+            numberOfStudentsInCourse: 4,
+            numberOfQuestions: 4,
+            numberOfAnsweredQuestions: 4,
+        } as ExerciseManagementStatisticsDto;
 
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
@@ -44,7 +58,7 @@ describe('TextExercise Management Detail Component', () => {
         it('Should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            spyOn(exerciseService, 'find').and.returnValue(
                 of(
                     new HttpResponse({
                         body: textExerciseWithCourse,
@@ -52,12 +66,13 @@ describe('TextExercise Management Detail Component', () => {
                     }),
                 ),
             );
+            spyOn(statisticsService, 'getExerciseStatistics').and.returnValue(of(textExerciseStatistics));
             // WHEN
             fixture.detectChanges();
             comp.ngOnInit();
 
             // THEN
-            expect(service.find).toHaveBeenCalled();
+            expect(exerciseService.find).toHaveBeenCalled();
             expect(comp.isExamExercise).toBeFalsy();
             expect(comp.textExercise).toEqual(textExerciseWithCourse);
         });
@@ -76,7 +91,7 @@ describe('TextExercise Management Detail Component', () => {
         it('Should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            spyOn(exerciseService, 'find').and.returnValue(
                 of(
                     new HttpResponse({
                         body: textExerciseWithExerciseGroup,
@@ -89,7 +104,7 @@ describe('TextExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(service.find).toHaveBeenCalled();
+            expect(exerciseService.find).toHaveBeenCalled();
             expect(comp.isExamExercise).toBeTruthy();
             expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
         });
