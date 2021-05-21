@@ -220,7 +220,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
             return (
                 !this.mappings?.some((mapping) => {
                     return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem);
-                }, this) ?? true
+                }, this) ?? false
             );
         }, this);
     }
