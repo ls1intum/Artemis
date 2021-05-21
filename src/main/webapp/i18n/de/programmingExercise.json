@@ -279,10 +279,11 @@
             "auxiliaryRepository": {
                 "addAuxiliaryRepository": "Hilfsrepository anlegen",
                 "repositoryName": "Name des Repositorys",
-                "checkoutDirectory": "Checkout Verzeichnis",
-                "repositoryNameRequired": "Der Name des Repositorys wird benötigt",
+                "checkoutDirectory": "Checkout-Verzeichnis",
+                "repositoryNameRequired": "Der Name des Repositories wird benötigt",
                 "invalidRepositoryName": "Es existiert bereits ein Repository mit dem angegebenen Namen für diese Aufgabe!",
-                "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!"
+                "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
+                "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfsrepositories zu ändern."
             }
         },
         "error": {
