@@ -465,11 +465,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         headers.push('Overall Points');
         headers.push('Overall Score (%)');
         if (this.gradingScaleExists) {
-            if (this.isBonus) {
-                headers.push('Overall Bonus Points');
-            } else {
-                headers.push('Overall Grade');
-            }
+            headers.push(this.isBonus ? 'Overall Bonus Points' : 'Overall Grade');
         }
         headers.push('Submitted');
         if (this.gradingScaleExists && !this.isBonus) {
