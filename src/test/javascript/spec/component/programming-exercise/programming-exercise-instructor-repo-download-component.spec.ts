@@ -50,7 +50,7 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
         const spy = sinon.spy(service, 'exportInstructorRepository');
 
         component.exerciseId = 1;
-        const repoTypes: ProgrammingExerciseInstructorRepositoryType[] = ['SOLUTION', 'TEMPLATE', 'TESTS'];
+        const repoTypes: ProgrammingExerciseInstructorRepositoryType[] = ['SOLUTION', 'TEMPLATE', 'TESTS', 'AUXILIARY'];
         repoTypes.forEach((repoType) => {
             component.repositoryType = repoType;
             component.exportRepository();

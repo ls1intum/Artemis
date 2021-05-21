@@ -288,9 +288,9 @@
                                 <jhi-programming-exercise-instructor-repo-download
                                     class="ml-2"
                                     [exerciseId]="programmingExercise.id!"
-                                    [repositoryType]="'TESTS'"
+                                    [repositoryType]="'AUXILIARY'"
+                                    [auxiliaryRepositoryId]="auxiliaryRepository.id!"
                                 ></jhi-programming-exercise-instructor-repo-download>
-
                                 <div class="auxiliaryRepositoryDescription">
                                     <span *ngIf="auxiliaryRepository.checkoutDirectory != undefined; else noCheckoutDirectorySet"
                                         >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
