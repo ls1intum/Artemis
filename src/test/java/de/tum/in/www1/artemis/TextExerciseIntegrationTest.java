@@ -813,4 +813,18 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         courseRepository.save(course);
         request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.FORBIDDEN, String.class);
     }
+
+    @Test
+    @WithMockUser(value="instructor1", roles="INSTRUCTOR")
+    public void testImportedExerciseIdIsSet() throws Exception {
+        // Create course with one released text exercise
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(courseWithOneReleasedTextExercise.getId()).get(0);
+        // import text exercise
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        // fetch imported exercise
+        TextExercise importedTextExercises = request.getList("/api/courses/" + courseWithOneReleasedTextExercise.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class).get(1);
+        // assert that importedExerciseId is set correctly for the imported text exercise
+        assertThat(textExercise.getId()).isEqualTo(importedTextExercises.getImportedExerciseId());
+    }
 }
