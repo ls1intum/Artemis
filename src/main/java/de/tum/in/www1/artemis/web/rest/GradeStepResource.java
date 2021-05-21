@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
@@ -31,17 +30,14 @@ public class GradeStepResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final GradingScaleService gradingScaleService;
-
     private final GradingScaleRepository gradingScaleRepository;
 
     private final GradeStepRepository gradeStepRepository;
 
     private final CourseRepository courseRepository;
 
-    public GradeStepResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
-        this.gradingScaleService = gradingScaleService;
+    public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
+            CourseRepository courseRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
         this.authCheckService = authCheckService;
@@ -134,7 +130,7 @@ public class GradeStepResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        GradeStep gradeStep = gradingScaleService.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
         return ResponseEntity.ok(gradeStep);
     }
 
@@ -153,7 +149,7 @@ public class GradeStepResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        GradeStep gradeStep = gradingScaleService.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
         return ResponseEntity.ok(gradeStep);
     }
 }
