@@ -845,7 +845,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise importedTextExercise2 = textExercises.get(1);
 
         // assert that importedExerciseId is set to null for both imported exercises
-        assertThat(importedTextExercise1.getImportedExerciseId()).isEqualTo(null);
-        assertThat(importedTextExercise2.getImportedExerciseId()).isEqualTo(null);
+        assertThat(importedTextExercise1.getImportedExerciseId()).isNull();
+        assertThat(importedTextExercise2.getImportedExerciseId()).isNull();
     }
 }
