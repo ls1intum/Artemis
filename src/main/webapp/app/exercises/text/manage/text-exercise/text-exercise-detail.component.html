@@ -31,9 +31,9 @@
                 [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
                 [exerciseId]="textExercise.id!"
                 [exerciseType]="ExerciseType.TEXT"
-                [currentPercentage]="doughnutStats.averageScoreOfExercise"
+                [currentPercentage]="doughnutStats?.averageScoreOfExercise"
                 [currentAbsolute]="absoluteAveragePoints"
-                [currentMax]="doughnutStats.maxPointsOfExercise"
+                [currentMax]="doughnutStats?.maxPointsOfExercise"
             >
             </jhi-doughnut-chart>
             <jhi-doughnut-chart
@@ -43,8 +43,8 @@
                 [exerciseId]="textExercise.id!"
                 [exerciseType]="ExerciseType.TEXT"
                 [currentPercentage]="participationsInPercent"
-                [currentAbsolute]="doughnutStats.numberOfParticipations"
-                [currentMax]="doughnutStats.numberOfStudentsInCourse"
+                [currentAbsolute]="doughnutStats?.numberOfParticipations"
+                [currentMax]="doughnutStats?.numberOfStudentsInCourse"
             >
             </jhi-doughnut-chart>
             <jhi-doughnut-chart
@@ -54,8 +54,8 @@
                 [exerciseId]="textExercise.id!"
                 [exerciseType]="ExerciseType.TEXT"
                 [currentPercentage]="questionsAnsweredInPercent"
-                [currentAbsolute]="doughnutStats.numberOfAnsweredQuestions"
-                [currentMax]="doughnutStats.numberOfQuestions"
+                [currentAbsolute]="doughnutStats?.numberOfAnsweredQuestions"
+                [currentMax]="doughnutStats?.numberOfQuestions"
             >
             </jhi-doughnut-chart>
             <hr />

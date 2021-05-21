@@ -74,6 +74,7 @@ export class TextExerciseService {
         return this.http.get<TextExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
         );
     }
 

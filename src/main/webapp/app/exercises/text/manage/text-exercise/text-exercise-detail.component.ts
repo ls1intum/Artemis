@@ -25,15 +25,16 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
 
     textExercise: TextExercise;
+    courseId = 0;
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
     doughnutStats: ExerciseManagementStatisticsDto;
-    absoluteAveragePoints = 0;
-    participationsInPercent = 0;
-    questionsAnsweredInPercent = 0;
+    absoluteAveragePoints: number;
+    participationsInPercent: number;
+    questionsAnsweredInPercent: number;
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -83,7 +84,9 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Unsubscribe from changes of text exercise on destruction of component.
      */
     ngOnDestroy() {
-        this.subscription.unsubscribe();
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
         this.eventManager.destroy(this.eventSubscriber);
     }
 
