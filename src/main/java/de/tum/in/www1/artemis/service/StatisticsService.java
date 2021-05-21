@@ -164,15 +164,15 @@ public class StatisticsService {
         var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         var exerciseManagementStatisticsDTO = new ExerciseManagementStatisticsDTO();
         // number of students
-        var numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
+        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
         exerciseManagementStatisticsDTO.setNumberOfStudentsInCourse(Objects.requireNonNullElse(numberOfStudents, 0L));
         // number of participations
-        var numberOfParticipations = participationRepository.getNumberOfParticipationsForExercise(exercise.getId());
+        long numberOfParticipations = participationRepository.getNumberOfParticipationsForExercise(exercise.getId());
         exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipations);
         // questions stats
-        var questionsAsked = statisticsRepository.getNumberOfQuestionsAskedForExercise(exercise.getId());
+        long questionsAsked = statisticsRepository.getNumberOfQuestionsAskedForExercise(exercise.getId());
         exerciseManagementStatisticsDTO.setNumberOfQuestions(questionsAsked);
-        var answeredQuestions = statisticsRepository.getNumberOfQuestionsAnsweredForExercise(exercise.getId());
+        long answeredQuestions = statisticsRepository.getNumberOfQuestionsAnsweredForExercise(exercise.getId());
         exerciseManagementStatisticsDTO.setNumberOfAnsweredQuestions(answeredQuestions);
 
         // average score & max points
