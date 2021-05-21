@@ -856,26 +856,28 @@ public class ProgrammingExerciseResource {
     /**
      * GET /programming-exercises/:exerciseId/export-instructor-auxiliary-repository/:repositoryType : sends an auxiliary repository as a zip file
      * @param exerciseId The id of the programming exercise
-     * @param repositoryName The name of the auxiliary repository to zip and send
+     * @param repositoryId The id of the auxiliary repository
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(Endpoints.EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable String repositoryName) throws IOException {
+    public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
-        Optional<AuxiliaryRepository> auxiliaryRepository = auxiliaryRepositoryRepository.findByIdAndName(exerciseId, repositoryName);
+        Optional<AuxiliaryRepository> optionalAuxiliaryRepository = auxiliaryRepositoryRepository.findById(repositoryId);
 
-        if (auxiliaryRepository.isEmpty()) {
+        if (optionalAuxiliaryRepository.isEmpty()) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the URL of the auxiliary couldn't be retrieved.")).build();
         }
 
+        AuxiliaryRepository auxiliaryRepository = optionalAuxiliaryRepository.get();
+
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExercise(programmingExercise.getId(), auxiliaryRepository.get(),
+        Optional<File> zipFile = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExercise(programmingExercise.getId(), auxiliaryRepository,
                 new ArrayList<>());
         if (zipFile.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
@@ -884,7 +886,7 @@ public class ProgrammingExerciseResource {
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
 
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, programmingExercise.getId(),
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", auxiliaryRepository.getName(), programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);

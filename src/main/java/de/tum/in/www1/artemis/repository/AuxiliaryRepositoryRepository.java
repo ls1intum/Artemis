@@ -18,10 +18,4 @@ public interface AuxiliaryRepositoryRepository extends JpaRepository<AuxiliaryRe
 
     List<AuxiliaryRepository> findByExerciseId(Long exerciseId);
 
-    @Query("""
-            SELECT DISTINCT programmingExerciseAuxiliaryRepositories FROM ProgrammingExerciseAuxiliaryRepositories repositories
-            WHERE programmingExerciseAuxiliaryRepositories.id = :#{#exerciseId}
-            AND programmingExerciseAuxiliaryRepositories.name = :#{#repositoryName}
-            """)
-    Optional<AuxiliaryRepository> findByIdAndName(@Param("exerciseId") Long courseId, @Param("repositoryName") String repositoryName);
 }
