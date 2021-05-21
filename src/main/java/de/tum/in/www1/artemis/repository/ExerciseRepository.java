@@ -54,6 +54,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     Set<Exercise> findAllExercisesByCourseId(@Param("courseId") Long courseId);
 
+    /**
+     * Select all exercises whose importedExerciseId is equal to the provided parent exercise ID
+     * @param importedExerciseID the id of the parent exercise
+     * @return list of exercises we want to fetch
+     */
     @Query("""
             SELECT e FROM Exercise e
             WHERE e.importedExerciseId = :#{#importedExerciseID}
