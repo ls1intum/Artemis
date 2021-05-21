@@ -21,14 +21,14 @@
             @extend .btn;
             @extend .btn-secondary;
             > *:not(:first-child) {
-                @extend .ml-2;
+                @extend .ml-2 !optional;
             }
         }
         &__submit {
             @extend .btn;
             @extend .btn-danger;
             > *:not(:first-child) {
-                @extend .ml-2;
+                @extend .ml-2 !optional;
             }
         }
     }
