@@ -29,7 +29,7 @@ describe('Grading System Component', () => {
     let fixture: ComponentFixture<GradingSystemComponent>;
     let gradingSystemService: GradingSystemService;
 
-    const route = { params: of({ courseId: 1, examId: 1 }) } as any as ActivatedRoute;
+    const route = ({ params: of({ courseId: 1, examId: 1 }) } as any) as ActivatedRoute;
 
     const gradeStep1: GradeStep = {
         gradeName: 'Fail',
@@ -92,7 +92,11 @@ describe('Grading System Component', () => {
     });
 
     it('should handle find response for exam', () => {
-        const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(new HttpResponse<GradingScale>({ body: comp.gradingScale })));
+        const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(
+            of(
+                new HttpResponse<GradingScale>({ body: comp.gradingScale }),
+            ),
+        );
 
         fixture.detectChanges();
 
@@ -101,9 +105,11 @@ describe('Grading System Component', () => {
     });
 
     it('should handle find response for exam and not find a grading scale', () => {
-        const findGradingScaleForExamAndReturnNotFoundStub = sinon
-            .stub(gradingSystemService, 'findGradingScaleForExam')
-            .returns(of(new HttpResponse<GradingScale>({ status: 404 })));
+        const findGradingScaleForExamAndReturnNotFoundStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(
+            of(
+                new HttpResponse<GradingScale>({ status: 404 }),
+            ),
+        );
 
         fixture.detectChanges();
 
@@ -245,7 +251,11 @@ describe('Grading System Component', () => {
         comp.existingGradingScale = true;
         comp.isExam = false;
         comp.courseId = 123;
-        const gradingSystemDeleteForCourseStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForCourse').returns(of(new HttpResponse<{}>({ body: [] })));
+        const gradingSystemDeleteForCourseStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForCourse').returns(
+            of(
+                new HttpResponse<{}>({ body: [] }),
+            ),
+        );
 
         comp.delete();
 
@@ -256,7 +266,11 @@ describe('Grading System Component', () => {
     it('should delete grading scale for exam', () => {
         comp.existingGradingScale = true;
         comp.isExam = true;
-        const gradingSystemDeleteForExamStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForExam').returns(of(new HttpResponse<{}>({ body: [] })));
+        const gradingSystemDeleteForExamStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForExam').returns(
+            of(
+                new HttpResponse<{}>({ body: [] }),
+            ),
+        );
 
         comp.delete();
 
@@ -267,7 +281,11 @@ describe('Grading System Component', () => {
     it('should not update grading scale', () => {
         comp.existingGradingScale = false;
         comp.isExam = false;
-        const gradingSystemServiceStub = sinon.stub(gradingSystemService, 'createGradingScaleForCourse').returns(of(new HttpResponse<GradingScale>({ body: undefined })));
+        const gradingSystemServiceStub = sinon.stub(gradingSystemService, 'createGradingScaleForCourse').returns(
+            of(
+                new HttpResponse<GradingScale>({ body: undefined }),
+            ),
+        );
 
         comp.save();
 
@@ -279,9 +297,11 @@ describe('Grading System Component', () => {
         comp.existingGradingScale = false;
         const createdGradingScaleForCourse = comp.gradingScale;
         createdGradingScaleForCourse.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForCourseStub = sinon
-            .stub(gradingSystemService, 'createGradingScaleForCourse')
-            .returns(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForCourse })));
+        const gradingSystemCreateForCourseStub = sinon.stub(gradingSystemService, 'createGradingScaleForCourse').returns(
+            of(
+                new HttpResponse<GradingScale>({ body: createdGradingScaleForCourse }),
+            ),
+        );
 
         comp.save();
 
@@ -295,9 +315,11 @@ describe('Grading System Component', () => {
         comp.isExam = true;
         const createdGradingScaleForExam = comp.gradingScale;
         createdGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemCreateForExamStub = sinon
-            .stub(gradingSystemService, 'createGradingScaleForExam')
-            .returns(of(new HttpResponse<GradingScale>({ body: createdGradingScaleForExam })));
+        const gradingSystemCreateForExamStub = sinon.stub(gradingSystemService, 'createGradingScaleForExam').returns(
+            of(
+                new HttpResponse<GradingScale>({ body: createdGradingScaleForExam }),
+            ),
+        );
 
         comp.save();
 
@@ -310,9 +332,11 @@ describe('Grading System Component', () => {
         comp.existingGradingScale = true;
         const updateGradingScaleFoCourse = comp.gradingScale;
         updateGradingScaleFoCourse.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForCourseStub = sinon
-            .stub(gradingSystemService, 'updateGradingScaleForCourse')
-            .returns(of(new HttpResponse<GradingScale>({ body: updateGradingScaleFoCourse })));
+        const gradingSystemUpdateForCourseStub = sinon.stub(gradingSystemService, 'updateGradingScaleForCourse').returns(
+            of(
+                new HttpResponse<GradingScale>({ body: updateGradingScaleFoCourse }),
+            ),
+        );
 
         comp.save();
 
@@ -326,9 +350,11 @@ describe('Grading System Component', () => {
         comp.isExam = true;
         const updatedGradingScaleForExam = comp.gradingScale;
         updatedGradingScaleForExam.gradeType = GradeType.BONUS;
-        const gradingSystemUpdateForExamStub = sinon
-            .stub(gradingSystemService, 'updateGradingScaleForExam')
-            .returns(of(new HttpResponse<GradingScale>({ body: updatedGradingScaleForExam })));
+        const gradingSystemUpdateForExamStub = sinon.stub(gradingSystemService, 'updateGradingScaleForExam').returns(
+            of(
+                new HttpResponse<GradingScale>({ body: updatedGradingScaleForExam }),
+            ),
+        );
 
         comp.save();
 

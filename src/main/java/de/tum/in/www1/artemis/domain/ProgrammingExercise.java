@@ -481,6 +481,7 @@ public class ProgrammingExercise extends Exercise {
             case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
             case SOLUTION -> this.getVcsSolutionRepositoryUrl();
             case TESTS -> this.getVcsTestRepositoryUrl();
+            default -> throw new UnsupportedOperationException("Can retrieve URL for repositorytype " + repositoryType);
         };
     }
 
