@@ -38,7 +38,7 @@ declare global {
     }
 }
 
-Cypress.Commands.add('login', (username, password, url) => {
+Cypress.Commands.add('login', (username, password, url = '/') => {
     let token = '';
     cy.request({
         url: '/api/authenticate',
@@ -61,6 +61,7 @@ Cypress.Commands.add('login', (username, password, url) => {
 Cypress.Commands.add('logout', () => {
     localStorage.removeItem(authTokenKey);
     cy.visit('/');
+    cy.url().should('equal', Cypress.config().baseUrl + '/');
     cy.log('Logged out');
 });
 
