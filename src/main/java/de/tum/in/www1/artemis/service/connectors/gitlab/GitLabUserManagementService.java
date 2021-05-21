@@ -298,7 +298,15 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         for (var exercise : exercises) {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(groups, course);
-            accessLevel.ifPresent(level -> addUserToGroup(exercise.getProjectKey(), gitlabUserId, level));
+            accessLevel.ifPresent(level -> {
+                try {
+                    addUserToGroup(exercise.getProjectKey(), gitlabUserId, level);
+                }
+                catch (GitLabException e) {
+                    // Don't throw the exception because it will abort adding the user to the other groups.
+                    log.info("Couldn't add Gitlab user {} to group {}: ", gitlabUserId, exercise.getProjectKey());
+                }
+            });
         }
     }
 
