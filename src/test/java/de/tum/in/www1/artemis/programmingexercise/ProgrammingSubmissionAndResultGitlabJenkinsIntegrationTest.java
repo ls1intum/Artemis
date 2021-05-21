@@ -93,8 +93,8 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());
         postResult(notification, HttpStatus.BAD_REQUEST);
 
-        var result = assertBuildError(participation.getId(), userLogin, false);
-        assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
+        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results.size()).isEqualTo(0);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
