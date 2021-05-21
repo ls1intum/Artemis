@@ -57,11 +57,11 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
      * @param invalidPercentage the invalid percentage
      */
     @ParameterizedTest
-    @ValueSource(doubles = { -60, -1.3, -0.0002, 100.1, 150 })
+    @ValueSource(doubles = { -60, -1.3, -0.0002, 100.2, 150 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> {
-            gradingScaleService.matchPercentageToGradeStep(invalidPercentage, gradingScale.getId());
+            gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, gradingScale.getId());
         });
 
         assertThat(exception.getMessage()).isEqualTo("Grade percentages must be between 0 and 100");
@@ -83,7 +83,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         double percentage = 85;
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            gradingScaleService.matchPercentageToGradeStep(percentage, id);
+            gradingScaleRepository.matchPercentageToGradeStep(percentage, id);
         });
 
         assertThat(exception.getMessage()).isEqualTo("No grade step in selected grading scale matches given percentage");
@@ -107,7 +107,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
         double percentage = 70;
 
-        GradeStep gradeStep = gradingScaleService.matchPercentageToGradeStep(percentage, gradingScaleId);
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(percentage, gradingScaleId);
 
         assertThat(gradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(expectedGradeStep);
     }

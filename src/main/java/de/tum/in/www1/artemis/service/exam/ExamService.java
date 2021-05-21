@@ -92,14 +92,12 @@ public class ExamService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    private final GradingScaleService gradingScaleService;
-
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService, ExerciseService exerciseService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, GradingScaleService gradingScaleService) {
+            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -119,7 +117,6 @@ public class ExamService {
         this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.gradingScaleService = gradingScaleService;
     }
 
     /**
@@ -277,7 +274,7 @@ public class ExamService {
                 // Sets grading scale related properties for exam scores
                 Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
                 if (gradingScale.isPresent()) {
-                    GradeStep studentGrade = gradingScaleService.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                    GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
                     studentResult.overallGrade = studentGrade.getGradeName();
                     studentResult.hasPassed = studentGrade.getIsPassingGrade();
                 }

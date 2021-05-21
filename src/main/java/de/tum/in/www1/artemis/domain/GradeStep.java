@@ -110,10 +110,11 @@ public class GradeStep extends DomainObject {
      * @return whether the percentage matches this grade step
      */
     public boolean matchingGradePercentage(double percentage) {
-        if (percentage == lowerBoundPercentage) {
+        double epsilon = 0.01d;
+        if (Math.abs(percentage - lowerBoundPercentage) < epsilon) {
             return lowerBoundInclusive;
         }
-        else if (percentage == upperBoundPercentage) {
+        else if (Math.abs(percentage - upperBoundPercentage) < epsilon) {
             return upperBoundInclusive;
         }
         else {
