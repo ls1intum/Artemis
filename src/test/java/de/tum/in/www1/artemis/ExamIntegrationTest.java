@@ -96,6 +96,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private ParticipationTestRepository participationTestRepository;
 
     @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
     ZipFileTestUtilService zipFileTestUtilService;
 
     private List<User> users;
@@ -1429,6 +1432,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
         final var exerciseWithNoUsers = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
         exerciseRepo.save(exerciseWithNoUsers);
+
+        GradingScale gradingScale = new GradingScale();
+        gradingScale.setExam(exam);
+        gradingScale.setGradeType(GradeType.GRADE);
+        gradingScale.setGradeSteps(database.generateGradeStepSet(gradingScale, true));
+        gradingScaleRepository.save(gradingScale);
+
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO
@@ -1510,6 +1520,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / response.maxPoints * 100;
             assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
+
+            assertThat(studentResult.overallGrade).isNotNull();
+            assertThat(studentResult.hasPassed).isNotNull();
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
             List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)
