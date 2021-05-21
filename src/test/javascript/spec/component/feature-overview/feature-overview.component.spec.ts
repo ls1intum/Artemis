@@ -20,7 +20,7 @@ describe('Feature Overview Component', () => {
     let debugElement: DebugElement;
 
     describe('Target Audience: Instructors', function () {
-        const route = ({ snapshot: { url: ['instructors'] } } as any) as ActivatedRoute;
+        const route = { snapshot: { url: ['instructors'] } } as any as ActivatedRoute;
 
         beforeEach(() => {
             TestBed.configureTestingModule({

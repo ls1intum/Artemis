@@ -432,12 +432,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         return of([]);
                     }
                     return from(submissions).pipe(
-                        switchMap(
-                            ([participationId, submission]): Observable<ProgrammingSubmissionStateObj> => {
-                                this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-                                return this.processPendingSubmission(submission, participationId, exerciseId, false);
-                            },
-                        ),
+                        switchMap(([participationId, submission]): Observable<ProgrammingSubmissionStateObj> => {
+                            this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                            return this.processPendingSubmission(submission, participationId, exerciseId, false);
+                        }),
                     );
                 }),
                 reduce(this.mapToExerciseBuildState, {}),

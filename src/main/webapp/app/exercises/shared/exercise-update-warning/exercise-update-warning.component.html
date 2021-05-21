@@ -1,0 +1,36 @@
+<div style="padding: 20px">
+    <h2><span jhiTranslate="artemisApp.exercise.update.warning.warning"></span></h2>
+    <div class="warning-problem">
+        <h4><span jhiTranslate="artemisApp.exercise.update.warning.problems"></span></h4>
+        <ul>
+            <li *ngIf="instructionDeleted" class="warning-problem-result-wrapper">
+                <span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span>
+                <ul class="warning-problem-result">
+                    <li class="warning-problem-result-element">
+                        <span jhiTranslate="artemisApp.exercise.update.warning.results"></span>
+                    </li>
+                </ul>
+            </li>
+            <li *ngIf="scoringChanged" class="warning-problem-result-wrapper">
+                <span jhiTranslate="artemisApp.exercise.update.warning.scoringChange"></span>
+                <ul class="warning-problem-result">
+                    <li class="warning-problem-result-element">
+                        <span jhiTranslate="artemisApp.exercise.update.warning.results"></span>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="edit-modal-footer-content">
+        <h4>
+            <span jhiTranslate="artemisApp.exercise.update.warning.confirmtext"></span>
+        </h4>
+        &nbsp;
+        <div class="form-group">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <button type="submit" (click)="confirmChange()" class="btn btn-primary">&nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.confirm"></span></button>
+        </div>
+    </div>
+</div>

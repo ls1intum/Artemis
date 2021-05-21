@@ -120,6 +120,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfSuccessfulParticipations?: number;
     public averagePoints?: number;
     public presentationScoreEnabled?: boolean;
+    public gradingInstructionFeedbackUsed?: boolean;
 
     protected constructor(type: ExerciseType) {
         this.type = type;

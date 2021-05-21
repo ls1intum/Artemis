@@ -21,7 +21,7 @@ describe('QuizExercise Management Component', () => {
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
     quizExercise.id = 456;
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
