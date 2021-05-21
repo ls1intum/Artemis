@@ -10,6 +10,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { HelpIconComponentWithoutTranslation } from 'app/shared/components/help-icon-without-translation.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule, ArtemisMarkdownModule],
@@ -17,6 +18,7 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
     declarations: [
         ButtonComponent,
         HelpIconComponent,
+        HelpIconComponentWithoutTranslation,
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
         CloneRepoButtonComponent,
@@ -27,6 +29,7 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
     exports: [
         ButtonComponent,
         HelpIconComponent,
+        HelpIconComponentWithoutTranslation,
         ConfirmAutofocusButtonComponent,
         CloneRepoButtonComponent,
         ExerciseActionButtonComponent,

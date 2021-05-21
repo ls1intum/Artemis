@@ -31,7 +31,10 @@
                                 <code class="text-white badge badge-primary label-preview">
                                     {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
                                 </code>
-                                <jhi-help-icon *ngIf="auxiliaryRepository.description != undefined" placement="right" text="{{ auxiliaryRepository.description }}"> </jhi-help-icon>
+                                <jhi-help-icon-without-translation
+                                    placement="right"
+                                    text="{{ auxiliaryRepository.description || 'AuxiliaryRepository' }}"
+                                ></jhi-help-icon-without-translation>
                             </li>
                         </div>
                     </div>
