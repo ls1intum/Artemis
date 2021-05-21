@@ -222,8 +222,7 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
-     * solution, or tests repository.
+     * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      * @param exerciseId The id of the programming exercise that has the repository
