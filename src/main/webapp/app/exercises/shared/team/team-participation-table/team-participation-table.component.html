@@ -26,7 +26,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="releaseDate" [minWidth]="170" [width]="170" [maxWidth]="190" [frozenLeft]="true">
+            <ngx-datatable-column prop="releaseDate" [minWidth]="160" [width]="160" [maxWidth]="160" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('releaseDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate"> Release Date </span>
@@ -50,19 +50,15 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column *ngIf="isAdmin" prop="team" [minWidth]="140" [width]="140" [maxWidth]="140" [cellClass]="cellClassLeftSpace" [headerClass]="cellClassLeftSpace">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.id')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.team"> Team </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('team.id')"></fa-icon>
-                    </span>
-                </ng-template>
+            <ngx-datatable-column [minWidth]="140" [width]="140" [maxWidth]="140" [frozenLeft]="true">
                 <ng-template ngx-datatable-cell-template let-value="row">
-                    <a *ngIf="exercise.id !== value.id; else teamId" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]">
-                        {{ value.team.id }}
+                    <a *ngIf="exercise.id !== value.id; else teamId" (click)="onActivate()" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]">
+                        {{ 'entity.action.view' | artemisTranslate }}
                     </a>
                     <ng-template #teamId>
-                        <span class="current-team">{{ value.team.id }}</span>
+                        <span class="current-team">
+                            {{ 'entity.action.view' | artemisTranslate }}
+                        </span>
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>

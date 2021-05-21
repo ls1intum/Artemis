@@ -108,9 +108,11 @@ export class TeamParticipationTableComponent implements OnInit {
      *
      * @param exercise Exercise is passed in from the template (instead of doing this.exercise) to trigger the ngx-datatable change detection
      */
-    rowClass = (exercise: Exercise) => (row: Exercise): string => {
-        return exercise.id === row.id ? currentExerciseRowClass : '';
-    };
+    rowClass =
+        (exercise: Exercise) =>
+        (row: Exercise): string => {
+            return exercise.id === row.id ? currentExerciseRowClass : '';
+        };
 
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission
@@ -140,8 +142,13 @@ export class TeamParticipationTableComponent implements OnInit {
         return AssessmentAction.OPEN;
     }
 
+    onActivate() {
+        window.scroll(0, 0);
+    }
+
     /**
      * Returns whether the assessment button should be disabled
+     * @param exercise Exercise for which the submission is to be assessed
      * @param submission Submission that is to be assessed
      */
     assessmentButtonDisabled(exercise: Exercise, submission: Submission | null) {
