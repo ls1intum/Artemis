@@ -65,7 +65,7 @@ describe('Programming exercise', () => {
         cy.log('Successfully created a new programming exercise!');
 
         openCourseManagement();
-        cy.get('.course-table-container').contains(`${courseName} (${courseShortName})`).parent().parent().find('.float-right, .card-groups').children().eq(0).click();
+        cy.get('.course-table-container').contains('0 Students').click();
         cy.get('#typeahead-basic').type(username);
         cy.get('#ngb-typeahead-0-0').should(beVisible).click();
 
@@ -83,7 +83,7 @@ describe('Programming exercise', () => {
 
         // TODO: Actually interact with the online code editor
         // Asserts that every sub-task in the programming exercise is marked with a question mark
-        cy.get('.stepwizard-row')
+        cy.get('.stepwizard-row', { timeout: 10000 })
             .find('.stepwizard-step')
             .each(($el, index, $list) => {
                 cy.wrap($el).find('[data-icon="question"]').should(beVisible);
