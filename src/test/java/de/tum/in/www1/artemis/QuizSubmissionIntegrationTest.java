@@ -234,6 +234,21 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void testQuizSubmitLiveMode_badRequest_alreadySubmitted() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
+        Course course = courses.get(0);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(10));
+        quizExercise.setDuration(10);
+        quizExercise = quizExerciseService.save(quizExercise);
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
+        // submit quiz for the first time, expected status = OK
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK);
+        // submit quiz for the second time, expected status = BAD_REQUEST
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPractice() throws Exception {
 
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
