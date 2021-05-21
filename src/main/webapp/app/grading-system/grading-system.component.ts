@@ -14,10 +14,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class GradingSystemComponent implements OnInit {
     ButtonSize = ButtonSize;
-    gradingScale: GradingScale = {
-        gradeSteps: [],
-        gradeType: GradeType.GRADE,
-    };
+    gradingScale = new GradingScale();
     lowerBoundInclusivity = true;
     existingGradingScale = false;
     firstPassingGrade: string;
@@ -153,7 +150,6 @@ export class GradingSystemComponent implements OnInit {
             });
         }
         this.gradingScale = new GradingScale();
-        this.gradingScale.gradeType = GradeType.GRADE;
     }
 
     /**

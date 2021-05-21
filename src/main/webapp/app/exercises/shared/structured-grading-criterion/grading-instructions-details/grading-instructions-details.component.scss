@@ -1,0 +1,60 @@
+.edit-sqi {
+    .grading-instructions-update-border {
+        padding: 10px;
+        border-radius: 0.1em;
+        border-width: 1px;
+        border-style: solid;
+        border-color: lightgrey;
+        height: auto;
+
+        .re-evaluate-order-button {
+            display: inline-block;
+            padding: 4px;
+            cursor: move;
+
+            &:hover {
+                color: blue;
+            }
+        }
+    }
+
+    .re-evaluate-button {
+        display: inline-block;
+        padding: 4px;
+
+        &:hover {
+            color: blue;
+        }
+    }
+
+    .instructions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+
+        input,
+        .input-group-btn {
+            display: inline-block;
+            width: auto;
+        }
+
+        .input-group > input {
+            height: 100%;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin: 0 5px 15px;
+
+            > * {
+                margin: 0 4px;
+            }
+        }
+
+        .background-file {
+            display: flex;
+        }
+    }
+}

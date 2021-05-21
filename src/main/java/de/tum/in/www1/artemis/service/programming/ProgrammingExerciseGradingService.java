@@ -476,6 +476,12 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+            // Checks if weightSum == 0. We need to use magic because we are comparing a floating-point
+            // number and weightSum == 0 would lose its precision.
+            if (Math.abs(weightSum - 0) < 1E-8) {
+                result.setScore(0D);
+                return;
+            }
 
             // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {

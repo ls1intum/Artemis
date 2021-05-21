@@ -4,7 +4,7 @@ import { Exercise } from 'app/entities/exercise.model';
 
 export class MockProgrammingSubmissionService implements IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId = (participationId: number) =>
-        of(([1, ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null] as unknown) as ProgrammingSubmissionStateObj);
+        of([1, ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null] as unknown as ProgrammingSubmissionStateObj);
     getSubmissionStateOfExercise = (exerciseId: number) => empty();
     triggerBuild = (participationId: number) => of({});
     triggerInstructorBuild = (participationId: number) => of({});

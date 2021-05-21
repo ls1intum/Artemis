@@ -43,7 +43,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     quizExercise.id = 456;
     quizExercise.title = 'MyQuiz';
 
-    const route = ({ params: of({ exerciseId: 123 }) } as any) as ActivatedRoute;
+    const route = { params: of({ exerciseId: 123 }) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

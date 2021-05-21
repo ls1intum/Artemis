@@ -102,6 +102,8 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final GitService gitService;
 
     private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
@@ -128,7 +130,8 @@ public class ProgrammingExerciseResource {
             PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService) {
+            CourseRepository courseRepository, FeedbackRepository feedbackRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService) {
+
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -146,6 +149,7 @@ public class ProgrammingExerciseResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
+        this.feedbackRepository = feedbackRepository;
         this.gitService = gitService;
         this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
     }
@@ -675,6 +679,12 @@ public class ProgrammingExerciseResource {
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
+
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+
+        if (!feedbackList.isEmpty()) {
+            programmingExercise.setGradingInstructionFeedbackUsed(true);
+        }
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -777,7 +787,36 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
+     * GET /programming-exercises/:exerciseId/export-instructor-exercise
+     * @param exerciseId The id of the programming exercise
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(Endpoints.EXPORT_INSTRUCTOR_EXERCISE)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+
+        long start = System.nanoTime();
+        var path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
+        if (path == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+        var finalZipFile = path.toFile();
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(finalZipFile));
+
+        log.info("Export of the programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
+                formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
      * @param exerciseId The id of the programming exercise
      * @param repositoryType The type of repository to zip and send
      * @return ResponseEntity with status
@@ -791,18 +830,18 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         long start = System.nanoTime();
-        File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
-        if (zipFile == null) {
+        Optional<File> zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
+        if (zipFile.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
 
         log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType.getName(), programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
 
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
 
     /**
@@ -1142,6 +1181,8 @@ public class ProgrammingExerciseResource {
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPANTS = PROGRAMMING_EXERCISE + "/export-repos-by-participant-identifiers/{participantIdentifiers}";
 
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
+
+        public static final String EXPORT_INSTRUCTOR_EXERCISE = PROGRAMMING_EXERCISE + "/export-instructor-exercise";
 
         public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";
 

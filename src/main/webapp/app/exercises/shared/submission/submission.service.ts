@@ -35,17 +35,15 @@ export class SubmissionService {
      * @param {number} participationId - The id of the participation to be searched for
      */
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
-            .pipe(
-                map((res) => this.convertDateArrayFromServer(res)),
-                filter((res) => !!res.body),
-                tap((res) =>
-                    res.body!.forEach((submission) => {
-                        this.reconnectSubmissionAndResult(submission);
-                    }),
-                ),
-            );
+        return this.http.get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' }).pipe(
+            map((res) => this.convertDateArrayFromServer(res)),
+            filter((res) => !!res.body),
+            tap((res) =>
+                res.body!.forEach((submission) => {
+                    this.reconnectSubmissionAndResult(submission);
+                }),
+            ),
+        );
     }
 
     /**

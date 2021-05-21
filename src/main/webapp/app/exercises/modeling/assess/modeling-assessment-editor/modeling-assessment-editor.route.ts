@@ -27,7 +27,7 @@ export const routes: Routes = [
     },
 
     {
-        path: ':courseId/modeling-exercises/:exerciseId/assessment',
+        path: ':courseId/modeling-exercises/:exerciseId/submissions',
         component: ModelingAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

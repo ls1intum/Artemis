@@ -4,6 +4,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import * as $ from 'jquery';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -158,10 +159,20 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         for (const assessment of assessments) {
             const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
             if (existingFeedback) {
+                if (existingFeedback.credits !== assessment.score && existingFeedback.gradingInstruction) {
+                    existingFeedback.gradingInstruction = undefined;
+                }
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
+                if (assessment.dropInfo) {
+                    existingFeedback.gradingInstruction = new GradingInstruction();
+                    existingFeedback.gradingInstruction.id = assessment.dropInfo.instructionId;
+                }
             } else {
-                this.elementFeedback.set(assessment.modelElementId, Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
+                this.elementFeedback.set(
+                    assessment.modelElementId,
+                    Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo),
+                );
             }
         }
         return [...this.elementFeedback.values()];
