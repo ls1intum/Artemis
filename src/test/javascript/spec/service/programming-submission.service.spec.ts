@@ -263,7 +263,7 @@ describe('ProgrammingSubmissionService', () => {
             submission = sub;
         });
 
-        expect(httpGetStub).to.have.been.calledOnceWithExactly('undefinedapi/programming-exercises/3/latest-pending-submissions');
+        expect(httpGetStub).to.have.been.calledOnceWithExactly('api/programming-exercises/3/latest-pending-submissions');
         // Fetching the latest pending submission should not trigger a rest call for a cached submission.
         expect(fetchLatestPendingSubmissionSpy).not.to.have.been.called;
         expect(submissionState).to.equal(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
