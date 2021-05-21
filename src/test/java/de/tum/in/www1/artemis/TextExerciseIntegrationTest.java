@@ -815,7 +815,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(value="instructor1", roles="INSTRUCTOR")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testImportedExerciseIdIsSet() throws Exception {
         // Create course with one released text exercise
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
@@ -826,5 +826,26 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise importedTextExercises = request.getList("/api/courses/" + courseWithOneReleasedTextExercise.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class).get(1);
         // assert that importedExerciseId is set correctly for the imported text exercise
         assertThat(textExercise.getId()).isEqualTo(importedTextExercises.getImportedExerciseId());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testImportedExerciseIdIsSetToNullAfterParentIsDeleted() throws Exception {
+        // Create course with one released text exercise
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(courseWithOneReleasedTextExercise.getId()).get(0);
+        // import 2 text exercises from the first exercise
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        // delete parent exercise
+        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        // fetch imported exercises
+        List<TextExercise> textExercises = request.getList("/api/courses/" + courseWithOneReleasedTextExercise.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class);
+        TextExercise importedTextExercise1 = textExercises.get(0);
+        TextExercise importedTextExercise2 = textExercises.get(1);
+
+        // assert that importedExerciseId is set to null for both imported exercises
+        assertThat(importedTextExercise1.getImportedExerciseId()).isEqualTo(null);
+        assertThat(importedTextExercise2.getImportedExerciseId()).isEqualTo(null);
     }
 }
