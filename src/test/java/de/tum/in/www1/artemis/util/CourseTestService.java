@@ -111,6 +111,10 @@ public class CourseTestService {
         return courseRepo;
     }
 
+    public UserRepository getUserRepo() {
+        return userRepo;
+    }
+
     // Test
     public void testCreateCourseWithPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
@@ -392,6 +396,16 @@ public class CourseTestService {
         course.setInstructorGroupName("new-instructor-group");
         course.setEditorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
+
+        // Create instructor in the course
+        User user = ModelFactory.generateActivatedUser("instructor11");
+        user.setGroups(Set.of("new-instructor-group"));
+        userRepo.save(user);
+
+        // Create teaching assisstant in the course
+        user = ModelFactory.generateActivatedUser("teaching-assisstant11");
+        user.setGroups(Set.of("new-ta-group"));
+        userRepo.save(user);
 
         mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);

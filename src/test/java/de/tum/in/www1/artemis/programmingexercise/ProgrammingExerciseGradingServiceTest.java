@@ -188,6 +188,36 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldSetScoreCorrectlyIfWeightSumIsReallyBigOrReallySmall() {
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(0.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.00000000000000001);
+        testCases.get("test3").active(false).weight(0.);
+        testCaseRepository.saveAll(testCases.values());
+
+        Result result = new Result();
+        result.addFeedback(new Feedback().result(result).text("test1").positive(false).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        result.rated(true) //
+                .hasFeedback(true) //
+                .successful(false) //
+                .completionDate(ZonedDateTime.now()) //
+                .assessmentType(AssessmentType.AUTOMATIC);
+
+        result = gradingService.calculateScoreForResult(result, programmingExercise, false);
+        assertThat(result.getScore()).isEqualTo(0);
+
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.8000000000);
+        testCaseRepository.saveAll(testCases.values());
+
+        result = gradingService.calculateScoreForResult(result, programmingExercise, false);
+        assertThat(result.getScore()).isGreaterThan(0);
+
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
@@ -195,6 +225,7 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
+
         testCaseRepository.saveAll(testCases.values());
 
         var result1 = new Result();
