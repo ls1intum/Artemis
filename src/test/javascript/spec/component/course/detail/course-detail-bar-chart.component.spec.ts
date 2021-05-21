@@ -5,7 +5,7 @@ import * as chai from 'chai';
 import { MockPipe } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-detail-bar-chart.component';

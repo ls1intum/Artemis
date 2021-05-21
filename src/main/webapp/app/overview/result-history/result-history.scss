@@ -1,3 +1,4 @@
+@use "sass:math";
 @import 'src/main/webapp/content/scss/artemis-variables';
 
 $result-element-size: 25px;
@@ -48,7 +49,7 @@ $result-element-size: 25px;
         .result-divider {
             width: calc(100% - #{$result-element-size});
             border-top: 1px solid;
-            margin-top: $result-element-size / 2;
+            margin-top: math.div($result-element-size, 2);
         }
 
         &:last-child {
