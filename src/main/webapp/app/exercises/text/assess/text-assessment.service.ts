@@ -110,7 +110,7 @@ export class TextAssessmentService {
             .get<StudentParticipation>(`${this.resourceUrl}/text-submissions/${submissionId}/for-assessment`, { observe: 'response', params })
             .pipe<HttpResponse<StudentParticipation>, StudentParticipation>(
                 // Wire up Result and Submission
-                tap((response) => {
+                tap((response: HttpResponse<StudentParticipation>) => {
                     const participation = response.body!;
                     const submission = participation.submissions![0];
                     let result;
@@ -122,7 +122,7 @@ export class TextAssessmentService {
                     TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
                     (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
                 }),
-                map<HttpResponse<StudentParticipation>, StudentParticipation>((response) => response.body!),
+                map<HttpResponse<StudentParticipation>, StudentParticipation>((response: HttpResponse<StudentParticipation>) => response.body!),
             );
     }
 
