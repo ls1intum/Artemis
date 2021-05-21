@@ -44,9 +44,17 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     Course course;
 
+    TextExercise exercise;
+
     List<GraphType> artemisGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.LOGGED_IN_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE,
             GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
             GraphType.CREATED_FEEDBACKS);
+
+    List<GraphType> courseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS,
+            GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS, GraphType.QUESTIONS_ASKED,
+            GraphType.QUESTIONS_ANSWERED);
+
+    List<GraphType> exerciseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS);
 
     @BeforeEach
     public void initTestCase() {
@@ -54,11 +62,11 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         course = database.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();
-        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
-        course.addExercises(textExercise);
-        textExerciseRepository.save(textExercise);
+        exercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
+        course.addExercises(exercise);
+        textExerciseRepository.save(exercise);
         StudentQuestion studentQuestion = new StudentQuestion();
-        studentQuestion.setExercise(textExercise);
+        studentQuestion.setExercise(exercise);
         studentQuestion.setQuestionText("Test Student Question 1");
         studentQuestion.setVisibleForStudents(true);
         studentQuestion.setCreationDate(ZonedDateTime.now().minusSeconds(11));
@@ -75,13 +83,13 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         // one submission today
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.submissionDate(ZonedDateTime.now().minusSeconds(1));
-        var submission = database.addSubmission(textExercise, textSubmission, "student1");
+        var submission = database.addSubmission(exercise, textSubmission, "student1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL);
 
         for (int i = 2; i <= 12; i++) {
             textSubmission = new TextSubmission();
             textSubmission.submissionDate(ZonedDateTime.now().minusMonths(i - 1).withDayOfMonth(10));
-            submission = database.addSubmission(textExercise, textSubmission, "student" + i);
+            submission = database.addSubmission(exercise, textSubmission, "student" + i);
             database.addResultToSubmission(submission, AssessmentType.MANUAL);
         }
     }
@@ -173,42 +181,38 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetChartDataForCourse() throws Exception {
-        var courseId = course.getId();
         SpanType span = SpanType.WEEK;
         int periodIndex = 0;
-        var graph = GraphType.SUBMISSIONS;
         var view = StatisticsView.COURSE;
-        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("span", "" + span);
-        parameters.add("periodIndex", "" + periodIndex);
-        parameters.add("graphType", "" + graph);
-        parameters.add("view", "" + view);
-        parameters.add("entityId", "" + courseId);
-        Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
-        assertThat(result.length).isEqualTo(7);
-        // one submission was manually added right before the request
-        assertThat(result[6]).isEqualTo(1);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetQuestionsAskedForCourse() throws Exception {
-        List<GraphType> questionStats = Arrays.asList(GraphType.QUESTIONS_ASKED, GraphType.QUESTIONS_ANSWERED);
-        for (GraphType questionGraph : questionStats) {
-            var courseId = course.getId();
-            SpanType span = SpanType.WEEK;
-            int periodIndex = 0;
-            var view = StatisticsView.COURSE;
+        var courseId = course.getId();
+        for (GraphType graph : courseGraphs) {
             LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
             parameters.add("span", "" + span);
             parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + questionGraph);
+            parameters.add("graphType", "" + graph);
             parameters.add("view", "" + view);
             parameters.add("entityId", "" + courseId);
             Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result.length).isEqualTo(7);
-            // one question and one answer was manually added
-            assertThat(result[6]).isEqualTo(1);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetChartDataForExercise() throws Exception {
+        SpanType span = SpanType.WEEK;
+        int periodIndex = 0;
+        var view = StatisticsView.EXERCISE;
+        var exerciseId = exercise.getId();
+        for (GraphType graph : exerciseGraphs) {
+            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+            parameters.add("span", "" + span);
+            parameters.add("periodIndex", "" + periodIndex);
+            parameters.add("graphType", "" + graph);
+            parameters.add("view", "" + view);
+            parameters.add("entityId", "" + exerciseId);
+            Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
+            assertThat(result.length).isEqualTo(7);
         }
     }
 

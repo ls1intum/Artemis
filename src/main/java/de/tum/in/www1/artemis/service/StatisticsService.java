@@ -155,7 +155,7 @@ public class StatisticsService {
     }
 
     /**
-     * Get the average score of the exercise
+     * Get statistics regarding a specific exercise
      *
      * @param exercise    the exercise for which the data should be fetched
      * @return a custom ExerciseManagementStatisticsDTO, which contains the relevant data
