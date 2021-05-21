@@ -298,15 +298,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         for (var exercise : exercises) {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(groups, course);
-            accessLevel.ifPresent(level -> {
-                try {
-                    addUserToGroup(exercise.getProjectKey(), gitlabUserId, level);
-                }
-                catch (GitLabException e) {
-                    // Don't throw the exception because it will abort adding the user to the other groups.
-                    log.info("Couldn't add Gitlab user {} to group {}: ", gitlabUserId, exercise.getProjectKey());
-                }
-            });
+            accessLevel.ifPresent(level -> addUserToGroup(exercise.getProjectKey(), gitlabUserId, level));
         }
     }
 
@@ -338,6 +330,10 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         catch (GitLabApiException e) {
             if (e.getMessage().equals("Member already exists")) {
                 log.warn("Member already exists for group {}", groupName);
+                return;
+            }
+            else if (e.getHttpStatus() == 404) {
+                log.warn("Group not found {}", groupName);
                 return;
             }
             throw new GitLabException(String.format("Error adding new user [%d] to group [%s]", gitlabUserId, groupName), e);
