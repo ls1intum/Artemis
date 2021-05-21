@@ -27,6 +27,9 @@ import * as sinon from 'sinon';
 import { SinonStub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../../test.module';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeStep } from 'app/entities/grade-step.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,6 +44,7 @@ describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
     let component: CourseScoresComponent;
     let courseService: CourseManagementService;
+    let gradingSystemService: GradingSystemService;
 
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
@@ -246,6 +250,15 @@ describe('CourseScoresComponent', () => {
                 },
                 MockProvider(TranslateService),
                 MockProvider(ParticipantScoresService),
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForCourse: () => {
+                        return of(
+                            new HttpResponse({
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
             ],
         })
             .compileComponents()
@@ -253,6 +266,7 @@ describe('CourseScoresComponent', () => {
                 fixture = TestBed.createComponent(CourseScoresComponent);
                 component = fixture.componentInstance;
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
+                gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
                 const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
                 findCourseScoresSpy = sinon.stub(participationScoreService, 'findCourseScores').returns(of(new HttpResponse({ body: [courseScoreStudent1, courseScoreStudent2] })));
             });
@@ -384,6 +398,32 @@ describe('CourseScoresComponent', () => {
         validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
         expect(maxRow[OVERALL_COURSE_POINTS_KEY]).to.equal('30');
+    });
+
+    it('should set grading scale properties correctly', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'A',
+            lowerBoundInclusive: true,
+            lowerBoundPercentage: 0,
+            upperBoundInclusive: true,
+            upperBoundPercentage: 100,
+            isPassingGrade: true,
+        };
+        const gradingScale: GradingScale = {
+            gradeType: GradeType.GRADE,
+            gradeSteps: [gradeStep],
+        };
+        spyOn(gradingSystemService, 'sortGradeSteps').and.returnValue([gradeStep]);
+        spyOn(gradingSystemService, 'maxGrade').and.returnValue('A');
+        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradeStep);
+
+        component.calculateGradingScaleInformation(gradingScale);
+
+        expect(component.gradingScaleExists).to.be.true;
+        expect(component.gradingScale).to.equal(gradingScale);
+        expect(component.isBonus).to.be.false;
+        expect(component.maxGrade).to.equal('A');
+        expect(component.averageGrade).to.equal('A');
     });
 
     function validateUserRow(
