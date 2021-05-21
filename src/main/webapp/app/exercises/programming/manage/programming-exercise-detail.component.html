@@ -268,13 +268,13 @@
                     <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories">Auxiliary Repositories</span>
                     <jhi-add-auxiliary-repository-button
                         placement="right"
-                        *ngIf="programmingExercise.isAtLeastEditor"
+                        *ngIf="programmingExercise.isAtLeastEditor && supportsAuxiliaryRepositories"
                         [exercise]="programmingExercise"
                         class="mr-2"
                     ></jhi-add-auxiliary-repository-button>
                 </dt>
                 <dd></dd>
-                <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0">
+                <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
                     <ul>
                         <li *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <dt>

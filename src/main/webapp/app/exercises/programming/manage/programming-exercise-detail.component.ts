@@ -19,6 +19,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -35,6 +36,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
+    supportsAuxiliaryRepositories: boolean;
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
@@ -54,6 +56,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private translateService: TranslateService,
         private auxiliaryRepositoryService: AuxiliaryRepositoryService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
@@ -83,6 +86,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             }
 
             this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.programmingExercise);
+        });
+
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+            }
         });
     }
 
