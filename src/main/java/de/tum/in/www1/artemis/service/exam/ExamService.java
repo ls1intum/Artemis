@@ -271,6 +271,13 @@ public class ExamService {
 
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+                // Sets grading scale related properties for exam scores
+                Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
+                if (gradingScale.isPresent()) {
+                    GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                    studentResult.overallGrade = studentGrade.getGradeName();
+                    studentResult.hasPassed = studentGrade.getIsPassingGrade();
+                }
             }
             scores.studentResults.add(studentResult);
         }
