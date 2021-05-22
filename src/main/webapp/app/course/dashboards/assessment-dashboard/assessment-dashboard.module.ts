@@ -10,6 +10,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.module';
 import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
@@ -23,6 +24,7 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         ArtemisTutorLeaderboardModule,
         ArtemisTutorParticipationGraphModule,
         ArtemisExerciseAssessmentDashboardModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [AssessmentDashboardComponent, AssessmentDashboardInformationComponent],
 })
