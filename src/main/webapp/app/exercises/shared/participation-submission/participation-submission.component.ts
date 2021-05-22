@@ -32,7 +32,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     selector: 'jhi-participation-submission',
     templateUrl: './participation-submission.component.html',
 })
-export class ParticipationSubmissionComponent implements OnInit, OnChanges {
+export class ParticipationSubmissionComponent implements OnInit {
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
     readonly actionTypeEmpty = ActionType.NoButtonTextDelete;
@@ -74,11 +74,6 @@ export class ParticipationSubmissionComponent implements OnInit, OnChanges {
         this.setupPage();
         this.eventSubscriber = this.eventManager.subscribe('submissionsModification', () => this.setupPage());
     }
-
-    ngOnChanges() {
-
-    }
-
     /**
      * Set up page by loading participation and all submissions
      */
@@ -200,20 +195,13 @@ export class ParticipationSubmissionComponent implements OnInit, OnChanges {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
                     this.textAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
-                        () => {
-                            console.log(submission);
-                            submission.results?.filter((deletedResult) => deletedResult.id != result.id);
-                            console.log(submission);
-                            this.dialogErrorSource.next('');
-                        },
-                        (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+
                     );
                     break;
                 case ExerciseType.MODELING:
                     this.modelingAssessmentsService.deleteAssessment(submission.id, result.id).subscribe(
                         () => {
-                            submission.results?.filter((deletedResult) => deletedResult.id != result.id);
-
+                            submission.results = submission.results?.filter((remainingResult) => remainingResult.id != result.id);
                             this.dialogErrorSource.next('');
                         },
                         (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -222,8 +210,7 @@ export class ParticipationSubmissionComponent implements OnInit, OnChanges {
                 case ExerciseType.FILE_UPLOAD:
                     this.fileUploadAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
                         () => {
-                            submission.results?.filter((deletedResult) => deletedResult.id != result.id);
-
+                            submission.results = submission.results?.filter((remainingResult) => remainingResult.id != result.id);
                             this.dialogErrorSource.next('');
                         },
                         (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -232,8 +219,7 @@ export class ParticipationSubmissionComponent implements OnInit, OnChanges {
                 case ExerciseType.PROGRAMMING:
                     this.programmingAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
                         () => {
-                            submission.results?.filter((deletedResult) => deletedResult.id != result.id);
-
+                            submission.results = submission.results?.filter((remainingResult) => remainingResult.id != result.id);
                             this.dialogErrorSource.next('');
                         },
                         (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

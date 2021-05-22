@@ -313,16 +313,15 @@ public class AssessmentService {
      * @param result     - the result that should get deleted
      */
     @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
-    public void deleteAssessment(StudentParticipation participation, Submission submission, Result result) {
+    public void deleteAssessment(Submission submission, Result result) {
 
         if (complaintRepository.findByResult_Id(result.getId()).isPresent()) {
             throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
         }
-
         submission.getResults().remove(result);
         feedbackRepository.deleteByResult_Id(result.getId());
         resultRepository.deleteById(result.getId());
-        // this should keep the result order intact
+        // this keeps the result order intact
         submissionRepository.save(submission);
     }
 }

@@ -228,7 +228,7 @@ public abstract class AssessmentResource {
         }
 
         // delete assessment
-        assessmentService.deleteAssessment(studentParticipation, submission, result);
+        assessmentService.deleteAssessment(submission, result);
 
         return ok();
     }
