@@ -26,7 +26,6 @@ export class ProfileService {
                         const data = res.body!;
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
-                        const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
 
                         this.mapGuidedTourConfig(data, profileInfo);
                         this.mapAllowedOrionVersions(data, profileInfo);
@@ -34,9 +33,14 @@ export class ProfileService {
                         ProfileService.mapSaml2Config(data, profileInfo);
 
                         if (profileInfo.activeProfiles) {
-                            const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
-                            if (ribbonProfiles.length !== 0) {
-                                profileInfo.ribbonEnv = ribbonProfiles[0];
+                            if (data['display-ribbon-on-profiles']) {
+                                const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
+                                const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
+                                if (ribbonProfiles.length !== 0) {
+                                    profileInfo.ribbonEnv = ribbonProfiles[0];
+                                }
+                            } else {
+                                profileInfo.ribbonEnv = '';
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
@@ -73,11 +77,19 @@ export class ProfileService {
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
-        profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
+        if (data['allowed-minimum-orion-version']) {
+            profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
+        } else {
+            profileInfo.allowedMinimumOrionVersion = data['allowedMinimumOrionVersion'];
+        }
     }
 
     private mapTestServer(data: any, profileInfo: ProfileInfo) {
-        profileInfo.testServer = data['test-server'];
+        if (data['test-server']) {
+            profileInfo.testServer = data['test-server'];
+        } else {
+            profileInfo.testServer = data['testServer'];
+        }
     }
 
     private mapGuidedTourConfig(data: any, profileInfo: ProfileInfo) {

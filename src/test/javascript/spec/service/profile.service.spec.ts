@@ -1,4 +1,4 @@
-import { TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -28,6 +28,7 @@ describe('Logs Service', () => {
         sshKeysURL: 'sshKeysURL',
         testServer: false,
         versionControlUrl: 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
+        openApiEnabled: false,
     };
 
     beforeEach(() => {
@@ -49,25 +50,27 @@ describe('Logs Service', () => {
 
     describe('Service methods', () => {
         it('should call correct URL', () => {
-            //service.get().subscribe(() => {});
             service.getProfileInfo().subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'GET' }); //I Hope GET is correct here
-            //const resourceUrl = SERVER_API_URL + 'management/configprops';
+            const req = httpMock.expectOne({ method: 'GET' });
             const infoUrl = SERVER_API_URL + 'management/info';
             expect(req.request.url).toEqual(infoUrl);
         });
 
-        it('should get the profile info', fakeAsync(() => {
+        it('should get the profile info', () => {
             const expected = profileInfo;
 
+            let requestResult = {} as ProfileInfo;
+
             service.getProfileInfo().subscribe((received) => {
-                expect(received).toEqual(expected);
+                if (received) {
+                    requestResult = received;
+                }
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(profileInfo);
-            tick();
-        }));
+            expect(requestResult).toEqual(expected);
+        });
     });
 });
