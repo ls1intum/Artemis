@@ -1424,10 +1424,10 @@
     tslib "2.2.0"
     uuid "8.3.2"
 
-"@ng-bootstrap/ng-bootstrap@9.1.1":
-  version "9.1.1"
-  resolved "https://registry.yarnpkg.com/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-9.1.1.tgz#5a629915ea93b4f9b4d61854cb6862d99a7c9ca4"
-  integrity sha512-m31qKJylYueXm+a3YEoOfnrJYR1lovb7WgaQwvXQz3dDmtaYRX4n8aPeCMp1VrI7hFfFITKWo0GxPaI3JIFk4w==
+"@ng-bootstrap/ng-bootstrap@11.0.0-beta.1":
+  version "11.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-11.0.0-beta.1.tgz#5ab95dc1899d810d1c694daf42a27535382342d6"
+  integrity sha512-yogNbUFhQ4SD+Xdfr9PefJjDAzqHLjOo6bShDwubfDIkaOWltbnO8GTJGEIIG3KzldaWbpydsyDSoEYmG1keKQ==
   dependencies:
     tslib "^2.0.0"
 
