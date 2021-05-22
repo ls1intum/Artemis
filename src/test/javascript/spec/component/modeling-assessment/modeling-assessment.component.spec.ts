@@ -8,11 +8,10 @@ import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/model
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import * as chai from 'chai';
-import { MockModule } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
@@ -80,6 +79,13 @@ describe('ModelingAssessmentComponent', () => {
 
     const mockModel = generateMockModel('elementId1', 'elementId2', 'relationshipId');
     const mockFeedbackWithReference = { text: 'FeedbackWithReference', referenceId: 'relationshipId', reference: 'referemce', credits: 30 } as Feedback;
+    const mockFeedbackWithReferenceCopied = {
+        text: 'FeedbackWithReference Copied',
+        referenceId: 'relationshipId',
+        reference: 'referemce',
+        credits: 35,
+        copiedFeedbackId: 12,
+    } as Feedback;
     const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
     const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference' };
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
@@ -215,6 +221,43 @@ describe('ModelingAssessmentComponent', () => {
         expect(relationship!.highlight).to.not.exist;
     });
 
+    it('should update highlighted assessments first round', () => {
+        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
+        comp.highlightDifferences = true;
+        comp.model = mockModel;
+        fixture.detectChanges();
+        comp.feedbacks = [mockFeedbackWithReference];
+        comp.referencedFeedbacks = [mockFeedbackWithReference];
+
+        comp.ngOnChanges(changes);
+
+        expect(comp.apollonEditor).to.exist;
+        const apollonModel = comp.apollonEditor!.model;
+        const assessments: any = apollonModel.assessments;
+        expect(assessments[0].labelColor).to.equal('#ffa561');
+        expect(assessments[0].label).to.equal('Second correction round');
+        expect(assessments[0].score).to.equal(30);
+    });
+
+    it('should update highlighted assessments', () => {
+        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
+        const highlightDifferences = true;
+        comp.highlightDifferences = highlightDifferences;
+        comp.model = mockModel;
+        fixture.detectChanges();
+        comp.feedbacks = [mockFeedbackWithReferenceCopied];
+        comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
+
+        comp.ngOnChanges(changes);
+
+        expect(comp.apollonEditor).to.exist;
+        const apollonModel = comp.apollonEditor!.model;
+        const assessments: any = apollonModel.assessments;
+        expect(assessments[0].labelColor).to.equal('#3e8acc');
+        expect(assessments[0].label).to.equal('First correction round');
+        expect(assessments[0].score).to.equal(35);
+    });
+
     it('should update feedbacks', () => {
         const newMockFeedbackWithReference = { text: 'NewFeedbackWithReference', referenceId: 'relationshipId', reference: 'reference', credits: 30 } as Feedback;
         const newMockFeedbackWithoutReference = { text: 'NewFeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
@@ -226,6 +269,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
         comp.ngOnChanges(changes);
+        // todo add test here
         expect(comp.feedbacks).to.deep.equal(newMockFeedbacks);
         expect(comp.referencedFeedbacks).to.deep.equal([newMockFeedbackWithReference]);
     });
