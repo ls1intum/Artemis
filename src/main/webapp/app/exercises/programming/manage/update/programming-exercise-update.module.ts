@@ -12,6 +12,8 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
+import { AuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-button.component';
+import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-dialog.component';
 
 @NgModule({
     imports: [
@@ -27,7 +29,12 @@ import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/program
         StructuredGradingCriterionModule,
         ArtemisProgrammingExerciseLifecycleModule,
     ],
-    declarations: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+    declarations: [
+        ProgrammingExerciseUpdateComponent,
+        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
+        AuxiliaryRepositoryButtonComponent,
+        AuxiliaryRepositoryDialogComponent,
+    ],
     exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}

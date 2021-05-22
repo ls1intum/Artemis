@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/auxiliary-repository-dialog.component';
+import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-dialog.component';
 
 @Component({
     selector: 'jhi-add-auxiliary-repository-button',

@@ -4,7 +4,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
+import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/update/auxiliary-repository.service';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
