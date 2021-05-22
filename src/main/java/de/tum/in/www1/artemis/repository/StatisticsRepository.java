@@ -434,7 +434,8 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
     /**
-     * Gets the number of entries for the specific graphType and the span
+     * Gets the number of entries for the specific graphType and the span. First we distribute into the different types of graphs.
+     * After that, we distinguish between the views in which this graph can be shown and call the corresponding method
      *
      * @param span the spanType for which the call is executed
      * @param startDate The startDate of which the data should be fetched
