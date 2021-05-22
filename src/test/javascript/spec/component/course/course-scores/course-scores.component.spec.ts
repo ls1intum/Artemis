@@ -295,6 +295,7 @@ describe('CourseScoresComponent', () => {
     it('should log error on sentry when missing participant score calculation', () => {
         spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
         spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
         findCourseScoresSpy.returns(of(new HttpResponse({ body: [] })));
         const errorSpy = sinon.spy(component, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -304,6 +305,7 @@ describe('CourseScoresComponent', () => {
     it('should log error on sentry when wrong points score calculation', () => {
         spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
         spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 99;
@@ -323,6 +325,7 @@ describe('CourseScoresComponent', () => {
     it('should log error on sentry when wrong score calculation', () => {
         spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
         spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 40;
