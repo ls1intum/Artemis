@@ -12,6 +12,9 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { cloneDeep } from 'lodash';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -24,6 +27,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     checkedFlag: boolean;
     isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
+    backupExercise: FileUploadExercise;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -34,6 +38,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
+        private modalService: NgbModal,
+        private popupService: ExerciseUpdateWarningService,
         private activatedRoute: ActivatedRoute,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
@@ -54,6 +60,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
+            this.backupExercise = cloneDeep(this.fileUploadExercise);
             this.isExamMode = this.fileUploadExercise.exerciseGroup !== undefined;
             if (!this.isExamMode) {
                 this.exerciseCategories = this.fileUploadExercise.categories || [];
@@ -77,10 +84,27 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         navigateBackFromExerciseUpdate(this.router, this.fileUploadExercise);
     }
 
+    save() {
+        if (this.fileUploadExercise.gradingInstructionFeedbackUsed) {
+            const ref = this.popupService.checkExerciseBeforeUpdate(this.fileUploadExercise, this.backupExercise);
+            if (!this.modalService.hasOpenModals()) {
+                this.saveExercise();
+            } else {
+                ref.then((reference) => {
+                    reference.componentInstance.confirmed.subscribe(() => {
+                        this.saveExercise();
+                    });
+                });
+            }
+        } else {
+            this.saveExercise();
+        }
+    }
+
     /**
      * Creates or updates file upload exercise
      */
-    save() {
+    saveExercise() {
         Exercise.sanitize(this.fileUploadExercise);
 
         this.isSaving = true;

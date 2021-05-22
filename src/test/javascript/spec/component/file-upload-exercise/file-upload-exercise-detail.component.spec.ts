@@ -38,10 +38,10 @@ describe('FileUploadExercise Management Detail Component', () => {
     let service: FileUploadExerciseService;
     let debugElement: DebugElement;
 
-    const route = ({
+    const route = {
         data: of({ fileUploadExercise }),
         params: of({ exerciseId: 2 }),
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
