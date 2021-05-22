@@ -116,7 +116,9 @@
             <div class="row">
                 <div class="col">
                     <div class="form-group-narrow">
-                        <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
+                        <label class="form-control-label">{{
+                            'artemisApp.exercise.includedInOverallScore' + (quizExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
+                        }}</label>
                         <div>
                             <jhi-included-in-overall-score-picker
                                 *ngIf="quizExercise.includedInOverallScore"
