@@ -320,7 +320,6 @@ public class AssessmentService {
         }
 
         submission.getResults().remove(result);
-        participation.removeResult(result);
         feedbackRepository.deleteByResult_Id(result.getId());
         resultRepository.deleteById(result.getId());
         // this should keep the result order intact

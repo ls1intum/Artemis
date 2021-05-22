@@ -7,7 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { now } from 'moment';
 import { Location } from '@angular/common';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -31,7 +31,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
-    providers: [FileUploadAssessmentsService],
+    providers: [FileUploadAssessmentService],
     templateUrl: './file-upload-assessment.component.html',
     styles: [],
     encapsulation: ViewEncapsulation.None,
@@ -78,7 +78,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         private router: Router,
         private route: ActivatedRoute,
         private resultService: ResultService,
-        private fileUploadAssessmentsService: FileUploadAssessmentsService,
+        private fileUploadAssessmentsService: FileUploadAssessmentService,
         private accountService: AccountService,
         private location: Location,
         private artemisMarkdown: ArtemisMarkdownService,

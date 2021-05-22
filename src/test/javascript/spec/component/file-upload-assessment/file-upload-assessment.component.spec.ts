@@ -24,7 +24,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -54,7 +54,7 @@ describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
     let fixture: ComponentFixture<FileUploadAssessmentComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
-    let fileUploadAssessmentsService: FileUploadAssessmentsService;
+    let fileUploadAssessmentsService: FileUploadAssessmentService;
     let accountService: AccountService;
     let complaintService: ComplaintService;
     let getFileUploadSubmissionForExerciseWithoutAssessmentStub: SinonStub;
@@ -112,7 +112,7 @@ describe('FileUploadAssessmentComponent', () => {
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 // The TestBed only knows about it's providers and the component has it's own injector, so the component's service needs to be injected by
                 // getting the injector.
-                fileUploadAssessmentsService = fixture.componentRef.injector.get(FileUploadAssessmentsService);
+                fileUploadAssessmentsService = fixture.componentRef.injector.get(FileUploadAssessmentService);
                 accountService = TestBed.inject(AccountService);
                 complaintService = TestBed.inject(ComplaintService);
                 alertService = TestBed.inject(JhiAlertService);

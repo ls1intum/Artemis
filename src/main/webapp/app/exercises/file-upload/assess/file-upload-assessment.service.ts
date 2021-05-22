@@ -13,7 +13,7 @@ export type EntityResponseType = HttpResponse<Result>;
 @Injectable({
     providedIn: 'root',
 })
-export class FileUploadAssessmentsService {
+export class FileUploadAssessmentService {
     private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
