@@ -12,7 +12,9 @@
             "eist": {
                 "forHomework": "Points for homework",
                 "forInClass": "Points for in-class exercises"
-            }
+            },
+            "gradingSystemGrade": "Grades",
+            "gradingSystemBonus": "Bonus Points"
         }
     }
 }
