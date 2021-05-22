@@ -93,7 +93,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise) {
+    public void addAuxiliaryRepositoryToExerciseBuildPlan(ProgrammingExercise exercise) {
         deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
         deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
         createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),

@@ -42,7 +42,7 @@ public interface ContinuousIntegrationService {
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL);
 
-    void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise);
+    void addAuxiliaryRepositoryToExerciseBuildPlan(ProgrammingExercise exercise);
 
     /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.

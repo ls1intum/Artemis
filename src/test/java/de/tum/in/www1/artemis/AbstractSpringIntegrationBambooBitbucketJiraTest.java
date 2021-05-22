@@ -183,8 +183,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockConnectorRequestForAuxiliaryRepositoryCreation(ProgrammingExercise exercise, AuxiliaryRepository repository) throws Exception {
-        mockConnectorRequestsForSetup(exercise, false);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, exercise.getProjectKey() + "-" + repository.getName());
+        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, true, false);
+        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, true);
+        bitbucketRequestMockProvider.mockCreateRepository(exercise, any());
+        doReturn(null).when(gitService).getOrCheckoutRepository(any(), anyBoolean());
+        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
         bambooRequestMockProvider.mockDeleteBambooBuildPlan(exercise.generateBuildPlanId(TEMPLATE), true);
         bambooRequestMockProvider.mockDeleteBambooBuildPlan(exercise.generateBuildPlanId(SOLUTION), true);
     }

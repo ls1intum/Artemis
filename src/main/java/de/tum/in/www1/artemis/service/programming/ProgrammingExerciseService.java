@@ -353,7 +353,7 @@ public class ProgrammingExerciseService {
         gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, null);
 
         if (newAuxiliaryRepository.shouldBeIncludedInBuildPlan()) {
-            continuousIntegrationService.get().addAuxiliaryRepositoryToExercise(programmingExercise);
+            continuousIntegrationService.get().addAuxiliaryRepositoryToExerciseBuildPlan(programmingExercise);
         }
         return newAuxiliaryRepository;
     }
