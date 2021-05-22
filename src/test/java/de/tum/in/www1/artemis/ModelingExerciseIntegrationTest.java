@@ -47,6 +47,12 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private SubmissionRepository submissionRepository;
 
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
     private ModelingExercise classExercise;
 
     private List<GradingCriterion> gradingCriteria;
@@ -109,6 +115,21 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "tutor2", roles = "TA")
     public void testGetModelingExercise_tutorNotInCourse() throws Exception {
         request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetModelingExercise_setGradingInstructionFeedbackUsed() throws Exception {
+
+        gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
+        feedbackRepository.save(feedback);
+
+        ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
+
+        assertThat(receivedModelingExercise.isGradingInstructionFeedbackUsed()).isTrue();
     }
 
     @Test
