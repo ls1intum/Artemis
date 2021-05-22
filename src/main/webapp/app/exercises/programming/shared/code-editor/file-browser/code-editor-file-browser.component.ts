@@ -23,6 +23,15 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 
+export type InteractableEvent = {
+    // Click event object; contains target information
+    event: any;
+    // Used to decide which height to use for the collapsed element
+    horizontal: boolean;
+    // The interactjs element, used to en-/disable resizing
+    interactable: Interactable;
+};
+
 @Component({
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
@@ -55,8 +64,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     isTutorAssessment = false;
     @Input()
     highlightFileChanges = false;
+
     @Output()
-    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
+    onToggleCollapse = new EventEmitter<InteractableEvent>();
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
@@ -365,7 +375,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * @param event
      */
     toggleEditorCollapse(event: any) {
-        this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });
+        this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
     }
 
     /**

@@ -11,7 +11,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
     private showAlert = new Subject<void>();
 
     constructor(alertService: JhiAlertService, private serverDateService: ArtemisServerDateService) {
-        this.showAlert.pipe(throttleTime(10000)).subscribe((x) => {
+        this.showAlert.pipe(throttleTime(10000)).subscribe(() => {
             // show the outdated alert for 30s so users update by reloading the browser, only show this every 10s
             alertService.addAlert({ type: 'info', msg: 'artemisApp.outdatedAlert', timeout: 30000 }, []);
         });
