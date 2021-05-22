@@ -37,7 +37,7 @@ public class ComplaintResource {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
 
-    private static final String ENTITY_NAME = "complaint";
+    private static final String COMPLAINT_ENTITY_NAME = "complaint";
 
     private static final String MORE_FEEDBACK_ENTITY_NAME = "moreFeedback";
 
@@ -82,19 +82,19 @@ public class ComplaintResource {
     public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
         if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
         }
 
         if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
+            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
         }
 
         if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
-            throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
+            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
+        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
         Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.empty(), principal);
 
         // Remove assessor information from client request
@@ -118,19 +118,19 @@ public class ComplaintResource {
     public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
         if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
         }
 
         if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
+            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
         }
 
         if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
-            throw new BadRequestAlertException("A complaint for this result already exists", ENTITY_NAME, "complaintexists");
+            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
-        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : ENTITY_NAME;
+        String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
         Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.of(examId), principal);
 
         // Remove assessor information from client request
@@ -199,11 +199,11 @@ public class ComplaintResource {
         Participant participant = user;
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!course.getComplaintsEnabled()) {
-            throw new BadRequestAlertException("Complaints are disabled for this course", ENTITY_NAME, "complaintsDisabled");
+            throw new BadRequestAlertException("Complaints are disabled for this course", COMPLAINT_ENTITY_NAME, "complaintsDisabled");
         }
         if (teamMode) {
             Optional<Team> team = teamRepository.findAllByCourseIdAndUserIdOrderByIdDesc(course.getId(), user.getId()).stream().findFirst();
-            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", ENTITY_NAME, "noAssignedTeamInCourse"));
+            participant = team.orElseThrow(() -> new BadRequestAlertException("You do not belong to a team in this course.", COMPLAINT_ENTITY_NAME, "noAssignedTeamInCourse"));
         }
         long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
         return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
