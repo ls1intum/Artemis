@@ -2,7 +2,7 @@
     <div class="row justify-content-between">
         <div class="col-6">
             <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="back()" class="guided-tour-back back-button mr-2"></fa-icon>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="guided-tour-back back-button me-2"></fa-icon>
                 <span *ngIf="isNewSubmission">{{ 'artemisApp.exampleSubmission.createNew' | artemisTranslate }} </span
                 >{{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
@@ -44,7 +44,7 @@
                     <button
                         *ngSwitchCase="AssessButtonStates.ASSESS"
                         (click)="startAssessment()"
-                        class="btn btn-primary col-auto ml-auto mr-3"
+                        class="btn btn-primary col-auto ms-auto me-3"
                         id="createNewAssessment"
                         [disabled]="unsavedChanges"
                     >
@@ -55,13 +55,13 @@
                         *ngSwitchCase="AssessButtonStates.CREATE"
                         (click)="saveAssessments()"
                         [disabled]="!assessmentsAreValid"
-                        class="btn btn-primary col-auto ml-auto mr-3"
+                        class="btn btn-primary col-auto ms-auto me-3"
                         id="saveNewAssessment"
                     >
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                     </button>
-                    <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
+                    <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                     </button>

@@ -17,7 +17,7 @@ import { ButtonType } from 'app/shared/components/button.component';
     template: `
         <jhi-button
             id="trigger-all-button"
-            class="ml-3"
+            class="ms-3"
             [disabled]="disabled"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"

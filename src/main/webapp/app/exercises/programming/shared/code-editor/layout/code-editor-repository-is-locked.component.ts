@@ -6,7 +6,7 @@ import { Component } from '@angular/core';
         <span class="badge badge-warning d-flex align-items-center locked-container">
             <fa-icon [icon]="'info-circle'" class="text-white" size="2x"></fa-icon>
             <span
-                class="ml-2 locked-lable"
+                class="ms-2 locked-lable"
                 jhiTranslate="artemisApp.programmingExercise.repositoryIsLocked.title"
                 ngbTooltip="{{ 'artemisApp.programmingExercise.repositoryIsLocked.tooltip' | artemisTranslate }}"
             >

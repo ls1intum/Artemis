@@ -50,7 +50,7 @@
                                 <input
                                     id="quiz-duration-minutes"
                                     style="width: 70px"
-                                    class="form-control mr-2"
+                                    class="form-control me-2"
                                     title="Duration"
                                     type="number"
                                     min="0"
@@ -62,7 +62,7 @@
                                 <input
                                     id="quiz-duration-seconds"
                                     style="width: 70px"
-                                    class="form-control mr-2 ml-2"
+                                    class="form-control me-2 ms-2"
                                     title="Duration"
                                     type="number"
                                     max="60"
@@ -196,7 +196,7 @@
             <ng-container *ngIf="showExistingQuestions && showExistingQuestionsFromExam; then existingQuestionsFromExamTemplate"></ng-container>
 
             <div class="question-options row d-flex justify-content-start" *ngIf="showExistingQuestions && showExistingQuestionsFromFile">
-                <div class="mr-2 col flex-grow-0" style="white-space: nowrap">
+                <div class="me-2 col flex-grow-0" style="white-space: nowrap">
                     <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"> </span>
                 </div>
                 <div class="input-group flex-grow-1 col">
@@ -212,7 +212,7 @@
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
-                        <div class="form-group flex-fill ml-1" *ngIf="!isExamMode && quizExercise.id">
+                        <div class="form-group flex-fill ms-1" *ngIf="!isExamMode && quizExercise.id">
                             <div class="form-group flex-fill">
                                 <input
                                     minlength="3"
@@ -353,7 +353,7 @@
             <div class="form-group question-options existing-question-container">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
-                    <select class="form-control ml-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
+                    <select class="form-control ms-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
                         <option *ngFor="let course of courses" [value]="course.id">{{ course.title }}</option>
                     </select>
                 </div>
@@ -424,7 +424,7 @@
                 <div
                     *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedCourseId != null"
                     jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound"
-                    class="ml-3"
+                    class="ms-3"
                 ></div>
                 <button
                     class="btn btn-outline-primary"
@@ -438,7 +438,7 @@
             <div class="form-group question-options existing-question-container">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectExam" class="font-weight-bold align-middle"></span>
-                    <select class="form-control ml-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
+                    <select class="form-control ms-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
                         <option *ngFor="let exam of exams" [value]="exam.id">{{ exam.title }}</option>
                     </select>
                 </div>
@@ -509,7 +509,7 @@
                 <div
                     *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedExamId != null"
                     jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound"
-                    class="ml-3"
+                    class="ms-3"
                 ></div>
                 <button
                     class="btn btn-outline-primary"

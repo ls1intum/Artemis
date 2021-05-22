@@ -9,7 +9,7 @@
         </div>
         <div class="col-auto px-0">
             <fa-icon
-                class="clickable mr-1"
+                class="clickable me-1"
                 *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate"
                 container="body"
@@ -17,10 +17,10 @@
                 (click)="toggleEditMode()"
             ></fa-icon>
             <jhi-confirm-icon
-                class="clickable mr-1"
+                class="clickable me-1"
                 *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                 (confirmEvent)="deleteQuestion()"
-                [ngClass]="'mr-1'"
+                [ngClass]="'me-1'"
                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | artemisTranslate"
                 [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | artemisTranslate"
             ></jhi-confirm-icon>
@@ -51,7 +51,7 @@
                 </div>
                 <div class="col-auto px-0">
                     <fa-icon
-                        class="clickable mr-1"
+                        class="clickable me-1"
                         *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate"
                         container="body"
@@ -59,10 +59,10 @@
                         (click)="toggleEditMode()"
                     ></fa-icon>
                     <jhi-confirm-icon
-                        class="clickable mr-1"
+                        class="clickable me-1"
                         *ngIf="isAtLeastTutorInCourse || isAuthorOfQuestion(studentQuestion)"
                         (confirmEvent)="deleteQuestion()"
-                        [ngClass]="'mr-1'"
+                        [ngClass]="'me-1'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | artemisTranslate"
                         [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | artemisTranslate"
                     ></jhi-confirm-icon>

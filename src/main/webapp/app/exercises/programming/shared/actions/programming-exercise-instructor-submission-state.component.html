@@ -1,5 +1,5 @@
 <div *ngIf="buildingSummary; else loadingState" class="d-flex">
-    <div id="result-eta" *ngIf="hasBuildingSubmissions" class="badge badge-secondary d-flex flex-column justify-content-between mr-3">
+    <div id="result-eta" *ngIf="hasBuildingSubmissions" class="badge badge-secondary d-flex flex-column justify-content-between me-3">
         <fa-icon [icon]="'clock'"></fa-icon>
         <span
             [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
@@ -28,7 +28,7 @@
     <jhi-programming-exercise-trigger-all-button [exercise]="exercise"></jhi-programming-exercise-trigger-all-button>
     <jhi-button
         id="trigger-failed-button"
-        class="ml-3"
+        class="ms-3"
         [disabled]="!hasFailedSubmissions"
         [isLoading]="isBuildingFailedSubmissions"
         [icon]="'redo'"

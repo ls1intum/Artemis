@@ -148,7 +148,7 @@
                                     </a>
                                     <!-- button for existing result with lock-->
                                     <span *ngIf="submission.id && !submission.results[correctionRound]?.completionDate">
-                                        <div class="btn-group-vertical mr-1 mb-10">
+                                        <div class="btn-group-vertical me-1 mb-10">
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
