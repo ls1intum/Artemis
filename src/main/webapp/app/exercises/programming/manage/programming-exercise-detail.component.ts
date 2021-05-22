@@ -18,7 +18,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
+import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/update/auxiliary-repository.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({

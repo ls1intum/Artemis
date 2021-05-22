@@ -22,8 +22,8 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/actions/programming-exercise-instructor-repo-download.component';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
-import { AuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/auxiliary-repository-button.component';
-import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/auxiliary-repository-dialog.component';
+import { AuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-button.component';
+import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-dialog.component';
 
 @NgModule({
     imports: [
@@ -52,8 +52,6 @@ import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/ma
         ProgrammingExerciseEditSelectedComponent,
         ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
-        AuxiliaryRepositoryButtonComponent,
-        AuxiliaryRepositoryDialogComponent,
     ],
 })
 export class ArtemisProgrammingExerciseManagementModule {}

@@ -22,7 +22,7 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/auxiliary-repository.service';
+import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/update/auxiliary-repository.service';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
