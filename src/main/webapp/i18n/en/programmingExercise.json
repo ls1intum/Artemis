@@ -199,6 +199,7 @@
                 "addTeamName": "Add team name to project (allows to import multiple projects into Eclipse at the same time)",
                 "addTeamOrStudentName": "Add team/student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
+                "anonymizeStudentCommits": "Anonymize all of the student's commits",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."

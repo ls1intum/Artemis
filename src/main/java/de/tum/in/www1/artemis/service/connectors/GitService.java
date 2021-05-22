@@ -25,8 +25,6 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -753,8 +751,9 @@ public class GitService {
      *
      * @param repository          Local Repository Object.
      * @param programmingExercise ProgrammingExercise associated with this repo.
+     * @param overwriteMain       If false keeps main and creates squash commit in seperate branch, if true squashes main
      */
-    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteMain) {
         try {
             Git studentGit = new Git(repository);
             setRemoteUrl(repository);
@@ -770,8 +769,10 @@ public class GitService {
             // flush cache of files
             repository.setContent(null);
 
-            // checkout own local "diff" branch
-            studentGit.checkout().setCreateBranch(true).setName("diff").call();
+            // checkout own local "diff" branch to keep main as is
+            if (!overwriteMain) {
+                studentGit.checkout().setCreateBranch(true).setName("diff").call();
+            }
 
             studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
             studentGit.add().addFilepattern(".").call();
@@ -791,7 +792,9 @@ public class GitService {
     }
 
     /**
-     * Removes all author information from the commits on the currently active branch. Also removes all remotes since they contain data about the student. Also also deletes the .git/logs folder to prevent restoring commits from reflogs
+     * Removes all author information from the commits on the currently active branch.
+     * Also removes all remotes since they contain data about the student.
+     * Also deletes the .git/logs folder to prevent restoring commits from reflogs
      *
      * @param repository          Local Repository Object.
      * @param programmingExercise ProgrammingExercise associated with this repo.

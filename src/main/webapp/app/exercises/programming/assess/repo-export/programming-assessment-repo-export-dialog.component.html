@@ -92,6 +92,12 @@
         </div>
         <div class="checkbox">
             <label class="control-label">
+                <input type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" />
+                <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeStudentCommits">Anonymize all of the student's commits</strong>
+            </label>
+        </div>
+        <div class="checkbox">
+            <label class="control-label">
                 <input type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
                 <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle">Normalize code style (line endings, encoding)</strong>
             </label>
