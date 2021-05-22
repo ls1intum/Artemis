@@ -27,7 +27,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.12.3"
+version = "5.0.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -128,7 +128,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.865
+                minimum = 0.867
             }
             limit {
                 counter = "CLASS"
