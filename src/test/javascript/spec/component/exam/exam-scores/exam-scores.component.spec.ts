@@ -208,6 +208,7 @@ describe('ExamScoresComponent', () => {
                     findGradingScaleForExam: () => {
                         return of(
                             new HttpResponse({
+                                body: new GradingScale(),
                                 status: 200,
                             }),
                         );

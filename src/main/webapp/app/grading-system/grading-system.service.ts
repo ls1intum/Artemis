@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { GradeStep } from 'app/entities/grade-step.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
@@ -12,7 +12,7 @@ export type EntityResponseType = HttpResponse<GradingScale>;
 export class GradingSystemService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
     /**
      * Store a new grading scale for course on the server
@@ -40,7 +40,7 @@ export class GradingSystemService {
      * @param courseId the course for which the grading scale will be retrieved
      */
     findGradingScaleForCourse(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
+        return this.http.get<GradingScale>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' }).pipe(map((res: EntityResponseType) => res));
     }
 
     /**
