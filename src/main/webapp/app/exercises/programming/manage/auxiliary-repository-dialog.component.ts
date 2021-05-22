@@ -99,9 +99,7 @@ export class AuxiliaryRepositoryDialogComponent implements OnInit {
     private setInvalidDirectoryNamePattern() {
         let invalidDirectoryNames = '';
         this.exercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
-        if (invalidDirectoryNames.length > 1) {
-            invalidDirectoryNames = invalidDirectoryNames.slice(1);
-        }
-        this.invalidDirectoryNamePattern = new RegExp('^(?!(' + invalidDirectoryNames + ')\\b)\\b(\\w|-|/)+$');
+        this.invalidDirectoryNamePattern = new RegExp('^(?!( ' + invalidDirectoryNames + ')\\b)\\b(\\w|-|/)+$');
+        console.log('Invalid Directory Name pattern: ' + this.invalidDirectoryNamePattern);
     }
 }
