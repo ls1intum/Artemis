@@ -5,7 +5,7 @@
         <button
             id="modeling-exercise-import-button"
             *ngIf="course && course.isAtLeastEditor"
-            class="btn btn-primary float-right jh-create-entity create-modeling-exercise mr-1"
+            class="btn btn-primary float-end jh-create-entity create-modeling-exercise mr-1"
             (click)="openImportModal()"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -14,7 +14,7 @@
         <a
             id="modeling-exercise-create-button"
             *ngIf="course && course.isAtLeastEditor"
-            class="btn btn-primary float-right jh-create-entity create-modeling-exercise mr-1"
+            class="btn btn-primary float-end jh-create-entity create-modeling-exercise mr-1"
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>

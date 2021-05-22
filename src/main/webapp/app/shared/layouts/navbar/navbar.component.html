@@ -1,7 +1,7 @@
 <nav class="navbar navbar-dark navbar-expand-md jh-navbar">
-    <div class="jh-logo-container float-left">
+    <div class="jh-logo-container float-start">
         <a
-            class="jh-navbar-toggler d-lg-none float-right"
+            class="jh-navbar-toggler d-lg-none float-end"
             href="javascript:void(0);"
             data-toggle="collapse"
             data-target="#navbarResponsive"
@@ -12,7 +12,7 @@
         >
             <fa-icon [icon]="'bars'"></fa-icon>
         </a>
-        <a class="navbar-brand logo float-left" routerLink="/" (click)="collapseNavbar()">
+        <a class="navbar-brand logo float-start" routerLink="/" (click)="collapseNavbar()">
             <img class="logo-img" [src]="SERVER_API_URL + 'public/images/logo.png'" />
             <span>&nbsp;&nbsp;&nbsp;</span>
             <span jhiTranslate="global.title" class="navbar-title">Artemis</span>&nbsp;&nbsp;&nbsp;<span class="navbar-version">{{ version }}</span>
