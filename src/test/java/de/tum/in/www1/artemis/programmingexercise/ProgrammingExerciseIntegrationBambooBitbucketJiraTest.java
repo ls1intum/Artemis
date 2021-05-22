@@ -705,4 +705,90 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutExercise();
     }
+
+    // Auxiliary Repository Tests
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testCreateAuxiliaryRepositoryProgrammingExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCreateAuxiliaryRepositoryProgrammingExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testCreateAuxiliaryRepositoryUnauthorized() throws Exception {
+        programmingExerciseIntegrationServiceTest.testCreateAuxiliaryRepositoryUnauthorized();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateValidAuxiliaryRepository() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateValidAuxiliaryRepository();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryIdSetOnRequest();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithoutName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithTooLongName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithDuplicatedName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithoutCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithTooLongDescription();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithoutDescription();
+    }
 }

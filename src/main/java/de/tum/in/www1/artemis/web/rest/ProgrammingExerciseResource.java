@@ -1209,7 +1209,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
-            notFound();
+            return notFound();
         }
         ProgrammingExercise exercise = optionalProgrammingExercise.get();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -1229,7 +1229,7 @@ public class ProgrammingExerciseResource {
         Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
                 .findWithAuxiliaryRepositoriesAndTemplateUrlAndSolutionUrlAndTestUrlById(exerciseId);
         if (optionalProgrammingExercise.isEmpty()) {
-            notFound();
+            return notFound();
         }
         ProgrammingExercise exercise = optionalProgrammingExercise.get();
 
@@ -1263,7 +1263,7 @@ public class ProgrammingExerciseResource {
     }
 
     private void validateAuxiliaryRepositoryNameLength(AuxiliaryRepository auxiliaryRepository) {
-        if (auxiliaryRepository.getName().length() > 100) {
+        if (auxiliaryRepository.getName().length() > AuxiliaryRepository.MAX_NAME_LENGTH) {
             throw new BadRequestAlertException("The name of an auxiliary repository must not be longer than 100 characters!", AUX_REPO_ENTITY_NAME,
                     ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
@@ -1296,7 +1296,7 @@ public class ProgrammingExerciseResource {
     }
 
     private void validateAuxiliaryRepositoryCheckoutDirectoryLength(AuxiliaryRepository auxiliaryRepository) {
-        if (auxiliaryRepository.getCheckoutDirectory().length() > 100) {
+        if (auxiliaryRepository.getCheckoutDirectory().length() > AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH) {
             throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!", AUX_REPO_ENTITY_NAME,
                     ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
@@ -1312,7 +1312,7 @@ public class ProgrammingExerciseResource {
     }
 
     private void validateAuxiliaryRepositoryDescriptionLength(AuxiliaryRepository auxiliaryRepository) {
-        if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > 500) {
+        if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > AuxiliaryRepository.MAX_DESCRIPTION_LENGTH) {
             throw new BadRequestAlertException("The provided description is too long!", AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION);
         }
     }
@@ -1341,16 +1341,22 @@ public class ProgrammingExerciseResource {
 
         if (auxiliaryRepository.getCheckoutDirectory() != null) {
 
-            // We want to make sure, that the checkout directory path is valid.
-            validateAuxiliaryRepositoryCheckoutDirectoryValid(auxiliaryRepository);
+            if (auxiliaryRepository.getCheckoutDirectory().isBlank()) {
+                auxiliaryRepository.setCheckoutDirectory(null);
+            }
+            else {
 
-            // The checkout directory path must not be longer than 100 characters, since the database column is
-            // limited to 100 characters.
-            validateAuxiliaryRepositoryCheckoutDirectoryLength(auxiliaryRepository);
+                // We want to make sure, that the checkout directory path is valid.
+                validateAuxiliaryRepositoryCheckoutDirectoryValid(auxiliaryRepository);
 
-            // Multiple auxiliary repositories might not share one checkout directory, since
-            // Bamboo does not allow this.
-            validateAuxiliaryRepositoryCheckoutDirectoryDuplication(auxiliaryRepository, exercise);
+                // The checkout directory path must not be longer than 100 characters, since the database column is
+                // limited to 100 characters.
+                validateAuxiliaryRepositoryCheckoutDirectoryLength(auxiliaryRepository);
+
+                // Multiple auxiliary repositories might not share one checkout directory, since
+                // Bamboo does not allow this.
+                validateAuxiliaryRepositoryCheckoutDirectoryDuplication(auxiliaryRepository, exercise);
+            }
         }
 
         // The description must not be longer than 100 characters, since the database column is

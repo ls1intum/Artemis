@@ -31,6 +31,8 @@ public interface MockDelegate {
 
     void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException;
 
+    void mockConnectorRequestForAuxiliaryRepositoryCreation(ProgrammingExercise exercise, AuxiliaryRepository repository) throws Exception;
+
     void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
             throws IOException, URISyntaxException;
 

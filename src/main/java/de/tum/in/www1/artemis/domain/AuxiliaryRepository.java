@@ -19,6 +19,11 @@ import java.net.MalformedURLException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AuxiliaryRepository extends DomainObject {
 
+    @JsonIgnore public static final int MAX_NAME_LENGTH = 100;
+    @JsonIgnore public static final int MAX_CHECKOUT_DIRECTORY_LENGTH = 100;
+    @JsonIgnore public static final int MAX_REPOSITORY_URL_LENGTH = 500;
+    @JsonIgnore public static final int MAX_DESCRIPTION_LENGTH = 500;
+
     /**
      * Name of the repository.
      *
@@ -26,11 +31,11 @@ public class AuxiliaryRepository extends DomainObject {
      * One programming exercise must not have multiple repositories
      * sharing one name.
      */
-    @Size(max = 100)
+    @Size(max = MAX_NAME_LENGTH)
     @Column(name = "name")
     private String name;
 
-    @Size(max = 500)
+    @Size(max = MAX_REPOSITORY_URL_LENGTH)
     @Column(name = "repository_url")
     private String repositoryUrl;
 
@@ -38,11 +43,11 @@ public class AuxiliaryRepository extends DomainObject {
      * One programming exercise must not have multiple repositories
      * sharing the same checkout directory. Bamboo does not allow that.
      */
-    @Size(max = 100)
+    @Size(max = MAX_CHECKOUT_DIRECTORY_LENGTH)
     @Column(name = "checkout_directory")
     private String checkoutDirectory;
 
-    @Size(max = 500)
+    @Size(max = MAX_DESCRIPTION_LENGTH)
     @Column(name = "description")
     private String description;
 
