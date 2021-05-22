@@ -3,8 +3,11 @@
 // If you change the values in the webpack config files, you need to re run webpack to update the application
 
 export const VERSION = process.env.VERSION;
-export const DEBUG_INFO_ENABLED = Boolean(process.env.DEBUG_INFO_ENABLED); // TODO: this value is undefined due to the latest webpack update
-export const SERVER_API_URL = process.env.SERVER_API_URL ?? ''; // TODO: this value is undefined due to the latest webpack update
+// TODO: this value is undefined due to the latest webpack update
+export const DEBUG_INFO_ENABLED = Boolean(process.env.DEBUG_INFO_ENABLED);
+// TODO: this value is undefined due to the latest webpack update
+// export const SERVER_API_URL = process.env.SERVER_API_URL ?? '';
+export const SERVER_API_URL = '';
 
 export const MIN_SCORE_GREEN = 80;
 export const MIN_SCORE_ORANGE = 40;
