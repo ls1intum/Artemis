@@ -42,7 +42,11 @@ export class ParticipationSubmissionComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     @Input() participationId: number;
+
     public exerciseStatusBadge = 'badge-success';
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     isTmpOrSolutionProgrParticipation = false;
     exercise?: Exercise;
@@ -74,6 +78,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         this.setupPage();
         this.eventSubscriber = this.eventManager.subscribe('submissionsModification', () => this.setupPage());
     }
+
     /**
      * Set up page by loading participation and all submissions
      */
@@ -188,6 +193,23 @@ export class ParticipationSubmissionComponent implements OnInit {
                 .replace('{commitHash}', submission.commitHash ?? '');
         }
         return '';
+    }
+
+    /**
+     * Delete a submission from the server
+     * @param submissionId - Id of submission that is deleted.
+     */
+    deleteSubmission(submissionId: number) {
+        this.submissionService.delete(submissionId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'submissionsModification',
+                    content: 'Deleted a submission',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
 
     delete(submission: Submission, result: Result) {

@@ -140,10 +140,12 @@
                 <button
                     class="btn btn-danger btn-sm mr-1"
                     id="deleteButton"
-                    [routerLink]="['/course-management', { outlets: { popup: 'participation/' + participationId + '/submission/' + value + '/delete' } }]"
+                    jhiDeleteButton
+                    deleteQuestion="artemisApp.participation.participationSubmission.delete"
+                    (delete)="deleteSubmission(value)"
+                    [dialogError]="dialogError$"
                 >
                     <fa-icon [icon]="'times'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                 </button>
             </ng-template>
         </ngx-datatable-column>
