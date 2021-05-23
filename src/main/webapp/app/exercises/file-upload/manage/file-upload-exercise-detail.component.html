@@ -22,7 +22,7 @@
             </div>
             <div *ngIf="fileUploadExercise.releaseDate != undefined && moment(fileUploadExercise.releaseDate).isBefore(moment())">
                 <jhi-doughnut-chart
-                    class="my-4 d-inline-flex"
+                    class="mt-3 d-inline-flex"
                     [courseId]="fileUploadExercise.course?.id!"
                     [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
                     [exerciseId]="fileUploadExercise.id!"
@@ -33,7 +33,7 @@
                 >
                 </jhi-doughnut-chart>
                 <jhi-doughnut-chart
-                    class="my-4 d-inline-flex"
+                    class="mt-3 d-inline-flex"
                     [courseId]="fileUploadExercise.course?.id!"
                     [contentType]="DoughnutChartType.PARTICIPATIONS"
                     [exerciseId]="fileUploadExercise.id!"
@@ -44,7 +44,7 @@
                 >
                 </jhi-doughnut-chart>
                 <jhi-doughnut-chart
-                    class="my-4 d-inline-flex"
+                    class="mt-3 d-inline-flex"
                     [courseId]="fileUploadExercise.course?.id!"
                     [contentType]="DoughnutChartType.QUESTIONS"
                     [exerciseId]="fileUploadExercise.id!"
