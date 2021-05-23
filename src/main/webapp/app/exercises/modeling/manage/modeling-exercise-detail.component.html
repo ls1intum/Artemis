@@ -24,44 +24,46 @@
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>
-            <jhi-doughnut-chart
-                class="my-4 d-inline-flex"
-                [courseId]="modelingExercise.course?.id!"
-                [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
-                [exerciseId]="modelingExercise.id!"
-                [exerciseType]="ExerciseType.TEXT"
-                [currentPercentage]="doughnutStats?.averageScoreOfExercise"
-                [currentAbsolute]="absoluteAveragePoints"
-                [currentMax]="doughnutStats?.maxPointsOfExercise"
-            >
-            </jhi-doughnut-chart>
-            <jhi-doughnut-chart
-                class="my-4 d-inline-flex"
-                [courseId]="modelingExercise.course?.id!"
-                [contentType]="DoughnutChartType.PARTICIPATIONS"
-                [exerciseId]="modelingExercise.id!"
-                [exerciseType]="ExerciseType.TEXT"
-                [currentPercentage]="participationsInPercent"
-                [currentAbsolute]="doughnutStats?.numberOfParticipations"
-                [currentMax]="doughnutStats?.numberOfStudentsInCourse"
-            >
-            </jhi-doughnut-chart>
-            <jhi-doughnut-chart
-                class="my-4 d-inline-flex"
-                [courseId]="modelingExercise.course?.id!"
-                [contentType]="DoughnutChartType.QUESTIONS"
-                [exerciseId]="modelingExercise.id!"
-                [exerciseType]="ExerciseType.TEXT"
-                [currentPercentage]="questionsAnsweredInPercent"
-                [currentAbsolute]="doughnutStats?.numberOfAnsweredQuestions"
-                [currentMax]="doughnutStats?.numberOfQuestions"
-            >
-            </jhi-doughnut-chart>
-            <hr />
-            <div>
-                <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+            <div *ngIf="modelingExercise.releaseDate != undefined && moment(modelingExercise.releaseDate).isBefore(moment())">
+                <jhi-doughnut-chart
+                    class="my-4 d-inline-flex"
+                    [courseId]="modelingExercise.course?.id!"
+                    [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
+                    [exerciseId]="modelingExercise.id!"
+                    [exerciseType]="ExerciseType.TEXT"
+                    [currentPercentage]="doughnutStats?.averageScoreOfExercise"
+                    [currentAbsolute]="absoluteAveragePoints"
+                    [currentMax]="doughnutStats?.maxPointsOfExercise"
+                >
+                </jhi-doughnut-chart>
+                <jhi-doughnut-chart
+                    class="my-4 d-inline-flex"
+                    [courseId]="modelingExercise.course?.id!"
+                    [contentType]="DoughnutChartType.PARTICIPATIONS"
+                    [exerciseId]="modelingExercise.id!"
+                    [exerciseType]="ExerciseType.TEXT"
+                    [currentPercentage]="participationsInPercent"
+                    [currentAbsolute]="doughnutStats?.numberOfParticipations"
+                    [currentMax]="doughnutStats?.numberOfStudentsInCourse"
+                >
+                </jhi-doughnut-chart>
+                <jhi-doughnut-chart
+                    class="my-4 d-inline-flex"
+                    [courseId]="modelingExercise.course?.id!"
+                    [contentType]="DoughnutChartType.QUESTIONS"
+                    [exerciseId]="modelingExercise.id!"
+                    [exerciseType]="ExerciseType.TEXT"
+                    [currentPercentage]="questionsAnsweredInPercent"
+                    [currentAbsolute]="doughnutStats?.numberOfAnsweredQuestions"
+                    [currentMax]="doughnutStats?.numberOfQuestions"
+                >
+                </jhi-doughnut-chart>
+                <hr />
+                <div>
+                    <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+                </div>
+                <hr />
             </div>
-            <hr />
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="modelingExercise"></jhi-exercise-details>
                 <dt><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></dt>

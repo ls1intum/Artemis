@@ -14,6 +14,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { round } from 'app/shared/util/utils';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -23,6 +24,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
     readonly DoughnutChartType = DoughnutChartType;
     readonly ExerciseType = ExerciseType;
+    readonly moment = moment;
 
     textExercise: TextExercise;
     courseId = 0;

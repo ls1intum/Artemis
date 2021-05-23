@@ -13,6 +13,7 @@ import { DoughnutChartType } from 'app/course/manage/detail/course-detail.compon
 import { ExerciseType } from 'app/entities/exercise.model';
 import { round } from 'app/shared/util/utils';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -29,6 +30,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     readonly DoughnutChartType = DoughnutChartType;
     readonly ExerciseType = ExerciseType;
+    readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
     absoluteAveragePoints = 0;
     participationsInPercent = 0;

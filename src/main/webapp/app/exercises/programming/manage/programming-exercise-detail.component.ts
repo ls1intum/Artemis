@@ -22,6 +22,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { round } from 'app/shared/util/utils';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -36,6 +37,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly DoughnutChartType = DoughnutChartType;
+    readonly moment = moment;
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
