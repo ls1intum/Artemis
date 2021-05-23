@@ -3,6 +3,10 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -10,9 +14,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
@@ -33,12 +34,18 @@ public class ComplaintResponseService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ResultRepository resultRepository;
+
+    private final SubmissionRepository submissionRepository;
+
     public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, ResultRepository resultRepository, SubmissionRepository submissionRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -145,10 +152,38 @@ public class ComplaintResponseService {
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for creating the empty complaint response");
         }
-        ComplaintResponse complaintResponseRepresentingLock = new ComplaintResponse();
-        complaintResponseRepresentingLock.setReviewer(user); // owner of the lock
-        complaintResponseRepresentingLock.setComplaint(complaint);
-        ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(complaintResponseRepresentingLock);
+        // The ComplaintResponse which represents the lock
+        ComplaintResponse complaintResponse = new ComplaintResponse();
+        complaintResponse.setReviewer(user); // owner of the lock
+        complaintResponse.setComplaint(complaint);
+
+        Result result = new Result();
+
+        Submission submission = complaint.getResult().getSubmission();
+        result.setParticipation(submission.getParticipation());
+        result = resultRepository.save(result);
+        result.setSubmission(submission);
+        //submission.addResult(result);
+        submissionRepository.save(submission);
+
+        newResult.setAssessor(user);
+        newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        // Copy feedback into the new result
+        for (Feedback feedback : automaticFeedbacks) {
+            feedback = feedbackRepository.save(feedback);
+            feedback.setResult(newResult);
+        }
+        newResult.setFeedbacks(automaticFeedbacks);
+        if (optionalExistingResult.isPresent()) {
+            newResult.setResultString(optionalExistingResult.get().getResultString());
+        }
+        // Workaround to prevent the assessor turning into a proxy object after saving
+        var assessor = newResult.getAssessor();
+        newResult = resultRepository.save(newResult);
+
+
+
+        ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(complaintResponse);
         log.debug("Created empty complaint and thus lock for complaint with id : {}", complaint.getId());
         return persistedComplaintResponse;
     }
