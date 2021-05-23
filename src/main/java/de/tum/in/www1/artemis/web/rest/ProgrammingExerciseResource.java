@@ -338,7 +338,9 @@ public class ProgrammingExerciseResource {
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
         validateGeneralSettings(programmingExercise);
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -551,6 +553,7 @@ public class ProgrammingExerciseResource {
      *
      * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
      * @param notificationText           to notify the student group about the update on the programming exercise
+     * @param recreateBuildPlans         specifies whether the build plans for this exercise should be recreated.
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      * is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
@@ -558,7 +561,8 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText", required = false) String notificationText,
+            @RequestParam(value = "recreateBuildPlans", required = false) boolean recreateBuildPlans) {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
         if (updatedProgrammingExercise.getId() == null) {
             return badRequest();
@@ -587,6 +591,10 @@ public class ProgrammingExerciseResource {
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
+        List<AuxiliaryRepository> newAuxiliaryRepositories = new ArrayList<>();
+
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(updatedProgrammingExercise);
+
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
             updatedProgrammingExercise.setBonusPoints(0.0);
@@ -600,7 +608,7 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, existingProgrammingExercise, ENTITY_NAME);
 
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText, recreateBuildPlans);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(existingProgrammingExercise, updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
@@ -1234,7 +1242,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise exercise = optionalProgrammingExercise.get();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        validateAuxiliaryRepository(repository, exercise);
+        // validateAuxiliaryRepository(repository, exercise);
         try {
             AuxiliaryRepository newAuxiliaryRepository = programmingExerciseService.createAuxiliaryRepositoryForExercise(exercise, repository);
 
@@ -1248,6 +1256,18 @@ public class ProgrammingExerciseResource {
                             "An error occurred while setting up an auxiliary repository for exercise: " + e.getMessage(), "errorProgrammingExerciseAuxiliaryRepository"))
                     .body(null);
         }
+    }
+
+    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise) {
+        final List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
+        if (programmingExercise.getAuxiliaryRepositories() != null) {
+            for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
+                validateAuxiliaryRepository(repo, auxiliaryRepositories);
+                auxiliaryRepositories.add(repo);
+            }
+        }
+        programmingExercise.setAuxiliaryRepositories(List.of());
+        auxiliaryRepositories.forEach(programmingExercise::addAuxiliaryRepository);
     }
 
     private void validateAuxiliaryRepositoryId(AuxiliaryRepository auxiliaryRepository) {
@@ -1269,8 +1289,8 @@ public class ProgrammingExerciseResource {
         }
     }
 
-    private void validateAuxiliaryRepositoryNameDuplication(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
-        for (AuxiliaryRepository existingRepository : exercise.getAuxiliaryRepositories()) {
+    private void validateAuxiliaryRepositoryNameDuplication(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
+        for (AuxiliaryRepository existingRepository : otherRepositories) {
             if (existingRepository.getName().equals(auxiliaryRepository.getName())) {
                 throw new BadRequestAlertException("The name '" + auxiliaryRepository.getName() + "' is not allowed for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
                         ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
@@ -1302,8 +1322,8 @@ public class ProgrammingExerciseResource {
         }
     }
 
-    private void validateAuxiliaryRepositoryCheckoutDirectoryDuplication(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
-        for (AuxiliaryRepository repo : exercise.getAuxiliaryRepositories()) {
+    private void validateAuxiliaryRepositoryCheckoutDirectoryDuplication(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
+        for (AuxiliaryRepository repo : otherRepositories) {
             if (repo.getCheckoutDirectory() != null && repo.getCheckoutDirectory().equals(auxiliaryRepository.getCheckoutDirectory())) {
                 throw new BadRequestAlertException("The checkout directory path is already defined for another additional repository!", AUX_REPO_ENTITY_NAME,
                         ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
@@ -1317,7 +1337,7 @@ public class ProgrammingExerciseResource {
         }
     }
 
-    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, ProgrammingExercise exercise) {
+    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
 
         // Id of the auxiliary repository must not be set, because the id is set
         // by the database.
@@ -1332,7 +1352,7 @@ public class ProgrammingExerciseResource {
         validateAuxiliaryRepositoryNameLength(auxiliaryRepository);
 
         // We want to avoid using the same auxiliary repository name multiple times
-        validateAuxiliaryRepositoryNameDuplication(auxiliaryRepository, exercise);
+        validateAuxiliaryRepositoryNameDuplication(auxiliaryRepository, otherRepositories);
 
         // The name must not match any of the names of the already present repositories, otherwise
         // we get an undefined state.
@@ -1355,7 +1375,7 @@ public class ProgrammingExerciseResource {
 
                 // Multiple auxiliary repositories might not share one checkout directory, since
                 // Bamboo does not allow this.
-                validateAuxiliaryRepositoryCheckoutDirectoryDuplication(auxiliaryRepository, exercise);
+                validateAuxiliaryRepositoryCheckoutDirectoryDuplication(auxiliaryRepository, otherRepositories);
             }
         }
 

@@ -133,9 +133,11 @@ public class ProgrammingExerciseService {
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
+        connectAuxiliaryRepositoriesToExerciseAndSave(programmingExercise);
+
         setupExerciseTemplate(programmingExercise, user);
 
-        // Save programmning exercise to prevent transiant exception
+        // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         setupBuildPlansForNewExercise(programmingExercise);
@@ -209,6 +211,17 @@ public class ProgrammingExerciseService {
         programmingExercise.setSolutionParticipation(solutionParticipation);
     }
 
+    private void connectAuxiliaryRepositoriesToExerciseAndSave(ProgrammingExercise exercise) {
+        List<AuxiliaryRepository> savedRepositories = new ArrayList<>();
+        exercise.getAuxiliaryRepositories().forEach(repository -> {
+            repository.setExercise(null);
+            repository = auxiliaryRepositoryRepository.save(repository);
+            repository.setExercise(exercise);
+            savedRepositories.add(repository);
+        });
+        exercise.setAuxiliaryRepositories(savedRepositories);
+    }
+
     private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
@@ -224,6 +237,10 @@ public class ProgrammingExerciseService {
         solutionParticipation.setBuildPlanId(solutionPlanId);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+
+        // Set Auxiliary Repository URLs
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.get()
+            .getCloneRepositoryUrl(projectKey, programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     /**
@@ -320,6 +337,11 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
+
+        // Create auxiliary repositories
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
+            versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(repo.getName()), null);
+        });
     }
 
     /**
@@ -363,7 +385,7 @@ public class ProgrammingExerciseService {
      * @param notificationText    optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText, boolean recreateBuildPlan) {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
