@@ -50,7 +50,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column [minWidth]="140" [width]="140" [maxWidth]="140" [frozenLeft]="true">
+            <ngx-datatable-column [minWidth]="120" [width]="120" [maxWidth]="120" [frozenLeft]="true">
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <a *ngIf="exercise.id !== value.id; else teamId" (click)="onActivate()" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]">
                         {{ 'entity.action.view' | artemisTranslate }}
@@ -89,14 +89,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column
-                prop="participation.initializationDate"
-                [minWidth]="isAdmin ? 150 : 200"
-                [width]="isAdmin ? 150 : 200"
-                [maxWidth]="isAdmin ? 150 : 200"
-                [cellClass]="isAdmin ? '' : cellClassLeftSpace"
-                [headerClass]="isAdmin ? '' : cellClassLeftSpace"
-            >
+            <ngx-datatable-column prop="participation.initializationDate" [minWidth]="190" [width]="190" [maxWidth]="190">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate"> Initialization Date </span>
@@ -108,7 +101,7 @@
                         {{ value.participation.initializationDate | artemisDate }}
                     </ng-container>
                     <ng-template #initializationDateUnavailable>
-                        {{ 'artemisApp.exercise.dateNotSet' | artemisTranslate }}
+                        {{ 'artemisApp.participation.initializationNotYetStarted' | artemisTranslate }}
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>

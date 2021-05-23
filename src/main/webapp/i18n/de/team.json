@@ -26,7 +26,7 @@
                     "columns": {
                         "assessment": {
                             "label": "Bewertung",
-                            "tooltip": "Die Bewertung kann erst vorgenommen werden, wenn die Abgabe beendet wurde."
+                            "tooltip": "Die Bewertung kann erst nach erfolgreicher Abgabe und Ende der Einreichungsfrist vorgenommen werden."
                         },
                         "participationId": {
                             "label": "Teilnahme ID"
