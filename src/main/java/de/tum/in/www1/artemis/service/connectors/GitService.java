@@ -26,10 +26,7 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
@@ -46,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -803,6 +801,8 @@ public class GitService {
         try {
             Git studentGit = new Git(repository);
             setRemoteUrl(repository);
+            String copyBranchName = "copy";
+            String headName = "HEAD";
 
             // Get last commit hash from template repo
             ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
@@ -814,28 +814,40 @@ public class GitService {
             }
 
             // Create copy branch
-            Ref copy = studentGit.branchCreate().setName("copy").call();
+            Ref copyBranch = studentGit.branchCreate().setName(copyBranchName).call();
             // Reset main branch back to template
             studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestHash)).call();
 
             // Get list of all student commits, that is all commits up to the last template commit
-            var commits = studentGit.log().add(copy.getObjectId()).call();
+            Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
             List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestHash)).collect(Collectors.toList());
             // Sort them oldest to newest
             Collections.reverse(commitList);
             // Cherry-Pick all commits back into the main branch and immediately commit amend anonymized author information
             for (RevCommit commit : commitList) {
+                ObjectId head = studentGit.getRepository().resolve(headName);
                 studentGit.cherryPick().include(commit).call();
-                PersonIdent authorIdent = commit.getAuthorIdent();
-                PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
-                studentGit.commit().setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                // Only commit amend if head changed; cherry-picking empty commits does nothing
+                if (!head.equals(studentGit.getRepository().resolve(headName))) {
+                    PersonIdent authorIdent = commit.getAuthorIdent();
+                    PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
+                    studentGit.commit().setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                }
             }
             // Delete copy branch
-            studentGit.branchDelete().setBranchNames("copy").setForce(true).call();
+            studentGit.branchDelete().setBranchNames(copyBranchName).setForce(true).call();
 
             // Delete all remotes
             for (RemoteConfig remote : studentGit.remoteList().call()) {
                 studentGit.remoteRemove().setRemoteName(remote.getName()).call();
+                // Manually delete remote tracking branches since JGit apparently fails to do so
+                for (Ref ref : studentGit.getRepository().getRefDatabase().getRefs()) {
+                    if (ref.getName().startsWith("refs/remotes/" + remote.getName())) {
+                        RefUpdate update = studentGit.getRepository().updateRef(ref.getName());
+                        update.setForceUpdate(true);
+                        update.delete();
+                    }
+                }
             }
 
             // Delete .git/logs/ folder to delete git reflogs
