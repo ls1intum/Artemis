@@ -45,9 +45,6 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     public exerciseStatusBadge = 'badge-success';
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
-
     isTmpOrSolutionProgrParticipation = false;
     exercise?: Exercise;
     participation?: Participation;
