@@ -36,9 +36,9 @@ public class ModelIndex {
         elementSimilarityMap = hazelcastInstance.getMap("similarities - " + exerciseId);
         uniqueModelElementList = hazelcastInstance.getMap("elements - " + exerciseId);
 
-        MapConfig uniqueModelElementListConfig = new MapConfig("elements - " + exerciseId);
-        uniqueModelElementListConfig.setNearCacheConfig(getNearCacheConfig("models - " + exerciseId));
-        hazelcastInstance.getConfig().addMapConfig(uniqueModelElementListConfig);
+        // MapConfig uniqueModelElementListConfig = new MapConfig("elements - " + exerciseId);
+        // uniqueModelElementListConfig.setNearCacheConfig(getNearCacheConfig("models - " + exerciseId));
+        // hazelcastInstance.getConfig().addMapConfig(uniqueModelElementListConfig);
 
         modelMap = hazelcastInstance.getMap("models - " + exerciseId);
         elementTypeMap = hazelcastInstance.getMap("element-types - " + exerciseId);
