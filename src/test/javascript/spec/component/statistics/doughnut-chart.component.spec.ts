@@ -65,7 +65,7 @@ describe('DoughnutChartComponent', () => {
         component.ngOnChanges();
         expect(component.doughnutChartData[0].data).to.deep.equal([-1, 0]);
     });
-    describe('DoughnutChartComponent', () => {
+    describe('setting titles for different chart types', () => {
         it('should set title for average exercise score', () => {
             component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
             component.ngOnInit();

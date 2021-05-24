@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -20,8 +20,12 @@ import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-grap
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { SinonStub } from 'sinon';
-import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { HttpResponse } from '@angular/common/http';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,8 +34,17 @@ describe('ExerciseStatisticsComponent', () => {
     let fixture: ComponentFixture<ExerciseStatisticsComponent>;
     let component: ExerciseStatisticsComponent;
     let service: StatisticsService;
+    let exerciseService: ExerciseService;
 
     let statisticsSpy: SinonStub;
+    let exerciseSpy: SinonStub;
+
+    const exercise = {
+        id: 1,
+        course: {
+            id: 2,
+        },
+    } as Exercise;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -55,20 +68,19 @@ describe('ExerciseStatisticsComponent', () => {
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(DoughnutChartComponent),
                 MockComponent(StatisticsScoreDistributionGraphComponent),
+                MockComponent(ExerciseDetailStatisticsComponent),
             ],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseStatisticsComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(StatisticsService);
+                exerciseService = TestBed.inject(ExerciseService);
                 statisticsSpy = sinon.stub(service, 'getExerciseStatistics').returns(of(exerciseStatistics));
+                exerciseSpy = sinon.stub(exerciseService, 'find').returns(of({ body: exercise } as HttpResponse<Exercise>));
             });
     });
 

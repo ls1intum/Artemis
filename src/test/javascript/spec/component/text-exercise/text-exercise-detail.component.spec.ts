@@ -19,10 +19,10 @@ import * as chai from 'chai';
 import * as sinon from 'sinon';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,7 +52,7 @@ describe('TextExercise Management Detail Component', () => {
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
                 MockComponent(AlertComponent),
                 MockComponent(AlertErrorComponent),
-                MockComponent(DoughnutChartComponent),
+                MockComponent(ExerciseDetailStatisticsComponent),
                 MockComponent(ExerciseDetailsComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
