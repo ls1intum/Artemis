@@ -38,7 +38,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private boolean isBuildSuccessful;
 
-    List<String> logs;
+    private List<String> logs;
 
     public static TestResultsDTO convert(Object someResult) {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);

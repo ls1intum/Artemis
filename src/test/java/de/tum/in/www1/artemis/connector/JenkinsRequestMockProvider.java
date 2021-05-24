@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -275,7 +276,7 @@ public class JenkinsRequestMockProvider {
             doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
         }
         else {
-            java.io.File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
+            File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
             StringBuilder builder = new StringBuilder();
             Files.lines(file.toPath()).forEach(line -> {
                 builder.append(line);

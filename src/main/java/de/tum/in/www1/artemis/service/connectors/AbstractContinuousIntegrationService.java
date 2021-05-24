@@ -156,6 +156,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
      *
      * @param buildLogEntries the original, unfiltered list
+     * @param programmingLanguage the programming language for filtering out language-specific logs
      * @return the filtered list
      */
     protected List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {

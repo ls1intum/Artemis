@@ -142,14 +142,9 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> filteredLogs = new ArrayList<>();
         for (BuildLogEntry buildLog : buildLogEntries) {
-            boolean compilationErrorFound = false;
+
             String logString = buildLog.getLog();
-
-            if (logString.contains("COMPILATION ERROR")) {
-                compilationErrorFound = true;
-            }
-
-            if (compilationErrorFound && logString.contains("BUILD FAILURE")) {
+            if (isCompilationError(logString) && isBuildFailure(logString)) {
                 // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
                 break;
             }
@@ -171,5 +166,13 @@ public class BuildLogEntryService {
         }
 
         return filteredLogs;
+    }
+
+    private boolean isCompilationError(String log) {
+        return log.contains("COMPILATION ERROR");
+    }
+
+    private boolean isBuildFailure(String log) {
+        return log.contains("BUILD FAILURE");
     }
 }
