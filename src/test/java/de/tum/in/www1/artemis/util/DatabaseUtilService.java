@@ -2701,6 +2701,11 @@ public class DatabaseUtilService {
         }
     }
 
+    public void addComplaintToSubmission(Submission submission, String userLogin) {
+        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(submission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+        complaintRepo.save(complaint);
+    }
+
     public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().participation(participation);

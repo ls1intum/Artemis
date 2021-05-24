@@ -226,7 +226,6 @@ public abstract class AssessmentResource {
         if (!submission.getResults().contains(result)) {
             throw new BadRequestAlertException("The specified result does not belong to the submission.", "Result", "invalidResultId");
         }
-
         // delete assessment
         assessmentService.deleteAssessment(submission, result);
 
