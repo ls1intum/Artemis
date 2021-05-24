@@ -24,11 +24,11 @@ describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponent: SystemNotificationManagementUpdateComponent;
     let service: SystemNotificationService;
 
-    const route = ({
+    const route = {
         parent: {
             data: of({ notification: { id: 1, title: 'test' } as SystemNotification }),
         },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
     const router = { navigate() {} };
 
     beforeEach(() => {

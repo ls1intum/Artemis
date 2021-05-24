@@ -72,18 +72,16 @@ export class TextSubmissionService {
             params = params.set(option, 'true');
         }
 
-        return this.http
-            .get<TextSubmission>(url, { observe: 'response', params })
-            .pipe(
-                map((response) => {
-                    const submission = response.body!;
-                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    submission.participation!.submissions = [submission];
-                    submission.participation!.results = [submission.latestResult!];
-                    submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
-                    return submission;
-                }),
-            );
+        return this.http.get<TextSubmission>(url, { observe: 'response', params }).pipe(
+            map((response) => {
+                const submission = response.body!;
+                setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+                submission.participation!.submissions = [submission];
+                submission.participation!.results = [submission.latestResult!];
+                submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
+                return submission;
+            }),
+        );
     }
 
     private static convertResponse(res: EntityResponseType): EntityResponseType {

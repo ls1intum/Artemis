@@ -95,6 +95,10 @@ public class ExamScoresDTO {
 
         public Double overallScoreAchieved = null;
 
+        public String overallGrade = null;
+
+        public Boolean hasPassed = null;
+
         public Boolean submitted = false;
 
         public Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
