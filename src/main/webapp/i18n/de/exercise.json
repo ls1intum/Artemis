@@ -45,10 +45,14 @@
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
+            "addGradingCriterion": "Benotungskriterium hinzufügen",
+            "deleteGradingCriterion": "Benotungskriterium löschen",
             "usageCount": "Maximale Zählung in der Bewertung",
             "DragDropInstruction": "Drag & Drop Benotungshinweis zum Feedback-Element",
             "gradingScale": "Benotungsskala",
-            "instrDescription": "Beschreibung der Anweisung",
+            "instructionDescription": "Beschreibung der Anweisung",
+            "credits": "Credits",
+            "feedback": "Feedback",
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden",
             "title": "Titel",
             "shortName": "Kurzname",
@@ -62,7 +66,8 @@
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonus points",
             "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
-            "includedInOverallScoreLabel": "Soll diese Aufgabe bei der Berechnung des Kurs- bzw Klausurergebnis miteinbezogen werden?",
+            "includedInOverallScoreCourseLabel": "Soll diese Aufgabe bei der Berechnung des Kursergebnis miteinbezogen werden?",
+            "includedInOverallScoreExamLabel": "Soll diese Aufgabe bei der Berechnung des Klausurergebnisses miteinbezogen werden?",
             "includedInOverallScore": "Miteinbezogen in Ergebnis",
             "includedCompletely": "Miteinbezogen",
             "includedCompletelyTooltip": "Alle erzielten Punkte und Bonuspunkte in dieser Aufgabe zählen zu dem Kurs- bzw Klausurergebnis!",
@@ -173,6 +178,17 @@
             },
             "exam": "Klausur",
             "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
+            "update": {
+                "warning": {
+                    "warning": "Warnung!",
+                    "confirm": "Änderungen bestätigen",
+                    "problems": "Folgende Probleme können auftreten:",
+                    "instructionDeleted": "Benotungshinweise gelöscht:",
+                    "scoringChange": "Bewertungsart verändert:",
+                    "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
+                    "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?"
+                }
+            },
             "isUsedForTutorial": "Soll es vom Tutor benotet werden"
         },
         "exerciseLtiConfiguration": {

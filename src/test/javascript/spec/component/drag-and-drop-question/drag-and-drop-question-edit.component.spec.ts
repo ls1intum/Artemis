@@ -584,7 +584,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         // text
         text = 'take this null as a command';
-        domainCommand = [text, (null as unknown) as DomainCommand];
+        domainCommand = [text, null as unknown as DomainCommand];
 
         component.domainCommandsFound([domainCommand]);
 
