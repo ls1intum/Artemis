@@ -12,7 +12,7 @@
                 },
                 "aceEditor": {
                     "headline": "Code editor",
-                    "content": "The source code is now displayed in the code editor. You can read through the <tt>TODO</tt> and try to solve it. Or alternatively you can enter any code for this test round. If you are done with your implementation, just click on the <tt>Next</tt> button to proceed."
+                    "content": "The source code is now displayed in the code editor. You can read through the <tt>TODO</tt> and try to solve it. Alternatively, you can enter any code for this test round. If you are done with your implementation, just click on the <tt>Next</tt> button to proceed."
                 },
                 "saveChanges": {
                     "headline": "Save changes",
@@ -31,7 +31,7 @@
             "buildStatus": {
                 "headline": "Build status",
                 "content": "You can now see your build status here and identify which tasks have been successfully solved and which have not.",
-                "hint": "It is possible that some additional tests will be run after the due date. This means that passing all displayed tests does not necessarily guarantee a final score of 100%. Therefore, please check your implementation carefully."
+                "hint": "Some additional tests may be run after the due date. This means that passing all displayed tests does not necessarily guarantee a final score of 100%. Therefore, please check your implementation carefully."
             },
             "testCases": {
                 "headline": "Feedback",
