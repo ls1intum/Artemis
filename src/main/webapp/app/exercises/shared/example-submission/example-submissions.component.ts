@@ -29,7 +29,7 @@ export class ExampleSubmissionsComponent implements OnInit {
      * @param index in the example submissions array
      */
     deleteExampleSubmission(index: number) {
-        let submissionId = this.exercise.exampleSubmissions![index].id!;
+        const submissionId = this.exercise.exampleSubmissions![index].id!;
         this.exampleSubmissionService.delete(submissionId).subscribe(
             () => {
                 this.exercise.exampleSubmissions!.splice(index, 1);
