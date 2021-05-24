@@ -1,5 +1,0 @@
-{
-    "name": "Example for using fixtures to represent data",
-    "email": "admin@artemis.in.tum.de",
-    "body": "Fixtures are a great way to mock data for responses to routes"
-}
