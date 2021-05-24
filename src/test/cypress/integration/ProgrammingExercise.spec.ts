@@ -26,7 +26,6 @@ describe('Programming exercise', () => {
     });
 
     it('Creates a new course, participates in it and deletes it afterwards', function () {
-        // @ts-ignore
         cy.login(adminUsername, adminPassword);
         openCourseManagement();
         cy.get('.create-course').click();
@@ -70,7 +69,6 @@ describe('Programming exercise', () => {
         cy.get('#ngb-typeahead-0-0').should(beVisible).click();
 
         // Login as the student
-        // @ts-ignore
         cy.login(username, password);
 
         cy.url().should('include', '/courses');
@@ -104,7 +102,6 @@ describe('Programming exercise', () => {
         cy.log('Artemis graded our submission, so we are done here...');
 
         // Login is admin again
-        // @ts-ignore
         cy.login(adminUsername, adminPassword);
 
         openCourseManagement();
