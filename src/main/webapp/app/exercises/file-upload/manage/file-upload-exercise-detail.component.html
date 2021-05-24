@@ -20,40 +20,8 @@
                     <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                 </a>
             </div>
-            <div *ngIf="fileUploadExercise.releaseDate != undefined && moment(fileUploadExercise.releaseDate).isBefore(moment())">
-                <jhi-doughnut-chart
-                    class="mt-3 d-inline-flex"
-                    [courseId]="fileUploadExercise.course?.id!"
-                    [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
-                    [exerciseId]="fileUploadExercise.id!"
-                    [exerciseType]="ExerciseType.TEXT"
-                    [currentPercentage]="doughnutStats?.averageScoreOfExercise"
-                    [currentAbsolute]="absoluteAveragePoints"
-                    [currentMax]="doughnutStats?.maxPointsOfExercise"
-                >
-                </jhi-doughnut-chart>
-                <jhi-doughnut-chart
-                    class="mt-3 d-inline-flex"
-                    [courseId]="fileUploadExercise.course?.id!"
-                    [contentType]="DoughnutChartType.PARTICIPATIONS"
-                    [exerciseId]="fileUploadExercise.id!"
-                    [exerciseType]="ExerciseType.TEXT"
-                    [currentPercentage]="participationsInPercent"
-                    [currentAbsolute]="doughnutStats?.numberOfParticipations"
-                    [currentMax]="doughnutStats?.numberOfStudentsInCourse"
-                >
-                </jhi-doughnut-chart>
-                <jhi-doughnut-chart
-                    class="mt-3 d-inline-flex"
-                    [courseId]="fileUploadExercise.course?.id!"
-                    [contentType]="DoughnutChartType.QUESTIONS"
-                    [exerciseId]="fileUploadExercise.id!"
-                    [exerciseType]="ExerciseType.TEXT"
-                    [currentPercentage]="questionsAnsweredInPercent"
-                    [currentAbsolute]="doughnutStats?.numberOfAnsweredQuestions"
-                    [currentMax]="doughnutStats?.numberOfQuestions"
-                >
-                </jhi-doughnut-chart>
+            <div *ngIf="fileUploadExercise.releaseDate != undefined && moment(fileUploadExercise.releaseDate).isBefore(moment())" class="mt-3">
+                <jhi-exercise-detail-statistics [exercise]="fileUploadExercise" [doughnutStats]="doughnutStats"></jhi-exercise-detail-statistics>
                 <hr />
                 <div>
                     <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>

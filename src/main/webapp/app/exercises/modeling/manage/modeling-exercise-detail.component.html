@@ -24,40 +24,8 @@
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>
-            <div *ngIf="modelingExercise.releaseDate != undefined && moment(modelingExercise.releaseDate).isBefore(moment())">
-                <jhi-doughnut-chart
-                    class="mt-3 d-inline-flex"
-                    [courseId]="modelingExercise.course?.id!"
-                    [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
-                    [exerciseId]="modelingExercise.id!"
-                    [exerciseType]="ExerciseType.TEXT"
-                    [currentPercentage]="doughnutStats?.averageScoreOfExercise"
-                    [currentAbsolute]="absoluteAveragePoints"
-                    [currentMax]="doughnutStats?.maxPointsOfExercise"
-                >
-                </jhi-doughnut-chart>
-                <jhi-doughnut-chart
-                    class="mt-3 d-inline-flex"
-                    [courseId]="modelingExercise.course?.id!"
-                    [contentType]="DoughnutChartType.PARTICIPATIONS"
-                    [exerciseId]="modelingExercise.id!"
-                    [exerciseType]="ExerciseType.TEXT"
-                    [currentPercentage]="participationsInPercent"
-                    [currentAbsolute]="doughnutStats?.numberOfParticipations"
-                    [currentMax]="doughnutStats?.numberOfStudentsInCourse"
-                >
-                </jhi-doughnut-chart>
-                <jhi-doughnut-chart
-                    class="mt-3 d-inline-flex"
-                    [courseId]="modelingExercise.course?.id!"
-                    [contentType]="DoughnutChartType.QUESTIONS"
-                    [exerciseId]="modelingExercise.id!"
-                    [exerciseType]="ExerciseType.TEXT"
-                    [currentPercentage]="questionsAnsweredInPercent"
-                    [currentAbsolute]="doughnutStats?.numberOfAnsweredQuestions"
-                    [currentMax]="doughnutStats?.numberOfQuestions"
-                >
-                </jhi-doughnut-chart>
+            <div *ngIf="modelingExercise.releaseDate != undefined && moment(modelingExercise.releaseDate).isBefore(moment())" class="mt-3">
+                <jhi-exercise-detail-statistics [exercise]="modelingExercise" [doughnutStats]="doughnutStats"></jhi-exercise-detail-statistics>
                 <hr />
                 <div>
                     <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>

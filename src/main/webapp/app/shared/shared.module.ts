@@ -30,6 +30,7 @@ import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { RouterModule } from '@angular/router';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -57,6 +58,7 @@ import { RouterModule } from '@angular/router';
         StatisticsScoreDistributionGraphComponent,
         ExerciseStatisticsComponent,
         DoughnutChartComponent,
+        ExerciseDetailStatisticsComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -88,6 +90,7 @@ import { RouterModule } from '@angular/router';
         StatisticsScoreDistributionGraphComponent,
         ExerciseStatisticsComponent,
         DoughnutChartComponent,
+        ExerciseDetailStatisticsComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

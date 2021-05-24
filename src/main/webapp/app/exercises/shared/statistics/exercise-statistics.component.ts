@@ -6,7 +6,9 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { round } from 'app/shared/util/utils';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-exercise-statistics',
@@ -23,9 +25,8 @@ export class ExerciseStatisticsComponent implements OnInit {
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.EXERCISE;
     paramSub: Subscription;
-    courseId: number;
-    exerciseId: number;
 
+    exercise: Exercise;
     exerciseStatistics: ExerciseManagementStatisticsDto;
 
     // doughnut chart percentage values
@@ -33,14 +34,17 @@ export class ExerciseStatisticsComponent implements OnInit {
     questionsAnsweredInPercent = 0;
     absoluteAveragePoints = 0;
 
-    constructor(private service: StatisticsService, private route: ActivatedRoute) {}
+    constructor(private service: StatisticsService, private route: ActivatedRoute, private exerciseService: ExerciseService) {}
 
     ngOnInit() {
+        let exerciseId = 0;
         this.paramSub = this.route.params.subscribe((params) => {
-            this.exerciseId = params['exerciseId'];
-            this.courseId = params['courseId'];
+            exerciseId = params['exerciseId'];
         });
-        this.service.getExerciseStatistics(this.exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
+        this.exerciseService.find(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.exercise = exerciseResponse.body!;
+        });
+        this.service.getExerciseStatistics(exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
             this.exerciseStatistics = res;
             this.participationsInPercent = res.numberOfStudentsInCourse > 0 ? round((res.numberOfParticipations / res.numberOfStudentsInCourse) * 100, 1) : 0;
             this.questionsAnsweredInPercent = res.numberOfQuestions > 0 ? round((res.numberOfAnsweredQuestions / res.numberOfQuestions) * 100, 1) : 0;
