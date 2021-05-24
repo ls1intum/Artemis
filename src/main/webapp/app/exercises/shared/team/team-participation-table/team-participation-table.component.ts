@@ -154,10 +154,10 @@ export class TeamParticipationTableComponent implements OnInit {
     assessmentButtonDisabled(exercise: Exercise, submission: Submission | null) {
         if (submission?.submissionExerciseType === SubmissionExerciseType.PROGRAMMING) {
             // Programming exercise cannot be assessed by anyone if there is no submitted submission or the due date is reached yet
-            return !submission?.submitted || exercise.dueDate?.isAfter(moment());
+            return !submission?.submitted || exercise.dueDate === null || exercise.dueDate?.isAfter(moment());
         } else if (!exercise.isAtLeastInstructor) {
             // Other exercises cannot be assessed by tutors if there is no submitted submission or submission date is not reached yet
-            return !submission?.submitted || exercise.dueDate?.isAfter(moment());
+            return !submission?.submitted || exercise.dueDate === null || exercise.dueDate?.isAfter(moment());
         } else {
             // Other exercises cannot be assessed by anyone if there is not submitted submission.
             return !submission?.submitted;
