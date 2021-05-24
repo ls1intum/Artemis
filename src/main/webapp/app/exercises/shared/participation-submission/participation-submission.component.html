@@ -79,11 +79,11 @@
                             [actionType]="actionTypeEmpty"
                             [entityTitle]="'deleteResultButton'"
                             deleteQuestion="artemisApp.result.delete.question2"
-                            (delete)="delete(result.submission, result)"
+                            (delete)="deleteResult(result.submission, result)"
                             [dialogError]="dialogError$"
                         >
-                {{ 'artemisApp.result.delete.buttonText' | artemisTranslate | uppercase }}
-            </span>
+                            {{ 'artemisApp.result.delete.buttonText' | artemisTranslate | uppercase }}
+                        </span>
                     </div>
                 </div>
             </ng-template>

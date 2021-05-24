@@ -152,7 +152,11 @@ export class ParticipationSubmissionComponent implements OnInit {
                     this.submissions = submissions;
                     this.isLoading = false;
                     // set the submission to every result so it can be accessed via the result
-                    submissions.forEach((submission) => submission.results?.forEach((result) => (result.submission = submission)));
+                    submissions.forEach((submission: Submission) => {
+                        if (submission.results) {
+                            submission.results.forEach((result: Result) => (result.submission = submission));
+                        }
+                    });
                 }
             });
     }
@@ -209,7 +213,7 @@ export class ParticipationSubmissionComponent implements OnInit {
         );
     }
 
-    delete(submission: Submission, result: Result) {
+    deleteResult(submission: Submission, result: Result) {
         if (this.exercise && submission.id && result.id) {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
