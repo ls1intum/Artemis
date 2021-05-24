@@ -78,8 +78,8 @@ describe('ParticipationSubmissionComponent', () => {
     const result1 = { id: 44 } as Result;
     const result2 = { id: 45 } as Result;
     const participation1 = { id: 66 } as Participation;
-    let submissionWithTwoResults = { id: 77, results: [result1, result2], participation: participation1 } as Submission;
-    let submissionWithTwoResults2 = { id: 78, results: [result1, result2], participation: participation1 } as Submission;
+    const submissionWithTwoResults = { id: 77, results: [result1, result2], participation: participation1 } as Submission;
+    const submissionWithTwoResults2 = { id: 78, results: [result1, result2], participation: participation1 } as Submission;
 
     const programmingExercise = { id: 100, type: ExerciseType.PROGRAMMING } as Exercise;
     const modelingExercise = { id: 100, type: ExerciseType.MODELING } as Exercise;
