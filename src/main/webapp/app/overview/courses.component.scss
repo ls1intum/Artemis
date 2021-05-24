@@ -18,7 +18,7 @@
 
 @media screen and (min-width: 1900px) {
     .col-xl-4 {
-        flex: 0 0 25 !important;
-        max-width: 25% !important;
+        flex: 0 0 25;
+        width: 25% !important;
     }
 }
