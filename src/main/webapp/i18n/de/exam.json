@@ -21,8 +21,12 @@
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Punkte",
                     "bonus": "Bonuspunkte",
-                    "youAchieved": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten und {{bonusPoints}} Bonuspunkten erreicht"
-                }
+                    "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten und {{bonusPoints}} Bonuspunkten erreicht",
+                    "youAchieved": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten",
+                    "maxPointsNotSet": "The exam max points are not set."
+                },
+                "grade": "Note:",
+                "bonus": "Bonuspunkte für die Klausur:"
             },
             "title": "Klausur",
             "startExam": "Starten",
