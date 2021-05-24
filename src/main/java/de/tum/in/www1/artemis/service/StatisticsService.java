@@ -35,7 +35,7 @@ public class StatisticsService {
     private final ParticipationRepository participationRepository;
 
     public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository, CourseRepository courseRepository,
-            UserRepository userRepository, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository) {
+            UserRepository userRepository, ParticipationRepository participationRepository) {
         this.statisticsRepository = statisticsRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.courseRepository = courseRepository;

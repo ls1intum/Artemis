@@ -441,6 +441,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
      * @param startDate The startDate of which the data should be fetched
      * @param endDate The endDate of which the data should be fetched
      * @param graphType the type of graph the data should be fetched for (see GraphType.java)
+     * @param view the view in which the data will be displayed (Artemis, Course, Exercise)
      * @param entityId the entityId which is null for a user statistics call and contains the Id for the other statistics pages
      * @return the return value of the processed database call which returns a list of entries
      */
