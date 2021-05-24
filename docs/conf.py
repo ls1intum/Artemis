@@ -47,3 +47,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_context = {
+    "display_github": True,
+    "github_user": "ls1intum",
+    "github_repo": "Artemis",
+    "github_version": "develop",
+    "conf_py_path": "/docs/",
+}

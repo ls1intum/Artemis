@@ -44,7 +44,7 @@ describe('Test Run Management Component', () => {
         { id: 1, user: { id: 99 } },
         { id: 2, user: { id: 90 } },
     ] as StudentExam[];
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) } } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

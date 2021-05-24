@@ -63,8 +63,9 @@ describe('ExerciseUnitComponent', () => {
 
     it('should initialize and set input of course exercise row correctly', () => {
         exerciseUnitComponentFixture.detectChanges();
-        const courseExerciseRowStubComponent: CourseExerciseRowStubComponent = exerciseUnitComponentFixture.debugElement.query(By.directive(CourseExerciseRowStubComponent))
-            .componentInstance;
+        const courseExerciseRowStubComponent: CourseExerciseRowStubComponent = exerciseUnitComponentFixture.debugElement.query(
+            By.directive(CourseExerciseRowStubComponent),
+        ).componentInstance;
 
         expect(courseExerciseRowStubComponent.course).to.equal(exerciseUnitComponent.course);
         expect(courseExerciseRowStubComponent.exercise).to.equal(exerciseUnitComponent.exerciseUnit.exercise);

@@ -114,12 +114,12 @@ describe('AssessmentDashboardInformationComponent', () => {
         totalNumberOfAssessmentLocks: 2,
     } as StatsForDashboard;
 
-    const route = ({
+    const route = {
         snapshot: {
             paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
             url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
         },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -171,12 +171,12 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     describe('ngOnInit', () => {
         it('should loadAll for course', () => {
-            const newRoute = ({
+            const newRoute = {
                 snapshot: {
                     paramMap: convertToParamMap({ courseId: course.id }),
                     url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
                 },
-            } as any) as ActivatedRoute;
+            } as any as ActivatedRoute;
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.snapshot = newRoute.snapshot;
             TestBed.inject(ActivatedRoute);

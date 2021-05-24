@@ -21,6 +21,9 @@ import { JhiAlertService, JhiSortByDirective, JhiSortDirective, JhiTranslateDire
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { empty, of } from 'rxjs';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStep } from 'app/entities/grade-step.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -29,6 +32,42 @@ describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
+    let gradingSystemService: GradingSystemService;
+
+    const gradeStep1: GradeStep = {
+        isPassingGrade: false,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 0,
+        upperBoundInclusive: false,
+        upperBoundPercentage: 40,
+        gradeName: 'D',
+    };
+    const gradeStep2: GradeStep = {
+        isPassingGrade: true,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 40,
+        upperBoundInclusive: false,
+        upperBoundPercentage: 60,
+        gradeName: 'C',
+    };
+    const gradeStep3: GradeStep = {
+        isPassingGrade: true,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 60,
+        upperBoundInclusive: false,
+        upperBoundPercentage: 80,
+        gradeName: 'B',
+    };
+    const gradeStep4: GradeStep = {
+        isPassingGrade: true,
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 80,
+        upperBoundInclusive: true,
+        upperBoundPercentage: 100,
+        gradeName: 'A',
+    };
+    const gradingScale = new GradingScale();
+    gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
 
     const exInfo1 = {
         exerciseId: 11,
@@ -165,6 +204,15 @@ describe('ExamScoresComponent', () => {
                 MockProvider(SortService),
                 MockProvider(JhiAlertService),
                 MockProvider(ParticipantScoresService),
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForExam: () => {
+                        return of(
+                            new HttpResponse({
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
             ],
         })
@@ -173,6 +221,7 @@ describe('ExamScoresComponent', () => {
                 fixture = TestBed.createComponent(ExamScoresComponent);
                 comp = fixture.componentInstance;
                 examService = fixture.debugElement.injector.get(ExamManagementService);
+                gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
                 const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
                 findExamScoresSpy = sinon
                     .stub(participationScoreService, 'findExamScores')
@@ -344,6 +393,9 @@ describe('ExamScoresComponent', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
+        comp.gradingScale = gradingScale;
+        comp.gradingScale.gradeSteps = [gradeStep1];
+        comp.gradingScaleExists = true;
 
         const exportAsCsvStub = sinon.stub(comp, 'exportAsCsv');
         // create csv
@@ -392,6 +444,48 @@ describe('ExamScoresComponent', () => {
             '50',
             studentResult3.submitted ? 'yes' : 'no',
         );
+    });
+
+    it('should export as csv', () => {
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        fixture.detectChanges();
+
+        comp.exportToCsv();
+
+        expect(comp).to.be.ok;
+    });
+
+    it('should find grade step index correctly', () => {
+        spyOn(gradingSystemService, 'matchGradePercentage').and.callThrough();
+        comp.gradingScale = gradingScale;
+
+        expect(comp.findGradeStepIndex(20)).to.equal(0);
+    });
+
+    it('should set grading scale properties', () => {
+        const examScoreDTOWithGrades = examScoreDTO;
+        examScoreDTOWithGrades.studentResults[0].hasPassed = true;
+        spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
+        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ body: gradingScale })));
+        fixture.detectChanges();
+
+        expect(comp.gradingScaleExists).to.be.true;
+        expect(comp.gradingScale).to.deep.equal(gradingScale);
+        expect(comp.isBonus).to.be.false;
+    });
+
+    it('should filter non-empty submissions', () => {
+        comp.filterForNonEmptySubmissions = false;
+        comp.gradingScale = gradingScale;
+        comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
+        comp.gradingScaleExists = true;
+        comp.exerciseGroups = examScoreDTO.exerciseGroups;
+        comp.studentResults = examScoreDTO.studentResults;
+        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradingScale.gradeSteps[0]);
+
+        comp.toggleFilterForNonEmptySubmission();
+
+        expect(comp.filterForNonEmptySubmissions).to.be.true;
     });
 });
 
