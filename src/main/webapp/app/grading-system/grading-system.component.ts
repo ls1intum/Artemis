@@ -2,10 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-grading-system',
@@ -24,30 +25,38 @@ export class GradingSystemComponent implements OnInit {
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     notFound = false;
+    isLoading = false;
 
     constructor(private gradingSystemService: GradingSystemService, private route: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
+            this.isLoading = true;
             this.courseId = Number(params['courseId']);
             if (params['examId']) {
                 this.examId = Number(params['examId']);
                 this.isExam = true;
             }
+            if (this.isExam) {
+                this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
+            } else {
+                this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
+            }
         });
-        if (this.isExam) {
-            this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!).subscribe((gradingSystemResponse) => {
+    }
+
+    private handleFindObservable(findObservable: Observable<EntityResponseType>) {
+        findObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
                     this.handleFindResponse(gradingSystemResponse.body);
                 }
             }, this.handleErrorResponse());
-        } else {
-            this.gradingSystemService.findGradingScaleForCourse(this.courseId!).subscribe((gradingSystemResponse) => {
-                if (gradingSystemResponse.body) {
-                    this.handleFindResponse(gradingSystemResponse.body);
-                }
-            }, this.handleErrorResponse());
-        }
     }
 
     /**
@@ -72,7 +81,7 @@ export class GradingSystemComponent implements OnInit {
      */
     handleFindResponse(gradingScale?: GradingScale): void {
         if (gradingScale) {
-            gradingScale.gradeSteps = this.sortGradeSteps(gradingScale.gradeSteps);
+            gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(gradingScale.gradeSteps);
             this.gradingScale = gradingScale;
             this.existingGradingScale = true;
             this.setBoundInclusivity();
@@ -85,8 +94,9 @@ export class GradingSystemComponent implements OnInit {
      * and passing grade properties and saves the grading scale via the service
      */
     save(): void {
+        this.isLoading = true;
         this.notFound = false;
-        this.gradingScale.gradeSteps = this.sortGradeSteps(this.gradingScale.gradeSteps);
+        this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setInclusivity(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
         // new grade steps shouldn't have ids set
@@ -95,25 +105,29 @@ export class GradingSystemComponent implements OnInit {
         });
         if (this.existingGradingScale) {
             if (this.isExam) {
-                this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
             } else {
-                this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale));
             }
         } else {
             if (this.isExam) {
-                this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.handleSaveObservable(this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
             } else {
-                this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale).subscribe((gradingSystemResponse) => {
-                    this.handleSaveResponse(gradingSystemResponse.body!);
-                });
+                this.handleSaveObservable(this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale));
             }
         }
+    }
+
+    private handleSaveObservable(saveObservable: Observable<EntityResponseType>) {
+        saveObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe((gradingSystemResponse) => {
+                this.handleSaveResponse(gradingSystemResponse.body!);
+            });
     }
 
     /**
@@ -125,7 +139,7 @@ export class GradingSystemComponent implements OnInit {
      */
     private handleSaveResponse(newGradingScale?: GradingScale): void {
         if (newGradingScale) {
-            newGradingScale.gradeSteps = this.sortGradeSteps(newGradingScale.gradeSteps);
+            newGradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(newGradingScale.gradeSteps);
             this.gradingScale = newGradingScale;
             this.existingGradingScale = true;
         }
@@ -138,33 +152,26 @@ export class GradingSystemComponent implements OnInit {
         if (!this.existingGradingScale) {
             return;
         }
+        this.isLoading = true;
         if (this.isExam) {
-            this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!).subscribe(() => {
-                this.existingGradingScale = false;
-                this.dialogErrorSource.next('');
-            });
+            this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForExam(this.courseId!, this.examId!));
         } else {
-            this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!).subscribe(() => {
-                this.existingGradingScale = false;
-                this.dialogErrorSource.next('');
-            });
+            this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!));
         }
         this.gradingScale = new GradingScale();
     }
 
-    /**
-     * Sorts grade steps by lower bound percentage
-     *
-     * @param gradeSteps the grade steps to be sorted
-     */
-    sortGradeSteps(gradeSteps: GradeStep[]): GradeStep[] {
-        if (gradeSteps) {
-            return gradeSteps.sort((gradeStep1, gradeStep2) => {
-                return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
+    handleDeleteObservable(deleteObservable: Observable<EntityResponseType>) {
+        deleteObservable
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(() => {
+                this.existingGradingScale = false;
+                this.dialogErrorSource.next('');
             });
-        } else {
-            return [];
-        }
     }
 
     /**
@@ -231,9 +238,13 @@ export class GradingSystemComponent implements OnInit {
     }
 
     gradeStepsWithNonemptyNames(): GradeStep[] {
-        return this.gradingScale.gradeSteps.filter((gradeStep) => {
-            return gradeStep.gradeName !== '';
-        });
+        if (this.gradingScale.gradeSteps) {
+            return this.gradingScale.gradeSteps.filter((gradeStep) => {
+                return gradeStep.gradeName !== '';
+            });
+        } else {
+            return [];
+        }
     }
 
     /**

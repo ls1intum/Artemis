@@ -25,7 +25,12 @@
                     <span jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</span>
                 </dd>
 
-                <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
+                <dt>
+                    <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
+                    <button *ngIf="modelingExercise && modelingExercise.sampleSolutionModel" (click)="downloadAsPDf()" class="btn btn-primary" jhiTranslate="entity.action.export">
+                        Export
+                    </button>
+                </dt>
                 <dd class="editor-outline-background">
                     <jhi-modeling-editor
                         *ngIf="sampleSolutionUML"
