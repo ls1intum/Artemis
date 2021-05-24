@@ -30,8 +30,6 @@ public class StatisticsService {
 
     private final CourseRepository courseRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final UserRepository userRepository;
 
     private final ParticipationRepository participationRepository;
@@ -42,7 +40,6 @@ public class StatisticsService {
         this.participantScoreRepository = participantScoreRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.exerciseRepository = exerciseRepository;
         this.participationRepository = participationRepository;
     }
 
@@ -55,6 +52,7 @@ public class StatisticsService {
      * @param span DAY,WEEK,MONTH or YEAR depending on the active tab in the view
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @param graphType the type of graph the data should be fetched
+     * @param view the view in which the data will be displayed (Artemis, Course, Exercise)
      * @param entityId the entityId. Only set if we fetch value for the course statistics
      * @return an array, containing the values for each bar in the graph
      */
