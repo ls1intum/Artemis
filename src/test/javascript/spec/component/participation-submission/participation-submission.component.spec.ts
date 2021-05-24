@@ -81,7 +81,7 @@ describe('ParticipationSubmissionComponent', () => {
     const submissionWithTwoResults = { id: 77, results: [result1, result2], participation: participation1 } as Submission;
     const submissionWithTwoResults2 = { id: 78, results: [result1, result2], participation: participation1 } as Submission;
 
-    const programmingExercise = { id: 100, type: ExerciseType.PROGRAMMING } as Exercise;
+    const programmingExercise1 = { id: 100, type: ExerciseType.PROGRAMMING } as Exercise;
     const modelingExercise = { id: 100, type: ExerciseType.MODELING } as Exercise;
     const fileUploadExercise = { id: 100, type: ExerciseType.FILE_UPLOAD } as Exercise;
     const textExercise = { id: 100, type: ExerciseType.TEXT } as Exercise;
@@ -314,7 +314,7 @@ describe('ParticipationSubmissionComponent', () => {
         }));
 
         it('should delete result of programmingSubmission', fakeAsync(() => {
-            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise })));
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise1 })));
             fixture.detectChanges();
             tick();
             comp.deleteResult(submissionWithTwoResults, result2);
@@ -375,7 +375,7 @@ describe('ParticipationSubmissionComponent', () => {
         }));
 
         it('should not delete result of programmingSubmission', fakeAsync(() => {
-            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise })));
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise1 })));
             fixture.detectChanges();
             tick();
             comp.deleteResult(submissionWithTwoResults, result2);
