@@ -8,6 +8,8 @@ import { Result } from 'app/entities/result.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { MockComponent } from 'ng-mocks';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -16,7 +18,7 @@ describe('AssessmentHeaderComponent', () => {
     beforeEach(async(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule],
-            declarations: [AssessmentHeaderComponent],
+            declarations: [AssessmentHeaderComponent, MockComponent(AssessmentWarningComponent)],
             providers: [
                 {
                     provide: JhiAlertService,
