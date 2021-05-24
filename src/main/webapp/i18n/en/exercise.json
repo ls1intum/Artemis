@@ -130,7 +130,7 @@
             "tagPlaceholder": "+Category",
             "tagSecondaryPlaceholder": "Enter a new category",
             "isProgramming": "This is a programming exercise",
-            "isModeling": "This is a modeling exercise",
+            "isModeling": "This is a modelling exercise",
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
