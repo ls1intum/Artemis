@@ -26,9 +26,6 @@ public abstract class AssessmentResource {
 
     private final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     protected final AuthorizationCheckService authCheckService;
 
     protected final UserRepository userRepository;
