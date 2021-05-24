@@ -369,8 +369,6 @@ public class ProgrammingSubmissionResource {
         programmingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // return forbidden if caller is not allowed to assess
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
         }

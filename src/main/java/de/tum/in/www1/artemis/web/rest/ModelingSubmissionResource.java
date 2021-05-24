@@ -195,7 +195,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // return forbidden if caller is not allowed to assess
         if (!authCheckService.isAllowedToAssesExercise(modelingExercise, user, resultId)) {
             return forbidden();
         }
