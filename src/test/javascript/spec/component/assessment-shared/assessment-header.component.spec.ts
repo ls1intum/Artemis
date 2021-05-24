@@ -10,6 +10,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { MockComponent } from 'ng-mocks';
+import { Exercise } from 'app/entities/exercise.model';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -53,6 +54,18 @@ describe('AssessmentHeaderComponent', () => {
         const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
         const jhiAlertContent = jhiAlertComponent.nativeElement.textContent;
         expect(jhiAlertContent).toContain('test-alert-string');
+    });
+
+    it('should display warning when assessment due date has not passed', () => {
+        component.exercise = {
+            id: 16,
+            dueDate: moment().subtract(2, 'days'),
+        } as Exercise;
+        // @ts-ignore
+        component.result = undefined;
+        fixture.detectChanges();
+        const warningComponent = fixture.debugElement.query(By.directive(AssessmentWarningComponent));
+        expect(warningComponent).toBeTruthy();
     });
 
     it('should display alert when assessment due date has passed', () => {
