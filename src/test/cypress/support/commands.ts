@@ -67,9 +67,11 @@ Cypress.Commands.add('login', (username, password, url = '/') => {
  * */
 Cypress.Commands.add('logout', () => {
     localStorage.removeItem(authTokenKey);
+    // The 'jhi-previousurl' can cause issues when it is not cleared
+    sessionStorage.clear();
     Cypress.env(authTokenKey, '');
     cy.visit('/');
-    cy.url().should('equal', Cypress.config().baseUrl + '/');
+    cy.location('pathname').should('eq', '/');
     cy.log('Logged out');
 });
 
