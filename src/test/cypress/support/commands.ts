@@ -31,15 +31,19 @@ export {};
 declare global {
     namespace Cypress {
         interface Chainable {
-            login(username: String, password: String, url: String): any;
+            login(username: String, password: String, url?: String): any;
             logout(): any;
             loginWithGUI(username: String, password: String): any;
+            createCourse(course: String): Chainable<Cypress.Response>;
+            deleteCourse(courseID: number): Chainable<Cypress.Response>;
         }
     }
 }
 
+/**
+ * Logs in using API and sets authToken in Cypress.env
+ * */
 Cypress.Commands.add('login', (username, password, url = '/') => {
-    let token = '';
     cy.request({
         url: '/api/authenticate',
         method: 'POST',
@@ -53,20 +57,61 @@ Cypress.Commands.add('login', (username, password, url = '/') => {
         .its('body')
         .then((res) => {
             localStorage.setItem(authTokenKey, '"' + res.id_token + '"');
-            token = res.id_token;
+            Cypress.env(authTokenKey, res.id_token);
         });
-    cy.visit({ url, method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+    cy.visit(url);
 });
 
+/**
+ * Log out and removes all references to authToken
+ * */
 Cypress.Commands.add('logout', () => {
     localStorage.removeItem(authTokenKey);
+    Cypress.env(authTokenKey, '');
     cy.visit('/');
     cy.url().should('equal', Cypress.config().baseUrl + '/');
     cy.log('Logged out');
 });
 
+/**
+ * Logs in using GUI and sets authToken in Cypress.env
+ * */
 Cypress.Commands.add('loginWithGUI', (username, password) => {
     cy.visit('/');
     cy.get('#username').type(username);
     cy.get('#password').type(password).type('{enter}');
+    Cypress.env(authTokenKey, localStorage.getItem(authTokenKey));
+});
+
+/**
+ * Creates a course with API request
+ * @param course is a course object in json format
+ * @return Chainable<Cypress.Response> the http response of the POST request
+ * */
+Cypress.Commands.add('createCourse', (course: string) => {
+    cy.request({
+        url: '/api/courses',
+        method: 'POST',
+        body: course,
+        headers: {
+            Authorization: 'Bearer ' + Cypress.env(authTokenKey),
+        },
+    }).then((response) => {
+        return response;
+    });
+});
+
+/**
+ * Deletes course with courseID
+ * @param courseID id of the course that is to be deleted
+ * @return Chainable<Cypress.Response> the http response of the DELETE request
+ * */
+Cypress.Commands.add('deleteCourse', (courseID: number) => {
+    cy.request({
+        url: `/api/courses/${courseID}`,
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
+    }).then((response) => {
+        return response;
+    });
 });
