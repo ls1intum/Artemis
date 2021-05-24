@@ -42,6 +42,9 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     private ExerciseRepository exerciseRepository;
 
     @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -605,4 +608,23 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(assessedSubmissionList.size()).isEqualTo(0);
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("file-upload", 1);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.get(0);
+        assertThat(submission.getResults().size()).isEqualTo(3);
+        Result firstResult = submission.getResults().get(0);
+        Result lastResult = submission.getLatestResult();
+        request.delete("/api/file-upload-submissions/" + submission.getId() + "/delete/" + firstResult.getId(), HttpStatus.OK);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(1);
+        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+    }
 }

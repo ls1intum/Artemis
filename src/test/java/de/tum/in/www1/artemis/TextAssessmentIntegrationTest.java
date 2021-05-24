@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.util.FileUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,12 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
@@ -1238,5 +1245,24 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(expectedScore);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("text", 1);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.get(0);
+        assertThat(submission.getResults().size()).isEqualTo(2);
+        Result firstResult = submission.getResults().get(0);
+        Result lastResult = submission.getLatestResult();
+        request.delete("/api/text-assessments/text-submissions/" + submission.getId() + "/delete/" + firstResult.getId(), HttpStatus.OK);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(1);
+        assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
     }
 }

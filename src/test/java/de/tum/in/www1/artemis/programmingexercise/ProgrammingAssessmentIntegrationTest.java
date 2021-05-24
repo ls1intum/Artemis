@@ -6,8 +6,10 @@ import static org.mockito.Mockito.doReturn;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.util.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +45,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private ProgrammingAssessmentService programmingAssessmentService;
@@ -894,5 +899,34 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10D);
         assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
 
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+
+        database.addAutomaticAssessmentToExercise(exercise);
+        database.addAutomaticAssessmentToExercise(exercise);
+        database.addAutomaticAssessmentToExercise(exercise);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.get(0);
+        assertThat(submission.getResults().size()).isEqualTo(5);
+        Result firstResult = submission.getResults().get(0);
+        Result midResult = submission.getResults().get(2);
+        Result firstSemiAutomaticResult = submission.getResults().get(3);
+
+        Result lastResult = submission.getLatestResult();
+        // we will only delte the middle automatic result at index 2
+        request.delete("/api/programming-submissions/" + submission.getId() + "/delete/" + midResult.getId(), HttpStatus.OK);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(4);
+        assertThat(submission.getResults().get(0)).isEqualTo(firstResult);
+        assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);
+        assertThat(submission.getResults().get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
     }
 }

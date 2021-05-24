@@ -98,7 +98,7 @@ export class TextAssessmentService {
      * @param resultId     id of the result which is deleted
      */
     deleteAssessment(submissionId: number, resultId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${submissionId}/delete/${resultId}`);
+        return this.http.delete<void>(`${this.resourceUrl}/text-assessments/text-submissions/${submissionId}/delete/${resultId}`);
     }
 
     /**

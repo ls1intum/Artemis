@@ -62,6 +62,9 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     private AssessmentService assessmentService;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -1298,4 +1301,22 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.get(0);
+        assertThat(submission.getResults().size()).isEqualTo(2);
+        Result firstResult = submission.getResults().get(0);
+        Result lastResult = submission.getLatestResult();
+        request.delete("/api/modeling-submissions/" + submission.getId() + "/delete/" + firstResult.getId(), HttpStatus.OK);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(1);
+        assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
+    }
 }
