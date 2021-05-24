@@ -2,14 +2,14 @@
     <div class="row">
         <div>
             <h4>
-                <span *ngIf="modelingExercise && modelingExercise.course">{{ modelingExercise.course.title }} - {{ modelingExercise.title }} - Example Submissions</span>
+                <span *ngIf="exercise && exercise.course">{{ exercise.course.title }} - {{ exercise.title }} - Example Submissions</span>
             </h4>
         </div>
         <div style="margin-left: auto">
             <a
-                *ngIf="modelingExercise && modelingExercise.id && modelingExercise.course && modelingExercise.course.id"
+                *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
                 class="btn btn-primary"
-                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
+                [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', 'new']"
                 jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
             >
                 Create example submission
@@ -28,18 +28,11 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                <tr *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
+                <tr *ngFor="let exampleSubmission of exercise.exampleSubmissions; let i = index">
                     <td>
                         <a
-                            *ngIf="modelingExercise && modelingExercise.id && modelingExercise.course && modelingExercise.course.id"
-                            [routerLink]="[
-                                '/course-management',
-                                modelingExercise.course.id,
-                                'modeling-exercises',
-                                modelingExercise.id,
-                                'example-submissions',
-                                exampleSubmission.id
-                            ]"
+                            *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
+                            [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmission.id]"
                             class="btn-link"
                         >
                             {{ exampleSubmission.id }}</a
@@ -47,15 +40,8 @@
                     </td>
                     <td>
                         <a
-                            *ngIf="modelingExercise && modelingExercise.id && modelingExercise.course && modelingExercise.course.id"
-                            [routerLink]="[
-                                '/course-management',
-                                modelingExercise.course.id,
-                                'modeling-exercises',
-                                modelingExercise.id,
-                                'example-submissions',
-                                exampleSubmission.id
-                            ]"
+                            *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
+                            [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmission.id]"
                             class="btn-link"
                         >
                             Example submission {{ i + 1 }}</a

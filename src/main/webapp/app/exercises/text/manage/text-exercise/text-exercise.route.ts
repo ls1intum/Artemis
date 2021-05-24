@@ -14,7 +14,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
-import { TextExerciseExampleSubmissionsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-example-submissions.component';
+import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
@@ -107,9 +107,9 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: ':courseId/text-exercises/:exerciseId/example-submissions',
-        component: TextExerciseExampleSubmissionsComponent,
+        component: ExampleSubmissionsComponent,
         resolve: {
-            textExercise: TextExerciseResolver,
+            exercise: TextExerciseResolver,
         },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
