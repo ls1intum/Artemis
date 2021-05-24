@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { getTestBed, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { take } from 'rxjs/operators';
@@ -31,19 +31,20 @@ describe('ModelingSubmission Service', () => {
         return { exerciseId, returnedFromService, expected, requestOption, correctionRound, participationId };
     };
 
-    it('should find an element', async () => {
+    it('should find an element', fakeAsync(() => {
         const { returnedFromService, correctionRound } = getDefaultValues();
         service
             .getSubmission(123, correctionRound)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
+            .subscribe((resp) => expect(resp).toEqual({ ...elemDefault, id: 5 }));
 
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/modeling-submissions/123?correction-round=7` });
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should create a ModelingSubmission', async () => {
+    it('should create a ModelingSubmission', fakeAsync(() => {
         const { returnedFromService, expected } = getDefaultValues();
         service
             .create(new ModelingSubmission(), 1)
@@ -51,9 +52,9 @@ describe('ModelingSubmission Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(JSON.stringify(returnedFromService));
-    });
+    }));
 
-    it('should update a ModelingSubmission', async () => {
+    it('should update a ModelingSubmission', fakeAsync(() => {
         const { returnedFromService, expected } = getDefaultValues({ model: 'BBBBBB', explanationText: 'BBBBBB' });
         service
             .update(expected, 1)
@@ -61,9 +62,9 @@ describe('ModelingSubmission Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(JSON.stringify(returnedFromService));
-    });
+    }));
 
-    it('should getModelingSubmissionsForExerciseByCorrectionRound without correction round', async () => {
+    it('should getModelingSubmissionsForExerciseByCorrectionRound without correction round', fakeAsync(() => {
         const { exerciseId, returnedFromService, expected, requestOption } = getDefaultValues();
         service
             .getModelingSubmissionsForExerciseByCorrectionRound(exerciseId, requestOption)
@@ -72,9 +73,9 @@ describe('ModelingSubmission Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test` });
         expect(req.request.params.get('test')).toBe('Test');
         req.flush(JSON.stringify(returnedFromService));
-    });
+    }));
 
-    it('should getModelingSubmissionsForExerciseByCorrectionRound without correction round', async () => {
+    it('should getModelingSubmissionsForExerciseByCorrectionRound without correction round', fakeAsync(() => {
         const { exerciseId, returnedFromService, expected, requestOption, correctionRound } = getDefaultValues();
         service
             .getModelingSubmissionsForExerciseByCorrectionRound(5, requestOption, correctionRound)
@@ -84,9 +85,9 @@ describe('ModelingSubmission Service', () => {
         expect(req.request.params.get('test')).toBe('Test');
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
         req.flush(JSON.stringify(returnedFromService));
-    });
+    }));
 
-    it('should getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', () => {
+    it('should getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fakeAsync(() => {
         const { exerciseId, returnedFromService, expected, correctionRound } = getDefaultValues();
         service
             .getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
@@ -96,9 +97,9 @@ describe('ModelingSubmission Service', () => {
         expect(req.request.params.get('lock')).toBe('true');
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
         req.flush(JSON.stringify(returnedFromService));
-    });
+    }));
 
-    it('should getLatestSubmissionForModelingEditor', () => {
+    it('should getLatestSubmissionForModelingEditor', fakeAsync(() => {
         const { returnedFromService, expected, participationId } = getDefaultValues();
         service
             .getLatestSubmissionForModelingEditor(participationId)
@@ -106,7 +107,8 @@ describe('ModelingSubmission Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'GET', url: `api/participations/${participationId}/latest-modeling-submission` });
         req.flush(JSON.stringify(returnedFromService));
-    });
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();
