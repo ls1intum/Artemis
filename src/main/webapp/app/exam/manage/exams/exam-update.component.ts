@@ -93,7 +93,8 @@ export class ExamUpdateComponent implements OnInit {
         const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
-        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid;
+        const examMaxPointsValid = this.isValidMaxPoints;
+        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid;
     }
 
     get isValidVisibleDate(): boolean {
@@ -102,6 +103,10 @@ export class ExamUpdateComponent implements OnInit {
 
     get isValidNumberOfCorrectionRounds(): boolean {
         return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+    }
+
+    get isValidMaxPoints(): boolean {
+        return this.exam?.maxPoints !== undefined && this.exam?.maxPoints > 0;
     }
 
     get isValidStartDate(): boolean {
