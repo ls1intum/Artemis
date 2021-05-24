@@ -19,7 +19,9 @@
             </label>
         </div>
     </div>
-    <jhi-exercise-detail-statistics class="mb-4" [exercise]="exercise" [doughnutStats]="exerciseStatistics"></jhi-exercise-detail-statistics>
+    <div class="mb-3">
+        <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics"></jhi-exercise-detail-statistics>
+    </div>
     <jhi-statistics-score-distribution-graph
         *ngIf="exerciseStatistics"
         [averageScoreOfExercise]="exerciseStatistics?.averageScoreOfExercise"

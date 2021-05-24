@@ -74,6 +74,9 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private createCharts() {
         const self = this;
         this.barChartOptions = {
+            legend: {
+                position: 'bottom',
+            },
             layout: {
                 padding: {
                     top: 20,
