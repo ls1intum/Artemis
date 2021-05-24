@@ -143,6 +143,27 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
+        String res = postWithResponseBodyString(path, body, expectedStatus, httpHeaders, expectedResponseHeaders, params);
+        if (res == null) {
+            return null;
+        }
+        return mapper.readValue(res, responseType);
+    }
+
+    /**
+     * Mocks sending a request and returns response content as string
+     * @param path the url to send request to
+     * @param body the body of the request
+     * @param expectedStatus the status that the request will return
+     * @param httpHeaders headers of request
+     * @param expectedResponseHeaders headers of response
+     * @param params parameters for multi value
+     * @param <T> Request type
+     * @return Request content as string
+     * @throws Exception
+     */
+    public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
         if (httpHeaders != null) {
@@ -162,7 +183,7 @@ public class RequestUtilService {
                 assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
             }
         }
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        return res.getResponse().getContentAsString();
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
@@ -172,6 +193,10 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         return postWithResponseBody(path, body, responseType, expectedStatus, null, null);
+    }
+
+    public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
+        return postWithResponseBodyString(path, body, expectedStatus, null, null, new LinkedMultiValueMap<>());
     }
 
     public <T, R> List<R> postListWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
