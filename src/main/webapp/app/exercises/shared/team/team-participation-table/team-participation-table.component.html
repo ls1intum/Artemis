@@ -116,11 +116,11 @@
                     <div class="d-flex justify-content-start align-items-center">
                         <div
                             ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.columns.assessment.tooltip' | artemisTranslate }}"
-                            [disableTooltip]="!assessmentButtonDisabled(value, value.submission)"
+                            [disableTooltip]="!isAssessmentButtonDisabled(value, value.submission)"
                             placement="left"
                         >
                             <button
-                                [disabled]="assessmentButtonDisabled(value, value.submission)"
+                                [disabled]="isAssessmentButtonDisabled(value, value.submission)"
                                 (click)="openAssessmentEditor(value, value.submission)"
                                 class="btn btn-warning btn-sm"
                             >

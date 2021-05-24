@@ -150,17 +150,25 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param exercise Exercise for which the submission is to be assessed
      * @param submission Submission that is to be assessed
      */
-    assessmentButtonDisabled(exercise: Exercise, submission: Submission | null) {
-        if (submission?.submissionExerciseType === SubmissionExerciseType.PROGRAMMING) {
-            // Programming exercise cannot be assessed by anyone if there is no submitted submission or the due date is reached yet
-            return !submission?.submitted || exercise.dueDate === null || exercise.dueDate?.isAfter(moment());
-        } else if (!exercise.isAtLeastInstructor) {
-            // Other exercises cannot be assessed by tutors if there is no submitted submission or submission date is not reached yet
-            return !submission?.submitted || exercise.dueDate === null || exercise.dueDate?.isAfter(moment());
-        } else {
-            // Other exercises cannot be assessed by anyone if there is not submitted submission.
-            return !submission?.submitted;
+    isAssessmentButtonDisabled(exercise: Exercise, submission?: Submission): boolean {
+        // Non-Submitted exercises can not be assessed
+        if (submission === null || !submission?.submitted) {
+            return true;
         }
+        // Exercises without due date can be assessed
+        if (exercise.dueDate === undefined) {
+            return false;
+        }
+        // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
+        // if the exercise due date has passed
+        if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
+            if (exercise.dueDate.isBefore(moment())) {
+                return false;
+            }
+        } else if (exercise.isAtLeastInstructor) {
+            return false;
+        }
+        return true;
     }
 
     private onError(error: HttpErrorResponse) {
