@@ -24,8 +24,14 @@ a,
 a:not(.btn):hover {
     color: $primary;
     font-weight: bold;
+    text-decoration: underline;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
+}
+
+a {
+    /* bootstrap 5 underlines links by default */
+    text-decoration: none;
 }
 
 a.disabled {
