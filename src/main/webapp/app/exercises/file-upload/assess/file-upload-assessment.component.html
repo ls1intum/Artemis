@@ -32,7 +32,7 @@
             <div class="row">
                 <div *ngIf="submission.filePath" class="col-12 card-text">
                     <a class="text-primary" (click)="downloadFile(submission.filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
-                    <span class="ms-2 badge badge-info">{{ attachmentExtension(submission.filePath!) | uppercase }}</span>
+                    <span class="ms-2 badge bg-info">{{ attachmentExtension(submission.filePath!) | uppercase }}</span>
                 </div>
             </div>
         </div>

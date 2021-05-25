@@ -77,12 +77,12 @@
                     <td>{{ user.langKey }}</td>
                     <td>
                         <div *ngFor="let authority of user.authorities">
-                            <span class="badge badge-info">{{ authority }}</span>
+                            <span class="badge bg-info">{{ authority }}</span>
                         </div>
                     </td>
                     <td>
                         <div *ngFor="let group of user.groups">
-                            <span class="badge badge-info">{{ group }}</span>
+                            <span class="badge bg-info">{{ group }}</span>
                         </div>
                     </td>
                     <td>{{ user.createdDate | artemisDate }}</td>

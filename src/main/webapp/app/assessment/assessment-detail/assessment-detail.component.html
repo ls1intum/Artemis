@@ -2,7 +2,7 @@
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
         <fa-icon [icon]="'trash-alt'" class="float-end" (click)="delete()" *ngIf="!disabled"></fa-icon>
         <span
-            class="badge badge-secondary float-end"
+            class="badge bg-secondary float-end"
             *ngIf="assessment.type == FeedbackType_AUTOMATIC"
             title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}"
         >

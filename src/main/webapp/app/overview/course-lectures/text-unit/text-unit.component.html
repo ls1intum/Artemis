@@ -8,7 +8,7 @@
                         {{ textUnit?.name ? textUnit.name : '' }}
                         <span
                             *ngIf="!textUnit?.visibleToStudents"
-                            class="badge badge-warning"
+                            class="badge bg-warning"
                             placement="right"
                             ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ textUnit?.releaseDate | artemisDate }}"
                         >

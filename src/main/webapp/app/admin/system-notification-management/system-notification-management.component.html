@@ -27,11 +27,11 @@
                     <td>{{ notification.text }}</td>
                     <td>{{ notification.type }}</td>
                     <td>
-                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge badge-success">{{
+                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge bg-success">{{
                             'artemisApp.systemNotification.active' | artemisTranslate
                         }}</span>
                         <ng-template #notActive>
-                            <span class="badge badge-danger">{{ 'artemisApp.systemNotification.notActive' | artemisTranslate }}</span>
+                            <span class="badge bg-danger">{{ 'artemisApp.systemNotification.notActive' | artemisTranslate }}</span>
                         </ng-template>
                     </td>
                     <td>{{ notification.notificationDate | artemisDate }}</td>

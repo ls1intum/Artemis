@@ -154,7 +154,7 @@
             >
                 <div class="col">
                     <h4>
-                        <span class="badge w-100 badge-info">
+                        <span class="badge w-100 bg-info">
                             {{ 'artemisApp.courseOverview.exerciseDetails.notGraded' | artemisTranslate | uppercase }}
                         </span>
                     </h4>
@@ -179,7 +179,7 @@
                         <div class="row justify-content-between">
                             <div class="col">
                                 <h4>
-                                    <span class="badge w-100 badge-success" [ngClass]="exerciseRatedBadge(result)">
+                                    <span class="badge w-100 bg-success" [ngClass]="exerciseRatedBadge(result)">
                                         {{
                                             (result.rated ? 'artemisApp.courseOverview.exerciseDetails.graded' : 'artemisApp.courseOverview.exerciseDetails.notGraded')
                                                 | artemisTranslate

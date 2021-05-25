@@ -109,7 +109,7 @@
                     <td>
                         <span>{{ exercise.title }}</span>
                         <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
-                        <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
+                        <span class="badge bg-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
                     </td>
                     <td *ngIf="!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]">
                         <jhi-tutor-participation-graph

@@ -1,7 +1,7 @@
 <li class="nav-item pointer">
     <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
         <fa-icon [icon]="'bell'"></fa-icon>
-        <span class="badge badge-danger badge-pill" *ngIf="recentNotificationCount > 0">
+        <span class="badge bg-danger bg-pill" *ngIf="recentNotificationCount > 0">
             {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
         </span>
     </button>
@@ -32,7 +32,7 @@
                 <div>
                     <h5>
                         {{ notification.title }}
-                        <span class="badge ms-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
+                        <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div class="mb-1 text-break" [innerHTML]="notification.text"></div>
                     <div class="info text-muted text-right">

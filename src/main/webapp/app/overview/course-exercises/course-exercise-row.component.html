@@ -41,7 +41,7 @@
                     <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
                 </h4>
                 <h4 *ngIf="!isPresentationMode">
-                    <span class="badge badge-success me-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{
+                    <span class="badge bg-success me-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{
                         'artemisApp.courseOverview.exerciseList.live' | artemisTranslate
                     }}</span>
                 </h4>

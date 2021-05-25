@@ -5,7 +5,7 @@
             {{ videoUnit?.name ? videoUnit.name : '' }}
             <span
                 *ngIf="!videoUnit?.visibleToStudents"
-                class="badge badge-warning ms-2"
+                class="badge bg-warning ms-2"
                 placement="right"
                 ngbTooltip="{{ 'artemisApp.videoUnit.notReleasedTooltip' | artemisTranslate }} {{ videoUnit?.releaseDate | artemisDate }}"
             >
