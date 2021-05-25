@@ -248,7 +248,7 @@ public class UserService {
             if (!vcsUserManagementService.canCreateVcsUser(newUser)) {
                 // Delete the user that was previously saved and throw
                 deleteUser(newUser);
-                throw new VCSAccountExistsException();
+                throw new VCSAccountExistsException(newUser.getLogin());
             }
         });
 
@@ -256,7 +256,7 @@ public class UserService {
             if (!ciUserManagementService.canCreateUser(newUser)) {
                 // Delete the user that was previously saved and throw
                 deleteUser(newUser);
-                throw new CIAccountExistsException();
+                throw new CIAccountExistsException(newUser.getLogin());
             }
         });
 
