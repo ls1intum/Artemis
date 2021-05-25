@@ -282,7 +282,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         assertThat(foundGrade.gradeName).isEqualTo("Test grade");
         assertThat(foundGrade.gradeType).isEqualTo(GradeType.BONUS);
-        assertThat(foundGrade.isPassingGrade).isTrue();
+        assertThat(foundGrade.isPassingGrade).isFalse();
     }
 
 }

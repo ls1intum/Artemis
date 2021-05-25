@@ -65,7 +65,8 @@
                 "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
-                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
+                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large.",
+                "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
                 "cannotRegisterInstructor": "You cannot register instructors or administrators to exams."

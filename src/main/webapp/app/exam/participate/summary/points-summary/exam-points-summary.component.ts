@@ -53,13 +53,12 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     calculateExamGrade() {
         const achievedPointsRelative = (this.calculatePointsSum() / this.calculateMaxPointsSum()) * 100;
-        this.gradingSystemService.findGradingScaleForCourse(this.courseId);
         this.gradingSystemService
             .matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative)
             .pipe(
                 catchError((error: HttpErrorResponse) => {
                     if (error.status === 404) {
-                        return of(null);
+                        return of(undefined);
                     }
                     return throwError(error);
                 }),
