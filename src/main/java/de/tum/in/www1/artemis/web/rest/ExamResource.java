@@ -137,6 +137,10 @@ public class ExamResource {
             return forbidden();
         }
 
+        if (exam.getMaxPoints() <= 0) {
+            return conflict();
+        }
+
         Optional<ResponseEntity<Exam>> courseAccessFailure = examAccessService.checkCourseAccessForInstructor(courseId);
         if (courseAccessFailure.isPresent()) {
             return courseAccessFailure.get();
@@ -174,6 +178,10 @@ public class ExamResource {
 
         if (updatedExam.getVisibleDate() == null || updatedExam.getStartDate() == null || updatedExam.getEndDate() == null
                 || !updatedExam.getVisibleDate().isBefore(updatedExam.getStartDate()) || !updatedExam.getStartDate().isBefore(updatedExam.getEndDate())) {
+            return conflict();
+        }
+
+        if (updatedExam.getMaxPoints() <= 0) {
             return conflict();
         }
 
