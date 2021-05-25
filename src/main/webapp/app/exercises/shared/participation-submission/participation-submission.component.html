@@ -74,6 +74,7 @@
                         ></jhi-result>
                         <span
                             class="badge"
+                            style="border-radius: 0px"
                             jhiDeleteButton
                             [buttonSize]="buttonSizeSmall"
                             [actionType]="actionTypeEmpty"
@@ -82,6 +83,7 @@
                             (delete)="deleteResult(result.submission, result)"
                             [dialogError]="dialogError$"
                         >
+                            <fa-icon [icon]="'times'"></fa-icon>
                             {{ 'artemisApp.result.delete.buttonText' | artemisTranslate | uppercase }}
                         </span>
                     </div>
