@@ -15,7 +15,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
         ></jhi-button>
     `,
 })
-export class AuxiliaryRepositoryButtonComponent {
+export class AddAuxiliaryRepositoryButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
