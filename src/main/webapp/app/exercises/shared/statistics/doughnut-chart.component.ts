@@ -39,8 +39,11 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
             backgroundColor: 'rgba(0, 0, 0, 1)',
             callbacks: {
                 label(tooltipItem: any, data: any) {
-                    const value = data['datasets'][0]['data'][tooltipItem['index']];
-                    return '' + (value === -1 ? 0 : value);
+                    if (data && data['datasets'] && data['datasets'][0] && data['datasets'][0]['data']) {
+                        const value = data['datasets'][0]['data'][tooltipItem['index']];
+                        return '' + (value === -1 ? 0 : value);
+                    }
+                    return '';
                 },
             },
         },
