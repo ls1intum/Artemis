@@ -90,12 +90,14 @@
                 <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits">Combine all changes after instructor into one commit</strong>
             </label>
         </div>
-        <div *ngif="isAtLeastInstructor" class="checkbox">
-            <label class="control-label">
-                <input type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />
-                <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeStudentCommits">Anonymize all of the student's commits</strong>
-            </label>
-        </div>
+        <ng-container  *ngif="isAtLeastInstructor">
+            <div class="checkbox">
+                <label class="control-label">
+                    <input type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />
+                    <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeStudentCommits">Anonymize all of the student's commits</strong>
+                </label>
+            </div>
+        </ng-container>
         <div class="checkbox">
             <label class="control-label">
                 <input type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
