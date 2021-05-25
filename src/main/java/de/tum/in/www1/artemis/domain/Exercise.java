@@ -821,7 +821,9 @@ public abstract class Exercise extends DomainObject {
         this.studentAssignedTeamIdComputedTransient = studentAssignedTeamIdComputedTransient;
     }
 
-    public boolean isGradingInstructionFeedbackUsed() { return isGradingInstructionFeedbackUsedTransient; }
+    public boolean isGradingInstructionFeedbackUsed() {
+        return isGradingInstructionFeedbackUsedTransient;
+    }
 
     public void setGradingInstructionFeedbackUsed(boolean isGradingInstructionFeedbackUsedTransient) {
         this.isGradingInstructionFeedbackUsedTransient = isGradingInstructionFeedbackUsedTransient;
