@@ -44,7 +44,9 @@
             ></textarea>
             <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
                 <fa-icon [icon]="'exclamation-triangle'" size="1x" class="text-warning" placement="left"></fa-icon>
-                <span jhiTranslate="artemisApp.textAssessment.feedbackImpactWarning" [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"></span>
+                <span [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"
+                    >This feedback might affect <b>{{ textBlock.numberOfAffectedSubmissions }}</b> other similar submission/s.</span
+                >
             </div>
         </div>
         <div class="form-group col-2 text-right">
