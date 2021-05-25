@@ -61,6 +61,16 @@ a.disabled {
     white-space: nowrap;
 }
 
+/* Default the color to white even on bootstrap 5 */
+.btn, .btn:hover {
+    color: #fff;
+}
+
+/* Except the warning button which has a yellow background */
+.btn-warning, .btn-warning:hover {
+    color: #000;
+}
+
 a.btn {
     -webkit-appearance: none !important;
 }
