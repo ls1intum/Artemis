@@ -131,7 +131,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         userVM.setPassword("password");
 
         // make request and assert
-        gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true);
+        gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, false);
         request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
         // The account shouldn't be saved

@@ -445,10 +445,6 @@ public class GitlabRequestMockProvider {
         mockSetPermissionsForNewGroupMembers(programmingExercises, newUsers, updatedCourse);
     }
 
-    public void mockFailToSetPermiisionsForNetGroupMembers() {
-
-    }
-
     private void mockUpdateOldGroupMembers(List<ProgrammingExercise> programmingExercises, Set<de.tum.in.www1.artemis.domain.User> oldUsers, Course updatedCourse)
             throws GitLabApiException {
         for (var user : oldUsers) {
