@@ -227,11 +227,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
 
-        if (!withoutResults) {
-            // prepare modelingSubmission for response
-            modelingSubmissionService.hideDetails(modelingSubmission, user);
-            modelingSubmission.removeNotNeededResults(correctionRound, resultId);
-        }
+        // prepare modelingSubmission for response
+        modelingSubmissionService.hideDetails(modelingSubmission, user);
+        modelingSubmission.removeNotNeededResults(correctionRound, resultId);
+
         return ResponseEntity.ok(modelingSubmission);
     }
 
