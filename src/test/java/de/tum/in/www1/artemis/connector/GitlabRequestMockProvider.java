@@ -317,6 +317,11 @@ public class GitlabRequestMockProvider {
         }
     }
 
+    public void mockUpdateVcsUserFailToActivate(String login, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
+        mockUpdateBasicUserInformation(login, user, true);
+        mockUpdateUserActivationState(user, true);
+    }
+
     public void mockUpdateBasicUserInformation(String login, de.tum.in.www1.artemis.domain.User user, boolean shouldUpdatePassword) throws GitLabApiException {
         var gitlabUser = new User().withUsername(login).withId(1);
         doReturn(gitlabUser).when(userApi).getUser(login);
@@ -567,8 +572,45 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockDeactivateUser(String userLogin) throws GitLabApiException {
+    public void mockDeactivateUser(String userLogin, boolean shouldFail) throws GitLabApiException {
         mockGetUserId(userLogin, true, false);
-        doNothing().when(userApi).blockUser(anyInt());
+        mockBlockUser(shouldFail);
+    }
+
+    public void mockActivateUser(String userLogin, boolean shouldFail) throws GitLabApiException {
+        mockGetUserId(userLogin, true, false);
+        mockUnblockUser(shouldFail);
+    }
+
+    public UserApi mockUpdateUserActivationState(de.tum.in.www1.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
+        if (user.getActivated()) {
+            mockUnblockUser(shouldFail);
+        }
+        else {
+            mockBlockUser(shouldFail);
+        }
+        return userApi;
+    }
+
+    public void mockBlockUser(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(userApi).blockUser(anyInt());
+        }
+        else {
+            doNothing().when(userApi).blockUser(anyInt());
+        }
+    }
+
+    public void mockUnblockUser(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(userApi).unblockUser(anyInt());
+        }
+        else {
+            doNothing().when(userApi).blockUser(anyInt());
+        }
+    }
+
+    public UserApi getMockedUserApi() {
+        return userApi;
     }
 }

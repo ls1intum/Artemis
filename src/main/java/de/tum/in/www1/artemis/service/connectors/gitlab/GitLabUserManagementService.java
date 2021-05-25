@@ -111,18 +111,12 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param user The Artemis user
      * @param gitlabUserId the id of the GitLab user that is mapped to the Artemis user
      */
-    private void updateUserActivationState(User user, int gitlabUserId) {
-        try {
-            if (user.getActivated()) {
-                gitlabApi.getUserApi().unblockUser(gitlabUserId);
-            }
-            else {
-                gitlabApi.getUserApi().blockUser(gitlabUserId);
-            }
+    private void updateUserActivationState(User user, int gitlabUserId) throws GitLabApiException {
+        if (user.getActivated()) {
+            gitlabApi.getUserApi().unblockUser(gitlabUserId);
         }
-        catch (GitLabApiException e) {
-            // Ignore the exception because it shouldn't hinder updating the Artemis user.
-            log.warn("Cannot update the activation state of GitLab user {}: {}", user.getLogin(), e.getMessage());
+        else {
+            gitlabApi.getUserApi().blockUser(gitlabUserId);
         }
     }
 

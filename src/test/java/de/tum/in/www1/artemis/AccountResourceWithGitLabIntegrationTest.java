@@ -72,7 +72,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
         // Simulate creation of GitLab user
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
-        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin());
+        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
@@ -156,9 +156,81 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         userVM.setPassword("password");
 
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
-        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin());
+        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
 
         assertThat(userRepo.findOneByLogin(user.getLogin())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testShouldAbortRegistrationAndFailIfCannotDeactivateAccountInGitlab() throws Exception {
+        // create unactivated user in repo
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setActivated(false);
+        user.setActivationKey("testActivationKey");
+
+        // setup user to register
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("password");
+
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), true);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testShouldActivateUserInGitlab() throws Exception {
+        // create unactivated user in repo
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setActivated(false);
+        user.setActivationKey("testActivationKey");
+
+        // setup user to register
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("password");
+
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+
+        Optional<User> registeredUser = userRepo.findOneByLogin(user.getLogin());
+        assertThat(registeredUser).isPresent();
+
+        // Activate the user
+        gitlabRequestMockProvider.mockActivateUser(user.getLogin(), false);
+        String activationKey = registeredUser.get().getActivationKey();
+        request.get("/api/activate?key=" + activationKey, HttpStatus.OK, Void.class);
+        verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyInt());
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testShouldThrowErrorIfCannotActivateUserInGitlab() throws Exception {
+        // create unactivated user in repo
+        User user = ModelFactory.generateActivatedUser("ab123cd");
+        user.setActivated(false);
+        user.setActivationKey("testActivationKey");
+
+        // Register the user
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword("password");
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+
+        Optional<User> registeredUser = userRepo.findOneByLogin(user.getLogin());
+        assertThat(registeredUser).isPresent();
+
+        // Activate the user
+        gitlabRequestMockProvider.mockActivateUser(user.getLogin(), true);
+        String activationKey = registeredUser.get().getActivationKey();
+        request.get("/api/activate?key=" + activationKey, HttpStatus.INTERNAL_SERVER_ERROR, Void.class);
+        verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyInt());
+
+        assertThat(registeredUser.get().getActivationKey()).isNotNull();
     }
 }
