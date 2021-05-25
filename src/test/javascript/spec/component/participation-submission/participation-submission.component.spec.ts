@@ -390,10 +390,10 @@ describe('ParticipationSubmissionComponent', () => {
         expect(receivedCommitHashUrl).to.equal(commitHashUrl);
     }
 
-    function deleteResult(submissionWithTwoResults: Submission, result2: Result) {
+    function deleteResult(submission: Submission, resultToDelete: Result) {
         fixture.detectChanges();
         tick();
-        comp.deleteResult(submissionWithTwoResults, result2);
+        comp.deleteResult(submission, resultToDelete);
         tick();
         fixture.destroy();
     }
