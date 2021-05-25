@@ -118,6 +118,7 @@
                             ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.columns.assessment.tooltip' | artemisTranslate }}"
                             [disableTooltip]="!isAssessmentButtonDisabled(value, value.submission)"
                             placement="left"
+                            container="body"
                         >
                             <button
                                 [disabled]="isAssessmentButtonDisabled(value, value.submission)"
