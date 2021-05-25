@@ -295,31 +295,19 @@ describe('ParticipationSubmissionComponent', () => {
 
         it('should delete result of fileUploadSubmission', fakeAsync(() => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: fileUploadExercise })));
-            fixture.detectChanges();
-            tick();
-            comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
-            fixture.destroy();
+            deleteResult(submissionWithTwoResults, result2);
             flush();
         }));
 
         it('should delete result of modelingSubmission', fakeAsync(() => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: modelingExercise })));
-            fixture.detectChanges();
-            tick();
-            comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
-            fixture.destroy();
+            deleteResult(submissionWithTwoResults, result2);
             flush();
         }));
 
         it('should delete result of programmingSubmission', fakeAsync(() => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise1 })));
-            fixture.detectChanges();
-            tick();
-            comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
-            fixture.destroy();
+            deleteResult(submissionWithTwoResults, result2);
             flush();
         }));
 
@@ -353,33 +341,29 @@ describe('ParticipationSubmissionComponent', () => {
             expect(comp.submissions![0].results![0]).to.be.deep.equal(result1);
         });
 
+        it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
+            const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
+            deleteFileUploadAssessmentStub.returns(throwError(error2));
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: fileUploadExercise })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
         it('should not delete result of fileUploadSubmission', fakeAsync(() => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: fileUploadExercise })));
-            fixture.detectChanges();
-            tick();
-            comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
-            fixture.destroy();
+            deleteResult(submissionWithTwoResults, result2);
             flush();
         }));
 
         it('should not delete result of modelingSubmission', fakeAsync(() => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: modelingExercise })));
-            fixture.detectChanges();
-            tick();
-            comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
-            fixture.destroy();
+            deleteResult(submissionWithTwoResults, result2);
             flush();
         }));
 
         it('should not delete result of programmingSubmission', fakeAsync(() => {
             stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise1 })));
-            fixture.detectChanges();
-            tick();
-            comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
-            fixture.destroy();
+            deleteResult(submissionWithTwoResults, result2);
             flush();
         }));
 
@@ -404,5 +388,13 @@ describe('ParticipationSubmissionComponent', () => {
             .replace('{repoSlug}', projectKey + repoSlug)
             .replace('{commitHash}', submission.commitHash!);
         expect(receivedCommitHashUrl).to.equal(commitHashUrl);
+    }
+
+    function deleteResult(submissionWithTwoResults: Submission, result2: Result) {
+        fixture.detectChanges();
+        tick();
+        comp.deleteResult(submissionWithTwoResults, result2);
+        tick();
+        fixture.destroy();
     }
 });

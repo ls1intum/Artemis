@@ -251,7 +251,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     private handleErrorResponse(error: HttpErrorResponse) {
-        if (error.error.message === 'error.hasComplaint') {
+        if (error.error?.message === 'error.hasComplaint') {
             this.dialogErrorSource.next(this.translateService.instant('artemisApp.result.delete.error.hasComplaint'));
         } else {
             this.dialogErrorSource.next(error.message);
