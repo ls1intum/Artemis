@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -57,20 +57,16 @@ describe('Logs Service', () => {
             expect(req.request.url).toEqual(infoUrl);
         });
 
-        it('should get the profile info', () => {
+        it('should get the profile info', fakeAsync(() => {
             const expected = profileInfo;
 
-            let requestResult = {} as ProfileInfo;
-
             service.getProfileInfo().subscribe((received) => {
-                if (received) {
-                    requestResult = received;
-                }
+                expect(received).toEqual(expected);
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(profileInfo);
-            expect(requestResult).toEqual(expected);
-        });
+            tick();
+        }));
     });
 });

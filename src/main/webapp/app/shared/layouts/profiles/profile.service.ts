@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from './profile-info.model';
-import { BehaviorSubject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -12,13 +12,13 @@ import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
     private infoUrl = SERVER_API_URL + 'management/info';
-    private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
+    private profileInfo: Subject<ProfileInfo>;
 
     constructor(private http: HttpClient, private featureToggleService: FeatureToggleService) {}
 
-    getProfileInfo(): BehaviorSubject<ProfileInfo | undefined> {
+    getProfileInfo(): Subject<ProfileInfo> {
         if (!this.profileInfo) {
-            this.profileInfo = new BehaviorSubject(undefined);
+            this.profileInfo = new Subject();
             this.http
                 .get<ProfileInfo>(this.infoUrl, { observe: 'response' })
                 .pipe(
@@ -39,7 +39,8 @@ export class ProfileService {
                                 if (ribbonProfiles.length !== 0) {
                                     profileInfo.ribbonEnv = ribbonProfiles[0];
                                 }
-                            } else {
+                            }
+                            if (profileInfo.ribbonEnv === undefined) {
                                 profileInfo.ribbonEnv = '';
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
