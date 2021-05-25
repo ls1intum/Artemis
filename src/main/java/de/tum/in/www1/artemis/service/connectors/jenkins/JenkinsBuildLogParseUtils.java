@@ -17,8 +17,28 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 public class JenkinsBuildLogParseUtils {
 
     // Pattern of the DateTime that is included in the logs received from Jenkins
-    private static final DateTimeFormatter LOG_DATA_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+    private static final DateTimeFormatter LOG_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
+    /**
+     * Parses build logs from Jenkins into BuildLogEntry objects. The function reads the list
+     * of log strings and tries to parse lines of the following format:
+     *
+     * [2021-05-10T15:19:49.741Z] [INFO] BUILD FAILURE
+     *
+     * and extract the timestamp and message.
+     *
+     * A small snippet of the log format is:
+     * [Pipeline] {
+     * [Pipeline] sh
+     * [2021-05-10T15:19:37.112Z] + mvn clean test -B
+     * [2021-05-10T15:19:49.741Z] [INFO] BUILD FAILURE
+     * ...
+     * [2021-05-10T15:19:49.741Z] [ERROR] BubbleSort.java:[15,9] not a statement
+     * [2021-05-10T15:19:49.741Z] [ERROR] BubbleSort.java:[15,10] ';' expected
+     * [Pipeline] }
+     * @param logLines The lines of the Jenkins log
+     * @return a list of BuildLogEntries
+     */
     public static List<BuildLogEntry> parseBuildLogsFromJenkinsLogs(List<String> logLines) {
         final List<BuildLogEntry> buildLogs = new ArrayList<>();
         for (final var logLine : logLines) {
@@ -31,6 +51,7 @@ public class JenkinsBuildLogParseUtils {
 
             try {
                 final ZonedDateTime timestamp = ZonedDateTime.parse(possibleTimestamp);
+                // The 2 is used because the timestamp is surrounded with '[' ']'
                 final String log = logLine.substring(possibleTimestamp.length() + 2);
 
                 BuildLogEntry buildLogEntry = new BuildLogEntry(timestamp, stripLogEndOfLine(log).trim());
@@ -43,6 +64,13 @@ public class JenkinsBuildLogParseUtils {
         return buildLogs;
     }
 
+    /**
+     * Parses build logs from the legacy version of Jenkins. An example
+     * snippet of the file is located at: src/test-data/jenkins-response/legacy-failed-build-log.html
+     *
+     * @param logHtml Build logs in the HTML format
+     * @return a list of BuildLogEntries
+     */
     public static List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
         final var buildLog = new LinkedList<BuildLogEntry>();
         final var iterator = logHtml.childNodes().iterator();
@@ -52,7 +80,7 @@ public class JenkinsBuildLogParseUtils {
             // For timestamps, parse the <b> tag containing the time as hh:mm:ss
             if (node.attributes().get("class").contains("timestamp")) {
                 final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                final var time = ZonedDateTime.parse(timeAsString, LOG_DATA_TIME_FORMATTER);
+                final var time = ZonedDateTime.parse(timeAsString, LOG_DATE_TIME_FORMATTER);
                 log = reduceToText(iterator.next());
                 buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
             }
