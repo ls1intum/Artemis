@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -48,37 +49,10 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void createVcsUser(User user) {
+    public void createVcsUser(User user) throws VersionControlException {
         final int gitlabUserId = getUserIdCreateIfNotExists(user);
         // Add user to existing exercises
         addUserToGroups(gitlabUserId, user.getGroups());
-    }
-
-    /**
-     * Checks if the Artemis you can be created in Gitlab. The
-     * function first checks if the user exists and if it doesn't
-     * attempts to create it. If the creation is successful, the
-     * Gitlab user is deleted and a boolean value is returned.
-     *
-     * @param user The user to check
-     * @return whether the user can be created in Gitlab or not
-     */
-    @Override
-    public boolean canCreateVcsUser(User user) {
-        try {
-            var gitlabUser = gitlabApi.getUserApi().getUser(user.getLogin());
-            if (gitlabUser != null) {
-                return false;
-            }
-
-            createVcsUser(user);
-            deleteVcsUser(user.getLogin());
-            return true;
-        }
-        catch (GitLabApiException | GitLabException e) {
-            log.error("Cannot check if the user {} can be created in the VCS: {}", user.getLogin(), e.getMessage());
-            return false;
-        }
     }
 
     @Override
@@ -284,6 +258,30 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException(String.format("Cannot delete user %s from GitLab!", login), e);
+        }
+    }
+
+    @Override
+    public void deactivateUser(String login) throws VersionControlException {
+        try {
+            final int userId = getUserId(login);
+            // We block the user instead of deactivating because a deactivates account
+            // is activated automatically if the user logs into Gitlab.
+            gitlabApi.getUserApi().blockUser(userId);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException(String.format("Cannot block user %s from GitLab!", login), e);
+        }
+    }
+
+    @Override
+    public void activateUser(String login) throws VersionControlException {
+        try {
+            final int userId = getUserId(login);
+            gitlabApi.getUserApi().unblockUser(userId);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException(String.format("Cannot unblock user %s from GitLab!", login), e);
         }
     }
 

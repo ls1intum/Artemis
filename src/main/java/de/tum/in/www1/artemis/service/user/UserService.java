@@ -21,9 +21,8 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.exception.CIAccountExistsException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.exception.VCSAccountExistsException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -149,8 +148,7 @@ public class UserService {
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
         return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.activateUser(user.getLogin()));
             // activate given user for the registration key.
             userCreationService.activateUser(user);
             return user;
@@ -244,19 +242,16 @@ public class UserService {
         // we need to save first so that the user can be found in the database in the subsequent method
         User savedNonActivatedUser = saveUser(newUser);
 
+        // Create an account on the VCS. If it fails, abort registration.
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
-            if (!vcsUserManagementService.canCreateVcsUser(savedNonActivatedUser)) {
-                // Delete the user that was previously saved and throw
-                deleteUser(savedNonActivatedUser);
-                throw new VCSAccountExistsException(savedNonActivatedUser.getLogin());
+            try {
+                vcsUserManagementService.createVcsUser(savedNonActivatedUser);
+                vcsUserManagementService.deactivateUser(savedNonActivatedUser.getLogin());
             }
-        });
-
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
-            if (!ciUserManagementService.canCreateUser(savedNonActivatedUser)) {
-                // Delete the user that was previously saved and throw
+            catch (VersionControlException e) {
+                log.error("An error occurred while registering GitLab user " + savedNonActivatedUser.getLogin() + ":", e);
                 deleteUser(savedNonActivatedUser);
-                throw new CIAccountExistsException(savedNonActivatedUser.getLogin());
+                throw e;
             }
         });
 

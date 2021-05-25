@@ -42,15 +42,6 @@ public interface CIUserManagementService {
     void updateUserLogin(String oldLogin, User user) throws ContinuousIntegrationException;
 
     /**
-     * Returns true if the user can be created in the CIS. Returns false
-     * if the user already exists.
-     *
-     * @param user The Artemis user to create
-     * @return whether the user can be created in the CIS.
-     */
-    boolean canCreateUser(User user) throws ContinuousIntegrationException;
-
-    /**
      * Updates the user in the CIS with the data from the Artemis users. Also adds/removes
      * the user to/from the specified groups. Throws an exception if the user doesn't exist
      * in the CIS.
