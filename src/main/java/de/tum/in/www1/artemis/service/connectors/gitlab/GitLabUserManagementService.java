@@ -63,6 +63,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                 return;
             }
 
+            updateUserActivationState(user, gitlabUser.getId());
+
             addUserToGroups(gitlabUser.getId(), addedGroups);
 
             // Remove the user from groups or update it's permissions if the user belongs to multiple
@@ -101,6 +103,27 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         String password = shouldUpdatePassword ? passwordService.decryptPassword(user) : null;
         return userApi.updateUser(gitlabUser, password);
+    }
+
+    /**
+     * Updates the activation state of the Gitlab account based on the Artemis account.
+     * We
+     * @param user The Artemis user
+     * @param gitlabUserId the id of the GitLab user that is mapped to the Artemis user
+     */
+    private void updateUserActivationState(User user, int gitlabUserId) {
+        try {
+            if (user.getActivated()) {
+                gitlabApi.getUserApi().unblockUser(gitlabUserId);
+            }
+            else {
+                gitlabApi.getUserApi().blockUser(gitlabUserId);
+            }
+        }
+        catch (GitLabApiException e) {
+            // Ignore the exception because it shouldn't hinder updating the Artemis user.
+            log.warn("Cannot update the activation state of GitLab user {}: {}", user.getLogin(), e.getMessage());
+        }
     }
 
     @Override
