@@ -16,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -69,13 +68,11 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         userVM.setPassword("password");
 
         // Simulate failure to delete GitLab user, this should not keep Artemis from creating a new user
-        gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
-        // Simulate creation of GitLab user
-        gitlabRequestMockProvider.mockCanCreateVcsUser(user);
+        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), true);
 
-        SecurityUtils.setAuthorizationObject();
-        jenkinsRequestMockProvider.mockDeleteUser(user, true, false);
-        jenkinsRequestMockProvider.mockCanCreateUser(user, false);
+        // Simulate creation of GitLab user
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin());
 
         // make request and assert Status Created
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
@@ -131,7 +128,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         userVM.setPassword("password");
 
         // make request and assert
-        gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, false);
+        gitlabRequestMockProvider.mockCreateVcsUser(user, true);
         request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
         // The account shouldn't be saved
@@ -148,7 +145,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testShouldNotRegisterUserIfCannotCreateInJenkins() throws Exception {
+    public void testShouldRegisterUserIfCanCreateAndDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
@@ -158,28 +155,8 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         ManagedUserVM userVM = new ManagedUserVM(user);
         userVM.setPassword("password");
 
-        gitlabRequestMockProvider.mockCanCreateVcsUser(user);
-        jenkinsRequestMockProvider.mockCanCreateUser(user, true);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
-
-        // The account shouldn't be saved
-        assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void testShouldRegisterUserIfCanCreateInJenkinsAndGitlab() throws Exception {
-        // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
-        user.setActivated(false);
-        user.setActivationKey("testActivationKey");
-
-        // setup user to register
-        ManagedUserVM userVM = new ManagedUserVM(user);
-        userVM.setPassword("password");
-
-        gitlabRequestMockProvider.mockCanCreateVcsUser(user);
-        jenkinsRequestMockProvider.mockCanCreateUser(user, false);
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        gitlabRequestMockProvider.mockDeactivateUser(user.getLogin());
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
 
         assertThat(userRepo.findOneByLogin(user.getLogin())).isPresent();

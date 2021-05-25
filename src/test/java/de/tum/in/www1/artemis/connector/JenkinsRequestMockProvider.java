@@ -370,11 +370,6 @@ public class JenkinsRequestMockProvider {
         mockAddUsersToGroups(user.getLogin(), user.getGroups(), false);
     }
 
-    public void mockCanCreateUser(User user, boolean shouldFail) throws URISyntaxException, IOException {
-        mockCreateUser(user, false, shouldFail, false);
-        mockDeleteUser(user, true, false);
-    }
-
     public void mockAddUsersToGroups(String login, Set<String> groups, boolean shouldfail) throws IOException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {

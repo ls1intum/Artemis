@@ -269,7 +269,15 @@ public class UserService {
         if (existingUser.getActivated()) {
             return false;
         }
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteVcsUser(existingUser.getLogin()));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
+            try {
+                vcsUserManagementService.deleteVcsUser(existingUser.getLogin());
+            }
+            catch (VersionControlException e) {
+                // Ignore exception since the user should still be deleted but log it.
+                log.warn("Cannot remove non-activated user " + existingUser.getLogin() + " from the VCS: ", e);
+            }
+        });
         deleteUser(existingUser);
         return true;
     }
