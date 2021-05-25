@@ -21,23 +21,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(value = { "author" }, allowGetters = true) // author field is not deserialized
 public class StudentQuestionAnswer extends DomainObject {
 
+    // Post.content
     @Lob
     @Column(name = "answer_text")
     private String answerText;
 
+    // Post.creationDate
     @Column(name = "answer_date")
     private ZonedDateTime answerDate;
 
+    // Redundant -> Remove
     @Column(name = "verified")
     private Boolean verified;
 
+    // AnswerPost.tutorApproved
     @Column(name = "tutor_approved")
     private Boolean tutorApproved;
 
+    // Post.author
     @ManyToOne
     @JsonIgnoreProperties("questionAnswers")
     private User author;
 
+    // AnswerPost.rootPost
     @ManyToOne
     @JsonIgnoreProperties("answers")
     private StudentQuestion question;

@@ -24,30 +24,38 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(value = { "author" }, allowGetters = true) // author field is not deserialized
 public class StudentQuestion extends DomainObject {
 
+    // Post.content
     @Size(max = 1000)
     @Column(name = "question_text", length = 1000)
     private String questionText;
 
+    // Post.creationDate
     @Column(name = "creation_date")
     private ZonedDateTime creationDate;
 
+    // RootPost.visibleForStudents
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
+    // Included in Post.reactions
     @Column(name = "votes", columnDefinition = "integer default 0")
     private Integer votes = 0;
 
+    // RootPost.answers
     @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<StudentQuestionAnswer> answers = new HashSet<>();
 
+    // Post.author
     @ManyToOne
     @JsonIgnoreProperties("studentQuestions")
     private User author;
 
+    // RootPost.exerciseContext
     @ManyToOne
     @JsonIgnoreProperties("studentQuestions")
     private Exercise exercise;
 
+    // RootPost.lectureContext
     @ManyToOne
     @JsonIgnoreProperties("studentQuestions")
     private Lecture lecture;
