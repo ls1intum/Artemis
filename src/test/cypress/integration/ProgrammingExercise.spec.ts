@@ -83,7 +83,7 @@ describe('Programming exercise', () => {
         // Asserts that every sub-task in the programming exercise is marked with a question mark
         cy.get('.stepwizard-row', { timeout: 10000 })
             .find('.stepwizard-step')
-            .each(($el, index, $list) => {
+            .each(($el) => {
                 cy.wrap($el).find('[data-icon="question"]').should(beVisible);
             });
 
@@ -95,7 +95,7 @@ describe('Programming exercise', () => {
         // Make sure that all sub-tasks are not marked with question marks, but with an indication that they failed
         cy.get('.stepwizard-row')
             .find('.stepwizard-step')
-            .each(($el, index, $list) => {
+            .each(($el) => {
                 cy.wrap($el).find('[data-icon="question"]').should('not.exist');
                 cy.wrap($el).find('[data-icon="times"]').should(beVisible);
             });
@@ -111,7 +111,7 @@ describe('Programming exercise', () => {
         // Check all checkboxes to get rid of the git repositories and build plans
         cy.get('.modal-body')
             .find('[type="checkbox"]')
-            .each(($el, index, $list) => {
+            .each(($el) => {
                 cy.wrap($el).check();
             });
         cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
