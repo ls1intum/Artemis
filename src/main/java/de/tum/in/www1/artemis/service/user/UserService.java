@@ -270,8 +270,6 @@ public class UserService {
             return false;
         }
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteVcsUser(existingUser.getLogin()));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(existingUser));
-
         deleteUser(existingUser);
         return true;
     }
