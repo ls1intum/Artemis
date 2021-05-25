@@ -13,7 +13,6 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { AuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-button.component';
-import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-dialog.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 
@@ -33,12 +32,7 @@ import { ArtemisTableModule } from 'app/shared/table/table.module';
         NgxDatatableModule,
         ArtemisTableModule,
     ],
-    declarations: [
-        ProgrammingExerciseUpdateComponent,
-        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
-        AuxiliaryRepositoryButtonComponent,
-        AuxiliaryRepositoryDialogComponent,
-    ],
+    declarations: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent, AuxiliaryRepositoryButtonComponent],
     exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}

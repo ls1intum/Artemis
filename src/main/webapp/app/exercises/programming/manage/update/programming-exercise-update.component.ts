@@ -22,7 +22,6 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/update/auxiliary-repository.service';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -117,7 +116,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private router: Router,
-        private auxiliaryRepositoryService: AuxiliaryRepositoryService,
     ) {}
 
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
@@ -238,7 +236,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
                         this.submitButtonTitle = 'entity.action.save';
-                        this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.programmingExercise);
                     } else {
                         this.submitButtonTitle = 'entity.action.generate';
                     }

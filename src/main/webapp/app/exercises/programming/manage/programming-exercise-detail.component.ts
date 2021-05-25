@@ -18,7 +18,6 @@ import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/update/auxiliary-repository.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -55,7 +54,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
-        private auxiliaryRepositoryService: AuxiliaryRepositoryService,
         private profileService: ProfileService,
     ) {}
 
@@ -84,8 +82,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.loadingSolutionParticipationResults = false;
                 });
             }
-
-            this.auxiliaryRepositoryService.updateAuxiliaryRepositories(this.programmingExercise);
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
