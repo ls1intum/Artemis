@@ -242,21 +242,21 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // we need to save first so that the user can be found in the database in the subsequent method
-        saveUser(newUser);
+        User savedNonActivatedUser = saveUser(newUser);
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
-            if (!vcsUserManagementService.canCreateVcsUser(newUser)) {
+            if (!vcsUserManagementService.canCreateVcsUser(savedNonActivatedUser)) {
                 // Delete the user that was previously saved and throw
-                deleteUser(newUser);
-                throw new VCSAccountExistsException(newUser.getLogin());
+                deleteUser(savedNonActivatedUser);
+                throw new VCSAccountExistsException(savedNonActivatedUser.getLogin());
             }
         });
 
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
-            if (!ciUserManagementService.canCreateUser(newUser)) {
+            if (!ciUserManagementService.canCreateUser(savedNonActivatedUser)) {
                 // Delete the user that was previously saved and throw
-                deleteUser(newUser);
-                throw new CIAccountExistsException(newUser.getLogin());
+                deleteUser(savedNonActivatedUser);
+                throw new CIAccountExistsException(savedNonActivatedUser.getLogin());
             }
         });
 
