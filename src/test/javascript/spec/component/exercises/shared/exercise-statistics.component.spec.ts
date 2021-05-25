@@ -95,6 +95,7 @@ describe('ExerciseStatisticsComponent', () => {
         fixture.detectChanges();
         expect(component).to.be.ok;
         expect(statisticsSpy).to.have.been.calledOnce;
+        expect(exerciseSpy).to.have.been.calledOnce;
         expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
         expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
         expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
@@ -111,6 +112,7 @@ describe('ExerciseStatisticsComponent', () => {
         expect(tabSpy).to.have.been.calledOnce;
         expect(component.currentSpan).to.be.equal(SpanType.MONTH);
         expect(statisticsSpy).to.have.been.calledOnce;
+        expect(exerciseSpy).to.have.been.calledOnce;
         expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
         expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
         expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
