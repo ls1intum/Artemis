@@ -1,8 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/manage/update/auxiliary-repository-dialog.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 @Component({
     selector: 'jhi-add-auxiliary-repository-button',
@@ -12,7 +11,7 @@ import { AuxiliaryRepositoryDialogComponent } from 'app/exercises/programming/ma
             [btnSize]="ButtonSize.SMALL"
             [icon]="'plus'"
             [title]="'entity.action.addAuxiliaryRepository'"
-            (onClick)="openExternalSubmissionDialog($event)"
+            (onClick)="addAuxiliaryRepositoryRow($event)"
         ></jhi-button>
     `,
 })
@@ -20,17 +19,13 @@ export class AuxiliaryRepositoryButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() exercise: Exercise;
+    @Input() programmingExercise: ProgrammingExercise;
 
-    constructor(private modalService: NgbModal) {}
-
-    /**
-     * Opens modal window for external exercise submission.
-     * @param { MouseEvent } event
-     */
-    openExternalSubmissionDialog(event: MouseEvent) {
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(AuxiliaryRepositoryDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exercise = this.exercise;
+    addAuxiliaryRepositoryRow(event: MouseEvent) {
+        if (this.programmingExercise.auxiliaryRepositories === undefined) {
+            this.programmingExercise.auxiliaryRepositories = [];
+        }
+        this.programmingExercise.auxiliaryRepositories?.push(new AuxiliaryRepository());
+        this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
     }
 }

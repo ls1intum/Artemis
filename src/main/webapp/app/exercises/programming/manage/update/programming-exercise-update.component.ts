@@ -26,6 +26,7 @@ import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/upd
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -119,6 +120,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private auxiliaryRepositoryService: AuxiliaryRepositoryService,
     ) {}
 
+    updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
+        return (newValue: any) => {
+            editedAuxiliaryRepository.name = 'I WAS MODIFIED';
+            return editedAuxiliaryRepository.name;
+        };
+    }
+
     /**
      * Will also trigger loading the corresponding programming exercise language template.
      *
@@ -148,11 +156,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         // Automatically enable the checkout of the solution repository for Haskell exercises
-        if (this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL) {
-            this.programmingExercise.checkoutSolutionRepository = true;
-        } else {
-            this.programmingExercise.checkoutSolutionRepository = false;
-        }
+        this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
