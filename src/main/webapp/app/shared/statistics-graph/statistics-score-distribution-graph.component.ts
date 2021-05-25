@@ -4,7 +4,7 @@ import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
-import { GraphColors, SpanType } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/entities/statistics.model';
 import { round } from 'app/shared/util/utils';
 
 @Component({
@@ -18,11 +18,6 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     scoreDistribution: number[] | undefined;
     @Input()
     numberOfExerciseScores: number | undefined;
-
-    // Html properties
-    LEFT = false;
-    RIGHT = true;
-    SpanType = SpanType;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};

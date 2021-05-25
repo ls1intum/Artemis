@@ -49,12 +49,15 @@ describe('ExerciseStatisticsComponent', () => {
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
         maxPointsOfExercise: 10,
+        absoluteAveragePoints: 5,
         scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
         numberOfExerciseScores: 10,
         numberOfParticipations: 10,
         numberOfStudentsInCourse: 10,
+        participationsInPercent: 100,
         numberOfQuestions: 4,
         numberOfAnsweredQuestions: 2,
+        questionsAnsweredInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
@@ -92,9 +95,9 @@ describe('ExerciseStatisticsComponent', () => {
         fixture.detectChanges();
         expect(component).to.be.ok;
         expect(statisticsSpy).to.have.been.calledOnce;
-        expect(component.participationsInPercent).to.equal(100);
-        expect(component.questionsAnsweredInPercent).to.equal(50);
-        expect(component.absoluteAveragePoints).to.equal(5);
+        expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
+        expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
+        expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
     });
 
     it('should trigger when tab changed', fakeAsync(() => {
@@ -108,8 +111,8 @@ describe('ExerciseStatisticsComponent', () => {
         expect(tabSpy).to.have.been.calledOnce;
         expect(component.currentSpan).to.be.equal(SpanType.MONTH);
         expect(statisticsSpy).to.have.been.calledOnce;
-        expect(component.participationsInPercent).to.equal(100);
-        expect(component.questionsAnsweredInPercent).to.equal(50);
-        expect(component.absoluteAveragePoints).to.equal(5);
+        expect(component.exerciseStatistics.participationsInPercent).to.equal(100);
+        expect(component.exerciseStatistics.questionsAnsweredInPercent).to.equal(50);
+        expect(component.exerciseStatistics.absoluteAveragePoints).to.equal(5);
     }));
 });

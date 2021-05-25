@@ -13,5 +13,8 @@ export class ExerciseManagementStatisticsDto {
     numberOfQuestions: number;
     numberOfAnsweredQuestions: number;
 
-    constructor() {}
+    // helper
+    absoluteAveragePoints?: number;
+    participationsInPercent?: number;
+    questionsAnsweredInPercent?: number;
 }

@@ -5,6 +5,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { map } from 'rxjs/operators';
+import { round } from 'app/shared/util/utils';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -49,6 +51,15 @@ export class StatisticsService {
      */
     getExerciseStatistics(exerciseId: number): Observable<ExerciseManagementStatisticsDto> {
         const params = new HttpParams().set('exerciseId', '' + exerciseId);
-        return this.http.get<ExerciseManagementStatisticsDto>(`${this.resourceUrl}exercise-statistics`, { params });
+        return this.http
+            .get<ExerciseManagementStatisticsDto>(`${this.resourceUrl}exercise-statistics`, { params })
+            .pipe(map((res: ExerciseManagementStatisticsDto) => StatisticsService.calculatePercentagesForExerciseStatistics(res)));
+    }
+
+    private static calculatePercentagesForExerciseStatistics(stats: ExerciseManagementStatisticsDto): ExerciseManagementStatisticsDto {
+        stats.participationsInPercent = stats.numberOfStudentsInCourse > 0 ? round((stats.numberOfParticipations / stats.numberOfStudentsInCourse) * 100, 1) : 0;
+        stats.questionsAnsweredInPercent = stats.numberOfQuestions > 0 ? round((stats.numberOfAnsweredQuestions / stats.numberOfQuestions) * 100, 1) : 0;
+        stats.absoluteAveragePoints = round((stats.averageScoreOfExercise * stats.maxPointsOfExercise) / 100, 1);
+        return stats;
     }
 }

@@ -21,7 +21,11 @@
                 </a>
             </div>
             <div *ngIf="fileUploadExercise.releaseDate != undefined && moment(fileUploadExercise.releaseDate).isBefore(moment())" class="mt-3">
-                <jhi-exercise-detail-statistics [exercise]="fileUploadExercise" [doughnutStats]="doughnutStats"></jhi-exercise-detail-statistics>
+                <jhi-exercise-detail-statistics
+                    [exercise]="fileUploadExercise"
+                    [doughnutStats]="doughnutStats"
+                    [exerciseType]="ExerciseType.FILE_UPLOAD"
+                ></jhi-exercise-detail-statistics>
                 <hr />
                 <div>
                     <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>

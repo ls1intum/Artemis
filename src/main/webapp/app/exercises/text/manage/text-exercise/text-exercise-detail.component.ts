@@ -4,15 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
-
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { round } from 'app/shared/util/utils';
-import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 
@@ -22,21 +19,16 @@ import * as moment from 'moment';
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
-    readonly DoughnutChartType = DoughnutChartType;
     readonly ExerciseType = ExerciseType;
     readonly moment = moment;
 
     textExercise: TextExercise;
-    courseId = 0;
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
     doughnutStats: ExerciseManagementStatisticsDto;
-    absoluteAveragePoints: number;
-    participationsInPercent: number;
-    questionsAnsweredInPercent: number;
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -76,9 +68,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         });
         this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
-            this.participationsInPercent = statistics.numberOfStudentsInCourse > 0 ? round((statistics.numberOfParticipations / statistics.numberOfStudentsInCourse) * 100, 1) : 0;
-            this.questionsAnsweredInPercent = statistics.numberOfQuestions > 0 ? round((statistics.numberOfAnsweredQuestions / statistics.numberOfQuestions) * 100, 1) : 0;
-            this.absoluteAveragePoints = round((statistics.averageScoreOfExercise * statistics.maxPointsOfExercise) / 100, 1);
         });
     }
 

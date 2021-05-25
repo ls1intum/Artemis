@@ -3,16 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
-
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { round } from 'app/shared/util/utils';
 import * as moment from 'moment';
 
 @Component({
@@ -25,13 +22,9 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    readonly DoughnutChartType = DoughnutChartType;
     readonly ExerciseType = ExerciseType;
     readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
-    absoluteAveragePoints = 0;
-    participationsInPercent = 0;
-    questionsAnsweredInPercent = 0;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -70,9 +63,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
             );
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
-            this.participationsInPercent = statistics.numberOfStudentsInCourse > 0 ? round((statistics.numberOfParticipations / statistics.numberOfStudentsInCourse) * 100, 1) : 0;
-            this.questionsAnsweredInPercent = statistics.numberOfQuestions > 0 ? round((statistics.numberOfAnsweredQuestions / statistics.numberOfQuestions) * 100, 1) : 0;
-            this.absoluteAveragePoints = round((statistics.averageScoreOfExercise * statistics.maxPointsOfExercise) / 100, 1);
         });
     }
 

@@ -28,12 +28,15 @@ describe('ProgrammingExercise Management Detail Component', () => {
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
         maxPointsOfExercise: 10,
+        absoluteAveragePoints: 5,
         scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
         numberOfExerciseScores: 10,
         numberOfParticipations: 10,
         numberOfStudentsInCourse: 10,
+        participationsInPercent: 100,
         numberOfQuestions: 4,
         numberOfAnsweredQuestions: 2,
+        questionsAnsweredInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
@@ -71,9 +74,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(statisticsServiceStub).to.have.been.called;
             expect(comp.programmingExercise).to.equal(programmingExercise);
             expect(comp.isExamExercise).to.be.false;
-            expect(comp.participationsInPercent).to.equal(100);
-            expect(comp.questionsAnsweredInPercent).to.equal(50);
-            expect(comp.absoluteAveragePoints).to.equal(5);
+            expect(comp.doughnutStats.participationsInPercent).to.equal(100);
+            expect(comp.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
         });
     });
 

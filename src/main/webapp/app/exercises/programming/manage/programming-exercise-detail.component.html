@@ -185,7 +185,7 @@
                 </button>
             </div>
             <div *ngIf="programmingExercise.releaseDate != undefined && moment(programmingExercise.releaseDate).isBefore(moment())" class="mt-3">
-                <jhi-exercise-detail-statistics [exercise]="programmingExercise" [doughnutStats]="doughnutStats"></jhi-exercise-detail-statistics>
+                <jhi-exercise-detail-statistics [exercise]="programmingExercise" [doughnutStats]="doughnutStats" [exerciseType]="PROGRAMMING"></jhi-exercise-detail-statistics>
                 <hr />
                 <div>
                     <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
