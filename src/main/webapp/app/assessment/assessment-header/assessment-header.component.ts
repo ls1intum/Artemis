@@ -28,7 +28,7 @@ export class AssessmentHeaderComponent {
     @Input() exerciseDashboardLink: string[];
     @Input() canOverride: boolean;
 
-    @Input() exercise: Exercise | undefined;
+    @Input() exercise?: Exercise;
     @Input() result?: Result;
     @Input() isIllegalSubmission: boolean;
     @Input() hasComplaint = false;
