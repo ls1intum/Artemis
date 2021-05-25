@@ -265,8 +265,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     public void deactivateUser(String login) throws VersionControlException {
         try {
             final int userId = getUserId(login);
-            // We block the user instead of deactivating because a deactivates account
-            // is activated automatically if the user logs into Gitlab.
+            // We block the user instead of deactivating because a deactivated account
+            // is activated automatically when the user logs into Gitlab.
             gitlabApi.getUserApi().blockUser(userId);
         }
         catch (GitLabApiException e) {
