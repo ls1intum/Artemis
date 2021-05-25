@@ -278,7 +278,7 @@ describe('ParticipationSubmissionComponent', () => {
     }));
 
     describe('should delete', () => {
-        beforeEach(async () => {
+        beforeEach(() => {
             deleteFileUploadAssessmentStub.returns(of({}));
             deleteTextAssessmentStub.returns(of({}));
             deleteModelingAssessmentStub.returns(of({}));
@@ -287,7 +287,7 @@ describe('ParticipationSubmissionComponent', () => {
             stub(participationService, 'find').returns(of(new HttpResponse({ body: participation1 })));
         });
 
-        afterEach(async () => {
+        afterEach(() => {
             expect(comp.submissions?.length).to.be.equal(1);
             expect(comp.submissions![0].results?.length).to.be.equal(1);
             expect(comp.submissions![0].results![0]).to.be.deep.equal(result1);
@@ -337,18 +337,17 @@ describe('ParticipationSubmissionComponent', () => {
     });
 
     describe('should handle failed delete', () => {
-        beforeEach(async () => {
+        beforeEach(() => {
             const error = { message: 'Result could not be deleted!' } as HttpErrorResponse;
             deleteFileUploadAssessmentStub.returns(throwError(error));
             deleteProgrammingAssessmentStub.returns(throwError(error));
             deleteModelingAssessmentStub.returns(throwError(error));
             deleteTextAssessmentStub.returns(throwError(error));
-
             findAllSubmissionsOfParticipationStub.returns(of({ body: [submissionWithTwoResults2] }));
             stub(participationService, 'find').returns(of(new HttpResponse({ body: participation1 })));
         });
 
-        afterEach(async () => {
+        afterEach(() => {
             expect(comp.submissions?.length).to.be.equal(1);
             expect(comp.submissions![0].results?.length).to.be.equal(2);
             expect(comp.submissions![0].results![0]).to.be.deep.equal(result1);

@@ -12,7 +12,10 @@
             "delete": {
                 "question": "Soll Result {{ id }} wirklich dauerhaft gelöscht werden?",
                 "question2": "Soll die Bewertung wirklich gelöscht werden? Es kann nicht rückgängig gemacht werden!",
-                "buttonText": "Löschen"
+                "buttonText": "Löschen",
+                "error": {
+                    "hasComplaint": "Eine Bewertung kann nicht gelöscht werden wenn es zu ihr eine Beschwerde gibt!"
+                }
             },
             "detail": {
                 "title": "Result"

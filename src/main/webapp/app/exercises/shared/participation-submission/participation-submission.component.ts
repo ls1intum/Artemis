@@ -56,6 +56,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private submissionService: SubmissionService,
+        private translateService: TranslateService,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
         private programmingExerciseService: ProgrammingExerciseService,
@@ -218,41 +219,42 @@ export class ParticipationSubmissionComponent implements OnInit {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
                     this.textAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
-                        () => {
-                            submission.results = submission.results?.filter((remainingResult) => remainingResult.id !== result.id);
-                            this.dialogErrorSource.next('');
-                        },
-                        (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.MODELING:
                     this.modelingAssessmentsService.deleteAssessment(submission.id, result.id).subscribe(
-                        () => {
-                            submission.results = submission.results?.filter((remainingResult) => remainingResult.id !== result.id);
-                            this.dialogErrorSource.next('');
-                        },
-                        (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.FILE_UPLOAD:
                     this.fileUploadAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
-                        () => {
-                            submission.results = submission.results?.filter((remainingResult) => remainingResult.id !== result.id);
-                            this.dialogErrorSource.next('');
-                        },
-                        (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
                 case ExerciseType.PROGRAMMING:
                     this.programmingAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
-                        () => {
-                            submission.results = submission.results?.filter((remainingResult) => remainingResult.id !== result.id);
-                            this.dialogErrorSource.next('');
-                        },
-                        (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     );
                     break;
             }
+        }
+    }
+
+    private updateResults(submission: Submission, result: Result) {
+        submission.results = submission.results?.filter((remainingResult) => remainingResult.id !== result.id);
+        this.dialogErrorSource.next('');
+    }
+
+    private handleErrorResponse(error: HttpErrorResponse) {
+        if (error.error.message === 'error.hasComplaint') {
+            this.dialogErrorSource.next(this.translateService.instant('artemisApp.result.delete.error.hasComplaint'));
+        } else {
+            this.dialogErrorSource.next(error.message);
         }
     }
 }
