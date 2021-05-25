@@ -119,6 +119,22 @@ a.btn {
     color: rgba(0, 0, 0, 0.125);
 }
 
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-inline {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    text-align: left;
+}
+
+.form-control {
+    display: inline-block;
+    width: auto;
+}
+
 /* ==========================================================================
 Browser Upgrade Prompt
 ========================================================================== */
