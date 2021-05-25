@@ -605,9 +605,9 @@ describe('FileUploadAssessmentComponent', () => {
         const cancelAssessmentStub = stub(fileUploadAssessmentsService, 'cancelAssessment').returns(of());
         sinon.replace(window, 'confirm', windowFake);
 
-        comp.submission = ({
+        comp.submission = {
             id: 2,
-        } as unknown) as FileUploadSubmission;
+        } as unknown as FileUploadSubmission;
         fixture.detectChanges();
 
         comp.onCancelAssessment();
@@ -630,7 +630,7 @@ const createSubmission = (exercise: FileUploadExercise) => {
         submitted: true,
         type: SubmissionType.MANUAL,
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
-        participation: ({ type: ParticipationType.STUDENT, exercise } as unknown) as Participation,
+        participation: { type: ParticipationType.STUDENT, exercise } as unknown as Participation,
     } as FileUploadSubmission;
 };
 

@@ -21,21 +21,21 @@ describe('Submission Service', () => {
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
-    const submission = ({
+    const submission = {
         id: 1,
         submitted: true,
         type: 'AUTOMATIC',
         text: 'Test\n\nTest\n\nTest',
-    } as unknown) as TextSubmission;
+    } as unknown as TextSubmission;
     submission.results = [
-        ({
+        {
             id: 2374,
             resultString: '1 of 12 points',
             score: 8,
             rated: true,
             hasFeedback: true,
             hasComplaint: false,
-        } as unknown) as Result,
+        } as unknown as Result,
     ];
 
     beforeEach(() => {

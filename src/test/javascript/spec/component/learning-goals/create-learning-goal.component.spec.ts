@@ -102,8 +102,9 @@ describe('CreateLearningGoal', () => {
 
         createLearningGoalComponentFixture.detectChanges();
 
-        const learningGoalForm: LearningGoalFormStubComponent = createLearningGoalComponentFixture.debugElement.query(By.directive(LearningGoalFormStubComponent))
-            .componentInstance;
+        const learningGoalForm: LearningGoalFormStubComponent = createLearningGoalComponentFixture.debugElement.query(
+            By.directive(LearningGoalFormStubComponent),
+        ).componentInstance;
         learningGoalForm.formSubmitted.emit(formDate);
 
         createLearningGoalComponentFixture.whenStable().then(() => {

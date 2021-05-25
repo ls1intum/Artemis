@@ -274,7 +274,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
-        var buildLogEntries = filterBuildLogs(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()), programmingLanguage);
+        var buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()),
+                programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
@@ -540,7 +541,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
 
         // Filter unwanted logs
-        return filterBuildLogs(buildLogEntries, programmingLanguage);
+        return removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
     }
 
     @Override
