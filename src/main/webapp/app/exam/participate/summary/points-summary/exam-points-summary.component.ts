@@ -64,8 +64,8 @@ export class ExamPointsSummaryComponent implements OnInit {
                 }),
             )
             .subscribe((gradeObservable) => {
-                const gradeDTO = gradeObservable!.body;
-                if (gradeDTO) {
+                if (gradeObservable && gradeObservable!.body) {
+                    const gradeDTO = gradeObservable!.body;
                     this.gradingScaleExists = true;
                     this.grade = gradeDTO.gradeName;
                     this.hasPassed = gradeDTO.isPassingGrade;
