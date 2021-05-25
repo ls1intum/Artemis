@@ -7,7 +7,8 @@ import { ArtemisTestModule } from '../test.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
-import { BehaviorSubject } from 'rxjs';
+//import { BehaviorSubject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { By } from '@angular/platform-browser';
 
@@ -28,9 +29,9 @@ describe('BuildPlanLinkDirective', () => {
     let debugElement: DebugElement;
     let profileService: ProfileService;
     let getProfileInfoStub: SinonStub;
-    let profileInfoSubject: BehaviorSubject<ProfileInfo | null>;
+    let profileInfoSubject: Subject<ProfileInfo>;
 
-    const profileInfo = { buildPlanURLTemplate: 'https://some.url.com/plans/{buildPlanId}/path/{projectKey}' } as ProfileInfo;
+    //const profileInfo = { buildPlanURLTemplate: 'https://some.url.com/plans/{buildPlanId}/path/{projectKey}' } as ProfileInfo;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -47,7 +48,8 @@ describe('BuildPlanLinkDirective', () => {
 
                 getProfileInfoStub = stub(profileService, 'getProfileInfo');
 
-                profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
+                //profileInfoSubject = new Subject<ProfileInfo>(profileInfo);
+                profileInfoSubject = new Subject<ProfileInfo>();
                 getProfileInfoStub.returns(profileInfoSubject);
             });
     });
