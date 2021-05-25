@@ -338,7 +338,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     describe('should handle failed delete', () => {
         beforeEach(() => {
-            const error = { message: 'Result could not be deleted!' } as HttpErrorResponse;
+            const error = { message: '400 error', error: { message: 'error.hasComplaint' } } as HttpErrorResponse;
             deleteFileUploadAssessmentStub.returns(throwError(error));
             deleteProgrammingAssessmentStub.returns(throwError(error));
             deleteModelingAssessmentStub.returns(throwError(error));
