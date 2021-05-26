@@ -32,23 +32,38 @@ public class JenkinsInternalUrlService {
      * @return the vcs repository url with the internal url
      */
     public VcsRepositoryUrl toInternalVcsUrl(VcsRepositoryUrl vcsRepositoryUrl) {
-        if (internalVcsUrl.isEmpty()) {
-            return vcsRepositoryUrl;
-        }
-
         if (vcsRepositoryUrl.getURL() == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
             return vcsRepositoryUrl;
         }
 
         try {
-            String newInternalUrl = replaceUrl(vcsRepositoryUrl.getURL().toString(), internalVcsUrl.get());
+            String newInternalUrl = toInternalVcsUrl(vcsRepositoryUrl.getURL().toString());
             return new VcsRepositoryUrl(newInternalUrl);
         }
         catch (MalformedURLException e) {
             log.warn("Cannot replace url {} to {}: {}. Falling back to original url.", vcsRepositoryUrl, internalVcsUrl, e.getMessage());
             return vcsRepositoryUrl;
         }
+    }
+
+    /**
+     * Replaces the url of the vcs repository url to the internal url if it's
+     * defined.
+     * @param vcsRepositoryUrl the vcs repository url
+     * @return the vcs repository url with the internal url
+     */
+    public String toInternalVcsUrl(String vcsRepositoryUrl) {
+        if (internalVcsUrl.isEmpty()) {
+            return vcsRepositoryUrl;
+        }
+
+        if (vcsRepositoryUrl == null) {
+            log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
+            return vcsRepositoryUrl;
+        }
+
+        return replaceUrl(vcsRepositoryUrl, internalVcsUrl.get());
     }
 
     /**

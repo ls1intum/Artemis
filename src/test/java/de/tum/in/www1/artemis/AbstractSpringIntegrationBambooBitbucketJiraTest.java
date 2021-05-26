@@ -181,17 +181,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
 
-    @Override
-    public void mockConnectorRequestForAuxiliaryRepositoryCreation(ProgrammingExercise exercise, AuxiliaryRepository repository) throws Exception {
-        bambooRequestMockProvider.mockCheckIfProjectExists(exercise, true, false);
-        bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, true);
-        bitbucketRequestMockProvider.mockCreateRepository(exercise, any());
-        doReturn(null).when(gitService).getOrCheckoutRepository(any(), anyBoolean());
-        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(exercise.generateBuildPlanId(TEMPLATE), true);
-        bambooRequestMockProvider.mockDeleteBambooBuildPlan(exercise.generateBuildPlanId(SOLUTION), true);
-    }
-
     private void mockBambooBuildPlanCreation(ProgrammingExercise exercise, boolean failToCreateCiProject) throws IOException, URISyntaxException {
         if (!failToCreateCiProject) {
             // TODO: check the actual plan and plan permissions that get passed here

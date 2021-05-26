@@ -19,6 +19,9 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -32,6 +35,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly moment = moment;
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -40,6 +44,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     lockingOrUnlockingRepositories = false;
+
+    doughnutStats: ExerciseManagementStatisticsDto;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -55,6 +61,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private translateService: TranslateService,
         private profileService: ProfileService,
+        private statisticsService: StatisticsService,
     ) {}
 
     ngOnInit() {
@@ -82,6 +89,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.loadingSolutionParticipationResults = false;
                 });
             }
+            this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+                this.doughnutStats = statistics;
+            });
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

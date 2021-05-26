@@ -1388,7 +1388,6 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     public void testValidateValidAuxiliaryRepository() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
-        mockDelegate.mockConnectorRequestForAuxiliaryRepositoryCreation(programmingExercise, auxRepoBuilder.get());
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
@@ -1416,13 +1415,11 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     public void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
-        mockDelegate.mockConnectorRequestForAuxiliaryRepositoryCreation(programmingExercise, auxRepoBuilder.get());
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
     public void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
-        mockDelegate.mockConnectorRequestForAuxiliaryRepositoryCreation(programmingExercise, auxRepoBuilder.get());
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
@@ -1441,7 +1438,6 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     public void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
-        mockDelegate.mockConnectorRequestForAuxiliaryRepositoryCreation(programmingExercise, auxRepoBuilder.get());
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
