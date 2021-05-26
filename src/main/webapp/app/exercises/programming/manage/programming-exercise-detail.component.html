@@ -152,6 +152,16 @@
                         ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
                     ></fa-icon>
                 </span>
+                <span *ngIf="programmingExercise.isAtLeastEditor" class="mr-1">
+                    <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="recreateBuildPlans()" class="btn btn-secondary btn-sm">
+                        <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
+                    </button>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.recreateBuildPlans.warning' | artemisTranslate }}"
+                    ></fa-icon>
+                </span>
                 <button
                     id="unlockAllRepositoriesButton"
                     class="btn btn-danger btn-sm mr-1"

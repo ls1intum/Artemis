@@ -1228,6 +1228,16 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok(exercise.getAuxiliaryRepositories());
     }
 
+    @PutMapping(Endpoints.RECREATE_BUILD_PLANS)
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Void> recreateBuildPlans(@PathVariable Long exerciseId) {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        return ResponseEntity.ok().build();
+    }
+
     private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories) {
         final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<>());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
@@ -1401,6 +1411,8 @@ public class ProgrammingExerciseResource {
         public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
 
         public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
+
+        public static final String RECREATE_BUILD_PLANS = PROGRAMMING_EXERCISE + "/recreate-build-plans";
 
         private Endpoints() {
         }
