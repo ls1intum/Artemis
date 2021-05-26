@@ -40,7 +40,9 @@ describe('Exam Update Component', function () {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
-    const exam = { id: 1 } as Exam;
+    const exam = new Exam();
+    exam.id = 1;
+
     const course = { id: 1 } as Course;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },

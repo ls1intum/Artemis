@@ -43,6 +43,13 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
 
+    @Query("""
+            SELECT COUNT(p)
+            FROM Participation p JOIN p.exercise e
+            WHERE e.id = :#{#exerciseId}
+            """)
+    long getNumberOfParticipationsForExercise(@Param("exerciseId") Long exerciseId);
+
     @NotNull
     default Participation findByIdWithLegalSubmissionsElseThrow(long participationId) {
         return findWithEagerLegalSubmissionsById(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
