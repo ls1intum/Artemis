@@ -1,5 +1,6 @@
 {
     "statistics": {
+        "statistics-title": "Statistiken",
         "amountOfStudents": "# an Studenten",
         "span": {
             "day": "Tag",
@@ -23,6 +24,7 @@
         "created_feedbacks": "Erstellte Feedbacks",
         "questions_asked": "Gestellte Fragen",
         "questions_answered": "Beantwortete Fragen",
+        "score_distribution": "Bewertungsverteilung",
         "submissionsTitle": "# an Abgaben",
         "active_usersTitle": "# an Benutzer",
         "logged_in_usersTitle": "# an Benutzer",
@@ -35,7 +37,8 @@
         "created_resultsTitle": "# an Bewertungen",
         "created_feedbacksTitle": "# an Feedbacks",
         "questions_askedTitle": "# an Fragen",
-        "questions_answeredTitle": "# an Antworten"
+        "questions_answeredTitle": "# an Antworten",
+        "score_distributionTitle": "% an Studenten"
     },
     "calendar_week": "KW",
     "overview": {
@@ -66,5 +69,11 @@
         "october": "Oktober",
         "november": "November",
         "december": "Dezember"
+    },
+    "exercise-statistics": {
+        "title": "Aufgabenstatistiken",
+        "averageScore": "Duschnittspunktzahl",
+        "participationRate": "Teilnahmen",
+        "questionsAnswered": "Beantwortete Fragen"
     }
 }
