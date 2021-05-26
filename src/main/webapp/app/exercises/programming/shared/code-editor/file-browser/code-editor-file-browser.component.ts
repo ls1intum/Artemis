@@ -6,7 +6,6 @@ import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import * as textFiles from './text-files.json';
 import {
     CommitState,
     CreateFileChange,
@@ -22,6 +21,7 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
+import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -253,7 +253,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     handleNodeSelected(item: TreeviewItem) {
         if (item && item.value !== this.selectedFile) {
             item.checked = true;
-            // If we had selected a file prior to this, we "uncheck" it
+            // If we had selected a file prior to this, we 'uncheck' it
             if (this.selectedFile) {
                 const priorFileSelection = TreeviewHelper.findItemInList(this.filesTreeViewItem, this.selectedFile);
                 // Avoid issues after file deletion
@@ -397,7 +397,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
             this.onError.emit('fileExists');
             return;
-        } else if (newFileName.split('.').length > 1 && !textFiles.textFileExtensions.includes(newFileName.split('.').pop()!)) {
+        } else if (newFileName.split('.').length > 1 && !supportedTextFileExtensions.includes(newFileName.split('.').pop()!)) {
             this.onError.emit('unsupportedFile');
             return;
         }
@@ -435,7 +435,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
         const [folderPath, fileType] = this.creatingFile;
 
-        if (fileName.split('.').length > 1 && !textFiles.textFileExtensions.includes(fileName.split('.').pop()!)) {
+        if (fileName.split('.').length > 1 && !supportedTextFileExtensions.includes(fileName.split('.').pop()!)) {
             this.onError.emit('unsupportedFile');
             return;
         } else if (Object.keys(this.repositoryFiles).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
@@ -498,7 +498,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     filter(([filename]) => {
                         const fileSplit = filename.split('.');
                         // Either the file has no ending or the file ending is allowed
-                        return fileSplit.length === 1 || textFiles.textFileExtensions.includes(fileSplit.pop()!);
+                        return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
                     }),
                     toPairs,
                 )(files),
@@ -518,7 +518,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     filter(([filename]) => {
                         const fileSplit = filename.split('.');
                         // Either the file has no ending or the file ending is allowed
-                        return fileSplit.length === 1 || textFiles.textFileExtensions.includes(fileSplit.pop()!);
+                        return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
                     }),
                     toPairs,
                 )(files),
