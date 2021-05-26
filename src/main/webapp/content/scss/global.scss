@@ -24,14 +24,17 @@ a,
 a:not(.btn):hover {
     color: $primary;
     font-weight: bold;
-    text-decoration: underline;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
 
+/* bootstrap 5 underlines links by default */
 a {
-    /* bootstrap 5 underlines links by default */
-    text-decoration: none;
+    text-decoration: none !important;
+}
+
+a:not(.btn):hover {
+    text-decoration: underline !important;
 }
 
 a.disabled {
@@ -64,13 +67,15 @@ a.disabled {
 /* Default the color to white even on bootstrap 5 */
 .btn,
 .btn:hover {
-    color: #fff !important;
+    color: #fff;
 }
 
 /* Except the warning button which has a yellow background */
 .btn-warning,
-.btn-warning:hover {
-    color: #000 !important;
+.btn-warning:hover,
+.btn-outline-primary,
+.btn-outline-primary:hover {
+    color: #000;
 }
 
 a.btn {
@@ -132,9 +137,14 @@ a.btn {
     text-align: left;
 }
 
-.form-control {
+.form-inline .form-control {
     display: inline-block;
     width: auto;
+}
+
+.btn-primary input {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
 }
 
 /* ==========================================================================
