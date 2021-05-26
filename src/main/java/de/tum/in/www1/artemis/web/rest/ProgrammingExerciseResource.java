@@ -340,7 +340,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         validateGeneralSettings(programmingExercise);
-        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise);
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -553,7 +553,6 @@ public class ProgrammingExerciseResource {
      *
      * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
      * @param notificationText           to notify the student group about the update on the programming exercise
-     * @param recreateBuildPlans         specifies whether the build plans for this exercise should be recreated.
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      * is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
@@ -561,8 +560,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText,
-            @RequestParam(value = "recreateBuildPlans", required = false) boolean recreateBuildPlans) {
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
         if (updatedProgrammingExercise.getId() == null) {
             return badRequest();
@@ -591,9 +589,15 @@ public class ProgrammingExerciseResource {
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
 
-        List<AuxiliaryRepository> newAuxiliaryRepositories = new ArrayList<>();
+        if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
+            // make sure the default value is set properly
+            updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        }
 
-        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(updatedProgrammingExercise);
+        List<AuxiliaryRepository> newAuxiliaryRepositories = updatedProgrammingExercise.getAuxiliaryRepositories()
+            .stream().filter(repo -> repo.getId() == null).toList();
+
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(updatedProgrammingExercise, newAuxiliaryRepositories);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
@@ -608,7 +612,7 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, existingProgrammingExercise, ENTITY_NAME);
 
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText, recreateBuildPlans);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(existingProgrammingExercise, updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
@@ -1224,47 +1228,11 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok(exercise.getAuxiliaryRepositories());
     }
 
-    /**
-     * Creates a new auxiliary repository for the given programming exercise.
-     *
-     * @param exerciseId of the exercise
-     * @param repository data for the new auxiliary repository
-     * @return the ResponseEntity with status 201 (Created) and the created auxiliary repository
-     */
-    @PostMapping(Endpoints.AUXILIARY_REPOSITORY)
-    @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<AuxiliaryRepository> createAuxiliaryRepository(@PathVariable Long exerciseId, @RequestBody AuxiliaryRepository repository) {
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository
-                .findWithAuxiliaryRepositoriesAndTemplateUrlAndSolutionUrlAndTestUrlById(exerciseId);
-        if (optionalProgrammingExercise.isEmpty()) {
-            return notFound();
-        }
-        ProgrammingExercise exercise = optionalProgrammingExercise.get();
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        // validateAuxiliaryRepository(repository, exercise);
-        try {
-            AuxiliaryRepository newAuxiliaryRepository = programmingExerciseService.createAuxiliaryRepositoryForExercise(exercise, repository);
-
-            return ResponseEntity.created(new URI("/api/programming-exercises/" + exercise.getId() + "/auxiliary-repository/" + newAuxiliaryRepository.getId()))
-                    .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, AUX_REPO_ENTITY_NAME, newAuxiliaryRepository.getName())).body(newAuxiliaryRepository);
-        }
-        catch (InterruptedException | URISyntaxException | GitAPIException e) {
-            log.error("Error while setting up programming exercise", e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR).headers(HeaderUtil.createAlert(applicationName,
-                            "An error occurred while setting up an auxiliary repository for exercise: " + e.getMessage(), "errorProgrammingExerciseAuxiliaryRepository"))
-                    .body(null);
-        }
-    }
-
-    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise) {
-        final List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
-        if (programmingExercise.getAuxiliaryRepositories() != null) {
-            for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
-                validateAuxiliaryRepository(repo, auxiliaryRepositories);
-                auxiliaryRepositories.add(repo);
-            }
+    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories) {
+        final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<>());
+        for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
+            validateAuxiliaryRepository(repo, auxiliaryRepositories);
+            auxiliaryRepositories.add(repo);
         }
         programmingExercise.setAuxiliaryRepositories(List.of());
         auxiliaryRepositories.forEach(programmingExercise::addAuxiliaryRepository);
