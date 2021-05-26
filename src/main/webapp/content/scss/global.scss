@@ -64,13 +64,13 @@ a.disabled {
 /* Default the color to white even on bootstrap 5 */
 .btn,
 .btn:hover {
-    color: #fff;
+    color: #fff !important;
 }
 
 /* Except the warning button which has a yellow background */
 .btn-warning,
 .btn-warning:hover {
-    color: #000;
+    color: #000 !important;
 }
 
 a.btn {
