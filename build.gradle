@@ -175,7 +175,7 @@ dependencies {
     implementation "org.jsoup:jsoup:1.13.1"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.5.8"
+    implementation "org.springdoc:springdoc-openapi-ui:1.5.9"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
