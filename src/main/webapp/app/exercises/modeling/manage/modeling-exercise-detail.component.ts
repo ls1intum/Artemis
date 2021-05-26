@@ -5,10 +5,13 @@ import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
-
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -23,12 +26,17 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     sampleSolution: SafeHtml;
     sampleSolutionUML: UMLModel;
 
+    readonly ExerciseType = ExerciseType;
+    readonly moment = moment;
+    doughnutStats: ExerciseManagementStatisticsDto;
+
     constructor(
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         private jhiAlertService: JhiAlertService,
+        private statisticsService: StatisticsService,
     ) {}
 
     ngOnInit() {
@@ -47,6 +55,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
             }
+        });
+        this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats = statistics;
         });
     }
 
