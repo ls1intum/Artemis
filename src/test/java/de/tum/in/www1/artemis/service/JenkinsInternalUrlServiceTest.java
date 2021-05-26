@@ -58,6 +58,9 @@ public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenk
         var vcsRepositoryUrl = mock(VcsRepositoryUrl.class);
         doReturn(null).when(vcsRepositoryUrl).getURL();
         assertThat(jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUrl)).isEqualTo(vcsRepositoryUrl);
+
+        String nullUrl = null;
+        assertThat(jenkinsInternalUrlService.toInternalVcsUrl(nullUrl)).isNull();
     }
 
     @Test

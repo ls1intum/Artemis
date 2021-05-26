@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -154,39 +155,13 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     /**
      * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
      *
-     * @param unfilteredBuildLogs the original, unfiltered list
+     * @param buildLogEntries the original, unfiltered list
+     * @param programmingLanguage the programming language for filtering out language-specific logs
      * @return the filtered list
      */
-    // TODO: think about moving it into the build log service
-    protected List<BuildLogEntry> filterBuildLogs(List<BuildLogEntry> unfilteredBuildLogs, ProgrammingLanguage programmingLanguage) {
-        List<BuildLogEntry> filteredBuildLogs = new ArrayList<>();
-        for (BuildLogEntry unfilteredBuildLog : unfilteredBuildLogs) {
-            boolean compilationErrorFound = false;
-            String logString = unfilteredBuildLog.getLog();
-
-            if (logString.contains("COMPILATION ERROR")) {
-                compilationErrorFound = true;
-            }
-
-            if (compilationErrorFound && logString.contains("BUILD FAILURE")) {
-                // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
-                break;
-            }
-
-            // filter unnecessary logs and illegal reflection logs
-            if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
-                continue;
-            }
-
-            // Replace some unnecessary information and hide complex details to make it easier to read the important information
-            final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
-
-            // Avoid duplicate log entries
-            if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredBuildLogs, shortenedLogString)) {
-                filteredBuildLogs.add(new BuildLogEntry(unfilteredBuildLog.getTime(), shortenedLogString, unfilteredBuildLog.getProgrammingSubmission()));
-            }
-        }
-
-        return filteredBuildLogs;
+    protected List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
+        // Replace some unnecessary information and hide complex details to make it easier to read the important information
+        return buildLogs.stream().peek(buildLog -> buildLog.setLog(ASSIGNMENT_PATH.matcher(buildLog.getLog()).replaceAll(""))).collect(Collectors.toList());
     }
 }
