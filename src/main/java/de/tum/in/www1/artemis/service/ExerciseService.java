@@ -785,6 +785,7 @@ public class ExerciseService {
     public void reEvaluateExercise (Exercise exercise, Exercise originalExercise) {
 
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        List<GradingCriterion> backupGradingcriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalExercise.getId());
         List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
         // Check the grading instructions are used as feedback. The feedbacks should also re-evaluated
@@ -794,12 +795,44 @@ public class ExerciseService {
                 for (Feedback feedback : feedbackList) {
                     if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
                         feedback.setCredits(instruction.getCredits());
+                        feedback.setPositive(feedback.getCredits() >= 0);
                         feedback.setDetailText(instruction.getFeedback());
                     }
                 }
             }
+            // burda sey yapmam lazim eger result ile iliskiliyse result null edecek once sonra feedback save edip sonra result id ile tekrar iliskilendirecek
             feedbackRepository.saveFeedbacks(feedbackList);
         }
+
+
+
+        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(exercise.getId());
+
+        for (Result result : results) {
+            Result updatedResult = resultRepository.submitResult(result, exercise);
+        }
+
+
+        // eger intruction delete edildiyse bi tane checkbox olsun popupta feedback de silinsin mi diye bu checkbox secildiginde confirm changes secili olmasin cunku re-evaluate
+        // lazim ama secildiyse veya secilmeden revealute butonuna tiklandiysa bunun kontrolunu yap bu bir rest call da parametre olrak gelsin
+        // eger seciliyse original exercise ile su anki exercise i karsilatir boylece silinmis olan instructionlari bulursun sonra o instrucino id ile match
+        // eden feedback repodan feedbackleri sil
+        List<GradingInstruction> updatedInstructionList = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
+        List<GradingInstruction> backupInstructionList = backupGradingcriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
+
+
+        List<Long>  deletedInstructionIds = new ArrayList<>();
+
+        for (GradingInstruction backupInstruction: backupInstructionList) {
+            for (GradingInstruction updatedInstruction: updatedInstructionList) {
+                if(!backupInstruction.getId().equals(updatedInstruction.getId())){
+                    deletedInstructionIds.add(backupInstruction.getId());
+                }
+            }
+        }
+
+        List<Feedback> deletedFeedbacks = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
+        feedbackRepository.deleteAll(deletedFeedbacks);
 
     }
 }
