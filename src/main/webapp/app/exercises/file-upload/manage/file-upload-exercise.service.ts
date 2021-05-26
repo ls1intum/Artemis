@@ -58,6 +58,7 @@ export class FileUploadExerciseService {
         return this.http.get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
         );
     }
 
