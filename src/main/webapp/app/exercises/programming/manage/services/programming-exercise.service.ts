@@ -57,6 +57,14 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Recreates the BASE and SOLUTION build plan for this exercise
+     * @param exerciseId of the programming exercise for which the build plans should be recreated
+     */
+    recreateBuildPlans(exerciseId: number): Observable<string> {
+        return this.http.put<string>(this.resourceUrl + '/' + exerciseId + '/recreate-build-plans', { responseType: 'text' });
+    }
+
+    /**
      * Check plagiarism with JPlag
      *
      * @param exerciseId

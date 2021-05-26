@@ -93,7 +93,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void addAuxiliaryRepositoryToExerciseBuildPlan(ProgrammingExercise exercise) {
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
 
     }
 

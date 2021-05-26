@@ -77,6 +77,7 @@
             },
             "recreateBuildPlans": {
                 "title": "Build-Pläne neu erstellen",
+                "warning": "Die Build-Pläne werden neu erstellt. Alle bisherigen Veränderungen gehen verloren!",
                 "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
             },
             "updateTemplate": {

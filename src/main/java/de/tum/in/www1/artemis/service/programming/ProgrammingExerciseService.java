@@ -213,12 +213,14 @@ public class ProgrammingExerciseService {
 
     private void connectAuxiliaryRepositoriesToExerciseAndSave(ProgrammingExercise exercise) {
         List<AuxiliaryRepository> savedRepositories = new ArrayList<>();
-        exercise.getAuxiliaryRepositories().forEach(repository -> {
-            repository.setExercise(null);
-            repository = auxiliaryRepositoryRepository.save(repository);
-            repository.setExercise(exercise);
-            savedRepositories.add(repository);
-        });
+        exercise.getAuxiliaryRepositories().stream()
+            .filter(repository -> repository.getId() == null)
+            .forEach(repository -> {
+                repository.setExercise(null);
+                repository = auxiliaryRepositoryRepository.save(repository);
+                repository.setExercise(exercise);
+                savedRepositories.add(repository);
+            });
         exercise.setAuxiliaryRepositories(savedRepositories);
     }
 
@@ -239,8 +241,12 @@ public class ProgrammingExerciseService {
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
 
         // Set Auxiliary Repository URLs
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
+    }
+
+    private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
         programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.get()
-            .getCloneRepositoryUrl(projectKey, programmingExercise.generateRepositoryName(repo.getName())).toString()));
+            .getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     /**
@@ -375,7 +381,7 @@ public class ProgrammingExerciseService {
         gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, null);
 
         if (newAuxiliaryRepository.shouldBeIncludedInBuildPlan()) {
-            continuousIntegrationService.get().addAuxiliaryRepositoryToExerciseBuildPlan(programmingExercise);
+            continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
         }
         return newAuxiliaryRepository;
     }
@@ -385,7 +391,11 @@ public class ProgrammingExerciseService {
      * @param notificationText    optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText, boolean recreateBuildPlan) {
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
+
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
+        connectAuxiliaryRepositoriesToExerciseAndSave(programmingExercise);
+
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
