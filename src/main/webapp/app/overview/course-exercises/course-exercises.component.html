@@ -68,7 +68,7 @@
                     [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey] ? weeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
                     (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
                 >
-                    <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
+                    <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
                     <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
                         <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'long-date' }}</strong> -
                         <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>

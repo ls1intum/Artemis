@@ -38,7 +38,7 @@
 <ng-template #readOnlyFeedback>
     <div class="container">
         <div class="row align-items-center">
-            <div class="col pl-0">
+            <div class="col ps-0">
                 <h5 class="d-inline">
                     <span class="badge" [class.bg-success]="feedback.credits! > 0" [class.bg-danger]="feedback.credits! < 0" [class.bg-warning]="feedback.credits === 0">{{
                         round(feedback.credits, 1) + 'P'

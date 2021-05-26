@@ -13,7 +13,7 @@
             <div class="col-auto answers-line p-0"></div>
             <div class="col" *ngIf="studentQuestion.answers && studentQuestion.answers.length !== 0">
                 <div class="row clickable mb-1" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | artemisTranslate" (click)="isExpanded = true">
-                    <div class="col-auto pl-0">
+                    <div class="col-auto ps-0">
                         <span class="question-subtitle">{{
                             'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | artemisTranslate: { count: studentQuestion.answers ? studentQuestion.answers.length : 0 }
                         }}</span>
@@ -22,7 +22,7 @@
                     <div class="col-auto">
                         <fa-icon class="clickable" [icon]="'angle-down'"></fa-icon>
                     </div>
-                    <div class="col pl-0 line"></div>
+                    <div class="col ps-0 line"></div>
                 </div>
                 <!-- new answer -->
                 <div class="row my-2" *ngIf="!isAnswerMode">
@@ -35,7 +35,7 @@
                 <ng-container *ngIf="isAnswerMode">
                     <div class="row mb-2">
                         <div class="col-12">
-                            <div class="row pl-2 mb-1">
+                            <div class="row ps-2 mb-1">
                                 <div class="col-auto px-0">
                                     <fa-icon [icon]="'comment'"></fa-icon>
                                 </div>
@@ -90,14 +90,14 @@
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | artemisTranslate"
                     (click)="isExpanded = false"
                 >
-                    <div class="col-auto pl-0">
+                    <div class="col-auto ps-0">
                         <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hide' | artemisTranslate }}</span>
                     </div>
                     <div class="col px-0 line"></div>
                     <div class="col-auto">
                         <fa-icon class="clickable" [icon]="'angle-up'"></fa-icon>
                     </div>
-                    <div class="col pl-0 line"></div>
+                    <div class="col ps-0 line"></div>
                 </div>
                 <div class="row m-0">
                     <div class="col-12 px-0">
@@ -118,7 +118,7 @@
                             [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | artemisTranslate: { count: sortedQuestionAnswers.length }"
                             (click)="showOtherAnswers = !showOtherAnswers"
                         >
-                            <div class="col-auto overflow-parent pl-0">
+                            <div class="col-auto overflow-parent ps-0">
                                 <div class="overflow-ellipsis question-subtitle">
                                     {{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | artemisTranslate: { count: sortedQuestionAnswers.length } }}
                                 </div>
@@ -127,7 +127,7 @@
                             <div class="col-auto">
                                 <fa-icon [icon]="'angle-down'"></fa-icon>
                             </div>
-                            <div class="col pl-0 line"></div>
+                            <div class="col ps-0 line"></div>
                         </div>
                         <!-- show less answers -->
                         <ng-container *ngIf="isExpanded && (approvedQuestionAnswers.length === 0 || showOtherAnswers)">
@@ -137,14 +137,14 @@
                                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | artemisTranslate"
                                     (click)="showOtherAnswers = !showOtherAnswers"
                                 >
-                                    <div class="col-auto overflow-parent pl-0">
+                                    <div class="col-auto overflow-parent ps-0">
                                         <div class="overflow-ellipsis question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | artemisTranslate }}</div>
                                     </div>
                                     <div class="col px-0 line"></div>
                                     <div class="col-auto">
                                         <fa-icon [icon]="'angle-up'"></fa-icon>
                                     </div>
-                                    <div class="col pl-0 line"></div>
+                                    <div class="col ps-0 line"></div>
                                 </div>
                             </ng-container>
                             <!-- unapproved answers -->
@@ -173,7 +173,7 @@
                         <ng-container *ngIf="isExpanded && isAnswerMode">
                             <div class="row mb-2">
                                 <div class="col-12">
-                                    <div class="row pl-2 mb-1">
+                                    <div class="row ps-2 mb-1">
                                         <div class="col-auto px-0">
                                             <fa-icon [icon]="'comment'"></fa-icon>
                                         </div>

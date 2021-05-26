@@ -19,8 +19,8 @@
 <!--resizable container-->
 <jhi-resizeable-container *ngIf="textExercise" [isExerciseParticipation]="true">
     <!--region Left Panel-->
-    <div left-body class="text-editor-grid pl-2 pb-2 w-100">
-        <div class="grid-area-team-info pb-4 pl-md-2" *ngIf="textExercise?.teamMode && isActive">
+    <div left-body class="text-editor-grid ps-2 pb-2 w-100">
+        <div class="grid-area-team-info pb-4 ps-md-2" *ngIf="textExercise?.teamMode && isActive">
             <jhi-team-participate-info-box
                 [exercise]="textExercise"
                 [participation]="participation"

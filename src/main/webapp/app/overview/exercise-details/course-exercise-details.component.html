@@ -10,7 +10,7 @@
     <jhi-alert></jhi-alert>
     <jhi-alert-error></jhi-alert-error>
     <!-- EXERCISE ACTIONS START -->
-    <div class="tab-bar tab-bar-exercise-details pl-2 pr-2 mb-2 justify-content-between">
+    <div class="tab-bar tab-bar-exercise-details ps-2 pe-2 mb-2 justify-content-between">
         <jhi-programming-exercise-student-ide-actions jhiOrionFilter [showInOrionWindow]="true" [courseId]="courseId" [exercise]="exercise">
         </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions
@@ -101,7 +101,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col pr-0 flex-grow-1">
+        <div class="col pe-0 flex-grow-1">
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">

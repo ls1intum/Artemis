@@ -1,6 +1,6 @@
 <!-- question not in edit mode -->
 <ng-container *ngIf="!isEditMode">
-    <div class="row pl-2 mb-1">
+    <div class="row ps-2 mb-1">
         <div class="col-auto px-0">
             <fa-icon [icon]="'comment'"></fa-icon>
         </div>
@@ -34,7 +34,7 @@
             [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
         ></div>
     </div>
-    <div class="row pl-2 mb-2">
+    <div class="row ps-2 mb-2">
         <span class="text-black-50 question-subtitle">{{ studentQuestion.author!.name }} - {{ studentQuestion.creationDate | artemisDate: 'short' }}</span>
     </div>
 </ng-container>
@@ -42,7 +42,7 @@
 <ng-container *ngIf="isEditMode">
     <div class="row mb-2">
         <div class="col-12">
-            <div class="row pl-2 mb-1">
+            <div class="row ps-2 mb-1">
                 <div class="col-auto px-0">
                     <fa-icon [icon]="'comment'"></fa-icon>
                 </div>
