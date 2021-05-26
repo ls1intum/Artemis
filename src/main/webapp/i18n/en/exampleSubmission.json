@@ -2,7 +2,8 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Example Submission Editor"
+                "title": "Example Submissions Board",
+                "editor": "Example Submission Editor"
             },
             "assessScore": {
                 "success": "Congratulations! This is a good assessment!",

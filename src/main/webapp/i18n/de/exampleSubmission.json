@@ -2,7 +2,8 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Beispiellösungs-Editor"
+                "title": "Beispiellösungs-Board",
+                "editor": "Beispiellösungs-Editor"
             },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",

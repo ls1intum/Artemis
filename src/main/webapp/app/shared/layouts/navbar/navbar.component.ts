@@ -174,6 +174,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         plagiarism: 'artemisApp.plagiarism.plagiarism-detection',
         example_solution: 'artemisApp.modelingExercise.exampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
+        example_submission_editor: 'artemisApp.exampleSubmission.home.editor',
         text_feedback_conflict: 'artemisApp.textAssessment.title',
         grading: 'artemisApp.programmingExercise.configureGrading.shortTitle',
         test: 'artemisApp.editor.home.title',
@@ -287,7 +288,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
-                this.addTranslationAsCrumb(currentPath, 'example-submissions');
+                this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
                 break;
             case 'text-feedback-conflict':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
@@ -323,7 +324,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'code-editor':
             case 'admin':
             case 'ide':
-            case 'example-submissions':
             case 'text-units':
             case 'exercise-units':
             case 'attachment-units':
@@ -342,7 +342,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     break;
                 } else if (this.lastRouteUrlSegment === 'example-submissions') {
                     // - Creating a new example submission should display the text for example submissions
-                    this.addTranslationAsCrumb(currentPath, 'example-submissions');
+                    this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
                     break;
                 } else if (this.lastRouteUrlSegment === 'grading') {
                     // - Opening a grading tab should only display the text for grading
