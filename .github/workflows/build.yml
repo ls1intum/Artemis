@@ -38,6 +38,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v2.1.0
       with:
+        distribution: 'zulu'
         java-version: '${{ env.java }}'
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
