@@ -65,17 +65,13 @@ a.disabled {
 }
 
 /* Default the color to white even on bootstrap 5 */
-.btn,
-.btn:hover {
+.btn-primary,
+.btn-primary:hover,
+.btn-info,
+.btn-info:hover,
+.btn-success,
+.btn-success:hover {
     color: #fff;
-}
-
-/* Except the warning button which has a yellow background */
-.btn-warning,
-.btn-warning:hover,
-.btn-outline-primary,
-.btn-outline-primary:hover {
-    color: #000;
 }
 
 a.btn {
@@ -142,7 +138,8 @@ a.btn {
     width: auto;
 }
 
-.btn-primary input {
+.btn-primary input,
+label input {
     position: absolute;
     clip: rect(0, 0, 0, 0);
 }
