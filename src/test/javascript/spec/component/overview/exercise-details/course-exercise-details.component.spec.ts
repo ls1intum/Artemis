@@ -219,7 +219,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.studentParticipation?.exercise?.id).to.equal(exerciseDetail.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal(changedResult);
         expect(comp.hasMoreResults).to.be.false;
-        expect(comp.exerciseRatedBadge(result)).to.equal('badge-info');
+        expect(comp.exerciseRatedBadge(result)).to.equal('bg-info');
 
         // has correct router link
         expect(comp.exerciseRouterLink).to.equal(`/course-management/1/text-exercises/42/submissions`);

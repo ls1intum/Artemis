@@ -94,7 +94,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should put the badge and the text correctly for feedback conflicts', () => {
         component.feedback.conflictingTextAssessments = [new FeedbackConflict()];
         fixture.detectChanges();
-        const badge = compiled.querySelector('.badge-warning fa-icon[ng-reflect-icon="balance-scale-right"]');
+        const badge = compiled.querySelector('.bg-warning fa-icon[ng-reflect-icon="balance-scale-right"]');
         expect(badge).toBeTruthy();
         const text = compiled.querySelector('[jhiTranslate$=conflictingAssessments]');
         expect(text).toBeTruthy();

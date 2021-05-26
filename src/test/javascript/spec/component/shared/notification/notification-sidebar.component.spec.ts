@@ -233,7 +233,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponent.recentNotificationCount = 2;
             notificationSidebarComponentFixture.detectChanges();
-            const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.badge-danger > span'));
+            const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.bg-danger > span'));
             expect(plus).to.be.not.null;
         });
     });

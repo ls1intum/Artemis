@@ -29,7 +29,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     readonly ParticipationType = ParticipationType;
     @Input() participationId: number;
 
-    public exerciseStatusBadge = 'badge-success';
+    public exerciseStatusBadge = 'bg-success';
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -77,7 +77,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
                     // Check if requested participationId belongs to the template or solution participation
@@ -97,7 +97,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Get exercise for release and due dates
                 this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
                 });
                 this.fetchParticipationAndSubmissionsForStudent();
             }

@@ -313,7 +313,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     exerciseRatedBadge(result: Result): string {
-        return result.rated ? 'badge-success' : 'badge-info';
+        return result.rated ? 'bg-success' : 'bg-info';
     }
 
     get hasMoreResults(): boolean {
