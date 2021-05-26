@@ -26,6 +26,7 @@ import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/update/auxiliary-repository-service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -116,12 +117,34 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private router: Router,
+        private auxiliaryRepositoryService: AuxiliaryRepositoryService,
     ) {}
 
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
-            editedAuxiliaryRepository.name = 'I WAS MODIFIED';
+            // TODO AUXREPO validation
+            editedAuxiliaryRepository.name = newValue;
+            this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
             return editedAuxiliaryRepository.name;
+        };
+    }
+
+    updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
+        return (newValue: any) => {
+            this.programmingExercise.auxiliaryRepositories?.forEach((auxRepo) => {
+                if (auxRepo.checkoutDirectory === newValue) {
+                    throw new Error('HOW DO I LOOK');
+                }
+            });
+            editedAuxiliaryRepository.checkoutDirectory = newValue;
+            return editedAuxiliaryRepository.checkoutDirectory;
+        };
+    }
+
+    updateDescription(editedAuxiliaryRepository: AuxiliaryRepository) {
+        return (newValue: any) => {
+            editedAuxiliaryRepository.description = newValue;
+            return editedAuxiliaryRepository.description;
         };
     }
 

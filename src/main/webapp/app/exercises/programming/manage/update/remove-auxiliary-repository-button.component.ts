@@ -21,13 +21,12 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
 
     @Input() programmingExercise: ProgrammingExercise;
 
-    removeAuxiliaryRepository(event: MouseEvent) {
-        if (this.programmingExercise.auxiliaryRepositories === undefined) {
-            this.programmingExercise.auxiliaryRepositories = [];
-        }
-        this.programmingExercise.auxiliaryRepositories?.push(new AuxiliaryRepository());
-        this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
+    @Input() row: AuxiliaryRepository;
 
-        // TODO AUXREPOS
+    removeAuxiliaryRepository(event: MouseEvent) {
+        let auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
+        let tmp = [...this.programmingExercise.auxiliaryRepositories!];
+        tmp?.splice(auxRepoIndex, 1)!;
+        this.programmingExercise.auxiliaryRepositories = [...tmp];
     }
 }

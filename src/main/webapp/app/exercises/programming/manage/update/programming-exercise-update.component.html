@@ -71,50 +71,34 @@
                     [headerHeight]="50"
                     [limit]="20"
                     [columnMode]="'force'"
-                    [footerHeight]="50"
                     [rowHeight]="'auto'"
                     [rows]="programmingExercise.auxiliaryRepositories"
                     *ngIf="programmingExercise.auxiliaryRepositories"
                 >
-                    <ngx-datatable-column name="Auxiliary Repository Name" prop="auxiliaryRepositoryName">
-                        <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                            <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                <span class="datatable-header-cell-label bold sortable">Auxiliary Repository Name</span>
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-auxiliaryRepositoryName'"
-                                [value]="value"
-                                [onValueUpdate]="updateRepositoryName(row)"
-                            ></jhi-table-editable-field>
+                    <ngx-datatable-column name="Repository Name" prop="repositoryName">
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <jhi-table-editable-field [id]="row.id + '-repositoryName'" [value]="row.name || ''" [onValueUpdate]="updateRepositoryName(row)">
+                            </jhi-table-editable-field>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column name="Checkout Repository" prop="checkoutRepository">
-                        <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                            <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                <span class="datatable-header-cell-label bold sortable">Checkout Repository</span>
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field [id]="row.id + '-checkoutRepository'" [value]="value"></jhi-table-editable-field>
+                    <ngx-datatable-column name="Checkout Directory" prop="checkoutDirectory">
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <jhi-table-editable-field [id]="row.id + '-checkoutDirectory'" [value]="row.checkoutDirectory || ''" [onValueUpdate]="updateCheckoutDirectory(row)">
+                            </jhi-table-editable-field>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="Description" prop="description">
-                        <ng-template ngx-datatable-header-template let-sortFn="sortFn">
-                            <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                <span class="datatable-header-cell-label bold sortable">Description</span>
-                            </span>
-                        </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                            <jhi-table-editable-field [id]="row.id + '-description'" [value]="value"></jhi-table-editable-field>
+                        <ng-template ngx-datatable-cell-template let-row="row">
+                            <jhi-table-editable-field [id]="row.id + '-description'" [value]="row.description || ''" [onValueUpdate]="updateDescription(row)">
+                            </jhi-table-editable-field>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column name="" prop="">
-                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                        <ng-template ngx-datatable-cell-template let-row="row">
                             <jhi-remove-auxiliary-repository-button
                                 placement="right"
                                 [programmingExercise]="programmingExercise"
+                                [row]="row"
                                 class="ml-2"
                             ></jhi-remove-auxiliary-repository-button>
                         </ng-template>
