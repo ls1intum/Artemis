@@ -133,6 +133,12 @@
             </canvas>
         </div>
 
+        <!-- Exercise Statistics -->
+        <h4 class="mt-3">
+            <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle">Exercise groups statistics</span>
+        </h4>
+        <jhi-exam-scores-average-scores-graph [averageScores]="aggregatedExerciseGroupResults"></jhi-exam-scores-average-scores-graph>
+
         <!-- Exercise Statistics Table -->
         <div class="table-responsive">
             <table class="table table-bordered table-sm body-striped">
