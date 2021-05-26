@@ -14,7 +14,7 @@ export class ExampleSubmissionsComponent implements OnInit {
     constructor(private jhiAlertService: JhiAlertService, private exampleSubmissionService: ExampleSubmissionService, private activatedRoute: ActivatedRoute) {}
 
     /**
-     * Initializes all relevant data for text exercise
+     * Initializes all relevant data for the exercise
      */
     ngOnInit() {
         // Get the exercise
