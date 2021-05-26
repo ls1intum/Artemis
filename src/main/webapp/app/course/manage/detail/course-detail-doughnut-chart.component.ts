@@ -79,7 +79,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
                 this.doughnutChartTitle = 'moreFeedback';
                 this.titleLink = undefined;
                 break;
-            case DoughnutChartType.AVERAGESCORE:
+            case DoughnutChartType.AVERAGE_COURSE_SCORE:
                 this.doughnutChartTitle = 'averageStudentScore';
                 this.titleLink = 'scores';
                 break;

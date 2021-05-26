@@ -14,6 +14,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 
 @Injectable({ providedIn: 'root' })
@@ -116,6 +117,18 @@ export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises',
         redirectTo: ':courseId/exercises',
+    },
+    {
+        path: ':courseId/modeling-exercises/:exerciseId/exercise-statistics',
+        component: ExerciseStatisticsComponent,
+        resolve: {
+            exercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'exercise-statistics.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 
