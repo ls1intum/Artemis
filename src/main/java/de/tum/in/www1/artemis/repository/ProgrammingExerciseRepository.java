@@ -216,9 +216,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH p.exerciseHints
             LEFT JOIN FETCH p.templateParticipation
             LEFT JOIN FETCH p.solutionParticipation
+            LEFT JOIN FETCH p.auxiliaryRepositories
             WHERE p.id = :#{#exerciseId}
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") Long exerciseId);
 
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.

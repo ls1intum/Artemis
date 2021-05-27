@@ -483,14 +483,11 @@ public class ProgrammingExerciseResource {
         validateCourseSettings(newExercise, course);
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(sourceExerciseId);
         if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
         final var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
-
-        // TODO Maybe change that
-        originalProgrammingExercise.setAuxiliaryRepositories(programmingExerciseRepository.findWithAuxiliaryRepositoriesById(sourceExerciseId).get().getAuxiliaryRepositories());
 
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
         if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {

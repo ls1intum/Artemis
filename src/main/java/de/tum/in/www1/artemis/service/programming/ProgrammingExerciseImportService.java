@@ -127,7 +127,9 @@ public class ProgrammingExerciseImportService {
         }
 
         // Re-adding auxiliary repositories
-        for (AuxiliaryRepository auxiliaryRepository : templateExercise.getAuxiliaryRepositories()) {
+        List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
+
+        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoriesToBeImported) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
             auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
@@ -316,7 +318,6 @@ public class ProgrammingExerciseImportService {
      */
     private void setupExerciseForImport(ProgrammingExercise newExercise) {
 
-        //TODO AUXREPOS
         newExercise.setId(null);
         newExercise.setTemplateParticipation(null);
         newExercise.setSolutionParticipation(null);
@@ -331,6 +332,8 @@ public class ProgrammingExerciseImportService {
         newExercise.setExampleSubmissions(null);
         newExercise.setStudentQuestions(null);
         newExercise.setStudentParticipations(null);
+        // We have to rebuild the auxiliary repositories
+        newExercise.setAuxiliaryRepositories(new ArrayList<>());
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);

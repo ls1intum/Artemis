@@ -809,6 +809,14 @@ public class ProgrammingExerciseService {
             if (programmingExercise.getTestRepositoryUrl() != null) {
                 versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
             }
+
+            // We also want to delete any auxiliary repositories
+            programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
+                if (repo.getRepositoryUrl() != null) {
+                    versionControlService.get().deleteRepository(repo.getVcsRepositoryUrl());
+                }
+            });
+
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
         /*
