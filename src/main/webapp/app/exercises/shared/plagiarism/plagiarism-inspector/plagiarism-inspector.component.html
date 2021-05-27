@@ -38,17 +38,7 @@
                     [ngbTooltip]="'artemisApp.plagiarism.similarity-threshold-tooltip' | artemisTranslate"
                     container="body"
                 ></fa-icon>
-                <input
-                    required
-                    type="number"
-                    class="form-control"
-                    min="50"
-                    max="100"
-                    step="5"
-                    onkeydown="return false"
-                    id="plagiarism-similarity-threshold"
-                    [(ngModel)]="similarityThreshold"
-                />
+                <input required type="number" class="form-control pr-0" min="50" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
             </div>
 
             <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
@@ -57,7 +47,16 @@
                     <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimum-score">Minimum Score</div>
                 </label>
                 <fa-icon [icon]="'question-circle'" placement="bottom" [ngbTooltip]="'artemisApp.plagiarism.minimum-score-tooltip' | artemisTranslate" container="body"></fa-icon>
-                <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
+                <input
+                    required
+                    type="number"
+                    [disabled]="!enableMinimumScore"
+                    class="form-control pr-0"
+                    min="0"
+                    max="100"
+                    id="plagiarism-minimum-score"
+                    [(ngModel)]="minimumScore"
+                />
             </div>
 
             <div class="plagiarism-option" *ngIf="!isProgrammingExercise()" [class.disabled]="!enableMinimumSize">
