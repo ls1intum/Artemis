@@ -522,6 +522,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         return result;
     }
 
+    /**
+     * save the result means to save it with a score, result string, assessor and if it is rated
+     * @param result
+     * @param exercise
+     * @return the saved result
+     */
     default Result saveResult(Result result, Exercise exercise) {
 
         boolean isProgrammingExercise = exercise instanceof ProgrammingExercise;
@@ -551,9 +557,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
-        result = save(result);
-        result.setAssessor(assessor);
-        return result;
+        var resultNew = save(result);
+        resultNew.setAssessor(assessor);
+        return resultNew;
     }
 
     /**

@@ -16,7 +16,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { cloneDeep } from 'lodash';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Location } from '@angular/common';

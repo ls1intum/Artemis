@@ -115,10 +115,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // Resultstring has to be calculated on server as well as score
         // add that result has always to be rated
         // if score of 100% then set also result successful
-
-        var response = super.saveAssessment(submission, submit, feedbacks, resultId);
-
-        return response;
+        return super.saveAssessment(submission, submit, feedbacks, resultId);
     }
 
     @Override

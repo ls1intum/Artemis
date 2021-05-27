@@ -265,6 +265,7 @@ public class AssessmentService {
      * @param submission the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
      * @param resultId resultId of the submission we what to save the @feedbackList to, null if no result exists
+     * @param exercise exercise of wich the submission belongs to
      * @return result that was saved in the database
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, Exercise exercise) {

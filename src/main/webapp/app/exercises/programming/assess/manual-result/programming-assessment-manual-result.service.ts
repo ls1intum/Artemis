@@ -4,9 +4,8 @@ import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
+import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
-import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentManualResultService {
@@ -26,7 +25,7 @@ export class ProgrammingAssessmentManualResultService {
             params = params.set('submit', 'true');
         }
         const url = `${this.resourceUrl}/programming-submissions/${submissionId}/result/${resultId}/assessment`;
-        return this.http.put<Result>(url, feedbacks, { params }).pipe(map((res: EntityResponseType) => this.resultService.convertDateFromServer(res)));
+        return this.http.put<Result>(url, feedbacks, { params });
     }
 
     /**

@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -43,11 +42,10 @@ public abstract class AssessmentResource {
 
     protected final SubmissionRepository submissionRepository;
 
-    private final LtiService ltiService;
 
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
             ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, LtiService ltiService) {
+            SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -57,7 +55,6 @@ public abstract class AssessmentResource {
         this.messagingService = messagingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
-        this.ltiService = ltiService;
     }
 
     abstract String getEntityName();
