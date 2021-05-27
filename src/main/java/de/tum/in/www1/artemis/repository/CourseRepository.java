@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -26,20 +27,26 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    @Query("select distinct course.teachingAssistantGroupName from Course course")
-    Set<String> findAllTeachingAssistantGroupNames();
-
     @Query("select distinct course.instructorGroupName from Course course")
     Set<String> findAllInstructorGroupNames();
+
+    @Query("select distinct course.editorGroupName from Course course")
+    Set<String> findAllEditorGroupNames();
+
+    @Query("select distinct course.teachingAssistantGroupName from Course course")
+    Set<String> findAllTeachingAssistantGroupNames();
 
     @Query("select distinct course from Course course where course.instructorGroupName like :#{#name}")
     Course findCourseByInstructorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
-    Course findCourseByStudentGroupName(@Param("name") String name);
+    @Query("select distinct course from Course course where course.editorGroupName like :#{#name}")
+    Course findCourseByEditorGroupName(@Param("name") String name);
 
     @Query("select distinct course from Course course where course.teachingAssistantGroupName like :#{#name}")
     Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
+
+    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
+    Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
             SELECT DISTINCT c FROM Course c
@@ -124,11 +131,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     String getCourseTitle(@Param("courseId") Long courseId);
 
     @Query("""
-            select distinct c
-            from Course c left join fetch c.exercises e
-            where c.instructorGroupName in :#{#userGroups} and TYPE(e) = QuizExercise
+            SELECT DISTINCT c
+            FROM Course c LEFT JOIN FETCH c.exercises e
+            WHERE (c.instructorGroupName IN :#{#userGroups} OR c.editorGroupName IN :#{#userGroups})
+                AND TYPE(e) = QuizExercise
             """)
-    List<Course> getCoursesWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
+    List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
             select distinct c
@@ -159,13 +167,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return A list with a map for every submission containing date and the username
      */
     @Query("""
-            SELECT s.submissionDate AS day, p.student.login AS username
+            SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                substring(s.submissionDate, 1, 10), p.student.login
+                )
             FROM StudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
                 AND s.submissionDate >= :#{#startDate}
                 AND s.submissionDate <= :#{#endDate}
+                group by substring(s.submissionDate, 1, 10), p.student.login
             """)
-    List<Map<String, Object>> getActiveStudents(@Param("exerciseIds") List<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+    List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
      * Fetches the courses to display for the management overview
@@ -179,7 +190,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             SELECT c
             FROM Course c
             WHERE (c.endDate IS NULL OR :#{#now} IS NULL OR c.endDate >= :#{#now})
-                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
+                AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
 

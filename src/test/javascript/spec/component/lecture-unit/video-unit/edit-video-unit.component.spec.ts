@@ -12,7 +12,7 @@ import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-ma
 import { MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -49,7 +49,7 @@ describe('EditVideoUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        paramMap: Observable.of({
+                        paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
                                     case 'videoUnitId':
@@ -59,7 +59,7 @@ describe('EditVideoUnitComponent', () => {
                         }),
                         parent: {
                             parent: {
-                                paramMap: Observable.of({
+                                paramMap: of({
                                     get: (key: string) => {
                                         switch (key) {
                                             case 'lectureId':

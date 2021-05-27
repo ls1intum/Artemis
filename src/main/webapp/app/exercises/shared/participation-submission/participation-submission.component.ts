@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { JhiEventManager } from 'ng-jhipster';
-import { Subscription } from 'rxjs/Subscription';
+import { Subject, Subscription } from 'rxjs';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -19,6 +19,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -27,7 +28,11 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 export class ParticipationSubmissionComponent implements OnInit {
     readonly ParticipationType = ParticipationType;
     @Input() participationId: number;
+
     public exerciseStatusBadge = 'badge-success';
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     isTmpOrSolutionProgrParticipation = false;
     exercise?: Exercise;
@@ -168,5 +173,22 @@ export class ParticipationSubmissionComponent implements OnInit {
                 .replace('{commitHash}', submission.commitHash ?? '');
         }
         return '';
+    }
+
+    /**
+     * Delete a submission from the server
+     * @param submissionId - Id of submission that is deleted.
+     */
+    deleteSubmission(submissionId: number) {
+        this.submissionService.delete(submissionId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'submissionsModification',
+                    content: 'Deleted a submission',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
     }
 }

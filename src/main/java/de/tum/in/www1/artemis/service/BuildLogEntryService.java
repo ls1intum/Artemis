@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -129,5 +130,49 @@ public class BuildLogEntryService {
             return existingLog.isEmpty() || isSingleBlankLog;
         }
         return true;
+    }
+
+    /**
+     * Filters out unnecessary build logs that a student should not see.
+     *
+     * @param buildLogEntries the build logs
+     * @param programmingLanguage the programming language
+     * @return filtered build logs
+     */
+    public List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> filteredLogs = new ArrayList<>();
+        for (BuildLogEntry buildLog : buildLogEntries) {
+
+            String logString = buildLog.getLog();
+            if (isCompilationError(logString) && isBuildFailure(logString)) {
+                // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
+                break;
+            }
+
+            // filter unnecessary logs and illegal reflection logs
+            if (isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || isIllegalReflectionLog(logString)) {
+                continue;
+            }
+
+            // filter blank entries
+            if (logString.isBlank()) {
+                continue;
+            }
+
+            // Avoid duplicate log entries
+            if (checkIfBuildLogIsNotADuplicate(programmingLanguage, filteredLogs, logString)) {
+                filteredLogs.add(new BuildLogEntry(buildLog.getTime(), logString, buildLog.getProgrammingSubmission()));
+            }
+        }
+
+        return filteredLogs;
+    }
+
+    private boolean isCompilationError(String log) {
+        return log.contains("COMPILATION ERROR");
+    }
+
+    private boolean isBuildFailure(String log) {
+        return log.contains("BUILD FAILURE");
     }
 }

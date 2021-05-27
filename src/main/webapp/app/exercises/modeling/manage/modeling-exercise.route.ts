@@ -8,12 +8,13 @@ import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
@@ -38,7 +39,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
                 );
             }
         }
-        return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
+        return of(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
     }
 }
 
@@ -50,7 +51,7 @@ export const routes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -62,7 +63,7 @@ export const routes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -74,7 +75,7 @@ export const routes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -83,7 +84,7 @@ export const routes: Routes = [
         path: ':courseId/modeling-exercises/:exerciseId',
         component: ModelingExerciseDetailComponent,
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -95,7 +96,7 @@ export const routes: Routes = [
             exercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
@@ -103,6 +104,18 @@ export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises',
         redirectTo: ':courseId/exercises',
+    },
+    {
+        path: ':courseId/modeling-exercises/:exerciseId/exercise-statistics',
+        component: ExerciseStatisticsComponent,
+        resolve: {
+            exercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'exercise-statistics.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 

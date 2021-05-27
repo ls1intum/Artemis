@@ -18,6 +18,9 @@ import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -31,6 +34,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly moment = moment;
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -38,6 +42,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     lockingOrUnlockingRepositories = false;
+
+    doughnutStats: ExerciseManagementStatisticsDto;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -52,6 +58,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
+        private statisticsService: StatisticsService,
     ) {}
 
     ngOnInit() {
@@ -60,6 +67,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
 
             this.programmingExercise.isAtLeastTutor = this.accountService.isAtLeastTutorForExercise(this.programmingExercise);
+            this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
             if (this.programmingExercise.templateParticipation) {
@@ -78,6 +86,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.loadingSolutionParticipationResults = false;
                 });
             }
+            this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+                this.doughnutStats = statistics;
+            });
         });
     }
 

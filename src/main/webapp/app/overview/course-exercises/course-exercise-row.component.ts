@@ -3,7 +3,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -76,6 +76,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             this.exercise.studentParticipations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
+        this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         if (this.exercise.type === ExerciseType.QUIZ) {

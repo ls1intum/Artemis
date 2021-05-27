@@ -24,7 +24,7 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     public void setUp() throws IOException {
-        database.addUsers(1, 0, 0);
+        database.addUsers(1, 0, 0, 0);
         doReturn(UML_PNG).when(plantUmlService).generatePng(UML_DIAGRAM_STRING);
         doReturn(UML_SVG).when(plantUmlService).generateSvg(UML_DIAGRAM_STRING);
     }

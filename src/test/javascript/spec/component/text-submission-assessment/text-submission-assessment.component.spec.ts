@@ -3,7 +3,7 @@ import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/tex
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
@@ -50,11 +50,11 @@ describe('TextSubmissionAssessmentComponent', () => {
         problemStatement: '',
         course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
-    const participation: StudentParticipation = ({
+    const participation: StudentParticipation = {
         type: ParticipationType.STUDENT,
         exercise,
-    } as unknown) as StudentParticipation;
-    const submission = ({
+    } as unknown as StudentParticipation;
+    const submission = {
         submissionExerciseType: SubmissionExerciseType.TEXT,
         id: 2278,
         submitted: true,
@@ -62,9 +62,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
         text: 'First text. Second text.',
         participation,
-    } as unknown) as TextSubmission;
+    } as unknown as TextSubmission;
     submission.results = [
-        ({
+        {
             id: 2374,
             resultString: '1 of 12 points',
             completionDate: moment('2019-07-09T11:51:23.251Z'),
@@ -75,7 +75,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             hasComplaint: true,
             submission,
             participation,
-        } as unknown) as Result,
+        } as unknown as Result,
     ];
 
     getLatestSubmissionResult(submission)!.feedbacks = [
@@ -104,9 +104,9 @@ describe('TextSubmissionAssessmentComponent', () => {
     ];
     submission.participation!.submissions = [submission];
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
-    const route = ({
+    const route = {
         snapshot: { path: '' },
-        paramMap: Observable.of(
+        paramMap: of(
             convertToParamMap({
                 exerciseId: '1',
             }),
@@ -114,10 +114,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         queryParams: of({
             testRun: 'false',
         }),
-        data: Observable.of({
+        data: of({
             studentParticipation: participation,
         }),
-    } as unknown) as ActivatedRoute;
+    } as unknown as ActivatedRoute;
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [

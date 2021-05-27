@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 
 export const enum GroupNotificationType {
     INSTRUCTOR = 'INSTRUCTOR',
+    EDITOR = 'EDITOR',
     TA = 'TA',
     STUDENT = 'STUDENT',
 }

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -14,6 +12,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -65,9 +64,7 @@ public class ProgrammingExerciseGradingResource {
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 
         List<Result> updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
 
@@ -83,17 +80,12 @@ public class ProgrammingExerciseGradingResource {
      * @return the test case statistics for the exercise.
      */
     @GetMapping(STATISTICS)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseGradingStatisticsDTO> getGradingStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get test case statistics for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         var statistics = programmingExerciseGradingService.generateGradingStatistics(exerciseId);
         return ResponseEntity.ok(statistics);

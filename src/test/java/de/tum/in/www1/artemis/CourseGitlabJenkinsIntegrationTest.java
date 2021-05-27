@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
+import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -18,6 +25,9 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     CourseTestService courseTestService;
+
+    @Autowired
+    ProgrammingExerciseRepository programmingExerciseRepository;
 
     @BeforeEach
     public void setup() {
@@ -131,6 +141,151 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseGroups() throws Exception {
         courseTestService.testUpdateCourseGroups();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateOldMembersInCourse() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        var oldInstructorGroup = course.getInstructorGroupName();
+        course.setInstructorGroupName("new-editor-group");
+
+        changeUserGroup("instructor1", Set.of(course.getTeachingAssistantGroupName()));
+        changeUserGroup("tutor1", Set.of(course.getTeachingAssistantGroupName(), "new-editor-group"));
+        changeUserGroup("tutor2", Set.of(course.getEditorGroupName()));
+
+        gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName());
+        jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        assertThat(course.getInstructorGroupName()).isEqualTo("new-editor-group");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testSetPermissionsForNewGroupMembersInCourse() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        String oldInstructorGroup = course.getInstructorGroupName();
+        String oldEditorGroup = course.getEditorGroupName();
+        String oldTaGroup = course.getTeachingAssistantGroupName();
+
+        course.setInstructorGroupName("new-instructor-group");
+        course.setEditorGroupName("new-editor-group");
+        course.setTeachingAssistantGroupName("new-ta-group");
+
+        // Create editor in the course
+        User user = ModelFactory.generateActivatedUser("new-editor");
+        user.setGroups(Set.of("new-editor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        user = ModelFactory.generateActivatedUser("new-ta");
+        user.setGroups(Set.of("new-ta-group"));
+        courseTestService.getUserRepo().save(user);
+
+        user = ModelFactory.generateActivatedUser("new-instructor");
+        user.setGroups(Set.of("new-instructor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTaGroup);
+        jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
+        assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
+        assertThat(course.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testSetPermissionsForNewGroupMembersInCourseFails() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        course.setInstructorGroupName("new-instructor-group");
+
+        // Create editor in the course
+        User user = ModelFactory.generateActivatedUser("new-editor");
+        user.setGroups(Set.of("new-instructor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testSetPermissionsForNewGroupMembersInCourseMemberDoesntExist() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        course.setInstructorGroupName("new-instructor-group");
+
+        // Create editor in the course
+        User user = ModelFactory.generateActivatedUser("new-editor");
+        user.setGroups(Set.of("new-instructor-group"));
+        courseTestService.getUserRepo().save(user);
+
+        gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testFailToUpdateOldMembersInCourse() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        course.setInstructorGroupName("new-editor-group");
+
+        changeUserGroup("tutor1", Set.of(course.getTeachingAssistantGroupName()));
+
+        var exercise = programmingExerciseRepository.findAllByCourse(course).stream().findFirst();
+        assertThat(exercise).isPresent();
+
+        var user = courseTestService.getUserRepo().findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()).stream().findFirst();
+        assertThat(user).isPresent();
+
+        gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Changes the group of the user.
+     *
+     * @param userLogin the login of the user
+     * @param groups the groups to change
+     */
+    private void changeUserGroup(String userLogin, Set<String> groups) {
+        Optional<User> user = courseTestService.getUserRepo().findOneWithGroupsByLogin(userLogin);
+        assertThat(user).isPresent();
+
+        User updatedUser = user.get();
+        updatedUser.setGroups(groups);
+
+        courseTestService.getUserRepo().save(updatedUser);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseGroupsFailsToGetUser() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        course.setInstructorGroupName("new-instructor-group");
+
+        Optional<User> user = courseTestService.getUserRepo().findOneWithGroupsByLogin("instructor1");
+        assertThat(user).isPresent();
+
+        gitlabRequestMockProvider.mockFailToGetUserWhenUpdatingOldMembers(user.get());
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseGroupsFailsToRemoveOldMember() throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        course.setInstructorGroupName("new-instructor-group");
+
+        Optional<User> user = courseTestService.getUserRepo().findOneWithGroupsByLogin("instructor1");
+        assertThat(user).isPresent();
+
+        var exercise = programmingExerciseRepository.findAllByCourse(course).stream().findFirst();
+        assertThat(exercise).isPresent();
+
+        gitlabRequestMockProvider.mockFailToRemoveOldMember(exercise.get(), user.get());
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -310,13 +465,31 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
-        courseTestService.testAddTutorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
+        courseTestService.testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
         courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveTutorFromCourse_removeUserFromGitlabGroupFails() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseTestService.getCourseRepo().save(course);
+        database.addProgrammingExerciseToCourse(course, false);
+
+        Optional<User> optionalTutor = courseTestService.getUserRepo().findOneWithGroupsByLogin("tutor1");
+        assertThat(optionalTutor).isPresent();
+
+        String tutorGroup = course.getTeachingAssistantGroupName();
+        User tutor = optionalTutor.get();
+
+        gitlabRequestMockProvider.mockUpdateBasicUserInformation(tutor.getLogin(), tutor, false);
+        gitlabRequestMockProvider.mockRemoveUserFromGroup(1, tutorGroup, Optional.of(new GitLabApiException("Forbidden", 403)));
+        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -328,7 +501,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseTestService.getCourseRepo().save(course);
 
         request.put("/api/courses", course, HttpStatus.OK);
@@ -363,7 +536,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
-        courseTestService.testAddStudentOrTutorOrInstructorToCourse();
+        courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 
     @Test
@@ -393,7 +566,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
-        courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse_WithNonExistingUser();
+        courseTestService.testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser();
     }
 
     @Test
@@ -535,5 +708,11 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
         courseTestService.testGetExerciseStatsForCourseOverviewWithPastExercises();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetCourseManagementDetailData() throws Exception {
+        courseTestService.testGetCourseManagementDetailData();
     }
 }

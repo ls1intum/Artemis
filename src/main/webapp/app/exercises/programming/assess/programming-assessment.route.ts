@@ -7,10 +7,10 @@ import { ProgrammingAssessmentDashboardComponent } from 'app/exercises/programmi
 
 export const routes: Routes = [
     {
-        path: ':courseId/programming-exercises/:exerciseId/assessment',
+        path: ':courseId/programming-exercises/:exerciseId/submissions',
         component: ProgrammingAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -19,7 +19,7 @@ export const routes: Routes = [
         path: ':courseId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],

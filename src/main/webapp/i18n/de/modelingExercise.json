@@ -25,13 +25,16 @@
             "exampleSubmissions": "Beispielabgaben",
             "createExampleSubmission": "Beispielabgabe erstellen",
             "createNewExampleSubmission": "Neue Beispielabgabe erstellen",
-            "updateExampleSubmission": "Beispielabgabe aktualisieren",
+            "saveExampleSubmission": "Beispielabgabe speichern",
             "saveExampleAssessment": "Beispielbewertung speichern",
             "showExampleSubmission": "Abgabe anzeigen",
             "showExampleAssessment": "Bewertung anzeigen",
             "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen.",
             "exampleSubmissionForModelingExercise": "Beispielabgabe für Modellierungsaufgabe {{ exerciseTitle }}",
-            "usedForTutorial": "Für Tutorial"
+            "usedForTutorial": "Für Tutorial",
+            "apollonConversion": {
+                "error": "Apollon-Konvertierung ist nicht verfügbar"
+            }
         }
     }
 }

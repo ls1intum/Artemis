@@ -30,7 +30,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void initTestCase() {
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 2, 0, 2);
 
         exercise = exerciseRepository.findAll().get(0);
         database.addHintsToExercise(exercise);

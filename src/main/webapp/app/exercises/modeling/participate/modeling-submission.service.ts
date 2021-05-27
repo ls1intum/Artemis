@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { map } from 'rxjs/operators';
 
@@ -82,9 +82,7 @@ export class ModelingSubmissionService {
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http
-            .get<ModelingSubmission>(url, { params })
-            .pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
     }
 
     /**

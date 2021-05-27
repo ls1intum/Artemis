@@ -20,14 +20,14 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.0.0"
-    id "com.github.node-gradle.node" version "3.0.1"
-    id "com.diffplug.spotless" version "5.12.4"
+    id "com.github.node-gradle.node" version "3.1.0"
+    id "com.diffplug.spotless" version "5.12.5"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.38.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.11.8"
+version = "5.0.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -73,6 +73,10 @@ defaultTasks "bootRun"
 
 springBoot {
     mainClass = "de.tum.in.www1.artemis.ArtemisApp"
+}
+
+bootRun {
+    jvmArgs = ["--illegal-access=warn"]
 }
 
 // Execute the test cases: ./gradlew executeTests
@@ -124,7 +128,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.881
+                minimum = 0.867
             }
             limit {
                 counter = "CLASS"
@@ -157,8 +161,8 @@ dependencies {
     implementation files("libs/jplag-3.0.0.jar")
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.11.0.202103091610-r"
-    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:5.11.0.202103091610-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -169,15 +173,16 @@ dependencies {
     implementation "io.sentry:sentry-spring-boot-starter:4.3.0"
     implementation "io.sentry:sentry-logback:4.3.0"
     implementation "org.jsoup:jsoup:1.13.1"
+    implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.5.7"
+    implementation "org.springdoc:springdoc-openapi-ui:1.5.8"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.6.6"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.7.0"
     implementation "net.logstash.logback:logstash-logback-encoder:6.6"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -191,11 +196,12 @@ dependencies {
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:4.0.3"
     implementation "org.apache.commons:commons-text:1.9"
+    implementation 'org.apache.commons:commons-math3:3.6.1'
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:7.0.1.Final"
-    implementation "org.liquibase:liquibase-core:4.3.4"
+    implementation "org.liquibase:liquibase-core:4.3.5"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -210,16 +216,16 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:2.3.3.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.5.0"
+    implementation "org.springframework.ldap:spring-ldap-core:2.3.4.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.5.1"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.0.2"
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.3"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.63.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.6"
-    implementation "org.springframework:spring-messaging:5.3.6"
+    implementation "io.netty:netty-all:4.1.65.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.7"
+    implementation "org.springframework:spring-messaging:5.3.7"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -236,7 +242,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-java:8.0.24"
+    implementation "mysql:mysql-connector-java:8.0.25"
 
     implementation "org.zalando:problem-spring-web:0.26.2"
     implementation "com.ibm.icu:icu4j:69.1"
@@ -266,7 +272,7 @@ dependencies {
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
-    testImplementation "org.awaitility:awaitility:4.0.3"
+    testImplementation "org.awaitility:awaitility:4.1.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
 
@@ -309,7 +315,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "7.0"
+    gradleVersion = "7.0.2"
 }
 
 task stage(dependsOn: "bootWar") {

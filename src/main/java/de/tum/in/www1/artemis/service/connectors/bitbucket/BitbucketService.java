@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -230,7 +231,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * Creates an user on Bitbucket
      *
      * @param username     The wanted Bitbucket username
-     * @param password     The wanted passowrd in clear text
+     * @param password     The wanted password in clear text
      * @param emailAddress The eMail address for the user
      * @param displayName  The display name (full name)
      * @throws BitbucketException if the rest request to Bitbucket for creating the user failed.
@@ -444,15 +445,19 @@ public class BitbucketService extends AbstractVersionControlService {
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects", HttpMethod.POST, entity, Void.class);
-            grantGroupPermissionToProject(projectKey, adminGroupName, "PROJECT_ADMIN"); // admins get administrative permissions
+            grantGroupPermissionToProject(projectKey, adminGroupName, BitbucketPermission.PROJECT_ADMIN); // admins get administrative permissions
 
-            if (course.getInstructorGroupName() != null && !course.getInstructorGroupName().isEmpty()) {
-                grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
+            if (StringUtils.hasText(course.getInstructorGroupName())) {
+                grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), BitbucketPermission.PROJECT_ADMIN); // instructors get administrative permissions
             }
 
-            if (course.getTeachingAssistantGroupName() != null && !course.getTeachingAssistantGroupName().isEmpty()) {
-                grantGroupPermissionToProject(projectKey, course.getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get
-                // write-permissions
+            // editors get write permissions
+            if (StringUtils.hasText(course.getEditorGroupName())) {
+                grantGroupPermissionToProject(projectKey, course.getEditorGroupName(), BitbucketPermission.PROJECT_WRITE);
+            }
+            // tutors get read permissions
+            if (StringUtils.hasText(course.getTeachingAssistantGroupName())) {
+                grantGroupPermissionToProject(projectKey, course.getTeachingAssistantGroupName(), BitbucketPermission.PROJECT_READ);
             }
         }
         catch (HttpClientErrorException e) {
@@ -502,7 +507,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
     }
 
-    private void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
+    private void grantGroupPermissionToProject(String projectKey, String groupName, BitbucketPermission permission) {
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
         try {
             restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, null, Void.class);

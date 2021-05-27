@@ -33,7 +33,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @BeforeEach
     void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(0, 0, 0);
+        programmingExerciseTestService.setupTestUsers(0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
@@ -268,6 +268,24 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "student1", roles = "USER")
     public void exportInstructorRepositories_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportProgrammingExerciseInstructorMaterial() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void exportProgrammingExerciseInstructorMaterialAsTutor_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void exportProgrammingExerciseInstructorMaterialAsStudent_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
     @Test

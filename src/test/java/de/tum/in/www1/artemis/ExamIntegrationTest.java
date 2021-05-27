@@ -96,6 +96,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private ParticipationTestRepository participationTestRepository;
 
     @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
     ZipFileTestUtilService zipFileTestUtilService;
 
     private List<User> users;
@@ -114,7 +117,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void initTestCase() {
-        users = database.addUsers(numberOfStudents, 5, 1);
+        users = database.addUsers(numberOfStudents, 5, 0, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
@@ -757,7 +760,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExam_asInstructor() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam1.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam1.getId());
     }
 
     @Test
@@ -781,7 +784,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam returnedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
 
         assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course.getId(), exam.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course.getId(), exam.getId());
     }
 
     @Test
@@ -1128,7 +1131,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Should save new order
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructor(course1.getId(), exam.getId());
+        verify(examAccessService, times(1)).checkCourseAndExamAccessForEditor(course1.getId(), exam.getId());
         List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).get().getExerciseGroups();
         assertThat(savedExerciseGroups.get(0).getTitle()).isEqualTo("second");
         assertThat(savedExerciseGroups.get(1).getTitle()).isEqualTo("third");
@@ -1429,6 +1432,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
         final var exerciseWithNoUsers = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
         exerciseRepo.save(exerciseWithNoUsers);
+
+        GradingScale gradingScale = new GradingScale();
+        gradingScale.setExam(exam);
+        gradingScale.setGradeType(GradeType.GRADE);
+        gradingScale.setGradeSteps(database.generateGradeStepSet(gradingScale, true));
+        gradingScaleRepository.save(gradingScale);
+
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
         // Compare generated results to data in ExamScoresDTO
@@ -1510,6 +1520,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / response.maxPoints * 100;
             assertEquals(studentResult.overallScoreAchieved, calculatedOverallScore, EPSILON);
+
+            assertThat(studentResult.overallGrade).isNotNull();
+            assertThat(studentResult.hasPassed).isNotNull();
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
             List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)

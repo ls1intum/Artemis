@@ -419,7 +419,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple times.
         const preloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (preloadingSubject) {
-            return preloadingSubject.asObservable().filter((val) => val !== undefined) as Observable<ExerciseSubmissionState>;
+            return preloadingSubject.asObservable().pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
         }
         this.exerciseBuildStateSubjects.set(exerciseId, new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined));
         this.fetchLatestPendingSubmissionsByExerciseId(exerciseId)
@@ -432,12 +432,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                         return of([]);
                     }
                     return from(submissions).pipe(
-                        switchMap(
-                            ([participationId, submission]): Observable<ProgrammingSubmissionStateObj> => {
-                                this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
-                                return this.processPendingSubmission(submission, participationId, exerciseId, false);
-                            },
-                        ),
+                        switchMap(([participationId, submission]): Observable<ProgrammingSubmissionStateObj> => {
+                            this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                            return this.processPendingSubmission(submission, participationId, exerciseId, false);
+                        }),
                     );
                 }),
                 reduce(this.mapToExerciseBuildState, {}),
@@ -569,7 +567,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 params,
                 observe: 'response',
             })
-            .map((res: HttpResponse<ProgrammingSubmission[]>) => ProgrammingSubmissionService.convertArrayResponse(res));
+            .pipe(map((res: HttpResponse<ProgrammingSubmission[]>) => ProgrammingSubmissionService.convertArrayResponse(res)));
     }
 
     /**

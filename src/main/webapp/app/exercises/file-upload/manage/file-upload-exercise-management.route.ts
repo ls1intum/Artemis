@@ -2,7 +2,7 @@ import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Injectable, NgModule } from '@angular/core';
 import { filter, map } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
@@ -50,7 +51,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
                 );
             }
         }
-        return Observable.of(new FileUploadExercise(undefined, undefined));
+        return of(new FileUploadExercise(undefined, undefined));
     }
 }
 
@@ -62,7 +63,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -74,7 +75,7 @@ const routes: Routes = [
             fileUploadExercise: FileUploadExerciseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -83,7 +84,7 @@ const routes: Routes = [
         path: ':courseId/file-upload-exercises/:exerciseId',
         component: FileUploadExerciseDetailComponent,
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -91,6 +92,18 @@ const routes: Routes = [
     {
         path: ':courseId/file-upload-exercises',
         redirectTo: ':courseId/exercises',
+    },
+    {
+        path: ':courseId/file-upload-exercises/:exerciseId/exercise-statistics',
+        component: ExerciseStatisticsComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'exercise-statistics.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 

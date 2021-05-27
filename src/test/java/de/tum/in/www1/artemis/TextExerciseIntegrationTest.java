@@ -56,9 +56,15 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 1, 1);
+        database.addUsers(2, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
     }
 
@@ -505,7 +511,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
 
-       request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.FORBIDDEN, TextExercise.class);
+        request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
     @Test
@@ -558,6 +564,23 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
         request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetTextExercise_setGradingInstructionFeedbackUsed() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(textExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
+        feedbackRepository.save(feedback);
+
+        TextExercise receivedTextExercise = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+
+        assertThat(receivedTextExercise.isGradingInstructionFeedbackUsed()).isTrue();
     }
 
     @Test

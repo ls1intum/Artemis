@@ -71,8 +71,8 @@ export const getExerciseDashboardLink = (courseId: number, exerciseId: number, e
         : ['/course-management', courseId.toString(), 'assessment-dashboard', exerciseId.toString()];
 };
 
-export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId: number, exerciseId: number, examId: number, exerciseGroupId: number): string[] => {
-    if (examId > 0) {
+export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId: number, exerciseId: number, examId = 0, exerciseGroupId = 0): string[] => {
+    if (examId > 0 && exerciseGroupId > 0) {
         return [
             '/course-management',
             courseId.toString(),
@@ -82,9 +82,9 @@ export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId:
             exerciseGroupId.toString(),
             exerciseType + '-exercises',
             exerciseId.toString(),
-            'assessment',
+            'submissions',
         ];
     }
 
-    return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'assessment'];
+    return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions'];
 };

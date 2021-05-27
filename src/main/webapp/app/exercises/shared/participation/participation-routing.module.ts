@@ -10,7 +10,7 @@ const routes: Routes = exerciseTypes.map((exerciseType) => {
         path: ':courseId/' + exerciseType + '-exercises/:exerciseId/participations',
         component: ParticipationComponent,
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.participation.home.title',
         },
         canActivate: [UserRouteAccessService],

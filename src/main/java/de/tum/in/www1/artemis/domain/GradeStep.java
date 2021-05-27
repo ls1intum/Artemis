@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import javax.persistence.*;
 
+import org.apache.commons.math3.util.Precision;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -87,11 +88,11 @@ public class GradeStep extends DomainObject {
         this.gradeName = gradeName;
     }
 
-    public boolean isPassingGrade() {
+    public boolean getIsPassingGrade() {
         return isPassingGrade;
     }
 
-    public void setPassingGrade(boolean passingGrade) {
+    public void setIsPassingGrade(boolean passingGrade) {
         isPassingGrade = passingGrade;
     }
 
@@ -110,10 +111,11 @@ public class GradeStep extends DomainObject {
      * @return whether the percentage matches this grade step
      */
     public boolean matchingGradePercentage(double percentage) {
-        if (percentage == lowerBoundPercentage) {
+        double epsilon = 0.01d;
+        if (Precision.equals(percentage, lowerBoundPercentage, epsilon)) {
             return lowerBoundInclusive;
         }
-        else if (percentage == upperBoundPercentage) {
+        else if (Precision.equals(percentage, upperBoundPercentage, epsilon)) {
             return upperBoundInclusive;
         }
         else {
@@ -130,7 +132,7 @@ public class GradeStep extends DomainObject {
      *
      * @return true if all conditions are true and false otherwise
      */
-    public boolean isValid() {
+    public boolean checkValidity() {
         boolean validOrder = lowerBoundPercentage < upperBoundPercentage || lowerBoundPercentage == upperBoundPercentage && lowerBoundInclusive && upperBoundInclusive;
         return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder && upperBoundPercentage <= 100;
     }

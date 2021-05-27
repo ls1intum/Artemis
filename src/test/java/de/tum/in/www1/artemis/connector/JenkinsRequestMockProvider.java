@@ -6,9 +6,11 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -129,13 +132,8 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockGivePlanPermissions(String jobFolder, String job) throws IOException {
-        // jenkinsJobService.getJobConfig(folderName, jobName)
         mockGetJobConfig(jobFolder, job);
-
-        // jenkinsJobService.updateJob(folderName, jobName, jobConfig);
         mockUpdateJob(jobFolder, job);
-
-        // addInstructorAndTAPermissionsToUsersForFolder(taLogins, instructorLogins, folderName);
         mockGetFolderConfig(jobFolder);
         doNothing().when(jenkinsServer).updateJob(eq(jobFolder), anyString(), eq(useCrumb));
     }
@@ -266,8 +264,36 @@ public class JenkinsRequestMockProvider {
         final var job = mock(JobWithDetails.class);
         mockGetJob(projectKey, buildPlanId, job, false);
 
-        var buildLogFile = useLegacyLogs ? "legacy-failed-build-log.html" : "failed-build-log.html";
-        final var buildLogResponse = loadFileFromResources("test-data/jenkins-response/" + buildLogFile);
+        final var build = mock(Build.class);
+        doReturn(build).when(job).getLastBuild();
+
+        final var buildWithDetails = mock(BuildWithDetails.class);
+        doReturn(buildWithDetails).when(build).details();
+
+        if (useLegacyLogs) {
+            doReturn(null).when(buildWithDetails).getConsoleOutputText();
+            String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
+            doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
+        }
+        else {
+            File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
+            StringBuilder builder = new StringBuilder();
+            Files.lines(file.toPath()).forEach(line -> {
+                builder.append(line);
+                builder.append("\n");
+            });
+            doReturn(builder.toString()).when(buildWithDetails).getConsoleOutputText();
+        }
+        return buildWithDetails;
+
+    }
+
+    public void mockGetLegacyBuildLogs(ProgrammingExerciseStudentParticipation participation) throws IOException {
+        String projectKey = participation.getProgrammingExercise().getProjectKey();
+        String buildPlanId = participation.getBuildPlanId();
+
+        final var job = mock(JobWithDetails.class);
+        mockGetJob(projectKey, buildPlanId, job, false);
 
         final var build = mock(Build.class);
         doReturn(build).when(job).getLastBuild();
@@ -275,9 +301,9 @@ public class JenkinsRequestMockProvider {
         final var buildWithDetails = mock(BuildWithDetails.class);
         doReturn(buildWithDetails).when(build).details();
 
-        doReturn(buildLogResponse).when(buildWithDetails).getConsoleOutputHtml();
-        return buildWithDetails;
-
+        String htmlString = loadFileFromResources("test-data/jenkins-response/legacy-failed-build-log.html");
+        doReturn(htmlString).when(buildWithDetails).getConsoleOutputText();
+        doReturn(htmlString).when(buildWithDetails).getConsoleOutputHtml();
     }
 
     public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins)
@@ -346,7 +372,7 @@ public class JenkinsRequestMockProvider {
             return;
         }
 
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groupsToRemove);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
         for (ProgrammingExercise exercise : exercises) {
             var folderName = exercise.getProjectKey();
             mockRemovePermissionsFromUserOfFolder(folderName, shouldFail);
@@ -376,13 +402,12 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockAddUsersToGroups(String login, Set<String> groups, boolean shouldfail) throws IOException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrTAGroupNameIn(groups);
+        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
         for (ProgrammingExercise exercise : exercises) {
             var jobName = exercise.getProjectKey();
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-            if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
-                // jenkinsJobPermissionsService.addPermissionsForUserToFolder
+            if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getEditorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
                 mockGetFolderConfig(jobName);
                 if (shouldfail) {
                     doThrow(IOException.class).when(jenkinsServer).updateJob(eq(jobName), anyString(), eq(useCrumb));
@@ -394,21 +419,22 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers, boolean failToRemoveUsers)
-            throws IOException {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
+            boolean failToRemoveUsers) throws IOException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
-        var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
+        var newEditorGroup = updatedCourse.getEditorGroupName();
+        var newTeachingAssistantGroup = updatedCourse.getTeachingAssistantGroupName();
 
         // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistantGroup.equals(oldTeachingAssistantGroup)) {
             return;
         }
 
-        mockRemovePermissionsFromInstructorsAndTAsForCourse(updatedCourse, failToRemoveUsers);
-        mockAssignPermissionsToInstructorAndTAsForCourse(updatedCourse, failToAddUsers);
+        mockRemovePermissionsFromInstructorsAndEditorsAndTAsForCourse(updatedCourse, failToRemoveUsers);
+        mockAssignPermissionsToInstructorAndEditorAndTAsForCourse(updatedCourse, failToAddUsers);
     }
 
-    private void mockRemovePermissionsFromInstructorsAndTAsForCourse(Course course, boolean shouldFailToRemove) throws IOException {
+    private void mockRemovePermissionsFromInstructorsAndEditorsAndTAsForCourse(Course course, boolean shouldFailToRemove) throws IOException {
         var exercises = programmingExerciseRepository.findAllByCourse(course);
         for (var exercise : exercises) {
             if (shouldFailToRemove) {
@@ -420,15 +446,15 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    private void mockAssignPermissionsToInstructorAndTAsForCourse(Course course, boolean shouldFailToAdd) throws IOException {
+    private void mockAssignPermissionsToInstructorAndEditorAndTAsForCourse(Course course, boolean shouldFailToAdd) throws IOException {
         var exercises = programmingExerciseRepository.findAllByCourse(course);
         for (var exercise : exercises) {
             var job = exercise.getProjectKey();
-            mockAddInstructorAndTAPermissionsToUsersForFolder(job, shouldFailToAdd);
+            mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(job, shouldFailToAdd);
         }
     }
 
-    private void mockAddInstructorAndTAPermissionsToUsersForFolder(String folderName, boolean shouldFailToAdd) throws IOException {
+    private void mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(String folderName, boolean shouldFailToAdd) throws IOException {
         mockGetFolderConfig(folderName);
         if (shouldFailToAdd) {
             doThrow(IOException.class).when(jenkinsServer).updateJob(eq(folderName), anyString(), eq(useCrumb));
@@ -512,6 +538,6 @@ public class JenkinsRequestMockProvider {
     }
 
     public void mockGivePlanPermissionsThrowException(String projectKey, String projectKey1) throws IOException {
-        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndTAPermissionsToUsersForJob(any(), any(), eq(projectKey), eq(projectKey1));
+        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndEditorAndTAPermissionsToUsersForJob(any(), any(), any(), eq(projectKey), eq(projectKey1));
     }
 }

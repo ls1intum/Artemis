@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

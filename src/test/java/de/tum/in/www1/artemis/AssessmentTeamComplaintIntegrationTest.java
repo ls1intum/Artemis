@@ -62,7 +62,7 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(1, 2, 1);
+        database.addUsers(1, 2, 0, 1);
         // Initialize with 3 max team complaints and 7 days max complaint deadline
         course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();

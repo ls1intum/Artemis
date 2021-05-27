@@ -6,7 +6,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Injectable } from '@angular/core';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
@@ -14,6 +14,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
@@ -42,7 +43,7 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
                 );
             }
         }
-        return Observable.of(new TextExercise(undefined, undefined));
+        return of(new TextExercise(undefined, undefined));
     }
 }
 
@@ -54,7 +55,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -63,7 +64,7 @@ export const textExerciseRoute: Routes = [
         path: ':courseId/text-exercises/:exerciseId',
         component: TextExerciseDetailComponent,
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -75,7 +76,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -87,7 +88,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -99,7 +100,7 @@ export const textExerciseRoute: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.plagiarism.plagiarism-detection',
         },
         canActivate: [UserRouteAccessService],
@@ -107,5 +108,17 @@ export const textExerciseRoute: Routes = [
     {
         path: ':courseId/text-exercises',
         redirectTo: ':courseId/exercises',
+    },
+    {
+        path: ':courseId/text-exercises/:exerciseId/exercise-statistics',
+        component: ExerciseStatisticsComponent,
+        resolve: {
+            exercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'exercise-statistics.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];

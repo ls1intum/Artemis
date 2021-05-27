@@ -59,12 +59,14 @@ public class FileUploadExerciseResource {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
+    private final FeedbackRepository feedbackRepository;
+
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
-            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository) {
+            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, FeedbackRepository feedbackRepository) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -75,6 +77,7 @@ public class FileUploadExerciseResource {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -85,7 +88,7 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/file-upload-exercises")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
@@ -102,7 +105,7 @@ public class FileUploadExerciseResource {
 
         // Check that the user is authorized to create the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
 
@@ -158,7 +161,7 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
@@ -174,7 +177,7 @@ public class FileUploadExerciseResource {
 
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
             return forbidden();
         }
         FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findOne(fileUploadExercise.getId());
@@ -182,15 +185,15 @@ public class FileUploadExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
 
-        FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-
-        exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, result);
+        FileUploadExercise updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
 
         // Only notify students about changes if a regular exercise was updated
         if (notificationText != null && fileUploadExercise.isCourseExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }
 
     /**
@@ -241,7 +244,7 @@ public class FileUploadExerciseResource {
             ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(fileUploadExercise.getExerciseGroup().getId());
             Course course = exerciseGroup.getExam().getCourse();
 
-            if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+            if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
                 return forbidden();
             }
             // Set the exerciseGroup, exam and course so that the client can work with those ids
@@ -253,6 +256,12 @@ public class FileUploadExerciseResource {
 
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
+
+        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+
+        if (!feedbackList.isEmpty()) {
+            fileUploadExercise.setGradingInstructionFeedbackUsed(true);
+        }
 
         return ResponseEntity.ok().body(fileUploadExercise);
     }

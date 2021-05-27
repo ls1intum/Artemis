@@ -62,7 +62,9 @@
             <span *ngIf="modelingExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
         </div>
         <div class="form-group">
-            <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
+            <label class="form-control-label">{{
+                'artemisApp.exercise.includedInOverallScore' + (modelingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
+            }}</label>
             <div>
                 <jhi-included-in-overall-score-picker [(includedInOverallScore)]="modelingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
             </div>
@@ -135,7 +137,11 @@
         </div>
         <div
             class="form-group"
-            *ngIf="!isExamMode && (this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram)"
+            *ngIf="
+                semiAutomaticAssessmentAvailable &&
+                !isExamMode &&
+                (this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram)
+            "
         >
             <div class="form-check custom-control custom-checkbox">
                 <input

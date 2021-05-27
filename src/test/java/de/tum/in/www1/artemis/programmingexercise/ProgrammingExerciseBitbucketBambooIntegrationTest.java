@@ -33,7 +33,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @BeforeEach
     public void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(0, 0, 0);
+        programmingExerciseTestService.setupTestUsers(0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
@@ -268,9 +268,21 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void exportInstructorRepositories_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportProgrammingExerciseInstructorMaterial() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportProgrammingExerciseInstructorMaterialAsTutor_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
     @Test

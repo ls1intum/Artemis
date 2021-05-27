@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -14,7 +13,6 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class GradingScaleService {
@@ -26,27 +24,6 @@ public class GradingScaleService {
     public GradingScaleService(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository) {
         this.gradeStepRepository = gradeStepRepository;
         this.gradingScaleRepository = gradingScaleRepository;
-    }
-
-    /**
-     * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
-     *
-     * @param percentage the grade percentage to be mapped
-     * @param gradingScaleId the identifier for the grading scale
-     * @return grade step corresponding to the given percentage
-     */
-    public GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
-        if (percentage < 0 || percentage > 100) {
-            throw new BadRequestAlertException("Grade percentages must be between 0 and 100", "gradeStep", "invalidGradePercentage");
-        }
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScaleId);
-        Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
-        if (matchingGradeStep.isPresent()) {
-            return matchingGradeStep.get();
-        }
-        else {
-            throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
-        }
     }
 
     /**
@@ -79,12 +56,15 @@ public class GradingScaleService {
      */
     private void checkGradeStepValidity(Set<GradeStep> gradeSteps) {
         if (gradeSteps != null && !gradeSteps.isEmpty()) {
-            if (!gradeSteps.stream().allMatch(GradeStep::isValid)) {
-                throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidFormat");
+            if (!gradeSteps.stream().allMatch(GradeStep::checkValidity)) {
+                throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidGradeStepFormat");
             }
             else if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
-                throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidFormat");
+                throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidGradeStepAdjacency");
             }
+        }
+        else {
+            throw new BadRequestAlertException("Grade steps can't be empty", "gradeStep", "emptyGradeSteps");
         }
     }
 

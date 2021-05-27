@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -20,10 +21,14 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -60,12 +65,14 @@ public class ProgrammingExerciseGradingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final ResultService resultService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService) {
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -79,6 +86,7 @@ public class ProgrammingExerciseGradingService {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
+        this.resultService = resultService;
     }
 
     /**
@@ -165,10 +173,8 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        for (Feedback feedback : newAutomaticResult.getFeedbacks()) {
-            Feedback newFeedback = feedback.copyFeedback();
-            latestSemiAutomaticResult.addFeedback(newFeedback);
-        }
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
         latestSemiAutomaticResult.setResultString(resultString);
@@ -446,7 +452,7 @@ public class ProgrammingExerciseGradingService {
             // Enables to view the result details in case all test cases are positive
             result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
-            groupNotificationService.notifyInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
             return true;
         }
         return false;
@@ -471,6 +477,11 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+            // Checks if weightSum == 0. We can't use == operator since we are comparing doubles
+            if (Precision.equals(weightSum, 0, 1E-8)) {
+                result.setScore(0D);
+                return;
+            }
 
             // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {

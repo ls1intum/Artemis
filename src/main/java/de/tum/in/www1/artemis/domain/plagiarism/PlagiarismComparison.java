@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -136,5 +137,26 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     @Override
     public String toString() {
         return "PlagiarismComparison{" + "submissionA=" + submissionA + ", submissionB=" + submissionB + ", similarity=" + similarity + ", status=" + status + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        PlagiarismComparison<?> that = (PlagiarismComparison<?>) o;
+        return Double.compare(that.getSimilarity(), getSimilarity()) == 0 && Objects.equals(getSubmissionA(), that.getSubmissionA())
+                && Objects.equals(getSubmissionB(), that.getSubmissionB()) && getStatus() == that.getStatus();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), getSubmissionA(), getSubmissionB(), getSimilarity(), getStatus());
     }
 }

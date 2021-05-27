@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
@@ -10,6 +10,7 @@ import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { downloadStream } from 'app/shared/util/download.util';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -26,12 +27,10 @@ export class ModelingExerciseService {
         let copy = this.exerciseService.convertDateFromClient(modelingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
@@ -39,21 +38,18 @@ export class ModelingExerciseService {
         let copy = this.exerciseService.convertDateFromClient(modelingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     find(modelingExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
+        );
     }
 
     getStatistics(modelingExerciseId: number): Observable<HttpResponse<ModelingStatistic>> {
@@ -75,12 +71,10 @@ export class ModelingExerciseService {
         let copy = this.exerciseService.convertDateFromClient(adaptedSourceModelingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     /**
@@ -92,6 +86,12 @@ export class ModelingExerciseService {
         return this.http
             .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response', params: { ...options?.toParams() } })
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
+    }
+
+    convertToPdf(model: string, filename: string): Observable<any> {
+        return this.http
+            .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
+            .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 
     /**

@@ -71,7 +71,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     public void init() {
-        users = database.addUsers(numberOfParticipants, 1, 1);
+        users = database.addUsers(numberOfParticipants, 1, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -109,6 +109,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         evaluateQuiz_authorization_forbidden();
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void evaluateQuiz_authorization_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);

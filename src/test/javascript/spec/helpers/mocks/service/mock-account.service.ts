@@ -9,6 +9,7 @@ export class MockAccountService implements IAccountService {
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
     hasAnyAuthorityDirect = (authorities: any[]) => authorities.length !== 0;
     getAuthenticationState = () => of({ id: 99 } as User);
+    isAtLeastEditorInCourse = (course: Course) => course.isAtLeastEditor!;
     isAtLeastInstructorInCourse = (course: Course) => course.isAtLeastInstructor!;
     authenticate = (identity: User | undefined) => {};
     fetch = () => of({ body: { id: 99 } as User } as any);
@@ -16,6 +17,7 @@ export class MockAccountService implements IAccountService {
     hasAuthority = (authority: string) => Promise.resolve(true);
     isAtLeastTutorInCourse = (course: Course) => true;
     isAtLeastTutorForExercise = (exercise?: Exercise) => true;
+    isAtLeastEditorForExercise = (exercise?: Exercise) => true;
     isAtLeastInstructorForExercise = (exercise?: Exercise) => true;
     isAuthenticated = () => true;
     isOwnerOfParticipation = () => true;

@@ -50,7 +50,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
 
     @SpyBean
@@ -378,13 +378,13 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup) {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
         // Not needed here.
     }
 
     @Override
-    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
-            boolean failToRemoveUsers) throws Exception {
+    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
+            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
         // Not needed here
     }
 

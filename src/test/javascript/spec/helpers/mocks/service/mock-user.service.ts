@@ -1,8 +1,7 @@
 import { of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/of';
+import { Observable } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 export class MockUserService {
@@ -28,8 +27,7 @@ export class MockUserService {
             ],
             headers: new HttpHeaders({
                 'X-Total-Count': '1',
-                link:
-                    '<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="last",<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="first"',
+                link: '<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="last",<http://localhost:9000/api/users?pageSize=50&searchTerm=&sortingOrder=ASCENDING&sortedColumn=id&page=0&size=50>; rel="first"',
             }),
         } as HttpResponse<User[]>);
     }

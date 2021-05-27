@@ -1,9 +1,10 @@
 <div class="course-info-bar" *ngIf="exercise">
     <div class="row">
         <div class="col general-info">
-            <h3 *ngIf="displayBackButton">
-                <fa-icon [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
+            <h3>
+                <fa-icon *ngIf="displayBackButton" [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
                 <ng-content select="[pagetitle]"></ng-content>
+                <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
             </h3>
 
             <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">

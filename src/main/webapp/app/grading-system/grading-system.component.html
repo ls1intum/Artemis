@@ -1,0 +1,102 @@
+<div>
+    <jhi-alert></jhi-alert>
+    <jhi-alert-error *ngIf="!notFound"></jhi-alert-error>
+    <h2 style="margin-bottom: 0.5em">
+        {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
+        {{ isExam ? examId : courseId }}
+    </h2>
+    <div>
+        <div class="d-flex">
+            <button (click)="generateDefaultGradingScale()" class="btn btn-primary mr-1 mb-1" type="button">
+                <span jhiTranslate="artemisApp.gradingSystem.defaultButton">Generate Default Grading Scale</span>
+            </button>
+            <jhi-grading-system-info-modal></jhi-grading-system-info-modal>
+        </div>
+        <div class="dropdown-container">
+            <div class="form-group">
+                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title">Grade Type</span>
+                <select class="form-control" [(ngModel)]="gradingScale.gradeType" (change)="deleteGradeNames()" title="grade type">
+                    <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade">Grade</option>
+                    <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus">Bonus</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
+                <select class="form-control" [(ngModel)]="lowerBoundInclusivity" title="inclusivity">
+                    <option [ngValue]="true" jhiTranslate="artemisApp.gradingSystem.inclusivity.lower">Lower Bound Inclusive</option>
+                    <option [ngValue]="false" jhiTranslate="artemisApp.gradingSystem.inclusivity.upper">Upper Bound Inclusive</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <ng-container *ngIf="isGradeType()">
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade">First Passing Grade</span>
+                    <select class="form-control" title="first passing grade" [(ngModel)]="firstPassingGrade">
+                        <option *ngFor="let gradeStep of gradeStepsWithNonemptyNames()" [ngValue]="gradeStep.gradeName">
+                            {{ gradeStep.gradeName }}
+                        </option>
+                    </select>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+    <div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        <span jhiTranslate="artemisApp.gradingSystem.min">Min %</span>
+                    </th>
+                    <th>
+                        <span jhiTranslate="artemisApp.gradingSystem.max">Max %</span>
+                    </th>
+                    <th [colSpan]="2">
+                        <span>
+                            {{ isGradeType() ? ('artemisApp.gradingSystem.gradeName' | artemisTranslate) : ('artemisApp.gradingSystem.bonusPoints' | artemisTranslate) }}
+                        </span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index">
+                    <td>
+                        <input [(ngModel)]="gradeStep.lowerBoundPercentage" />
+                    </td>
+                    <td>
+                        <input [(ngModel)]="gradeStep.upperBoundPercentage" />
+                    </td>
+                    <td>
+                        <input [(ngModel)]="gradeStep.gradeName" />
+                    </td>
+                    <td>
+                        <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger mb-1">
+                            <fa-icon [icon]="'times'"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="margin-bottom: 1em">
+        <button (click)="createGradeStep()" class="btn btn-success mr-1 mb-1" type="button">
+            <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.add">Add Grade Step</span>
+        </button>
+    </div>
+    <div>
+        <button (click)="save()" [disabled]="isLoading" class="btn btn-primary mr-1 mb-1" type="button">
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
+        </button>
+        <button
+            *ngIf="existingGradingScale"
+            class="mb-1"
+            jhiDeleteButton
+            [entityTitle]="''"
+            [buttonSize]="ButtonSize.MEDIUM"
+            deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
+            (delete)="delete()"
+            [dialogError]="dialogError$"
+            [disabled]="isLoading"
+        >
+            <fa-icon [icon]="'times'"> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
+        </button>
+    </div>
+</div>

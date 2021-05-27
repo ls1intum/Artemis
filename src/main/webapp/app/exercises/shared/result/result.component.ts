@@ -64,6 +64,7 @@ export class ResultComponent implements OnInit, OnChanges {
     resultString: string;
     templateStatus: ResultTemplateStatus;
     submission?: Submission;
+    onlyShowSuccessfulCompileStatus: boolean;
 
     resultTooltip: string;
 
@@ -141,6 +142,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
+            this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -233,15 +235,20 @@ export class ResultComponent implements OnInit, OnChanges {
             const isManualResult = this.result?.assessmentType !== AssessmentType.AUTOMATIC;
             return isManualResult ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
-        } else if (
+        }
+
+        const resultStringCompiledMessage = this.result!.resultString!.replace('0 of 0 passed', this.translate.instant('artemisApp.editor.buildSuccessful'));
+
+        if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
             isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
             const preliminary = '(' + this.translate.instant('artemisApp.result.preliminary') + ')';
-            return `${this.result!.resultString} ${preliminary}`;
+            return `${resultStringCompiledMessage} ${preliminary}`;
+        } else {
+            return resultStringCompiledMessage;
         }
-        return this.result!.resultString;
     }
 
     /**
@@ -318,6 +325,14 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
+     * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
+     *
+     */
+    getOnlyShowSuccessfulCompileStatus(): boolean {
+        return this.templateStatus !== ResultTemplateStatus.NO_RESULT && this.templateStatus !== ResultTemplateStatus.IS_BUILDING && this.result?.resultString === '0 of 0 passed';
+    }
+
+    /**
      * Get the css class for the entire text as a string
      *
      * @return {string} the css class
@@ -348,6 +363,9 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     getResultIconClass(): IconProp {
         const result = this.result!;
+        if (this.onlyShowSuccessfulCompileStatus) {
+            return ['far', 'check-circle'];
+        }
         if (result.score == undefined) {
             if (result.successful) {
                 return ['far', 'check-circle'];

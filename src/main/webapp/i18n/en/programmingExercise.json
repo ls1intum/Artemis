@@ -142,7 +142,9 @@
                     "updated": "The test cases were updated successfully.",
                     "couldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
                     "weightSumError": "The sum of all test case weights is 0 or below. Please adjust at least one test case weight to be greater than 0",
-                    "showInactive": "Show inactive test cases"
+                    "showInactive": "Show inactive test cases",
+                    "settingNull": "Test case {{testCase}} must not have settings that are empty.",
+                    "settingNegative": "Test case {{testCase}} must not have settings set to negative values."
                 },
                 "categories": {
                     "title": "Code Analysis Categories",
@@ -188,6 +190,7 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",
@@ -197,7 +200,8 @@
                 "addTeamOrStudentName": "Add team/student name to project (allows to import multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
-                "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
+                "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
+                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
             },
             "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",

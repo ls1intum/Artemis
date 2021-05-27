@@ -4,7 +4,7 @@
         {
             "fieldName": "type",
             "fieldType": "GroupNotificationType",
-            "fieldValues": "INSTRUCTOR,TA,STUDENT"
+            "fieldValues": "INSTRUCTOR,EDITOR,TA,STUDENT"
         }
     ],
     "relationships": [

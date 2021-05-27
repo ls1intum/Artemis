@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -19,7 +21,9 @@ import java.util.stream.Collectors;
 
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -152,8 +156,8 @@ public class ProgrammingExerciseTestService {
 
     private MockDelegate mockDelegate;
 
-    public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
-        return database.addUsers(ProgrammingExerciseTestService.numberOfStudents + numberOfStudents, numberOfTutors + 1, numberOfInstructors + 1);
+    public List<User> setupTestUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
+        return database.addUsers(ProgrammingExerciseTestService.numberOfStudents + numberOfStudents, numberOfTutors + 1, numberOfEditors + 1, numberOfInstructors + 1);
     }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
@@ -228,6 +232,11 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, exerciseRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, testRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, solutionRepoTestUrl);
+
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + exerciseRepoName, exerciseRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + testRepoName, testRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + solutionRepoName, solutionRepoTestUrl);
+
         mockDelegate.mockGetProjectKeyFromAnyUrl(projectKey);
     }
 
@@ -244,6 +253,7 @@ public class ProgrammingExerciseTestService {
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + participantRepoName, participantRepoTestUrl);
     }
 
     public MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {
@@ -772,37 +782,94 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        var zip = exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.OK);
+        String zip = exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.OK);
+        zip = exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.OK);
+        zip = exportInstructorRepository("TESTS", testRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
-
     }
 
     // Test
     public void exportInstructorRepositories_forbidden() throws Exception {
-        exportInstructorRepository("TEMPLATE", sourceExerciseRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
-        exportInstructorRepository("SOLUTION", sourceSolutionRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
-        exportInstructorRepository("TESTS", sourceTestRepo.localRepoFile.toPath(), HttpStatus.FORBIDDEN);
+        // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository("TESTS", testRepo, HttpStatus.FORBIDDEN);
     }
 
-    private String exportInstructorRepository(String repositoryType, Path localPathToRepository, HttpStatus expectedStatus) throws Exception {
+    private String exportInstructorRepository(String repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
+        generateProgrammingExerciseForExport();
+
+        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
+        disableAutoGC(repository);
+        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
+        return request.get(url, expectedStatus, String.class);
+    }
+
+    // Test
+    public void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK);
+        // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        await().until(zipFile::exists);
+        assertThat(zipFile).isNotNull();
+
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
+        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+
+        // Check that the contents we created exist in the unzipped exported folder
+        var listOfIncludedFiles = Files.walk(Path.of(extractedZipDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-solution.zip"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))).isTrue();
+        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))).isTrue();
+    }
+
+    // Test
+    public void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
+        // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN);
+    }
+
+    private java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
+        generateProgrammingExerciseForExport();
+
+        // Mock template repo
+        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+
+        // Mock solution repo
+        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+
+        // Mock tests repo
+        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+        createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
+        return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
+    }
+
+    private void generateProgrammingExerciseForExport() {
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
-
-        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localPathToRepository, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
-
-        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
-        // return request.postWithResponseBodyFile(url, null, expectedStatus);
-        return request.get(url, expectedStatus, String.class);
     }
 
     // Test
@@ -812,32 +879,38 @@ public class ProgrammingExerciseTestService {
         course.setExercises(Set.of(exercise));
         courseRepository.save(course);
 
+        // Create a programming exercise with solution, template, and tests participations
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTestCasesToProgrammingExercise(exercise);
 
+        // Add student participation
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
 
         // Mock student repo
-        var studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
+        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
+        disableAutoGC(studentRepository);
+        createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         // Mock template repo
-        var templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceExerciseRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "Template.java");
+        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+        disableAutoGC(templateRepository);
+        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
 
         // Mock solution repo
-        var solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceSolutionRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "Solution.java");
+        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+        disableAutoGC(solutionRepository);
+        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
 
         // Mock tests repo
-        var testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(sourceTestRepo.localRepoFile.toPath(), null);
-        createDummyFileInLocalRepository(studentRepo, "Tests.java");
+        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+        disableAutoGC(testsRepository);
+        createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
@@ -845,13 +918,37 @@ public class ProgrammingExerciseTestService {
 
         var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+
     }
 
-    public void createDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException {
+    /**
+     * Disables auto garbage collection for the given repository.
+     *
+     * @param repository the repository
+     */
+    public void disableAutoGC(org.eclipse.jgit.lib.Repository repository) {
+        // See https://www.eclipse.org/lists/jgit-dev/msg03734.html
+        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+        repository.getConfig().setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+    }
+
+    /**
+     * Creates a dummy file in the repository and commits it locally
+     * without pushing it.
+     *
+     * @param localRepository the repository
+     * @param filename the file to create
+     * @throws IOException when the file cannot be created
+     * @throws GitAPIException when git can't add or commit the file
+     */
+    public void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {
         var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
         if (!Files.exists(file)) {
             Files.createFile(file);
         }
+        localRepository.localGit.add().addFilepattern(file.getFileName().toString()).call();
+        localRepository.localGit.commit().setMessage("Added testfile").call();
     }
 
     // Test
@@ -868,7 +965,7 @@ public class ProgrammingExerciseTestService {
         zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
-        // Check that the dummy files we created exist in the archivie.
+        // Check that the dummy files we created exist in the archive
         var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
         assertThat(filenames).contains(Path.of("HelloWorld.java"));
         assertThat(filenames).contains(Path.of("Template.java"));
@@ -968,10 +1065,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        setupTeamExercise();
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
@@ -1001,10 +1095,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        setupTeamExercise();
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
@@ -1033,10 +1124,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        setupTeamExercise();
 
         // create a team for the user (necessary condition before starting an exercise)
         final String edxUsername = userPrefixEdx.get() + "student";
@@ -1055,21 +1143,8 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void copyRepository_testNotCreatedError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
+        Team team = setupTeamForBadRequestForStartExercise();
 
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamRepository.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
-        mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
         var participantRepoTestUrl = getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
@@ -1078,25 +1153,40 @@ public class ProgrammingExerciseTestService {
         // the local repo should exist before startExercise()
         assertThat(Files.exists(teamLocalPath)).isTrue();
         // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
-            // the directory of the repo should be deleted
-            assertThat(Files.exists(teamLocalPath)).isFalse();
-            // We cannot compare exception messages because each vcs has their
-            // own. Maybe simply checking that the exception is not empty is
-            // enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
+        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
+        // the directory of the repo should be deleted
+        assertThat(Files.exists(teamLocalPath)).isFalse();
+        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
+        assertThat(exception.getMessage()).isNotEmpty();
     }
 
-    // TEST
-    public void copyRepository_testConflictError() throws Exception {
+    @NotNull
+    private Team setupTeamForBadRequestForStartExercise() throws Exception {
+        setupTeamExercise();
+
+        // Create a team with students
+        var student1 = database.getUserByLogin("student1");
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(Set.of(student1));
+        team = teamRepository.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Student1 was correctly added to team").hasSize(1);
+
+        // test for internal server error
+        mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
+        mockDelegate.mockRepositoryWritePermissions(team, student1, exercise, HttpStatus.BAD_REQUEST);
+        return team;
+    }
+
+    private void setupTeamExercise() {
         exercise.setMode(TEAM);
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
+    }
+
+    // TEST
+    public void copyRepository_testConflictError() throws Exception {
+        setupTeamExercise();
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
@@ -1110,35 +1200,18 @@ public class ProgrammingExerciseTestService {
 
         // Start participation
         participationService.startExercise(exercise, team, false);
+
+        // TODO add assertions
     }
 
     // TEST
     public void configureRepository_testBadRequestError() throws Exception {
-        exercise.setMode(TEAM);
-        programmingExerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-
-        // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
-        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
-        team = teamRepository.save(exercise, team);
-
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
-
-        // test for internal server error
-        final var username = team.getParticipantIdentifier();
-        mockDelegate.mockCopyRepositoryForParticipation(exercise, username);
-        mockDelegate.mockRepositoryWritePermissions(team, team.getStudents().stream().findFirst().get(), exercise, HttpStatus.BAD_REQUEST);
+        Team team = setupTeamForBadRequestForStartExercise();
 
         // Start participation
-        try {
-            participationService.startExercise(exercise, team, false);
-        }
-        catch (VersionControlException e) {
-            // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
-            assertThat(e.getMessage()).isNotEmpty();
-        }
+        var exception = assertThrows(VersionControlException.class, () -> participationService.startExercise(exercise, team, false));
+        // We cannot compare exception messages because each vcs has their own. Maybe simply checking that the exception is not empty is enough?
+        assertThat(exception.getMessage()).isNotEmpty();
     }
 
     // TEST

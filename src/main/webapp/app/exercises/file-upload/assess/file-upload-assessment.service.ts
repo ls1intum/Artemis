@@ -6,6 +6,7 @@ import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -32,9 +33,7 @@ export class FileUploadAssessmentsService {
             feedbacks,
             complaintResponse,
         };
-        return this.http
-            .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     // TODO refactor all asssessment.service getAssessment calls to make similar REST calls
