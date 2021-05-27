@@ -1,18 +1,21 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { ChartType } from 'chart.js';
 import { round } from 'app/shared/util/utils';
-import { DoughnutChartType } from './course-detail.component';
-import { Router } from '@angular/router';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
-    selector: 'jhi-course-detail-doughnut-chart',
-    templateUrl: './course-detail-doughnut-chart.component.html',
-    styleUrls: ['./course-detail-doughnut-chart.component.scss'],
+    selector: 'jhi-doughnut-chart',
+    templateUrl: './doughnut-chart.component.html',
+    styleUrls: ['./doughnut-chart.component.scss'],
 })
-export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
+export class DoughnutChartComponent implements OnChanges, OnInit {
     @Input() courseId: number;
     @Input() contentType: DoughnutChartType;
+    @Input() exerciseId: number;
+    @Input() exerciseType: ExerciseType;
     @Input() currentPercentage: number | undefined;
     @Input() currentAbsolute: number | undefined;
     @Input() currentMax: number | undefined;
@@ -20,7 +23,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     receivedStats = false;
     doughnutChartTitle: string;
     stats: number[];
-    titleLink: string | undefined;
+    titleLink: string[] | undefined;
 
     constructor(private router: Router) {}
 
@@ -36,8 +39,11 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
             backgroundColor: 'rgba(0, 0, 0, 1)',
             callbacks: {
                 label(tooltipItem: any, data: any) {
-                    const value = data['datasets'][0]['data'][tooltipItem['index']];
-                    return '' + (value === -1 ? 0 : value);
+                    if (data && data['datasets'] && data['datasets'][0] && data['datasets'][0]['data']) {
+                        const value = data['datasets'][0]['data'][tooltipItem['index']];
+                        return '' + (value === -1 ? 0 : value);
+                    }
+                    return '';
                 },
             },
         },
@@ -67,21 +73,17 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      */
     ngOnInit(): void {
         switch (this.contentType) {
-            case DoughnutChartType.ASSESSMENT:
-                this.doughnutChartTitle = 'assessments';
-                this.titleLink = 'assessment-dashboard';
+            case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
+                this.doughnutChartTitle = 'averageScore';
+                this.titleLink = [`/course-management/${this.courseId}/${this.exerciseType}-exercises/${this.exerciseId}/scores`];
                 break;
-            case DoughnutChartType.COMPLAINTS:
-                this.doughnutChartTitle = 'complaints';
-                this.titleLink = 'complaints';
+            case DoughnutChartType.PARTICIPATIONS:
+                this.doughnutChartTitle = 'participationRate';
+                this.titleLink = [`/course-management/${this.courseId}/${this.exerciseType}-exercises/${this.exerciseId}/participations`];
                 break;
-            case DoughnutChartType.FEEDBACK:
-                this.doughnutChartTitle = 'moreFeedback';
-                this.titleLink = undefined;
-                break;
-            case DoughnutChartType.AVERAGE_COURSE_SCORE:
-                this.doughnutChartTitle = 'averageStudentScore';
-                this.titleLink = 'scores';
+            case DoughnutChartType.QUESTIONS:
+                this.doughnutChartTitle = 'questionsAnswered';
+                this.titleLink = [`/courses/${this.courseId}/exercises/${this.exerciseId}`];
                 break;
             default:
                 this.doughnutChartTitle = '';
@@ -90,11 +92,12 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     }
 
     /**
-     * handles clicks onto the graph, which then redirects the user to the corresponding page, e.g. complaints page for the complaints chart
+     * handles clicks onto the graph, which then redirects the user to the corresponding page,
+     * e.g. participations to the participations page
      */
     openCorrespondingPage() {
-        if (this.courseId && this.titleLink) {
-            this.router.navigate(['/course-management', this.courseId, this.titleLink]);
+        if (this.courseId && this.exerciseId && this.titleLink) {
+            this.router.navigate(this.titleLink);
         }
     }
 }
