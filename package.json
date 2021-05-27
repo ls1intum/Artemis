@@ -189,7 +189,7 @@
         "ngc": "ngc -p tsconfig.app.json",
         "cleanup": "rimraf build/resources/main/static/ build/resources/main/aot",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
-        "start": "yarn run webpack:dev",
+        "start": "NODE_OPTIONS=--max_old_space_size=4096 yarn run webpack:dev",
         "start-docker": "yarn run webpack:dev --hot --env.docker",
         "start-tls": "yarn run webpack:dev --hot --env.tls",
         "serve": "yarn run start",
