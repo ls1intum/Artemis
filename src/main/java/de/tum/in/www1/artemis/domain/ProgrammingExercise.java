@@ -36,7 +36,7 @@ public class ProgrammingExercise extends Exercise {
     private String testRepositoryUrl;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("exercise")
+    @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
     private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
 
@@ -200,18 +200,17 @@ public class ProgrammingExercise extends Exercise {
         return matcher.group(1);
     }
 
-    @JsonIgnore
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
+    }
+
+    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+        this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
     @JsonIgnore
     public List<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
         return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toList());
-    }
-
-    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
-        this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
     public void addAuxiliaryRepository(AuxiliaryRepository repository) {

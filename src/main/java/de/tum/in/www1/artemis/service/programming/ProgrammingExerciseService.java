@@ -239,9 +239,6 @@ public class ProgrammingExerciseService {
         solutionParticipation.setBuildPlanId(solutionPlanId);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
-
-        // Set Auxiliary Repository URLs
-        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
@@ -337,7 +334,7 @@ public class ProgrammingExerciseService {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
-    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) {
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
         final var projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
@@ -345,9 +342,17 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
 
         // Create auxiliary repositories
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
-            versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(repo.getName()), null);
-        });
+        createAndInitializeAuxiliaryRepositories(programmingExercise);
+    }
+
+    private void createAndInitializeAuxiliaryRepositories(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+        for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
+            String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
+            versionControlService.get().createRepository(programmingExercise.getProjectKey(), repositoryName, null);
+            repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
+            Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
+            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, null);
+        }
     }
 
     /**

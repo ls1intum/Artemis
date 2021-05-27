@@ -340,7 +340,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         validateGeneralSettings(programmingExercise);
-        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories(), programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -577,7 +577,8 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        var existingProgrammingExercise = programmingExerciseRepository
+            .findByIdWithAuxiliaryRepositoriesElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(existingProgrammingExercise.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
@@ -597,7 +598,7 @@ public class ProgrammingExerciseResource {
         List<AuxiliaryRepository> newAuxiliaryRepositories = updatedProgrammingExercise.getAuxiliaryRepositories()
             .stream().filter(repo -> repo.getId() == null).toList();
 
-        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(updatedProgrammingExercise, newAuxiliaryRepositories);
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(existingProgrammingExercise, newAuxiliaryRepositories, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
@@ -1219,11 +1220,7 @@ public class ProgrammingExerciseResource {
     @GetMapping(Endpoints.AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId);
-        if (optionalProgrammingExercise.isEmpty()) {
-            return notFound();
-        }
-        ProgrammingExercise exercise = optionalProgrammingExercise.get();
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         return ResponseEntity.ok(exercise.getAuxiliaryRepositories());
     }
@@ -1238,14 +1235,16 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().build();
     }
 
-    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories) {
-        final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<>());
+    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories, ProgrammingExercise updatedExercise) {
+        final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(),
+            new ArrayList<AuxiliaryRepository>()).stream().filter(repo -> repo.getId() != null).collect(Collectors.toList());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
             validateAuxiliaryRepository(repo, auxiliaryRepositories);
             auxiliaryRepositories.add(repo);
         }
-        programmingExercise.setAuxiliaryRepositories(List.of());
-        auxiliaryRepositories.forEach(programmingExercise::addAuxiliaryRepository);
+        System.out.println(auxiliaryRepositories);
+        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
+        auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
     }
 
     private void validateAuxiliaryRepositoryId(AuxiliaryRepository auxiliaryRepository) {

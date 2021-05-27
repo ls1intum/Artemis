@@ -1450,7 +1450,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     private String defaultAuxiliaryRepositoryEndpoint(String exerciseId) {
-        return "/api" + AUXILIARY_REPOSITORY.replace("{exerciseId}", exerciseId);
+        return "/api" + PROGRAMMING_EXERCISE.replace("{exerciseId}", exerciseId);
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
