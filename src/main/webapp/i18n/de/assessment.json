@@ -45,7 +45,7 @@
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
             },
             "dashboard": {
-                "warning": "Achtung: die Einreichungsfrist ist noch nicht abgelaufen und Studenten dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen",
+                "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {
@@ -55,7 +55,7 @@
                     "score": "Punkte",
                     "duration": "Dauer",
                     "assessmentType": "Bewertungsart",
-                    "student": "Student",
+                    "student": "Student/in",
                     "assessor": "Prüfer/in",
                     "assessors": "Prüfer/innen",
                     "action": "Bewertungsaktionen",
