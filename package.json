@@ -189,7 +189,7 @@
         "ngc": "ngc -p tsconfig.app.json",
         "cleanup": "rimraf build/resources/main/static/ build/resources/main/aot",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
-        "start": "NODE_OPTIONS=--max_old_space_size=4096 yarn run webpack:dev",
+        "start": "yarn run webpack:dev",
         "start-docker": "yarn run webpack:dev --hot --env.docker",
         "start-tls": "yarn run webpack:dev --hot --env.tls",
         "serve": "yarn run start",
@@ -206,8 +206,8 @@
         "webpack:build": "yarn run cleanup && yarn run webpack:build:main",
         "webpack:prod:main": "yarn run webpack-ts --config webpack/webpack.prod.ts --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
-        "webpack-dev-server": "node --max-old-space-size=3072 node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-        "webpack": "node --max-old-space-size=3072 --report-on-fatalerror node_modules/webpack/bin/webpack.js",
-        "webpack-ts": "cross-env TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack"
+        "webpack-dev-server": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js",
+        "webpack": "node --report-on-fatalerror node_modules/webpack/bin/webpack.js",
+        "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=4096 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack"
     }
 }
