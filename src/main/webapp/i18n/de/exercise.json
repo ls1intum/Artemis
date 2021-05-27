@@ -189,8 +189,7 @@
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
                     "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?"
                 }
-            },
-            "isUsedForTutorial": "Soll es vom Tutor benotet werden"
+            }
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

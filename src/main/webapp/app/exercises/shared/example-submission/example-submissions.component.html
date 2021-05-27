@@ -2,7 +2,9 @@
     <div class="row">
         <div>
             <h4>
-                <span *ngIf="exercise && exercise.course">{{ exercise.course.title }} - {{ exercise.title }} - Example Submissions</span>
+                <span *ngIf="exercise && exercise.course"
+                    >{{ exercise.course.title }} - {{ exercise.title }} - {{ 'artemisApp.exampleSubmission.exampleSubmissions' | artemisTranslate }}
+                </span>
             </h4>
         </div>
         <div style="margin-left: auto">
@@ -10,9 +12,8 @@
                 *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
                 class="btn btn-primary"
                 [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', 'new']"
-                jhiTranslate="artemisApp.textExercise.createExampleSubmissions"
+                jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
             >
-                Create example submission
             </a>
         </div>
     </div>
@@ -23,9 +24,9 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th><span jhiTranslate="global.field.id">ID</span></th>
-                    <th><span jhiTranslate="artemisApp.exercise.title">Title</span></th>
-                    <th><span jhiTranslate="artemisApp.exercise.isUsedForTutorial">Needs be reviewed by tutor</span></th>
+                    <th><span jhiTranslate="global.field.id"></span></th>
+                    <th><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                    <th><span jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -46,14 +47,14 @@
                             [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmission.id]"
                             class="btn-link"
                         >
-                            Example submission {{ i + 1 }}</a
+                            {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}</a
                         >
                     </td>
                     <td>{{ exampleSubmission.usedForTutorial ? 'Yes' : 'No' }}</td>
                     <td>
                         <button (click)="deleteExampleSubmission(i)" class="btn btn-danger col-auto">
                             <fa-icon [icon]="'times'"></fa-icon>
-                            Delete
+                            {{ 'entity.action.delete' | artemisTranslate }}
                         </button>
                     </td>
                 </tr>
