@@ -143,7 +143,7 @@
             "resultCreationUnsuccessful": "The result could not be created",
             "presentationScoreEnabled": {
                 "title": "Presentation",
-                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participants\" page of the exercise."
+                "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
             },
             "errors": {
                 "exerciseNotFound": "This exercise was not found"
