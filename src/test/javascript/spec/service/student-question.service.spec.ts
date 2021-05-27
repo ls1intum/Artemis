@@ -10,7 +10,7 @@ import { Lecture } from 'app/entities/lecture.model';
 
 const expect = chai.expect;
 
-describe('StudentQuestion Service', () => {
+describe('Post Service', () => {
     let injector: TestBed;
     let service: StudentQuestionService;
     let httpMock: HttpTestingController;
@@ -57,7 +57,7 @@ describe('StudentQuestion Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should create a StudentQuestion', fakeAsync(() => {
+        it('should create a Post', fakeAsync(() => {
             const returnedFromService = { ...elemDefault, id: 0 };
             const expected = { ...returnedFromService };
             service
@@ -69,7 +69,7 @@ describe('StudentQuestion Service', () => {
             tick();
         }));
 
-        it('should update a StudentQuestion', fakeAsync(() => {
+        it('should update a Post', fakeAsync(() => {
             const returnedFromService = { ...elemDefault, questionText: 'This is another test question' };
 
             const expected = { ...returnedFromService };
@@ -82,7 +82,7 @@ describe('StudentQuestion Service', () => {
             tick();
         }));
 
-        it('should delete a StudentQuestion', fakeAsync(() => {
+        it('should delete a Post', fakeAsync(() => {
             service.delete(1, 123).subscribe((resp) => expect(resp.ok).to.be.true);
 
             const req = httpMock.expectOne({ method: 'DELETE' });
@@ -90,7 +90,7 @@ describe('StudentQuestion Service', () => {
             tick();
         }));
 
-        it('should update the votes of a StudentQuestion', fakeAsync(() => {
+        it('should update the votes of a Post', fakeAsync(() => {
             const returnedFromService = { ...elemDefault, votes: 42 };
 
             const expected = { ...returnedFromService };

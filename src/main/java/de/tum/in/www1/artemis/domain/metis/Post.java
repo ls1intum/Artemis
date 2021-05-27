@@ -1,6 +1,5 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.metis;
 
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,60 +11,52 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+
+import de.tum.in.www1.artemis.domain.*;
 
 /**
- * A StudentQuestion.
+ * A Post.
  */
 @Entity
-@Table(name = "student_question")
+@Table(name = "post")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@JsonIgnoreProperties(value = { "author" }, allowGetters = true) // author field is not deserialized
-public class StudentQuestion extends DomainObject {
+public class Post extends Posting {
 
-    @Size(max = 1000)
-    @Column(name = "question_text", length = 1000)
-    private String questionText;
-
-    @Column(name = "creation_date")
-    private ZonedDateTime creationDate;
+    // To be used with introduction of METIS
+    @Size(max = 200)
+    @Column(name = "title")
+    private String title;
 
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
+    /**
+     * Track the votes for a "Post"
+     * @deprecated
+     * This will be removed with the introduction of METIS, where every Post will have a emoji reaction bar.
+     */
+    @Deprecated
     @Column(name = "votes", columnDefinition = "integer default 0")
     private Integer votes = 0;
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    private Set<StudentQuestionAnswer> answers = new HashSet<>();
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    private Set<AnswerPost> answers = new HashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties("studentQuestions")
-    private User author;
-
-    @ManyToOne
-    @JsonIgnoreProperties("studentQuestions")
+    @JsonIgnoreProperties("posts")
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIgnoreProperties("studentQuestions")
+    @JsonIgnoreProperties("posts")
     private Lecture lecture;
 
-    public String getQuestionText() {
-        return questionText;
+    public String getTitle() {
+        return title;
     }
 
-    public void setQuestionText(String questionText) {
-        this.questionText = questionText;
-    }
-
-    public ZonedDateTime getCreationDate() {
-        return creationDate;
-    }
-
-    public void setCreationDate(ZonedDateTime creationDate) {
-        this.creationDate = creationDate;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public Boolean isVisibleForStudents() {
@@ -84,21 +75,12 @@ public class StudentQuestion extends DomainObject {
         this.votes = votes;
     }
 
-    public Set<StudentQuestionAnswer> getAnswers() {
+    public Set<AnswerPost> getAnswers() {
         return answers;
     }
 
-    public void setAnswers(Set<StudentQuestionAnswer> studentQuestionAnswers) {
-        this.answers = studentQuestionAnswers;
-    }
-
-    @JsonProperty
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User user) {
-        this.author = user;
+    public void setAnswers(Set<AnswerPost> answerPosts) {
+        this.answers = answerPosts;
     }
 
     public Exercise getExercise() {
@@ -133,7 +115,7 @@ public class StudentQuestion extends DomainObject {
 
     @Override
     public String toString() {
-        return "StudentQuestion{" + "id=" + getId() + ", questionText='" + getQuestionText() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='"
-                + isVisibleForStudents() + "'" + ", votes='" + getVotes() + "'" + "}";
+        return "Post{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents()
+                + "'" + ", votes='" + getVotes() + "'" + "}";
     }
 }

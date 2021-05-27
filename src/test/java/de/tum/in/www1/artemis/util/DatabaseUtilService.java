@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -45,6 +46,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
@@ -166,7 +168,7 @@ public class DatabaseUtilService {
     private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    private StudentQuestionRepository studentQuestionRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private ModelingSubmissionService modelSubmissionService;
@@ -655,7 +657,7 @@ public class DatabaseUtilService {
         return Arrays.asList(course1, course2);
     }
 
-    public List<StudentQuestion> createCourseWithExerciseAndStudentQuestions() {
+    public List<Post> createCourseWithExerciseAndStudentQuestions() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -671,27 +673,27 @@ public class DatabaseUtilService {
         courseRepo.save(course1);
         textExercise = exerciseRepo.save(textExercise);
 
-        List<StudentQuestion> studentQuestions = new ArrayList<>();
-        StudentQuestion studentQuestion1 = new StudentQuestion();
-        studentQuestion1.setExercise(textExercise);
-        studentQuestion1.setQuestionText("Test Student Question 1");
-        studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
-        studentQuestionRepository.save(studentQuestion1);
-        studentQuestions.add(studentQuestion1);
+        List<Post> posts = new ArrayList<>();
+        Post post1 = new Post();
+        post1.setExercise(textExercise);
+        post1.setContent("Test Student Question 1");
+        post1.setVisibleForStudents(true);
+        post1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
+        postRepository.save(post1);
+        posts.add(post1);
 
-        StudentQuestion studentQuestion2 = new StudentQuestion();
-        studentQuestion2.setExercise(textExercise);
-        studentQuestion2.setQuestionText("Test Student Question 2");
-        studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
-        studentQuestionRepository.save(studentQuestion2);
-        studentQuestions.add(studentQuestion2);
+        Post post2 = new Post();
+        post2.setExercise(textExercise);
+        post2.setContent("Test Student Question 2");
+        post2.setVisibleForStudents(true);
+        post2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
+        postRepository.save(post2);
+        posts.add(post2);
 
-        return studentQuestions;
+        return posts;
     }
 
-    public List<StudentQuestion> createCourseWithExerciseAndLectureAndStudentQuestions() {
+    public List<Post> createCourseWithExerciseAndLectureAndStudentQuestions() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -712,40 +714,40 @@ public class DatabaseUtilService {
         textExercise = exerciseRepo.save(textExercise);
         lecture = lectureRepo.save(lecture);
 
-        List<StudentQuestion> studentQuestions = new ArrayList<>();
-        StudentQuestion studentQuestion1 = new StudentQuestion();
-        studentQuestion1.setExercise(textExercise);
-        studentQuestion1.setQuestionText("Test Student Question 1");
-        studentQuestion1.setVisibleForStudents(true);
-        studentQuestion1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
-        studentQuestionRepository.save(studentQuestion1);
-        studentQuestions.add(studentQuestion1);
+        List<Post> posts = new ArrayList<>();
+        Post post1 = new Post();
+        post1.setExercise(textExercise);
+        post1.setContent("Test Student Question 1");
+        post1.setVisibleForStudents(true);
+        post1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
+        postRepository.save(post1);
+        posts.add(post1);
 
-        StudentQuestion studentQuestion2 = new StudentQuestion();
-        studentQuestion2.setExercise(textExercise);
-        studentQuestion2.setQuestionText("Test Student Question 2");
-        studentQuestion2.setVisibleForStudents(true);
-        studentQuestion2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
-        studentQuestionRepository.save(studentQuestion2);
-        studentQuestions.add(studentQuestion2);
+        Post post2 = new Post();
+        post2.setExercise(textExercise);
+        post2.setContent("Test Student Question 2");
+        post2.setVisibleForStudents(true);
+        post2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
+        postRepository.save(post2);
+        posts.add(post2);
 
-        StudentQuestion studentQuestion3 = new StudentQuestion();
-        studentQuestion3.setLecture(lecture);
-        studentQuestion3.setQuestionText("Test Student Question 3");
-        studentQuestion3.setVisibleForStudents(true);
-        studentQuestion3.setAuthor(getUserByLoginWithoutAuthorities("student1"));
-        studentQuestionRepository.save(studentQuestion3);
-        studentQuestions.add(studentQuestion3);
+        Post post3 = new Post();
+        post3.setLecture(lecture);
+        post3.setContent("Test Student Question 3");
+        post3.setVisibleForStudents(true);
+        post3.setAuthor(getUserByLoginWithoutAuthorities("student1"));
+        postRepository.save(post3);
+        posts.add(post3);
 
-        StudentQuestion studentQuestion4 = new StudentQuestion();
-        studentQuestion4.setLecture(lecture);
-        studentQuestion4.setQuestionText("Test Student Question 4");
-        studentQuestion4.setVisibleForStudents(true);
-        studentQuestion4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
-        studentQuestionRepository.save(studentQuestion4);
-        studentQuestions.add(studentQuestion4);
+        Post post4 = new Post();
+        post4.setLecture(lecture);
+        post4.setContent("Test Student Question 4");
+        post4.setVisibleForStudents(true);
+        post4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
+        postRepository.save(post4);
+        posts.add(post4);
 
-        return studentQuestions;
+        return posts;
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {

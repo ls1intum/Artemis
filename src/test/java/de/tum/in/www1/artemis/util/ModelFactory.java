@@ -710,7 +710,7 @@ public class ModelFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setTutorParticipations(null);
-        toBeImported.setStudentQuestions(null);
+        toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
         toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
         toBeImported.setExampleSubmissions(null);
