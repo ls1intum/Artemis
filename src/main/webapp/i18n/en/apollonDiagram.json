@@ -27,13 +27,13 @@
             "detail": {
                 "title": "Apollon Diagram",
                 "crop": "Crop image to selection",
-                "help": "Download your current selection as a PNG image.",
+                "help": "Download your current selection as a PNG image",
                 "createLabel": "Generate a Quiz Exercise",
                 "generate": "Generate",
                 "error": {
                     "loading": "Error while loading Apollon Diagram"
                 },
-                "quizExercise": "Generate a quiz exercise for course {{ title }}."
+                "quizExercise": "Generate a Quiz Exercise for course {{ title }}."
             },
             "title": "Title",
             "jsonRepresentation": "JSON Representation",
