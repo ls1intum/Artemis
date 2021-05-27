@@ -111,7 +111,6 @@ public class PostResource {
         }
 
         // TODO: send notifications
-
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/metis/post" + post.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, post.getId().toString())).body(post);
     }

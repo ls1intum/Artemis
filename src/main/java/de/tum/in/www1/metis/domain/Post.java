@@ -21,10 +21,8 @@ import de.tum.in.www1.artemis.domain.User;
  * A METIS Post.
  */
 @Entity
-@EitherOr
 @Table(name = "post")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-// TODO: @Cache raus?
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(value = { "author" }, allowGetters = true) // author field is not deserialized

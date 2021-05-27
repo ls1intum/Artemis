@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
  * A root post, i.e., start of METIS Thread.
  */
 @Entity
+@EitherOr
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Table(name = "root_post")
 public class RootPost extends Post {
@@ -68,7 +69,7 @@ public class RootPost extends Post {
         this.answers = answers;
     }
 
-    public Boolean getVisibleForStudents() {
+    public Boolean isVisibleForStudents() {
         return visibleForStudents;
     }
 
@@ -126,5 +127,12 @@ public class RootPost extends Post {
             return getCourseContext();
         }
         return null;
+    }
+
+    // Todo: improve
+    @Override
+    public String toString() {
+        return "Thread{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents() + "'"
+                + "}";
     }
 }
