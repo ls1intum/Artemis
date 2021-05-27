@@ -1242,7 +1242,6 @@ public class ProgrammingExerciseResource {
             validateAuxiliaryRepository(repo, auxiliaryRepositories);
             auxiliaryRepositories.add(repo);
         }
-        System.out.println(auxiliaryRepositories);
         updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
         auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
     }

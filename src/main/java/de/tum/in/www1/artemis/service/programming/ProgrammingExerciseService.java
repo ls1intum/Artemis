@@ -212,7 +212,8 @@ public class ProgrammingExerciseService {
     }
 
     private void connectAuxiliaryRepositoriesToExerciseAndSave(ProgrammingExercise exercise) {
-        List<AuxiliaryRepository> savedRepositories = new ArrayList<>();
+        List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream()
+            .filter(repo -> repo.getId() != null).toList());
         exercise.getAuxiliaryRepositories().stream()
             .filter(repository -> repository.getId() == null)
             .forEach(repository -> {
