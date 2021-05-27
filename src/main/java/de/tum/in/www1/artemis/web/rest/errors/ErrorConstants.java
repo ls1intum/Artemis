@@ -28,6 +28,8 @@ public final class ErrorConstants {
 
     public static final URI LOGIN_ALREADY_USED_TYPE = URI.create(PROBLEM_BASE_URL + "/login-already-used");
 
+    public static final URI ACCOUNT_REGISTRATION_BLOCKED = URI.create(PROBLEM_BASE_URL + "/account-registration-blocked");
+
     public static final URI STUDENT_ALREADY_ASSIGNED_TYPE = URI.create(PROBLEM_BASE_URL + "/student-already-assigned");
 
     public static final URI REGISTRATION_NUMBER_NOT_FOUND_TYPE = URI.create(PROBLEM_BASE_URL + "/registration-number-not-found");

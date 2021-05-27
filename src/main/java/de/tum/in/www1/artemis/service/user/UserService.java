@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -20,9 +21,7 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.exception.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -78,6 +77,12 @@ public class UserService {
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
+    private final ScheduledExecutorService scheduler;
+
+    // Used for tracking and canceling the non-activated accounts that will be cleaned up.
+    // The key of the map is the user id.
+    private final Map<Long, ScheduledFuture<?>> nonActivatedAccountsFutures = new ConcurrentHashMap<>();
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
@@ -94,6 +99,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.studentScoreRepository = studentScoreRepository;
+        this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
     /**
@@ -148,6 +154,8 @@ public class UserService {
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
         return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
+            // Cancel automatic removal of the user since it's activated.
+            cancelNonActivatedUserRemoval(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.activateUser(user.getLogin()));
             // activate given user for the registration key.
             userCreationService.activateUser(user);
@@ -209,18 +217,19 @@ public class UserService {
      * @return newly registered user or throw registration exception
      */
     public User registerUser(UserDTO userDTO, String password) {
-        userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
-            boolean removed = removeNonActivatedUser(existingUser);
-            if (!removed) {
-                throw new UsernameAlreadyUsedException();
-            }
-        });
-        userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
-            boolean removed = removeNonActivatedUser(existingUser);
-            if (!removed) {
-                throw new EmailAlreadyUsedException();
-            }
-        });
+        // Find user that has the same login
+        Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
+        if (optionalExistingUser.isPresent()) {
+            User existingUser = optionalExistingUser.get();
+            return handleRegisterUserWithSameLoginAsExistingUser(userDTO, existingUser);
+        }
+
+        optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
+        if (optionalExistingUser.isPresent()) {
+            User existingUser = optionalExistingUser.get();
+            return handleRegisterUserWithSameEmailAsExistingUser(userDTO, existingUser);
+        }
+
         final var newUser = new User();
         String encryptedPassword = passwordService.encodePassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
@@ -255,19 +264,112 @@ public class UserService {
             }
         });
 
+        // Automatically remove the user if it wasn't activated after a certain amount of time.
+        scheduleForRemoveNonActivatedUser(savedNonActivatedUser);
+
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
 
     /**
-     * Remove non activated user
+     * Handles the case where a user registers a new account but a user with the same login already
+     * exists in Artemis.
+     *
+     * @param userDTO the user DTO
+     * @param existingUser the existing user
+     * @return the existing non-activated user in Artemis.
+     */
+    private User handleRegisterUserWithSameLoginAsExistingUser(UserDTO userDTO, User existingUser) {
+        // An account with the same login is already activated.
+        if (existingUser.getActivated()) {
+            throw new UsernameAlreadyUsedException();
+        }
+
+        // The user has the same login and email, but the account is not activated.
+        // Return the existing non-activated user so that Artemis can re-send the
+        // activation link.
+        if (existingUser.getEmail().equals(userDTO.getEmail())) {
+            // Post-pone the cleaning up of the account
+            scheduleForRemoveNonActivatedUser(existingUser);
+            return existingUser;
+        }
+
+        // The email is different which means that the user wants to re-register the same
+        // account with a different email. Block this.
+        throw new AccountRegistrationBlockedException(userDTO.getEmail());
+    }
+
+    /**
+     * Handles the case where a user registers a new account but a user with the same email already
+     * exists in Artemis.
+     *
+     * @param userDTO the user DTO
+     * @param existingUser the existing user
+     * @return the existing non-activated user in Artemis.
+     */
+    private User handleRegisterUserWithSameEmailAsExistingUser(UserDTO userDTO, User existingUser) {
+        // An account with the same login is already activated.
+        if (existingUser.getActivated()) {
+            throw new EmailAlreadyUsedException();
+        }
+
+        // The user has the same login and email, but the account is not activated.
+        // Return the existing non-activated user so that Artemis can re-send the
+        // activation link.
+        if (existingUser.getLogin().equals(userDTO.getLogin())) {
+            // Post-pone the cleaning up of the account
+            scheduleForRemoveNonActivatedUser(existingUser);
+            return existingUser;
+        }
+
+        // The email is different which means that the user wants to re-register the same
+        // account with a different email. Block this.
+        throw new AccountRegistrationBlockedException(userDTO.getEmail());
+    }
+
+    /**
+     * Schedules the removal of the non activated user if it wasn't activated
+     * after an hour. If it was already scheduled, the removal
+     * schedule is resetted.
+     *
+     * @param nonActivatedUser the non activated user
+     */
+    private void scheduleForRemoveNonActivatedUser(User nonActivatedUser) {
+        // Check if a future exists and cancel it before creating a new one.
+        ScheduledFuture<?> future = nonActivatedAccountsFutures.get(nonActivatedUser.getId());
+        if (future != null) {
+            future.cancel(false);
+        }
+
+        ScheduledFuture<?> newFuture = scheduler.schedule(() -> {
+            log.info("Removing user {} because it hasn't been activated within the hour.", nonActivatedUser);
+            nonActivatedAccountsFutures.remove(nonActivatedUser.getId());
+            removeNonActivatedUser(nonActivatedUser);
+        }, 1, TimeUnit.HOURS);
+        nonActivatedAccountsFutures.put(nonActivatedUser.getId(), newFuture);
+    }
+
+    /**
+     * Cancels the removal of a non activated user.
+     *
+     * @param user The non activated user
+     */
+    private void cancelNonActivatedUserRemoval(User user) {
+        ScheduledFuture<?> future = nonActivatedAccountsFutures.get(user.getId());
+        if (future != null) {
+            future.cancel(false);
+            nonActivatedAccountsFutures.remove(user.getId());
+        }
+    }
+
+    /**
+     * Remove non activated user.
      *
      * @param existingUser user object of an existing user
-     * @return true if removal has been executed successfully otherwise false
      */
-    private boolean removeNonActivatedUser(User existingUser) {
+    private void removeNonActivatedUser(User existingUser) {
         if (existingUser.getActivated()) {
-            return false;
+            return;
         }
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
             try {
@@ -279,7 +381,6 @@ public class UserService {
             }
         });
         deleteUser(existingUser);
-        return true;
     }
 
     /**
