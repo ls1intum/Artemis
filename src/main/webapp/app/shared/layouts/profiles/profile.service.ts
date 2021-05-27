@@ -3,8 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from './profile-info.model';
-import { Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, OperatorFunction } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
@@ -12,13 +12,13 @@ import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
     private infoUrl = SERVER_API_URL + 'management/info';
-    private profileInfo: Subject<ProfileInfo>;
+    private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
 
     constructor(private http: HttpClient, private featureToggleService: FeatureToggleService) {}
 
-    getProfileInfo(): Subject<ProfileInfo> {
+    getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {
-            this.profileInfo = new Subject();
+            this.profileInfo = new BehaviorSubject(undefined);
             this.http
                 .get<ProfileInfo>(this.infoUrl, { observe: 'response' })
                 .pipe(
@@ -74,7 +74,7 @@ export class ProfileService {
                 });
         }
 
-        return this.profileInfo;
+        return this.profileInfo.pipe(filter((x) => x !== undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
