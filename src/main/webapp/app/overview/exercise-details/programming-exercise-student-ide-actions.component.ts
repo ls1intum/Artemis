@@ -9,7 +9,7 @@ import { ParticipationStatus } from 'app/entities/exercise.model';
 import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { OrionState } from 'app/shared/orion/orion';
+import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { catchError, filter, finalize, tap } from 'rxjs/operators';
@@ -118,15 +118,15 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     }
 
     get canImport(): boolean {
-        const notOpenedOrInstructor = this.ideState.inInstructorView || this.ideState.opened !== this.exercise.id;
+        const notOpenedOrNotStudent = this.ideState.view != ExerciseView.STUDENT || this.ideState.opened !== this.exercise.id;
 
-        return this.hasInitializedParticipation() && notOpenedOrInstructor;
+        return this.hasInitializedParticipation() && notOpenedOrNotStudent;
     }
 
     get canSubmit(): boolean {
-        const openedAndNotInstructor = !this.ideState.inInstructorView && this.ideState.opened === this.exercise.id;
+        const openedAndStudent = this.ideState.view == ExerciseView.STUDENT && this.ideState.opened === this.exercise.id;
 
-        return this.hasInitializedParticipation() && openedAndNotInstructor;
+        return this.hasInitializedParticipation() && openedAndStudent;
     }
 
     private hasInitializedParticipation(): boolean {

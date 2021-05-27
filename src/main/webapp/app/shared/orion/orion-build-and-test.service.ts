@@ -21,7 +21,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 })
 export class OrionBuildAndTestService {
     private buildFinished = new Subject<void>();
-    private resultSubsription: Subscription;
+    private resultSubscription: Subscription;
     private buildLogSubscription: Subscription;
     private latestResult: Result;
 
@@ -56,13 +56,13 @@ export class OrionBuildAndTestService {
         this.javaBridge.onBuildStarted(exercise.problemStatement!);
 
         // Listen for the new result on the websocket
-        if (this.resultSubsription) {
-            this.resultSubsription.unsubscribe();
+        if (this.resultSubscription) {
+            this.resultSubscription.unsubscribe();
         }
         if (this.buildLogSubscription) {
             this.buildLogSubscription.unsubscribe();
         }
-        this.resultSubsription = this.participationWebsocketService
+        this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(participationId, true)
             .pipe(
                 filter(Boolean),

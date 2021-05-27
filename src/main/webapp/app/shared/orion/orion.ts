@@ -7,7 +7,7 @@ export interface OrionState {
     opened: number;
     cloning: boolean;
     building: boolean;
-    inInstructorView: boolean;
+    view: ExerciseView;
 }
 
 /**
@@ -16,6 +16,7 @@ export interface OrionState {
  */
 export enum ExerciseView {
     STUDENT = 'STUDENT',
+    TUTOR = 'TUTOR',
     INSTRUCTOR = 'INSTRUCTOR',
 }
 
@@ -47,6 +48,12 @@ export interface OrionExerciseConnector {
      * @param exerciseJson Exercise in a Json string.
      */
     editExercise(exerciseJson: string): void;
+
+    /**
+     * Assess an exercise.
+     * @param exerciseJson Exercise in a Json string.
+     */
+    assessExercise(exerciseJson: string): void;
 
     /**
      * Import a participation.
@@ -157,7 +164,7 @@ export interface OrionConnectorFacade {
 
     /**
      * To be executed when the build failed.
-     * @param buildLogsJsonString The Json string of the build logs.
+     * @param buildErrors All compile errors for the current build
      */
     onBuildFailed(buildErrors: Array<Annotation>): void;
 

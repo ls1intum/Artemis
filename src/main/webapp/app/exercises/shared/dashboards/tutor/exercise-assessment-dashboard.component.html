@@ -350,6 +350,7 @@
 
                                         <td>
                                             <button
+                                                *ngIf="!isOrion; else orionButton"
                                                 class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 (click)="openAssessmentEditor('new', correctionRound)"
                                                 [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
@@ -360,6 +361,14 @@
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
                                             </button>
+                                            <ng-template #orionButton>
+                                                <jhi-ide-button
+                                                    buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
+                                                    [smallButton]="false"
+                                                    (click)="openAssessmentInOrion('new', correctionRound)"
+                                                >
+                                                </jhi-ide-button>
+                                            </ng-template>
                                         </td>
                                     </tr>
                                 </ng-container>

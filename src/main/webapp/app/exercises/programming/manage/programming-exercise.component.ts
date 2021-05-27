@@ -11,7 +11,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { isOrion, OrionState } from 'app/shared/orion/orion';
+import { isOrion, OrionState, ExerciseView } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -33,6 +33,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
     orionState: OrionState;
+    inInstructorView: boolean;
     selectedProgrammingExercises: ProgrammingExercise[];
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
@@ -61,7 +62,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe((state) => (this.orionState = state));
+        this.javaBridge.state().subscribe((state) => {
+            this.orionState = state;
+            this.inInstructorView = state.view == ExerciseView.INSTRUCTOR;
+        });
     }
 
     protected loadExercises(): void {
@@ -167,7 +171,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     openEditSelectedModal() {
-        const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
+        const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, {
+            size: 'xl',
+            backdrop: 'static',
+        });
         modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
         modalRef.closed.subscribe(() => {
             location.reload();
@@ -175,7 +182,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     openRepoExportModal() {
-        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
         modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
     }
 

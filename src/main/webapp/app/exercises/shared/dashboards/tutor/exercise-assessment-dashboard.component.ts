@@ -40,6 +40,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { isOrion } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -54,6 +56,7 @@ export interface ExampleSubmissionQueryParams {
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
+    readonly isOrion = isOrion;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -154,6 +157,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
+        private javaBridge: OrionConnectorService,
     ) {}
 
     /**
@@ -592,6 +596,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
+    }
+
+    openAssessmentInOrion(submission: Submission | 'new', correctionRound = 0) {
+        this.javaBridge.assessExercise(this.exercise);
+        this.openAssessmentEditor(submission, correctionRound);
     }
 
     /**
