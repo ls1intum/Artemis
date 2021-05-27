@@ -4,24 +4,31 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
-
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { ExerciseType } from 'app/entities/exercise.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
-    AssessmentType = AssessmentType;
+    readonly AssessmentType = AssessmentType;
+    readonly ExerciseType = ExerciseType;
+    readonly moment = moment;
 
     textExercise: TextExercise;
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedSampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
+
+    doughnutStats: ExerciseManagementStatisticsDto;
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -31,6 +38,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         private textExerciseService: TextExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        private statisticsService: StatisticsService,
     ) {}
 
     /**
@@ -58,13 +66,18 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.sampleSolution);
         });
+        this.statisticsService.getExerciseStatistics(id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats = statistics;
+        });
     }
 
     /**
      * Unsubscribe from changes of text exercise on destruction of component.
      */
     ngOnDestroy() {
-        this.subscription.unsubscribe();
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+        }
         this.eventManager.destroy(this.eventSubscriber);
     }
 

@@ -376,8 +376,8 @@ public class ExamService {
         }
 
         // Check that the exam max points is set
-        if (exam.getMaxPoints() == null) {
-            throw new BadRequestAlertException("The exam max points is not set.", "Exam", "artemisApp.exam.validation.maxPointsNotSet");
+        if (exam.getMaxPoints() == 0) {
+            throw new BadRequestAlertException("The exam max points can not be 0.", "Exam", "artemisApp.exam.validation.maxPointsNotSet");
         }
 
         // Ensure that all exercises in an exercise group have the same amount of max points and max bonus points
