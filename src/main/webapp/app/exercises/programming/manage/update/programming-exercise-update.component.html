@@ -78,8 +78,25 @@
                     <ngx-datatable-column name="Repository Name" prop="repositoryName">
                         <ng-template ngx-datatable-cell-template let-row="row">
                             <div *ngIf="!row.id; else auxiliaryRepositoryIsNotEditable">
-                                <jhi-table-editable-field required [id]="row.id + '-repositoryName'" [value]="row.name || ''" [onValueUpdate]="updateRepositoryName(row)">
+                                <jhi-table-editable-field [id]="row.id + '-repositoryName'" [value]="row.name || ''" [onValueUpdate]="updateRepositoryName(row)">
                                 </jhi-table-editable-field>
+
+                                <!--
+                                <input
+                                    required
+                                    [id]="row.id + '-repositoryName'"
+                                    [ngModel]="row.name || ''"
+                                    [pattern]="'^(?!(solution|exercise|tests|abc)\\b)\\b(\\w|-)+$'"
+                                    #auxRepoName="ngModel"
+                                />
+                                <span
+                                    class="text-danger"
+                                    *ngIf="auxRepoName?.invalid && auxRepoName?.errors?.required"
+                                    jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired"
+                                >
+                                    Repository Name is required.
+                                </span>
+                                -->
                             </div>
                             <ng-template #auxiliaryRepositoryIsNotEditable>
                                 {{ row.name }}
