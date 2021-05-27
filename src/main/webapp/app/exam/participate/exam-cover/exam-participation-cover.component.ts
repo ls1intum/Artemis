@@ -69,6 +69,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * changes in the exam and subscription is handled in the exam-participation.component
      */
     ngOnInit(): void {
+        console.log('test');
         this.confirmed = false;
         this.startEnabled = false;
         this.testRun = this.studentExam.testRun;
@@ -199,7 +200,15 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.testRun) {
             return this.nameIsCorrect && this.confirmed && !!this.exam;
         }
-        return !!(this.nameIsCorrect && this.confirmed && this.exam && this.exam.visibleDate && this.exam.visibleDate.isBefore(this.serverDateService.now()));
+        console.log('timing test', this.serverDateService.now().add(5, 'minute').isAfter(this.exam.startDate!));
+        return !!(
+            this.nameIsCorrect &&
+            this.confirmed &&
+            this.exam &&
+            this.exam.visibleDate &&
+            this.exam.visibleDate.isBefore(this.serverDateService.now()) &&
+            this.serverDateService.now().add(5, 'minute').isAfter(this.exam.startDate!)
+        );
     }
 
     get endButtonEnabled(): boolean {
