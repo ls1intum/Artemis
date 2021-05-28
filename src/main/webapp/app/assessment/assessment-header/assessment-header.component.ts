@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -27,6 +28,7 @@ export class AssessmentHeaderComponent {
     @Input() exerciseDashboardLink: string[];
     @Input() canOverride: boolean;
 
+    @Input() exercise?: Exercise;
     @Input() result?: Result;
     @Input() isIllegalSubmission: boolean;
     @Input() hasComplaint = false;
