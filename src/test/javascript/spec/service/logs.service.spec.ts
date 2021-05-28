@@ -1,5 +1,4 @@
-import { TestBed } from '@angular/core/testing';
-
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LogsService } from 'app/admin/logs/logs.service';
 import { Log } from 'app/admin/logs/log.model';
 import { SERVER_API_URL } from 'app/app.constants';
@@ -23,34 +22,34 @@ describe('Logs Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should call correct URL', () => {
+        it('should call correct URL', fakeAsync(() => {
+            const resourceUrl = SERVER_API_URL + 'management/logs';
+
             service.findAll().subscribe(() => {});
 
             const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = SERVER_API_URL + 'management/logs';
             expect(req.request.url).toEqual(resourceUrl);
-        });
+            tick();
+        }));
 
-        it('should return Logs', () => {
+        it('should return Logs', fakeAsync(() => {
             const log = new Log('main', 'ERROR');
 
-            service.findAll().subscribe((received) => {
-                expect(received.body![0]).toEqual(log);
-            });
+            service.findAll().subscribe((resp) => expect(resp.body).toEqual(log));
 
             const req = httpMock.expectOne({ method: 'GET' });
-            req.flush([log]);
-        });
+            req.flush(log);
+            tick();
+        }));
 
-        it('should change log level', () => {
-            const log = new Log('main', 'ERROR');
+        it('should change log level', fakeAsync(() => {
+            const log = new Log('new', 'ERROR');
 
-            service.changeLevel(log).subscribe((received) => {
-                expect(received.body![0]).toEqual(log);
-            });
+            service.changeLevel(log).subscribe((received) => expect(received.body).toEqual(log));
 
             const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush([log]);
-        });
+            req.flush(log);
+            tick();
+        }));
     });
 });

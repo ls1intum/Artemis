@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -477,6 +478,11 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+            // Checks if weightSum == 0. We can't use == operator since we are comparing doubles
+            if (Precision.equals(weightSum, 0, 1E-8)) {
+                result.setScore(0D);
+                return;
+            }
 
             // calculate the achieved points from the passed test cases
             double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
