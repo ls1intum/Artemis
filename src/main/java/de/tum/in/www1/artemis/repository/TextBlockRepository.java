@@ -34,7 +34,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     void deleteAllBySubmission_Id(Long submissionId);
 
     /**
-     * Interface to define return type for countOtherBlocksInClusterForSubmission
+     * Interface used to define return type for `countOtherBlocksInClusterBySubmissionId`
      */
     interface TextBlockCount {
 
@@ -64,7 +64,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     List<TextBlockCount> countOtherBlocksInSameClusterForSubmissionId(@Param("submissionId") Long submissionId);
 
     /**
-     * This function calls query `countOtherBlocksInClusterForSubmission` and converts the result into a Map
+     * This function calls query `countOtherBlocksInSameClusterForSubmissionId` and converts the result into a Map
      * so that it's values will be easily accessed through key value pairs
      * @param submissionId the `id` of the Submission
      * @return a Map data type representing key value pairs where the key is the TextBlock id
