@@ -182,12 +182,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
 
+        this.loadAll();
+        this.accountService.identity().then((user: User) => (this.tutor = user));
         this.javaBridge.state().subscribe((state) => {
             this.exerciseOpenedInOrion = this.exercise.id === state.opened && state.view === ExerciseView.TUTOR;
         });
-
-        this.loadAll();
-        this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
     /**
