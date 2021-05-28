@@ -357,42 +357,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Creates and initializes an auxiliary repository for a given programming exercise.
-     * Creates and initializes the repository on the VCS and adds the created repository
-     * to the base and solution build plan of the given programming exercise.
-     *
-     * @param programmingExercise The programming exercise that auxiliaryRepository will be added to.
-     * @param auxiliaryRepository The auxiliary repository that must be added to programmingExercise.
-     * @return Auxiliary repository that was created and added to the provided programming exercise.
-     * @throws GitAPIException Is thrown when the repository could not be created or the initial
-     *                         commit was unsuccessful.
-     * @throws InterruptedException Is thrown when the target repository could not be checked out.
-     */
-    public AuxiliaryRepository createAuxiliaryRepositoryForExercise(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository)
-            throws GitAPIException, InterruptedException {
-
-        final var projectKey = programmingExercise.getProjectKey();
-
-        AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
-
-        programmingExercise.addAuxiliaryRepository(newAuxiliaryRepository);
-        String repositoryUrl = versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), newAuxiliaryRepository.getRepositoryName()).toString();
-        newAuxiliaryRepository.setRepositoryUrl(repositoryUrl);
-
-        save(programmingExercise);
-
-        versionControlService.get().createRepository(projectKey, newAuxiliaryRepository.getRepositoryName(), null);
-
-        Repository repo = gitService.getOrCheckoutRepository(newAuxiliaryRepository.getVcsRepositoryUrl(), true);
-        gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, null);
-
-        if (newAuxiliaryRepository.shouldBeIncludedInBuildPlan()) {
-            continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
-        }
-        return newAuxiliaryRepository;
-    }
-
-    /**
      * @param programmingExercise the changed programming exercise with its new values
      * @param notificationText    optional text about the changes for a notification
      * @return the updates programming exercise from the database
