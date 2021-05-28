@@ -115,6 +115,7 @@ Route naming conventions:
 
 Additional notes on the controller methods:
 
+* The RestControllers route should end with a tailing "/" and not start with a "/" (e.g. "api/"), the individual Endpoints routes should not start and not end with a "/" (e.g. "exercises/{exerciseId}")
 * Use ...ElseThrow alternatives of all Repository and AuthorizationCheck calls whenever applicable, this increases readability (e.g. ``findByIdElseThrow(...)`` instead of ``findById(...)`` and then checking for ``null``)
 * POST should return the newly created entity
 * POST should be used to trigger remote methods (e.g. ".../{participationId}/submit" should be triggered with a POST)
@@ -124,7 +125,7 @@ Additional notes on the controller methods:
 * Check for other common weaknesses, e.g., weak configuration, malicious user input, missing log events, etc.
 * Never trust user input and check if the passed data exists in the database.
     * Verify the consistency of user input by e.g. checking Ids in Body and path to see if they match, comparing course in the RequestBody with the one referenced by Id in the path
-    * Check for User Input consistency first, and then check the Authorization, if e.g. the Ids of the course in Body and path dont match, the user may be Instructor in one course and just a USER in another, this may lead to unauthorized access
+    * Check for User Input consistency first, then check the Authorization, if e.g. the Ids of the course in Body and path dont match, the user may be Instructor in one course and just a USER in another, this may lead to unauthorized access
 * RestController should only handle authentication, error handling, input validation and output creation, the actual logic behind an Endpoint should happen in the respective Service or Repository
 * Handle exceptions and errors with a standard response. Errors are very important in REST APIs. They inform clients that something went wrong, after all.
 * Always use different response status codes to notify the client about errors on the server, e.g.:
