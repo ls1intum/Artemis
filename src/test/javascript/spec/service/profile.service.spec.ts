@@ -17,6 +17,36 @@ describe('Logs Service', () => {
     const serverResponse = {
         contact: 'artemis.in@tum.de',
         imprint: 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint',
+        'guided-tour': {
+            courseShortName: 'artemistutorial',
+            tours: {
+                0: {
+                    cancel_tour: '',
+                },
+                1: {
+                    code_editor_tour: 'test',
+                },
+                2: {
+                    course_overview_tour: '',
+                },
+                3: {
+                    course_exercise_overview_tour: 'test',
+                },
+                4: {
+                    modeling_tour: 'UML Class Diagram',
+                },
+                5: {
+                    programming_exercise_fail_tour: 'test',
+                },
+                6: {
+                    programming_exercise_success_tour: 'test',
+                },
+                7: {
+                    tutor_assessment_tour: 'Patterns in Software Engineering',
+                },
+            },
+            //            "course-group-students": "artemis-artemistutorial-students"
+        },
         'test-server': true,
         sentry: {
             dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2',
@@ -95,6 +125,20 @@ describe('Logs Service', () => {
         allowedMinimumOrionVersion: '1.0.0',
         testServer: true,
         ribbonEnv: '',
+        guidedTourMapping: {
+            //         "course-group-students": "artemis-artemistutorial-students",
+            courseShortName: 'artemistutorial',
+            tours: {
+                cancel_tour: '',
+                code_editor_tour: 'test',
+                course_exercise_overview_tour: 'test',
+                course_overview_tour: '',
+                modeling_tour: 'UML Class Diagram',
+                programming_exercise_fail_tour: 'test',
+                programming_exercise_success_tour: 'test',
+                tutor_assessment_tour: 'Patterns in Software Engineering',
+            },
+        },
         inProduction: true,
         openApiEnabled: true,
         sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
@@ -163,28 +207,6 @@ describe('Logs Service', () => {
         ],
     };
 
-    /*
-    const profileInfo: ProfileInfo = {
-        activeProfiles: [],
-        allowedMinimumOrionVersion: '',
-        buildPlanURLTemplate: '',
-        commitHashURLTemplate: '',
-        contact: '',
-        externalUserManagementName: '',
-        externalUserManagementURL: '',
-        features: [],
-        inProduction: false,
-        programmingLanguageFeatures: [],
-        ribbonEnv: '',
-        sshCloneURLTemplate: 'ssh://git@bitbucket.ase.in.tum.de:7999/',
-        sshKeysURL: 'sshKeysURL',
-        testServer: false,
-        versionControlUrl: 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
-        openApiEnabled: false,
-    };
-
-     */
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -217,7 +239,6 @@ describe('Logs Service', () => {
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
-            //req.flush(profileInfo);
             req.flush(serverResponse);
             tick();
         }));

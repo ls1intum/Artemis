@@ -26,6 +26,7 @@ export class ProfileService {
                         const data = res.body!;
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
+                        const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
 
                         this.mapGuidedTourConfig(data, profileInfo);
                         this.mapAllowedOrionVersions(data, profileInfo);
@@ -33,18 +34,15 @@ export class ProfileService {
                         ProfileService.mapSaml2Config(data, profileInfo);
 
                         if (profileInfo.activeProfiles) {
-                            if (data['display-ribbon-on-profiles']) {
-                                const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
-                                const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
-                                if (ribbonProfiles.length !== 0) {
-                                    profileInfo.ribbonEnv = ribbonProfiles[0];
-                                }
-                            }
-                            if (profileInfo.ribbonEnv === undefined) {
-                                profileInfo.ribbonEnv = '';
+                            const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
+                            if (ribbonProfiles.length !== 0) {
+                                profileInfo.ribbonEnv = ribbonProfiles[0];
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
+                        }
+                        if (profileInfo.ribbonEnv === undefined) {
+                            profileInfo.ribbonEnv = '';
                         }
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
@@ -52,8 +50,13 @@ export class ProfileService {
                         profileInfo.commitHashURLTemplate = data.commitHashURLTemplate;
                         profileInfo.sshCloneURLTemplate = data.sshCloneURLTemplate;
                         profileInfo.sshKeysURL = data.sshKeysURL;
-                        profileInfo.externalUserManagementName = data.externalUserManagementName;
-                        profileInfo.externalUserManagementURL = data.externalUserManagementURL;
+
+                        // Both properties below are mandatory Strings (see profile-info.model.ts)
+                        const externalUserManagementName = data.externalUserManagementName;
+                        profileInfo.externalUserManagementName = externalUserManagementName === undefined ? '' : externalUserManagementName;
+                        const externalUserManagementURL = data.externalUserManagementURL;
+                        profileInfo.externalUserManagementURL = externalUserManagementURL === undefined ? '' : externalUserManagementURL;
+
                         profileInfo.contact = data.contact;
                         profileInfo.registrationEnabled = data.registrationEnabled;
                         profileInfo.needsToAcceptTerms = data.needsToAcceptTerms;
@@ -78,19 +81,11 @@ export class ProfileService {
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
-        if (data['allowed-minimum-orion-version']) {
-            profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
-        } else {
-            profileInfo.allowedMinimumOrionVersion = data['allowedMinimumOrionVersion'];
-        }
+        profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
     }
 
     private mapTestServer(data: any, profileInfo: ProfileInfo) {
-        if (data['test-server']) {
-            profileInfo.testServer = data['test-server'];
-        } else {
-            profileInfo.testServer = data['testServer'];
-        }
+        profileInfo.testServer = data['test-server'];
     }
 
     private mapGuidedTourConfig(data: any, profileInfo: ProfileInfo) {
