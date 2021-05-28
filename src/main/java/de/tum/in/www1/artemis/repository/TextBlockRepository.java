@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
+import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,6 +34,14 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     void deleteAllBySubmission_Id(Long submissionId);
 
     /**
+     * Inner Class to define return type for countOtherBlocksInClusterForSubmission
+     */
+    interface TextBlockCount {
+        String getId();
+        Long getNumberOfOtherBlocks();
+    }
+
+    /**
      * For the given Submission `id` returns a list of raw object array representing two columns.
      * First index/column corresponds to the TextBlock `id` while the second one corresponds to
      * the number of other blocks in the same cluster as given block with id = `id`.
@@ -43,21 +51,24 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
      * @return the number of other blocks in the same cluster as the block with given `id`
      */
     @Query("""
-            SELECT tb.id, COUNT(DISTINCT tball.id)
+            SELECT tb.id, COUNT(DISTINCT tball.id) as numberOfOtherBlocks
             FROM TextSubmission s
             LEFT JOIN TextBlock tb ON s.id = tb.submission.id
             LEFT JOIN TextCluster tc ON tb.cluster.id = tc.id
             LEFT JOIN TextBlock tball ON tc.id = tball.cluster.id AND tball.id <> tb.id
             WHERE s.id = :#{#id}
-            GROUP BY tb.id""")
-    List<Object[]> getNumberOfOtherBlocksInClusterForSubmission(@Param("id") Long id);
+            GROUP BY tb.id
+            """)
+    List<TextBlockCount> countOtherBlocksInClusterForSubmission(@Param("id") Long id);
 
     /**
-     * Takes a List of Object[] type and converts it into a Map<String, Integer>
-     * @param input the id of the submission
-     * @return given input in Map<String, Integer> data structure
+     *
+     * @param id
+     * @return
      */
-    default Map<String, Integer> convertListOfObjectArrayToMap(List<Object[]> input) {
-        return input.stream().collect(Collectors.toMap(column -> (String) column[0], column -> ((Long) column[1]).intValue()));
+    default Map<String, Integer> countOtherBlocksInClusterForSubmissionByTextBlockId(Long id) {
+        return countOtherBlocksInClusterForSubmission(id).stream().collect(
+            toMap(TextBlockCount::getId, count -> count.getNumberOfOtherBlocks().intValue())
+        );
     }
 }
