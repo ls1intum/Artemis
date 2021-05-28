@@ -53,11 +53,11 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
             GraphType.CREATED_FEEDBACKS);
 
     List<GraphType> courseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS,
-            GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS, GraphType.QUESTIONS_ASKED,
-            GraphType.QUESTIONS_ANSWERED);
+            GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS, GraphType.POSTS,
+            GraphType.ANSWERED_POSTS);
 
     List<GraphType> exerciseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS,
-            GraphType.QUESTIONS_ASKED, GraphType.QUESTIONS_ANSWERED);
+            GraphType.POSTS, GraphType.ANSWERED_POSTS);
 
     @BeforeEach
     public void initTestCase() {

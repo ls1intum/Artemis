@@ -21,13 +21,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByAuthorWithLogin(@Param("login") String login);
 
     @Query("select post from Post post where post.exercise.id = :#{#exerciseId}")
-    List<Post> findStudentQuestionsForExercise(@Param("exerciseId") Long exerciseId);
+    List<Post> findPostsForExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("select post from Post post where post.lecture.id = :#{#lectureId}")
-    List<Post> findStudentQuestionsForLecture(@Param("lectureId") Long lectureId);
+    List<Post> findPostsForLecture(@Param("lectureId") Long lectureId);
 
     @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} )")
-    List<Post> findStudentQuestionsForCourse(@Param("courseId") Long courseId);
+    List<Post> findPostsForCourse(@Param("courseId") Long courseId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));

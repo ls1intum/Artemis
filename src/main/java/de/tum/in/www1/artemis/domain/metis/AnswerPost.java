@@ -44,12 +44,15 @@ public class AnswerPost extends Posting {
 
     @Override
     public String toString() {
-        return "AnswerPost{" + "id=" + getId() + ", content='" + getContent() + "'" + ", answerDate='" + getCreationDate() + "'" + ", tutorApproved='" + isTutorApproved() + "'"
+        return "AnswerPost{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", tutorApproved='" + isTutorApproved() + "'"
                 + "}";
     }
 
     @Override
     public Course getCourse() {
-        return getPost().getCourse();
+        if (post == null) {
+            return null;
+        }
+        return post.getCourse();
     }
 }

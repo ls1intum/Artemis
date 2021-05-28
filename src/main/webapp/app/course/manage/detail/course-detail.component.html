@@ -63,7 +63,7 @@
             </a>
             <div class="ml-auto">
                 <a
-                    *ngIf="course.studentQuestionsEnabled && course.isAtLeastTutor"
+                    *ngIf="course.postsEnabled && course.isAtLeastTutor"
                     [routerLink]="['/course-management', course.id!, 'questions']"
                     class="tab-item btn btn-primary btn-md ml-1 mr-1"
                 >

@@ -133,13 +133,13 @@ public class GroupNotificationFactory {
         String title, text;
         Course course;
         switch (notificationType) {
-            case NEW_QUESTION_FOR_EXERCISE -> {
+            case NEW_POST_FOR_EXERCISE -> {
                 Exercise exercise = question.getExercise();
                 title = "New Question";
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new question.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
             }
-            case NEW_QUESTION_FOR_LECTURE -> {
+            case NEW_POST_FOR_LECTURE -> {
                 Lecture lecture = question.getLecture();
                 title = "New Question";
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new question.";
@@ -150,7 +150,7 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        if (notificationType == NotificationType.NEW_QUESTION_FOR_EXERCISE) {
+        if (notificationType == NotificationType.NEW_POST_FOR_EXERCISE) {
             notification.setTarget(notification.getExerciseQuestionTarget(question.getExercise()));
         }
         else {
@@ -173,13 +173,13 @@ public class GroupNotificationFactory {
         String text, title;
         Course course;
         switch (notificationType) {
-            case NEW_ANSWER_FOR_EXERCISE -> {
+            case NEW_ANSWER_POST_FOR_EXERCISE -> {
                 Exercise exercise = answer.getPost().getExercise();
                 title = "New Answer";
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new answer.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
             }
-            case NEW_ANSWER_FOR_LECTURE -> {
+            case NEW_ANSWER_POST_FOR_LECTURE -> {
                 Lecture lecture = answer.getPost().getLecture();
                 title = "New Answer";
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new answer.";
@@ -190,7 +190,7 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        if (notificationType == NotificationType.NEW_ANSWER_FOR_EXERCISE) {
+        if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
             notification.setTarget(notification.getExerciseAnswerTarget(answer.getPost().getExercise()));
         }
         else {

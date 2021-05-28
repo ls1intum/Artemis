@@ -489,7 +489,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        Lecture l = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }
@@ -657,7 +657,7 @@ public class DatabaseUtilService {
         return Arrays.asList(course1, course2);
     }
 
-    public List<Post> createCourseWithExerciseAndStudentQuestions() {
+    public List<Post> createCourseWithExerciseAndPosts() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -676,7 +676,7 @@ public class DatabaseUtilService {
         List<Post> posts = new ArrayList<>();
         Post post1 = new Post();
         post1.setExercise(textExercise);
-        post1.setContent("Test Student Question 1");
+        post1.setContent("Test Post 1");
         post1.setVisibleForStudents(true);
         post1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         postRepository.save(post1);
@@ -684,7 +684,7 @@ public class DatabaseUtilService {
 
         Post post2 = new Post();
         post2.setExercise(textExercise);
-        post2.setContent("Test Student Question 2");
+        post2.setContent("Test Post 2");
         post2.setVisibleForStudents(true);
         post2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         postRepository.save(post2);
@@ -693,7 +693,7 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    public List<Post> createCourseWithExerciseAndLectureAndStudentQuestions() {
+    public List<Post> createCourseWithExerciseAndLectureAndPosts() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -717,7 +717,7 @@ public class DatabaseUtilService {
         List<Post> posts = new ArrayList<>();
         Post post1 = new Post();
         post1.setExercise(textExercise);
-        post1.setContent("Test Student Question 1");
+        post1.setContent("Test Post 1");
         post1.setVisibleForStudents(true);
         post1.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         postRepository.save(post1);
@@ -725,7 +725,7 @@ public class DatabaseUtilService {
 
         Post post2 = new Post();
         post2.setExercise(textExercise);
-        post2.setContent("Test Student Question 2");
+        post2.setContent("Test Post 2");
         post2.setVisibleForStudents(true);
         post2.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         postRepository.save(post2);
@@ -733,7 +733,7 @@ public class DatabaseUtilService {
 
         Post post3 = new Post();
         post3.setLecture(lecture);
-        post3.setContent("Test Student Question 3");
+        post3.setContent("Test Post 3");
         post3.setVisibleForStudents(true);
         post3.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         postRepository.save(post3);
@@ -741,7 +741,7 @@ public class DatabaseUtilService {
 
         Post post4 = new Post();
         post4.setLecture(lecture);
-        post4.setContent("Test Student Question 4");
+        post4.setContent("Test Post 4");
         post4.setVisibleForStudents(true);
         post4.setAuthor(getUserByLoginWithoutAuthorities("student2"));
         postRepository.save(post4);

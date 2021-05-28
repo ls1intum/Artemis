@@ -91,10 +91,10 @@ public class PostResource {
         post.setAuthor(user);
         Post savedPost = postRepository.save(post);
         if (savedPost.getExercise() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForExercise(savedPost);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(savedPost);
         }
         if (savedPost.getLecture() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewQuestionForLecture(savedPost);
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(savedPost);
         }
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + savedPost.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedPost.getId().toString())).body(savedPost);
@@ -121,7 +121,7 @@ public class PostResource {
         if (!existingPost.getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the Post that should be changed");
         }
-        mayUpdateOrDeleteStudentQuestionElseThrow(existingPost, user);
+        mayUpdateOrDeletePostElseThrow(existingPost, user);
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         Post result = postRepository.save(existingPost);
@@ -149,7 +149,7 @@ public class PostResource {
         if (!post.getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the Post that should be changed");
         }
-        mayUpdateStudentQuestionVotesElseThrow(post, user);
+        mayUpdatePostVotesElseThrow(post, user);
         Integer newVotes = post.getVotes() + voteChange;
         post.setVotes(newVotes);
         Post result = postRepository.save(post);
@@ -174,7 +174,7 @@ public class PostResource {
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the exercise that should be returned");
         }
-        List<Post> posts = postRepository.findStudentQuestionsForExercise(exerciseId);
+        List<Post> posts = postRepository.findPostsForExercise(exerciseId);
         hideSensitiveInformation(posts);
         return new ResponseEntity<>(posts, null, HttpStatus.OK);
     }
@@ -195,7 +195,7 @@ public class PostResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (lecture.getCourse().getId().equals(courseId)) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
-            List<Post> posts = postRepository.findStudentQuestionsForLecture(lectureId);
+            List<Post> posts = postRepository.findPostsForLecture(lectureId);
             hideSensitiveInformation(posts);
             return new ResponseEntity<>(posts, null, HttpStatus.OK);
         }
@@ -215,7 +215,7 @@ public class PostResource {
     public ResponseEntity<List<Post>> getAllPostsForCourse(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        List<Post> posts = postRepository.findStudentQuestionsForCourse(courseId);
+        List<Post> posts = postRepository.findPostsForCourse(courseId);
         return new ResponseEntity<>(posts, null, HttpStatus.OK);
     }
 
@@ -253,8 +253,8 @@ public class PostResource {
         if (post.getCourse() == null) {
             return ResponseEntity.badRequest().build();
         }
-        mayUpdateOrDeleteStudentQuestionElseThrow(post, user);
-        log.info("Post deleted by " + user.getLogin() + ". Question: " + post.getContent() + " for " + entity);
+        mayUpdateOrDeletePostElseThrow(post, user);
+        log.info("Post deleted by " + user.getLogin() + ". Post: " + post.getContent() + " for " + entity);
         postRepository.deleteById(postId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, postId.toString())).build();
 
@@ -266,19 +266,19 @@ public class PostResource {
      * @param post post for which to check
      * @param user user for which to check
      */
-    private void mayUpdateOrDeleteStudentQuestionElseThrow(Post post, User user) {
+    private void mayUpdateOrDeletePostElseThrow(Post post, User user) {
         if (!user.getId().equals(post.getAuthor().getId())) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCourse(), user);
         }
     }
 
     /**
-     * Check if user can update the StudentQuestions votes, if not throws an AccessForbiddenException
+     * Check if user can update the post votes, if not throws an AccessForbiddenException
      *
      * @param post postAnswer for which to check
      * @param user user for which to check
      */
-    private void mayUpdateStudentQuestionVotesElseThrow(Post post, User user) {
+    private void mayUpdatePostVotesElseThrow(Post post, User user) {
         Course course = post.getCourse();
         Exercise exercise = post.getExercise();
         if (course != null) {

@@ -28,7 +28,7 @@ public class SingleUserNotificationService {
      * @param answer for exercise that is new
      */
     public void notifyUserAboutNewAnswerForExercise(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_FOR_EXERCISE));
+        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_EXERCISE));
     }
 
     /**
@@ -37,7 +37,7 @@ public class SingleUserNotificationService {
      * @param answer for lecture that is new
      */
     public void notifyUserAboutNewAnswerForLecture(AnswerPost answer) {
-        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_FOR_LECTURE));
+        saveAndSend(createNotification(answer, NotificationType.NEW_ANSWER_POST_FOR_LECTURE));
     }
 
     /**

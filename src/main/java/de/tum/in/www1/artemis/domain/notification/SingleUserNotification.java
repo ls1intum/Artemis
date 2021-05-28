@@ -52,7 +52,7 @@ public class SingleUserNotification extends Notification {
      * @param answerPost a question that was posted for an exercise
      * @return JSON string with all properties for the notification target field
      */
-    public String studentQuestionAnswerTargetForExercise(AnswerPost answerPost) {
+    public String answerPostTargetForExercise(AnswerPost answerPost) {
         JsonObject target = new JsonObject();
         target.addProperty("message", "newAnswer");
         target.addProperty("id", answerPost.getPost().getExercise().getId());
@@ -68,7 +68,7 @@ public class SingleUserNotification extends Notification {
      * @param answerPost a question that was posted for a lecture
      * @return JSON string with all properties for the notification target field
      */
-    public String studentQuestionAnswerTargetForLecture(AnswerPost answerPost) {
+    public String answerPostTargetForLecture(AnswerPost answerPost) {
         JsonObject target = new JsonObject();
         target.addProperty("message", "newAnswer");
         target.addProperty("id", answerPost.getPost().getLecture().getId());

@@ -8,7 +8,7 @@
             "creationDate": "Gestellt am",
             "votes": "Votes",
             "answers": "Antworten",
-            "approvedAnswers": "Bestätigte Antworten",
+            "approvedAnswerPosts": "Bestätigte Antworten",
             "exerciseOrLecture": "Aufgabe / Vorlesung",
             "overview": {
                 "title": "Fragen",

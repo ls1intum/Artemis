@@ -12,7 +12,7 @@
                     {{ exam?.title }}
                 </h2>
                 <a
-                    *ngIf="!isExamMode && course?.studentQuestionsEnabled && course?.isAtLeastTutor"
+                    *ngIf="!isExamMode && course?.postsEnabled && course?.isAtLeastTutor"
                     routerLinkActive="active"
                     [routerLink]="['/course-management', course?.id, 'questions']"
                     class="text-white card-link"
