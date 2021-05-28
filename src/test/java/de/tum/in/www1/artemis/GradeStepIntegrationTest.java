@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
@@ -29,6 +31,9 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private GradeStepRepository gradeStepRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
 
     private Course course;
 
@@ -259,6 +264,20 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     /**
+     * Test get request for a single grade step by grade pecentage as a student
+     * when the exam results have not been published yet
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetGradeStepByPercentageForExamForbidden() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.FORBIDDEN, GradeDTO.class);
+    }
+
+    /**
      * Test get request for a single grade by grade percentage
      *
      * @throws Exception
@@ -276,6 +295,8 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         examGradingScale.setGradeSteps(gradeSteps);
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
+        exam.setPublishResultsDate(ZonedDateTime.now());
+        examRepository.save(exam);
 
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=35", HttpStatus.OK,
                 GradeDTO.class);

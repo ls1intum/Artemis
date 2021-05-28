@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -12,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.GradeStepRepository;
-import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
@@ -37,12 +39,18 @@ public class GradeStepResource {
 
     private final CourseRepository courseRepository;
 
+    private final ExamRepository examRepository;
+
+    private final UserRepository userRepository;
+
     public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
+        this.examRepository = examRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -148,9 +156,15 @@ public class GradeStepResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
+        Exam exam = examRepository.findByIdElseThrow(examId);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
+        if (!isInstructor && !exam.resultsPublished()) {
+            return forbidden();
+        }
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
         return ResponseEntity.ok(gradeDTO);
