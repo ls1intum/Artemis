@@ -7,7 +7,7 @@
             [title]="showPostsWithApprovedAnswerPosts ? 'artemisApp.post.overview.hideApproved' : 'artemisApp.post.overview.showApproved'"
         ></jhi-button>
     </div>
-    <div class="table-responsive" *ngIf="posts && posts.length > 0; else noQuestions">
+    <div class="table-responsive" *ngIf="posts && posts.length > 0; else noPosts">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
@@ -31,7 +31,7 @@
                     <td>{{ post.creationDate | artemisDate }}</td>
                     <td>{{ post.votes }}</td>
                     <td>{{ post.answers }}</td>
-                    <td *ngIf="showPostsWithApprovedAnswerPosts">{{ post.approvedAnswers }}</td>
+                    <td *ngIf="showPostsWithApprovedAnswerPosts">{{ post.approvedAnswerPosts }}</td>
                     <td>
                         <a [routerLink]="['/courses', courseId, post.belongsToExercise ? 'exercises' : 'lectures', post.exerciseOrLectureId]">{{ post.exerciseOrLectureTitle }}</a>
                     </td>
@@ -39,7 +39,7 @@
             </tbody>
         </table>
     </div>
-    <ng-template #noQuestions>
+    <ng-template #noPosts>
         <div>
             {{ 'artemisApp.post.overview.noQuestions' | artemisTranslate }}
         </div>
