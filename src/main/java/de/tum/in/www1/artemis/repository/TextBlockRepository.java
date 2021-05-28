@@ -61,7 +61,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
             WHERE s.id = :#{#submissionId}
             GROUP BY tb.id
             """)
-    List<TextBlockCount> countOtherBlocksInClusterForSubmission(@Param("submissionId") Long submissionId);
+    List<TextBlockCount> countOtherBlocksInSameClusterBySubmissionId(@Param("submissionId") Long submissionId);
 
     /**
      * This function calls query `countOtherBlocksInClusterForSubmission` and converts the result into a Map
@@ -70,7 +70,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
      * @return a Map data type representing key value pairs where the key is the TextBlock id
      * and the value is the number of other blocks in the same cluster for that TextBlock.
      */
-    default Map<String, Integer> countOtherBlocksInClusterForSubmissionByTextBlockId(Long submissionId) {
-        return countOtherBlocksInClusterForSubmission(submissionId).stream().collect(toMap(TextBlockCount::getBlockId, count -> count.getNumberOfOtherBlocks().intValue()));
+    default Map<String, Integer> countOtherBlocksInClusterBySubmissionId(Long submissionId) {
+        return countOtherBlocksInSameClusterBySubmissionId(submissionId).stream().collect(toMap(TextBlockCount::getBlockId, count -> count.getNumberOfOtherBlocks().intValue()));
     }
 }

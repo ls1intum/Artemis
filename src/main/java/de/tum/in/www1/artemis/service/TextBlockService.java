@@ -117,7 +117,7 @@ public class TextBlockService {
         final long sumbissionId = textSubmission.getId();
         final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(sumbissionId);
         textSubmission.setBlocks(blocks);
-        final var otherBlocksInCluster = textBlockRepository.countOtherBlocksInClusterForSubmissionByTextBlockId(sumbissionId);
+        final var otherBlocksInCluster = textBlockRepository.countOtherBlocksInClusterBySubmissionId(sumbissionId);
 
         // iterate over blocks of the referenced submission
         blocks.forEach(block -> {
