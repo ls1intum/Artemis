@@ -30,10 +30,10 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
+    readonly ExerciseView = ExerciseView
     readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
     orionState: OrionState;
-    inInstructorView: boolean;
     selectedProgrammingExercises: ProgrammingExercise[];
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
@@ -64,7 +64,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         super.ngOnInit();
         this.javaBridge.state().subscribe((state) => {
             this.orionState = state;
-            this.inInstructorView = state.view == ExerciseView.INSTRUCTOR;
         });
     }
 

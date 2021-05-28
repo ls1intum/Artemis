@@ -46,7 +46,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { ExerciseView, isOrion } from 'app/shared/orion/orion';
+import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 export interface ExampleSubmissionQueryParams {
@@ -62,6 +62,7 @@ export interface ExampleSubmissionQueryParams {
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
+    readonly ExerciseView = ExerciseView
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -121,7 +122,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
-    exerciseOpenedInOrion = false;
+    orionState: OrionState
     isOrionAndProgramming = false;
 
     stats = {
@@ -182,11 +183,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
 
+        this.javaBridge.state().subscribe((state) => {
+            this.orionState = state;
+        });
+
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
-        this.javaBridge.state().subscribe((state) => {
-            this.exerciseOpenedInOrion = this.exercise.id === state.opened && state.view === ExerciseView.TUTOR;
-        });
     }
 
     /**

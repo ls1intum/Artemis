@@ -189,8 +189,7 @@
                     <td class="d-none d-md-table-cell" *ngIf="course.presentationScore !== 0">{{ programmingExercise.presentationScoreEnabled }}</td>
                     <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
                         <jhi-ide-button
-                            *ngIf="
-                                inInstructorView &&
+                            *ngIf=" orionState.view === ExerciseView.INSTRUCTOR &&
                                     orionState.opened === programmingExercise.id &&
                                     programmingExercise.isAtLeastEditor &&
                                     programmingExercise.templateParticipation;
