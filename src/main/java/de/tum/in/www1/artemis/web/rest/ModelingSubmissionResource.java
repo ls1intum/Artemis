@@ -229,7 +229,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // prepare modelingSubmission for response
         modelingSubmissionService.hideDetails(modelingSubmission, user);
-        modelingSubmission.removeNotNeededResults(correctionRound, resultId);
+        // Don't remove results when they were not requested in the first place
+        if (!withoutResults) {
+            modelingSubmission.removeNotNeededResults(correctionRound, resultId);
+        }
 
         return ResponseEntity.ok(modelingSubmission);
     }
