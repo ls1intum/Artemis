@@ -34,10 +34,12 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     void deleteAllBySubmission_Id(Long submissionId);
 
     /**
-     * Inner Class to define return type for countOtherBlocksInClusterForSubmission
+     * Interface to define return type for countOtherBlocksInClusterForSubmission
      */
     interface TextBlockCount {
-        String getId();
+
+        String getBlockId();
+
         Long getNumberOfOtherBlocks();
     }
 
@@ -47,11 +49,11 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
      * the number of other blocks in the same cluster as given block with id = `id`.
      * For all TextBlock's of the Submission with the given `id`
      * finds their respective cluster and retrieves the number of other blocks in the same cluster
-     * @param id the id of the submission
+     * @param id the id of the Submission
      * @return the number of other blocks in the same cluster as the block with given `id`
      */
     @Query("""
-            SELECT tb.id, COUNT(DISTINCT tball.id) as numberOfOtherBlocks
+            SELECT tb.id as blockId, COUNT(DISTINCT tball.id) as numberOfOtherBlocks
             FROM TextSubmission s
             LEFT JOIN TextBlock tb ON s.id = tb.submission.id
             LEFT JOIN TextCluster tc ON tb.cluster.id = tc.id
@@ -62,13 +64,13 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     List<TextBlockCount> countOtherBlocksInClusterForSubmission(@Param("id") Long id);
 
     /**
-     *
-     * @param id
-     * @return
+     * This function calls query `countOtherBlocksInClusterForSubmission` and converts the result into a Map
+     * so that it's values will be easily accessed through key value pairs
+     * @param id the `id` of the Submission
+     * @return a Map data type representing key value pairs where the key is the TextBlock id
+     * and the value is the number of other blocks in the same cluster for that TextBlock.
      */
     default Map<String, Integer> countOtherBlocksInClusterForSubmissionByTextBlockId(Long id) {
-        return countOtherBlocksInClusterForSubmission(id).stream().collect(
-            toMap(TextBlockCount::getId, count -> count.getNumberOfOtherBlocks().intValue())
-        );
+        return countOtherBlocksInClusterForSubmission(id).stream().collect(toMap(TextBlockCount::getBlockId, count -> count.getNumberOfOtherBlocks().intValue()));
     }
 }
