@@ -26,7 +26,7 @@ public class ModelCluster extends DomainObject {
     @Column(name = "minimum_similarity", nullable = false)
     private double minimumSimilarity;
 
-    @Column(name = "text", nullable = false)
+    @Column(name = "modelElementType", nullable = false)
     // TODO: we might want to use an enum here
     private String modelElementType;
 
