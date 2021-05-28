@@ -213,19 +213,7 @@ public class UserService {
      * @return newly registered user or throw registration exception
      */
     public User registerUser(UserDTO userDTO, String password) {
-        // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
-        if (optionalExistingUser.isPresent()) {
-            User existingUser = optionalExistingUser.get();
-            return handleRegisterUserWithSameLoginAsExistingUser(userDTO, existingUser);
-        }
-
-        optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
-        if (optionalExistingUser.isPresent()) {
-            User existingUser = optionalExistingUser.get();
-            return handleRegisterUserWithSameEmailAsExistingUser(userDTO, existingUser);
-        }
-
+        // Prepare the new user object.
         final var newUser = new User();
         String encryptedPassword = passwordService.encodePassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
@@ -243,6 +231,19 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
+
+        // Find user that has the same login
+        Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
+        if (optionalExistingUser.isPresent()) {
+            User existingUser = optionalExistingUser.get();
+            return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
+        }
+
+        optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
+        if (optionalExistingUser.isPresent()) {
+            User existingUser = optionalExistingUser.get();
+            return handleRegisterUserWithSameEmailAsExistingUser(newUser, existingUser);
+        }
 
         // we need to save first so that the user can be found in the database in the subsequent method
         User savedNonActivatedUser = saveUser(newUser);
@@ -271,11 +272,11 @@ public class UserService {
      * Handles the case where a user registers a new account but a user with the same login already
      * exists in Artemis.
      *
-     * @param userDTO the user DTO
+     * @param newUser the new user
      * @param existingUser the existing user
      * @return the existing non-activated user in Artemis.
      */
-    private User handleRegisterUserWithSameLoginAsExistingUser(UserDTO userDTO, User existingUser) {
+    private User handleRegisterUserWithSameLoginAsExistingUser(User newUser, User existingUser) {
         // An account with the same login is already activated.
         if (existingUser.getActivated()) {
             throw new UsernameAlreadyUsedException();
@@ -284,26 +285,32 @@ public class UserService {
         // The user has the same login and email, but the account is not activated.
         // Return the existing non-activated user so that Artemis can re-send the
         // activation link.
-        if (existingUser.getEmail().equals(userDTO.getEmail())) {
+        if (existingUser.getEmail().equals(newUser.getEmail())) {
+            // Update the existing user and VCS
+            newUser.setId(existingUser.getId());
+            User updatedExistingUser = userRepository.save(newUser);
+            optionalVcsUserManagementService
+                    .ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(existingUser.getLogin(), updatedExistingUser, Set.of(), Set.of(), true));
+
             // Post-pone the cleaning up of the account
-            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(existingUser.getId());
-            return existingUser;
+            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
+            return updatedExistingUser;
         }
 
         // The email is different which means that the user wants to re-register the same
         // account with a different email. Block this.
-        throw new AccountRegistrationBlockedException(userDTO.getEmail());
+        throw new AccountRegistrationBlockedException(existingUser.getEmail());
     }
 
     /**
      * Handles the case where a user registers a new account but a user with the same email already
      * exists in Artemis.
      *
-     * @param userDTO the user DTO
+     * @param newUser the new user
      * @param existingUser the existing user
      * @return the existing non-activated user in Artemis.
      */
-    private User handleRegisterUserWithSameEmailAsExistingUser(UserDTO userDTO, User existingUser) {
+    private User handleRegisterUserWithSameEmailAsExistingUser(User newUser, User existingUser) {
         // An account with the same login is already activated.
         if (existingUser.getActivated()) {
             throw new EmailAlreadyUsedException();
@@ -312,15 +319,21 @@ public class UserService {
         // The user has the same login and email, but the account is not activated.
         // Return the existing non-activated user so that Artemis can re-send the
         // activation link.
-        if (existingUser.getLogin().equals(userDTO.getLogin())) {
+        if (existingUser.getLogin().equals(newUser.getLogin())) {
+            // Update the existing user in repository and VCS
+            newUser.setId(existingUser.getId());
+            User updatedExistingUser = userRepository.save(newUser);
+            optionalVcsUserManagementService
+                    .ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(updatedExistingUser.getLogin(), updatedExistingUser, Set.of(), Set.of(), true));
+
             // Post-pone the cleaning up of the account
-            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(existingUser.getId());
+            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
             return existingUser;
         }
 
         // The email is different which means that the user wants to re-register the same
         // account with a different email. Block this.
-        throw new AccountRegistrationBlockedException(userDTO.getEmail());
+        throw new AccountRegistrationBlockedException(newUser.getEmail());
     }
 
     /**
