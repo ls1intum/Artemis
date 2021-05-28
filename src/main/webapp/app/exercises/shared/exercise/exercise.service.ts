@@ -55,12 +55,13 @@ export class ExerciseService {
      */
     validateDate(exercise: Exercise) {
         exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
-
         exercise.assessmentDueDateError =
-            exercise.assessmentDueDate && exercise.releaseDate
-                ? !exercise.assessmentDueDate.isAfter(exercise.releaseDate)
-                : exercise.assessmentDueDate && exercise.dueDate
-                ? !exercise.assessmentDueDate.isAfter(exercise.dueDate)
+            exercise.releaseDate && exercise.assessmentDueDate
+                ? exercise.assessmentDueDate.isAfter(exercise.releaseDate)
+                    ? exercise.dueDate && exercise.assessmentDueDate && !exercise.assessmentDueDate.isAfter(exercise.dueDate)
+                    : true
+                : exercise.dueDate && exercise.assessmentDueDate
+                ? exercise.assessmentDueDate.isAfter(exercise.dueDate)
                 : false;
     }
 
