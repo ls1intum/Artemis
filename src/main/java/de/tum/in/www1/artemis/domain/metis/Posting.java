@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.metis;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.persistence.*;
 
@@ -41,12 +39,6 @@ public abstract class Posting extends DomainObject {
     @Column(name = "tokenized_content")
     private String tokenizedContent;
 
-    // To be used with introduction of METIS
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "tags")
-    private Set<String> tags = new HashSet<>();
-
     public String getTokenizedContent() {
         return tokenizedContent;
     }
@@ -80,16 +72,6 @@ public abstract class Posting extends DomainObject {
         this.content = content;
     }
 
-    public Set<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(Set<String> tags) {
-        this.tags = tags;
-    }
-
     public abstract Course getCourse();
-
-    // TODO: think about abstract method for getContext
 
 }
