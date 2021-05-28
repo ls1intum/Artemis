@@ -42,6 +42,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
+    invalidRepositoryNamePattern: RegExp;
+    invalidDirectoryNamePattern: RegExp;
     submitButtonTitle: string;
     isImport: boolean;
     isExamMode: boolean;
@@ -74,6 +76,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
+
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
@@ -122,7 +125,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
-            // TODO AUXREPO validation
             editedAuxiliaryRepository.name = newValue;
             this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
             return editedAuxiliaryRepository.name;
@@ -289,6 +291,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
         this.supportsSwift = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT);
         this.supportsOCaml = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML);
+
+        this.setInvalidRepoNamePattern();
+        this.setInvalidDirectoryNamePattern();
     }
 
     /**
@@ -323,6 +328,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.releaseDate = undefined;
         this.programmingExercise.shortName = undefined;
         this.programmingExercise.title = undefined;
+    }
+
+    private setInvalidRepoNamePattern() {
+        let invalidRepoNames = '';
+        this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidRepoNames += '|' + auxiliaryRepository.name));
+        this.invalidRepositoryNamePattern = new RegExp('^(?!(solution|exercise|tests' + invalidRepoNames + ')\\b)\\b(\\w|-)+$');
+    }
+
+    private setInvalidDirectoryNamePattern() {
+        let invalidDirectoryNames = '';
+        this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
+        this.invalidDirectoryNamePattern = new RegExp('^(?!( ' + invalidDirectoryNames + ')\\b)\\b(\\w|-|/)+$');
+        console.log('Invalid Directory Name pattern: ' + this.invalidDirectoryNamePattern);
     }
 
     /**
