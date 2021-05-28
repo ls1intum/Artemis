@@ -9,9 +9,12 @@ import { Component, ElementRef, Input, ViewChild } from '@angular/core';
     templateUrl: './table-editable-field.component.html',
 })
 export class TableEditableFieldComponent {
-    @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
-
     @Input() id: string;
+    @Input() pattern: string;
+    @Input() isRequired: boolean;
+    @Input() translationRequiredMessage: string;
+    @Input() translationInvalidMessage: string;
+
     @Input() set value(value: any) {
         this.inputValue = value;
     }
