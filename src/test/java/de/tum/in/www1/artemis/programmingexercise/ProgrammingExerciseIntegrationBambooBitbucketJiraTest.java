@@ -710,18 +710,6 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(value = "editor1", roles = "EDITOR")
-    public void testCreateAuxiliaryRepositoryProgrammingExerciseNotFound() throws Exception {
-        programmingExerciseIntegrationServiceTest.testCreateAuxiliaryRepositoryProgrammingExerciseNotFound();
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void testCreateAuxiliaryRepositoryUnauthorized() throws Exception {
-        programmingExerciseIntegrationServiceTest.testCreateAuxiliaryRepositoryUnauthorized();
-    }
-
-    @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
     public void testValidateValidAuxiliaryRepository() throws Exception {
         programmingExerciseIntegrationServiceTest.testValidateValidAuxiliaryRepository();
     }

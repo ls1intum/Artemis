@@ -174,7 +174,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         localGit.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
-        // we use the temp repository as remote origing for all repositories that are created during the
+        // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
         doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
     }
@@ -1378,14 +1378,6 @@ public class ProgrammingExerciseIntegrationServiceTest {
         assertThat(result).isNull();
     }
 
-    public void testCreateAuxiliaryRepositoryProgrammingExerciseNotFound() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults(), HttpStatus.NOT_FOUND, "-1");
-    }
-
-    public void testCreateAuxiliaryRepositoryUnauthorized() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults(), HttpStatus.FORBIDDEN);
-    }
-
     public void testValidateValidAuxiliaryRepository() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
@@ -1446,19 +1438,16 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     private String defaultAuxiliaryRepositoryEndpoint() {
-        return defaultAuxiliaryRepositoryEndpoint(String.valueOf(programmingExercise.getId()));
-    }
-
-    private String defaultAuxiliaryRepositoryEndpoint(String exerciseId) {
-        return "/api" + PROGRAMMING_EXERCISE.replace("{exerciseId}", exerciseId);
+        return "/api" + SETUP;
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
-        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(), body.get(), expectedStatus);
-    }
-
-    private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus, String exerciseId) throws Exception {
-        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(exerciseId), body.get(), expectedStatus);
+        String uniqueExerciseTitle = "Title" + System.nanoTime() + "" + new Random().nextInt(100);
+        programmingExercise.setAuxiliaryRepositories(List.of(body.get()));
+        programmingExercise.setId(null);
+        programmingExercise.setShortName(uniqueExerciseTitle);
+        programmingExercise.setTitle(uniqueExerciseTitle);
+        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, expectedStatus);
     }
 
     private static class AuxiliaryRepositoryBuilder {
