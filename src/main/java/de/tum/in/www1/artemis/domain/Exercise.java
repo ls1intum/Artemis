@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.ws.rs.BadRequestException;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -919,6 +920,57 @@ public abstract class Exercise extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+    }
+
+    public void validateDates() throws BadRequestException {
+        if (getReleaseDate() == null && getAssessmentDueDate() == null && getDueDate() == null)
+            return;
+
+        boolean validDates = validateReleaseDate(getReleaseDate(), getDueDate(), getAssessmentDueDate()) && validateAssesmentDueDate(getDueDate(), getAssessmentDueDate());
+
+        if (!validDates) {
+            throw new BadRequestException();
+        }
+
+    }
+
+    /**
+     * In case the DueDate is after the AssesmentDueDate, we return false. Also, if there is an AssesmentDueDate but no DueDate, we return false
+     */
+    public boolean validateAssesmentDueDate(ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        if (dueDate == null && assessmentDueDate != null) {
+            return false;
+        }
+        if (dueDate != null && assessmentDueDate == null) {
+            return true;
+        }
+        if (dueDate == null && assessmentDueDate == null) {
+            return true;
+        }
+
+        return dueDate.isBefore(assessmentDueDate);
+
+    }
+
+    /**
+     * In case the Release is after the DueDate or the AssesmentDueDate, we return false.
+     */
+    public boolean validateReleaseDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        if (dueDate == null & assessmentDueDate == null)
+            return true;
+        boolean validDate = true;
+
+        if (releaseDate == null) {
+            releaseDate = ZonedDateTime.now();
+        }
+
+        if (dueDate != null)
+            validDate = releaseDate.isBefore(dueDate);
+
+        if (assessmentDueDate != null && validDate)
+            validDate = releaseDate.isBefore(assessmentDueDate);
+
+        return validDate;
     }
 
 }
