@@ -32,15 +32,15 @@ export class StructuredGradingCriterionService {
     }
 
     calculateScoreForGradingInstructions(feedback: Feedback, score: number, gradingInstructions: any): number {
-        if (gradingInstructions[feedback.gradingInstruction!.id]) {
+        if (gradingInstructions[feedback.gradingInstruction!.id!]) {
             // We Encountered this grading instruction before
             const maxCount = feedback.gradingInstruction!.usageCount;
-            const encounters = gradingInstructions[feedback.gradingInstruction!.id];
+            const encounters = gradingInstructions[feedback.gradingInstruction!.id!];
             if (maxCount && maxCount > 0) {
                 if (encounters >= maxCount) {
-                    gradingInstructions[feedback.gradingInstruction!.id] = encounters + 1;
+                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
                 } else {
-                    gradingInstructions[feedback.gradingInstruction!.id] = encounters + 1;
+                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
                     score += feedback.gradingInstruction!.credits;
                 }
             } else {
@@ -48,7 +48,7 @@ export class StructuredGradingCriterionService {
             }
         } else {
             // First time encountering the grading instruction
-            gradingInstructions[feedback.gradingInstruction!.id] = 1;
+            gradingInstructions[feedback.gradingInstruction!.id!] = 1;
             score += feedback.credits!;
         }
         return score;

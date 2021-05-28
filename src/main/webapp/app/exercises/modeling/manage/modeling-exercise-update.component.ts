@@ -16,6 +16,9 @@ import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { cloneDeep } from 'lodash';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -31,6 +34,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     checkedFlag: boolean;
 
     modelingExercise: ModelingExercise;
+    backupExercise: ModelingExercise;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -48,6 +52,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     constructor(
         private jhiAlertService: JhiAlertService,
         private modelingExerciseService: ModelingExerciseService,
+        private modalService: NgbModal,
+        private popupService: ExerciseUpdateWarningService,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,
@@ -70,6 +76,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
+            this.backupExercise = cloneDeep(this.modelingExercise);
             this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
         });
 
@@ -150,10 +157,27 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.exerciseService.validateDate(this.modelingExercise);
     }
 
+    save() {
+        if (this.modelingExercise.gradingInstructionFeedbackUsed) {
+            const ref = this.popupService.checkExerciseBeforeUpdate(this.modelingExercise, this.backupExercise);
+            if (!this.modalService.hasOpenModals()) {
+                this.saveExercise();
+            } else {
+                ref.then((reference) => {
+                    reference.componentInstance.confirmed.subscribe(() => {
+                        this.saveExercise();
+                    });
+                });
+            }
+        } else {
+            this.saveExercise();
+        }
+    }
+
     /**
      * Sends a request to either update, create or import a modeling exercise
      */
-    save(): void {
+    saveExercise(): void {
         Exercise.sanitize(this.modelingExercise);
 
         this.isSaving = true;

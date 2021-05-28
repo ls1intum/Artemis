@@ -28,6 +28,9 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { SimpleChange } from '@angular/core';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +46,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     quizExercise.id = 456;
     quizExercise.title = 'MyQuiz';
 
-    const route = ({ params: of({ exerciseId: 123 }) } as any) as ActivatedRoute;
+    const route = { params: of({ exerciseId: 123 }) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -57,6 +60,8 @@ describe('QuizExercise Re-evaluate Component', () => {
                 MockTranslateValuesDirective,
                 MockDirective(JhiTranslateDirective),
                 MockPipe(ArtemisDatePipe),
+                MockComponent(IncludedInOverallScorePickerComponent),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 NgbModal,
@@ -152,5 +157,12 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('Should save a quiz', () => {
         comp.ngOnInit();
+    });
+
+    it('Should change score calculation type', () => {
+        comp.ngOnInit();
+        expect(comp.quizExercise.includedInOverallScore).to.equal(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        comp.includedInOverallScoreChange(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        expect(comp.quizExercise.includedInOverallScore).to.equal(IncludedInOverallScore.INCLUDED_AS_BONUS);
     });
 });
