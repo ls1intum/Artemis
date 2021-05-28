@@ -50,7 +50,7 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
      * For all TextBlock's of the Submission with the given `id`
      * finds their respective cluster and retrieves the number of other blocks in the same cluster
      * @param id the id of the Submission
-     * @return the number of other blocks in the same cluster as the block with given `id`
+     * @return the number of other TextBlock's in the same cluster as the block with given `id`
      */
     @Query("""
             SELECT tb.id as blockId, COUNT(DISTINCT tball.id) as numberOfOtherBlocks
