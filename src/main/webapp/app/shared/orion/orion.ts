@@ -56,6 +56,14 @@ export interface OrionExerciseConnector {
     assessExercise(exerciseJson: string): void;
 
     /**
+     * Downloads a submission into the opened tutor project
+     * @param submissionId id of the submission, used to navigate to the corresponding URL
+     * @param correctionRound correction round, also needed to navigate to the correct URL
+     * @param downloadURL URL of the zip file containing the student's repository
+     */
+    downloadSubmission(submissionId: string, correctionRound: string, downloadURL: string): void;
+
+    /**
      * Import a participation.
      * @param repository Repository name as string.
      * @param exerciseJson Exercise in a Json string.

@@ -201,7 +201,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param exercise The exercise to be imported
      */
     editExercise(exercise: ProgrammingExercise): void {
-        this.setIDEStateParameter({ cloning: true });
+        this.isCloning(true);
         theWindow().orionExerciseConnector.editExercise(stringifyCircular(exercise));
     }
 
@@ -228,7 +228,18 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param exercise The exercise to be imported
      */
     assessExercise(exercise: ProgrammingExercise): void {
-        this.setIDEStateParameter({ cloning: true });
+        this.isCloning(true);
         theWindow().orionExerciseConnector.assessExercise(stringifyCircular(exercise));
+    }
+
+    /**
+     * Downloads a submission into the opened tutor project
+     *
+     * @param submissionId id of the submission, used to navigate to the corresponding URL
+     * @param correctionRound correction round, also needed to navigate to the correct URL
+     * @param downloadURL URL of the zip file containing the student's repository
+     */
+    downloadSubmission(submissionId: number, correctionRound: number, downloadURL: String) {
+        theWindow().orionExerciseConnector.downloadSubmission(String(submissionId), String(correctionRound), downloadURL);
     }
 }

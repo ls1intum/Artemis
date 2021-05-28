@@ -164,7 +164,7 @@
     </div>
 
     <div class="d-flex" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED || isTestRun">
-        <div class="guided-tour-exercise-dashboard-table flex-grow-1">
+        <div *ngIf="!isOrionAndProgramming || exerciseOpenedInOrion else orionStartButton" class="guided-tour-exercise-dashboard-table flex-grow-1">
             <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS && !isTestRun" class="alert alert-warning row" role="alert">
                 <span
                     jhiTranslate="artemisApp.exerciseAssessmentDashboard.totalExampleSubmissions"
@@ -350,7 +350,7 @@
 
                                         <td>
                                             <button
-                                                *ngIf="!isOrion; else orionButton"
+                                                *ngIf="!isOrionAndProgramming; else orionButton"
                                                 class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 (click)="openAssessmentEditor('new', correctionRound)"
                                                 [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
@@ -365,7 +365,7 @@
                                                 <jhi-ide-button
                                                     buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
                                                     [smallButton]="false"
-                                                    (click)="openAssessmentInOrion('new', correctionRound)"
+                                                    (click)="openAssessmentEditor('new', correctionRound, true)"
                                                 >
                                                 </jhi-ide-button>
                                             </ng-template>
@@ -550,4 +550,13 @@
     <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
 
     <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
+
+    <ng-template #orionStartButton>
+        <jhi-ide-button
+            buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
+            [smallButton]="false"
+            (click)="openAssessmentInOrion()"
+        >
+        </jhi-ide-button>
+    </ng-template>
 </div>

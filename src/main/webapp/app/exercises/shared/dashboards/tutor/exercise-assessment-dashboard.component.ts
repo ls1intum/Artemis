@@ -14,7 +14,13 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import {
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    setLatestSubmissionResult,
+    Submission,
+    SubmissionExerciseType,
+} from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -40,7 +46,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { isOrion } from 'app/shared/orion/orion';
+import { ExerciseView, isOrion } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 export interface ExampleSubmissionQueryParams {
@@ -56,7 +62,6 @@ export interface ExampleSubmissionQueryParams {
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
-    readonly isOrion = isOrion;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -116,6 +121,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
+    exerciseOpenedInOrion = false;
+    isOrionAndProgramming = false;
+
     stats = {
         toReview: {
             done: 0,
@@ -173,6 +181,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
+
+        this.javaBridge.state().subscribe((state) => {
+            this.exerciseOpenedInOrion = this.exercise.id === state.opened && state.view === ExerciseView.TUTOR;
+        });
 
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
@@ -246,6 +258,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
                 }
+
+                this.isOrionAndProgramming = isOrion && this.exercise.type === ExerciseType.PROGRAMMING
+
                 // load the guided tour step only after everything else on the page is loaded
                 this.guidedTourService.componentPageLoaded();
             },
@@ -581,26 +596,34 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Uses the router to navigate to the assessment editor for a given/new submission
      * @param submission Either submission or 'new'.
      * @param correctionRound
+     * @param inOrion whether to open the assessment in Orion, false by default
      */
-    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
+    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0, inOrion = false): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
-        if (this.isTestRun) {
-            await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
+        const submissionId: number = submission === 'new' ? (await this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, correctionRound).toPromise()).id! : submission.id!;
+
+        if (!inOrion) {
+            const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+            if (this.isTestRun) {
+                await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
+            } else {
+                await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
+            }
         } else {
-            await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
+            this.javaBridge.downloadSubmission(submissionId, correctionRound, "dummy");
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
 
-    openAssessmentInOrion(submission: Submission | 'new', correctionRound = 0) {
+    /**
+     * Triggers downloading the test repository and opening it, allowing for submissions to be downloaded
+     */
+    openAssessmentInOrion() {
         this.javaBridge.assessExercise(this.exercise);
-        this.openAssessmentEditor(submission, correctionRound);
     }
 
     /**
