@@ -131,8 +131,10 @@ public class AnswerPostResource {
         mayUpdateOrDeleteAnswerPostElseThrow(existingAnswerPost, user);
         // allow overwriting of values only for depicted fields: answerText, verified, tutorApproved
         existingAnswerPost.setContent(answerPost.getContent());
-        // tutor approval can only be given by a tutor
-        existingAnswerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
+        // tutor approval can only be toggled by a tutor
+        if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+            existingAnswerPost.setTutorApproved(answerPost.isTutorApproved());
+        }
         AnswerPost result = answerPostRepository.save(existingAnswerPost);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, answerPost.getId().toString())).body(result);
     }
