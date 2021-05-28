@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -31,6 +30,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -77,16 +77,12 @@ public class UserService {
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
-    private final ScheduledExecutorService scheduler;
-
-    // Used for tracking and canceling the non-activated accounts that will be cleaned up.
-    // The key of the map is the user id.
-    private final Map<Long, ScheduledFuture<?>> nonActivatedAccountsFutures = new ConcurrentHashMap<>();
+    private final InstanceMessageSendService instanceMessageSendService;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, InstanceMessageSendService instanceMessageSendService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -99,7 +95,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.studentScoreRepository = studentScoreRepository;
-        this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -155,7 +151,7 @@ public class UserService {
         log.debug("Activating user for activation key {}", key);
         return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
             // Cancel automatic removal of the user since it's activated.
-            cancelNonActivatedUserRemoval(user);
+            instanceMessageSendService.sendCancelRemoveNonActivatedUserSchedule(user.getId());
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.activateUser(user.getLogin()));
             // activate given user for the registration key.
             userCreationService.activateUser(user);
@@ -265,7 +261,7 @@ public class UserService {
         });
 
         // Automatically remove the user if it wasn't activated after a certain amount of time.
-        scheduleForRemoveNonActivatedUser(savedNonActivatedUser);
+        instanceMessageSendService.sendRemoveNonActivatedUserSchedule(savedNonActivatedUser.getId());
 
         log.debug("Created Information for User: {}", newUser);
         return newUser;
@@ -290,7 +286,7 @@ public class UserService {
         // activation link.
         if (existingUser.getEmail().equals(userDTO.getEmail())) {
             // Post-pone the cleaning up of the account
-            scheduleForRemoveNonActivatedUser(existingUser);
+            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(existingUser.getId());
             return existingUser;
         }
 
@@ -318,69 +314,13 @@ public class UserService {
         // activation link.
         if (existingUser.getLogin().equals(userDTO.getLogin())) {
             // Post-pone the cleaning up of the account
-            scheduleForRemoveNonActivatedUser(existingUser);
+            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(existingUser.getId());
             return existingUser;
         }
 
         // The email is different which means that the user wants to re-register the same
         // account with a different email. Block this.
         throw new AccountRegistrationBlockedException(userDTO.getEmail());
-    }
-
-    /**
-     * Schedules the removal of the non activated user if it wasn't activated
-     * after an hour. If it was already scheduled, the removal
-     * schedule is resetted.
-     *
-     * @param nonActivatedUser the non activated user
-     */
-    private void scheduleForRemoveNonActivatedUser(User nonActivatedUser) {
-        // Check if a future exists and cancel it before creating a new one.
-        ScheduledFuture<?> future = nonActivatedAccountsFutures.get(nonActivatedUser.getId());
-        if (future != null) {
-            future.cancel(false);
-        }
-
-        ScheduledFuture<?> newFuture = scheduler.schedule(() -> {
-            log.info("Removing user {} because it hasn't been activated within the hour.", nonActivatedUser);
-            nonActivatedAccountsFutures.remove(nonActivatedUser.getId());
-            removeNonActivatedUser(nonActivatedUser);
-        }, 1, TimeUnit.HOURS);
-        nonActivatedAccountsFutures.put(nonActivatedUser.getId(), newFuture);
-    }
-
-    /**
-     * Cancels the removal of a non activated user.
-     *
-     * @param user The non activated user
-     */
-    private void cancelNonActivatedUserRemoval(User user) {
-        ScheduledFuture<?> future = nonActivatedAccountsFutures.get(user.getId());
-        if (future != null) {
-            future.cancel(false);
-            nonActivatedAccountsFutures.remove(user.getId());
-        }
-    }
-
-    /**
-     * Remove non activated user.
-     *
-     * @param existingUser user object of an existing user
-     */
-    private void removeNonActivatedUser(User existingUser) {
-        if (existingUser.getActivated()) {
-            return;
-        }
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
-            try {
-                vcsUserManagementService.deleteVcsUser(existingUser.getLogin());
-            }
-            catch (VersionControlException e) {
-                // Ignore exception since the user should still be deleted but log it.
-                log.warn("Cannot remove non-activated user " + existingUser.getLogin() + " from the VCS: ", e);
-            }
-        });
-        deleteUser(existingUser);
     }
 
     /**
