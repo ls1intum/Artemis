@@ -1,6 +1,6 @@
 {
     "artemisApp": {
-        "studentQuestion": {
+        "post": {
             "created": "New question successfully created",
             "updated": "Question successfully updated",
             "deleted": "Question successfully deleted",
@@ -12,15 +12,10 @@
             "exerciseOrLecture": "Exercise / Lecture",
             "overview": {
                 "title": "Questions",
-                "noQuestions": "There are no questions for this course",
+                "noPosts": "There are no questions for this course",
                 "showApproved": "Show questions with approved answers",
                 "hideApproved": "Hide questions with approved answers"
             }
-        },
-        "questionAnswer": {
-            "created": "New answer successfully created",
-            "updated": "Answer successfully updated",
-            "deleted": "Answer successfully deleted"
         }
     }
 }

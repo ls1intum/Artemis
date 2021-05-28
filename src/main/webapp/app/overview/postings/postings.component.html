@@ -31,7 +31,7 @@
                         <fa-icon [icon]="'comment'"></fa-icon>
                     </div>
                     <div class="col">
-                        <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | artemisTranslate }}</span>
+                        <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newPostLabel' | artemisTranslate }}</span>
                     </div>
                     <div class="col-12 px-0">
                         <jhi-markdown-editor
@@ -59,13 +59,13 @@
                 <div class="col-12">
                     <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = true">
                         <fa-icon [icon]="'plus'"></fa-icon>
-                        <span class="d-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | artemisTranslate }}</span>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewPost' | artemisTranslate }}</span>
                     </button>
                 </div>
             </div>
             <!-- no posts -->
             <div class="row mt-2" *ngIf="!posts || posts.length === 0">
-                <div class="col-12">{{ 'artemisApp.courseOverview.exerciseDetails.faq.noQuestions' | artemisTranslate }}</div>
+                <div class="col-12">{{ 'artemisApp.courseOverview.exerciseDetails.faq.noPosts' | artemisTranslate }}</div>
             </div>
         </div>
     </div>

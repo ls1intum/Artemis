@@ -1,6 +1,6 @@
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CoursePostsComponent } from 'app/course/course-questions/course-posts.component';
+import { CoursePostsComponent } from 'app/course/course-posts/course-posts.component';
 import { NgModule } from '@angular/core';
 import { CourseResolve } from 'app/course/manage/course-management.route';
 import { Authority } from 'app/shared/constants/authority.constants';

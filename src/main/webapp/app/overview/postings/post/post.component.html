@@ -5,13 +5,13 @@
             <fa-icon [icon]="'comment'"></fa-icon>
         </div>
         <div class="col">
-            <span class="posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | artemisTranslate }}</span>
+            <span class="posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.postLabel' | artemisTranslate }}</span>
         </div>
         <div class="col-auto px-0">
             <fa-icon
                 class="clickable mr-1"
                 *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
-                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate"
                 container="body"
                 [icon]="'pencil-alt'"
                 (click)="toggleEditMode()"
@@ -22,7 +22,7 @@
                 (confirmEvent)="deletePost()"
                 [ngClass]="'mr-1'"
                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deletePost' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | artemisTranslate"
+                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeletePost' | artemisTranslate"
             ></jhi-confirm-icon>
         </div>
     </div>
@@ -47,13 +47,13 @@
                     <fa-icon [icon]="'comment'"></fa-icon>
                 </div>
                 <div class="col">
-                    <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate }}</span>
+                    <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate }}</span>
                 </div>
                 <div class="col-auto px-0">
                     <fa-icon
                         class="clickable mr-1"
                         *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | artemisTranslate"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate"
                         container="body"
                         [icon]="'pencil-alt'"
                         (click)="toggleEditMode()"
@@ -64,7 +64,7 @@
                         (confirmEvent)="deletePost()"
                         [ngClass]="'mr-1'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deletePost' | artemisTranslate"
-                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | artemisTranslate"
+                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeletePost' | artemisTranslate"
                     ></jhi-confirm-icon>
                 </div>
             </div>

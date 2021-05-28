@@ -1,6 +1,6 @@
 {
     "artemisApp": {
-        "studentQuestion": {
+        "post": {
             "created": "Frage erfolgreich erstellt",
             "updated": "Frage erfolgreich aktualisiert",
             "deleted": "Frage erfolgreich gelöscht",
@@ -12,15 +12,10 @@
             "exerciseOrLecture": "Aufgabe / Vorlesung",
             "overview": {
                 "title": "Fragen",
-                "noQuestions": "Es wurden noch keine Fragen in diesem Kurs gestellt",
+                "noPosts": "Es wurden noch keine Fragen in diesem Kurs gestellt",
                 "showApproved": "Zeige Fragen mit bestätigten Antworten an",
                 "hideApproved": "Verstecke Fragen mit bestätigten Antworten"
             }
-        },
-        "questionAnswer": {
-            "created": "Antwort erfolgreich erstellt",
-            "updated": "Antwort erfolgreich aktualisiert",
-            "deleted": "Antwort erfolgreich gelöscht"
         }
     }
 }

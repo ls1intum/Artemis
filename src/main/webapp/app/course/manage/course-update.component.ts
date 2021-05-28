@@ -136,7 +136,7 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                PostsEnabled: new FormControl(this.course.postsEnabled),
+                postsEnabled: new FormControl(this.course.postsEnabled),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
