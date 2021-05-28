@@ -29,8 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Java
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2.1.0
       with:
+        distribution: 'zulu'
         java-version: '${{ env.java }}'
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
@@ -60,9 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Java
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2.1.0
       with:
-        java-version: '${{ env.java }}'  #spotless does not yet seem to support JDK16
+        distribution: 'zulu'
+        java-version: '${{ env.java }}'
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
       uses: actions/cache@v2
@@ -73,15 +75,16 @@ jobs:
           ${{ runner.os }}-gradle-
     - name: Java Code Style
       run: ./gradlew spotlessCheck
-    - name: Java Documentation
-      run: ./gradlew checkstyleMain -x yarn -x webpack
-      if: success() || failure()
+#   Checkstyle does not yet seem to support JDK16
+#   - name: Java Documentation
+#     run: ./gradlew checkstyleMain -x yarn -x webpack
+#     if: success() || failure()
 
   client-tests-fast:
     runs-on: ubuntu-latest
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v1
+          uses: actions/setup-node@v2.1.5
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -114,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v1
+          uses: actions/setup-node@v2.1.5
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -141,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2.1.5
       with:
         node-version: '${{ env.node }}'
     - uses: actions/checkout@v2
