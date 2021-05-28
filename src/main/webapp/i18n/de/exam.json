@@ -22,7 +22,7 @@
                     "maxPoints": "Punkte",
                     "bonus": "Bonuspunkte",
                     "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten, und {{bonusPoints}} Bonuspunkten erreicht.",
-                    "youAchieved": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten",
+                    "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
                 },
                 "grade": "Note:",
