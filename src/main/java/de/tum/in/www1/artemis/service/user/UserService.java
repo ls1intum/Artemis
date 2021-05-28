@@ -150,13 +150,22 @@ public class UserService {
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
         return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
-            // Cancel automatic removal of the user since it's activated.
-            instanceMessageSendService.sendCancelRemoveNonActivatedUserSchedule(user.getId());
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.activateUser(user.getLogin()));
-            // activate given user for the registration key.
-            userCreationService.activateUser(user);
+            activateUser(user);
             return user;
         });
+    }
+
+    /**
+     * Activates the user and cancels the automatic cleanup of the account.
+     *
+     * @param user the non-activated user
+     */
+    public void activateUser(User user) {
+        // Cancel automatic removal of the user since it's activated.
+        instanceMessageSendService.sendCancelRemoveNonActivatedUserSchedule(user.getId());
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.activateUser(user.getLogin()));
+        // activate given user for the registration key.
+        userCreationService.activateUser(user);
     }
 
     /**
