@@ -114,8 +114,11 @@ public class TextBlockService {
      */
     public void setNumberOfAffectedSubmissionsPerBlock(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());
+        final long sumbissionId = textSubmission.getId();
+        final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(sumbissionId);
         textSubmission.setBlocks(blocks);
+        final var rawListOtherBlocksInCluster = textBlockRepository.getNumberOfOtherBlocksInClusterForSubmission(sumbissionId);
+        final var mapOtherBlocksInCluster = textBlockRepository.convertListOfObjectArrayToMap(rawListOtherBlocksInCluster);
 
         // iterate over blocks of the referenced submission
         blocks.forEach(block -> {
@@ -123,7 +126,7 @@ public class TextBlockService {
             final String blockID = block.getId();
             // if TextBlock is part of a cluster, we find how many other submissions of that cluster it will affect
             if (cluster != null) {
-                final int numberOfAffectedSubmissions = textBlockRepository.getNumberOfOtherBlocksInCluster(blockID);
+                final int numberOfAffectedSubmissions = mapOtherBlocksInCluster.get(blockID);
                 block.setNumberOfAffectedSubmissions(numberOfAffectedSubmissions);
             }
         });

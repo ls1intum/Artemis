@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,15 +34,30 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     void deleteAllBySubmission_Id(Long submissionId);
 
     /**
-     * For the given TextBlock `id` finds it's respective cluster and retrieves the number of other blocks
-     * @param id the id of the TextBlock
+     * For the given Submission `id` returns a list of raw object array representing two columns.
+     * First index/column corresponds to the TextBlock `id` while the second one corresponds to
+     * the number of other blocks in the same cluster as given block with id = `id`.
+     * For all TextBlock's of the Submission with the given `id`
+     * finds their respective cluster and retrieves the number of other blocks in the same cluster
+     * @param id the id of the submission
      * @return the number of other blocks in the same cluster as the block with given `id`
      */
     @Query("""
-            SELECT COUNT(c) - 1
-            FROM TextBlock c
-            WHERE c.cluster.id IN
-            (SELECT DISTINCT cluster.id FROM TextBlock WHERE id = :#{#id} )""")
-    int getNumberOfOtherBlocksInCluster(@Param("id") String id);
+            SELECT tb.id, COUNT(DISTINCT tball.id)
+            FROM TextSubmission s
+            LEFT JOIN TextBlock tb ON s.id = tb.submission.id
+            LEFT JOIN TextCluster tc ON tb.cluster.id = tc.id
+            LEFT JOIN TextBlock tball ON tc.id = tball.cluster.id AND tball.id <> tb.id
+            WHERE s.id = :#{#id}
+            GROUP BY tb.id""")
+    List<Object[]> getNumberOfOtherBlocksInClusterForSubmission(@Param("id") Long id);
 
+    /**
+     * Takes a List of Object[] type and converts it into a Map<String, Integer>
+     * @param input the id of the submission
+     * @return given input in Map<String, Integer> data structure
+     */
+    default Map<String, Integer> convertListOfObjectArrayToMap(List<Object[]> input) {
+        return input.stream().collect(Collectors.toMap(column -> (String) column[0], column -> ((Long) column[1]).intValue()));
+    }
 }
