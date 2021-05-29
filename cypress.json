@@ -5,7 +5,7 @@
     "screenshotsFolder": "src/test/cypress/screenshots",
     "videosFolder": "src/test/cypress/videos",
     "supportFile": "src/test/cypress/support/index.ts",
-    "baseUrl": "vmbruegge60.in.tum.de/",
+    "baseUrl": "https://vmbruegge60.in.tum.de/",
     "video": false,
     "screenshotOnRunFailure": false
 }
