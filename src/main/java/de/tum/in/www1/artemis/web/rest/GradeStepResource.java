@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
@@ -78,14 +79,28 @@ public class GradeStepResource {
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<GradeStep>> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all grade steps for exam: {}", examId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScale.getId());
-        return ResponseEntity.ok(gradeSteps);
+        boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
+        if (!isInstructor && !gradingScale.getExam().resultsPublished()) {
+            return forbidden();
+        }
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepDTO(gradingScale);
+        return ResponseEntity.ok(gradeStepsDTO);
+    }
+
+    private GradeStepsDTO prepareGradeStepDTO(GradingScale gradingScale) {
+        GradeStep[] gradeSteps = new GradeStep[gradingScale.getGradeSteps().size()];
+        gradingScale.getGradeSteps().toArray(gradeSteps);
+        for (GradeStep gradeStep : gradeSteps) {
+            gradeStep.setGradingScale(null);
+        }
+        return new GradeStepsDTO(gradingScale.getExam().getTitle(), gradingScale.getGradeType(), gradeSteps);
     }
 
     /**
