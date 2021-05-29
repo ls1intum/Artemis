@@ -26,6 +26,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-navbar',
@@ -333,6 +334,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
             case 'sa-question-statistic':
+                break;
+            case 'example-submissions':
+                // Hide example submission dashboard for non instructor users
+                if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR])) {
+                    this.addTranslationAsCrumb(currentPath, segment);
+                }
                 break;
             default:
                 // Special cases:
