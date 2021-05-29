@@ -926,7 +926,7 @@ public abstract class Exercise extends DomainObject {
         if (getReleaseDate() == null && getAssessmentDueDate() == null && getDueDate() == null)
             return;
 
-        boolean validDates = validateReleaseDate(getReleaseDate(), getDueDate(), getAssessmentDueDate()) && validateAssesmentDueDate(getDueDate(), getAssessmentDueDate());
+        boolean validDates = validateReleaseDate(getReleaseDate(), getDueDate(), getAssessmentDueDate()) && validateAssessmentDueDate(getDueDate(), getAssessmentDueDate());
 
         if (!validDates) {
             throw new BadRequestException();
@@ -935,16 +935,17 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
-     * In case the DueDate is after the AssesmentDueDate, we return false. Also, if there is an AssesmentDueDate but no DueDate, we return false
+     * In case the DueDate is after the AssessmentDueDate, we return false. Also, if there is an AssessmentDueDate but no DueDate, we return false
      */
-    public boolean validateAssesmentDueDate(ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+    private boolean validateAssessmentDueDate(ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        if (dueDate == null && assessmentDueDate == null) {
+            return true;
+        }
+
         if (dueDate == null && assessmentDueDate != null) {
             return false;
         }
         if (dueDate != null && assessmentDueDate == null) {
-            return true;
-        }
-        if (dueDate == null && assessmentDueDate == null) {
             return true;
         }
 
@@ -953,9 +954,9 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
-     * In case the Release is after the DueDate or the AssesmentDueDate, we return false.
+     * In case the Release is after the DueDate or the AssessmentDueDate, we return false.
      */
-    public boolean validateReleaseDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+    private boolean validateReleaseDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         if (dueDate == null & assessmentDueDate == null)
             return true;
         boolean validDate = true;
@@ -964,11 +965,13 @@ public abstract class Exercise extends DomainObject {
             releaseDate = ZonedDateTime.now();
         }
 
-        if (dueDate != null)
+        if (dueDate != null) {
             validDate = releaseDate.isBefore(dueDate);
+        }
 
-        if (assessmentDueDate != null && validDate)
+        if (assessmentDueDate != null && validDate) {
             validDate = releaseDate.isBefore(assessmentDueDate);
+        }
 
         return validDate;
     }

@@ -254,14 +254,11 @@ public class ProgrammingExerciseResource {
 
     /**
      * Validates general programming exercise settings
-     * 1. Validate score settings
-     * 2. Validates the participation mode
-     * 3. Validates the programming language
+     * 1. Validates the programming language
      *
      * @param programmingExercise exercise to validate
      */
-    private void validateGeneralSettings(ProgrammingExercise programmingExercise) {
-        exerciseService.validateScoreSettings(programmingExercise);
+    private void validateGeneralProgrammingSettings(ProgrammingExercise programmingExercise) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
@@ -333,7 +330,8 @@ public class ProgrammingExerciseResource {
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        validateGeneralSettings(programmingExercise);
+        exerciseService.validateGeneralSettings(programmingExercise);
+        validateGeneralProgrammingSettings(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -465,7 +463,8 @@ public class ProgrammingExerciseResource {
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        validateGeneralSettings(newExercise);
+        exerciseService.validateGeneralSettings(newExercise);
+        validateGeneralProgrammingSettings(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();

@@ -121,7 +121,8 @@ public class ModelingExerciseResource {
         // make sure the course actually exists
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        exerciseService.validateScoreSettings(modelingExercise);
+        // validates generall settings: points, dates
+        exerciseService.validateGeneralSettings(modelingExercise);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
@@ -165,7 +166,8 @@ public class ModelingExerciseResource {
         // make sure the course actually exists
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-        exerciseService.validateScoreSettings(modelingExercise);
+        // validates generall settings: points, dates
+        exerciseService.validateGeneralSettings(modelingExercise);
 
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
@@ -312,7 +314,9 @@ public class ModelingExerciseResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
-        exerciseService.validateScoreSettings(importedExercise);
+        // validates generall settings: points, dates
+
+        exerciseService.validateGeneralSettings(importedExercise);
 
         if (importedExercise.isExamExercise()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
