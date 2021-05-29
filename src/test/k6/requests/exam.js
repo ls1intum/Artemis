@@ -9,7 +9,7 @@ import {
     STUDENT_EXAM_WORKINGTIME,
     STUDENT_EXAMS,
     SUBMIT_EXAM,
-    TEXT_EXERCISE,
+    TEXT_EXERCISES,
 } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
@@ -76,7 +76,7 @@ export function newTextExercise(artemis, exerciseGroup) {
         mode: 'INDIVIDUAL',
     };
 
-    const res = artemis.post(TEXT_EXERCISE, textExercise);
+    const res = artemis.post(TEXT_EXERCISES, textExercise);
     if (res[0].status !== 201) {
         console.log('ERROR when creating a new text exercise. Response headers:');
         for (let [key, value] of Object.entries(res[0].headers)) {
