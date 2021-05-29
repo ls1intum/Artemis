@@ -37,7 +37,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private accountService: AccountService,
         private exerciseService: ExerciseService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
-        private fileUploadAssessmentsService: FileUploadAssessmentService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
@@ -122,7 +122,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.fileUploadAssessmentsService.cancelAssessment(submission.id!).subscribe(() => {
+            this.fileUploadAssessmentService.cancelAssessment(submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
         }

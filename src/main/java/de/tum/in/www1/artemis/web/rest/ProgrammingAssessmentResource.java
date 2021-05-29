@@ -206,7 +206,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      *
      * @param submissionId - the id of the submission for which the current assessment should be deleted
      * @param resultId     - the id of the result which should get deleted
-     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
+     * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
     @DeleteMapping("/programming-submissions/{submissionId}/delete/{resultId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")

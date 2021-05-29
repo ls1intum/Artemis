@@ -40,7 +40,7 @@ export class AssessmentLocksComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private modelingAssessmentService: ModelingAssessmentService,
         private textAssessmentService: TextAssessmentService,
-        private fileUploadAssessmentsService: FileUploadAssessmentService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         translateService: TranslateService,
         private location: Location,
@@ -97,7 +97,7 @@ export class AssessmentLocksComponent implements OnInit {
                     }
                     break;
                 case SubmissionExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentsService.cancelAssessment(canceledSubmission.id!).subscribe();
+                    this.fileUploadAssessmentService.cancelAssessment(canceledSubmission.id!).subscribe();
                     break;
                 case SubmissionExerciseType.PROGRAMMING:
                     this.programmingAssessmentService.cancelAssessment(canceledSubmission.id!).subscribe();

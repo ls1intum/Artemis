@@ -78,7 +78,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         private router: Router,
         private route: ActivatedRoute,
         private resultService: ResultService,
-        private fileUploadAssessmentsService: FileUploadAssessmentService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
         private accountService: AccountService,
         private location: Location,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -280,7 +280,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     onSaveAssessment() {
         this.isLoading = true;
-        this.fileUploadAssessmentsService
+        this.fileUploadAssessmentService
             .saveAssessment(this.assessments, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
@@ -303,7 +303,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
         this.isLoading = true;
-        this.fileUploadAssessmentsService
+        this.fileUploadAssessmentService
             .saveAssessment(this.assessments, this.submission.id!, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
@@ -324,7 +324,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.isLoading = true;
-            this.fileUploadAssessmentsService
+            this.fileUploadAssessmentService
                 .cancelAssessment(this.submission.id!)
                 .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(() => {
@@ -447,7 +447,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
         this.isLoading = true;
-        this.fileUploadAssessmentsService
+        this.fileUploadAssessmentService
             .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(

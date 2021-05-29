@@ -213,6 +213,7 @@ public abstract class AssessmentResource {
     }
 
     protected ResponseEntity<Void> deleteAssessment(Long submissionId, Long resultId) {
+        log.info("REST request by user: {} to delete result {}", userRepository.getUser().getLogin(), resultId);
         // check authentication
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);

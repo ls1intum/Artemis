@@ -51,7 +51,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     let fixture: ComponentFixture<FileUploadAssessmentDashboardComponent>;
     let exerciseService: ExerciseService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
-    let fileUploadAssessmentsService: FileUploadAssessmentService;
+    let fileUploadAssessmentService: FileUploadAssessmentService;
     let accountService: AccountService;
     let sortService: SortService;
 
@@ -86,7 +86,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                 component = fixture.componentInstance;
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
-                fileUploadAssessmentsService = fixture.debugElement.injector.get(FileUploadAssessmentService);
+                fileUploadAssessmentService = fixture.debugElement.injector.get(FileUploadAssessmentService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
             });
@@ -167,7 +167,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
         const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        const modelAssServiceCancelAssSpy = spyOn(fileUploadAssessmentsService, 'cancelAssessment').and.returnValue(of(1));
+        const modelAssServiceCancelAssSpy = spyOn(fileUploadAssessmentService, 'cancelAssessment').and.returnValue(of(1));
         component.exercise = fileUploadExercise2;
         // call
         component.cancelAssessment(fileUploadSubmission2);
