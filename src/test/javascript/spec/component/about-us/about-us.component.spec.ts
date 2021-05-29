@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import * as sinon from 'sinon';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
@@ -44,7 +44,7 @@ describe('AboutUsComponent', () => {
 
         const getStaticJsonFromArtemisServerStub = sandbox.stub(staticContentService, 'getStaticJsonFromArtemisServer').returns(of(new AboutUsModel([], [])));
         const getProfileInfoSub = sandbox.stub(profileService, 'getProfileInfo');
-        getProfileInfoSub.returns(new Observable<ProfileInfo>());
+        getProfileInfoSub.returns(new BehaviorSubject<ProfileInfo>({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo).asObservable());
 
         fixture.detectChanges();
         tick();
