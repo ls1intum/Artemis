@@ -595,7 +595,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * PUT /text-exercises : Re-evaluates and updates an existing textExercise.
+     * PUT /text-exercises/re-evaluate : Re-evaluates and updates an existing textExercise.
      *
      * @param textExercise     the textExercise to re-evaluate and update
      * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
