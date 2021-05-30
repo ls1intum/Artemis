@@ -48,6 +48,11 @@ import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import {
+    ProgrammingAssessmentRepoExportService,
+    RepositoryExportOptions,
+} from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -167,6 +172,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
         private javaBridge: OrionConnectorService,
+        private repositoryExportService: ProgrammingAssessmentRepoExportService,
     ) {}
 
     /**
@@ -257,7 +263,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 // 3. Don't handle test run submissions here
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
-                    this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
+                    this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
 
                 this.isOrionAndProgramming = isOrion && this.exercise.type === ExerciseType.PROGRAMMING
@@ -340,7 +346,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     /**
      * get all submissions for all correction rounds which the tutor has assessed.
-     * If not in examMode, correctionrounds defaults to 0, as more than 1 is currently not supported.
+     * If not in examMode, correction rounds defaults to 0, as more than 1 is currently not supported.
      * @private
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
@@ -354,7 +360,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Get all the submissions from the server for which the current user is the assessor for the specified correctionround,
+     * Get all the submissions from the server for which the current user is the assessor for the specified correction round,
      * which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
@@ -428,30 +434,30 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     };
 
     /**
-     * Get all submissions that dont have an assessment for all correctionrounds
-     * If not in examMode correctionrounds defaults to 0.
+     * Get all submissions that dont have an assessment for all correction rounds
+     * If not in examMode correction rounds defaults to 0.
      * @private
      */
-    private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
+    private getSubmissionWithoutAssessmentForAllCorrectionRounds(): void {
         if (this.isExamMode) {
             for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
                 if (i <= this.numberOfCorrectionRoundsEnabled) {
-                    this.getSubmissionWithoutAssessmentForCorrectionround(i);
+                    this.getSubmissionWithoutAssessmentForCorrectionRound(i);
                 }
             }
         } else {
-            this.getSubmissionWithoutAssessmentForCorrectionround(0);
+            this.getSubmissionWithoutAssessmentForCorrectionRound(0);
         }
     }
 
     /**
-     * Get a submission from the server that does not have an assessment for the given correctionround yet (if there is one).
+     * Get a submission from the server that does not have an assessment for the given correction round yet (if there is one).
      * The submission gets added to the end of the list of submissions in the exercise
      * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course.
      * If the user reached this limit,
      * the server will respond with a BAD REQUEST response here.
      */
-    private getSubmissionWithoutAssessmentForCorrectionround(correctionRound: number): void {
+    private getSubmissionWithoutAssessmentForCorrectionRound(correctionRound: number): void {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
@@ -615,7 +621,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
             }
         } else {
-            this.javaBridge.downloadSubmission(submissionId, correctionRound, "dummy");
+            const exportOptions: RepositoryExportOptions = {
+                exportAllParticipants: false,
+                filterLateSubmissions: false,
+                addParticipantName: true,
+                combineStudentCommits: false,
+                normalizeCodeStyle: false,
+                hideStudentNameInZippedFolder: true,
+            };
+            this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission : ProgrammingSubmission) => {
+                this.repositoryExportService.exportReposByParticipations(this.exercise.id!, [programmingSubmission.id!], exportOptions).subscribe((res: HttpResponse<Blob>) => {
+                    this.javaBridge.downloadSubmission(submissionId, correctionRound, URL.createObjectURL(res.body!));
+                });
+            });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
@@ -642,7 +660,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: Boolean) => {
             this.secondCorrectionEnabled = res as boolean;
             this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
-            this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
+            this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             this.toggelingSecondCorrectionButton = false;
         });
     }
@@ -664,7 +682,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
                 // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
-                // lock-count from the remaining unassessed submisssions of the current correction round.
+                // lock-count from the remaining unassessed submissions of the current correction round.
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
         }

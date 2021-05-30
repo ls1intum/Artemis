@@ -22,8 +22,7 @@
             >
             </jhi-tutor-participation-graph>
         </div>
-        <div
-            class="col-lg-3 col-md-6 col-sm-6 align-self-center"
+        <div class="col-lg-3 col-md-6 col-sm-6 align-self-center"
             *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
         >
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
@@ -38,7 +37,7 @@
             </ng-container>
         </div>
 
-        <div class="col-5">
+        <div class="col-sm-5">
             <jhi-side-panel *ngIf="!isExamMode" [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate">
                 <div class="row mb-1 small" *ngIf="numberOfSubmissions.late > 0">
                     <div class="col-8"></div>
@@ -363,6 +362,8 @@
                                             </button>
                                             <ng-template #orionButton>
                                                 <jhi-ide-button
+                                                    class="btn btn-success btn-sm"
+                                                    [buttonLoading]="orionState.building"
                                                     buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
                                                     [smallButton]="false"
                                                     (click)="openAssessmentEditor('new', correctionRound, true)"
@@ -553,6 +554,7 @@
 
     <ng-template #orionStartButton>
         <jhi-ide-button
+            [buttonLoading]="orionState.building"
             buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
             [smallButton]="false"
             (click)="openAssessmentInOrion()"
