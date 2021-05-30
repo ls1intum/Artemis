@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
+import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 
 @Repository
@@ -121,5 +122,14 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
             """)
     List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
+
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.domain.statistics.ScoreDistribution(count(p.id), p.lastRatedScore)
+            FROM ParticipantScore p
+            WHERE p.exercise.id = :exerciseId
+            group by p.id
+            order by p.lastRatedScore asc
+            """)
+    List<ScoreDistribution> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 
 }
