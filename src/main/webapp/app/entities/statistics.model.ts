@@ -32,6 +32,8 @@ export enum Graphs {
 export enum StatisticsView {
     ARTEMIS = 'ARTEMIS',
     COURSE = 'COURSE',
+    EXERCISE = 'EXERCISE',
+    EXAM = 'EXAM',
 }
 
 export enum GraphColors {

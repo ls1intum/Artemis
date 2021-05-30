@@ -22,8 +22,8 @@ describe('RatingListComponent', () => {
     let router: Router;
 
     const ratings = [{ id: 1 }, { id: 2 }, { id: 3 }];
-    const parentRoute = ({ params: of({ courseId: 123 }) } as any) as ActivatedRoute;
-    const route = ({ parent: parentRoute } as any) as ActivatedRoute;
+    const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;
+    const route = { parent: parentRoute } as any as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

@@ -6,6 +6,7 @@
                 "createLabel": "Übung erstellen",
                 "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
+            "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
             "resultCount": "{{resultsLength}} Ergebnisse",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
@@ -66,7 +67,8 @@
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonus points",
             "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
-            "includedInOverallScoreLabel": "Soll diese Aufgabe bei der Berechnung des Kurs- bzw Klausurergebnis miteinbezogen werden?",
+            "includedInOverallScoreCourseLabel": "Soll diese Aufgabe bei der Berechnung des Kursergebnis miteinbezogen werden?",
+            "includedInOverallScoreExamLabel": "Soll diese Aufgabe bei der Berechnung des Klausurergebnisses miteinbezogen werden?",
             "includedInOverallScore": "Miteinbezogen in Ergebnis",
             "includedCompletely": "Miteinbezogen",
             "includedCompletelyTooltip": "Alle erzielten Punkte und Bonuspunkte in dieser Aufgabe zählen zu dem Kurs- bzw Klausurergebnis!",

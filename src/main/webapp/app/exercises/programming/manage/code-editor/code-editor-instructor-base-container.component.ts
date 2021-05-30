@@ -355,7 +355,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.jhiAlertService.error(`artemisApp.editor.errors.${error}`);
     }
 
+    /**
+     * Returns whether the component can be left. Returns false if the code editor has unsaved changes
+     * or true if not or if there is no code editor
+     */
     canDeactivate() {
-        return this.codeEditorContainer.canDeactivate();
+        return this.codeEditorContainer?.canDeactivate() ?? true;
     }
 }

@@ -4,6 +4,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { GradeDTO, GradeStep } from 'app/entities/grade-step.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 
@@ -91,5 +92,60 @@ export class GradingSystemService {
      */
     deleteGradingScaleForExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
+    }
+
+    public matchPercentageToGradeStepForExam(courseId: number, examId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
+        return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
+    }
+
+    /**
+     * Sorts grade steps by lower bound percentage
+     *
+     * @param gradeSteps the grade steps to be sorted
+     */
+    sortGradeSteps(gradeSteps: GradeStep[]): GradeStep[] {
+        return gradeSteps.sort((gradeStep1, gradeStep2) => {
+            return gradeStep1.lowerBoundPercentage - gradeStep2.lowerBoundPercentage;
+        });
+    }
+
+    /**
+     * Determines whether a given percentage matches the corresponding grade step
+     *
+     * @param gradeStep the grade step
+     * @param percentage the percentage to be matched
+     */
+    matchGradePercentage(gradeStep: GradeStep, percentage: number): boolean {
+        if (percentage === gradeStep.lowerBoundPercentage) {
+            return gradeStep.lowerBoundInclusive;
+        } else if (percentage === gradeStep.upperBoundPercentage) {
+            return gradeStep.upperBoundInclusive;
+        } else {
+            return percentage > gradeStep.lowerBoundPercentage && percentage < gradeStep.upperBoundPercentage;
+        }
+    }
+
+    /**
+     * Finds a matching grade step inside a grade step set for the given percentage or returns undefined
+     *
+     * @param gradeSteps the grade step set
+     * @param percentage the percentage to be matched
+     */
+    findMatchingGradeStep(gradeSteps: GradeStep[], percentage: number) {
+        return gradeSteps.find((gradeStep) => {
+            return this.matchGradePercentage(gradeStep, percentage);
+        });
+    }
+
+    /**
+     * Returns the max grade from a given grade step set
+     *
+     * @param gradeSteps the grade step set
+     */
+    maxGrade(gradeSteps: GradeStep[]): string {
+        const maxGradeStep = gradeSteps.find((gradeStep) => {
+            return gradeStep.upperBoundInclusive && gradeStep.upperBoundPercentage === 100;
+        });
+        return maxGradeStep?.gradeName || '';
     }
 }

@@ -35,11 +35,11 @@ describe('ExamStudentsComponent', () => {
     const user2 = { id: 2, login: 'user2' } as User;
     const examWithCourse: Exam = { course, id: 2, registeredUsers: [user1, user2] } as Exam;
 
-    const route = ({
+    const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
         url: new Observable<UrlSegment[]>(),
         data: { subscribe: (fn: (value: any) => void) => fn({ exam: examWithCourse }) },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;

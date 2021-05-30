@@ -27,7 +27,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.12.2"
+version = "4.12.4"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -128,7 +128,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become at least 0.90
-                minimum = 0.865
+                minimum = 0.867
             }
             limit {
                 counter = "CLASS"
@@ -173,6 +173,7 @@ dependencies {
     implementation "io.sentry:sentry-spring-boot-starter:4.3.0"
     implementation "io.sentry:sentry-logback:4.3.0"
     implementation "org.jsoup:jsoup:1.13.1"
+    implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.5.8"
 
@@ -195,6 +196,7 @@ dependencies {
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:4.0.3"
     implementation "org.apache.commons:commons-text:1.9"
+    implementation 'org.apache.commons:commons-math3:3.6.1'
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
@@ -221,7 +223,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.0.3"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.63.Final"
+    implementation "io.netty:netty-all:4.1.65.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.7"
     implementation "org.springframework:spring-messaging:5.3.7"
 

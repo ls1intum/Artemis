@@ -4,12 +4,14 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -23,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -71,6 +74,51 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         database.resetDatabase();
         jenkinsRequestMockProvider.reset();
         gitlabRequestMockProvider.reset();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldReceiveBuildLogsOnNewStudentParticipationResult() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = database.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,9] not a statement");
+        logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,10] ';' expected");
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
+        notification.setLogs(logs);
+        postResult(notification);
+
+        var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
+        assertThat(submissionWithLogsOptional).isPresent();
+
+        // Assert that the submission contains build log entries
+        ProgrammingSubmission submissionWithLogs = submissionWithLogsOptional.get();
+        List<BuildLogEntry> buildLogEntries = submissionWithLogs.getBuildLogEntries();
+        assertThat(buildLogEntries).hasSize(2);
+        assertThat(buildLogEntries.get(0).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
+        assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, true);
+
+        jenkinsRequestMockProvider.mockGetLegacyBuildLogs(participation);
+        database.changeUser(userLogin);
+        var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs.size()).isGreaterThan(0);
     }
 
     private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
@@ -149,14 +197,24 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs.size()).isGreaterThan(0);
 
-        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        if (useLegacyBuildLogs) {
+            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        }
+        else {
+            verify(buildWithDetails, times(1)).getConsoleOutputText();
+        }
 
         // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
         receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs.size()).isGreaterThan(0);
 
-        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        if (useLegacyBuildLogs) {
+            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        }
+        else {
+            verify(buildWithDetails, times(1)).getConsoleOutputText();
+        }
 
         return result;
     }
@@ -185,4 +243,5 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         notification.setFullName(fullName);
         return notification;
     }
+
 }
