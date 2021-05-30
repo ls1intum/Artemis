@@ -69,17 +69,22 @@ public class CompassService {
             List<UMLElement> elements = clusterBuilder.getModelElements(modelingSubmission);
             for (UMLElement element : elements) {
                 ModelElement modelElement = modelElementRepository.findByModelElementIdWithCluster(element.getJSONElementID());
-                Optional<ModelCluster> cluster = modelClusterRepository.findByIdWithEagerElements(modelElement.getCluster().getId());
-                if (cluster.isPresent()) {
-                    Set<ModelElement> similarElements = cluster.get().getModelElements();
-                    List<String> references = similarElements.stream().map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId())
-                            .collect(Collectors.toList());
-                    List<Feedback> feedbacks = feedbackRepository.findByReferenceIn(references);
-                    Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, feedbacks, result);
-                    if (suggestedFeedback != null) {
-                        feedbacksForSuggestion.add(suggestedFeedback);
+                if (modelElement != null) {
+                    Optional<ModelCluster> cluster = modelClusterRepository.findByIdWithEagerElements(modelElement.getCluster().getId());
+                    if (cluster.isPresent()) {
+                        Set<ModelElement> similarElements = cluster.get().getModelElements();
+                        List<String> references = similarElements.stream().map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId())
+                                .collect(Collectors.toList());
+                        List<Feedback> feedbacks = feedbackRepository.findByReferenceIn(references);
+                        Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, feedbacks, result);
+                        if (suggestedFeedback != null) {
+                            feedbacksForSuggestion.add(suggestedFeedback);
+                        }
                     }
                 }
+            }
+            if (feedbacksForSuggestion.size() == 0) {
+                return null;
             }
             result.getFeedbacks().clear(); // Note, that a result is always initialized with an empty list -> no NPE here
             result.getFeedbacks().addAll(feedbacksForSuggestion);

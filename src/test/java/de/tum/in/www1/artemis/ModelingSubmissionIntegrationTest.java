@@ -663,22 +663,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void deleteNextOptimalModelSubmission() throws Exception {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(classExercise, submission, "student1");
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
-
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
-        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).hasSize(1);
-
-        request.delete("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.NO_CONTENT);
-        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).isEmpty();
-    }
-
-    @Test
     @WithMockUser(value = "student1")
     public void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");
