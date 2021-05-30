@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,10 +16,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
+import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 
 public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -27,6 +31,9 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private GradeStepRepository gradeStepRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
 
     private Course course;
 
@@ -43,7 +50,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @BeforeEach
     public void init() {
-        database.addUsers(0, 0, 0, 1);
+        database.addUsers(1, 0, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
@@ -214,31 +221,35 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeDTO.class);
     }
 
     /**
-     * Test get request for a single grade step by grade percentage
+     * Test get request for a single grade by grade percentage
      *
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForCourse() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
         gradeStep.setLowerBoundPercentage(60);
         gradeStep.setUpperBoundPercentage(100);
+        gradeStep.setIsPassingGrade(true);
         gradeStep.setGradingScale(courseGradingScale);
         gradeSteps = Set.of(gradeStep);
         courseGradingScale.setGradeSteps(gradeSteps);
+        courseGradingScale.setGradeType(GradeType.GRADE);
         gradingScaleRepository.save(courseGradingScale);
 
-        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeStep.class);
+        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
 
-        assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
+        assertThat(foundGrade.gradeName).isEqualTo("Name");
+        assertThat(foundGrade.gradeType).isEqualTo(GradeType.GRADE);
+        assertThat(foundGrade.isPassingGrade).isTrue();
     }
 
     /**
@@ -247,32 +258,52 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeDTO.class);
     }
 
     /**
-     * Test get request for a single grade step by grade percentage
+     * Test get request for a single grade step by grade pecentage as a student
+     * when the exam results have not been published yet
      *
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetGradeStepByPercentageForExamForbidden() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.FORBIDDEN, GradeDTO.class);
+    }
+
+    /**
+     * Test get request for a single grade by grade percentage
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForExam() throws Exception {
         GradeStep gradeStep = new GradeStep();
-        gradeStep.setGradeName("Name");
-        gradeStep.setLowerBoundPercentage(60);
-        gradeStep.setUpperBoundPercentage(100);
+        gradeStep.setGradeName("Test grade");
+        gradeStep.setLowerBoundPercentage(0);
+        gradeStep.setUpperBoundPercentage(40);
+        gradeStep.setIsPassingGrade(false);
         gradeStep.setGradingScale(examGradingScale);
         gradeSteps = Set.of(gradeStep);
         examGradingScale.setGradeSteps(gradeSteps);
+        examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
+        exam.setPublishResultsDate(ZonedDateTime.now());
+        examRepository.save(exam);
 
-        GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK,
-                GradeStep.class);
+        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=35", HttpStatus.OK,
+                GradeDTO.class);
 
-        assertThat(foundGradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradeStep);
+        assertThat(foundGrade.gradeName).isEqualTo("Test grade");
+        assertThat(foundGrade.gradeType).isEqualTo(GradeType.BONUS);
+        assertThat(foundGrade.isPassingGrade).isFalse();
     }
 
 }

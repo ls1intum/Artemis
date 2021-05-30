@@ -1,20 +1,20 @@
 {
     "artemisApp": {
         "post": {
-            "created": "Frage erfolgreich erstellt",
-            "updated": "Frage erfolgreich aktualisiert",
-            "deleted": "Frage erfolgreich gelöscht",
-            "text": "Frage",
+            "created": "Post erfolgreich erstellt",
+            "updated": "Post erfolgreich aktualisiert",
+            "deleted": "Post erfolgreich gelöscht",
+            "text": "Post",
             "creationDate": "Gestellt am",
             "votes": "Votes",
             "answers": "Antworten",
             "approvedAnswerPosts": "Bestätigte Antworten",
             "exerciseOrLecture": "Aufgabe / Vorlesung",
             "overview": {
-                "title": "Fragen",
-                "noPosts": "Es wurden noch keine Fragen in diesem Kurs gestellt",
-                "showApproved": "Zeige Fragen mit bestätigten Antworten an",
-                "hideApproved": "Verstecke Fragen mit bestätigten Antworten"
+                "title": "Posts",
+                "noPosts": "Es gibt keine Posts in diesem Kurs",
+                "showApproved": "Zeige Posts mit bestätigten Antworten an",
+                "hideApproved": "Verstecke Posts mit bestätigten Antworten"
             }
         }
     }
