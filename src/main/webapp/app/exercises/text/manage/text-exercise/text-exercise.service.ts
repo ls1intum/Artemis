@@ -139,7 +139,7 @@ export class TextExerciseService {
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .put<TextExercise>(`${this.resourceUrl}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<TextExercise>(`${this.resourceUrl}/${textExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
                 map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),

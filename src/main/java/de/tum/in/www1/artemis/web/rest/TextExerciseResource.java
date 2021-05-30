@@ -589,7 +589,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * PUT /text-exercises/re-evaluate : Re-evaluates and updates an existing textExercise.
+     * PUT /text-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing textExercise.
      *
      * @param textExercise     the textExercise to re-evaluate and update
      * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
@@ -599,9 +599,9 @@ public class TextExerciseResource {
      * Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/text-exercises/re-evaluate")
+    @PutMapping("/text-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@RequestBody TextExercise textExercise,
+    public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable Long exerciseId, @RequestBody TextExercise textExercise,
                                                                @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 

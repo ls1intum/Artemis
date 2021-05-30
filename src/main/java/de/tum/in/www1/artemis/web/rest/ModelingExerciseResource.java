@@ -410,4 +410,31 @@ public class ModelingExerciseResource {
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * PUT /modeling-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing modelingExercise.
+     *
+     * @param modelingExercise     the modelingExercise to re-evaluate and update
+     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
+     * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 500 (Internal
+     * Server Error) if the modelingExercise couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping("/modeling-exercises/{exerciseId}/re-evaluate")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable Long exerciseId, @RequestBody ModelingExercise modelingExercise,
+                                                                        @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
+        log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // make sure the course actually exists
+        var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbacks);
+
+        return updateModelingExercise(modelingExercise, null);
+    }
 }
