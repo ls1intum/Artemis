@@ -82,9 +82,7 @@ export class ModelingSubmissionService {
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http
-            .get<ModelingSubmission>(url, { params })
-            .pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
     }
 
     /**

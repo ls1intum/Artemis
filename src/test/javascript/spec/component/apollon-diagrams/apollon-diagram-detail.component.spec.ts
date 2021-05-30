@@ -39,7 +39,7 @@ describe('ApollonDiagramDetail Component', () => {
     global.URL.revokeObjectURL = jest.fn(() => '');
 
     beforeEach(() => {
-        const route = ({ params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+        const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(testClassDiagram);
 

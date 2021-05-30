@@ -31,7 +31,10 @@
             "showExampleAssessment": "Bewertung anzeigen",
             "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen.",
             "exampleSubmissionForModelingExercise": "Beispielabgabe für Modellierungsaufgabe {{ exerciseTitle }}",
-            "usedForTutorial": "Für Tutorial"
+            "usedForTutorial": "Für Tutorial",
+            "apollonConversion": {
+                "error": "Apollon-Konvertierung ist nicht verfügbar"
+            }
         }
     }
 }

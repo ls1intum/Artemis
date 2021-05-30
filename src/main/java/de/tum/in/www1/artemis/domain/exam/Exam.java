@@ -225,8 +225,8 @@ public class Exam extends DomainObject {
         this.confirmationEndText = confirmationEndText;
     }
 
-    public Integer getMaxPoints() {
-        return this.maxPoints;
+    public int getMaxPoints() {
+        return this.maxPoints == null ? 0 : this.maxPoints;
     }
 
     public void setMaxPoints(Integer maxPoints) {

@@ -12,7 +12,9 @@
             "eist": {
                 "forHomework": "Punkte für Hausaufgaben",
                 "forInClass": "Punkte für die Präsenzaufgaben"
-            }
+            },
+            "gradingSystemGrade": "Noten",
+            "gradingSystemBonus": "Bonus Punkte"
         }
     }
 }

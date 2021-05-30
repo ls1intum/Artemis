@@ -3,14 +3,15 @@ import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 
 /*
-Warn instructors in the assessment and submission page
-if the due date is not over yet as they are allowed to assess submissions there
+Display warning for instructors on submission page, team page and the assessment page.
+Instructors are allowed to access and assess submissions before the exercise's due date is reached
+and student submission would still be possible.
  */
 @Component({
     selector: 'jhi-assessment-warning',
     template: `
         <h6>
-            <div class="card-header" *ngIf="this.isBeforeDueDate">
+            <div class="card-header" *ngIf="isBeforeDueDate">
                 <fa-icon [icon]="'exclamation-triangle'" size="2x" class="text-warning" placement="bottom"></fa-icon>
                 {{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}
             </div>
@@ -19,7 +20,6 @@ if the due date is not over yet as they are allowed to assess submissions there
 })
 export class AssessmentWarningComponent implements OnChanges {
     @Input() exercise: Exercise;
-    currentDate: moment.MomentInput;
     isBeforeDueDate = false;
 
     /**
@@ -28,7 +28,7 @@ export class AssessmentWarningComponent implements OnChanges {
     ngOnChanges(): void {
         const dueDate = this.exercise.dueDate;
         if (dueDate != undefined) {
-            this.isBeforeDueDate = dueDate.isAfter(this.currentDate);
+            this.isBeforeDueDate = moment().isBefore(dueDate);
         }
     }
 }

@@ -24,7 +24,13 @@
                 "participationsTable": {
                     "title": "Participations in \"{{ courseTitle }}\" for",
                     "columns": {
-                        "assessment": "Assessment"
+                        "assessment": {
+                            "label": "Assessment",
+                            "tooltip": "Assessment can only be done for successful submissions and after exercise due date."
+                        },
+                        "participationId": {
+                            "label": "Participation ID"
+                        }
                     },
                     "complaintOrMoreFeedbackRequest": "Complaint or More Feedback Request"
                 }

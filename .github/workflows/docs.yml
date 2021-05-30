@@ -26,6 +26,7 @@ jobs:
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "docs/"
+        build-command: make html dirhtml
     - uses: actions/upload-artifact@v1
       with:
         name: Documentation
@@ -34,8 +35,9 @@ jobs:
     - uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/_build/html/
+        publish_dir: docs/_build/dirhtml/
         user_name: 'artemis-bot'
         user_email: 'artemis-bot@users.noreply.github.com'
         full_commit_message: ${{ github.event.head_commit.message }}
+        cname: docs.artemis.ase.in.tum.de
       if: github.ref == 'refs/heads/develop'

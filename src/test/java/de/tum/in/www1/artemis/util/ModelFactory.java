@@ -847,6 +847,7 @@ public class ModelFactory {
         notification.setSuccessful(successfulTestNames.size());
         notification.setFailures(failedTestNames.size());
         notification.setRunDate(ZonedDateTime.now());
+        notification.setLogs(List.of());
         return notification;
     }
 
