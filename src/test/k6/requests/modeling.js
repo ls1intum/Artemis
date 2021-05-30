@@ -1,10 +1,9 @@
-import { fail, sleep } from 'k6';
+import { fail } from 'k6';
 import { nextAlphanumeric } from '../util/utils.js';
 import {
     ASSESS_MODELING_SUBMISSION,
     MODELING_EXERCISE,
     SUBMIT_MODELING_EXAM,
-    PARTICIPATIONS,
     TUTOR_PARTICIPATIONS,
     MODELING_SUBMISSION_WITHOUT_ASSESSMENT,
     MODELING_EXERCISES,
@@ -61,24 +60,6 @@ export function newModelingExercise(artemis, exerciseGroup, courseId) {
         fail('FAILTEST: Could not create modeling exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new modeling exercise');
-
-    return JSON.parse(res[0].body);
-}
-
-export function startExercise(artemis, courseId, exerciseId) {
-    console.log('Try to start exercise for test user ' + __VU);
-    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), undefined, undefined);
-
-    if (res[0].status === 400) {
-        sleep(3000);
-        return;
-    }
-
-    if (res[0].status !== 201) {
-        fail('FAILTEST: error trying to start exercise for test user ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
-    } else {
-        console.log('SUCCESSFULLY started exercise for test user ' + __VU);
-    }
 
     return JSON.parse(res[0].body);
 }

@@ -6,10 +6,10 @@ import {
     getAndLockModelingSubmission,
     getExercise,
     newModelingExercise,
-    startExercise,
     startTutorParticipation,
     submitRandomModelingAnswerExam,
 } from './requests/modeling.js';
+import { startExercise } from './requests/exercises.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
 
