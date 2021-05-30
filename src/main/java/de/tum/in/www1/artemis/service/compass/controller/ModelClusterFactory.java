@@ -94,7 +94,8 @@ public class ModelClusterFactory {
         return null;
     }
 
-    void setCluster(UMLElement element, HashSet<UMLElement> uniqueModelElements, Map<Integer, ModelCluster> clusters, ModelingExercise exercise, ModelingSubmission submission) {
+    private void setCluster(UMLElement element, HashSet<UMLElement> uniqueModelElements, Map<Integer, ModelCluster> clusters, ModelingExercise exercise,
+            ModelingSubmission submission) {
 
         // Pair of similarity value and cluster ID
         var bestSimilarityFit = Pair.of(-1.0, -1);

@@ -49,6 +49,11 @@ public class CompassService {
     }
 
     public void build(ModelingExercise modelingExercise) {
+        List<ModelCluster> currentClusters = modelClusterRepository.findAllByExerciseIdWithEagerElements(modelingExercise.getId());
+        if (currentClusters.size() > 0) {
+            // Do not build submissions if this process has already been done before
+            return;
+        }
         List<ModelingSubmission> submissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(modelingExercise.getId());
         ModelClusterFactory clusterFactory = new ModelClusterFactory();
         List<ModelCluster> modelClusters = clusterFactory.buildClusters(submissions, modelingExercise);
