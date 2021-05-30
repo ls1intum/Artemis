@@ -479,7 +479,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
-    // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
+    // TODO: Reactivate this with the Compass statistics PR
     // @Test
     // @WithMockUser(username = "instructor1", roles = "ADMIN")
     // public void testStatistics() throws Exception {

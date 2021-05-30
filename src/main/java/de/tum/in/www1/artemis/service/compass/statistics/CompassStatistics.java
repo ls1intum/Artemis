@@ -22,6 +22,7 @@ public class CompassStatistics {
      * @return statistics about the UML model
      */
     // TODO: I don't think we should expose JSONObject to this internal server class. It would be better to return Java objects here
+    // TODO: New pipeline does not calculate these values beforehand calculate them here and return
     public JsonObject getStatistics() {
         JsonObject jsonObject = new JsonObject();
 
@@ -77,6 +78,7 @@ public class CompassStatistics {
      * @param exerciseId the id of the modeling exercise that is analyzed
      * @param finishedResults the list of finished results, i.e. results for which assessor and completion date is not null
      */
+    // TODO: New compass pipeline does not calculate most of these values beforehand change the way the values are acquired here
     public void printStatistic(long exerciseId, List<Result> finishedResults) {
         log.info("Statistics for exercise {}\n\n\n", exerciseId);
 
