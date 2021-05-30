@@ -610,7 +610,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * Get a distinct result from the database by its submissionId, else throws an EntityNotFoundException
      *
      * @param submissionId the id of the result to load from the database
-     * @return the result
+     * @return the result, else throws an EntityNotFoundException
      */
     default Result findDistinctBySubmissionIdElseThrow(Long submissionId) {
         return findDistinctBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("Result with submissionId", submissionId));
@@ -630,7 +630,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * Get a result from the database by its id together with the list of feedback items.
      *
      * @param resultId the id of the result to load from the database
-     * @return the result with submission and feedback list
+     * @return the result with submission and feedback list, else throws an EntityNotFoundException
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
