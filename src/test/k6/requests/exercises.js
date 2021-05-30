@@ -17,3 +17,18 @@ export function startExercise(artemis, courseId, exerciseId) {
 
     return JSON.parse(res[0].body);
 }
+
+export function getExercise(artemis, exerciseId, endpoint) {
+    const res = artemis.get(endpoint);
+    console.log('Server response is ' + JSON.stringify(res));
+    if (res[0].status !== 200) {
+        console.log('ERROR when getting existing exercise. Response headers:');
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('FAILTEST: Could not get exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+    }
+    console.log('SUCCESS: Get existing exercise');
+
+    return JSON.parse(res[0].body);
+}

@@ -1,18 +1,10 @@
-import { group, sleep } from 'k6';
-import { addUserToInstructorsInCourse, deleteCourse, newCourse } from './requests/course.js';
-import {
-    assessModelingSubmission,
-    deleteModelingExercise,
-    getAndLockModelingSubmission,
-    getExercise,
-    newModelingExercise,
-    startExercise,
-    startTutorParticipation,
-    submitRandomModelingAnswerExam,
-} from './requests/modeling.js';
-import { newTextExercise } from './requests/text.js';
+import { sleep } from 'k6';
+import { addUserToInstructorsInCourse, newCourse } from './requests/course.js';
+import { startExercise, getExercise } from './requests/exercises.js';
+import { newTextExercise, submitRandomTextAnswerExam } from './requests/text.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
+import { TEXT_EXERCISE } from './requests/endpoints';
 
 export let options = {
     maxRedirects: 0,
@@ -85,7 +77,7 @@ export function setup() {
         courseId = parseInt(__ENV.COURSE_ID);
         artemis = login(adminUsername, adminPassword);
         console.log('Getting text exercise');
-        exercise = getExercise(artemis, exerciseId);
+        exercise = getExercise(artemis, exerciseId, TEXT_EXERCISE(exerciseId));
     }
 
     for (let i = 1; i <= iterations; i++) {
@@ -104,7 +96,7 @@ export function setup() {
         if (participation) {
             const submissionId = participation.submissions[0].id;
             console.log('Submitting submission ' + submissionId);
-            submitRandomModelingAnswerExam(artemis, exercise, submissionId);
+            submitRandomTextAnswerExam(artemis, exercise, submissionId);
         }
         sleep(1);
     }

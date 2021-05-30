@@ -72,22 +72,6 @@ export function deleteModelingExercise(artemis, exerciseId) {
     console.log('DELETED modeling exercise, ID=' + exerciseId);
 }
 
-export function getExercise(artemis, exerciseId) {
-    const serverRespond = artemis.get(MODELING_EXERCISE(exerciseId));
-    console.log('Server response is ' + JSON.stringify(serverRespond));
-    const res = artemis.get(MODELING_EXERCISE(exerciseId));
-    if (res[0].status !== 200) {
-        console.log('ERROR when getting existing exercise. Response headers:');
-        for (let [key, value] of Object.entries(res[0].headers)) {
-            console.log(`${key}: ${value}`);
-        }
-        fail('FAILTEST: Could not get exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
-    }
-    console.log('SUCCESS: Get existing exercise');
-
-    return JSON.parse(res[0].body);
-}
-
 export function startTutorParticipation(artemis, exerciseId) {
     const res = artemis.post(TUTOR_PARTICIPATIONS(exerciseId), { status: 'NOT_PARTICIPATED' });
     if (res[0].status !== 201) {

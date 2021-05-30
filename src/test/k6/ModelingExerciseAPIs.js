@@ -4,14 +4,14 @@ import {
     assessModelingSubmission,
     deleteModelingExercise,
     getAndLockModelingSubmission,
-    getExercise,
     newModelingExercise,
     startTutorParticipation,
     submitRandomModelingAnswerExam,
 } from './requests/modeling.js';
-import { startExercise } from './requests/exercises.js';
+import { startExercise, getExercise } from './requests/exercises.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
+import { MODELING_EXERCISE } from './requests/endpoints';
 
 // Version: 1.1
 // Creator: Firefox
@@ -89,7 +89,7 @@ export function setup() {
         artemis = login(adminUsername, adminPassword);
 
         console.log('Getting exercise');
-        exercise = getExercise(artemis, exerciseId);
+        exercise = getExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
     }
 
     for (let i = 1; i <= iterations; i++) {
