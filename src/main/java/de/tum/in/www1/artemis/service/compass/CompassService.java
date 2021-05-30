@@ -56,7 +56,7 @@ public class CompassService {
      */
     public void build(ModelingExercise modelingExercise) {
         List<ModelCluster> currentClusters = modelClusterRepository.findAllByExerciseIdWithEagerElements(modelingExercise.getId());
-        if (currentClusters.size() > 0) {
+        if (!currentClusters.isEmpty()) {
             // Do not build submissions if this process has already been done before
             return;
         }
@@ -96,7 +96,7 @@ public class CompassService {
                     }
                 }
             }
-            if (feedbacksForSuggestion.size() == 0) {
+            if (feedbacksForSuggestion.isEmpty()) {
                 return null;
             }
             result.getFeedbacks().clear(); // Note, that a result is always initialized with an empty list -> no NPE here

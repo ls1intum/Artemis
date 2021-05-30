@@ -54,7 +54,7 @@ public class UMLDiagramTest {
 
     @AfterEach
     void tearDown() {
-        Mockito.reset(umlDiagram, umlElement1, umlElement2, umlElement3, referenceElement1, referenceElement2, referenceDiagram);
+        reset(umlDiagram, umlElement1, umlElement2, umlElement3, referenceElement1, referenceElement2, referenceDiagram);
     }
 
     @Test

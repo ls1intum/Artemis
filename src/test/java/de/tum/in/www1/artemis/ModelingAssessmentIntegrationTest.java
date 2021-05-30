@@ -76,12 +76,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private ComplaintRepository complaintRepository;
 
-    @Autowired
-    private ModelElementRepository modelElementRepository;
-
-    @Autowired
-    private ModelClusterRepository modelClusterRepository;
-
     private ModelingExercise classExercise;
 
     private ModelingExercise activityExercise;

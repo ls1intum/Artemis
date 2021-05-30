@@ -21,7 +21,7 @@ public class FeedbackSelector {
      * @return the feedback that is selected for suggestion
      */
     public static Feedback selectFeedback(ModelElement modelElement, List<Feedback> feedbackList, Result result) {
-        if (feedbackList == null || feedbackList.size() == 0) {
+        if (feedbackList == null || feedbackList.isEmpty()) {
             return null;
         }
         // counts the amount of feedback elements that have the same credits assigned, i.e. maps "credits -> amount" for every unique credit number
