@@ -95,12 +95,9 @@
                 </div>
             </div>
             <ng-container #startButton *ngIf="startView; else endButton">
-                <div ngbTooltip="{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}"></div>
+                <div *ngIf="!startButtonEnabled">{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
                 <button [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
-                    <span *ngIf="startButtonEnabled" jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
-                    <span *ngIf="!startButtonEnabled" ngbTooltip="{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}" jhiTranslate="artemisApp.exam.startExam"
-                        >Start Exam</span
-                    >
+                    <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
                 </button>
             </ng-container>
             <ng-template #endButton>
