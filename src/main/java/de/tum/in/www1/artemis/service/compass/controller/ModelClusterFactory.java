@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class ModelClusterFactory {
 
-    private final Logger log = LoggerFactory.getLogger(ModelClusterBuilder.class);
+    private final Logger log = LoggerFactory.getLogger(ModelClusterFactory.class);
 
     public ModelClusterFactory() {
 

@@ -113,8 +113,6 @@ public class CompassService {
      * @return true if the given diagram type is supported by Compass, false otherwise
      */
     public boolean isSupported(ModelingExercise modelingExercise) {
-        build(modelingExercise);
-
         // only use compass for course exercises, in exam exercises the additional delay is too much so it is currently deactivated
         // TODO: we should support compass also for the exam mode
         if (modelingExercise.isExamExercise()) {
