@@ -12,10 +12,14 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class FeedbackSelector {
 
-    public FeedbackSelector() {
-
-    }
-
+    /**
+     * Selects the feedback to suggest from the list of feedback then sets up the selected feedback for the given element and result
+     *
+     * @param modelElement the UML model element the Feedback will be suggested for
+     * @param feedbackList the list of feedback to choose from
+     * @param result the result the selected feedback will belong to
+     * @return the feedback that is selected for suggestion
+     */
     public static Feedback selectFeedback(ModelElement modelElement, List<Feedback> feedbackList, Result result) {
         if (feedbackList == null || feedbackList.size() == 0) {
             return null;
@@ -60,7 +64,7 @@ public class FeedbackSelector {
      * Creates the reference string to be stored in an Feedback element for modeling submissions. The reference of a modeling Feedback stores the type of the corresponding UML
      * element and its jsonElementId and is of the form "<umlElementType>:<jsonElementIds>".
      *
-     * @param modelElement    the UML model element the Feedback belongs to
+     * @param modelElement the UML model element the Feedback belongs to
      * @return the formatted reference string containing the element type and its jsonElementId
      */
     private static String buildReferenceString(ModelElement modelElement) {
@@ -68,20 +72,21 @@ public class FeedbackSelector {
     }
 
     /**
-     * Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable.
+     * Round credits to avoid machine precision errors, make the credits more readable and give a slight advantage which makes 100% scores easier reachable.
      * <p>
      * Positive values > [x.0, x.15[ gets rounded to x.0 > [x.15, x.65[ gets rounded to x.5 > [x.65, x + 1[ gets rounded to x + 1
      * <p>
      * Negative values > [-x - 1, -x.85[ gets rounded to -x - 1 > [-x.85, -x.35[ gets rounded to -x.5 > [-x.35, -x.0[ gets rounded to -x.0
      *
-     * @return the rounded compass grade
+     * @param credits to round
+     * @return the rounded compass credits
      */
     private static double roundCredits(double credits) {
 
-        BigDecimal point = new BigDecimal(credits);
+        BigDecimal point = new BigDecimal(String.valueOf(credits));
         boolean isNegative = point.doubleValue() < 0;
         // get the fractional part of the entry score and subtract 0.15 (e.g. 1.5 -> 0.35 or -1.5 -> -0.65)
-        double fractionalPart = point.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
+        double fractionalPart = point.remainder(BigDecimal.ONE).subtract(new BigDecimal(String.valueOf(0.15))).doubleValue();
         // remove the fractional part of the entry score (e.g. 1.5 -> 1 or -1.5 -> -1)
         point = point.setScale(0, RoundingMode.DOWN);
 
@@ -93,10 +98,10 @@ public class FeedbackSelector {
         }
 
         if (fractionalPart >= 0.5) {
-            point = point.add(new BigDecimal(1));
+            point = point.add(new BigDecimal(String.valueOf(1)));
         }
         else if (fractionalPart >= 0) {
-            point = point.add(new BigDecimal(0.5));
+            point = point.add(new BigDecimal(String.valueOf(0.5)));
         }
 
         return point.doubleValue();

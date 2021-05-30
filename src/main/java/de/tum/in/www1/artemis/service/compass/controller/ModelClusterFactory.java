@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -32,21 +33,27 @@ public class ModelClusterFactory {
 
     private final Logger log = LoggerFactory.getLogger(ModelClusterFactory.class);
 
-    public ModelClusterFactory() {
-
-    }
-
-    public List<ModelCluster> buildClusters(List<ModelingSubmission> modelSubmissions, ModelingExercise exercise) {
+    /**
+     * Finds the similar elements among submissions and puts them in a cluster
+     *
+     * @param modelingSubmissions the submissions to build the clusters from
+     * @param exercise the exercise that submissions belong to
+     * @return the clusters that has more than one element in them
+     */
+    public List<ModelCluster> buildClusters(List<ModelingSubmission> modelingSubmissions, ModelingExercise exercise) {
+        // The elements that has no other similar elements or are the first of their kind
         HashSet<UMLElement> uniqueElements = new HashSet<>();
+
+        // The map of similarity id and clusters. We are using similarity id instead of cluster id here since clusters do not exist in database yet
         Map<Integer, ModelCluster> clusters = new ConcurrentHashMap();
-        for (Submission submission : modelSubmissions) {
+        for (Submission submission : modelingSubmissions) {
             // We have to unproxy here as sometimes the Submission is a Hibernate proxy resulting in a cast exception
             // when iterating over the ModelingSubmissions directly (i.e. for (ModelingSubmission submission : submissions)).
             ModelingSubmission modelingSubmission = (ModelingSubmission) Hibernate.unproxy(submission);
 
             List<UMLElement> modelElements = getModelElements(modelingSubmission);
             for (UMLElement element : modelElements) {
-                setCluster(element, uniqueElements, clusters, exercise, modelingSubmission);
+                selectCluster(element, uniqueElements, clusters, exercise, modelingSubmission);
             }
             setContextOfModelElements(modelElements);
         }
@@ -79,6 +86,12 @@ public class ModelClusterFactory {
         }
     }
 
+    /**
+     * Builds and returns the elements of the modeling submission
+     *
+     * @param modelingSubmission the submission that has the elements
+     * @return the uml elements that submission has
+     */
     public List<UMLElement> getModelElements(ModelingSubmission modelingSubmission) {
         String modelString = modelingSubmission.getModel();
         if (modelString != null) {
@@ -94,7 +107,16 @@ public class ModelClusterFactory {
         return null;
     }
 
-    private void setCluster(UMLElement element, HashSet<UMLElement> uniqueModelElements, Map<Integer, ModelCluster> clusters, ModelingExercise exercise,
+    /**
+     * Builds and returns the elements of the modeling submission
+     *
+     * @param element the element to compare for other elements
+     * @param uniqueModelElements the elements that has no similar elements or the first of their kind
+     * @param clusters map of clusters and similarity ids to assign the element
+     * @param exercise the exercise that submission of element belongs to
+     * @param submission the submission that element belongs to
+     */
+    private void selectCluster(UMLElement element, Set<UMLElement> uniqueModelElements, Map<Integer, ModelCluster> clusters, ModelingExercise exercise,
             ModelingSubmission submission) {
 
         // Pair of similarity value and cluster ID

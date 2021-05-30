@@ -48,6 +48,12 @@ public class CompassService {
         this.feedbackRepository = feedbackRepository;
     }
 
+    /**
+     * Builds and saves the clusters
+     * Does not build clusters if there is already a cluster for given exercise
+     *
+     * @param modelingExercise the exercise to build clusters for
+     */
     public void build(ModelingExercise modelingExercise) {
         List<ModelCluster> currentClusters = modelClusterRepository.findAllByExerciseIdWithEagerElements(modelingExercise.getId());
         if (currentClusters.size() > 0) {
@@ -61,6 +67,13 @@ public class CompassService {
         modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).collect(Collectors.toList()));
     }
 
+    /**
+     * Selects the feedback suggestion for each element in submission and creates a result from them
+     * Returns null if no feedback can be selected or the submission has already a manual feedback
+     *
+     * @param modelingSubmission the submission to select feedbacks for
+     * @return the semi automatic result that has the feedbacks inside
+     */
     public Result getSuggestionResult(ModelingSubmission modelingSubmission) {
         Result result = getAutomaticResultForSubmission(modelingSubmission);
         if (result != null) {
