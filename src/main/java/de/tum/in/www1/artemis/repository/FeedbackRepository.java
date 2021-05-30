@@ -42,6 +42,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
 
+    List<Feedback> findByReferenceIn(List<String> references);
+
     @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
     List<Feedback> findFeedbacksByStructuredGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 

@@ -69,4 +69,8 @@ public class ModelCluster extends DomainObject {
     public void setExercise(ModelingExercise exercise) {
         this.exercise = exercise;
     }
+
+    public void addModelElement(ModelElement element) {
+        this.modelElements.add(element);
+    }
 }

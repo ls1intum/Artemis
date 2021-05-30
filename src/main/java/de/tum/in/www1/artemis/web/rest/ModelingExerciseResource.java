@@ -223,12 +223,12 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        if (compassService.isSupported(modelingExercise)) {
-            return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
-        }
-        else {
-            return notFound();
-        }
+        // if (compassService.isSupported(modelingExercise)) {
+        // return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
+        // }
+        // else {
+        return notFound();
+        // }
     }
 
     /**
@@ -241,7 +241,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> printCompassStatisticForExercise(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        compassService.printStatistic(modelingExercise.getId());
+        // compassService.printStatistic(modelingExercise.getId());
         return ResponseEntity.ok().build();
     }
 

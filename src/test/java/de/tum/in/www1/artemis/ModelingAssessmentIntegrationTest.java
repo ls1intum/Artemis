@@ -19,6 +19,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.modeling.ModelCluster;
+import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -75,6 +77,12 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private ComplaintRepository complaintRepository;
+
+    @Autowired
+    private ModelElementRepository modelElementRepository;
+
+    @Autowired
+    private ModelClusterRepository modelClusterRepository;
 
     private ModelingExercise classExercise;
 
@@ -526,6 +534,30 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
         Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result is not created").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    public void testSavingModelElementsAndModelClusters() throws Exception {
+        modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
+
+        database.createAndSaveParticipationForExercise(classExercise, "student2");
+
+        ModelCluster modelCluster = new ModelCluster();
+        modelCluster.setExercise(classExercise);
+        modelCluster.setMinimumSimilarity(0.95);
+        modelCluster.setModelElementType("Package");
+        modelClusterRepository.save(modelCluster);
+
+        ModelElement modelElement = new ModelElement();
+        modelElement.setModelElementId("123456123456123456123456123456123456");
+        modelElement.setModelElementType("Package");
+        modelElement.setSubmission(modelingSubmission);
+        modelElement.setCluster(modelCluster);
+
+        modelElementRepository.save(modelElement);
+
     }
 
     @Test
