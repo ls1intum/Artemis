@@ -124,6 +124,9 @@ public class ModelingExerciseResource {
         exerciseService.validateScoreSettings(modelingExercise);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
+        modelingExerciseService.scheduleOperations(result.getId());
+
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -179,6 +182,8 @@ public class ModelingExerciseResource {
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
+
+        modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
@@ -278,6 +283,9 @@ public class ModelingExerciseResource {
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        modelingExerciseService.cancelScheduledOperations(exerciseId);
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.

@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -24,9 +25,13 @@ public class ModelingExerciseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService) {
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService,
+            InstanceMessageSendService instanceMessageSendService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -54,4 +59,13 @@ public class ModelingExerciseService {
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
+
+    public void scheduleOperations(Long modelingExerciseId) {
+        instanceMessageSendService.sendModelingExerciseSchedule(modelingExerciseId);
+    }
+
+    public void cancelScheduledOperations(Long modelingExerciseId) {
+        instanceMessageSendService.sendModelingExerciseScheduleCancel(modelingExerciseId);
+    }
+
 }

@@ -11,10 +11,13 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.ModelingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 
 /**
@@ -31,16 +34,23 @@ public class InstanceMessageReceiveService {
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
+    private final ModelingExerciseScheduleService modelingExerciseScheduleService;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            TextExerciseRepository textExerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
+            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, TextExerciseRepository textExerciseRepository,
+            Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
+        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingExerciseScheduleService = modelingExerciseScheduleService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -49,6 +59,14 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule-cancel").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleProgrammingExerciseCancel(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic("modeling-exercise-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleModelingExercise((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("modeling-exercise-schedule-cancel").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleModelingExerciseCancel(message.getMessageObject());
         });
         hazelcastInstance.<Long>getTopic("text-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -83,6 +101,19 @@ public class InstanceMessageReceiveService {
         // The exercise might already be deleted, so we can not get it from the database.
         // Use the ID directly instead.
         programmingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
+    }
+
+    public void processScheduleModelingExercise(Long exerciseId) {
+        log.info("Received schedule update for modeling exercise {}", exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        modelingExerciseScheduleService.updateScheduling(modelingExercise);
+    }
+
+    public void processScheduleModelingExerciseCancel(Long exerciseId) {
+        log.info("Received schedule cancel for modeling exercise {}", exerciseId);
+        // The exercise might already be deleted, so we can not get it from the database.
+        // Use the ID directly instead.
+        modelingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
     }
 
     public void processScheduleTextExercise(Long exerciseId) {
