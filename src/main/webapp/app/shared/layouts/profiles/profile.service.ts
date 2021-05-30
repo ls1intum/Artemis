@@ -41,9 +41,8 @@ export class ProfileService {
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
                         }
-                        if (profileInfo.ribbonEnv === undefined) {
-                            profileInfo.ribbonEnv = '';
-                        }
+                        profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
+
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
@@ -52,10 +51,8 @@ export class ProfileService {
                         profileInfo.sshKeysURL = data.sshKeysURL;
 
                         // Both properties below are mandatory Strings (see profile-info.model.ts)
-                        const externalUserManagementName = data.externalUserManagementName;
-                        profileInfo.externalUserManagementName = externalUserManagementName === undefined ? '' : externalUserManagementName;
-                        const externalUserManagementURL = data.externalUserManagementURL;
-                        profileInfo.externalUserManagementURL = externalUserManagementURL === undefined ? '' : externalUserManagementURL;
+                        profileInfo.externalUserManagementName = data.externalUserManagementName ?? '';
+                        profileInfo.externalUserManagementURL = data.externalUserManagementURL ?? '';
 
                         profileInfo.contact = data.contact;
                         profileInfo.registrationEnabled = data.registrationEnabled;
