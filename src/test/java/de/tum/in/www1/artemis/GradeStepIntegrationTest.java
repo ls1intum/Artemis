@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
 public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -112,9 +113,23 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
-        request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
+    }
+
+    /**
+     * Test get request for all grade steps as a student
+     * when the exam results have not been published yet
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAllGradeStepsForExamForbidden() throws Exception {
+        gradingScaleRepository.save(examGradingScale);
+
+        request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
     }
 
     /**
@@ -123,8 +138,10 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllGradeStepsForExam() throws Exception {
+        exam.setPublishResultsDate(ZonedDateTime.now());
+        examRepository.save(exam);
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();
         gradeStep1.setGradeName("Name1");
@@ -138,12 +155,18 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradeStep2.setGradingScale(examGradingScale);
         gradeSteps = Set.of(gradeStep1, gradeStep2);
         examGradingScale.setGradeSteps(gradeSteps);
+        examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        List<GradeStep> foundGradeSteps = request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.OK,
-                GradeStep.class);
+        GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
 
-        assertThat(foundGradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(List.of(gradeStep1, gradeStep2));
+        assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.BONUS);
+        assertThat(gradeStepsDTO.examTitle).isEqualTo(exam.getTitle());
+
+        GradeStep[] gradeStepArray = new GradeStep[gradeSteps.size()];
+        gradeSteps.toArray(gradeStepArray);
+
+        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeStepArray);
     }
 
     /**
