@@ -1253,6 +1253,7 @@ public class ProgrammingExerciseResource {
         if (auxiliaryRepository.getName() == null || auxiliaryRepository.getName().isEmpty()) {
             throw new BadRequestAlertException("Cannot set empty name for auxiliary repositories!", AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
+        auxiliaryRepository.setName(auxiliaryRepository.getName().toLowerCase());
     }
 
     private void validateAuxiliaryRepositoryNameLength(AuxiliaryRepository auxiliaryRepository) {

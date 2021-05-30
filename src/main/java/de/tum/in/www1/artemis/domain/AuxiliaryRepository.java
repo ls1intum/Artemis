@@ -154,4 +154,10 @@ public class AuxiliaryRepository extends DomainObject {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "AuxiliaryRepository{id=%d, name='%s', checkoutDirectory='%s', repositoryUrl='%s', description='%s', exercise=%s}"
+            .formatted(getId(), getName(), getCheckoutDirectory(), getRepositoryUrl(), getDescription(), exercise == null ? "null" : exercise.getId());
+    }
 }

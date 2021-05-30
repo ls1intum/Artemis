@@ -343,13 +343,13 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
 
         // Create auxiliary repositories
-        createAndInitializeAuxiliaryRepositories(programmingExercise);
+        createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
     }
 
-    private void createAndInitializeAuxiliaryRepositories(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-            versionControlService.get().createRepository(programmingExercise.getProjectKey(), repositoryName, null);
+            versionControlService.get().createRepository(projectKey, repositoryName, null);
             repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
             Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, null);

@@ -1447,6 +1447,11 @@ public class ProgrammingExerciseIntegrationServiceTest {
         programmingExercise.setId(null);
         programmingExercise.setShortName(uniqueExerciseTitle);
         programmingExercise.setTitle(uniqueExerciseTitle);
+        if (expectedStatus == HttpStatus.CREATED) {
+            System.out.println("We currently have the following repos: ");
+            programmingExercise.getAuxiliaryRepositories().forEach(repository -> System.out.println(repository.toString()));
+            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+        }
         request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, expectedStatus);
     }
 
@@ -1465,7 +1470,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         static AuxiliaryRepositoryBuilder defaults() {
             return of()
                 .withoutId()
-                .withName("DefaultName")
+                .withName("defaultname")
                 .withCheckoutDirectory("assignment")
                 .withDescription("DefaultDescription");
         }
