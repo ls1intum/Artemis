@@ -1225,7 +1225,7 @@ public class ProgrammingExerciseResource {
     @PutMapping(Endpoints.RECREATE_BUILD_PLANS)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> recreateBuildPlans(@PathVariable Long exerciseId) {
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);

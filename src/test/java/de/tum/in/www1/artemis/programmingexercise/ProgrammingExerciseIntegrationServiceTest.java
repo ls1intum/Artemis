@@ -1398,7 +1398,14 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
-        // TODO
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(),
+            AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
+        for (RepositoryType repositoryType : RepositoryType.values()) {
+            testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(repositoryType.getName()), HttpStatus.BAD_REQUEST);
+        }
     }
 
     public void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
@@ -1421,7 +1428,14 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     public void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
-        // TODO
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(),
+            AuxiliaryRepositoryBuilder.defaults().withDifferentName().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(),
+            AuxiliaryRepositoryBuilder.defaults().withDifferentName().withoutCheckoutDirectory().get(),
+            AuxiliaryRepositoryBuilder.defaults().get()), HttpStatus.BAD_REQUEST);
     }
 
     public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
@@ -1433,6 +1447,32 @@ public class ProgrammingExerciseIntegrationServiceTest {
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
+    public void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
+        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.NOT_FOUND, List.class);
+    }
+
+    public void testGetAuxiliaryRepositoriesOk() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise.addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().get()));
+        programmingExercise.addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get()));
+        programmingExerciseRepository.save(programmingExercise);
+        var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
+        assertThat(returnedAuxiliaryRepositories).hasSize(2);
+    }
+
+    /*
+     * This method is also used for forbidden checks.
+     */
+    public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
+        assertThat(returnedAuxiliaryRepositories).hasSize(0);
+    }
+
+    public void testGetAuxiliaryRepositoriesForbidden() throws Exception {
+        request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
+    }
+
     private String generateStringWithMoreThanNCharacters(int n) {
         return IntStream.range(0,n + 1).mapToObj(unused -> "a").reduce("", String::concat);
     }
@@ -1441,18 +1481,37 @@ public class ProgrammingExerciseIntegrationServiceTest {
         return "/api" + SETUP;
     }
 
+    private String defaultRecreateBuildPlanEndpoint() {
+        return defaultRecreateBuildPlanEndpoint(programmingExercise.getId());
+    }
+
+    private String defaultGetAuxReposEndpoint() {
+        return defaultGetAuxReposEndpoint(programmingExercise.getId());
+    }
+
+    private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
+        return "/api" + RECREATE_BUILD_PLANS.replace("{exerciseId}", "" + exerciseId);
+    }
+
+    private String defaultGetAuxReposEndpoint(Long exerciseId) {
+        return "/api" + AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId);
+    }
+
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
+        testAuxRepo(List.of(body.get()), expectedStatus);
+    }
+
+    private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
         String uniqueExerciseTitle = "Title" + System.nanoTime() + "" + new Random().nextInt(100);
-        programmingExercise.setAuxiliaryRepositories(List.of(body.get()));
+        programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
         programmingExercise.setShortName(uniqueExerciseTitle);
         programmingExercise.setTitle(uniqueExerciseTitle);
         if (expectedStatus == HttpStatus.CREATED) {
-            System.out.println("We currently have the following repos: ");
             programmingExercise.getAuxiliaryRepositories().forEach(repository -> System.out.println(repository.toString()));
             mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
         }
-        request.postWithResponseBodyFile(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, expectedStatus);
+        request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
     }
 
     private static class AuxiliaryRepositoryBuilder {
@@ -1471,7 +1530,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
             return of()
                 .withoutId()
                 .withName("defaultname")
-                .withCheckoutDirectory("assignment")
+                .withCheckoutDirectory("directory")
                 .withDescription("DefaultDescription");
         }
 
@@ -1482,6 +1541,11 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
         public AuxiliaryRepositoryBuilder withoutName() {
             repository.setName(null);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withDifferentName() {
+            repository.setName("differentname");
             return this;
         }
 
@@ -1502,6 +1566,11 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
         public AuxiliaryRepositoryBuilder withoutCheckoutDirectory() {
             repository.setCheckoutDirectory(null);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withDifferentCheckoutDirectory() {
+            repository.setCheckoutDirectory("differentcheckoutdirectory");
             return this;
         }
 

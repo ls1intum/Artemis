@@ -740,6 +740,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithRestrictedName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory();
     }
@@ -770,6 +776,12 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithNullCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
         programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithTooLongDescription();
     }
@@ -778,5 +790,31 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(value = "editor1", roles = "EDITOR")
     public void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithoutDescription();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesMissingExercise();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetAuxiliaryRepositoriesOk() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesOk();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    public void testGetAuxiliaryRepositoriesForbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesForbidden();
+    }
+
+
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesEmptyOk();
     }
 }
