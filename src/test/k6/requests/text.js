@@ -1,6 +1,6 @@
 import { fail } from 'k6';
 import { nextAlphanumeric } from '../util/utils.js';
-import { SUBMIT_TEXT_EXAM, TEXT_EXERCISES } from './endpoints.js';
+import { ASSESS_TEXT_SUBMISSION, SUBMIT_TEXT_EXAM, TEXT_EXERCISES } from './endpoints.js';
 
 export function submitRandomTextAnswerExam(artemis, exercise, submissionId) {
     const answer = {
@@ -49,4 +49,25 @@ export function newTextExercise(artemis, exerciseGroup, courseID) {
     console.log('SUCCESS: Generated new text exercise');
 
     return JSON.parse(res[0].body);
+}
+
+export function assessTextSubmission(artemis, exerciseId, resultId) {
+    const assessment = [
+        {
+            credits: 4,
+            reference: 'Package:35f037f7-0606-4798-b43a-9bc76d741421',
+            referenceId: '35f037f7-0606-4798-b43a-9bc76d741421',
+            referenceType: 'Package',
+            text: 'AssessmentText',
+        },
+    ];
+    let res = artemis.put(ASSESS_TEXT_SUBMISSION(exerciseId, resultId), assessment);
+    if (res[0].status !== 200) {
+        console.log('ERROR when assessing modeling (Exercise) via REST. Response headers:');
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('FAILTEST: Could not assess modeling (Exercise) via REST (status: ' + res[0].status + ')! response: ' + res[0].body);
+    }
+    return assessment;
 }

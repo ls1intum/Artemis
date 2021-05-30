@@ -1,13 +1,6 @@
 import { fail } from 'k6';
 import { nextAlphanumeric } from '../util/utils.js';
-import {
-    ASSESS_MODELING_SUBMISSION,
-    MODELING_EXERCISE,
-    SUBMIT_MODELING_EXAM,
-    TUTOR_PARTICIPATIONS,
-    MODELING_SUBMISSION_WITHOUT_ASSESSMENT,
-    MODELING_EXERCISES,
-} from './endpoints.js';
+import { ASSESS_MODELING_SUBMISSION, SUBMIT_MODELING_EXAM, MODELING_EXERCISES } from './endpoints.js';
 
 export function submitRandomModelingAnswerExam(artemis, exercise, submissionId, participation) {
     const answer = {
@@ -61,33 +54,6 @@ export function newModelingExercise(artemis, exerciseGroup, courseId) {
     }
     console.log('SUCCESS: Generated new modeling exercise');
 
-    return JSON.parse(res[0].body);
-}
-
-export function deleteModelingExercise(artemis, exerciseId) {
-    const res = artemis.delete(MODELING_EXERCISE(exerciseId));
-    if (res[0].status !== 200) {
-        fail('FAILTEST: Could not delete exercise (' + res[0].status + ')! Response was + ' + res[0].body);
-    }
-    console.log('DELETED modeling exercise, ID=' + exerciseId);
-}
-
-export function startTutorParticipation(artemis, exerciseId) {
-    const res = artemis.post(TUTOR_PARTICIPATIONS(exerciseId), { status: 'NOT_PARTICIPATED' });
-    if (res[0].status !== 201) {
-        fail('FAILTEST: error trying to start tutor participation for test user ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
-    } else {
-        console.log('SUCCESSFULLY started tutor participation for test user ' + __VU);
-    }
-
-    return JSON.parse(res[0].body);
-}
-
-export function getAndLockModelingSubmission(artemis, exerciseId) {
-    const res = artemis.get(MODELING_SUBMISSION_WITHOUT_ASSESSMENT(exerciseId));
-    if (res[0].status !== 200) {
-        fail('FAILTEST: Could not get submission without assessment (' + res[0].status + ')! Response was + ' + res[0].body);
-    }
     return JSON.parse(res[0].body);
 }
 

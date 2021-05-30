@@ -1,10 +1,10 @@
-import { sleep } from 'k6';
-import { addUserToInstructorsInCourse, newCourse } from './requests/course.js';
-import { startExercise, getExercise } from './requests/exercises.js';
-import { newTextExercise, submitRandomTextAnswerExam } from './requests/text.js';
+import { group, sleep } from 'k6';
+import { addUserToInstructorsInCourse, deleteCourse, newCourse } from './requests/course.js';
+import { startExercise, getExercise, deleteExercise, startTutorParticipation, getAndLockSubmission } from './requests/exercises.js';
+import { assessTextSubmission, newTextExercise, submitRandomTextAnswerExam } from './requests/text.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { TEXT_EXERCISE } from './requests/endpoints';
+import { TEXT_SUBMISSION_WITHOUT_ASSESSMENT, TEXT_EXERCISE } from './requests/endpoints';
 
 export let options = {
     maxRedirects: 0,
@@ -105,4 +105,48 @@ export function setup() {
 
     console.log('Using existing course ' + courseId + ' and exercise ' + exerciseId);
     return { exerciseId, courseId };
+}
+
+export default function (data) {
+    // The user id (1, 2, 3) is stored in __VU
+    const iterations = parseInt(__ENV.ITERATIONS);
+    const userId = parseInt(__VU) + userOffset + iterations;
+    const currentUsername = baseUsername.replace('USERID', userId);
+    const currentPassword = basePassword.replace('USERID', userId);
+
+    console.log('Logging in as user ' + currentUsername);
+    const artemis = login(currentUsername, currentPassword);
+    const exerciseId = data.exerciseId;
+
+    // Delay so that not all users start at the same time, batches of 3 users per second
+    const delay = Math.floor(__VU / 3);
+    sleep(delay * 3);
+
+    group('Assess text submissions', function () {
+        console.log('Start participation for tutor ' + currentUsername);
+        let participation = startTutorParticipation(artemis, exerciseId);
+        if (participation) {
+            console.log('Get and lock text submission for tutor ' + userId + ' and exercise');
+            const submission = getAndLockSubmission(artemis, exerciseId, TEXT_SUBMISSION_WITHOUT_ASSESSMENT(exerciseId));
+            const submissionId = submission.id;
+            console.log('Assess text submission ' + submissionId);
+            console.log('Result before manual assessment ' + JSON.stringify(submission.results[0]));
+            assessTextSubmission(artemis, exerciseId, submission.results[0].id);
+        }
+        sleep(1);
+    });
+
+    return data;
+}
+
+export function teardown(data) {
+    const shouldCleanup = __ENV.CLEANUP === true || __ENV.CLEANUP === 'true';
+    if (shouldCleanup) {
+        const artemis = login(adminUsername, adminPassword);
+        const courseId = data.courseId;
+        const exerciseId = data.exerciseId;
+
+        deleteExercise(artemis, exerciseId, TEXT_EXERCISE(exerciseId));
+        deleteCourse(artemis, courseId);
+    }
 }

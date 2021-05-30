@@ -1,17 +1,10 @@
 import { group, sleep } from 'k6';
 import { addUserToInstructorsInCourse, deleteCourse, newCourse } from './requests/course.js';
-import {
-    assessModelingSubmission,
-    deleteModelingExercise,
-    getAndLockModelingSubmission,
-    newModelingExercise,
-    startTutorParticipation,
-    submitRandomModelingAnswerExam,
-} from './requests/modeling.js';
-import { startExercise, getExercise } from './requests/exercises.js';
+import { assessModelingSubmission, newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
+import { startExercise, getExercise, startTutorParticipation, deleteExercise, getAndLockSubmission } from './requests/exercises.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { MODELING_EXERCISE } from './requests/endpoints';
+import { MODELING_EXERCISE, MODELING_SUBMISSION_WITHOUT_ASSESSMENT } from './requests/endpoints';
 
 // Version: 1.1
 // Creator: Firefox
@@ -139,7 +132,7 @@ export default function (data) {
         let participation = startTutorParticipation(artemis, exerciseId);
         if (participation) {
             console.log('Get and lock modeling submission for tutor ' + userId + ' and exercise');
-            const submission = getAndLockModelingSubmission(artemis, exerciseId);
+            const submission = getAndLockSubmission(artemis, exerciseId, MODELING_SUBMISSION_WITHOUT_ASSESSMENT(exerciseId));
             const submissionId = submission.id;
             console.log('Assess modeling submission ' + submissionId);
             console.log('Result before manual assessment ' + JSON.stringify(submission.results[0]));
@@ -158,7 +151,7 @@ export function teardown(data) {
         const courseId = data.courseId;
         const exerciseId = data.exerciseId;
 
-        deleteModelingExercise(artemis, exerciseId);
+        deleteExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
         deleteCourse(artemis, courseId);
     }
 }
