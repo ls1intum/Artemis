@@ -62,7 +62,7 @@ export class ExerciseUpdateWarningService {
             const updatedCriteria = exercise.gradingCriteria?.find((criteria) => criteria.id === criteriaBackup.id);
 
             if (updatedCriteria) {
-                criteriaBackup.structuredGradingInstructions.forEach((instructionBackup) => {
+                criteriaBackup.structuredGradingInstructions?.forEach((instructionBackup) => {
                     const updatedInstruction = updatedCriteria.structuredGradingInstructions?.find((instruction) => instruction.id === instructionBackup.id);
                     if (updatedInstruction) {
                         this.checkInstruction(updatedInstruction, instructionBackup);

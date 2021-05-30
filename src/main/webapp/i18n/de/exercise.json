@@ -186,7 +186,9 @@
                     "scoringChange": "Bewertungsart verändert:",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
                     "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?",
-                    "reevaluate": "Neu bewerten"
+                    "reevaluate": "Neu bewerten",
+                    "deleteFeedbacks": "Löschen Sie entsprechende Rückmeldungen, die zur Beurteilung von Einsendungen herangezogen werden.",
+                    "information": "Wenn Sie auf 'Neu bewerten' klicken, werden die Bewertungen neu bewertet und die Übung wird aktualisiert. Wenn Sie bestehende Bewertungen nicht ändern möchten, können Sie auf 'Änderungen bestätigen' klicken und müssen die Konsequenzen akzeptieren. Dadurch werden nur die Übung und die Benotungsanweisungen aktualisiert, was zu Inkonsistenzen führen kann."
                 }
             }
         },

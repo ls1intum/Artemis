@@ -41,6 +41,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
+    List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
+
     /**
      * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
      *
@@ -609,5 +612,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findOneWithEagerSubmissionAndFeedback(long resultId) {
         return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
+    }
+
+    /**
+     * Runs 'submitResult' for each result in the given list
+     *
+     * @param resultList the list of results
+     * @param exercise exercise that is needed for 'submitResult'
+     */
+    default void reEvaluateResults(List<Result> resultList, Exercise exercise) {
+        for (Result result : resultList) {
+            submitResult(result, exercise);
+        }
     }
 }

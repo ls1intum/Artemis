@@ -136,4 +136,22 @@ export class TextExerciseService {
             })
             .pipe(map((response: HttpResponse<TextPlagiarismResult>) => response.body!));
     }
+
+    /**
+     * Re-evaluates and updates an existing text exercise.
+     * @param textExercise that should be updated of type {TextExercise}
+     * @param req optional request options
+     */
+    reevaluateAndUpdate(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        let copy = this.exerciseService.convertDateFromClient(textExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .put<TextExercise>(`${this.resourceUrl}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .pipe(
+                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            );
+    }
 }

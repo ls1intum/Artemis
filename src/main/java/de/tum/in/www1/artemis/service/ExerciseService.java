@@ -772,7 +772,14 @@ public class ExerciseService {
         }
     }
 
-    // documentation
+    /**
+     * Checks the exercise grading instructions if any of them is associated with the feedback
+     * then, sets the corresponding exercise field
+     *
+     * @param gradingCriteria grading criteria list of exercise
+     * @param exercise exercise to update
+     *
+     */
     public void checkExerciseIfGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
         List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
@@ -781,58 +788,58 @@ public class ExerciseService {
         }
     }
 
-    //do not forget to documentation
-    public void reEvaluateExercise (Exercise exercise, Exercise originalExercise) {
+    /**
+     * Re-evaluates the exercise before saving
+     * 1. The feedback associated with the exercise grading instruction needs to be updated
+     * 2. After updating feedbacks, result needs to be re-calculated
+     *
+     * @param exercise exercise to re-evaluate
+     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     *
+     */
+    public void reEvaluateExercise (Exercise exercise, Boolean deleteFeedbacks) {
 
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-        List<GradingCriterion> backupGradingcriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalExercise.getId());
+        List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
+        // retrieve the feedbacks associated with the grading instructions
         List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
 
-        // Check the grading instructions are used as feedback. The feedbacks should also re-evaluated
-        if (feedbackList.size() > 0) {
-            List<GradingInstruction> instructionList = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
-            for (GradingInstruction instruction : instructionList) {
-                for (Feedback feedback : feedbackList) {
-                    if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
-                        feedback.setCredits(instruction.getCredits());
-                        feedback.setPositive(feedback.getCredits() >= 0);
-                        feedback.setDetailText(instruction.getFeedback());
-                    }
+        // collect each sub-grading instructions into the list
+        List<GradingInstruction> instructionList = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
+
+        // update the related fields for feedbacks
+        for (GradingInstruction instruction : instructionList) {
+            for (Feedback feedback : feedbackList) {
+                if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
+                    feedback.setCredits(instruction.getCredits());
+                    feedback.setPositive(feedback.getCredits() >= 0);
+                    feedback.setDetailText(instruction.getFeedback());
                 }
             }
-            // burda sey yapmam lazim eger result ile iliskiliyse result null edecek once sonra feedback save edip sonra result id ile tekrar iliskilendirecek
-            feedbackRepository.saveFeedbacks(feedbackList);
         }
+        feedbackRepository.saveAll(feedbackList);
 
+        // check if the user decided to remove the feedbacks after deleting the associated grading instructions
+        if (deleteFeedbacks) {
+            // retrieve the grading instructions from database for backup
+            List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            List<GradingInstruction> backupInstructionList = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
+            List<Long>  deletedInstructionIds = new ArrayList<>();
 
-
-        List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(exercise.getId());
-
-        for (Result result : results) {
-            Result updatedResult = resultRepository.submitResult(result, exercise);
-        }
-
-
-        // eger intruction delete edildiyse bi tane checkbox olsun popupta feedback de silinsin mi diye bu checkbox secildiginde confirm changes secili olmasin cunku re-evaluate
-        // lazim ama secildiyse veya secilmeden revealute butonuna tiklandiysa bunun kontrolunu yap bu bir rest call da parametre olrak gelsin
-        // eger seciliyse original exercise ile su anki exercise i karsilatir boylece silinmis olan instructionlari bulursun sonra o instrucino id ile match
-        // eden feedback repodan feedbackleri sil
-        List<GradingInstruction> updatedInstructionList = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
-        List<GradingInstruction> backupInstructionList = backupGradingcriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
-
-
-        List<Long>  deletedInstructionIds = new ArrayList<>();
-
-        for (GradingInstruction backupInstruction: backupInstructionList) {
-            for (GradingInstruction updatedInstruction: updatedInstructionList) {
-                if(!backupInstruction.getId().equals(updatedInstruction.getId())){
+            // collect deleted grading instruction ids into the list
+            for (GradingInstruction backupInstruction: backupInstructionList) {
+                if(!instructionList.contains(backupInstruction)){
                     deletedInstructionIds.add(backupInstruction.getId());
                 }
             }
+
+            // find the feedbacks will be deleted
+            List<Feedback> deletedFeedbacks = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
+            feedbackRepository.deleteAll(deletedFeedbacks);
+
         }
 
-        List<Feedback> deletedFeedbacks = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
-        feedbackRepository.deleteAll(deletedFeedbacks);
-
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+        // re-calculate the results after updating the feedbacks
+        resultRepository.reEvaluateResults(results, exercise);
     }
 }

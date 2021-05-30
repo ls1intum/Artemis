@@ -186,7 +186,9 @@
                     "scoringChange": "Scoring changed:",
                     "results": "The existing results must be recalculated!",
                     "confirmtext": "Do you really want to perform these changes?",
-                    "reevaluate": "Re-evaluate"
+                    "reevaluate": "Re-evaluate",
+                    "deleteFeedbacks": "Delete corresponding feedbacks that are used to assess submissions.",
+                    "information": "By clicking 'Re-evaluate', the assessments will be re-evaluated and the exercise will be updated. If you do not want to change existing assessments, you can click 'Confirm Changes' and you have to accept the consequences. This will only update the exercise and grading instructions. Therefore, it can cause inconsistency."
                 }
             }
         },

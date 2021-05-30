@@ -167,6 +167,11 @@ export class TextExerciseUpdateComponent implements OnInit {
                     reference.componentInstance.confirmed.subscribe(() => {
                         this.saveExercise();
                     });
+                    reference.componentInstance.reEvaluated.subscribe(() => {
+                        const requestOptions = {} as any;
+                        requestOptions.deleteFeedbacks = reference.componentInstance.deleteFeedbacks;
+                        this.subscribeToSaveResponse(this.textExerciseService.reevaluateAndUpdate(this.textExercise, requestOptions));
+                    });
                 });
             }
         } else {

@@ -588,10 +588,21 @@ public class TextExerciseResource {
         return ResponseEntity.ok(result);
     }
 
-    // do not forget to documentation
-    @PutMapping("/text-exercises/{exerciseId}/re-evaluate")
+    /**
+     * PUT /text-exercises : Re-evaluates and updates an existing textExercise.
+     *
+     * @param textExercise     the textExercise to re-evaluate and update
+     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
+     * with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
+     * Server Error) if the textExercise couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping("/text-exercises/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<TextExercise> reEvaluateTextExercise(@PathVariable Long exerciseId, @RequestBody TextExercise textExercise) {
+    public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@RequestBody TextExercise textExercise,
+                                                               @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 
         // Retrieve the course over the exerciseGroup or the given courseId
@@ -603,27 +614,9 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        // Validate score settings
-        exerciseService.validateScoreSettings(textExercise);
+        exerciseService.reEvaluateExercise(textExercise, deleteFeedbacks);
 
-        TextExercise originalTextExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-
-        exerciseService.reEvaluateExercise(textExercise, originalTextExercise);
-
-        TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
-        exerciseService.logUpdate(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(originalTextExercise, updatedTextExercise);
-
-        instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
-
-        // Avoid recursions
-        if (textExercise.getExampleSubmissions().size() != 0) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(textExercise.getId());
-            updatedTextExercise.setExampleSubmissions(exampleSubmissionsWithResults);
-            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
-        }
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(textExercise);
+        return updateTextExercise(textExercise, null);
     }
+
 }
