@@ -102,8 +102,6 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final GitService gitService;
 
     private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
@@ -149,7 +147,6 @@ public class ProgrammingExerciseResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
-        this.feedbackRepository = feedbackRepository;
         this.gitService = gitService;
         this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
     }

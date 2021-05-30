@@ -59,14 +59,12 @@ public class FileUploadExerciseResource {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
-            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, FeedbackRepository feedbackRepository) {
+            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -77,7 +75,6 @@ public class FileUploadExerciseResource {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**

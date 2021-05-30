@@ -293,12 +293,6 @@ public class TextExerciseResource {
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            textExercise.setGradingInstructionFeedbackUsed(true);
-        }
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
 
