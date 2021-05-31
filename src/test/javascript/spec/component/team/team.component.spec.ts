@@ -26,6 +26,7 @@ import { restore, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockExercise, mockTeam, mockTeams, TeamRequestInterceptorMock } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,6 +61,7 @@ describe('TeamComponent', () => {
                 MockComponent(TeamParticipationTableComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(AlertComponent),
+                MockComponent(AssessmentWarningComponent),
             ],
             providers: [
                 MockProvider(SessionStorageService),

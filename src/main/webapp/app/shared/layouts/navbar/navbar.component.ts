@@ -52,7 +52,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private exam?: Exam;
     private examId?: number;
     private routeExamId = 0;
-    private routeCourseId = 0;
     private lastRouteUrlSegment: string;
 
     constructor(
@@ -197,6 +196,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         participant_scores: 'artemisApp.participantScores.pageTitle',
         course_statistics: 'statistics.course_statistics_title',
         grading_system: 'artemisApp.gradingSystem.title',
+        exercise_statistics: 'exercise-statistics.title',
     };
 
     /**

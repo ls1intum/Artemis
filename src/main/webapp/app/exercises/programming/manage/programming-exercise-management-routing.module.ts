@@ -12,6 +12,7 @@ import { ProgrammingExerciseConfigureGradingComponent } from 'app/exercises/prog
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -100,6 +101,18 @@ export const routes: Routes = [
     {
         path: ':courseId/programming-exercises',
         redirectTo: ':courseId/exercises',
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/exercise-statistics',
+        component: ExerciseStatisticsComponent,
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'exercise-statistics.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 
