@@ -269,7 +269,6 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
         comp.ngOnChanges(changes);
-        // todo add test here
         expect(comp.feedbacks).to.deep.equal(newMockFeedbacks);
         expect(comp.referencedFeedbacks).to.deep.equal([newMockFeedbackWithReference]);
     });
