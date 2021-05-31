@@ -923,7 +923,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDate or assessmentDueDateError
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
      * @throws BadRequestException if the dates are not valid
      */
     public void validateDates() throws BadRequestException {
@@ -941,8 +941,8 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
-     * This method is used to validate the dueDate of an exercise. A due date is valid, if it is after the releaseDate
-     * @return true if the dueDate is valid
+     * This method is used to validate the dueDate of an exercise. A due date is valid, if it is after the releaseDate,
+     * @return true if there is no DueDateError
      */
 
     private boolean validateDueDateError(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assesmentDueDate) {
@@ -954,7 +954,7 @@ public abstract class Exercise extends DomainObject {
 
     /**
      * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
-     * @return true if the assessmentDueDate is valid
+     * @return true if there is no assessmentDueDateError
      */
     private boolean validateAssessmentDueDateError(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         if (assessmentDueDate == null) {
