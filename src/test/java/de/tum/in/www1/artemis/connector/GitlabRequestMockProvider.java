@@ -286,6 +286,7 @@ public class GitlabRequestMockProvider {
     public void mockUpdateVcsUser(String login, de.tum.in.www1.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
             throws GitLabApiException {
         mockUpdateBasicUserInformation(login, user, shouldSynchronizePassword);
+        mockUpdateUserActivationState(user, false);
 
         // Add as member to new groups
         if (addedGroups != null && !addedGroups.isEmpty()) {

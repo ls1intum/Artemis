@@ -233,4 +233,64 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
         assertThat(registeredUser.get().getActivationKey()).isNotNull();
     }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testShouldBlockRegistrationIfUnactivatedUserWithSameLogin() throws Exception {
+        // Create existing non activated user
+        User user = ModelFactory.generateActivatedUser("userLogin");
+        user.setEmail("existingUser@mytum.de");
+        user.setActivated(false);
+        userRepo.save(user);
+
+        User newUser = ModelFactory.generateActivatedUser("userLogin");
+        newUser.setActivated(false);
+        newUser.setEmail("newUser@mytum.de");
+
+        // Register the user
+        ManagedUserVM userVM = new ManagedUserVM(newUser);
+        userVM.setPassword("password");
+        gitlabRequestMockProvider.mockCreateVcsUser(newUser, false);
+        gitlabRequestMockProvider.mockDeactivateUser(newUser.getLogin(), false);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testShouldBlockRegistrationIfUnactivatedUserWithSameEmail() throws Exception {
+        User user = ModelFactory.generateActivatedUser("existingLogin");
+        user.setEmail("existingUser@mytum.de");
+        user.setActivated(false);
+        userRepo.save(user);
+
+        User newUser = ModelFactory.generateActivatedUser("newLogin");
+        newUser.setActivated(false);
+        newUser.setEmail("existingUser@mytum.de");
+
+        // Register the user
+        ManagedUserVM userVM = new ManagedUserVM(newUser);
+        userVM.setPassword("password");
+        gitlabRequestMockProvider.mockCreateVcsUser(newUser, false);
+        gitlabRequestMockProvider.mockDeactivateUser(newUser.getLogin(), false);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testShouldFailRegistrationIfActivatedUserWithSameEmail() throws Exception {
+        User user = ModelFactory.generateActivatedUser("existingLogin");
+        user.setEmail("existingUser@mytum.de");
+        userRepo.save(user);
+
+        User newUser = ModelFactory.generateActivatedUser("newLogin");
+        newUser.setActivated(false);
+        newUser.setEmail("existingUser@mytum.de");
+
+        // Register the user
+        ManagedUserVM userVM = new ManagedUserVM(newUser);
+        userVM.setPassword("password");
+        gitlabRequestMockProvider.mockCreateVcsUser(newUser, false);
+        gitlabRequestMockProvider.mockDeactivateUser(newUser.getLogin(), false);
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
+    }
 }

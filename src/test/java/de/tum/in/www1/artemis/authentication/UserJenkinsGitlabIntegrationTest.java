@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -19,6 +21,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -375,5 +378,26 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUserFailToActivate(oldLogin, user);
         request.put("/api/users", new ManagedUserVM(user), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void shouldBlockUserInGitlabIfAccountNotActivated() throws Exception {
+        var oldLogin = userTestService.student.getLogin();
+        User user = userTestService.student;
+        user.setLogin("new-login");
+        user.setActivated(false);
+
+        jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
+        gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, Set.of(), user.getGroups(), true);
+
+        request.put("/api/users", new ManagedUserVM(user), HttpStatus.OK);
+
+        UserRepository userRepository = userTestService.getUserRepository();
+        final var userInDB = userRepository.findById(user.getId());
+        assertThat(userInDB).isPresent();
+        assertThat(userInDB.get().getLogin()).isEqualTo(user.getLogin());
+
+        verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyInt());
     }
 }

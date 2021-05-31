@@ -248,10 +248,19 @@ public class UserService {
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
+        // Find user that has the same email
         optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
-            return handleRegisterUserWithSameEmailAsExistingUser(newUser, existingUser);
+
+            // An account with the same login is already activated.
+            if (existingUser.getActivated()) {
+                throw new EmailAlreadyUsedException();
+            }
+
+            // The email is different which means that the user wants to re-register the same
+            // account with a different email. Block this.
+            throw new AccountRegistrationBlockedException(newUser.getEmail());
         }
 
         // we need to save first so that the user can be found in the database in the subsequent method
@@ -309,40 +318,6 @@ public class UserService {
         // The email is different which means that the user wants to re-register the same
         // account with a different email. Block this.
         throw new AccountRegistrationBlockedException(existingUser.getEmail());
-    }
-
-    /**
-     * Handles the case where a user registers a new account but a user with the same email already
-     * exists in Artemis.
-     *
-     * @param newUser the new user
-     * @param existingUser the existing user
-     * @return the existing non-activated user in Artemis.
-     */
-    private User handleRegisterUserWithSameEmailAsExistingUser(User newUser, User existingUser) {
-        // An account with the same login is already activated.
-        if (existingUser.getActivated()) {
-            throw new EmailAlreadyUsedException();
-        }
-
-        // The user has the same login and email, but the account is not activated.
-        // Return the existing non-activated user so that Artemis can re-send the
-        // activation link.
-        if (existingUser.getLogin().equals(newUser.getLogin())) {
-            // Update the existing user in repository and VCS
-            newUser.setId(existingUser.getId());
-            User updatedExistingUser = userRepository.save(newUser);
-            optionalVcsUserManagementService
-                    .ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(updatedExistingUser.getLogin(), updatedExistingUser, Set.of(), Set.of(), true));
-
-            // Post-pone the cleaning up of the account
-            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
-            return existingUser;
-        }
-
-        // The email is different which means that the user wants to re-register the same
-        // account with a different email. Block this.
-        throw new AccountRegistrationBlockedException(newUser.getEmail());
     }
 
     /**
