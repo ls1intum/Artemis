@@ -631,7 +631,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             };
             this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission : ProgrammingSubmission) => {
                 this.repositoryExportService.exportReposByParticipations(this.exercise.id!, [programmingSubmission.participation!.id!], exportOptions).subscribe((res: HttpResponse<Blob>) => {
-                    this.javaBridge.downloadSubmission(submissionId, correctionRound, URL.createObjectURL(res.body!));
+                    const submissionFile = new File([res.body!], "submissionFile", { type: 'application/zip' })
+                    this.javaBridge.downloadSubmission(submissionId, correctionRound, URL.createObjectURL(submissionFile));
                 });
             });
         }
