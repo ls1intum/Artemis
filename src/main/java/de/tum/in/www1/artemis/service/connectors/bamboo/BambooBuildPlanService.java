@@ -35,6 +35,7 @@ import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepository;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
+import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
 import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
@@ -48,6 +49,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -104,7 +106,7 @@ public class BambooBuildPlanService {
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
                 programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName)
-                        .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(),
+                        .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.hasSequentialTestRuns(),
                                 programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository()));
 
         bambooServer.publish(plan);
@@ -136,7 +138,7 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
             boolean checkoutSolutionRepository) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
@@ -157,7 +159,8 @@ public class BambooBuildPlanService {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
         // Do not run the builds in extra docker containers if the dev-profile is active
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+        // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
             defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage));
         }
         switch (programmingLanguage) {
@@ -188,7 +191,7 @@ public class BambooBuildPlanService {
             }
             case C -> {
                 // Default tasks:
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns, false);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0]));
                 // Final tasks:
@@ -205,18 +208,26 @@ public class BambooBuildPlanService {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/result.xml");
             }
             case SWIFT -> {
+                var isXcodeProject = ProjectType.XCODE.equals(projectType);
+                var subDirectory = isXcodeProject ? "xcode/" : "";
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns, false);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
-                if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
+                // SCA for Xcode is not supported yet
+                if (!isXcodeProject && Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
                     List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
-                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, false, true);
+                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, false, true);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
+                }
+                if (isXcodeProject) {
+                    // add a requirement to be able to run the Xcode build tasks
+                    var requirement = new Requirement("Simulator - iOS 14.5");
+                    defaultJob.requirements(requirement);
                 }
                 return defaultStage.jobs(defaultJob);
             }
@@ -229,7 +240,7 @@ public class BambooBuildPlanService {
     private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
             String resultDirectories) {
         final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories(resultDirectories);
-        var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns, false);
+        var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false);
         tasks.add(0, checkoutTask);
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
@@ -302,8 +313,9 @@ public class BambooBuildPlanService {
         return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
     }
 
-    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, final boolean getScaTasks) {
-        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase()
+    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, String subDirectory, final boolean sequentialBuildRuns,
+            final boolean getScaTasks) {
+        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + subDirectory
                 + (getScaTasks ? "/staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();

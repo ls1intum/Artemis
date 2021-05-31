@@ -20,6 +20,8 @@ export enum ProgrammingLanguage {
 export enum ProjectType {
     MAVEN = 'MAVEN',
     ECLIPSE = 'ECLIPSE',
+    PLAIN = 'PLAIN',
+    XCODE = 'XCODE',
 }
 
 export class ProgrammingExercise extends Exercise {

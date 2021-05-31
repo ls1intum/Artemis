@@ -498,6 +498,24 @@ public class FileService implements DisposableBean {
         }
     }
 
+    public void replaceVariablesInFileName(String startPath, String targetString, String replacementString) throws IOException {
+        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in the directory " + startPath + " should be replaced but it does not exist.");
+        }
+
+        // rename all files in the file tree
+        Files.find(Paths.get(startPath), Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString)).forEach(filePath -> {
+            try {
+                Files.move(new File(filePath.toString()).toPath(), new File(filePath.toString().replace(targetString, replacementString)).toPath());
+            }
+            catch (IOException e) {
+                throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
+            }
+        });
+    }
+
     /**
      * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
      * <p>
@@ -518,7 +536,6 @@ public class FileService implements DisposableBean {
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
         if (files != null) {
             for (String file : files) {
-
                 replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
             }
         }
