@@ -949,7 +949,7 @@ public abstract class Exercise extends DomainObject {
         if (releaseDate == null) {
             return true;
         }
-        return validateTwoDates(releaseDate, dueDate) && validateTwoDates(releaseDate, dueDate);
+        return validateTwoDates(releaseDate, dueDate);
     }
 
     /**
