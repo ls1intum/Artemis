@@ -498,6 +498,14 @@ public class FileService implements DisposableBean {
         }
     }
 
+    /**
+     * This replace all occurrences of the target String with the replacement String within a source file of a given directory (recursive!)
+     *
+     * @param startPath         the path where the file is located
+     * @param targetString      the string that should be replaced
+     * @param replacementString the string that should be used to replace the target
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
+     */
     public void replaceVariablesInFileName(String startPath, String targetString, String replacementString) throws IOException {
         log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
         File directory = new File(startPath);
