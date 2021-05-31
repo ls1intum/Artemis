@@ -76,7 +76,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     private static boolean needsToBeScheduled(ModelingExercise exercise) {
         final ZonedDateTime now = ZonedDateTime.now();
-        // Semi automaticly assessed modeling exercises as well
+        // Semi automatically assessed modeling exercises as well
         // Has a regular due date in the future
         return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
     }

@@ -61,7 +61,7 @@ public class FeedbackSelector {
     }
 
     /**
-     * Creates the reference string to be stored in an Feedback element for modeling submissions. The reference of a modeling Feedback stores the type of the corresponding UML
+     * Creates the reference string to be stored in a Feedback element for modeling submissions. The reference of a modeling Feedback stores the type of the corresponding UML
      * element and its jsonElementId and is of the form "<umlElementType>:<jsonElementIds>".
      *
      * @param modelElement the UML model element the Feedback belongs to

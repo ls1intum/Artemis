@@ -18,13 +18,28 @@ import de.tum.in.www1.artemis.domain.modeling.ModelCluster;
 @Repository
 public interface ModelClusterRepository extends JpaRepository<ModelCluster, Long> {
 
-    @Query("select distinct cluster from ModelCluster cluster left join fetch cluster.modelElements element where cluster.exercise.id = :#{#exerciseId}")
+    @Query("""
+            SELECT DISTINCT cluster
+            FROM ModelCluster cluster
+            LEFT JOIN FETCH cluster.modelElements element
+            WHERE
+            cluster.exercise.id = :#{#exerciseId}""")
     List<ModelCluster> findAllByExerciseIdWithEagerElements(@Param("exerciseId") Long exerciseId);
 
-    @Query("select cluster from ModelCluster cluster left join fetch cluster.modelElements element where cluster.id = :#{#clusterId}")
+    @Query("""
+            SELECT cluster
+            FROM ModelCluster cluster
+            LEFT JOIN FETCH cluster.modelElements element
+            WHERE
+            cluster.id = :#{#clusterId}""")
     Optional<ModelCluster> findByIdWithEagerElements(@Param("clusterId") Long clusterId);
 
-    @Query("select distinct feedback from Feedback feedback join ModelElement element where element.cluster.id = :#{#clusterId} and feedback.reference = concat(element.modelElementType,':',element.modelElementId)")
+    @Query("""
+            SELECT DISTINCT feedback
+            FROM Feedback feedback
+            JOIN ModelElement element
+            WHERE
+            element.cluster.id = :#{#clusterId} and feedback.reference = concat(element.modelElementType,':',element.modelElementId)""")
     List<Feedback> findFeedbacksWithClusterId(@Param("clusterId") Long clusterId);
 
 }

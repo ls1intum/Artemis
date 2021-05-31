@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
- * A TextCluster.
+ * A ModelCluster.
  */
 @Entity
 @Table(name = "model_cluster")

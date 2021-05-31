@@ -38,7 +38,7 @@ public class ModelClusterFactory {
      *
      * @param modelingSubmissions the submissions to build the clusters from
      * @param exercise the exercise that submissions belong to
-     * @return the clusters that has more than one element in them
+     * @return the clusters that have more than one element in them
      */
     public List<ModelCluster> buildClusters(List<ModelingSubmission> modelingSubmissions, ModelingExercise exercise) {
         // The elements that has no other similar elements or are the first of their kind
@@ -111,7 +111,7 @@ public class ModelClusterFactory {
      * Builds and returns the elements of the modeling submission
      *
      * @param element the element to compare for other elements
-     * @param uniqueModelElements the elements that has no similar elements or the first of their kind
+     * @param uniqueModelElements the elements that have no similar elements or the first of their kind
      * @param clusters map of clusters and similarity ids to assign the element
      * @param exercise the exercise that submission of element belongs to
      * @param submission the submission that element belongs to
