@@ -1148,7 +1148,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
+     * PUT /programming-exercises/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
      *
      * @param programmingExercise the ProgrammingExercise to re-evaluate and update
      * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
@@ -1160,7 +1160,7 @@ public class ProgrammingExerciseResource {
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable Long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
+    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
             @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
 
@@ -1220,7 +1220,7 @@ public class ProgrammingExerciseResource {
 
         public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
 
-        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
+        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISES + "/re-evaluate";
 
         private Endpoints() {
         }

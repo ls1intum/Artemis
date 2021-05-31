@@ -343,7 +343,7 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
+     * PUT /file-upload-exercises/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
      * @param fileUploadExercise the fileUploadExercise to re-evaluate and update
      * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
@@ -353,9 +353,9 @@ public class FileUploadExerciseResource {
      * Server Error) if the fileUploadExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/file-upload-exercises/{exerciseId}/re-evaluate")
+    @PutMapping("/file-upload-exercises/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable Long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
+    public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
@@ -370,6 +370,6 @@ public class FileUploadExerciseResource {
 
         exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbacks);
 
-        return updateFileUploadExercise(fileUploadExercise, null, exerciseId);
+        return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
     }
 }
