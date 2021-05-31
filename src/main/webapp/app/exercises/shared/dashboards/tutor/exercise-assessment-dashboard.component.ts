@@ -603,43 +603,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Uses the router to navigate to the assessment editor for a given/new submission
      * @param submission Either submission or 'new'.
      * @param correctionRound
-     * @param inOrion whether to open the assessment in Orion, false by default
      */
-    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0, inOrion = false): Promise<void> {
+    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const submissionId: number = submission === 'new' ? (await this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, correctionRound).toPromise()).id! : submission.id!;
-
-        if (!inOrion) {
-            const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
-            if (this.isTestRun) {
-                await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
-            } else {
-                await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
-            }
+        const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
+        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+        if (this.isTestRun) {
+            await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
         } else {
-            const exportOptions: RepositoryExportOptions = {
-                exportAllParticipants: false,
-                filterLateSubmissions: false,
-                addParticipantName: true,
-                combineStudentCommits: false,
-                normalizeCodeStyle: false,
-                hideStudentNameInZippedFolder: true,
-            };
-            this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission : ProgrammingSubmission) => {
-                this.repositoryExportService.exportReposByParticipations(this.exercise.id!, [programmingSubmission.participation!.id!], exportOptions).subscribe((res: HttpResponse<Blob>) => {
-                    var reader = new FileReader();
-                    reader.readAsDataURL(res.body!);
-                    reader.onloadend = () => {
-                        const result = reader.result as string;
-                        const base64data = result.substr(result.indexOf(',') + 1);
-                        this.javaBridge.downloadSubmission(submissionId, correctionRound, base64data);
-                    }
-                });
-            });
+            await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
     }
@@ -649,6 +625,35 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     openAssessmentInOrion() {
         this.javaBridge.assessExercise(this.exercise);
+    }
+
+    /**
+     * Locks the given submission, exports it, transforms it to base64, and sends it to Orion
+     *
+     * @param submission submission to send to Orion
+     * @param correctionRound correction round
+     */
+    async downloadSubmissionInOrion(submission: Submission | 'new', correctionRound: number = 0) {
+        const submissionId: number = submission === 'new' ? (await this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, correctionRound).toPromise()).id! : submission.id!;
+        const exportOptions: RepositoryExportOptions = {
+            exportAllParticipants: false,
+            filterLateSubmissions: false,
+            addParticipantName: true,
+            combineStudentCommits: false,
+            normalizeCodeStyle: false,
+            hideStudentNameInZippedFolder: true,
+        };
+        this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission : ProgrammingSubmission) => {
+            this.repositoryExportService.exportReposByParticipations(this.exercise.id!, [programmingSubmission.participation!.id!], exportOptions).subscribe((res: HttpResponse<Blob>) => {
+                var reader = new FileReader();
+                reader.readAsDataURL(res.body!);
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    const base64data = result.substr(result.indexOf(',') + 1);
+                    this.javaBridge.downloadSubmission(submissionId, correctionRound, base64data);
+                }
+            });
+        });
     }
 
     /**

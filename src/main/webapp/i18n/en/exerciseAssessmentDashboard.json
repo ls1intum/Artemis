@@ -83,7 +83,13 @@
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
             "noSubmissionsInfo": "You can assess 0 submissions in this round. {{notYetAssessed}} submissions are not yet assessed, from which {{lockedSubmissionsByOtherTutor}} are locked by other tutors ",
             "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round.",
-            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round, you can only assess submissions which you have not assessed in the first round."
+            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round, you can only assess submissions which you have not assessed in the first round.",
+            "orion": {
+                "startYourParticipation": "Assess exercise in Orion",
+                "startAssessment": "Start new assessment in Orion",
+                "continueAssessment": "Continue assessment in Orion",
+                "openAssessment": "Open assessment in Orion"
+            }
         }
     }
 }

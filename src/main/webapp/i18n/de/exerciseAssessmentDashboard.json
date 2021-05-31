@@ -83,7 +83,13 @@
             "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
             "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutoren gesperrt",
             "noSubmissionsInfoSecondCorrection": " und {{firstRoundAssessments}} wurden von dir in der ersten Korrekturrunde korrigiert. ",
-            "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden."
+            "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden.",
+            "orion": {
+                "startYourParticipation": "Aufgabe in Orion bewerten",
+                "startAssessment": "Neue Bewertung in Orion starten",
+                "continueAssessment": "Bewertung in Orion fortsetzen",
+                "openAssessment": "Bewertung in Orion öffnen"
+            }
         }
     }
 }
