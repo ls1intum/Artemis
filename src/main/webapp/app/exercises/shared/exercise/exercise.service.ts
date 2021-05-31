@@ -55,14 +55,22 @@ export class ExerciseService {
      */
     validateDate(exercise: Exercise) {
         exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
-        exercise.assessmentDueDateError =
-            exercise.releaseDate && exercise.assessmentDueDate
-                ? exercise.assessmentDueDate.isAfter(exercise.releaseDate)
-                    ? exercise.dueDate && exercise.assessmentDueDate && !exercise.assessmentDueDate.isAfter(exercise.dueDate)
-                    : true
-                : exercise.dueDate && exercise.assessmentDueDate
-                ? exercise.assessmentDueDate.isAfter(exercise.dueDate)
-                : false;
+
+        if (exercise.releaseDate && exercise.assessmentDueDate) {
+            if (exercise.dueDate) {
+                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate) && !exercise.assessmentDueDate.isAfter(exercise.releaseDate);
+            } else {
+                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.releaseDate);
+            }
+        }
+
+        if (exercise.dueDate && exercise.assessmentDueDate) {
+            exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate);
+        }
+
+        if (!exercise.dueDate && exercise.assessmentDueDate) {
+            exercise.assessmentDueDateError = true;
+        }
     }
 
     /**

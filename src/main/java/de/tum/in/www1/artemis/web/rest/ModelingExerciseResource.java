@@ -315,7 +315,6 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates generall settings: points, dates
-
         exerciseService.validateGeneralSettings(importedExercise);
 
         if (importedExercise.isExamExercise()) {

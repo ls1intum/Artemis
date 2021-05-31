@@ -924,50 +924,61 @@ public abstract class Exercise extends DomainObject {
 
     /**
      * This method is used to validate the dates of an exercise
+     * @throws BadRequestException if the dates are not valid
      */
     public void validateDates() throws BadRequestException {
         // All fields are optional, so there is no error if none of them is set
         if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
             return;
         }
-        boolean validDates = true;
-        if (getReleaseDate() == null) {
-            if (getDueDate() == null) {
-                // There is an assesmentDueDate, but no dueDate / releaseDate
-                validDates = false;
-            }
-            else {
-                // There is an dueDate/ assesmentDueDate, but no releaseDate
-                if (getAssessmentDueDate() != null) {
-                    validDates = getAssessmentDueDate().isAfter(getDueDate());
-                }
-            }
-            if (!validDates) {
-                throw new BadRequestException();
-            }
-        }
-        else {
-            if (getDueDate() == null) {
-                // There is an releaseDate / assesmentDueDate, but no dueDate
-                if (getAssessmentDueDate() != null) {
-                    validDates = false;
-                }
-            }
-            else {
-                // We have all dates set
-                if (getAssessmentDueDate() != null) {
+        // atleast one is set, so we have to check the two possible errors
+        boolean validDates = validatedueDateError(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && validateAssesmentDueDateError(getReleaseDate(), getDueDate(), getAssessmentDueDate());
 
-                    validDates = getReleaseDate().isBefore(getDueDate()) && getDueDate().isBefore(getAssessmentDueDate());
-                }
-                // There is an releaseDate / dueDate, but no assesmentDueDate
-                else {
-                    validDates = getReleaseDate().isBefore(getDueDate());
-                }
-            }
-            if (!validDates) {
-                throw new BadRequestException();
-            }
+        if (!validDates) {
+            throw new BadRequestException();
         }
     }
 
+    /**
+     * This method is used to validate the dueDate of an exercise
+     * @return true if the dueDate is valid
+     */
+
+    private boolean validatedueDateError(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assesmentDueDate) {
+        if (releaseDate == null) {
+            return true;
+        }
+        boolean validDate = true;
+        if (dueDate != null) {
+            validDate = releaseDate.isBefore(dueDate);
+        }
+        if (assesmentDueDate != null && validDate) {
+            validDate = releaseDate.isBefore(dueDate);
+        }
+        return validDate;
+    }
+
+    /**
+     * This method is used to validate the assesmentDueDate of an exercise
+     * @return true if the assesmentDueDate is valid
+     */
+    private boolean validateAssesmentDueDateError(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assesmentDueDate) {
+        if (assesmentDueDate == null) {
+            return true;
+        }
+        // There cannot be a assesmentDueDate without dueDate
+        if (dueDate == null) {
+            return false;
+        }
+        boolean validDate;
+
+        if (releaseDate == null) {
+            validDate = dueDate.isBefore(assesmentDueDate);
+        }
+        else {
+            validDate = releaseDate.isBefore(assesmentDueDate) && dueDate.isBefore(assesmentDueDate);
+        }
+        return validDate;
+    }
 }
