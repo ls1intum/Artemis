@@ -75,8 +75,8 @@
             "title": "Exam Scores",
             "examStatisticsTitle": "Exam Statistics",
             "ExerciseGroupsTitle": "Exercise groups & exercise Statistics",
-            "averageScoreGraphTitle": "Average score in %",
-            "exerciseGroupAverageTitle": "Exercise group average score in %",
+            "averageScoreGraphTitle": "Average score of exercise variant ",
+            "exerciseGroupAverageTitle": "Average score of Exercise group ",
             "studentResultsTitle": "Student Results",
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",
@@ -108,7 +108,8 @@
             "registered": "Registered Students",
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
-            "totalColumn": "Total"
+            "totalColumn": "Total",
+            "noScores": "No average"
         },
         "examParticipation": {
             "timer": "Time left: ",

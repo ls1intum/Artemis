@@ -18,7 +18,8 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     barChartType: ChartType = 'horizontalBar';
     exerciseAverageScoreLegend: string;
     exerciseGroupAverageScoreLegend: string;
-    chartLegend = true;
+    chartLegend = false;
+    labels = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
     // Data
     barChartLabels: Label[] = [];
@@ -37,28 +38,27 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     private initializeChart(): void {
-        /*this.barChartLabels = this.averageScores.map((exerciseGroup) => {
-            const titles = exerciseGroup.exerciseResults.map((exercise) => exercise.title);
-            titles.unshift(exerciseGroup.title);
-            return titles;
-        });*/
-        this.barChartLabels = this.averageScores.map((exerciseGroup) => exerciseGroup.title);
-
-        const exerciseGroupScores = this.averageScores.map((exerciseGroup) => {
-            const percentages = exerciseGroup.exerciseResults.map((exercise) => exercise.averagePercentage);
-            percentages.unshift(exerciseGroup.averagePercentage);
-            // return percentages.map((score) => score != undefined ? score : 0);
-            return percentages.filter((score) => score != undefined);
+        const filteredAverageScores = this.averageScores.map((exerciseGroup) => {
+            exerciseGroup.exerciseResults = exerciseGroup.exerciseResults.filter((exercise) => exercise.averagePercentage);
+            return exerciseGroup;
         });
-        this.absolutePoints = this.averageScores.map((exerciseGroup) => {
+        this.barChartLabels = filteredAverageScores.map((exerciseGroup) => exerciseGroup.title);
+
+        const exerciseGroupScores = filteredAverageScores.map((exerciseGroup) => {
+            const exercisePercentages = exerciseGroup.exerciseResults.map((exercise) => exercise.averagePercentage);
+            exercisePercentages.unshift(exerciseGroup.averagePercentage);
+            return exercisePercentages.filter((score) => score != undefined);
+        });
+        this.absolutePoints = filteredAverageScores.map((exerciseGroup) => {
             const percentages = exerciseGroup.exerciseResults.map((exercise) => exercise.averagePoints);
             percentages.unshift(exerciseGroup.averagePoints);
-            // return percentages.map((score) => score != undefined ? score : 0);
             return percentages.filter((score) => score != undefined);
         });
+
         // Prepare dataObjects
         const length = this.calculateMaxLength(exerciseGroupScores);
-        // Average exerciseGroup score bar
+
+        // settings for first ar with different color
         this.chartData.push({
             label: this.exerciseGroupAverageScoreLegend,
             data: [],
@@ -66,16 +66,19 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             borderColor: GraphColors.BLUE,
             hoverBackgroundColor: GraphColors.BLUE,
         });
+        // settings for second bar with specific legend
         this.chartData.push({
-            label: this.exerciseAverageScoreLegend,
+            label: this.exerciseAverageScoreLegend + '1',
             data: [],
             backgroundColor: GraphColors.DARK_BLUE,
             borderColor: GraphColors.DARK_BLUE,
             hoverBackgroundColor: GraphColors.DARK_BLUE,
         });
-        // Average exercise score bars
+
+        // add settings for rest of the bars
         for (let i = 2; i < length; i++) {
             const dataObject = {
+                label: this.exerciseAverageScoreLegend + '' + i,
                 data: [],
                 backgroundColor: GraphColors.DARK_BLUE,
                 borderColor: GraphColors.DARK_BLUE,
@@ -83,65 +86,28 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             };
             this.chartData.push(dataObject);
         }
-
+        // add the actual data for each bar
         for (let i = 0; i < exerciseGroupScores.length; i++) {
             for (let j = 0; j < exerciseGroupScores[i].length; j++) {
                 // @ts-ignore
                 this.chartData[j]['data'][i] = exerciseGroupScores[i][j];
             }
         }
-        /*this.chartData.map((dataSet) => {
-            // @ts-ignore
-            dataSet.data = dataSet.data!.filter((dataElement: number) => dataElement != undefined);
-        });*/
-        console.log(this.chartData);
     }
 
     private createCharts() {
-        const self = this;
         this.barChartOptions = {
-            legend: {
-                position: 'bottom',
-            },
             responsive: true,
             hover: {
                 animationDuration: 0,
             },
             animation: {
                 duration: 1,
-                /*onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const label = bar._model.label;
-                            const xOffset = 10;
-                            const yOffset = bar._model.y - 42;
-                            ctx.fillText(label, xOffset, yOffset);
-                        });
-                    });
-                }*/
-                /*onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const label = bar._model.label;
-                            // const xOffset = 10;
-                            // const yOffset = bar._model.y - 42;
-                            ctx.fillText(label, bar._model.x, bar._model.y);
-                        });
-                    });
-                },*/
             },
             scales: {
                 xAxes: [
                     {
+                        position: 'top',
                         ticks: {
                             beginAtZero: true,
                             min: 0,
@@ -159,7 +125,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 yAxes: [
                     {
                         ticks: {
-                            backdropPaddingX: 100,
                             autoSkip: false,
                             fontStyle: 'bold',
                             callback(title: string) {
@@ -171,16 +136,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             },
             tooltips: {
                 enabled: true,
-                /*callbacks: {
-                    label(tooltipItem: any) {
-                        const points = self.translateService.instant('artemisApp.exam.points');
-                        if (!self.absolutePoints) {
-                            return ' 0 ' + points;
-                        }
-
-                        return ' ' + self.absolutePoints[tooltipItem.index] + ' ' + points;
-                    },
-                },*/
             },
         };
     }

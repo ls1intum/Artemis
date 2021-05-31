@@ -33,6 +33,7 @@
             "course": "Kurs",
             "exercises": "Aufgaben",
             "points": "Punkte",
+            "noPoints": "keine",
             "summary": "Zusammenfassung",
             "visible": "Sichtbar",
             "startDate": "Beginn",
@@ -74,8 +75,8 @@
             "title": "Klausurergebnisse",
             "examStatisticsTitle": "Klausurstatistik",
             "ExerciseGroupsTitle": "Aufgabengruppen- & Aufgabenstatistics",
-            "averageScoreGraphTitle": "Durchschnittspunktzahl der Aufgabengruppe in %",
-            "exerciseGroupAverageTitle": "Durchschnittspunktzahl in %",
+            "averageScoreGraphTitle": "Durchschnittspunktzahl der Aufgabenvariante ",
+            "exerciseGroupAverageTitle": "Durchschnittspunktzahl der Aufgabengruppe ",
             "studentResultsTitle": "Studentenergebnisse",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",
@@ -107,7 +108,8 @@
             "registered": "Angemeldete Studenten",
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
-            "totalColumn": "Total"
+            "totalColumn": "Total",
+            "noScores": "Kein Durchschnitt"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
