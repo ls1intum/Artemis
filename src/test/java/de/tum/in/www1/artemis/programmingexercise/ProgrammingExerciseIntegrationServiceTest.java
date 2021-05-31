@@ -1510,8 +1510,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
         programmingExercise.setShortName(uniqueExerciseTitle);
         programmingExercise.setTitle(uniqueExerciseTitle);
         if (expectedStatus == HttpStatus.CREATED) {
-            programmingExercise.getAuxiliaryRepositories().forEach(repository -> System.out.println(repository.toString()));
             mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+            mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         }
         request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
     }

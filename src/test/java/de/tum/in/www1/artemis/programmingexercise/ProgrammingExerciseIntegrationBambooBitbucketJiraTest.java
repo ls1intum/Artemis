@@ -810,8 +810,6 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesForbidden();
     }
 
-
-
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
