@@ -365,6 +365,17 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getModelSubmissionWithoutResults() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(classExercise, submission, "student1");
+
+        ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId() + "?withoutResults=true", HttpStatus.OK, ModelingSubmission.class);
+
+        assertThat(storedSubmission.getLatestResult()).as("result has not been set").isNull();
+    }
+
+    @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void getModelSubmission_tutorNotInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
