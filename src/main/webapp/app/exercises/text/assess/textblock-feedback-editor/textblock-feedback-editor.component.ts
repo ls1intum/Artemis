@@ -13,7 +13,7 @@ import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
     readonly FeedbackType = FeedbackType;
 
-    @Input() textBlock: TextBlock;
+    @Input() textBlock: TextBlock = new TextBlock();
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
     @Output() close = new EventEmitter<void>();
