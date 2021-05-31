@@ -92,12 +92,10 @@ export class FileUploadExerciseService {
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {

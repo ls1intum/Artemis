@@ -373,11 +373,9 @@ export class ProgrammingExerciseService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 }
