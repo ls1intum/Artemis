@@ -1505,6 +1505,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
         String uniqueExerciseTitle = "Title" + System.nanoTime() + "" + new Random().nextInt(100);
         programmingExercise.setAuxiliaryRepositories(body);
         programmingExercise.setId(null);
+        programmingExercise.setSolutionParticipation(null);
+        programmingExercise.setTemplateParticipation(null);
         programmingExercise.setShortName(uniqueExerciseTitle);
         programmingExercise.setTitle(uniqueExerciseTitle);
         if (expectedStatus == HttpStatus.CREATED) {

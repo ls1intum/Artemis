@@ -25,6 +25,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathFactory;
 
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -64,6 +65,8 @@ public class ProgrammingExerciseExportService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     private final ObjectMapper objectMapper;
 
     private final FileService fileService;
@@ -77,13 +80,15 @@ public class ProgrammingExerciseExportService {
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+            FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.fileService = fileService;
         this.gitService = gitService;
         this.zipFileService = zipFileService;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -175,8 +180,11 @@ public class ProgrammingExerciseExportService {
         pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TEMPLATE, outputDir, exportErrors).map(File::toPath).orElse(null));
         pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.SOLUTION, outputDir, exportErrors).map(File::toPath).orElse(null));
         pathsToBeZipped.add(exportInstructorRepositoryForExercise(exercise.getId(), RepositoryType.TESTS, outputDir, exportErrors).map(File::toPath).orElse(null));
+
+        List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(exercise.getId());
+
         // Export the auxiliary repositories and add them to list
-        exercise.getAuxiliaryRepositories().forEach(auxiliaryRepository -> {
+        auxiliaryRepositories.forEach(auxiliaryRepository -> {
             pathsToBeZipped.add(exportInstructorAuxiliaryRepositoryForExercise(exercise.getId(), auxiliaryRepository, outputDir, exportErrors).map(File::toPath).orElse(null));
         });
 
