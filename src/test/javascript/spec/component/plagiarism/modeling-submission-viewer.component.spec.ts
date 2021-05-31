@@ -45,7 +45,7 @@ describe('Modeling Submission Viewer Component', () => {
     });
 
     it('should fetch the submission', () => {
-        spyOn(modelingSubmissionService, 'getSubmission').and.returnValue(of(modelingSubmission));
+        spyOn(modelingSubmissionService, 'getSubmissionWithoutLock').and.returnValue(of(modelingSubmission));
 
         comp.ngOnChanges({
             plagiarismSubmission: {
@@ -56,6 +56,6 @@ describe('Modeling Submission Viewer Component', () => {
             },
         });
 
-        expect(modelingSubmissionService.getSubmission).toHaveBeenCalledWith(1);
+        expect(modelingSubmissionService.getSubmissionWithoutLock).toHaveBeenCalledWith(1);
     });
 });
