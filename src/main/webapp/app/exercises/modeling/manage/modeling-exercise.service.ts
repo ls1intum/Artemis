@@ -11,7 +11,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { downloadStream } from 'app/shared/util/download.util';
-import {FileUploadExercise} from "app/entities/file-upload-exercise.model";
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -119,7 +118,7 @@ export class ModelingExerciseService {
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
             .pipe(
                 map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
                 map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
