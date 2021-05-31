@@ -1147,6 +1147,33 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
+     *
+     * @param programmingExercise the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or
+     * with status 400 (Bad Request) if the ProgrammingExercise is not valid, or with status 500 (Internal
+     * Server Error) if the ProgrammingExercise couldn't be updated
+     */
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable Long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
+                                                                                    @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) {
+        log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
+
+        // fetch course from database to make sure client didn't change groups
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbacks);
+
+        return updateProgrammingExercise(programmingExercise, null);
+    }
+
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
@@ -1192,6 +1219,8 @@ public class ProgrammingExerciseResource {
         public static final String UNLOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/unlock-all-repositories";
 
         public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
+
+        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
 
         private Endpoints() {
         }

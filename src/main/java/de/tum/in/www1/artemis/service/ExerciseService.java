@@ -820,21 +820,19 @@ public class ExerciseService {
 
         // check if the user decided to remove the feedbacks after deleting the associated grading instructions
         if (deleteFeedbacks) {
+            List<Long> updatedInstructionIds = instructionList.stream().map(GradingInstruction::getId).collect(Collectors.toList());
             // retrieve the grading instructions from database for backup
             List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-            List<GradingInstruction> backupInstructionList = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).collect(Collectors.toList());
-            List<Long>  deletedInstructionIds = new ArrayList<>();
+            List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
+                .map(GradingInstruction::getId).collect(Collectors.toList());
 
             // collect deleted grading instruction ids into the list
-            for (GradingInstruction backupInstruction: backupInstructionList) {
-                if(!instructionList.contains(backupInstruction)){
-                    deletedInstructionIds.add(backupInstruction.getId());
-                }
-            }
+            List<Long> deletedInstructionIds = backupInstructionIds.stream()
+                .filter(backupinstructionId -> !updatedInstructionIds.contains(backupinstructionId)).collect(Collectors.toList());
 
             // find the feedbacks will be deleted
-            List<Feedback> deletedFeedbacks = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
-            feedbackRepository.deleteAll(deletedFeedbacks);
+            List<Feedback> feedbacks = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
+            feedbackRepository.deleteAll(feedbacks);
 
         }
 
