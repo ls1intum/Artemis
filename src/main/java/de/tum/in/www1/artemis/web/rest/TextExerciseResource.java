@@ -602,7 +602,7 @@ public class TextExerciseResource {
     @PutMapping("/text-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable Long exerciseId, @RequestBody TextExercise textExercise,
-                                                               @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 
         // Retrieve the course over the exerciseGroup or the given courseId

@@ -1161,7 +1161,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable Long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
-                                                                                    @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) {
+            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
 
         // fetch course from database to make sure client didn't change groups

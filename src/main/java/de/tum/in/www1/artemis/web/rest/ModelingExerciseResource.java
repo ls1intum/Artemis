@@ -425,7 +425,7 @@ public class ModelingExerciseResource {
     @PutMapping("/modeling-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable Long exerciseId, @RequestBody ModelingExercise modelingExercise,
-                                                                        @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();

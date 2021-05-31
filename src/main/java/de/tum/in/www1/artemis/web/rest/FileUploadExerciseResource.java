@@ -356,7 +356,7 @@ public class FileUploadExerciseResource {
     @PutMapping("/file-upload-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable Long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
-                                                                        @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
         // Retrieve the course over the exerciseGroup or the given courseId
