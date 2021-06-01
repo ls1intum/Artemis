@@ -3,25 +3,16 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 import java.io.IOException;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.offbytwo.jenkins.JenkinsServer;
 
 @Service
 @Profile("jenkins")
 public class JenkinsJobPermissionsService {
 
-    @Value("${jenkins.use-crumb:#{true}}")
-    private boolean useCrumb;
-
-    private final JenkinsServer jenkinsServer;
-
     private final JenkinsJobService jenkinsJobService;
 
-    public JenkinsJobPermissionsService(JenkinsServer jenkinsServer, JenkinsJobService jenkinsJobService) {
-        this.jenkinsServer = jenkinsServer;
+    public JenkinsJobPermissionsService(JenkinsJobService jenkinsJobService) {
         this.jenkinsJobService = jenkinsJobService;
     }
 
@@ -85,7 +76,7 @@ public class JenkinsJobPermissionsService {
         JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getEditorPermissions(), editorLogins);
         JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
 
-        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        jenkinsJobService.updateFolderJob(folderName, folderConfig);
     }
 
     /**
@@ -109,7 +100,7 @@ public class JenkinsJobPermissionsService {
         // Assign teaching assistant permissions
         JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
 
-        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        jenkinsJobService.updateFolderJob(folderName, folderConfig);
     }
 
     /**
@@ -142,7 +133,7 @@ public class JenkinsJobPermissionsService {
         }
 
         JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, permissions, userLogins);
-        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        jenkinsJobService.updateFolderJob(folderName, folderConfig);
 
     }
 
@@ -174,7 +165,7 @@ public class JenkinsJobPermissionsService {
         }
 
         JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, permissionsToRemove, userLogins);
-        jenkinsServer.updateJob(folderName, folderConfig.toString(), useCrumb);
+        jenkinsJobService.updateFolderJob(folderName, folderConfig);
 
     }
 }
