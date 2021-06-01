@@ -48,7 +48,7 @@ describe('GradeKeyOverviewComponent', () => {
             imports: [MockModule(NgbModule)],
             declarations: [GradeKeyOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective)],
             providers: [
-                { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }), queryParams: of({ grade: '2.0' }) } },
+                { provide: ActivatedRoute, useValue: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
             ],
@@ -74,8 +74,8 @@ describe('GradeKeyOverviewComponent', () => {
 
         expect(fixture).toBeTruthy();
         expect(comp).toBeTruthy();
-        expect(comp.examId).toEqual(1);
-        expect(comp.courseId).toEqual(1);
+        expect(comp.examId).toEqual(123);
+        expect(comp.courseId).toEqual(345);
         expect(comp.studentGrade).toEqual('2.0');
         expect(comp.examTitle).toEqual('Title');
         expect(comp.isBonus).toEqual(true);
@@ -84,12 +84,12 @@ describe('GradeKeyOverviewComponent', () => {
 
     it('should navigate to previous state', () => {
         const routerSpy = spyOn(router, 'navigate').and.callFake(() => {});
-        comp.courseId = 1;
-        comp.examId = 1;
+        comp.courseId = 345;
+        comp.examId = 123;
 
         comp.previousState();
 
-        expect(routerSpy).toHaveBeenCalledWith(['courses', '1', 'exams', '1']);
+        expect(routerSpy).toHaveBeenCalledWith(['courses', '345', 'exams', '123']);
     });
 
     it('should print PDF', fakeAsync(() => {

@@ -115,7 +115,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
-        request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
 
     /**
@@ -129,7 +129,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     public void testGetAllGradeStepsForExamForbidden() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
     }
 
     /**
