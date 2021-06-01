@@ -3,6 +3,7 @@ export class ExamScoreDTO {
     public title: string;
     public maxPoints: number;
     public averagePointsAchieved: number;
+    public hasMultipleCorrectionRounds: boolean;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
 
@@ -62,6 +63,8 @@ export class AggregatedExamResult {
     public meanPointsRelative: number;
     public meanPointsTotal: number;
     public meanPointsRelativeTotal: number;
+    public meanPointsFirstCorrectionTotal = 1;
+    public meanPointsFirstCorrectionRelative = 1;
     public meanGradePassed?: string;
     public meanGrade?: string;
     public meanGradeTotal?: string;
@@ -71,12 +74,15 @@ export class AggregatedExamResult {
     public medianRelative: number;
     public medianTotal: number;
     public medianRelativeTotal: number;
+    public medianFirstCorrectionTotal = 1;
+    public medianFirstCorrectionRelative = 1;
     public medianGradePassed?: string;
     public medianGrade?: string;
     public medianGradeTotal?: string;
     public standardDeviationPassed?: number;
     public standardDeviation: number;
     public standardDeviationTotal: number;
+    public standardDeviationFirstCorrectionTotal = 1;
     public noOfExamsFilteredForPassed = 0;
     public noOfExamsFiltered = 0;
     public noOfRegisteredUsers = 0;

@@ -55,6 +55,9 @@
                     <th>
                         {{ 'artemisApp.examScores.totalColumn' | artemisTranslate }}
                     </th>
+                    <th *ngIf="hasMultipleCorrectionRounds">
+                        {{ 'artemisApp.examScores.firstCorrectionRound' | artemisTranslate }}
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -63,6 +66,7 @@
                     <td *ngIf="gradingScaleExists && !isBonus">{{ aggregatedExamResults.noOfExamsFilteredForPassed }}</td>
                     <td>{{ aggregatedExamResults.noOfExamsFiltered }}</td>
                     <td>{{ aggregatedExamResults.noOfRegisteredUsers }}</td>
+                    <td *ngIf="hasMultipleCorrectionRounds"></td>
                 </tr>
                 <tr>
                     <th scope="row">{{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}</th>
@@ -79,6 +83,19 @@
                     <td>
                         {{ aggregatedExamResults.meanPointsTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsTotal, 2, 2) : '-' }}
                         ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal, 2, 2) : '-' }}
+                        %)
+                    </td>
+                    <td *ngIf="hasMultipleCorrectionRounds">
+                        {{
+                            aggregatedExamResults.meanPointsFirstCorrectionTotal !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsFirstCorrectionTotal, 2, 2)
+                                : '-'
+                        }}
+                        ({{
+                            aggregatedExamResults.meanPointsFirstCorrectionRelative !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsFirstCorrectionRelative, 2, 2)
+                                : '-'
+                        }}
                         %)
                     </td>
                 </tr>
@@ -107,6 +124,17 @@
                         ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal, 2, 2) : '-' }}
                         %)
                     </td>
+                    <td *ngIf="hasMultipleCorrectionRounds">
+                        {{
+                            aggregatedExamResults.medianFirstCorrectionTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianFirstCorrectionTotal, 2, 2) : '-'
+                        }}
+                        ({{
+                            aggregatedExamResults.medianFirstCorrectionRelative !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.medianFirstCorrectionRelative, 2, 2)
+                                : '-'
+                        }}
+                        %)
+                    </td>
                 </tr>
                 <tr *ngIf="gradingScaleExists">
                     <th scope="row">
@@ -123,6 +151,13 @@
                     </td>
                     <td>{{ aggregatedExamResults.standardDeviation !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviation, 2, 2) : '-' }}</td>
                     <td>{{ aggregatedExamResults.standardDeviationTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationTotal, 2, 2) : '-' }}</td>
+                    <td *ngIf="hasMultipleCorrectionRounds">
+                        {{
+                            aggregatedExamResults.standardDeviationFirstCorrectionTotal !== null
+                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationFirstCorrectionTotal, 2, 2)
+                                : '-'
+                        }}
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -134,86 +169,95 @@
         </div>
 
         <!-- Exercise Statistics -->
-        <h4 class="mt-3">
-            <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle">Exercise groups statistics</span>
-        </h4>
-        <jhi-exam-scores-average-scores-graph [averageScores]="aggregatedExerciseGroupResults"></jhi-exam-scores-average-scores-graph>
+        <div *ngIf="aggregatedExerciseGroupResults">
+            <h4 class="mt-3">
+                <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle">Exercise groups statistics</span>
+            </h4>
+            <jhi-exam-scores-average-scores-graph [averageScores]="aggregatedExerciseGroupResults[0]" [legendPosition]="'top'"></jhi-exam-scores-average-scores-graph>
+            <div *ngFor="let exerciseGroup of aggregatedExerciseGroupResults.slice(1, aggregatedExerciseGroupResults.length - 1)">
+                <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [legendPosition]="'bottom'"></jhi-exam-scores-average-scores-graph>
+            </div>
+            <jhi-exam-scores-average-scores-graph
+                [averageScores]="aggregatedExerciseGroupResults[aggregatedExerciseGroupResults.length - 1]"
+                [legendPosition]="'bottom'"
+            ></jhi-exam-scores-average-scores-graph>
 
-        <!-- Exercise Statistics Table -->
-        <div class="table-responsive">
-            <table class="table table-bordered table-sm body-striped">
-                <thead class="thead-dark">
-                    <tr>
-                        <th>#</th>
-                        <th>
-                            {{ 'artemisApp.examScores.titleExerciseGroupColumn' | artemisTranslate }}
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
-                        </th>
-                        <th *ngIf="gradingScaleExists">
-                            {{ isBonus ? ('artemisApp.examScores.averageBonusColumn' | artemisTranslate) : ('artemisApp.examScores.averageGradeColumn' | artemisTranslate) }}
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.titleExerciseColumn' | artemisTranslate }}
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
-                            <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults; let i = index">
-                    <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
-                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ i + 1 }}
-                        </td>
-                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ exerciseGroupResult.title }}
-                        </td>
-                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ exerciseGroupResult.noOfParticipantsWithFilter }}
-                            / {{ exerciseGroupResult.totalParticipants }} ({{
-                                roundAndPerformLocalConversion((exerciseGroupResult.noOfParticipantsWithFilter / exerciseGroupResult.totalParticipants) * 100, 2, 2)
-                            }}
-                            %)
-                        </td>
-                        <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }}
-                            /
-                            {{ toLocaleString(exerciseGroupResult.maxPoints) }}
-                            ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }}
-                            %)
-                        </td>
-                        <td *ngIf="gradingScaleExists && isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                            {{ exerciseGroupResult.averageGrade !== null ? exerciseGroupResult.averageGrade : '-' }}
-                        </td>
-                        <td>{{ exerciseResult.title }}</td>
-                        <td>
-                            {{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }} ({{
-                                roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
-                            }}
-                            %)
-                        </td>
-                        <td>
-                            {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }}
-                            /
-                            {{ toLocaleString(exerciseResult.maxPoints) }}
-                            ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }}
-                            %)
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Exercise Statistics Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm body-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>
+                                {{ 'artemisApp.examScores.titleExerciseGroupColumn' | artemisTranslate }}
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
+                            </th>
+                            <th *ngIf="gradingScaleExists">
+                                {{ isBonus ? ('artemisApp.examScores.averageBonusColumn' | artemisTranslate) : ('artemisApp.examScores.averageGradeColumn' | artemisTranslate) }}
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.titleExerciseColumn' | artemisTranslate }}
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
+                            </th>
+                            <th>
+                                {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
+                                <jhi-help-icon placement="right" text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody *ngFor="let exerciseGroupResult of aggregatedExerciseGroupResults; let i = index">
+                        <tr *ngFor="let exerciseResult of exerciseGroupResult.exerciseResults; first as isFirst">
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                {{ i + 1 }}
+                            </td>
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                {{ exerciseGroupResult.title }}
+                            </td>
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                {{ exerciseGroupResult.noOfParticipantsWithFilter }}
+                                / {{ exerciseGroupResult.totalParticipants }} ({{
+                                    roundAndPerformLocalConversion((exerciseGroupResult.noOfParticipantsWithFilter / exerciseGroupResult.totalParticipants) * 100, 2, 2)
+                                }}
+                                %)
+                            </td>
+                            <td *ngIf="isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                {{ exerciseGroupResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePoints, 2, 2) : '-' }}
+                                /
+                                {{ toLocaleString(exerciseGroupResult.maxPoints) }}
+                                ({{ exerciseGroupResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseGroupResult.averagePercentage, 2, 2) : '-' }}
+                                %)
+                            </td>
+                            <td *ngIf="gradingScaleExists && isFirst" [rowSpan]="exerciseGroupResult.exerciseResults.length">
+                                {{ exerciseGroupResult.averageGrade !== null ? exerciseGroupResult.averageGrade : '-' }}
+                            </td>
+                            <td>{{ exerciseResult.title }}</td>
+                            <td>
+                                {{ exerciseResult.noOfParticipantsWithFilter }} / {{ exerciseResult.totalParticipants }} ({{
+                                    roundAndPerformLocalConversion((exerciseResult.noOfParticipantsWithFilter / exerciseResult.totalParticipants) * 100, 2, 2)
+                                }}
+                                %)
+                            </td>
+                            <td>
+                                {{ exerciseResult.averagePoints !== null ? roundAndPerformLocalConversion(exerciseResult.averagePoints, 2, 2) : '-' }}
+                                /
+                                {{ toLocaleString(exerciseResult.maxPoints) }}
+                                ({{ exerciseResult.averagePercentage !== null ? roundAndPerformLocalConversion(exerciseResult.averagePercentage, 2, 2) : '-' }}
+                                %)
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Student Result Table -->

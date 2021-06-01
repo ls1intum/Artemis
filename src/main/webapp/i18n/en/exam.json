@@ -112,6 +112,7 @@
             "registered": "Registered Students",
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
+            "firstCorrectionRound": "first correction",
             "totalColumn": "Total",
             "noScores": "No average"
         },

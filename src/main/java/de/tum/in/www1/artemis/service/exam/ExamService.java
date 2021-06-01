@@ -200,6 +200,9 @@ public class ExamService {
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
 
+        // setting multiplicity of correction rounds
+        scores.hasMultipleCorrectionRounds = exam.getNumberOfCorrectionRoundsInExam() > 1;
+
         // Counts how many participants each exercise has
         Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
                 .collect(Collectors.groupingBy(studentParticipation -> studentParticipation.getExercise().getId(), Collectors.counting()));
@@ -242,6 +245,7 @@ public class ExamService {
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.userId)).collect(Collectors.toList());
 
             studentResult.overallPointsAchieved = 0.0;
+            studentResult.pointsAchievedInFirstCorrection = 0.0;
             for (StudentParticipation studentParticipation : participationsOfStudent) {
                 Exercise exercise = studentParticipation.getExercise();
 
@@ -261,6 +265,19 @@ public class ExamService {
                         studentResult.overallPointsAchieved += achievedPoints;
                     }
 
+                    if (scores.hasMultipleCorrectionRounds && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                        Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
+                        if (latestSubmission.isPresent()) {
+                            List<Result> results = latestSubmission.get().getManualResults();
+                            if (results != null && results.size() > 1) {
+                                Result firstCorrectionResult = results.get(results.size() - 2);
+
+                                double achievedPointsInFirstCorrection = round(firstCorrectionResult.getScore() / 100.0 * exercise.getMaxPoints());
+                                studentResult.pointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
+                            }
+                        }
+                    }
+
                     // Check whether the student attempted to solve the exercise
                     boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
                     studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
@@ -271,6 +288,7 @@ public class ExamService {
 
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+                studentResult.scoreAchievedInFirstCorrection = (studentResult.pointsAchievedInFirstCorrection / scores.maxPoints) * 100.0;
                 // Sets grading scale related properties for exam scores
                 Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
                 if (gradingScale.isPresent()) {

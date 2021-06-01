@@ -68,6 +68,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
+    hasMultipleCorrectionRounds = true;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -100,6 +101,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
                     this.examScoreDTO = getExamScoresResponse!.body!;
                     if (this.examScoreDTO) {
+                        this.hasMultipleCorrectionRounds = this.examScoreDTO.hasMultipleCorrectionRounds;
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
 

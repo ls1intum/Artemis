@@ -11,7 +11,10 @@ import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-d
     templateUrl: './exam-scores-average-scores-graph.component.html',
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
-    @Input() averageScores: AggregatedExerciseGroupResult[];
+    @Input() averageScores: AggregatedExerciseGroupResult;
+    @Input() legendPosition: string | undefined;
+
+    height = 13;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
@@ -19,12 +22,11 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     exerciseAverageScoreLegend: string;
     exerciseGroupAverageScoreLegend: string;
     chartLegend = false;
-    labels = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
     // Data
     barChartLabels: Label[] = [];
     chartData: ChartDataSets[] = [];
-    absolutePoints: (number | undefined)[][] = [];
+    absolutePoints: (number | undefined)[] = [];
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -38,65 +40,45 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     private initializeChart(): void {
-        const filteredAverageScores = this.averageScores.map((exerciseGroup) => {
+        /*        const filteredAverageScores = this.averageScores.map((exerciseGroup) => {
             exerciseGroup.exerciseResults = exerciseGroup.exerciseResults.filter((exercise) => exercise.averagePercentage);
             return exerciseGroup;
-        });
-        this.barChartLabels = filteredAverageScores.map((exerciseGroup) => exerciseGroup.title);
+        });*/
 
-        const exerciseGroupScores = filteredAverageScores.map((exerciseGroup) => {
-            const exercisePercentages = exerciseGroup.exerciseResults.map((exercise) => exercise.averagePercentage);
-            exercisePercentages.unshift(exerciseGroup.averagePercentage);
-            return exercisePercentages.filter((score) => score != undefined);
+        const colors = [GraphColors.BLUE];
+        const labels = [this.averageScores.title];
+        const absoluteData = [this.averageScores.averagePoints];
+        const relativeData = [this.averageScores.averagePercentage];
+        this.averageScores.exerciseResults.forEach((exercise) => {
+            labels.push(exercise.title);
+            colors.push(GraphColors.DARK_BLUE);
+            absoluteData.push(exercise.averagePoints);
+            relativeData.push(exercise.averagePercentage);
+            this.height += 13;
         });
-        this.absolutePoints = filteredAverageScores.map((exerciseGroup) => {
-            const percentages = exerciseGroup.exerciseResults.map((exercise) => exercise.averagePoints);
-            percentages.unshift(exerciseGroup.averagePoints);
-            return percentages.filter((score) => score != undefined);
-        });
-
-        // Prepare dataObjects
-        const length = this.calculateMaxLength(exerciseGroupScores);
+        this.barChartLabels = labels;
+        this.absolutePoints = absoluteData;
 
         // settings for first ar with different color
-        this.chartData.push({
-            label: this.exerciseGroupAverageScoreLegend,
-            data: [],
-            backgroundColor: GraphColors.BLUE,
-            borderColor: GraphColors.BLUE,
-            hoverBackgroundColor: GraphColors.BLUE,
-        });
-        // settings for second bar with specific legend
-        this.chartData.push({
-            label: this.exerciseAverageScoreLegend + '1',
-            data: [],
-            backgroundColor: GraphColors.DARK_BLUE,
-            borderColor: GraphColors.DARK_BLUE,
-            hoverBackgroundColor: GraphColors.DARK_BLUE,
-        });
-
-        // add settings for rest of the bars
-        for (let i = 2; i < length; i++) {
-            const dataObject = {
-                label: this.exerciseAverageScoreLegend + '' + i,
-                data: [],
-                backgroundColor: GraphColors.DARK_BLUE,
-                borderColor: GraphColors.DARK_BLUE,
-                hoverBackgroundColor: GraphColors.DARK_BLUE,
-            };
-            this.chartData.push(dataObject);
-        }
-        // add the actual data for each bar
-        for (let i = 0; i < exerciseGroupScores.length; i++) {
-            for (let j = 0; j < exerciseGroupScores[i].length; j++) {
-                // @ts-ignore
-                this.chartData[j]['data'][i] = exerciseGroupScores[i][j];
-            }
-        }
+        this.chartData = [
+            {
+                label: this.exerciseGroupAverageScoreLegend,
+                data: relativeData,
+                backgroundColor: colors,
+                borderColor: colors,
+                hoverBackgroundColor: colors,
+                barPercentage: 0.75,
+            },
+        ];
     }
 
     private createCharts() {
+        const self = this;
         this.barChartOptions = {
+            title: {
+                display: true,
+                text: self.averageScores.title,
+            },
             responsive: true,
             hover: {
                 animationDuration: 0,
@@ -107,8 +89,11 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             scales: {
                 xAxes: [
                     {
-                        position: 'top',
+                        gridLines: {
+                            display: true,
+                        },
                         ticks: {
+                            display: !!self.legendPosition,
                             beginAtZero: true,
                             min: 0,
                             max: 100,
@@ -117,18 +102,19 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                                 return value + '%';
                             },
                         },
-                        scaleLabel: {
-                            fontStyle: 'bold',
-                        },
                     },
                 ],
                 yAxes: [
                     {
+                        gridLines: {
+                            display: true,
+                        },
                         ticks: {
+                            padding: 15,
                             autoSkip: false,
                             fontStyle: 'bold',
-                            callback(title: string) {
-                                return title.length > 30 ? title.substr(0, 10) + '...' : title;
+                            callback() {
+                                return '';
                             },
                         },
                     },
@@ -138,15 +124,5 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 enabled: true,
             },
         };
-    }
-
-    private calculateMaxLength(array: (number | undefined)[][]) {
-        let maxLength = 0;
-        array.forEach((subArray) => {
-            if (subArray.length > maxLength) {
-                maxLength = subArray.length;
-            }
-        });
-        return maxLength;
     }
 }

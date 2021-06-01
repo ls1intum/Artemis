@@ -112,6 +112,7 @@
             "registered": "Angemeldete Studenten",
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
+            "firstCorrectionRound": "Erstkorrektur",
             "totalColumn": "Total",
             "noScores": "Kein Durchschnitt"
         },

@@ -15,6 +15,8 @@ public class ExamScoresDTO {
 
     public Double averagePointsAchieved = null;
 
+    public Boolean hasMultipleCorrectionRounds;
+
     public ExamScoresDTO() {
         // default constructor for our beloved Jackson :-*
     }
@@ -98,6 +100,10 @@ public class ExamScoresDTO {
         public String overallGrade = null;
 
         public Boolean hasPassed = null;
+
+        public Double pointsAchievedInFirstCorrection = null;
+
+        public Double scoreAchievedInFirstCorrection = null;
 
         public Boolean submitted = false;
 
