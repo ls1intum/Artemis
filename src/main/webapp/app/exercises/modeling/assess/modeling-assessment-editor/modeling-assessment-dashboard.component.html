@@ -6,7 +6,7 @@
     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
     <div>
         <!-- These buttons only make sense when semi automatic assessment is possible -->
-        <div *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="button-toolbar float-end">
+        <div *ngIf="exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="button-toolbar float-right">
             <button
                 (click)="assessNextOptimal()"
                 [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)"

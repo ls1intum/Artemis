@@ -8,7 +8,7 @@
             [showInOrionWindow]="false"
             *ngIf="course && course.isAtLeastEditor"
             id="jh-import-entity"
-            class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
+            class="btn btn-primary float-right jh-create-entity create-programming-exercise me-1"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (click)="openImportModal()"
         >
@@ -20,7 +20,7 @@
             [showInOrionWindow]="false"
             *ngIf="course && course.isAtLeastEditor"
             id="jh-create-entity"
-            class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
+            class="btn btn-primary float-right jh-create-entity create-programming-exercise me-1"
             [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
             [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
         >
