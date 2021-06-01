@@ -1483,10 +1483,12 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void testRecreateBuildPlansExerciseSuccess() throws Exception {
         addAuxiliaryRepositoryToExercise();
         mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
-        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), true, true, false, false);
-        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), true, true, false, false);
-        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), false);
-        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), false);
+        String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
+        String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
         request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
     }
