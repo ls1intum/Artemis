@@ -355,7 +355,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         let invalidDirectoryNames = '';
         this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
         this.invalidDirectoryNamePattern = new RegExp('^(?!( ' + invalidDirectoryNames + ')\\b)\\b(\\w|-|/)+$');
-        console.log('Invalid Directory Name pattern: ' + this.invalidDirectoryNamePattern);
     }
 
     /**
