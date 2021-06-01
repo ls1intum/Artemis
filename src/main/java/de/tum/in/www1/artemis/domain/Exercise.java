@@ -947,7 +947,7 @@ public abstract class Exercise extends DomainObject {
         if (releaseDate == null) {
             return true;
         }
-        return validateTwoDates(releaseDate, dueDate);
+        return isBeforeAndNotNull(releaseDate, dueDate);
     }
 
     /**
@@ -962,14 +962,14 @@ public abstract class Exercise extends DomainObject {
         if (dueDate == null) {
             return false;
         }
-        return validateTwoDates(dueDate, assessmentDueDate) && validateTwoDates(releaseDate, assessmentDueDate);
+        return isBeforeAndNotNull(dueDate, assessmentDueDate) && isBeforeAndNotNull(releaseDate, assessmentDueDate);
     }
 
     /**
      * This method is used to validate if the previousDate is before the laterDate.
      * @return true if the previousDate is valid
      */
-    private boolean validateTwoDates(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+    private boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
         if (previousDate == null || laterDate == null) {
             return true;
         }
