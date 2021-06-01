@@ -11,7 +11,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
             [btnSize]="ButtonSize.SMALL"
             [icon]="'plus'"
             [title]="'entity.action.addAuxiliaryRepository'"
-            (onClick)="addAuxiliaryRepositoryRow($event)"
+            (onClick)="addAuxiliaryRepositoryRow()"
         ></jhi-button>
     `,
 })
@@ -21,7 +21,7 @@ export class AddAuxiliaryRepositoryButtonComponent {
 
     @Input() programmingExercise: ProgrammingExercise;
 
-    addAuxiliaryRepositoryRow(event: MouseEvent) {
+    addAuxiliaryRepositoryRow() {
         if (this.programmingExercise.auxiliaryRepositories === undefined) {
             this.programmingExercise.auxiliaryRepositories = [];
         }
