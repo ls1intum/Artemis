@@ -44,6 +44,11 @@ declare global {
  * Logs in using API and sets authToken in Cypress.env
  * */
 Cypress.Commands.add('login', (username, password, url = '/') => {
+    if (Cypress.env(isCi)) {
+        username.replace('USERID', '1');
+        password.replace('USERID', '1');
+    }
+
     cy.request({
         url: '/api/authenticate',
         method: 'POST',
@@ -79,6 +84,10 @@ Cypress.Commands.add('logout', () => {
  * Logs in using GUI and sets authToken in Cypress.env
  * */
 Cypress.Commands.add('loginWithGUI', (username, password) => {
+    if (Cypress.env(isCi)) {
+        username.replace('USERID', '1');
+        password.replace('USERID', '1');
+    }
     cy.visit('/');
     cy.get('#username').type(username);
     cy.get('#password').type(password).type('{enter}');
