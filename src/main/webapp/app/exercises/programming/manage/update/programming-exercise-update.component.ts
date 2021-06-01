@@ -26,7 +26,6 @@ import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { AuxiliaryRepositoryService } from 'app/exercises/programming/manage/update/auxiliary-repository-service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -120,29 +119,37 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private router: Router,
-        private auxiliaryRepositoryService: AuxiliaryRepositoryService,
     ) {}
 
+    /**
+     * Updates the name of the editedAuxiliaryRepository.
+     *
+     * @param editedAuxiliaryRepository
+     */
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.name = newValue;
-            this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
             return editedAuxiliaryRepository.name;
         };
     }
 
+    /**
+     * Updates the checkouDirectory name of the editedAuxiliaryRepository.
+     *
+     * @param editedAuxiliaryRepository
+     */
     updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
-            this.programmingExercise.auxiliaryRepositories?.forEach((auxRepo) => {
-                if (auxRepo.checkoutDirectory === newValue) {
-                    throw new Error('HOW DO I LOOK');
-                }
-            });
             editedAuxiliaryRepository.checkoutDirectory = newValue;
             return editedAuxiliaryRepository.checkoutDirectory;
         };
     }
 
+    /**
+     * Updates the description of the editedAuxiliaryRepository.
+     *
+     * @param editedAuxiliaryRepository
+     */
     updateDescription(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.description = newValue;
@@ -330,12 +337,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.title = undefined;
     }
 
+    /**
+     * Sets the attribute invalidRepositoryNamePattern to an updated RegExp that does not allow auxiliary repository names that are already used for this exercise and only allows
+     * "-" besides [A-z]
+     */
     private setInvalidRepoNamePattern() {
         let invalidRepoNames = '';
         this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidRepoNames += '|' + auxiliaryRepository.name));
         this.invalidRepositoryNamePattern = new RegExp('^(?!(solution|exercise|tests' + invalidRepoNames + ')\\b)\\b(\\w|-)+$');
     }
 
+    /**
+     * Sets the attribute invalidDirectoryNamePattern to an updated RegExp that does not allow directory names that are already used for other auxiliary repositories of this
+     * exercise "-" besides [A-z]
+     */
     private setInvalidDirectoryNamePattern() {
         let invalidDirectoryNames = '';
         this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
