@@ -1,7 +1,7 @@
 {
     "statistics": {
         "statistics-title": "Statistiken",
-        "amountOfStudents": "# an Studenten",
+        "amountOfStudents": "# an Studierenden",
         "span": {
             "day": "Tag",
             "week": "Woche",
@@ -19,7 +19,7 @@
         "conducted_exams": "Durchgeführte Klausuren",
         "exam_participations": "Klausurteilnahmen",
         "exam_registrations": "Klausuranmeldungen",
-        "active_tutors": "Aktive Tutoren",
+        "active_tutors": "Aktive Tutor:innen",
         "created_results": "Erstellte Resultate",
         "created_feedbacks": "Erstellte Feedbacks",
         "questions_asked": "Gestellte Fragen",
@@ -33,12 +33,12 @@
         "conducted_examsTitle": "# an Klausuren",
         "exam_participationsTitle": "# an Klausurteilnahmen",
         "exam_registrationsTitle": "# an Klausuranmeldungen",
-        "active_tutorsTitle": "# an Tutoren",
+        "active_tutorsTitle": "# an Tutor:innen",
         "created_resultsTitle": "# an Bewertungen",
         "created_feedbacksTitle": "# an Feedbacks",
         "questions_askedTitle": "# an Fragen",
         "questions_answeredTitle": "# an Antworten",
-        "score_distributionTitle": "% an Studenten"
+        "score_distributionTitle": "% an Studierenden"
     },
     "calendar_week": "KW",
     "overview": {

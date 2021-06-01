@@ -16,7 +16,7 @@
         "scoreNull": "Fehler! Eine Bewertung is erforderlich.",
         "resultNotRated": "Fehler! Ein Ergebnis muss bewertet sein.",
         "submissionMissing": "Fehler! Die Abgabe ist nicht mehr mit dem Ergebnis verknüpft. Deine Änderungen wurden abgelehnt.",
-        "resultAlreadyExists": "Es existiert bereits ein Ergebnis für diesen Studenten für diese Übung.",
+        "resultAlreadyExists": "Es liegt bereits ein Ergebnis für diese Übung vor.",
         "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnis mit 100% kann erfolgreich sein.",
         "feedbackDetailTextNull": "Fehler! Wenn Feedback vorhanden ist, müssen die Feedback Details ausgefüllt werden.",
         "quizAlreadyVisible": "Das Quiz ist bereits sichtbar.",

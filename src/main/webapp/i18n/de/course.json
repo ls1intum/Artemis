@@ -52,10 +52,10 @@
                 "title": "Passe Gruppennamen an",
                 "description": "Stelle sicher, dass die Gruppen in der externen Nutzerverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
             },
-            "studentGroupName": "Studierendengruppe",
-            "teachingAssistantGroupName": "Tutorengruppe",
+            "studentGroupName": "Gruppe der Studierenden",
+            "teachingAssistantGroupName": "Gruppe der Tutor:innen",
             "editorGroupName": "Editorengruppe",
-            "instructorGroupName": "Dozentengruppe",
+            "instructorGroupName": "Gruppe der Lehrpersonen",
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
@@ -87,13 +87,13 @@
             "fileUploadExercises": "Dateiupload-Aufgabe",
             "students": "Studierende",
             "participations": "Teilnahmen",
-            "tutors": "Tutoren",
+            "tutors": "Tutor:innen",
             "editors": "Editoren",
-            "instructors": "Dozenten",
+            "instructors": "Lehrpersonen",
             "student": "Student",
             "tutor": "Tutor",
             "editor": "Editor",
-            "instructor": "Dozent",
+            "instructor": "Lehrperson",
             "form": {
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
@@ -101,10 +101,10 @@
                 }
             },
             "courseDashboard": "Kurs Dashboard",
-            "instructorDashboard": "Dozenten-Kursdashboard",
+            "instructorDashboard": "Kursdashboard für Lehrpersonen",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
-                "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen ein Student halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
+                "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen Studierende halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
             },
             "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",
             "courseGroup": {
@@ -132,14 +132,14 @@
             "assessmentDueDate": "Bewertung",
             "cleanup": {
                 "title": "Aufräumen",
-                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studenten-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
             },
             "detail": {
                 "title": "Kurs Details:",
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
-                "averageStudentScoreTitle": "Durchschnittliche Studentenpunktzahl"
+                "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
             }
         },
         "courseStatistics": {
@@ -147,8 +147,8 @@
             "course": "Kurs",
             "courseAverage": "Kursdurchschnitt",
             "exerciseAverage": "Aufgabendurchschnitt",
-            "amountOfStudents": "# an Studenten",
-            "activeStudents": "Aktive Studenten"
+            "amountOfStudents": "# an Studierenden",
+            "activeStudents": "Aktive Studierende"
         }
     }
 }

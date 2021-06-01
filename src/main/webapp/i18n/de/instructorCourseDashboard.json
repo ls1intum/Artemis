@@ -1,14 +1,14 @@
 {
     "artemisApp": {
         "instructorCourseDashboard": {
-            "title": "Dozenten-Kurs-Dashboard",
-            "pageHeader": "Dozenten-Kurs-Dashboard für",
+            "title": "Kurs-Dashboard für Lehrpersonen",
+            "pageHeader": "Kurs-Dashboard für Lehrpersonen für",
             "informationAboutCourse": "Informationen zum Kurs",
             "noDescription": "Keine Beschreibung vorhanden",
-            "students": "Studenten",
+            "students": "Studierende",
             "submissions": "Einreichungen",
             "yourAssessmentLocks": "Gesperrte Bewertungen",
-            "tutors": "Tutoren",
+            "tutors": "Tutor:innen",
             "assessments": "Assessments",
             "open": "nicht bewertete Einreichungen",
             "openComplaint": "nicht geprüfte Beschwerden",

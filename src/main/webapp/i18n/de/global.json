@@ -127,7 +127,7 @@
                 "authenticated": {
                     "prefix": "Wenn du dich ",
                     "link": "melde",
-                    "suffix": " möchtest, versuche es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                    "suffix": " möchtest, versuche es mit <br>- Administration (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
                     "noaccount": "Du hast noch keinen Zugang?",
@@ -219,7 +219,7 @@
             "saveAttachment": "Anhang speichern",
             "addAttachment": "Anhang hinzufügen",
             "assessmentDashboard": "Bewertungs-Dashboard",
-            "instructorDashboard": "Dozenten-Dashboard",
+            "instructorDashboard": "Dashboard für Lehrpersonen",
             "exerciseDashboard": "Aufgaben-Dashboard",
             "newResult": "Neues Ergebnis",
             "updateResult": "Ergebnis bearbeiten",
@@ -232,8 +232,8 @@
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "questionsAndAnswers": "Q&A",
-            "toggleToUnsubmitted": "Setze Studentenklauszur auf nicht abgegeben",
-            "toggleToSubmitted": "Setze Studentenklauszur auf abgegeben"
+            "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
+            "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben"
         },
         "detail": {
             "field": "Feld",

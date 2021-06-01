@@ -11,7 +11,7 @@
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
-            "assessmentLockedComplaintView": "Ursprünglicher Tutor: {{otherUser}}",
+            "assessmentLockedComplaintView": "Ursprüngliche Tutor:in: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
             "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Ein anderer Tutor muss antworten.",
             "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
@@ -36,7 +36,7 @@
                 "tutorComment": "Tutorkommentar:"
             },
             "messages": {
-                "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
+                "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
                 "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
                 "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
                 "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",

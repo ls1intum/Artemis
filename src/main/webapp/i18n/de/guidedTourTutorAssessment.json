@@ -3,7 +3,7 @@
         "courseAdministration": {
             "assessmentDashboardButton": {
                 "headline": "Bewertungs-Dashboard",
-                "content": "Im <tt>Bewertungs-Dashboard</tt> kannst du die Studentenabgaben einsehen und bewerten."
+                "content": "Im <tt>Bewertungs-Dashboard</tt> kannst du die Abgaben von Studierenden einsehen und bewerten."
             }
         },
         "assessmentDashboard": {
@@ -21,11 +21,11 @@
             },
             "gradingProcess": {
                 "headline": "Bewertungsprozess",
-                "content": "Dieser Graph visualisiert deinen aktuellen Bewertungsprozess und markiert alle Knoten in grün, wenn der dazugehörige Prozessschritt erledigt ist: <ol><li>Lese die Bewertungsanleitung</li><li>Übe an Beispieleinreichungen (wenn vorhanden)</li><li>Bewerte Studenteneinreichungen</li><li>Evaluiere die Beschwerden und Feedbackanfragen der Studenten</li></ol>"
+                "content": "Dieser Graph visualisiert deinen aktuellen Bewertungsprozess und markiert alle Knoten in grün, wenn der dazugehörige Prozessschritt erledigt ist: <ol><li>Lese die Bewertungsanleitung</li><li>Übe an Beispieleinreichungen (wenn vorhanden)</li><li>Bewerte Einreichungen von Studierenden</li><li>Evaluiere die Beschwerden und Feedbackanfragen der Studierenden</li></ol>"
             },
             "exerciseDashboardButton": {
                 "headline": "Aufgaben Dashboard",
-                "content": "Nun gehen wir ins Aufgaben Dashboard und schauen uns die Aufgabendetails und Studentenabgaben an."
+                "content": "Nun gehen wir ins Aufgaben Dashboard und schauen uns die Aufgabendetails und Abgaben der Studierenden an."
             }
         },
         "exerciseAssessmentDashboard": {
@@ -46,12 +46,12 @@
                 "content": "Klick hier um an deiner ersten Bewertung für eine Textaufgabe zu arbeiten."
             },
             "submissionsAndComplaints": {
-                "headline": "Studentenabgaben",
-                "content": "Die Studentenabgaben, die bewertet werden müssen, werden nach der Einreichungsfrist der Übung hier angezeigt."
+                "headline": "Abgaben der Studierenden",
+                "content": "Die Abgaben der Studierenden, die bewertet werden müssen, werden nach der Einreichungsfrist der Übung hier angezeigt."
             },
             "assessSubmissions": {
-                "headline": "Bewertung von Studentenabgaben",
-                "content": "Um eine Bewertung zu starten musst du auf den Button <tt>Neue Bewertung starten</tt> klicken. Wir haben den Button hier für Tutorialzwecke deaktiviert."
+                "headline": "Bewertung von Abgaben der Studierenden",
+                "content": "Um eine Bewertung zu starten, musst du auf den Button <tt>Neue Bewertung starten</tt> klicken. Wir haben den Button hier für Tutor:inialzwecke deaktiviert."
             }
         },
         "exampleReview": {
@@ -84,7 +84,7 @@
                 "content": "Jetzt kannst du deine Bewertung einreichen."
             },
             "back": {
-                "headline": "Tutorial für Beispielbewertungen abschließen",
+                "headline": "Tutor:inial für Beispielbewertungen abschließen",
                 "content": "Navigiere zum Aufgaben Dashboard zurück um dieses Tutorial abzuschließen."
             }
         }

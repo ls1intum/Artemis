@@ -30,7 +30,7 @@
             "tutorialSubmissions": "Bewertung von Beispielabgaben",
             "assessingExampleSubmission": "Beispielabgabe bewerten",
             "assessExampleSubmission": "Bewertete Beispielabgabe",
-            "studentsSubmissions": "Abgaben der Studenten",
+            "studentsSubmissions": "Abgaben der Studierenden",
             "testRunSubmissions": "Testlaufabgaben",
             "submissionDate": "Abgabedatum",
             "result": "Ergebnis",
@@ -79,9 +79,9 @@
                 "GERMAN": "Deutsch",
                 "UNKNOWN": "Unbekannt"
             },
-            "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutoren. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
+            "complaintHint": "Zeigt Beschwerden über Bewertungen von anderen Tutor:innen. Beachte: Beschwerden über deine Bewertungen werden hier nicht angezeigt.",
             "moreFeedbackRequestHint": "Zeigt Anfragen für weiteres Feedback von deinen Bewertungen an.",
-            "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutoren gesperrt",
+            "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutor:innen gesperrt",
             "noSubmissionsInfoSecondCorrection": " und {{firstRoundAssessments}} wurden von dir in der ersten Korrekturrunde korrigiert. ",
             "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen die du nicht selbst in der ersten Korrekturrunde bearbeitet hast können korrigiert werden."
         }
