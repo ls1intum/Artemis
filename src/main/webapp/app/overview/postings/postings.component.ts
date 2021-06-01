@@ -139,11 +139,11 @@ export class PostingsComponent implements OnInit, AfterViewInit {
         });
     }
 
-    private updatePostAfterVoteChange(post: Post): void {
-        const indexToUpdate = this.posts.findIndex((p) => {
-            return p.id === p.id;
+    private updatePostAfterVoteChange(upvotedPost: Post): void {
+        const indexToUpdate = this.posts.findIndex((post) => {
+            return post.id === post.id;
         });
-        this.posts[indexToUpdate] = post;
+        this.posts[indexToUpdate] = upvotedPost;
         this.posts = PostingsComponent.sortPostsByVote(this.posts);
     }
 }
