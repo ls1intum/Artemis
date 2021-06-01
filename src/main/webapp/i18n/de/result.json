@@ -8,7 +8,7 @@
             },
             "created": "Result erstellt mit ID {{ param }}",
             "updated": "Bewertung aktualisiert mit ID {{ param }}",
-            "deleted": "Result gelöscht mit ID {{ param }}",
+            "deleted": "Bewertung gelöscht mit ID {{ param }}",
             "delete": {
                 "question": "Soll Bewertung {{ id }} wirklich dauerhaft gelöscht werden?",
                 "question2": "Soll die Bewertung wirklich gelöscht werden? Es kann nicht rückgängig gemacht werden!",
