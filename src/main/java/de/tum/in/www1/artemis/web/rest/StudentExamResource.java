@@ -239,6 +239,11 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
+        // students can not fetch the exam until 5 minutes before the exam start
+        if (ZonedDateTime.now().plusMinutes(5).isBefore(studentExam.getExam().getStartDate())) {
+            return forbidden();
+        }
+
         prepareStudentExamForConduction(request, user, studentExam);
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
