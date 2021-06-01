@@ -834,6 +834,7 @@ ngb-tooltip-window {
     HACK: Workaround an angular 12 bug where the css precedence changes,
     causing all columns in a row to have 'width: 100%'
 ========================================================================== */
+/*
 .col-11 {
     width: 91.66% !important;
 }
@@ -1092,4 +1093,4 @@ ngb-tooltip-window {
 
 .col-xl {
     width: auto !important;
-}
+}*/
