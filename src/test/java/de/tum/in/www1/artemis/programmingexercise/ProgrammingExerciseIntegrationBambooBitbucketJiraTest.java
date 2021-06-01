@@ -815,4 +815,50 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesEmptyOk();
     }
+
+    // Tests for recreate build plan endpoint
+
+    @Test
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    public void testRecreateBuildPlansForbiddenStudent() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testRecreateBuildPlansForbiddenTutor() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testRecreateBuildPlansExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testRecreateBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansExerciseSuccess();
+    }
+
+    // Tests for export auxiliary repository for exercise endpoint
+
+    @Test
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    public void testExportAuxiliaryRepositoryForbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryRepositoryNotFound();
+    }
 }

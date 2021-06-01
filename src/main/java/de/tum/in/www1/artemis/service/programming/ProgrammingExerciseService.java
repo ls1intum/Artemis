@@ -133,7 +133,7 @@ public class ProgrammingExerciseService {
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
-        connectAuxiliaryRepositoriesToExerciseAndSave(programmingExercise);
+        connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
         setupExerciseTemplate(programmingExercise, user);
 
@@ -211,12 +211,15 @@ public class ProgrammingExerciseService {
         programmingExercise.setSolutionParticipation(solutionParticipation);
     }
 
-    private void connectAuxiliaryRepositoriesToExerciseAndSave(ProgrammingExercise exercise) {
+    private void connectAuxiliaryRepositoriesToExercise(ProgrammingExercise exercise) {
         List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream()
             .filter(repo -> repo.getId() != null).toList());
         exercise.getAuxiliaryRepositories().stream()
             .filter(repository -> repository.getId() == null)
             .forEach(repository -> {
+                // We have to disconnect the exercise from the auxiliary repository
+                // since the auxiliary repositories of an exercise are represented as
+                // a sorted collection (list).
                 repository.setExercise(null);
                 repository = auxiliaryRepositoryRepository.save(repository);
                 repository.setExercise(exercise);
@@ -364,7 +367,7 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
 
         setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
-        connectAuxiliaryRepositoriesToExerciseAndSave(programmingExercise);
+        connectAuxiliaryRepositoriesToExercise(programmingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 

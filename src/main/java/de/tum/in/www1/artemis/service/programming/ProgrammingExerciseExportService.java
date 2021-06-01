@@ -258,13 +258,9 @@ public class ProgrammingExerciseExportService {
         if (exerciseOrEmpty.isEmpty()) {
             return Optional.empty();
         }
-
         var exercise = exerciseOrEmpty.get();
-
         String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
-
         var repositoryUrl = exercise.getRepositoryURL(repositoryType);
-
         return exportRepository(repositoryUrl, repositoryType.getName(), zippedRepoName, exercise, outputDir, exportErrors);
     }
 
@@ -283,13 +279,9 @@ public class ProgrammingExerciseExportService {
         if (exerciseOrEmpty.isEmpty()) {
             return Optional.empty();
         }
-
         var exercise = exerciseOrEmpty.get();
-
         String zippedRepoName = getZippedRepoName(exercise, auxiliaryRepository.getRepositoryName());
-
         var repositoryUrl = auxiliaryRepository.getVcsRepositoryUrl();
-
         return exportRepository(repositoryUrl, auxiliaryRepository.getName(), zippedRepoName, exercise, outputDir, exportErrors);
     }
 

@@ -101,7 +101,7 @@ public class BambooBuildPlanService {
      *                               the build plan
      */
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName,
-                                           String solutionRepositoryName, List<Pair<String, String>> auxiliaryRepositories) {
+            String solutionRepositoryName, List<Pair<String, String>> auxiliaryRepositories) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
@@ -141,7 +141,7 @@ public class BambooBuildPlanService {
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
-                                   boolean checkoutSolutionRepository, List<AuxiliaryRepository> auxiliaryRepositories) {
+            boolean checkoutSolutionRepository, List<AuxiliaryRepository> auxiliaryRepositories) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask;

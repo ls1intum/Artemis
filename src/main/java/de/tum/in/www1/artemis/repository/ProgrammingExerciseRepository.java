@@ -522,7 +522,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find a programming exercise by its id, including template and solution participation and their latest results.
+     * Find a programming exercise by its id, including auxiliary repositories, template and solution participation and
+     * their latest results.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id

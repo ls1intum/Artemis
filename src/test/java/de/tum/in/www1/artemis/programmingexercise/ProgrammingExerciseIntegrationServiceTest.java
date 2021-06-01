@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -1394,7 +1395,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_NAME_LENGTH)), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults()
+            .withName(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_NAME_LENGTH)), HttpStatus.BAD_REQUEST);
     }
 
     public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
@@ -1460,9 +1462,6 @@ public class ProgrammingExerciseIntegrationServiceTest {
         assertThat(returnedAuxiliaryRepositories).hasSize(2);
     }
 
-    /*
-     * This method is also used for forbidden checks.
-     */
     public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
@@ -1473,12 +1472,53 @@ public class ProgrammingExerciseIntegrationServiceTest {
         request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
     }
 
+    public void testRecreateBuildPlansForbidden() throws Exception {
+        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    public void testRecreateBuildPlansExerciseNotFound() throws Exception {
+        request.put(defaultRecreateBuildPlanEndpoint(-1L), programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    public void testRecreateBuildPlansExerciseSuccess() throws Exception {
+        addAuxiliaryRepositoryToExercise();
+        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), true, true, false, false);
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), true, true, false, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), false);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
+    }
+
+    public void testExportAuxiliaryRepositoryForbidden() throws Exception {
+        AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
+    }
+
+    public void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.NOT_FOUND, File.class);
+    }
+
+    public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), -1L), HttpStatus.NOT_FOUND, File.class);
+    }
+
     private String generateStringWithMoreThanNCharacters(int n) {
         return IntStream.range(0,n + 1).mapToObj(unused -> "a").reduce("", String::concat);
     }
 
+    private AuxiliaryRepository addAuxiliaryRepositoryToExercise() {
+        AuxiliaryRepository repository = AuxiliaryRepositoryBuilder.defaults().get();
+        auxiliaryRepositoryRepository.save(repository);
+        programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        programmingExercise.addAuxiliaryRepository(repository);
+        programmingExerciseRepository.save(programmingExercise);
+        return repository;
+    }
+
     private String defaultAuxiliaryRepositoryEndpoint() {
-        return "/api" + SETUP;
+        return ROOT + SETUP;
     }
 
     private String defaultRecreateBuildPlanEndpoint() {
@@ -1489,12 +1529,22 @@ public class ProgrammingExerciseIntegrationServiceTest {
         return defaultGetAuxReposEndpoint(programmingExercise.getId());
     }
 
+    private String defaultExportInstructorAuxiliaryRepository(AuxiliaryRepository repository) {
+        return defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), repository.getId());
+    }
+
     private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
-        return "/api" + RECREATE_BUILD_PLANS.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", "" + exerciseId);
     }
 
     private String defaultGetAuxReposEndpoint(Long exerciseId) {
-        return "/api" + AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId);
+        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId);
+    }
+
+    private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
+        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY
+            .replace("{exerciseId}","" + exerciseId)
+            .replace("{repositoryId}", "" + repositoryId);
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
