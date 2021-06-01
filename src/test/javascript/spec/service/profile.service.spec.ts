@@ -45,7 +45,6 @@ describe('Logs Service', () => {
                     tutor_assessment_tour: 'Patterns in Software Engineering',
                 },
             },
-            //            "course-group-students": "artemis-artemistutorial-students"
         },
         'test-server': true,
         sentry: {
@@ -126,7 +125,6 @@ describe('Logs Service', () => {
         testServer: true,
         ribbonEnv: '',
         guidedTourMapping: {
-            //         "course-group-students": "artemis-artemistutorial-students",
             courseShortName: 'artemistutorial',
             tours: {
                 cancel_tour: '',
