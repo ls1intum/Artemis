@@ -21,6 +21,9 @@ export class AddAuxiliaryRepositoryButtonComponent {
 
     @Input() programmingExercise: ProgrammingExercise;
 
+    /**
+     * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.
+     */
     addAuxiliaryRepositoryRow() {
         if (this.programmingExercise.auxiliaryRepositories === undefined) {
             this.programmingExercise.auxiliaryRepositories = [];
