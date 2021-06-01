@@ -5,7 +5,7 @@
     "screenshotsFolder": "src/test/cypress/screenshots",
     "videosFolder": "src/test/cypress/videos",
     "supportFile": "src/test/cypress/support/index.ts",
-    "baseUrl": "<Insert url to client application>",
+    "baseUrl": "http://localhost:8080",
     "video": false,
     "screenshotOnRunFailure": false
 }
