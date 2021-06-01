@@ -36,6 +36,8 @@ export class StudentResult {
     public registrationNumber: string;
     public overallPointsAchieved?: number;
     public overallScoreAchieved?: number;
+    public overallGrade?: string;
+    public hasPassed?: boolean;
     public submitted: boolean;
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
 
@@ -54,16 +56,28 @@ export class ExerciseResult {
 }
 
 export class AggregatedExamResult {
+    public meanPointsPassed?: number;
+    public meanPointsRelativePassed?: number;
     public meanPoints: number;
     public meanPointsRelative: number;
     public meanPointsTotal: number;
     public meanPointsRelativeTotal: number;
+    public meanGradePassed?: string;
+    public meanGrade?: string;
+    public meanGradeTotal?: string;
+    public medianPassed?: number;
+    public medianRelativePassed?: number;
     public median: number;
     public medianRelative: number;
     public medianTotal: number;
     public medianRelativeTotal: number;
+    public medianGradePassed?: string;
+    public medianGrade?: string;
+    public medianGradeTotal?: string;
+    public standardDeviationPassed?: number;
     public standardDeviation: number;
     public standardDeviationTotal: number;
+    public noOfExamsFilteredForPassed = 0;
     public noOfExamsFiltered = 0;
     public noOfRegisteredUsers = 0;
 
@@ -79,6 +93,7 @@ export class AggregatedExerciseGroupResult {
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
+    public averageGrade?: string;
     public exerciseResults: AggregatedExerciseResult[] = [];
 
     constructor(exerciseGroupId: number, title: string, maxPoints: number, totalParticipants: number) {

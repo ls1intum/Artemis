@@ -99,10 +99,10 @@
             </ngx-datatable>
         </ng-template>
     </jhi-data-table>
+    <jhi-assessment-warning *ngIf="exercise && exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-assessment-warning>
 
     <ng-container *ngIf="exercise && team">
-        <hr class="my-5" />
-        <h4 class="d-flex align-items-baseline">
+        <h4 class="mt-4 d-flex align-items-baseline">
             {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise.course!.title } }}
             <code class="ml-2 team-short-name">{{ team.shortName }}</code>
         </h4>

@@ -21,9 +21,12 @@
                     "yourPoints": "Your points",
                     "maxPoints": "Points",
                     "bonus": "Bonus points",
-                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points",
-                    "maxPointsNotSet": "The exam max points is not set."
-                }
+                    "youAchievedWithBonus": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points and {{bonusPoints}} bonus points",
+                    "youAchieved": "You achieved {{achievedPoints}} points out of possible {{normalPoints}} normal points",
+                    "maxPointsNotSet": "The exam max points are not set."
+                },
+                "grade": "Grade:",
+                "bonus": "Bonus points for the final exam:"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -62,7 +65,8 @@
                 "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
-                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
+                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large.",
+                "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
                 "cannotRegisterInstructor": "You cannot register instructors or administrators to exams."
@@ -78,6 +82,10 @@
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",
             "averagePointsColumn": "Average",
+            "averageGradeColumn": "Average Grade",
+            "averageBonusColumn": "Average Bonus Points",
+            "medianGradeColumn": "Median Grade",
+            "medianBonusColumn": "Median Bonus Points",
             "participantsColumn": "Participants",
             "averageExerciseTooltip": "(Average / Maximum) points achieved for the exercise. The activated filters affect the average.",
             "averageExerciseGroupTooltip": "(Average / Maximum) points achieved for the exercise group. The activated filters affect the average.",
@@ -89,6 +97,9 @@
             "registrationNumberColumn": "Matriculation Number",
             "overallPointsColumn": "Overall Points",
             "overallScoreColumn": "Overall Score (%)",
+            "overallGradeColumn": "Overall Grade",
+            "overallBonusColumn": "Overall Bonus Points",
+            "passedColumn": "Passed",
             "exportCSV": "Export Results as CSV",
             "filterForSubmittedExams": "Include only submitted exams",
             "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission",
