@@ -11,7 +11,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
             [btnSize]="ButtonSize.SMALL"
             [icon]="'minus'"
             [title]="'entity.action.remove'"
-            (onClick)="removeAuxiliaryRepository($event)"
+            (onClick)="removeAuxiliaryRepository()"
         ></jhi-button>
     `,
 })
@@ -23,10 +23,9 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
 
     @Input() row: AuxiliaryRepository;
 
-    removeAuxiliaryRepository(event: MouseEvent) {
-        let auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
-        let tmp = [...this.programmingExercise.auxiliaryRepositories!];
-        tmp?.splice(auxRepoIndex, 1)!;
-        this.programmingExercise.auxiliaryRepositories = [...tmp];
+    removeAuxiliaryRepository() {
+        const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
+        this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1)!;
+        this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
     }
 }
