@@ -6,7 +6,7 @@
         <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
             <div class="mb-4 mt-4 d-flex">
                 <fa-icon [icon]="'pen-alt'" size="2x"></fa-icon>
-                <h4 class="ms-2">{{ nextRelevantExam.title }}</h4>
+                <h4 class="ml-2">{{ nextRelevantExam.title }}</h4>
             </div>
             <div class="text-right mb-4 mt-4">
                 <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: nextRelevantExam.startDate | artemisDate } }}</div>

@@ -31,7 +31,7 @@
                     </div>
                     <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
                     <div class="d-inline-block" *ngFor="let extension of fileUploadExercise.filePattern!.split(',')">
-                        <span class="ms-1 badge bg-info">
+                        <span class="ml-1 badge bg-info">
                             {{ extension | uppercase }}
                         </span>
                     </div>
@@ -45,7 +45,7 @@
                 <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
             </h6>
             <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
-            <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
+            <span class="ml-2 badge bg-info" *ngIf="submittedFileExtension">
                 {{ submittedFileExtension | uppercase }}
             </span>
         </div>

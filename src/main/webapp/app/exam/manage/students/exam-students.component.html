@@ -10,14 +10,14 @@
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
             </span>
             <jhi-students-exam-import-button
-                class="ms-4"
+                class="ml-4"
                 [courseId]="courseId"
                 [exam]="exam"
                 [buttonSize]="ButtonSize.MEDIUM"
                 (finish)="reloadExamWithRegisteredUsers()"
             ></jhi-students-exam-import-button>
             <button
-                class="btn btn btn-primary ms-auto"
+                class="btn btn btn-primary ml-auto"
                 (click)="registerAllStudentsFromCourse()"
                 title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
             >
@@ -31,7 +31,7 @@
                 [renderButtonText]="false"
                 [buttonSize]="ButtonSize.MEDIUM"
                 jhiDeleteButton
-                class="btn btn-primary ms-auto"
+                class="btn btn-primary ml-auto"
                 deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
                 (delete)="removeAllStudents($event)"
                 [dialogError]="dialogError$"
@@ -159,7 +159,7 @@
                                 }"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="'user-slash'" class="me-1"></fa-icon>
+                                <fa-icon [icon]="'user-slash'" class="mr-1"></fa-icon>
                             </button>
                         </div>
                     </ng-template>

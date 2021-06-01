@@ -32,7 +32,7 @@
                     [secondCorrectionEnabled]="secondCorrectionEnabled"
                     [toggelingSecondCorrectionButton]="toggelingSecondCorrectionButton"
                 ></jhi-second-correction-enable-button>
-                <a class="btn btn-primary btn-sm ms-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                <a class="btn btn-primary btn-sm ml-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                     <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                 </a>
             </ng-container>
@@ -44,21 +44,21 @@
                     <div class="col-8"></div>
                     <div class="col-4">
                         {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | artemisTranslate }}
-                        <span class="ms-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
+                        <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
                     </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ numberOfSubmissions.inTime }}
-                        <span *ngIf="numberOfSubmissions.late > 0" class="ms-1 result--late text-nowrap">| {{ numberOfSubmissions.late }}</span>
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-1 result--late text-nowrap">| {{ numberOfSubmissions.late }}</span>
                     </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAssessedSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ totalNumberOfAssessments.inTime }} ({{ totalAssessmentPercentage.inTime }}%)
-                        <span *ngIf="numberOfSubmissions.late > 0" class="ms-2 result--late text-nowrap"
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
                             >| {{ totalNumberOfAssessments.late }} ({{ totalAssessmentPercentage.late }}%)</span
                         >
                     </div>
@@ -67,7 +67,7 @@
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ numberOfSubmissions.inTime - totalNumberOfAssessments.inTime }} ({{ 100 - totalAssessmentPercentage.inTime }}%)
-                        <span *ngIf="numberOfSubmissions.late > 0" class="ms-2 result--late text-nowrap"
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
                             >| {{ numberOfSubmissions.late - totalNumberOfAssessments.late }} ({{ 100 - totalAssessmentPercentage.late }}%)</span
                         >
                     </div>

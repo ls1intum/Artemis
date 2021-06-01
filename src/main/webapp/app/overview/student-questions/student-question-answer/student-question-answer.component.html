@@ -13,21 +13,21 @@
                         </div>
                         <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                             <fa-icon
-                                class="me-1 clickable"
+                                class="mr-1 clickable"
                                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
                                 container="body"
                                 [icon]="'pencil-alt'"
                                 (click)="toggleEditMode()"
                             ></fa-icon>
                             <jhi-confirm-icon
-                                class="me-1 clickable"
+                                class="mr-1 clickable"
                                 (confirmEvent)="deleteAnswer()"
-                                [ngClass]="'me-1 clickable'"
+                                [ngClass]="'mr-1 clickable'"
                                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
                                 [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
                             ></jhi-confirm-icon>
                             <fa-icon
-                                class="me-1 clickable"
+                                class="mr-1 clickable"
                                 *ngIf="isAtLeastTutorInCourse"
                                 [ngbTooltip]="
                                     (studentQuestionAnswer.tutorApproved
@@ -73,21 +73,21 @@
                 </div>
                 <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                     <fa-icon
-                        class="me-1 clickable"
+                        class="mr-1 clickable"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
                         container="body"
                         [icon]="'pencil-alt'"
                         (click)="toggleEditMode()"
                     ></fa-icon>
                     <jhi-confirm-icon
-                        class="me-1 clickable"
+                        class="mr-1 clickable"
                         (confirmEvent)="deleteAnswer()"
-                        [ngClass]="'me-1 clickable'"
+                        [ngClass]="'mr-1 clickable'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
                         [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
                     ></jhi-confirm-icon>
                     <fa-icon
-                        class="me-1 clickable"
+                        class="mr-1 clickable"
                         *ngIf="isAtLeastTutorInCourse"
                         [ngbTooltip]="
                             (studentQuestionAnswer.tutorApproved
