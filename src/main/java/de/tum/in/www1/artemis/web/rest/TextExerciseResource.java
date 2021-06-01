@@ -138,7 +138,7 @@ public class TextExerciseResource {
         if (textExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
-        // validates generall settings: points, dates
+        // validates general settings: points, dates
         exerciseService.validateGeneralSettings(textExercise);
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
@@ -188,7 +188,7 @@ public class TextExerciseResource {
             return createTextExercise(textExercise);
         }
 
-        // validates generall settings: points, dates
+        // validates general settings: points, dates
         exerciseService.validateGeneralSettings(textExercise);
 
         // Valid exercises have set either a course or an exerciseGroup

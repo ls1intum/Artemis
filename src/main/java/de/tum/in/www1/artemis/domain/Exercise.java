@@ -931,9 +931,8 @@ public abstract class Exercise extends DomainObject {
         if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
             return;
         }
-        // atleast one is set, so we have to check the two possible errors
-        boolean validDates = validateDueDateError(getReleaseDate(), getDueDate(), getAssessmentDueDate())
-                && validateAssessmentDueDateError(getReleaseDate(), getDueDate(), getAssessmentDueDate());
+        // at least one is set, so we have to check the two possible errors
+        boolean validDates = validateDueDate(getReleaseDate(), getDueDate()) && validateAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
 
         if (!validDates) {
             throw new BadRequestException();
@@ -944,8 +943,7 @@ public abstract class Exercise extends DomainObject {
      * This method is used to validate the dueDate of an exercise. A due date is valid, if it is after the releaseDate,
      * @return true if there is no DueDateError
      */
-
-    private boolean validateDueDateError(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assesmentDueDate) {
+    private boolean validateDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         if (releaseDate == null) {
             return true;
         }
@@ -956,7 +954,7 @@ public abstract class Exercise extends DomainObject {
      * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
      * @return true if there is no assessmentDueDateError
      */
-    private boolean validateAssessmentDueDateError(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+    private boolean validateAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         if (assessmentDueDate == null) {
             return true;
         }

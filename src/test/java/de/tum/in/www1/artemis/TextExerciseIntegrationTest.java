@@ -174,7 +174,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         textExercise.setId(null);
         textExercise.setDueDate(null);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
