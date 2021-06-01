@@ -3,7 +3,7 @@ import { GradingScale } from 'app/entities/grading-scale.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeDTO, GradeStep } from 'app/entities/grade-step.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 
@@ -91,6 +91,10 @@ export class GradingSystemService {
      */
     deleteGradingScaleForExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
+    }
+
+    public matchPercentageToGradeStepForExam(courseId: number, examId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
+        return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
     }
 
     /**
