@@ -7,7 +7,7 @@
                 "createOrEditLabel": "Result erstellen oder bearbeiten"
             },
             "created": "Result erstellt mit ID {{ param }}",
-            "updated": "Result aktualisiert mit ID {{ param }}",
+            "updated": "Bewertung aktualisiert mit ID {{ param }}",
             "deleted": "Result gelöscht mit ID {{ param }}",
             "delete": {
                 "question": "Soll Bewertung {{ id }} wirklich dauerhaft gelöscht werden?",
