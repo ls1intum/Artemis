@@ -123,7 +123,7 @@ export class ListOfComplaintsComponent implements OnInit {
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
                 return;
             case ExerciseType.PROGRAMMING:
-                const urlProgramming = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${studentParticipation.id}/assessment`];
+                const urlProgramming = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${studentParticipation.id}/assessment`];
                 this.router.navigate(urlProgramming, { queryParams: { 'correction-round': this.correctionRound } });
                 return;
         }
