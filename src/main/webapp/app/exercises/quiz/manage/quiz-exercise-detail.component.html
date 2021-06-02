@@ -3,7 +3,7 @@
         <h4 class="title">
             <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.edit.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
             <span *ngIf="!quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.new.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
-            <span class="badge bg-info align-text-top float-right">
+            <span class="badge bg-info align-text-top float-end">
                 <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
                 <span class="badge text-dark bg-light">{{ calculateMaxExerciseScore() }}</span>
                 <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
