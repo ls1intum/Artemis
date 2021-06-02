@@ -176,7 +176,7 @@ public class FileResource {
     }
 
     /**
-     * GET /files/drag-and-drop/backgrounds/:postId/:filename : Get the background file with the given name for the given drag and drop question
+     * GET /files/drag-and-drop/backgrounds/:questionId/:filename : Get the background file with the given name for the given drag and drop question
      *
      * @param questionId ID of the drag and drop question, the file belongs to
      * @param filename   the filename of the file
