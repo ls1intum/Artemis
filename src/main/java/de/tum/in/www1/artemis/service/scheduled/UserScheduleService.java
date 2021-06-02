@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 @Profile("scheduling")
 public class UserScheduleService {
 
-    @Value("${artemis.user-management.registration.cleanup-time-minutes}")
+    @Value("${artemis.user-management.registration.cleanup-time-minutes:60}")
     private Long removeNonActivatedUserDelayTime;
 
     private final Logger log = LoggerFactory.getLogger(UserScheduleService.class);
