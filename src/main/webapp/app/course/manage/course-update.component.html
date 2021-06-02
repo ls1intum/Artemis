@@ -102,7 +102,7 @@
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}" formControlName="startDate"></jhi-date-time-picker>
                     </div>
-                    <div class="form-group flex-grow-1 ml-3">
+                    <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}" formControlName="endDate"></jhi-date-time-picker>
                     </div>
                 </div>
@@ -354,7 +354,7 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving" class="btn btn-primary ml-2">
+                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving" class="btn btn-primary ms-2">
                         <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </ng-template>

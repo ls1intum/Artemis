@@ -2,7 +2,7 @@
 <div *ngIf="exercise.allowOnlineEditor">
     <div class="d-flex mb-3">
         <div class="d-flex flex-wrap flex-column justify-content-center">
-            <h4 class="mb-0 mr-1">Online Code Editor</h4>
+            <h4 class="mb-0 me-1">Online Code Editor</h4>
         </div>
         <!-- ngIf offline-ide clone button -->
         <jhi-exercise-details-student-actions
@@ -41,10 +41,10 @@
                 [participation]="studentParticipation"
                 [short]="true"
                 [personalParticipation]="true"
-                class="mr-2"
+                class="me-2"
             ></jhi-updating-result>
             <jhi-programming-exercise-student-trigger-build-button
-                class="mr-2"
+                class="me-2"
                 [exercise]="exercise"
                 [participation]="studentParticipation"
                 [btnSize]="ButtonSize.MEDIUM"
@@ -78,7 +78,7 @@
             [participation]="studentParticipation"
             [short]="true"
             [personalParticipation]="true"
-            class="mr-2"
+            class="me-2"
         ></jhi-updating-result>
     </div>
     <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showGradedBadge]="true"></jhi-submission-result-status>
