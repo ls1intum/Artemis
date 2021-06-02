@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import { v4 as uuidv4 } from 'uuid';
+
 // Environmental variables
 const adminUsername = Cypress.env('adminUsername');
 const adminPassword = Cypress.env('adminPassword');
@@ -7,9 +9,11 @@ const username = Cypress.env('username');
 const password = Cypress.env('password');
 
 // Common primitives
-const courseName = 'Cypress test course';
-const courseShortName = 'CypressTestCourse';
-const programmingExerciseName = 'Cypress test programming exercise';
+const uid = uuidv4().replace(/-/g, '');
+const courseName = 'Cypress course';
+const courseShortName = 'cypress' + uid;
+const programmingExerciseName = 'Cypress programming exercise ' + uid;
+const programmingExerciseShortName = courseShortName;
 const exercisePath = '/exercises';
 const longTimeout = 60000;
 const beVisible = 'be.visible';
@@ -46,7 +50,7 @@ describe('Programming exercise', () => {
 
         cy.log('Filling out programming exercise info...');
         cy.get(fieldTitle).type(programmingExerciseName);
-        cy.get(shortName).type('CypressTPE');
+        cy.get(shortName).type(programmingExerciseShortName);
         cy.get('#field_packageName').type('tum.exercise');
         cy.get('#field_points').type('100');
         cy.get('#field_allowOnlineEditor').check();
