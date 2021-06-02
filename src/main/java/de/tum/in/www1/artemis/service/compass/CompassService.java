@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.compass.controller.FeedbackSelector;
 import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
 import de.tum.in.www1.artemis.service.compass.statistics.CompassStatistics;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Service
 public class CompassService {
@@ -55,6 +56,8 @@ public class CompassService {
      * @param modelingExercise the exercise to build clusters for
      */
     public void build(ModelingExercise modelingExercise) {
+        long start = System.nanoTime();
+
         List<ModelCluster> currentClusters = modelClusterRepository.findAllByExerciseIdWithEagerElements(modelingExercise.getId());
         if (!currentClusters.isEmpty()) {
             // Do not build submissions if this process has already been done before
@@ -63,8 +66,13 @@ public class CompassService {
         List<ModelingSubmission> submissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(modelingExercise.getId());
         ModelClusterFactory clusterFactory = new ModelClusterFactory();
         List<ModelCluster> modelClusters = clusterFactory.buildClusters(submissions, modelingExercise);
+        log.info("ModelClusterTimelog: building clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
+                TimeLogUtil.formatDurationFrom(start));
         modelClusterRepository.saveAll(modelClusters);
         modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).collect(Collectors.toList()));
+        log.info("ModelClusterTimelog: building and saving clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
+                TimeLogUtil.formatDurationFrom(start));
+
     }
 
     /**
