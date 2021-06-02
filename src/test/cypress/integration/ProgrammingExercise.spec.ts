@@ -7,9 +7,9 @@ const username = Cypress.env('username');
 const password = Cypress.env('password');
 
 // Common primitives
-const courseName = 'Test course';
-const courseShortName = 'TCS';
-const programmingExerciseName = 'Test programming exercise';
+const courseName = 'Cypress test course';
+const courseShortName = 'CTC';
+const programmingExerciseName = 'Cypress test programming exercise';
 const exercisePath = '/exercises';
 const longTimeout = 60000;
 const beVisible = 'be.visible';
@@ -19,6 +19,7 @@ const fieldTitle = '#field_title';
 const shortName = '#field_shortName';
 const datepickerButtons = '.owl-dt-container-control-button';
 const exerciseRow = '.course-exercise-row';
+const modalDeleteButton = '.modal-footer > .btn-danger';
 
 describe('Programming exercise', () => {
     before(() => {
@@ -45,12 +46,11 @@ describe('Programming exercise', () => {
 
         cy.log('Filling out programming exercise info...');
         cy.get(fieldTitle).type(programmingExerciseName);
-        cy.get(shortName).type('TPE');
+        cy.get(shortName).type('CTP');
         cy.get('#field_packageName').type('tum.exercise');
         cy.get('#field_points').type('100');
         cy.get('#field_allowOnlineEditor').check();
 
-        // TODO: Find a better way of finding the selector elements...
         cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
         cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
 
@@ -90,7 +90,6 @@ describe('Programming exercise', () => {
         cy.log('Submitting default exercise for grading...');
         cy.get('#submit_button').click();
         // CI build is triggered here, so it will take quite some time
-        // TODO: We are querying for a text here. This might break with other translations
         cy.get('jhi-updating-result').contains('0 of 13 passed', { timeout: longTimeout }).should(beVisible);
         // Make sure that all sub-tasks are not marked with question marks, but with an indication that they failed
         cy.get('.stepwizard-row')
@@ -115,6 +114,16 @@ describe('Programming exercise', () => {
                 cy.wrap($el).check();
             });
         cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
+
+        // Delete the course
+        cy.log('Deleting the test course');
+        openCourseManagement();
+        cy.contains(`${courseName} (${courseShortName})`).parent().parent().click();
+        cy.get('.btn-danger').click();
+        cy.get(modalDeleteButton).should('be.disabled');
+        cy.get('[name="confirmExerciseName"]').type(courseName);
+        cy.get(modalDeleteButton).should('not.be.disabled').click();
+        cy.contains(`${courseName} (${courseShortName})`).should('not.exist');
     });
 });
 
