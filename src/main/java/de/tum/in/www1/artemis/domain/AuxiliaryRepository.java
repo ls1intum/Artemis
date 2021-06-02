@@ -167,4 +167,10 @@ public class AuxiliaryRepository extends DomainObject {
         return "AuxiliaryRepository{id=%d, name='%s', checkoutDirectory='%s', repositoryUrl='%s', description='%s', exercise=%s}".formatted(getId(), getName(),
                 getCheckoutDirectory(), getRepositoryUrl(), getDescription(), exercise == null ? "null" : exercise.getId());
     }
+
+    /**
+     * Used in Bamboo Service to map the name of an auxiliary repository to its repository slug.
+     */
+    public record AuxRepoNameWithSlug(String name, String repositorySlug) {
+    }
 }

@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
-import org.springframework.data.util.Pair;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -101,7 +100,7 @@ public class BambooBuildPlanService {
      *                               the build plan
      */
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName, String solutionRepositoryName,
-            List<Pair<String, String>> auxiliaryRepositories) {
+            List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
@@ -239,7 +238,7 @@ public class BambooBuildPlanService {
     }
 
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
-            boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug, List<Pair<String, String>> auxiliaryRepositories) {
+            boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug, List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
@@ -253,7 +252,7 @@ public class BambooBuildPlanService {
         planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName));
         planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug));
         for (var repo : auxiliaryRepositories) {
-            planRepositories.add(createBuildPlanRepository(repo.getFirst(), projectKey, repo.getSecond()));
+            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug()));
         }
         if (checkoutSolutionRepository) {
             planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug));
