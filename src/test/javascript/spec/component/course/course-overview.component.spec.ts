@@ -120,7 +120,6 @@ describe('CourseOverviewComponent', () => {
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 teamService = TestBed.inject(TeamService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
-                fixture.detectChanges();
             });
     }));
 
