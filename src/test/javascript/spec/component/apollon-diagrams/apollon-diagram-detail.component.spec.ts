@@ -109,8 +109,10 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
     });
 
-    it('downloadSelection', fakeAsync(() => {
+    it('downloadSelection', async () => {
         // setup
+        jest.useFakeTimers();
+
         // @ts-ignore
         const model: UMLModel = testClassDiagram as UMLModel;
         const div = document.createElement('div');
@@ -123,17 +125,16 @@ describe('ApollonDiagramDetail Component', () => {
         expect(div.children.length).toEqual(1);
 
         // set selection
-        const selection: Selection = { elements: model.elements.map((element) => element.id), relationships: [] };
-
-        fixture.componentInstance.apollonEditor!.selection = selection;
+        fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
+        fixture.detectChanges();
 
         // test
-        fixture.componentInstance.downloadSelection();
-        tick();
+        await fixture.componentInstance.downloadSelection();
+        jest.runAllTimers();
+
         // last task when downloading file
         expect(window.URL.revokeObjectURL).toBeCalled();
-        flush();
-    }));
+    });
 
     it('save', () => {
         // setup
@@ -154,7 +155,7 @@ describe('ApollonDiagramDetail Component', () => {
         expect(updateStub).toBeCalled();
     });
 
-    it('generateExercise', fakeAsync(() => {
+    it('generateExercise', async () => {
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         sandbox.stub(apollonDiagramService, 'update').returns(of(response));
@@ -166,6 +167,7 @@ describe('ApollonDiagramDetail Component', () => {
         // @ts-ignore
         const model: UMLModel = testClassDiagram as UMLModel;
         fixture.componentInstance.initializeApollonEditor(model);
+        fixture.detectChanges();
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         const result = new Promise((resolve) => resolve(true));
@@ -173,9 +175,7 @@ describe('ApollonDiagramDetail Component', () => {
         const successSpy = sandbox.spy(jhiAlertService, 'success');
 
         // test
-        fixture.componentInstance.generateExercise();
-        tick();
+        await fixture.componentInstance.generateExercise();
         expect(successSpy).toBeCalled();
-        flush();
-    }));
+    });
 });
