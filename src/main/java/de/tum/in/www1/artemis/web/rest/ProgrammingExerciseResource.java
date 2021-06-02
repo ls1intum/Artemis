@@ -1223,6 +1223,13 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok(exercise.getAuxiliaryRepositories());
     }
 
+    /**
+     * Deletes BASE and SOLUTION build plan of a programming exercise and creates those again.
+     * This reuses the build plan creation logic of the programming exercise creation service.
+     *
+     * @param exerciseId of the programming exercise
+     * @return the ResponseEntity with status 200 (OK) if the recreation was successful.
+     */
     @PutMapping(Endpoints.RECREATE_BUILD_PLANS)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> recreateBuildPlans(@PathVariable Long exerciseId) {

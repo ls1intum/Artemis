@@ -94,7 +94,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
      */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-
+        // Auxiliary repositories are currently not supported for Gitlab/Jenkins configurations.
     }
 
     @Override
