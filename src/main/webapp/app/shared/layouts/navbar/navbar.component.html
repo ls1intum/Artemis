@@ -1,7 +1,7 @@
 <nav class="navbar navbar-dark navbar-expand-md jh-navbar">
-    <div class="jh-logo-container float-left">
+    <div class="jh-logo-container float-start">
         <a
-            class="jh-navbar-toggler d-lg-none float-right"
+            class="jh-navbar-toggler d-lg-none float-end"
             data-toggle="collapse"
             data-target="#navbarResponsive"
             aria-controls="navbarResponsive"
@@ -11,7 +11,7 @@
         >
             <fa-icon [icon]="'bars'"></fa-icon>
         </a>
-        <a class="navbar-brand logo float-left" routerLink="/" (click)="collapseNavbar()">
+        <a class="navbar-brand logo float-start" routerLink="/" (click)="collapseNavbar()">
             <img class="logo-img" [src]="SERVER_API_URL + 'public/images/logo.png'" />
             <span>&nbsp;&nbsp;&nbsp;</span>
             <span jhiTranslate="global.title" class="navbar-title">Artemis</span>&nbsp;&nbsp;&nbsp;<span class="navbar-version">{{ version }}</span>
@@ -19,7 +19,7 @@
         </a>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
-        <ul class="navbar-nav ml-auto">
+        <ul class="navbar-nav ms-auto">
             <li *ngIf="currAccount && !examModeActive()" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <a class="guided-tour-overview nav-link" routerLink="courses" (click)="collapseNavbar()" id="overview-menu">
                     <span>
