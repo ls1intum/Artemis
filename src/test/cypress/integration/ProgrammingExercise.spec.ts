@@ -8,7 +8,7 @@ const password = Cypress.env('password');
 
 // Common primitives
 const courseName = 'Cypress test course';
-const courseShortName = 'CTC';
+const courseShortName = 'CypressTestCourse';
 const programmingExerciseName = 'Cypress test programming exercise';
 const exercisePath = '/exercises';
 const longTimeout = 60000;
@@ -46,7 +46,7 @@ describe('Programming exercise', () => {
 
         cy.log('Filling out programming exercise info...');
         cy.get(fieldTitle).type(programmingExerciseName);
-        cy.get(shortName).type('CTP');
+        cy.get(shortName).type('CypressTPE');
         cy.get('#field_packageName').type('tum.exercise');
         cy.get('#field_points').type('100');
         cy.get('#field_allowOnlineEditor').check();
@@ -141,6 +141,13 @@ function openCourseManagement() {
  * Opens the exercises (of the first found course).
  */
 function openExercisesFromCourseManagement() {
-    cy.get('.card-footer').eq(0).children().eq(0).click();
+    getCourseCard().find('.card-footer').eq(0).children().eq(0).click();
     cy.url().should('include', exercisePath);
+}
+
+/**
+ * @returns Returns the cypress chainable containing the root element of the course card of our created course. This can be used to find specific elements within this course card.
+ */
+function getCourseCard() {
+    return cy.contains(`${courseName} (${courseShortName})`).parent().parent().parent();
 }
