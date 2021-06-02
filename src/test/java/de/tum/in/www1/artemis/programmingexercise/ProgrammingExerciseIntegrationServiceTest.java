@@ -26,7 +26,6 @@ import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -1395,13 +1394,11 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults()
-            .withName(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_NAME_LENGTH)), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_NAME_LENGTH)), HttpStatus.BAD_REQUEST);
     }
 
     public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
-        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(),
-            AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory().get()), HttpStatus.BAD_REQUEST);
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory().get()), HttpStatus.BAD_REQUEST);
     }
 
     public void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
@@ -1425,19 +1422,17 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     public void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults()
-            .withCheckoutDirectory(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH)), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH)),
+                HttpStatus.BAD_REQUEST);
     }
 
     public void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
-        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(),
-            AuxiliaryRepositoryBuilder.defaults().withDifferentName().get()), HttpStatus.BAD_REQUEST);
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().get()), HttpStatus.BAD_REQUEST);
     }
 
     public void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
-        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(),
-            AuxiliaryRepositoryBuilder.defaults().withDifferentName().withoutCheckoutDirectory().get(),
-            AuxiliaryRepositoryBuilder.defaults().get()), HttpStatus.BAD_REQUEST);
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().withoutCheckoutDirectory().get(),
+                AuxiliaryRepositoryBuilder.defaults().get()), HttpStatus.BAD_REQUEST);
     }
 
     public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
@@ -1456,7 +1451,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void testGetAuxiliaryRepositoriesOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         programmingExercise.addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().get()));
-        programmingExercise.addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get()));
+        programmingExercise
+                .addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get()));
         programmingExerciseRepository.save(programmingExercise);
         var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
         assertThat(returnedAuxiliaryRepositories).hasSize(2);
@@ -1507,7 +1503,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     private String generateStringWithMoreThanNCharacters(int n) {
-        return IntStream.range(0,n + 1).mapToObj(unused -> "a").reduce("", String::concat);
+        return IntStream.range(0, n + 1).mapToObj(unused -> "a").reduce("", String::concat);
     }
 
     private AuxiliaryRepository addAuxiliaryRepositoryToExercise() {
@@ -1544,9 +1540,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
-        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY
-            .replace("{exerciseId}","" + exerciseId)
-            .replace("{repositoryId}", "" + repositoryId);
+        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId).replace("{repositoryId}", "" + repositoryId);
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
@@ -1581,11 +1575,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         }
 
         static AuxiliaryRepositoryBuilder defaults() {
-            return of()
-                .withoutId()
-                .withName("defaultname")
-                .withCheckoutDirectory("directory")
-                .withDescription("DefaultDescription");
+            return of().withoutId().withName("defaultname").withCheckoutDirectory("directory").withDescription("DefaultDescription");
         }
 
         public AuxiliaryRepositoryBuilder withName(String name) {

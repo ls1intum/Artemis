@@ -212,19 +212,16 @@ public class ProgrammingExerciseService {
     }
 
     private void connectAuxiliaryRepositoriesToExercise(ProgrammingExercise exercise) {
-        List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream()
-            .filter(repo -> repo.getId() != null).toList());
-        exercise.getAuxiliaryRepositories().stream()
-            .filter(repository -> repository.getId() == null)
-            .forEach(repository -> {
-                // We have to disconnect the exercise from the auxiliary repository
-                // since the auxiliary repositories of an exercise are represented as
-                // a sorted collection (list).
-                repository.setExercise(null);
-                repository = auxiliaryRepositoryRepository.save(repository);
-                repository.setExercise(exercise);
-                savedRepositories.add(repository);
-            });
+        List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null).toList());
+        exercise.getAuxiliaryRepositories().stream().filter(repository -> repository.getId() == null).forEach(repository -> {
+            // We have to disconnect the exercise from the auxiliary repository
+            // since the auxiliary repositories of an exercise are represented as
+            // a sorted collection (list).
+            repository.setExercise(null);
+            repository = auxiliaryRepositoryRepository.save(repository);
+            repository.setExercise(exercise);
+            savedRepositories.add(repository);
+        });
         exercise.setAuxiliaryRepositories(savedRepositories);
     }
 
@@ -246,8 +243,8 @@ public class ProgrammingExerciseService {
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.get()
-            .getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(
+                versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     /**

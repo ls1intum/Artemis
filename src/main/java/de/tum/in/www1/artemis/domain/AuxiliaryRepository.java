@@ -1,17 +1,19 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.slf4j.LoggerFactory;
+import java.net.MalformedURLException;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
-import java.net.MalformedURLException;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
 @Table(name = "programming_exercise_auxiliary_repositories")
@@ -19,10 +21,17 @@ import java.net.MalformedURLException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AuxiliaryRepository extends DomainObject {
 
-    @JsonIgnore public static final int MAX_NAME_LENGTH = 100;
-    @JsonIgnore public static final int MAX_CHECKOUT_DIRECTORY_LENGTH = 100;
-    @JsonIgnore public static final int MAX_REPOSITORY_URL_LENGTH = 500;
-    @JsonIgnore public static final int MAX_DESCRIPTION_LENGTH = 500;
+    @JsonIgnore
+    public static final int MAX_NAME_LENGTH = 100;
+
+    @JsonIgnore
+    public static final int MAX_CHECKOUT_DIRECTORY_LENGTH = 100;
+
+    @JsonIgnore
+    public static final int MAX_REPOSITORY_URL_LENGTH = 500;
+
+    @JsonIgnore
+    public static final int MAX_DESCRIPTION_LENGTH = 500;
 
     /**
      * Name of the repository.
@@ -115,8 +124,7 @@ public class AuxiliaryRepository extends DomainObject {
      */
     @JsonIgnore
     public boolean shouldBeIncludedInBuildPlan() {
-        return getCheckoutDirectory() != null && !getCheckoutDirectory().isBlank() &&
-            getRepositoryUrl() != null && !getRepositoryUrl().isBlank();
+        return getCheckoutDirectory() != null && !getCheckoutDirectory().isBlank() && getRepositoryUrl() != null && !getRepositoryUrl().isBlank();
     }
 
     /**
@@ -149,15 +157,14 @@ public class AuxiliaryRepository extends DomainObject {
             return new VcsRepositoryUrl(repositoryUrl);
         }
         catch (MalformedURLException e) {
-            LoggerFactory.getLogger(AuxiliaryRepository.class).error("Malformed URL " + getRepositoryUrl() +
-                " you could not be used to instantiate VcsRepositoryUrl.", e);
+            LoggerFactory.getLogger(AuxiliaryRepository.class).error("Malformed URL " + getRepositoryUrl() + " you could not be used to instantiate VcsRepositoryUrl.", e);
         }
         return null;
     }
 
     @Override
     public String toString() {
-        return "AuxiliaryRepository{id=%d, name='%s', checkoutDirectory='%s', repositoryUrl='%s', description='%s', exercise=%s}"
-            .formatted(getId(), getName(), getCheckoutDirectory(), getRepositoryUrl(), getDescription(), exercise == null ? "null" : exercise.getId());
+        return "AuxiliaryRepository{id=%d, name='%s', checkoutDirectory='%s', repositoryUrl='%s', description='%s', exercise=%s}".formatted(getId(), getName(),
+                getCheckoutDirectory(), getRepositoryUrl(), getDescription(), exercise == null ? "null" : exercise.getId());
     }
 }

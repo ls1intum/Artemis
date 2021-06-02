@@ -574,8 +574,7 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var existingProgrammingExercise = programmingExerciseRepository
-            .findByIdWithAuxiliaryRepositoriesElseThrow(updatedProgrammingExercise.getId());
+        var existingProgrammingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(existingProgrammingExercise.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
@@ -592,8 +591,7 @@ public class ProgrammingExerciseResource {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
 
-        List<AuxiliaryRepository> newAuxiliaryRepositories = updatedProgrammingExercise.getAuxiliaryRepositories()
-            .stream().filter(repo -> repo.getId() == null).toList();
+        List<AuxiliaryRepository> newAuxiliaryRepositories = updatedProgrammingExercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() == null).toList();
 
         validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(existingProgrammingExercise, newAuxiliaryRepositories, updatedProgrammingExercise);
 
@@ -883,16 +881,17 @@ public class ProgrammingExerciseResource {
         return returnZipFileForRepositoryExport(zipFile, auxiliaryRepository.getName(), programmingExercise, start);
     }
 
-    private ResponseEntity<Resource> returnZipFileForRepositoryExport(Optional<File> zipFile, String repositoryName, ProgrammingExercise exercise, long startTime) throws IOException {
+    private ResponseEntity<Resource> returnZipFileForRepositoryExport(Optional<File> zipFile, String repositoryName, ProgrammingExercise exercise, long startTime)
+            throws IOException {
         if (zipFile.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                "There was an error on the server and the zip file could not be created.")).body(null);
+                    "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
 
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, exercise.getId(),
-            exercise.getTitle(), formatDurationFrom(startTime));
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, exercise.getId(), exercise.getTitle(),
+                formatDurationFrom(startTime));
 
         return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
@@ -1232,9 +1231,10 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok().build();
     }
 
-    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories, ProgrammingExercise updatedExercise) {
-        final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(),
-            new ArrayList<AuxiliaryRepository>()).stream().filter(repo -> repo.getId() != null).collect(Collectors.toList());
+    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories,
+            ProgrammingExercise updatedExercise) {
+        final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>())
+                .stream().filter(repo -> repo.getId() != null).collect(Collectors.toList());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
             validateAuxiliaryRepository(repo, auxiliaryRepositories);
             auxiliaryRepositories.add(repo);
