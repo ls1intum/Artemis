@@ -128,6 +128,8 @@ public class ProgrammingExerciseResource {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
+    private final Pattern allowedBambooCheckoutDirectory = Pattern.compile("[a-zA-Z0-9]+(/[a-zA-Z0-9]*)*$");
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
@@ -1283,7 +1285,9 @@ public class ProgrammingExerciseResource {
     }
 
     private void validateAuxiliaryRepositoryCheckoutDirectoryValid(AuxiliaryRepository auxiliaryRepository) {
-        if (auxiliaryRepository.getCheckoutDirectory().contains(".")) {
+        String checkoutDirectory = auxiliaryRepository.getCheckoutDirectory();
+        Matcher ciCheckoutDirectoryMatcher = allowedBambooCheckoutDirectory.matcher(checkoutDirectory);
+        if (!ciCheckoutDirectoryMatcher.matches() || checkoutDirectory.equals(ASSIGNMENT_CHECKOUT_PATH)) {
             throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
                     ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
