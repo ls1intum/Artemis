@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.DOMException;
 
 @Service
 @Profile("jenkins")
@@ -34,20 +35,24 @@ public class JenkinsJobPermissionsService {
             return;
         }
 
-        // Revoke previously-assigned permissions
-        var allPermissions = Set.of(JenkinsJobPermission.values());
-        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, taLogins);
-        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, editorLogins);
-        JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, instructorLogins);
+        try {
+            // Revoke previously-assigned permissions
+            var allPermissions = Set.of(JenkinsJobPermission.values());
+            JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, taLogins);
+            JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, editorLogins);
+            JenkinsJobPermissionsUtils.removePermissionsFromJob(jobConfig, allPermissions, instructorLogins);
 
-        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
-        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getEditorPermissions(), editorLogins);
-        JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+            JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+            JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getEditorPermissions(), editorLogins);
+            JenkinsJobPermissionsUtils.addPermissionsToJob(jobConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
 
-        jenkinsJobService.updateJob(folderName, jobName, jobConfig);
+            jenkinsJobService.updateJob(folderName, jobName, jobConfig);
 
-        addInstructorAndEditorAndTAPermissionsToUsersForFolder(taLogins, editorLogins, instructorLogins, folderName);
-
+            addInstructorAndEditorAndTAPermissionsToUsersForFolder(taLogins, editorLogins, instructorLogins, folderName);
+        }
+        catch (DOMException e) {
+            throw new IOException("Cannot add instructor, editor, and/or ta permissions to users for job: " + jobName, e);
+        }
     }
 
     /**
@@ -66,17 +71,23 @@ public class JenkinsJobPermissionsService {
             // Job doesn't exist so do nothing.
             return;
         }
-        // Revoke previously-assigned permissions
-        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), taLogins);
-        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), editorLogins);
-        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), instructorLogins);
 
-        // Assign teaching assistant permissions
-        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
-        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getEditorPermissions(), editorLogins);
-        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+        try {
+            // Revoke previously-assigned permissions
+            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), taLogins);
+            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), editorLogins);
+            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), instructorLogins);
 
-        jenkinsJobService.updateFolderJob(folderName, folderConfig);
+            // Assign teaching assistant permissions
+            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), taLogins);
+            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getEditorPermissions(), editorLogins);
+            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getInstructorPermissions(), instructorLogins);
+
+            jenkinsJobService.updateFolderJob(folderName, folderConfig);
+        }
+        catch (DOMException e) {
+            throw new IOException("Cannot add instructor, editor, and/or ta permissions to users for folder: " + folderName, e);
+        }
     }
 
     /**
@@ -94,13 +105,19 @@ public class JenkinsJobPermissionsService {
             return;
         }
 
-        // Revoke previously-assigned permissions
-        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), Set.of(userLogin));
+        try {
+            // Revoke previously-assigned permissions
+            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, Set.of(JenkinsJobPermission.values()), Set.of(userLogin));
 
-        // Assign teaching assistant permissions
-        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
+            // Assign teaching assistant permissions
+            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, JenkinsJobPermission.getTeachingAssistantPermissions(), Set.of(userLogin));
 
-        jenkinsJobService.updateFolderJob(folderName, folderConfig);
+            jenkinsJobService.updateFolderJob(folderName, folderConfig);
+        }
+        catch (DOMException e) {
+            throw new IOException("Cannot add ta permissions to user for folder: " + folderName, e);
+        }
+
     }
 
     /**
@@ -132,9 +149,13 @@ public class JenkinsJobPermissionsService {
             return;
         }
 
-        JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, permissions, userLogins);
-        jenkinsJobService.updateFolderJob(folderName, folderConfig);
-
+        try {
+            JenkinsJobPermissionsUtils.addPermissionsToFolder(folderConfig, permissions, userLogins);
+            jenkinsJobService.updateFolderJob(folderName, folderConfig);
+        }
+        catch (DOMException e) {
+            throw new IOException("Cannot add permissions to users for folder: " + folderName, e);
+        }
     }
 
     /**
@@ -164,8 +185,13 @@ public class JenkinsJobPermissionsService {
             return;
         }
 
-        JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, permissionsToRemove, userLogins);
-        jenkinsJobService.updateFolderJob(folderName, folderConfig);
+        try {
+            JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, permissionsToRemove, userLogins);
+            jenkinsJobService.updateFolderJob(folderName, folderConfig);
+        }
+        catch (DOMException e) {
+            throw new IOException("Cannot remove permissions to user for folder: " + folderName, e);
 
+        }
     }
 }

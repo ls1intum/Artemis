@@ -141,12 +141,15 @@ public class JenkinsRequestMockProvider {
     private void mockGetJobConfig(String folderName, String jobName) throws IOException {
         doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
         doReturn(Optional.of(new FolderJob())).when(jenkinsServer).getFolderJob(any(JobWithDetails.class));
-        doReturn("").when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
+
+        var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
+        doReturn(mockXml).when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
     }
 
     private void mockGetFolderConfig(String folderName) throws IOException {
         doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
-        doReturn("").when(jenkinsServer).getJobXml(eq(folderName));
+        var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
+        doReturn(mockXml).when(jenkinsServer).getJobXml(eq(folderName));
     }
 
     private void mockUpdateJob(String folderName, String jobName) throws IOException {
