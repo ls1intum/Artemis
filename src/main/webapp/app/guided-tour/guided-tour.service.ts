@@ -338,7 +338,7 @@ export class GuidedTourService {
         this.nextDotSubject.next(this.currentTourStepIndex + 1);
         this.isBackPageNavigation.next(false);
 
-        if (currentStep.closeAction) {
+        if (currentStep?.closeAction) {
             currentStep.closeAction();
         }
         if (nextStep) {
