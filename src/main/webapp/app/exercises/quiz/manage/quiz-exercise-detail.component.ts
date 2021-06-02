@@ -1056,7 +1056,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * If the user accepts importing the questions with invalid flags, all these flags are reset. See {@link addQuestions}.
      * @param questions the question which are being imported.
      */
-    verifyAndImportQuestions(questions: QuizQuestion[]) {
+    async verifyAndImportQuestions(questions: QuizQuestion[]) {
         this.checkForInvalidFlaggedQuestions(questions);
         if (!this.isEmpty(this.invalidFlaggedQuestions)) {
             const modal = this.modalService.open(QuizConfirmImportInvalidQuestionsModalComponent, { keyboard: true, size: 'lg' });
@@ -1071,13 +1071,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 })
                 .filter(Boolean);
 
-            modal.componentInstance.shouldImport.subscribe(() => {
-                this.addQuestions(questions);
+            modal.componentInstance.shouldImport.subscribe(async () => {
+                await this.addQuestions(questions);
                 // Reset the invalid flagged questions
                 this.invalidFlaggedQuestions = {};
             });
         } else {
-            this.addQuestions(questions);
+            await this.addQuestions(questions);
         }
     }
 
