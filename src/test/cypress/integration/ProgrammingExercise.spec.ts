@@ -7,7 +7,11 @@ const adminUsername = Cypress.env('adminUsername');
 const adminPassword = Cypress.env('adminPassword');
 const username = Cypress.env('username');
 const password = Cypress.env('password');
-
+if (Cypress.env('isCi') === 'true') {
+    cy.log('REPLACED USER ID WITH 1');
+    username.replace('USERID', '1');
+    password.replace('USERID', '1');
+}
 // Common primitives
 const uid = uuidv4().replace(/-/g, '');
 const courseName = 'Cypress course';
