@@ -4,7 +4,7 @@ import { authTokenKey } from '../support/constants';
 
 let username = Cypress.env('username');
 let password = Cypress.env('password');
-if (Cypress.env('isCi') === 'true') {
+if (Cypress.env('isCi')) {
     username = username.replace('USERID', '1');
     password = password.replace('USERID', '1');
 }
