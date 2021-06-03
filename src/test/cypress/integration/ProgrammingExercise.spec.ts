@@ -12,9 +12,10 @@ if (Cypress.env('isCi') === 'true') {
     username.replace('USERID', '1');
     password.replace('USERID', '1');
 }
+
 // Common primitives
 const uid = uuidv4().replace(/-/g, '');
-const courseName = 'Cypress course';
+const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
 const programmingExerciseShortName = courseShortName;
@@ -36,104 +37,141 @@ describe('Programming exercise', () => {
 
     it('Creates a new course, participates in it and deletes it afterwards', function () {
         cy.login(adminUsername, adminPassword);
-        openCourseManagement();
-        cy.get('.create-course').click();
-
-        // Fill in the course-form
-        cy.log('Filling out course information...');
-        cy.get(fieldTitle).type(courseName);
-        cy.get(shortName).type(courseShortName);
-        cy.get('#field_testCourse').check();
-        cy.get('#field_customizeGroupNamesEnabled').uncheck();
-        cy.get('#save-entity').click();
-
+        createTestCourse();
         cy.log('Created course. Adding a programming exercise...');
         openExercisesFromCourseManagement();
-        cy.get('#jh-create-entity').click();
-        cy.url().should('include', '/programming-exercises/new');
-
-        cy.log('Filling out programming exercise info...');
-        cy.get(fieldTitle).type(programmingExerciseName);
-        cy.get(shortName).type(programmingExerciseShortName);
-        cy.get('#field_packageName').type('tum.exercise');
-        cy.get('#field_points').type('100');
-        cy.get('#field_allowOnlineEditor').check();
-
-        cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
-        cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
-
-        cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
-        cy.get('.owl-dt-control-arrow-button').eq(1).click();
-        cy.get('.owl-dt-day-3').eq(2).click();
-        cy.get(datepickerButtons).eq(1).click();
-        cy.get('[type="submit"]').click();
-        // Creating a programming exercise takes a lot of time, so we increase the timeout here
-        cy.url({ timeout: longTimeout }).should('include', exercisePath);
-        cy.log('Successfully created a new programming exercise!');
-
-        openCourseManagement();
-        cy.get('.course-table-container').contains('0 Students').click();
-        cy.get('#typeahead-basic').type(username);
-        cy.contains(new RegExp(username)).should(beVisible).click();
-
+        createProgrammingExercise();
+        addStudentToCourse();
         // Login as the student
         cy.login(username, password);
-
-        cy.url().should('include', '/courses');
-        cy.log('Participating in the programming exercise as a student...');
-        cy.get('jhi-overview-course-card').click();
-        cy.url().should('include', exercisePath);
-        cy.get(exerciseRow).contains(programmingExerciseName).should(beVisible);
-        cy.get(exerciseRow).find('.start-exercise').click();
-        cy.get(exerciseRow).find('[buttonicon="folder-open"]', { timeout: 20000 }).click();
-
-        // TODO: Actually interact with the online code editor
-        // Asserts that every sub-task in the programming exercise is marked with a question mark
-        cy.get('.stepwizard-row', { timeout: 10000 })
-            .find('.stepwizard-step')
-            .each(($el) => {
-                cy.wrap($el).find('[data-icon="question"]').should(beVisible);
-            });
-
-        cy.log('Submitting default exercise for grading...');
-        cy.get('#submit_button').click();
-        // CI build is triggered here, so it will take quite some time
-        cy.get('jhi-updating-result').contains('0 of 13 passed', { timeout: longTimeout }).should(beVisible);
-        // Make sure that all sub-tasks are not marked with question marks, but with an indication that they failed
-        cy.get('.stepwizard-row')
-            .find('.stepwizard-step')
-            .each(($el) => {
-                cy.wrap($el).find('[data-icon="question"]').should('not.exist');
-                cy.wrap($el).find('[data-icon="times"]').should(beVisible);
-            });
-        cy.log('Artemis graded our submission, so we are done here...');
-
+        startParticipationInProgrammingExercise();
+        makeCodeSubmissionAndCheckResults();
         // Login is admin again
         cy.login(adminUsername, adminPassword);
-
-        openCourseManagement();
-        openExercisesFromCourseManagement();
-        cy.log('Deleting programming exercise...');
-        cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
-        // Check all checkboxes to get rid of the git repositories and build plans
-        cy.get('.modal-body')
-            .find('[type="checkbox"]')
-            .each(($el) => {
-                cy.wrap($el).check();
-            });
-        cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
-
-        // Delete the course
-        cy.log('Deleting the test course');
-        openCourseManagement();
-        cy.contains(`${courseName} (${courseShortName})`).parent().parent().click();
-        cy.get('.btn-danger').click();
-        cy.get(modalDeleteButton).should('be.disabled');
-        cy.get('[name="confirmExerciseName"]').type(courseName);
-        cy.get(modalDeleteButton).should('not.be.disabled').click();
-        cy.contains(`${courseName} (${courseShortName})`).should('not.exist');
+        deleteProgrammingExercise();
+        deleteCourse();
     });
 });
+
+/**
+ * Navigates to the course management and deletes the test course.
+ */
+function deleteCourse() {
+    cy.log('Deleting the test course');
+    openCourseManagement();
+    cy.contains(`${courseName} (${courseShortName})`).parent().parent().click();
+    cy.get('.btn-danger').click();
+    cy.get(modalDeleteButton).should('be.disabled');
+    cy.get('[name="confirmExerciseName"]').type(courseName);
+    cy.get(modalDeleteButton).should('not.be.disabled').click();
+    cy.contains(`${courseName} (${courseShortName})`).should('not.exist');
+}
+
+/**
+ * Navigates to the course management and deletes the programming exercise from the test course.
+ */
+function deleteProgrammingExercise() {
+    openCourseManagement();
+    openExercisesFromCourseManagement();
+    cy.log('Deleting programming exercise...');
+    cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
+    // Check all checkboxes to get rid of the git repositories and build plans
+    cy.get('.modal-body')
+        .find('[type="checkbox"]')
+        .each(($el) => {
+            cy.wrap($el).check();
+        });
+    cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
+}
+
+/**
+ * Makes an empty submission in the programming exercise and checks the result.
+ */
+function makeCodeSubmissionAndCheckResults() {
+    // Asserts that every sub-task in the programming exercise is marked with a question mark
+    cy.get('.stepwizard-row', { timeout: 10000 })
+        .find('.stepwizard-step')
+        .each(($el) => {
+            cy.wrap($el).find('[data-icon="question"]').should(beVisible);
+        });
+
+    cy.log('Submitting default exercise for grading...');
+    cy.get('#submit_button').click();
+    // CI build is triggered here, so it will take quite some time
+    cy.get('jhi-updating-result').contains('0 of 13 passed', { timeout: longTimeout }).should(beVisible);
+    // Make sure that all sub-tasks are not marked with question marks, but with an indication that they failed
+    cy.get('.stepwizard-row')
+        .find('.stepwizard-step')
+        .each(($el) => {
+            cy.wrap($el).find('[data-icon="question"]').should('not.exist');
+            cy.wrap($el).find('[data-icon="times"]').should(beVisible);
+        });
+    cy.log('Artemis graded our submission, so we are done here...');
+}
+
+/**
+ * Starts the participation in the test programming exercise.
+ */
+function startParticipationInProgrammingExercise() {
+    cy.url().should('include', '/courses');
+    cy.log('Participating in the programming exercise as a student...');
+    cy.contains(courseName).parents('.card-header').click();
+    cy.url().should('include', exercisePath);
+    cy.get(exerciseRow).contains(programmingExerciseName).should(beVisible);
+    cy.get(exerciseRow).find('.start-exercise').click();
+    cy.get(exerciseRow).find('[buttonicon="folder-open"]', { timeout: 20000 }).click();
+}
+
+/**
+ * Adds the test student to the test course.
+ */
+function addStudentToCourse() {
+    openCourseManagement();
+    cy.get('.course-table-container').contains('0 Students').click();
+    cy.get('#typeahead-basic').type(username);
+    cy.contains(new RegExp(username)).should(beVisible).click();
+}
+
+/**
+ * Creates a new programming exercise.
+ */
+function createProgrammingExercise() {
+    cy.get('#jh-create-entity').click();
+    cy.url().should('include', '/programming-exercises/new');
+    cy.log('Filling out programming exercise info...');
+    cy.get(fieldTitle).type(programmingExerciseName);
+    cy.get(shortName).type(programmingExerciseShortName);
+    cy.get('#field_packageName').type('tum.exercise');
+    cy.get('#field_points').type('100');
+    cy.get('#field_allowOnlineEditor').check();
+
+    cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
+    cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
+
+    cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
+    cy.get('.owl-dt-control-arrow-button').eq(1).click();
+    cy.get('.owl-dt-day-3').eq(2).click();
+    cy.get(datepickerButtons).eq(1).click();
+    cy.get('[type="submit"]').click();
+    // Creating a programming exercise takes a lot of time, so we increase the timeout here
+    cy.url({ timeout: longTimeout }).should('include', exercisePath);
+    cy.log('Successfully created a new programming exercise!');
+}
+
+/**
+ * Fills out the course formula and clicks the save button at the end.
+ */
+function createTestCourse() {
+    openCourseManagement();
+    cy.get('.create-course').click();
+    // Fill in the course-form
+    cy.log('Filling out course information...');
+    cy.get(fieldTitle).type(courseName);
+    cy.get(shortName).type(courseShortName);
+    cy.get('#field_testCourse').check();
+    cy.get('#field_customizeGroupNamesEnabled').uncheck();
+    cy.get('#save-entity').click();
+}
 
 /**
  * Opens the course management page via the menu at the top and waits until it is loaded.
