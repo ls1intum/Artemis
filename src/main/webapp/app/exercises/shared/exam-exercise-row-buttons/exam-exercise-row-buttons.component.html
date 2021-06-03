@@ -37,7 +37,7 @@
 
     <!-- Example Submission -->
     <a
-        *ngIf="course.isAtLeastInstructor"
+        *ngIf="course.isAtLeastEditor"
         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'example-submissions']"
         class="btn btn-success btn-sm mr-1"
     >

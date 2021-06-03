@@ -91,7 +91,7 @@
                             </a>
                             <!-- Example Submission -->
                             <a
-                                *ngIf="modelingExercise.isAtLeastInstructor"
+                                *ngIf="modelingExercise.isAtLeastEditor"
                                 [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'example-submissions']"
                                 class="btn btn-success btn-sm mr-1"
                             >

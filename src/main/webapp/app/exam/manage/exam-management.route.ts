@@ -671,8 +671,8 @@ export const examManagementRoute: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -704,8 +704,8 @@ export const examManagementRoute: Routes = [
             exercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
