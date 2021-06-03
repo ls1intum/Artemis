@@ -225,10 +225,10 @@ export class GradingSystemComponent implements OnInit {
     handleDeleteObservable(deleteObservable: Observable<EntityResponseType>) {
         deleteObservable
             .pipe(
+                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
                 finalize(() => {
                     this.isLoading = false;
                 }),
-                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
             )
             .subscribe(() => {
                 this.existingGradingScale = false;
