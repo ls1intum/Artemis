@@ -20,10 +20,12 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
-import de.tum.in.www1.artemis.repository.StudentQuestionAnswerRepository;
-import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
@@ -37,10 +39,10 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     private UserRepository userRepository;
 
     @Autowired
-    private StudentQuestionRepository studentQuestionRepository;
+    private PostRepository postRepository;
 
     @Autowired
-    private StudentQuestionAnswerRepository studentQuestionAnswerRepository;
+    private AnswerPostRepository answerPostRepository;
 
     Course course;
 
@@ -51,11 +53,11 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
             GraphType.CREATED_FEEDBACKS);
 
     List<GraphType> courseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS,
-            GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS, GraphType.QUESTIONS_ASKED,
-            GraphType.QUESTIONS_ANSWERED);
+            GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS, GraphType.POSTS,
+            GraphType.ANSWERED_POSTS);
 
     List<GraphType> exerciseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS,
-            GraphType.QUESTIONS_ASKED, GraphType.QUESTIONS_ANSWERED);
+            GraphType.POSTS, GraphType.ANSWERED_POSTS);
 
     @BeforeEach
     public void initTestCase() {
@@ -66,20 +68,20 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         exercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
         course.addExercises(exercise);
         textExerciseRepository.save(exercise);
-        StudentQuestion studentQuestion = new StudentQuestion();
-        studentQuestion.setExercise(exercise);
-        studentQuestion.setQuestionText("Test Student Question 1");
-        studentQuestion.setVisibleForStudents(true);
-        studentQuestion.setCreationDate(ZonedDateTime.now().minusSeconds(11));
-        studentQuestion.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
-        studentQuestionRepository.save(studentQuestion);
+        Post post = new Post();
+        post.setExercise(exercise);
+        post.setContent("Test Student Question 1");
+        post.setVisibleForStudents(true);
+        post.setCreationDate(ZonedDateTime.now().minusSeconds(11));
+        post.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        postRepository.save(post);
 
-        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
-        studentQuestionAnswer.setAnswerText("Test Answer");
-        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusSeconds(10));
-        studentQuestionAnswer.setQuestion(studentQuestion);
-        studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setContent("Test Answer");
+        answerPost.setCreationDate(ZonedDateTime.now().minusSeconds(10));
+        answerPost.setPost(post);
+        answerPostRepository.save(answerPost);
 
         // one submission today
         TextSubmission textSubmission = new TextSubmission();
@@ -270,21 +272,21 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.createParticipationSubmissionAndResult(firstTextExerciseId, student1, 10.0, 0.0, 50, true);
         database.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
 
-        StudentQuestion studentQuestion = new StudentQuestion();
-        studentQuestion.setExercise(textExercise);
-        studentQuestion.setQuestionText("Test Student Question 1");
-        studentQuestion.setVisibleForStudents(true);
-        studentQuestion.setCreationDate(ZonedDateTime.now().minusHours(2));
-        studentQuestion.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
-        studentQuestionRepository.save(studentQuestion);
+        Post post = new Post();
+        post.setExercise(textExercise);
+        post.setContent("Test Student Question 1");
+        post.setVisibleForStudents(true);
+        post.setCreationDate(ZonedDateTime.now().minusHours(2));
+        post.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        postRepository.save(post);
 
-        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
-        studentQuestionAnswer.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
-        studentQuestionAnswer.setAnswerText("Test Answer");
-        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusHours(1));
-        studentQuestionAnswer.setTutorApproved(true);
-        studentQuestionAnswer.setQuestion(studentQuestion);
-        studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setContent("Test Answer");
+        answerPost.setCreationDate(ZonedDateTime.now().minusHours(1));
+        answerPost.setTutorApproved(true);
+        answerPost.setPost(post);
+        answerPostRepository.save(answerPost);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("exerciseId", "" + firstTextExerciseId);
