@@ -608,7 +608,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         database.changeUser("student1");
 
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/conduction", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/conduction", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
