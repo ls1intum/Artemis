@@ -13,6 +13,7 @@ export class TextBlock {
     endIndex?: number;
     submission?: TextSubmission;
     type?: TextBlockType;
+    numberOfAffectedSubmissions?: number;
 
     /**
      * Identical with de.tum.in.www1.artemis.domain.TextBlock:computeId
