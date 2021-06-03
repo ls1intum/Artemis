@@ -42,6 +42,14 @@
                     "title": "Erste bestehende Note",
                     "explanation": "Legt die erste bestehende Note für einen Notenschlüssel fest. Jede Note mit höheren Prozentsätzen wird ebenfalls als bestanden gewertet"
                 }
+            },
+            "error": {
+                "empty": "Die Notenstufen sind leer!",
+                "emptyFields": "Alle Notenstufenfelder müssen ausgefüllt werden!",
+                "invalidMinMaxPercentages": "Die Prozentsätze der Notenstufen müssen alle zwischen 0 und 100 (jeweils einschließlich) liegen und der Min % darf nicht größer als der Max % sein!",
+                "invalidBonusPoints": "Die Bonuspunkte müssen mindestens 0 sein!",
+                "invalidAdjacency": "Die Max % aller Notenstufen (außer der letzten), müssen gleich den Min % ihrer nachfolgenden Notenstufe sein!",
+                "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss 100 sein!"
             }
         },
         "gradingScale": {
