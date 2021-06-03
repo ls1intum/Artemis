@@ -90,11 +90,11 @@ public class GradeStepResource {
         if (!isInstructor && !gradingScale.getExam().resultsPublished()) {
             return forbidden();
         }
-        GradeStepsDTO gradeStepsDTO = prepareGradeStepDTO(gradingScale);
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale);
         return ResponseEntity.ok(gradeStepsDTO);
     }
 
-    private GradeStepsDTO prepareGradeStepDTO(GradingScale gradingScale) {
+    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale) {
         GradeStep[] gradeSteps = new GradeStep[gradingScale.getGradeSteps().size()];
         gradingScale.getGradeSteps().toArray(gradeSteps);
         for (GradeStep gradeStep : gradeSteps) {

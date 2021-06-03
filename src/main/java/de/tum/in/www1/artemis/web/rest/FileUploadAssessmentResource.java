@@ -128,7 +128,6 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         return super.deleteAssessment(submissionId, resultId);
     }
 
-
     @Override
     String getEntityName() {
         return ENTITY_NAME;
