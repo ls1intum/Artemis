@@ -31,7 +31,9 @@ const modalDeleteButton = '.modal-footer > .btn-danger';
 
 describe('Programming exercise', () => {
     before(() => {
-        cy.intercept('/api/courses/course-management-overview*').as('courseManagementQuery');
+        cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
+        cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
+        cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
     });
 
     it('Creates a new course, participates in it and deletes it afterwards', function () {
@@ -81,6 +83,7 @@ function deleteProgrammingExercise() {
             cy.wrap($el).check();
         });
     cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
+    cy.wait('@deleteProgrammingExerciseQuery');
 }
 
 /**
@@ -129,6 +132,8 @@ function addStudentToCourse() {
     cy.get('.course-table-container').contains('0 Students').click();
     cy.get('#typeahead-basic').type(username);
     cy.contains(new RegExp(username)).should(beVisible).click();
+    cy.wait('@addStudentQuery');
+    cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should('be.visible');
 }
 
 /**
@@ -150,7 +155,7 @@ function createProgrammingExercise() {
     cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
     cy.get('.owl-dt-control-arrow-button').eq(1).click();
     cy.get('.owl-dt-day-3').eq(2).click();
-    cy.get(datepickerButtons).eq(1).click();
+    cy.get(datepickerButtons).eq(1).should(beVisible).click();
     cy.get('[type="submit"]').click();
     // Creating a programming exercise takes a lot of time, so we increase the timeout here
     cy.url({ timeout: longTimeout }).should('include', exercisePath);
