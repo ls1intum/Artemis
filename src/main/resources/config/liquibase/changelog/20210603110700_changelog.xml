@@ -1,0 +1,26 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="schlesinger" id="20210603110700">
+
+        <!-- Introduction of post tags -->
+        <createTable tableName="post_tag">
+            <column name="post_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tag" type="VARCHAR(255)"/>
+        </createTable>
+        <createIndex indexName="FK_tag_to_post_id" tableName="post_tag">
+            <column name="post_id"/>
+        </createIndex>
+        <addForeignKeyConstraint baseColumnNames="post_id" baseTableName="post_tag" constraintName="FK_tag_to_post_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="post"/>
+
+        <!-- Introduction of course-wide context besides lecture and exercise link -->
+        <addColumn tableName="post">
+            <column name="course_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="post" constraintName="FK_post_to_course_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
+        <addColumn tableName="post">
+            <column name="course_wide_context" type="VARCHAR(50)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

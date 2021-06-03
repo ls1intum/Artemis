@@ -5,11 +5,11 @@ import { Post } from 'app/entities/metis/post.model';
 
 export class AnswerPost implements BaseEntity {
     public id?: number;
+    public author?: User;
+    public creationDate?: Moment;
     public content?: string;
     public tokenizedContent?: string;
-    public creationDate?: Moment;
     public tutorApproved?: boolean;
-    public author?: User;
     public post?: Post;
 
     constructor() {

@@ -43,16 +43,16 @@ public class AnswerPost extends Posting {
     }
 
     @Override
-    public String toString() {
-        return "AnswerPost{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", tutorApproved='" + isTutorApproved() + "'"
-                + "}";
-    }
-
-    @Override
     public Course getCourse() {
         if (post == null) {
             return null;
         }
         return post.getCourse();
+    }
+
+    @Override
+    public String toString() {
+        return "AnswerPost{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", tutorApproved='" + isTutorApproved() + "'"
+                + "}";
     }
 }
