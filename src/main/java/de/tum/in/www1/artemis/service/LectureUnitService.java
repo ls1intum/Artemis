@@ -38,7 +38,7 @@ public class LectureUnitService {
         for (LearningGoal learningGoal : associatedLearningGoals) {
             disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal);
         }
-        Lecture lecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoalsElseThrow(lectureUnit.getLecture().getId());
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureUnit.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
         for (LectureUnit unit : lecture.getLectureUnits()) {

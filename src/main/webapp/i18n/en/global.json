@@ -181,6 +181,7 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "noButtonTextDelete": "",
             "unlink": "Unlink",
             "confirm": "Confirm",
             "download": "Download",
@@ -248,6 +249,9 @@
         },
         "reset": {
             "title": "Confirm reset operation"
+        },
+        "noButtonTextDelete": {
+            "title": "Confirm delete operation"
         },
         "cleanup": {
             "title": "Confirm cleanup operation"

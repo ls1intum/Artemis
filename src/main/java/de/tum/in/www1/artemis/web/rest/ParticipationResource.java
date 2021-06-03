@@ -316,7 +316,7 @@ public class ParticipationResource {
             exercise.setAttachments(null);
             exercise.setCategories(null);
             exercise.setProblemStatement(null);
-            exercise.setStudentQuestions(null);
+            exercise.setPosts(null);
             exercise.setGradingInstructions(null);
             exercise.setDifficulty(null);
             exercise.setMode(null);
