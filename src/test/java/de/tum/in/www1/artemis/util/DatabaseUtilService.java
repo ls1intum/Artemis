@@ -3283,6 +3283,39 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public void addAssessmentWithFeedbacksWithGradingInstructionsForExercise(Exercise exercise, String login) {
+        // add participation and submission for exercise
+        StudentParticipation studentParticipation = createAndSaveParticipationForExercise(exercise, login);
+        Submission submission = null;
+        if(exercise instanceof TextExercise) {
+            submission = ModelFactory.generateTextSubmission("test", Language.ENGLISH, true);
+        }
+        if(exercise instanceof FileUploadExercise) {
+            submission = ModelFactory.generateFileUploadSubmission(true);
+        }
+        if(exercise instanceof ModelingExercise) {
+            submission = ModelFactory.generateModelingSubmission(null, true);
+        }
+        if(exercise instanceof ProgrammingExercise) {
+            submission = ModelFactory.generateProgrammingSubmission(true);
+        }
+        Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
+        Result result = addResultToParticipation(studentParticipation, submissionWithParticipation);
+        resultRepo.save(result);
+
+        // add feedback which is associated with structured grading instructions
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        feedback.setResult(result);
+        Feedback feedbackWithResult = feedbackRepo.save(feedback);
+        result.addFeedback(feedbackWithResult);
+        resultRepo.save(result);
+    }
+
+    public List<Result> getResultsForExercise (Exercise exercise) {
+        return resultRepo.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+    }
+
     public Course saveCourse(Course course) {
         return courseRepo.save(course);
     }

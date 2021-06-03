@@ -593,4 +593,56 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, ModelingPlagiarismResult.class);
         assertThat(result).isNull();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(createdModelingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
+
+        // change grading instruction score
+        gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
+        gradingCriteria.remove(1);
+        createdModelingExercise.setGradingCriteria(gradingCriteria);
+
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=false", createdModelingExercise, ModelingExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
+        assertThat(updatedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
+        assertThat(updatedResults.get(0).getFeedbacks().get(0).getCredits()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_shouldDeleteFeedbacks() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(createdModelingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
+
+        // remove instruction which is associated with feedbacks
+        gradingCriteria.remove(1);
+        gradingCriteria.remove(0);
+        createdModelingExercise.setGradingCriteria(gradingCriteria);
+
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=true", createdModelingExercise, ModelingExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
+        assertThat(updatedModelingExercise.getGradingCriteria().size()).isEqualTo(1);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
+        assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
+        request.put("/api/modeling-exercises/re-evaluate", classExercise, HttpStatus.FORBIDDEN);
+    }
 }

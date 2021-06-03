@@ -21,6 +21,7 @@ import java.util.zip.ZipFile;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
@@ -79,6 +80,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -1372,5 +1376,10 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         TextPlagiarismResult result = request.get("/api/programming-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
         assertThat(result).isNull();
+    }
+
+    public void testReEvaluateAndUpdateModelingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        request.put(ROOT + PROGRAMMING_EXERCISES + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
     }
 }

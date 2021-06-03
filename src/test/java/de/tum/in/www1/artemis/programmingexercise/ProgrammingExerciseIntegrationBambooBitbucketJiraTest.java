@@ -705,4 +705,10 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutExercise();
     }
+
+    @Test
+    @WithMockUser(value = "instructoralt1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_instructorNotInCourse_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateModelingExercise_instructorNotInCourse_forbidden();
+    }
 }

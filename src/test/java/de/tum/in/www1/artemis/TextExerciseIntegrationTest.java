@@ -836,4 +836,59 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         courseRepository.save(course);
         request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.FORBIDDEN, String.class);
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateTextExercise() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(textExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(textExercise, "instructor1");
+
+        // change grading instruction score
+        gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
+        gradingCriteria.remove(1);
+        textExercise.setGradingCriteria(gradingCriteria);
+
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=false", textExercise, TextExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
+        assertThat(updatedTextExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
+        assertThat(updatedResults.get(0).getFeedbacks().get(0).getCredits()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateTextExercise_shouldDeleteFeedbacks() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(textExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(textExercise, "instructor1");
+
+        // remove instruction which is associated with feedbacks
+        gradingCriteria.remove(1);
+        gradingCriteria.remove(0);
+        textExercise.setGradingCriteria(gradingCriteria);
+
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=true", textExercise, TextExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
+        assertThat(updatedTextExercise.getGradingCriteria().size()).isEqualTo(1);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
+        assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+
+        request.putWithResponseBody("/api/text-exercises/re-evaluate", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+    }
 }
