@@ -34,6 +34,8 @@ describe('Programming exercise', () => {
         cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
         cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
         cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
+        cy.intercept('POST', '/api/courses').as('createCourseQuery');
+        cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExerciseQuery');
     });
 
     it('Creates a new course, participates in it and deletes it afterwards', function () {
@@ -157,8 +159,9 @@ function createProgrammingExercise() {
     cy.get('.owl-dt-day-3').eq(2).click();
     cy.get(datepickerButtons).eq(1).should(beVisible).click();
     cy.get('[type="submit"]').click();
+    cy.wait('@createProgrammingExerciseQuery');
     // Creating a programming exercise takes a lot of time, so we increase the timeout here
-    cy.url({ timeout: longTimeout }).should('include', exercisePath);
+    cy.url().should('include', exercisePath);
     cy.log('Successfully created a new programming exercise!');
 }
 
@@ -175,6 +178,7 @@ function createTestCourse() {
     cy.get('#field_testCourse').check();
     cy.get('#field_customizeGroupNamesEnabled').uncheck();
     cy.get('#save-entity').click();
+    cy.wait('@createCourseQuery');
 }
 
 /**
