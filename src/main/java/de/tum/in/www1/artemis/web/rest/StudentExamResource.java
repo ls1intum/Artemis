@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
@@ -239,8 +240,8 @@ public class StudentExamResource {
             return courseAndExamAccessFailure.get();
         }
 
-        // students can not fetch the exam until 5 minutes before the exam start
-        if (ZonedDateTime.now().plusMinutes(5).isBefore(studentExam.getExam().getStartDate())) {
+        // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
+        if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
             return forbidden();
         }
 

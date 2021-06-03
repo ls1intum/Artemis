@@ -13,6 +13,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -205,7 +206,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.exam &&
             this.exam.visibleDate &&
             this.exam.visibleDate.isBefore(this.serverDateService.now()) &&
-            this.serverDateService.now().add(5, 'minute').isAfter(this.exam.startDate!)
+            this.serverDateService.now().add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(this.exam.startDate!)
         );
     }
 
