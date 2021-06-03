@@ -209,6 +209,16 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
+    /**
+     * Mocks the access and interaction with repository mocks on the local file system.
+     *
+     * @param exercise for which mock repositories should be created
+     * @param exerciseRepository represents exercise template code repository
+     * @param solutionRepository represents exercise solution code repository
+     * @param testRepository represents exercise test code repository
+     * @param auxRepository represents an arbitrary template code repository
+     * @throws Exception in case any repository url is malformed or the GitService fails
+     */
     public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
             LocalRepository auxRepository) throws Exception {
         final var projectKey = exercise.getProjectKey();
@@ -234,8 +244,7 @@ public class ProgrammingExerciseTestService {
                 true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(solutionRepoTestUrl,
-                true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
@@ -371,7 +380,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
+    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.SWIFT;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
@@ -383,7 +392,9 @@ public class ProgrammingExerciseTestService {
         commonImportSetup(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
-        addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
+        if (addAuxRepos) {
+            addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
+        }
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
