@@ -63,8 +63,8 @@
             </a>
             <div class="ml-auto">
                 <a
-                    *ngIf="course.studentQuestionsEnabled && course.isAtLeastTutor"
-                    [routerLink]="['/course-management', course.id!, 'questions']"
+                    *ngIf="course.postsEnabled && course.isAtLeastTutor"
+                    [routerLink]="['/course-management', course.id!, 'posts']"
                     class="tab-item btn btn-primary btn-md ml-1 mr-1"
                 >
                     <fa-icon [icon]="'comment'"></fa-icon>

@@ -123,7 +123,7 @@ public class AttachmentUnitResource {
         if (attachmentUnit.getId() != null) {
             return badRequest();
         }
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
             return badRequest();
         }

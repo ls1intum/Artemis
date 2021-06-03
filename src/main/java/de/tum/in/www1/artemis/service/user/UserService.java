@@ -413,7 +413,7 @@ public class UserService {
         // 4) All complaints and complaints responses associated to the user
         // 5) All student exams associated to the user
         // 6) All LTIid and LTIOutcomeUrls associated to the user
-        // 7) All StudentQuestion and StudentQuestionAnswer
+        // 7) All Post and AnswerPost
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation

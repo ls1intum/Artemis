@@ -83,7 +83,7 @@ describe('Lecture Service', () => {
 
         it('should find a lecture in the database', async () => {
             const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService, studentQuestions: [] };
+            const expected = { ...returnedFromService, posts: [] };
             const id = elemDefault.id!;
             service
                 .find(id)
