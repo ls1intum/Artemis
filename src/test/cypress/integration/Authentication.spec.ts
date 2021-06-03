@@ -2,12 +2,11 @@
 
 import { authTokenKey } from '../support/constants';
 
-const username = Cypress.env('username');
-const password = Cypress.env('password');
-if (Cypress.env('isCi') === 'true') {
-    cy.log('REPLACED USER ID WITH 1');
-    username.replace('USERID', '1');
-    password.replace('USERID', '1');
+let username = Cypress.env('username');
+let password = Cypress.env('password');
+if (Cypress.env('isCi')) {
+    username = username.replace('USERID', '1');
+    password = password.replace('USERID', '1');
 }
 describe('Authentication tests', () => {
     beforeEach(() => {
