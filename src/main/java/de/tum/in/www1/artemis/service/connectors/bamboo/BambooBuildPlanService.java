@@ -41,6 +41,7 @@ import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.Bitbucket
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
+import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
@@ -222,6 +223,11 @@ public class BambooBuildPlanService {
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
                 return defaultStage.jobs(defaultJob);
+            }
+            case EMPTY -> {
+                ScriptTask mvnVersionTask = new ScriptTask().description("Print Maven Version").inlineBody("mvn --version").interpreterShell()
+                        .location(ScriptTaskProperties.Location.INLINE);
+                return defaultStage.jobs(defaultJob.tasks(checkoutTask, mvnVersionTask));
             }
             // this is needed, otherwise the compiler complaints with missing return
             // statement

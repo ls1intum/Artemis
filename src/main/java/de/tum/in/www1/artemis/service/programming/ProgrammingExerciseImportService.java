@@ -331,7 +331,7 @@ public class ProgrammingExerciseImportService {
         newExercise.setTotalNumberOfAssessments(null);
         newExercise.setTutorParticipations(null);
         newExercise.setExampleSubmissions(null);
-        newExercise.setStudentQuestions(null);
+        newExercise.setPosts(null);
         newExercise.setStudentParticipations(null);
         // We have to rebuild the auxiliary repositories
         newExercise.setAuxiliaryRepositories(new ArrayList<>());

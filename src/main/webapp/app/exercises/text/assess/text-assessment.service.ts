@@ -93,6 +93,15 @@ export class TextAssessmentService {
     }
 
     /**
+     * Deletes an assessment.
+     * @param submissionId id of the submission, to which the assessment belongs to
+     * @param resultId     id of the result which is deleted
+     */
+    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/text-submissions/${submissionId}/delete/${resultId}`);
+    }
+
+    /**
      * Get all feedback items for a submission.
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      * @param correctionRound

@@ -711,7 +711,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function setQuestionText
+     * @function setContent
      * @desc sets the new text as question.text and updates the UI (through textParts)
      * @param id
      */
