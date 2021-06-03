@@ -296,7 +296,7 @@ export class GuidedTourService {
         this.currentDotSubject.next(this.currentTourStepIndex);
         this.nextDotSubject.next(this.currentTourStepIndex - 1);
 
-        if (currentStep.closeAction) {
+        if (currentStep?.closeAction) {
             currentStep.closeAction();
         }
 
@@ -872,19 +872,23 @@ export class GuidedTourService {
     /**
      *  @return true if highlighted element is available, otherwise false
      */
-    private checkSelectorValidity(): boolean {
+    private checkSelectorValidity(): boolean | void {
         if (!this.currentTour) {
             return false;
         }
         const currentTourStep = this.currentTour.steps[this.currentTourStepIndex];
-        const selector = currentTourStep?.highlightSelector ? currentTourStep.highlightSelector : undefined;
-        if (selector) {
-            const selectedElement = document.querySelector(selector);
-            if (!selectedElement) {
-                return false;
+        if (currentTourStep) {
+            const selector = currentTourStep.highlightSelector ? currentTourStep.highlightSelector : undefined;
+            if (selector) {
+                const selectedElement = document.querySelector(selector);
+                if (!selectedElement) {
+                    return false;
+                }
             }
+            return true;
+        } else {
+            this.resetTour();
         }
-        return true;
     }
 
     /**
