@@ -22,7 +22,7 @@
         </ul>
         <div *ngIf="instructionDeleted">
             <input type="checkbox" name="deleteFeedbacks" id="deleteFeedbacks" [ngModel]="deleteFeedbacks" (ngModelChange)="triggerDeleteFeedbacks()" />
-            <label class="form-check-label" for="deleteFeedbacks">
+            <label class="form-check-label text-danger" for="deleteFeedbacks">
                 {{ 'artemisApp.exercise.update.warning.deleteFeedbacks' | artemisTranslate }}
             </label>
         </div>
