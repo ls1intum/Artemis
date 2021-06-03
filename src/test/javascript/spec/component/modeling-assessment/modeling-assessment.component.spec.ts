@@ -253,7 +253,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.apollonEditor).to.exist;
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
-        expect(assessments[0].labelColor).to.equal('#3e8acc');
+        expect(assessments[0].labelColor).to.equal(comp.firstCorrectionRoundColor);
         expect(assessments[0].label).to.equal('First correction round');
         expect(assessments[0].score).to.equal(35);
     });
