@@ -9,10 +9,20 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
+import {
+    getLatestSubmissionResult,
+    setLatestSubmissionResult,
+    Submission,
+    SubmissionType,
+} from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import {
+    ProgrammingAssessmentRepoExportService,
+    RepositoryExportOptions,
+} from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -80,6 +90,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         private http: HttpClient,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ProgrammingExerciseParticipationService,
+        private javaBridge: OrionConnectorService,
+        private repositoryExportService: ProgrammingAssessmentRepoExportService,
     ) {}
 
     ngOnDestroy(): void {
@@ -590,7 +602,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Locks the submission of the participation for the user
-     * @param participationId
+     * @param submissionId
      * @param correctionRound
      */
     lockAndGetProgrammingSubmissionParticipation(submissionId: number, correctionRound = 0): Observable<ProgrammingSubmission> {
@@ -651,5 +663,37 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.websocketService.unsubscribe(submissionTopic);
             }
         }
+    }
+
+    /**
+     * Locks the given submission, exports it, transforms it to base64, and sends it to Orion
+     *
+     * @param exerciseId id of the exercise the submission belongs to
+     * @param submission submission to send to Orion
+     * @param correctionRound correction round
+     */
+    async downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound: number = 0) {
+        this.javaBridge.isCloning(true)
+        const submissionId: number = submission === 'new' ? (await this.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound).toPromise()).id! : submission.id!;
+        const exportOptions: RepositoryExportOptions = {
+            exportAllParticipants: false,
+            filterLateSubmissions: false,
+            addParticipantName: false,
+            combineStudentCommits: false,
+            normalizeCodeStyle: false,
+            hideStudentNameInZippedFolder: true,
+        };
+        this.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission : ProgrammingSubmission) => {
+            this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).subscribe((res: HttpResponse<Blob>) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(res.body!);
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    // remove prefix
+                    const base64data = result.substr(result.indexOf(',') + 1);
+                    this.javaBridge.downloadSubmission(submissionId, correctionRound, base64data);
+                }
+            });
+        });
     }
 }

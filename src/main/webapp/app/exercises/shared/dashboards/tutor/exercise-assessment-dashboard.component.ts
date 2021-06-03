@@ -48,11 +48,6 @@ import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import {
-    ProgrammingAssessmentRepoExportService,
-    RepositoryExportOptions,
-} from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -172,7 +167,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
         private javaBridge: OrionConnectorService,
-        private repositoryExportService: ProgrammingAssessmentRepoExportService,
     ) {}
 
     /**
@@ -628,32 +622,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Locks the given submission, exports it, transforms it to base64, and sends it to Orion
+     * Delegates to the service to download the submission
      *
      * @param submission submission to send to Orion
      * @param correctionRound correction round
      */
     async downloadSubmissionInOrion(submission: Submission | 'new', correctionRound: number = 0) {
-        const submissionId: number = submission === 'new' ? (await this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, correctionRound).toPromise()).id! : submission.id!;
-        const exportOptions: RepositoryExportOptions = {
-            exportAllParticipants: false,
-            filterLateSubmissions: false,
-            addParticipantName: true,
-            combineStudentCommits: false,
-            normalizeCodeStyle: false,
-            hideStudentNameInZippedFolder: true,
-        };
-        this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission : ProgrammingSubmission) => {
-            this.repositoryExportService.exportReposByParticipations(this.exercise.id!, [programmingSubmission.participation!.id!], exportOptions).subscribe((res: HttpResponse<Blob>) => {
-                var reader = new FileReader();
-                reader.readAsDataURL(res.body!);
-                reader.onloadend = () => {
-                    const result = reader.result as string;
-                    const base64data = result.substr(result.indexOf(',') + 1);
-                    this.javaBridge.downloadSubmission(submissionId, correctionRound, base64data);
-                }
-            });
-        });
+        await this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound)
     }
 
     /**

@@ -237,7 +237,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      *
      * @param submissionId id of the submission, used to navigate to the corresponding URL
      * @param correctionRound correction round, also needed to navigate to the correct URL
-     * @param downloadURL URL of the zip file containing the student's repository
+     * @param base64data the student's submission as base64
      */
     downloadSubmission(submissionId: number, correctionRound: number, base64data: String) {
         theWindow().orionExerciseConnector.downloadSubmission(String(submissionId), String(correctionRound), base64data);
