@@ -24,6 +24,10 @@
                 <strong>Email is already in use!</strong> Please choose another one.
             </div>
 
+            <div class="alert alert-danger" *ngIf="errorAccountRegistrationBlocked" jhiTranslate="register.messages.error.blocked">
+                <strong>Account Registration blocked! </strong> Please try again later.
+            </div>
+
             <div class="alert alert-danger" *ngIf="doNotMatch" jhiTranslate="global.messages.error.dontmatch">The password and its confirmation do not match!</div>
         </div>
     </div>
