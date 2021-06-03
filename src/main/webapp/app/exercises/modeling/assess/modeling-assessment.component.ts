@@ -6,6 +6,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import * as $ from 'jquery';
 import { JhiLanguageService } from 'ng-jhipster';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -17,6 +18,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
+    firstCorrectionRoundColor = '#3e8acc';
+    secondCorrectionRoundColor = '#ffa561';
 
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
@@ -46,7 +49,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private languageService: JhiLanguageService) {}
+    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {
@@ -290,17 +293,17 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     private calculateLabel(feedback: any) {
-        if (this.highlightDifferences && this.languageService.getCurrentLanguage() === 'en') {
-            return feedback.copiedFeedbackId ? 'First correction round' : 'Second correction round';
-        } else if (this.highlightDifferences && this.languageService.getCurrentLanguage() === 'de') {
-            return feedback.copiedFeedbackId ? 'Erste Korrekturrunde' : 'Zweite Korrekturrunde';
+        const firstCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffFirst');
+        const secondCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffSecond');
+        if (this.highlightDifferences) {
+            return feedback.copiedFeedbackId ? firstCorrectionRoundText : secondCorrectionRoundText;
         }
         return undefined;
     }
 
     private calculateLabelColor(feedback: any) {
         if (this.highlightDifferences) {
-            return feedback.copiedFeedbackId ? '#3e8acc' : '#ffa561';
+            return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
         }
         return '';
     }
