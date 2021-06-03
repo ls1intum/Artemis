@@ -70,7 +70,7 @@ describe('Programming exercise', () => {
         openCourseManagement();
         cy.get('.course-table-container').contains('0 Students').click();
         cy.get('#typeahead-basic').type(username);
-        cy.get('#ngb-typeahead-0-0').should(beVisible).click();
+        cy.contains(new RegExp(username)).should(beVisible).click();
 
         // Login as the student
         cy.login(username, password);
