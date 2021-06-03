@@ -178,6 +178,7 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "noButtonTextDelete": "",
             "unlink": "Trennen",
             "confirm": "Bestätigen",
             "download": "Herunterladen",
@@ -247,6 +248,9 @@
         },
         "reset": {
             "title": "Zurücksetzen bestätigen"
+        },
+        "noButtonTextDelete": {
+            "title": "Löschen bestätigen"
         },
         "cleanup": {
             "title": "Aufräumen bestätigen"
