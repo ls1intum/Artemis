@@ -100,6 +100,7 @@ export class AggregatedExerciseGroupResult {
     public averagePoints?: number;
     public averagePercentage?: number;
     public averageGrade?: string;
+    public standardDeviation?: number;
     public exerciseResults: AggregatedExerciseResult[] = [];
 
     constructor(exerciseGroupId: number, title: string, maxPoints: number, totalParticipants: number) {
@@ -107,6 +108,7 @@ export class AggregatedExerciseGroupResult {
         this.title = title;
         this.maxPoints = maxPoints;
         this.totalParticipants = totalParticipants;
+        this.standardDeviation = 10;
     }
 }
 
@@ -119,11 +121,13 @@ export class AggregatedExerciseResult {
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
+    public standardDeviation?: number;
 
     constructor(exerciseId: number, title: string, maxPoints: number, totalParticipants: number) {
         this.exerciseId = exerciseId;
         this.title = title;
         this.maxPoints = maxPoints;
         this.totalParticipants = totalParticipants;
+        this.standardDeviation = 10;
     }
 }

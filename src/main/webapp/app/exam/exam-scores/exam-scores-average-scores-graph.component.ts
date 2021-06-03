@@ -13,14 +13,14 @@ import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-d
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
     @Input() legendPosition: string | undefined;
+    @Input() standardDeviation: number[] = [10];
 
-    height = 13;
+    height = 25;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'horizontalBar';
-    exerciseAverageScoreLegend: string;
-    exerciseGroupAverageScoreLegend: string;
+    averagePointsTooltip: string;
     chartLegend = false;
 
     // Data
@@ -33,43 +33,51 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     constructor(private service: StatisticsService, private translateService: TranslateService) {}
 
     ngOnInit(): void {
-        this.exerciseAverageScoreLegend = this.translateService.instant('artemisApp.examScores.averageScoreGraphTitle');
-        this.exerciseGroupAverageScoreLegend = this.translateService.instant('artemisApp.examScores.exerciseGroupAverageTitle');
+        this.averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
         this.initializeChart();
         this.createCharts();
     }
 
     private initializeChart(): void {
-        /*        const filteredAverageScores = this.averageScores.map((exerciseGroup) => {
-            exerciseGroup.exerciseResults = exerciseGroup.exerciseResults.filter((exercise) => exercise.averagePercentage);
-            return exerciseGroup;
-        });*/
-
         const colors = [GraphColors.BLUE];
         const labels = [this.averageScores.title];
-        const absoluteData = [this.averageScores.averagePoints];
-        const relativeData = [this.averageScores.averagePercentage];
+        const absoluteData = [this.averageScores.averagePoints!];
+        const relativeData: number[] = [this.averageScores.averagePercentage! - this.averageScores.standardDeviation!];
         this.averageScores.exerciseResults.forEach((exercise) => {
             labels.push(exercise.title);
             colors.push(GraphColors.DARK_BLUE);
-            absoluteData.push(exercise.averagePoints);
-            relativeData.push(exercise.averagePercentage);
-            this.height += 13;
+            absoluteData.push(exercise.averagePoints!);
+            relativeData.push(exercise.averagePercentage! - exercise.standardDeviation!);
+            this.height += 25;
+            this.standardDeviation.push(10);
         });
         this.barChartLabels = labels;
         this.absolutePoints = absoluteData;
 
-        // settings for first ar with different color
         this.chartData = [
             {
-                label: this.exerciseGroupAverageScoreLegend,
                 data: relativeData,
                 backgroundColor: colors,
                 borderColor: colors,
                 hoverBackgroundColor: colors,
                 barPercentage: 0.75,
             },
+            {
+                data: this.standardDeviation,
+                backgroundColor: 'rgba(219, 53, 69, 0.3)',
+                borderColor: 'rgba(219, 53, 69, 0.3)',
+                hoverBackgroundColor: 'rgba(219, 53, 69, 0.3)',
+                barPercentage: 0.75,
+            },
+            {
+                data: this.standardDeviation,
+                backgroundColor: 'rgba(40, 167, 69, 0.3)',
+                borderColor: 'rgba(40, 167, 69, 0.3)',
+                hoverBackgroundColor: 'rgba(40, 167, 69, 0.3)',
+                barPercentage: 0.75,
+            },
         ];
+        console.log();
     }
 
     private createCharts() {
@@ -89,6 +97,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             scales: {
                 xAxes: [
                     {
+                        stacked: true,
                         gridLines: {
                             display: true,
                         },
@@ -106,6 +115,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 ],
                 yAxes: [
                     {
+                        stacked: true,
                         gridLines: {
                             display: true,
                         },
@@ -121,7 +131,16 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 ],
             },
             tooltips: {
+                mode: 'index',
                 enabled: true,
+                callbacks: {
+                    label(tooltipItem: any) {
+                        if (!self.absolutePoints && !self.chartData[0].data) {
+                            return ' 0';
+                        }
+                        return `${self.averagePointsTooltip}: ${self.absolutePoints[tooltipItem.index]} (${self.chartData[0].data![tooltipItem.index]}%)`;
+                    },
+                },
             },
         };
     }
