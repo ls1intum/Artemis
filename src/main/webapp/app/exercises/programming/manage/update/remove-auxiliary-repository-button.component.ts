@@ -28,7 +28,8 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
      */
     removeAuxiliaryRepository() {
         const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
-        this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1)!;
+        const removedRepository = this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1)!;
+        console.log(`Removed auxiliary repository ${removedRepository}`);
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
     }
 }
