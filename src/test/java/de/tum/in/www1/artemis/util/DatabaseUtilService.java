@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import liquibase.pro.packaged.S;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -2013,6 +2014,126 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseWithFileUploadExercise() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        FileUploadExercise assessedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
+        assessedFileUploadExercise.setTitle("assessed");
+        course.addExercises(assessedFileUploadExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(assessedFileUploadExercise);
+        return course;
+    }
+    /**
+     * Generates a course with one specific exercise, and an arbitrare amount of submissions.
+     *
+     * @param exerciseType              - the type of exercise which should be generated: programming, file-pload or text
+     * @param numberOfSubmissions       - the amount of submissions which should be generated for an exercise
+     * @return a course with an exercise with submissions
+     */
+    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions){
+        return addCourseWithOneExerciseAndSubmissions(exerciseType, numberOfSubmissions, Optional.empty());
+    }
+
+    /**
+     * Generates a course with one specific exercise, and an arbitrare amount of submissions.
+     *
+     * @param exerciseType              - the type of exercise which should be generated: modeling, programming, file-pload or text
+     * @param numberOfSubmissions       - the amount of submissions which should be generated for an exercise
+     * @param modelForModelingExercise  - the model string for a modeling exercise
+     * @return a course with an exercise with submissions
+     */
+    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions, Optional<String> modelForModelingExercise){
+        Course course;
+        Exercise exercise;
+        switch (exerciseType) {
+            case "modeling":
+                course = addCourseWithOneModelingExercise();
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                for (int j = 1; j <= numberOfSubmissions; j++){
+                    StudentParticipation participation = createAndSaveParticipationForExercise(exercise, "student" + j);
+                    assertThat(modelForModelingExercise).isNotEmpty();
+                    ModelingSubmission submission = ModelFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
+                    modelSubmissionService.save(submission, (ModelingExercise) exercise, "student" + j);
+                    studentParticipationRepo.save(participation);
+                }
+                return course;
+            case "programming":
+                course = addCourseWithOneProgrammingExercise();
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                for (int j = 1; j <= numberOfSubmissions; j++){
+                    ProgrammingSubmission submission = new ProgrammingSubmission();
+                    addProgrammingSubmission((ProgrammingExercise) exercise, submission, "student" + j);
+                }
+                return course;
+            case "text":
+                course = addCourseWithOneFinishedTextExercise();
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                for (int j = 1; j <= numberOfSubmissions; j++) {
+                    TextSubmission textSubmission = ModelFactory.generateTextSubmission("Text" + j + j, null, true);
+                    saveTextSubmission((TextExercise) exercise, textSubmission, "student" + j);
+                }
+                return course;
+            case "file-upload":
+                course = addCourseWithFileUploadExercise();
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+
+                for (int j = 1; j <= numberOfSubmissions; j++) {
+                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    saveFileUploadSubmission((FileUploadExercise) exercise, submission, "student" + j);
+                }
+                return course;
+            default: return null;
+        }
+    }
+
+    /**
+     * Adds an automatic assessment to all submissions of an exercise
+     * @param exercise - the exercise of which the submissions are assessed
+     */
+    public void addAutomaticAssessmentToExercise(Exercise exercise) {
+        var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
+        participations.forEach(participation -> {
+            Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
+            submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+            participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
+            Result result = generateResult(submission, null);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            submission.addResult(result);
+            participation.addResult(result);
+            studentParticipationRepo.save(participation);
+            submissionRepository.save(submission);
+        });
+    }
+
+    /**
+     * Adds a result to all submissions of an exercise
+     * @param exercise - the exercise of which the submissions are assessed
+     * @param assessor - the assessor which is set for the results of the submission
+     */
+    public void addAssessmentToExercise(Exercise exercise, User assessor) {
+    var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
+    participations.forEach(participation -> {
+        Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
+        Result result = generateResult(submission, assessor);
+        submission.addResult(result);
+        participation.addResult(result);
+        studentParticipationRepo.save(participation);
+        submissionRepository.save(submission);
+        });
+    }
+
+    public List<Submission> getAllSubmissionsOfExercise(Exercise exercise){
+        var participations = studentParticipationRepo.findByExerciseId(exercise.getId());
+        var allSubmissions = new ArrayList<Submission>();
+        participations.forEach(participation -> {
+            Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
+            allSubmissions.add(submissionRepository.findWithEagerResultAndFeedbackById(submission.getId()).orElseThrow());
+        });
+        return allSubmissions;
+    }
+
     /** With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text exercises in a cyclic manner.
      *
      * @param numberOfExercises             - number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated. (thats why there is the %3 check)
@@ -2580,6 +2701,11 @@ public class DatabaseUtilService {
             Complaint complaint = new Complaint().participant(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
+    }
+
+    public void addComplaintToSubmission(Submission submission, String userLogin) {
+        Complaint complaint = new Complaint().participant(getUserByLogin(userLogin)).result(submission.getLatestResult()).complaintType(ComplaintType.COMPLAINT);
+        complaintRepo.save(complaint);
     }
 
     public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
