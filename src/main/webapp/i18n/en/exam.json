@@ -55,7 +55,7 @@
             "notConfirmed": "Please tick the checkbox to continue.",
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
-            "startExamToolTip": "Button is activated 5 minutes before the exam start.",
+            "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",

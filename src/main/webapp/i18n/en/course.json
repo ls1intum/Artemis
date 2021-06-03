@@ -32,9 +32,9 @@
                 "title": "Deadline for complaints in days after result date",
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to complain anymore after this deadline."
             },
-            "studentQuestionsEnabled": {
-                "title": "Enable questions and answers by students",
-                "description": "Enable Questions and Answers section on lecture and exercise page."
+            "postsEnabled": {
+                "title": "Enable postings by students",
+                "description": "Enable postings section on lecture and exercise page."
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",

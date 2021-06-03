@@ -11,11 +11,14 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.AtheneScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.UserScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -35,12 +38,19 @@ public class InstanceMessageReceiveService {
 
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
+    private final UserRepository userRepository;
+
+    private final UserScheduleService userScheduleService;
+
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            TextExerciseRepository textExerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance) {
+            TextExerciseRepository textExerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance,
+            UserRepository userRepository, UserScheduleService userScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
+        this.userRepository = userRepository;
+        this.userScheduleService = userScheduleService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -69,6 +79,14 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic("programming-exercise-lock-repositories").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processLockAllRepositories((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("user-management-remove-non-activated-user").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processRemoveNonActivatedUser((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("user-management-cancel-remove-non-activated-user").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processCancelRemoveNonActivatedUser((message.getMessageObject()));
         });
     }
 
@@ -114,5 +132,17 @@ public class InstanceMessageReceiveService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
+    }
+
+    public void processRemoveNonActivatedUser(Long userId) {
+        log.info("Received remove non-activated user for user {}", userId);
+        User user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        userScheduleService.scheduleForRemoveNonActivatedUser(user);
+    }
+
+    public void processCancelRemoveNonActivatedUser(Long userId) {
+        log.info("Received cancel removal of non-activated user for user {}", userId);
+        User user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        userScheduleService.cancelScheduleRemoveNonActivatedUser(user);
     }
 }

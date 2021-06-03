@@ -200,13 +200,14 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.testRun) {
             return this.nameIsCorrect && this.confirmed && !!this.exam;
         }
+        const now = this.serverDateService.now();
         return !!(
             this.nameIsCorrect &&
             this.confirmed &&
             this.exam &&
             this.exam.visibleDate &&
-            this.exam.visibleDate.isBefore(this.serverDateService.now()) &&
-            this.serverDateService.now().add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(this.exam.startDate!)
+            this.exam.visibleDate.isBefore(now) &&
+            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(this.exam.startDate!)
         );
     }
 

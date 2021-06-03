@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
+import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -54,6 +55,12 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepository;
 
     @Autowired
@@ -73,6 +80,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private TextAssessmentService textAssessmentService;
+
+    @Autowired
+    private TextBlockService textBlockService;
 
     private TextExercise textExercise;
 
@@ -273,6 +283,36 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void setNumberOfAffectedSubmissionsPerBlock_withIdenticalTextBlocks() throws Exception {
+        int submissionCount = 5;
+        int submissionSize = 1;
+        int numberOfBlocksTotally = submissionCount * submissionSize;
+        int[] clusterSizes = new int[] { 5 };
+        var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
+        textBlocks.forEach(TextBlock::computeId);
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+        textClusterRepository.saveAll(clusters);
+        textBlockRepository.saveAll(textBlocks);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+        Result result = new Result();
+
+        result.setSubmission(submissionWithoutAssessment);
+
+        textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
+
+        assertThat(result).as("saved result found").isNotNull();
+        assertThat(submissionWithoutAssessment.getBlocks().size()).isEqualTo(1);
+        assertThat(submissionWithoutAssessment.getBlocks().stream().toList().get(0).getNumberOfAffectedSubmissions()).isEqualTo(numberOfBlocksTotally - 1);
     }
 
     @Test
@@ -1238,5 +1278,24 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(expectedScore);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("text", 1);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.get(0);
+        assertThat(submission.getResults().size()).isEqualTo(2);
+        Result firstResult = submission.getResults().get(0);
+        Result lastResult = submission.getLatestResult();
+        request.delete("/api/text-assessments/text-submissions/" + submission.getId() + "/delete/" + firstResult.getId(), HttpStatus.OK);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(1);
+        assertThat(submission.getResults().get(0)).isEqualTo(lastResult);
     }
 }

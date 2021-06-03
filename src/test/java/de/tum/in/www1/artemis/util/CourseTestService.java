@@ -237,7 +237,7 @@ public class CourseTestService {
 
     // Test
     public void testCreateCourseWithOptions() throws Exception {
-        // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
+        // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, postsEnabled = false
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, false, 0);
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
@@ -249,19 +249,19 @@ public class CourseTestService {
         Course getFromRepo = courseRepo.findAll().get(0);
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
         assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
-        assertThat(getFromRepo.getStudentQuestionsEnabled()).as("Course has right studentQuestionsEnabled Value").isFalse();
+        assertThat(getFromRepo.getPostsEnabled()).as("Course has right postsEnabled Value").isFalse();
         assertThat(getFromRepo.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isFalse();
 
         // Test edit course
         course.setId(getFromRepo.getId());
         course.setMaxComplaints(1);
         course.setMaxComplaintTimeDays(7);
-        course.setStudentQuestionsEnabled(true);
+        course.setPostsEnabled(true);
         course.setMaxRequestMoreFeedbackTimeDays(7);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
         assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
-        assertThat(updatedCourse.getStudentQuestionsEnabled()).as("studentQuestionsEnabled Value updated successfully").isTrue();
+        assertThat(updatedCourse.getPostsEnabled()).as("postsEnabled Value updated successfully").isTrue();
         assertThat(updatedCourse.getRequestMoreFeedbackEnabled()).as("Course has right requestMoreFeedbackEnabled Value").isTrue();
     }
 
