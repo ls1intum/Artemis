@@ -61,7 +61,7 @@ public class LectureUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lectureId);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (lectureOptional.isEmpty()) {
             return notFound();
         }
