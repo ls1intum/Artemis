@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -48,7 +49,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     @Override
-    public void createVcsUser(User user) {
+    public void createVcsUser(User user) throws VersionControlException {
         final int gitlabUserId = getUserIdCreateIfNotExists(user);
         // Add user to existing exercises
         addUserToGroups(gitlabUserId, user.getGroups());
@@ -61,6 +62,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             if (gitlabUser == null) {
                 return;
             }
+
+            updateUserActivationState(user, gitlabUser.getId());
 
             addUserToGroups(gitlabUser.getId(), addedGroups);
 
@@ -100,6 +103,21 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         String password = shouldUpdatePassword ? passwordService.decryptPassword(user) : null;
         return userApi.updateUser(gitlabUser, password);
+    }
+
+    /**
+     * Updates the activation state of the Gitlab account based on the Artemis account.
+     * We
+     * @param user The Artemis user
+     * @param gitlabUserId the id of the GitLab user that is mapped to the Artemis user
+     */
+    private void updateUserActivationState(User user, int gitlabUserId) throws GitLabApiException {
+        if (user.getActivated()) {
+            gitlabApi.getUserApi().unblockUser(gitlabUserId);
+        }
+        else {
+            gitlabApi.getUserApi().blockUser(gitlabUserId);
+        }
     }
 
     @Override
@@ -257,6 +275,30 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException(String.format("Cannot delete user %s from GitLab!", login), e);
+        }
+    }
+
+    @Override
+    public void deactivateUser(String login) throws VersionControlException {
+        try {
+            final int userId = getUserId(login);
+            // We block the user instead of deactivating because a deactivated account
+            // is activated automatically when the user logs into Gitlab.
+            gitlabApi.getUserApi().blockUser(userId);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException(String.format("Cannot block user %s from GitLab!", login), e);
+        }
+    }
+
+    @Override
+    public void activateUser(String login) throws VersionControlException {
+        try {
+            final int userId = getUserId(login);
+            gitlabApi.getUserApi().unblockUser(userId);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException(String.format("Cannot unblock user %s from GitLab!", login), e);
         }
     }
 

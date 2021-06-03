@@ -83,6 +83,18 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("programming-exercise-lock-repositories", exerciseId);
     }
 
+    @Override
+    public void sendRemoveNonActivatedUserSchedule(Long userId) {
+        log.info("Sending remove non-activated user {} to broker.", userId);
+        sendMessageDelayed("user-management-remove-non-activated-user", userId);
+    }
+
+    @Override
+    public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
+        log.info("Sending cancel removal of non-activated user {} to broker.", userId);
+        sendMessageDelayed("user-management-cancel-remove-non-activated-user", userId);
+    }
+
     private void sendMessageDelayed(String destination, Long exerciseId) {
         exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(exerciseId), 1, TimeUnit.SECONDS);
     }

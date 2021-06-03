@@ -70,4 +70,16 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processLockAllRepositories(exerciseId);
     }
+
+    @Override
+    public void sendRemoveNonActivatedUserSchedule(Long userId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processRemoveNonActivatedUser(userId);
+    }
+
+    @Override
+    public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processCancelRemoveNonActivatedUser(userId);
+    }
 }

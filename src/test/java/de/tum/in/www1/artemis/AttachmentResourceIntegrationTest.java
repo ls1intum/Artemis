@@ -80,7 +80,7 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
         var actualAttachment = request.putWithResponseBodyAndParams("/api/attachments", attachment, Attachment.class, HttpStatus.OK, params);
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
         assertThat(actualAttachment.getName()).isEqualTo("new name");
-        var ignoringFields = new String[] { "name", "fileService", "prevLink", "lecture.lectureUnits", "lecture.studentQuestions", "lecture.course", "lecture.attachments" };
+        var ignoringFields = new String[] { "name", "fileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course", "lecture.attachments" };
         assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
         verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
     }
