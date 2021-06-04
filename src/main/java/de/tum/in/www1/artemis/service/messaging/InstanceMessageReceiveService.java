@@ -77,6 +77,10 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleModelingExerciseCancel(message.getMessageObject());
         });
+        hazelcastInstance.<Long>getTopic("modeling-exercise-schedule-instant-clustering").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processModelingExerciseInstantClustering((message.getMessageObject()));
+        });
         hazelcastInstance.<Long>getTopic("text-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleTextExercise((message.getMessageObject()));
@@ -131,6 +135,12 @@ public class InstanceMessageReceiveService {
         // The exercise might already be deleted, so we can not get it from the database.
         // Use the ID directly instead.
         modelingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
+    }
+
+    public void processModelingExerciseInstantClustering(Long exerciseId) {
+        log.info("Received schedule instant clustering for modeling exercise {}", exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        modelingExerciseScheduleService.scheduleExerciseForInstant(modelingExercise);
     }
 
     public void processScheduleTextExercise(Long exerciseId) {

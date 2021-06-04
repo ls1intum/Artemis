@@ -61,6 +61,16 @@
                     <span [innerHTML]="sampleSolution"></span>
                 </dd>
             </dl>
+            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN']">
+                <dl class="row-md">
+                    <dt>
+                        <span jhiTranslate="artemisApp.modelingExercise.clusters">Clusters</span>
+                    </dt>
+                    <dd>
+                        <button (click)="buildModelClusters()" class="btn btn-primary" jhiTranslate="artemisApp.modelingExercise.buildClusters.action">Build Clusters</button>
+                    </dd>
+                </dl>
+            </ng-container>
         </div>
     </div>
 </div>

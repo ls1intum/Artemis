@@ -106,4 +106,8 @@ export class ModelingExerciseService {
             })
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
+
+    buildClusters(modelingExerciseId: number): Observable<{}> {
+        return this.http.post(`${this.resourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
+    }
 }

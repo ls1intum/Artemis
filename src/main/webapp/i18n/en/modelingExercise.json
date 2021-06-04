@@ -34,6 +34,11 @@
             "usedForTutorial": "Used for Tutorial",
             "apollonConversion": {
                 "error": "Apollon conversion is not available"
+            },
+            "clusters": "Clusters",
+            "buildClusters": {
+                "action": "Build Clusters",
+                "error": "Building Clusters failed"
             }
         }
     }

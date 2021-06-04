@@ -42,6 +42,12 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
+    public void sendModelingExerciseInstantClustering(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processModelingExerciseInstantClustering(exerciseId);
+    }
+
+    @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processScheduleTextExercise(exerciseId);

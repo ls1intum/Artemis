@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -77,11 +78,14 @@ public class ModelingExerciseResource {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository,
+            InstanceMessageSendService instanceMessageSendService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -97,6 +101,7 @@ public class ModelingExerciseResource {
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -292,6 +297,22 @@ public class ModelingExerciseResource {
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+    }
+
+    /**
+     * POST /modeling-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
+     * (clustering task) for given exercise id As the clustering can be performed on a different
+     * node, this will always return 200, despite an error could occur on the other node.
+     *
+     * @param exerciseId id of the exercised that for which the automatic assessment should be
+     *                   triggered
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/modeling-exercises/{exerciseId}/trigger-automatic-assessment")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
+        instanceMessageSendService.sendModelingExerciseInstantClustering(exerciseId);
+        return ResponseEntity.ok().build();
     }
 
     /**

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static java.time.Instant.now;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -8,8 +10,10 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -35,11 +39,16 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     private final CompassService compassService;
 
-    public ModelingExerciseScheduleService(ScheduleService scheduleService, ModelingExerciseRepository modelingExerciseRepository, Environment env, CompassService compassService) {
+    private final TaskScheduler scheduler;
+
+    public ModelingExerciseScheduleService(ScheduleService scheduleService, ModelingExerciseRepository modelingExerciseRepository, Environment env, CompassService compassService,
+            @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.env = env;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.compassService = compassService;
+        this.scheduler = scheduler;
+
     }
 
     @PostConstruct
@@ -107,6 +116,14 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
         }
+    }
+
+    /**
+     * Schedule a cluster building task for a modeling exercise to start immediately.
+     * @param exercise exercise to build clusters for
+     */
+    public void scheduleExerciseForInstant(ModelingExercise exercise) {
+        scheduler.schedule(buildModelingClusters(exercise), now());
     }
 
     /**
