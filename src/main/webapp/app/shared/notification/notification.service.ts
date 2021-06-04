@@ -63,7 +63,7 @@ export class NotificationService {
             const target = JSON.parse(notification.target);
             const courseId = target.course || notification.course?.id;
 
-            if ((notification.title = 'Quiz Started')) {
+            if (notification.title === 'Quiz started') {
                 this.router.navigate([target.mainPage, courseId, 'quiz-exercises', target.id, 'live']);
             } else {
                 this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
