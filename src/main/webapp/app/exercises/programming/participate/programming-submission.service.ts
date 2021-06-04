@@ -680,6 +680,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             filterLateSubmissions: false,
             addParticipantName: false,
             combineStudentCommits: false,
+            anonymizeStudentCommits: true,
             normalizeCodeStyle: false,
             hideStudentNameInZippedFolder: true,
         };
