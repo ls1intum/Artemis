@@ -13,7 +13,7 @@ export type EntityResponseType = HttpResponse<Result>;
 @Injectable({
     providedIn: 'root',
 })
-export class FileUploadAssessmentsService {
+export class FileUploadAssessmentService {
     private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
@@ -43,6 +43,15 @@ export class FileUploadAssessmentsService {
 
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
+    /**
+     * Deletes an assessment.
+     * @param submissionId id of the submission, to which the assessment belongs to
+     * @param resultId     id of the result which is deleted
+     */
+    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/delete/${resultId}`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

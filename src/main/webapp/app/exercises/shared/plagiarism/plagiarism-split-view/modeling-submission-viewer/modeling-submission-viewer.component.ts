@@ -26,7 +26,7 @@ export class ModelingSubmissionViewerComponent implements OnChanges {
 
             const currentPlagiarismSubmission: PlagiarismSubmission<ModelingSubmissionElement> = changes.plagiarismSubmission.currentValue;
 
-            this.modelingSubmissionService.getSubmission(currentPlagiarismSubmission.submissionId).subscribe(
+            this.modelingSubmissionService.getSubmissionWithoutLock(currentPlagiarismSubmission.submissionId).subscribe(
                 (submission: ModelingSubmission) => {
                     this.loading = false;
                     this.submissionModel = JSON.parse(submission.model!) as UMLModel;

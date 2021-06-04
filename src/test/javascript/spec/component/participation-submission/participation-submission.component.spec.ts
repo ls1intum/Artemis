@@ -11,7 +11,7 @@ import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -26,13 +26,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -42,7 +42,12 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { Result } from 'app/entities/result.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,6 +57,14 @@ describe('ParticipationSubmissionComponent', () => {
     let fixture: ComponentFixture<ParticipationSubmissionComponent>;
     let participationService: ParticipationService;
     let submissionService: SubmissionService;
+    let textAssessmentService: TextAssessmentService;
+    let fileUploadAssessmentService: FileUploadAssessmentService;
+    let programmingAssessmentService: ProgrammingAssessmentManualResultService;
+    let modelingAssessmentService: ModelingAssessmentService;
+    let deleteFileUploadAssessmentStub: SinonStub;
+    let deleteModelingAssessmentStub: SinonStub;
+    let deleteTextAssessmentStub: SinonStub;
+    let deleteProgrammingAssessmentStub: SinonStub;
     let exerciseService: ExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
     let profileService: ProfileService;
@@ -61,6 +74,17 @@ describe('ParticipationSubmissionComponent', () => {
     const route = { params: of({ participationId: 1, exerciseId: 42 }) };
     // Template for Bitbucket commit hash url
     const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
+
+    const result1 = { id: 44 } as Result;
+    const result2 = { id: 45 } as Result;
+    const participation1 = { id: 66 } as Participation;
+    const submissionWithTwoResults = { id: 77, results: [result1, result2], participation: participation1 } as Submission;
+    const submissionWithTwoResults2 = { id: 78, results: [result1, result2], participation: participation1 } as Submission;
+
+    const programmingExercise1 = { id: 100, type: ExerciseType.PROGRAMMING } as Exercise;
+    const modelingExercise = { id: 100, type: ExerciseType.MODELING } as Exercise;
+    const fileUploadExercise = { id: 100, type: ExerciseType.FILE_UPLOAD } as Exercise;
+    const textExercise = { id: 100, type: ExerciseType.TEXT } as Exercise;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -90,10 +114,20 @@ describe('ParticipationSubmissionComponent', () => {
                 router = debugElement.injector.get(Router);
                 participationService = TestBed.inject(ParticipationService);
                 submissionService = TestBed.inject(SubmissionService);
+                textAssessmentService = TestBed.inject(TextAssessmentService);
+                modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
+                programmingAssessmentService = TestBed.inject(ProgrammingAssessmentManualResultService);
+                fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
+
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 findAllSubmissionsOfParticipationStub = stub(submissionService, 'findAllSubmissionsOfParticipation');
+
+                deleteFileUploadAssessmentStub = stub(fileUploadAssessmentService, 'deleteAssessment');
+                deleteProgrammingAssessmentStub = stub(programmingAssessmentService, 'deleteAssessment');
+                deleteModelingAssessmentStub = stub(modelingAssessmentService, 'deleteAssessment');
+                deleteTextAssessmentStub = stub(textAssessmentService, 'deleteAssessment');
                 // Set profile info
                 const profileInfo = new ProfileInfo();
                 profileInfo.commitHashURLTemplate = commitHashURLTemplate;
@@ -243,6 +277,109 @@ describe('ParticipationSubmissionComponent', () => {
         flush();
     }));
 
+    describe('should delete', () => {
+        beforeEach(() => {
+            deleteFileUploadAssessmentStub.returns(of({}));
+            deleteTextAssessmentStub.returns(of({}));
+            deleteModelingAssessmentStub.returns(of({}));
+            deleteProgrammingAssessmentStub.returns(of({}));
+            findAllSubmissionsOfParticipationStub.returns(of({ body: [submissionWithTwoResults] }));
+            stub(participationService, 'find').returns(of(new HttpResponse({ body: participation1 })));
+        });
+
+        afterEach(() => {
+            expect(comp.submissions?.length).to.be.equal(1);
+            expect(comp.submissions![0].results?.length).to.be.equal(1);
+            expect(comp.submissions![0].results![0]).to.be.deep.equal(result1);
+        });
+
+        it('should delete result of fileUploadSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: fileUploadExercise })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
+        it('should delete result of modelingSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: modelingExercise })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
+        it('should delete result of programmingSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise1 })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
+        it('should delete result of textSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: textExercise })));
+            fixture.detectChanges();
+            tick();
+            expect(findAllSubmissionsOfParticipationStub).to.have.been.called;
+            expect(comp.submissions![0].results![0].submission).to.be.deep.equal(submissionWithTwoResults);
+            comp.deleteResult(submissionWithTwoResults, result2);
+            tick();
+            fixture.destroy();
+            flush();
+        }));
+    });
+
+    describe('should handle failed delete', () => {
+        beforeEach(() => {
+            const error = { message: '400 error', error: { message: 'error.hasComplaint' } } as HttpErrorResponse;
+            deleteFileUploadAssessmentStub.returns(throwError(error));
+            deleteProgrammingAssessmentStub.returns(throwError(error));
+            deleteModelingAssessmentStub.returns(throwError(error));
+            deleteTextAssessmentStub.returns(throwError(error));
+            findAllSubmissionsOfParticipationStub.returns(of({ body: [submissionWithTwoResults2] }));
+            stub(participationService, 'find').returns(of(new HttpResponse({ body: participation1 })));
+        });
+
+        afterEach(() => {
+            expect(comp.submissions?.length).to.be.equal(1);
+            expect(comp.submissions![0].results?.length).to.be.equal(2);
+            expect(comp.submissions![0].results![0]).to.be.deep.equal(result1);
+        });
+
+        it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
+            const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
+            deleteFileUploadAssessmentStub.returns(throwError(error2));
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: fileUploadExercise })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
+        it('should not delete result of fileUploadSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: fileUploadExercise })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
+        it('should not delete result of modelingSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: modelingExercise })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
+        it('should not delete result of programmingSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: programmingExercise1 })));
+            deleteResult(submissionWithTwoResults, result2);
+            flush();
+        }));
+
+        it('should not delete result of textSubmission', fakeAsync(() => {
+            stub(exerciseService, 'find').returns(of(new HttpResponse({ body: textExercise })));
+            fixture.detectChanges();
+            tick();
+            expect(findAllSubmissionsOfParticipationStub).to.have.been.called;
+            expect(comp.submissions![0].results![0].submission).to.be.deep.equal(submissionWithTwoResults2);
+            comp.deleteResult(submissionWithTwoResults, result2);
+            tick();
+            fixture.destroy();
+            flush();
+        }));
+    });
+
     function checkForCorrectCommitHashUrl(submission: ProgrammingSubmission, programmingExercise: ProgrammingExercise, repoSlug: string) {
         const projectKey = programmingExercise.projectKey!.toLowerCase();
         const receivedCommitHashUrl = comp.getCommitUrl(submission);
@@ -251,5 +388,13 @@ describe('ParticipationSubmissionComponent', () => {
             .replace('{repoSlug}', projectKey + repoSlug)
             .replace('{commitHash}', submission.commitHash!);
         expect(receivedCommitHashUrl).to.equal(commitHashUrl);
+    }
+
+    function deleteResult(submission: Submission, resultToDelete: Result) {
+        fixture.detectChanges();
+        tick();
+        comp.deleteResult(submission, resultToDelete);
+        tick();
+        fixture.destroy();
     }
 });
