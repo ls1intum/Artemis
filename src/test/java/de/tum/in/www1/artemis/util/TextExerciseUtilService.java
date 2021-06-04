@@ -45,6 +45,24 @@ public class TextExerciseUtilService {
     }
 
     /**
+     * Generate a set of specified size containing TextBlocks with the the same text
+     * @param count expected size of TextBlock set
+     * @return Set of TextBlocks with identical texts
+     */
+    public Set<TextBlock> generateTextBlocksWithIdenticalTexts(int count) {
+        Set<TextBlock> textBlocks = new HashSet<>();
+        TextBlock textBlock;
+        String text = "TextBlock" + random.nextInt();
+
+        for (int i = 0; i < count; i++) {
+            textBlock = new TextBlock();
+            textBlock.setText(text);
+            textBlocks.add(textBlock);
+        }
+        return textBlocks;
+    }
+
+    /**
      * Create n TextClusters and randomly assign TextBlocks to new clusters.
      * @param textBlocks TextBlocks to fake cluster
      * @param clusterSizes Number of new clusters

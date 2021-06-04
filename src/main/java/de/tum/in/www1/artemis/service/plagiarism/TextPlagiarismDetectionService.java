@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,13 +17,15 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import jplag.*;
+import jplag.ExitException;
+import jplag.JPlag;
+import jplag.JPlagOptions;
+import jplag.JPlagResult;
 import jplag.options.LanguageOption;
 
 @Service
@@ -44,8 +46,8 @@ public class TextPlagiarismDetectionService {
      * Reduce a TextExercise Object to a list of latest text submissions. Filters the empty ones because they do not need to be compared
      *
      * @param exerciseWithParticipationsAndSubmissions TextExercise with fetched participations and submissions
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
-     * @param minimumSize consider only submissions whose number of words is greater or equal to this value
+     * @param minimumScore                             consider only submissions whose score is greater or equal to this value
+     * @param minimumSize                              consider only submissions whose number of words is greater or equal to this value
      * @return List containing the latest text submission for every participation
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
@@ -64,10 +66,10 @@ public class TextPlagiarismDetectionService {
     /**
      * Download all submissions of the exercise, run JPlag, and return the result
      *
-     * @param textExercise to detect plagiarism for
+     * @param textExercise        to detect plagiarism for
      * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
-     * @param minimumScore consider only submissions whose score is greater or equal to this value
-     * @param minimumSize consider only submissions whose size is greater or equal to this value
+     * @param minimumScore        consider only submissions whose score is greater or equal to this value
+     * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
      * @throws ExitException is thrown if JPlag exits unexpectedly
      */
@@ -103,10 +105,13 @@ public class TextPlagiarismDetectionService {
             participation.setExercise(null);
             participation.setSubmissions(null);
 
-            String studentLogin = participation.getStudent().map(User::getLogin).orElse("unknown");
+            String participantIdentifier = participation.getParticipantIdentifier();
+            if (participantIdentifier == null) {
+                participantIdentifier = "unknown";
+            }
 
             try {
-                textSubmissionExportService.saveSubmissionToFile(submission, studentLogin, submissionsFolderName);
+                textSubmissionExportService.saveSubmissionToFile(submission, participantIdentifier, submissionsFolderName);
             }
             catch (IOException e) {
                 log.error(e.getMessage());

@@ -615,6 +615,17 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
+     * Get the result with the given id from the database. The result is loaded together with its feedback. Throws an EntityNotFoundException if no
+     * result could be found for the given id.
+     *
+     * @param resultId the id of the submission that should be loaded from the database
+     * @return the result with the given id
+     */
+    default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
+        return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", +resultId));
+    }
+
+    /**
      * Runs 'submitResult' for each result in the given list
      *
      * @param resultList the list of results

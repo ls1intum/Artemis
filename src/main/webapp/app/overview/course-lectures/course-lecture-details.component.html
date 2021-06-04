@@ -89,6 +89,6 @@
             </div>
         </div>
         <!-- LECTURE END -->
-        <router-outlet *ngIf="lecture && lecture.course?.studentQuestionsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>
+        <router-outlet *ngIf="lecture && lecture.course?.postsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>
     </div>
 </div>

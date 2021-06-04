@@ -373,7 +373,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
             assertThat(exercise.getAttachments()).isEmpty();
             assertThat(exercise.getCategories()).isEmpty();
             assertThat(exercise.getProblemStatement()).isNull();
-            assertThat(exercise.getStudentQuestions()).isEmpty();
+            assertThat(exercise.getPosts()).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getDifficulty()).isNull();
             assertThat(exercise.getMode()).isNull();
