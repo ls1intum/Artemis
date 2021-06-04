@@ -104,7 +104,7 @@ describe('TextAssessment Service', () => {
     it('should get feedback data for submission', fakeAsync(() => {
         const submissionId = 42;
         const returnedFromService = Object.assign({}, mockResponse);
-        const participationId = mockResponse.participation!.id;
+        const participationId = 42;
         service
             .getFeedbackDataForExerciseSubmission(participationId, submissionId)
             .pipe(take(1))

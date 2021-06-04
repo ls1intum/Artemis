@@ -190,7 +190,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.overrideBusy = true;
         this.assessmentsService
             .submit(
-                this.leftSubmission.latestResult!.participation!.id!,
+                this.leftSubmission!.latestResult!.participation!.id!,
                 this.leftSubmission!.latestResult!.id!,
                 this.leftSubmission!.latestResult!.feedbacks!,
                 this.textBlocksWithFeedbackForLeftSubmission,

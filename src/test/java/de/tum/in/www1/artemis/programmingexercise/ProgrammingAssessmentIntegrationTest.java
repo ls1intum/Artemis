@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.util.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
+import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -921,8 +921,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result firstSemiAutomaticResult = submission.getResults().get(3);
 
         Result lastResult = submission.getLatestResult();
-        // we will only delte the middle automatic result at index 2
-        request.delete("/api/programming-submissions/" + submission.getId() + "/delete/" + midResult.getId(), HttpStatus.OK);
+        // we will only delete the middle automatic result at index 2
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/delete/" + midResult.getId(),
+                HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(4);
         assertThat(submission.getResults().get(0)).isEqualTo(firstResult);
