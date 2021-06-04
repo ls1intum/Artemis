@@ -28,7 +28,7 @@ describe('BuildPlanLinkDirective', () => {
     let debugElement: DebugElement;
     let profileService: ProfileService;
     let getProfileInfoStub: SinonStub;
-    let profileInfoSubject: BehaviorSubject<ProfileInfo | null>;
+    let profileInfoSubject: BehaviorSubject<ProfileInfo>;
 
     const profileInfo = { buildPlanURLTemplate: 'https://some.url.com/plans/{buildPlanId}/path/{projectKey}' } as ProfileInfo;
 
@@ -47,7 +47,7 @@ describe('BuildPlanLinkDirective', () => {
 
                 getProfileInfoStub = stub(profileService, 'getProfileInfo');
 
-                profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
+                profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo);
                 getProfileInfoStub.returns(profileInfoSubject);
             });
     });
