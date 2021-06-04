@@ -518,4 +518,8 @@ public class UserTestService {
         User userInDB = userRepository.findOneByLogin("student1").get();
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
     }
+
+    public UserRepository getUserRepository() {
+        return userRepository;
+    }
 }

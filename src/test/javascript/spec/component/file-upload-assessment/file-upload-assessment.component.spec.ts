@@ -24,7 +24,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -54,7 +54,7 @@ describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
     let fixture: ComponentFixture<FileUploadAssessmentComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
-    let fileUploadAssessmentsService: FileUploadAssessmentsService;
+    let fileUploadAssessmentService: FileUploadAssessmentService;
     let accountService: AccountService;
     let complaintService: ComplaintService;
     let getFileUploadSubmissionForExerciseWithoutAssessmentStub: SinonStub;
@@ -112,7 +112,7 @@ describe('FileUploadAssessmentComponent', () => {
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 // The TestBed only knows about it's providers and the component has it's own injector, so the component's service needs to be injected by
                 // getting the injector.
-                fileUploadAssessmentsService = fixture.componentRef.injector.get(FileUploadAssessmentsService);
+                fileUploadAssessmentService = fixture.componentRef.injector.get(FileUploadAssessmentService);
                 accountService = TestBed.inject(AccountService);
                 complaintService = TestBed.inject(ComplaintService);
                 alertService = TestBed.inject(JhiAlertService);
@@ -329,7 +329,7 @@ describe('FileUploadAssessmentComponent', () => {
             changedResult.feedbacks = [feedback];
             changedResult.hasFeedback = true;
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentsService, 'saveAssessment').returns(of(changedResult));
+            stub(fileUploadAssessmentService, 'saveAssessment').returns(of(changedResult));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
@@ -355,7 +355,7 @@ describe('FileUploadAssessmentComponent', () => {
             changedResult.feedbacks = [feedback];
             changedResult.hasFeedback = true;
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentsService, 'saveAssessment').returns(throwError(errorResponse));
+            stub(fileUploadAssessmentService, 'saveAssessment').returns(throwError(errorResponse));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
@@ -381,7 +381,7 @@ describe('FileUploadAssessmentComponent', () => {
         const changedResult = cloneDeep(initResult);
         changedResult.feedbacks = [feedback, feedback];
         stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-        stub(fileUploadAssessmentsService, 'saveAssessment').returns(of(changedResult));
+        stub(fileUploadAssessmentService, 'saveAssessment').returns(of(changedResult));
         comp.submission = submission;
         setLatestSubmissionResult(comp.submission, initResult);
 
@@ -408,7 +408,7 @@ describe('FileUploadAssessmentComponent', () => {
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback, feedback];
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentsService, 'updateAssessmentAfterComplaint').returns(of({ body: changedResult } as EntityResponseType));
+            stub(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').returns(of({ body: changedResult } as EntityResponseType));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
@@ -443,7 +443,7 @@ describe('FileUploadAssessmentComponent', () => {
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback, feedback];
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentsService, 'updateAssessmentAfterComplaint').returns(throwError(errorResponse));
+            stub(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').returns(throwError(errorResponse));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
@@ -477,7 +477,7 @@ describe('FileUploadAssessmentComponent', () => {
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback, feedback];
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
-            stub(fileUploadAssessmentsService, 'updateAssessmentAfterComplaint').returns(throwError(errorResponse));
+            stub(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').returns(throwError(errorResponse));
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
@@ -602,7 +602,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     it('should cancel the current assessment', () => {
         const windowFake = sinon.fake.returns(true);
-        const cancelAssessmentStub = stub(fileUploadAssessmentsService, 'cancelAssessment').returns(of());
+        const cancelAssessmentStub = stub(fileUploadAssessmentService, 'cancelAssessment').returns(of());
         sinon.replace(window, 'confirm', windowFake);
 
         comp.submission = {
