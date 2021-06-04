@@ -31,7 +31,7 @@ public abstract class Posting extends DomainObject {
     private ZonedDateTime creationDate;
 
     @Lob
-    @Column(name = "content", length = 1000)
+    @Column(name = "content")
     private String content;
 
     // To be used with introduction of METIS
