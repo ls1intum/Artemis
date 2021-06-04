@@ -14,6 +14,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import * as moment from 'moment';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 
 describe('ModelingExercise Service', () => {
     let injector: TestBed;
@@ -25,7 +26,7 @@ describe('ModelingExercise Service', () => {
     const categories = [JSON.stringify(category) as ExerciseCategory];
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisModelingExerciseModule, HttpClientTestingModule, RouterTestingModule.withRoutes(routes)],
+            imports: [ArtemisModelingExerciseModule, HttpClientTestingModule, RouterTestingModule.withRoutes(routes), ArtemisTextExerciseModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

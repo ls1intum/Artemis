@@ -2,7 +2,8 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Example Submission Editor"
+                "title": "Example Submissions Board",
+                "editor": "Example Submission Editor"
             },
             "assessScore": {
                 "success": "Congratulations! This is a good assessment!",
@@ -14,10 +15,10 @@
             "readSuccessfully": "You have read the grading instructions, you can now start reviewing the example submission",
             "createNew": "Create new",
             "pageHeader": "Example Text Submission for Exercise",
-            "usedForTutorial": "Tutors need to assess this submission",
+            "usedForTutorial": "Tutors need to review this submission",
             "createNewSubmission": "Create new submission",
-            "editSampleSolution": "Edit sample submission",
-            "updateSampleSolution": "Update sample submission",
+            "editExampleSubmission": "Edit example submission",
+            "updateExampleSubmission": "Update example submission",
             "problemStatement": "Problem Statement",
             "sampleSolution": "Example Solution",
             "exampleAssessment": "Example Assessment",
@@ -29,6 +30,7 @@
             "submitAssessment": "Submit Assessment",
             "readAndUnderstood": "I have read and understood the example",
             "exampleSubmission": "Example Submission",
+            "exampleSubmissions": "Example Submissions",
             "assessmentInstruction": "Double-click on a model element to view and edit the element's assessment.",
             "deleted": "Example submission deleted successfully",
             "assessmentExplanation": "Explanation",

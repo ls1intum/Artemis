@@ -24,6 +24,16 @@
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
     </a>
 
+    <!-- Example Submission -->
+    <a
+        *ngIf="exercise.isAtLeastEditor && (exercise.type == 'modeling' || exercise.type == 'text')"
+        [routerLink]="['/course-management', courseId, exercise.type! + '-exercises', exercise.id, 'example-submissions']"
+        class="btn btn-success btn-sm mr-1"
+    >
+        <fa-icon [icon]="'book'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
+    </a>
+
     <!-- Export submissions -->
     <jhi-exercise-submission-export *ngIf="exercise.isAtLeastInstructor" [exerciseId]="exercise.id!" [exerciseType]="exercise.type!" class="mr-1"></jhi-exercise-submission-export>
 
