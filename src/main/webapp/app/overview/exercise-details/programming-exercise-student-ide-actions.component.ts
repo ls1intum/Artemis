@@ -118,13 +118,13 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     }
 
     get canImport(): boolean {
-        const notOpenedOrNotStudent = this.ideState.view != ExerciseView.STUDENT || this.ideState.opened !== this.exercise.id;
+        const notOpenedOrNotStudent = this.ideState.view !== ExerciseView.STUDENT || this.ideState.opened !== this.exercise.id;
 
         return this.hasInitializedParticipation() && notOpenedOrNotStudent;
     }
 
     get canSubmit(): boolean {
-        const openedAndStudent = this.ideState.view == ExerciseView.STUDENT && this.ideState.opened === this.exercise.id;
+        const openedAndStudent = this.ideState.view === ExerciseView.STUDENT && this.ideState.opened === this.exercise.id;
 
         return this.hasInitializedParticipation() && openedAndStudent;
     }

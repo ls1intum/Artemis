@@ -30,7 +30,7 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming-e
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    readonly ExerciseView = ExerciseView
+    readonly ExerciseView = ExerciseView;
     readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
     orionState: OrionState;

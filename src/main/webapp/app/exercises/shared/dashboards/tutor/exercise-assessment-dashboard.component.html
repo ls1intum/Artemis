@@ -22,7 +22,8 @@
             >
             </jhi-tutor-participation-graph>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-6 align-self-center"
+        <div
+            class="col-lg-3 col-md-6 col-sm-6 align-self-center"
             *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
         >
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
@@ -163,7 +164,10 @@
     </div>
 
     <div class="d-flex" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED || isTestRun">
-        <div *ngIf="!isOrionAndProgramming || (orionState.opened === exercise.id && orionState.view === ExerciseView.TUTOR) else orionStartButton" class="guided-tour-exercise-dashboard-table flex-grow-1">
+        <div
+            *ngIf="!isOrionAndProgramming || (orionState.opened === exercise.id && orionState.view === ExerciseView.TUTOR); else orionStartButton"
+            class="guided-tour-exercise-dashboard-table flex-grow-1"
+        >
             <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS && !isTestRun" class="alert alert-warning row" role="alert">
                 <span
                     jhiTranslate="artemisApp.exerciseAssessmentDashboard.totalExampleSubmissions"
@@ -302,7 +306,7 @@
                                     <jhi-language-table-cell *ngIf="exercise.type === ExerciseType.TEXT" [submission]="submission"></jhi-language-table-cell>
                                     <td>
                                         <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
-                                            <ng-container *ngIf="!isOrionAndProgramming else orionOpenButton">
+                                            <ng-container *ngIf="!isOrionAndProgramming; else orionOpenButton">
                                                 <button
                                                     *ngIf="submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'; else continueButton"
                                                     (click)="openAssessmentEditor(submission, correctionRound)"
@@ -327,7 +331,12 @@
                                                 <jhi-ide-button
                                                     class="btn btn-sm"
                                                     [buttonLoading]="orionState.cloning"
-                                                    buttonLabel="{{ (submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'? 'artemisApp.exerciseAssessmentDashboard.orion.continueAssessment' : 'artemisApp.exerciseAssessmentDashboard.orion.openAssessment' ) | artemisTranslate }}"
+                                                    buttonLabel="{{
+                                                        (submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'
+                                                            ? 'artemisApp.exerciseAssessmentDashboard.orion.continueAssessment'
+                                                            : 'artemisApp.exerciseAssessmentDashboard.orion.openAssessment'
+                                                        ) | artemisTranslate
+                                                    }}"
                                                     (click)="downloadSubmissionInOrion(submission, correctionRound)"
                                                 >
                                                 </jhi-ide-button>

@@ -14,13 +14,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import {
-    getLatestSubmissionResult,
-    getSubmissionResultByCorrectionRound,
-    setLatestSubmissionResult,
-    Submission,
-    SubmissionExerciseType,
-} from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -62,7 +56,7 @@ export interface ExampleSubmissionQueryParams {
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
-    readonly ExerciseView = ExerciseView
+    readonly ExerciseView = ExerciseView;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -122,7 +116,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
-    orionState: OrionState
+    orionState: OrionState;
     isOrionAndProgramming = false;
 
     stats = {
@@ -260,7 +254,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
 
-                this.isOrionAndProgramming = isOrion && this.exercise.type === ExerciseType.PROGRAMMING
+                this.isOrionAndProgramming = isOrion && this.exercise.type === ExerciseType.PROGRAMMING;
 
                 // load the guided tour step only after everything else on the page is loaded
                 this.guidedTourService.componentPageLoaded();
@@ -627,8 +621,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param submission submission to send to Orion
      * @param correctionRound correction round
      */
-    async downloadSubmissionInOrion(submission: Submission | 'new', correctionRound: number = 0) {
-        await this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound)
+    async downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
+        await this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound);
     }
 
     /**
