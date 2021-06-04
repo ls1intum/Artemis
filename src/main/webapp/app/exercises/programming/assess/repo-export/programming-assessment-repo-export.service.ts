@@ -10,6 +10,7 @@ export type RepositoryExportOptions = {
     filterLateSubmissionsDate?: Moment;
     addParticipantName: boolean;
     combineStudentCommits: boolean;
+    anonymizeStudentCommits: boolean;
     normalizeCodeStyle: boolean;
     hideStudentNameInZippedFolder: boolean;
 };
