@@ -228,14 +228,23 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             if (this.readOnly || this.toComplete) {
                 await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
-                await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
+                await this.router.navigate([
+                    '/course-management',
+                    courseId,
+                    'exams',
+                    examId,
+                    'exercise-groups',
+                    exerciseGroupId,
+                    'text-exercises',
+                    this.exerciseId,
+                    'example-submissions',
+                ]);
             }
         } else {
             if (this.readOnly || this.toComplete) {
                 this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
-                await this.router.navigate(['/course-management', courseId, 'text-exercises']);
-                this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'edit']);
+                this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
             }
         }
     }
