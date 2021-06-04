@@ -35,6 +35,14 @@
     }
 }
 
+.feedback-text {
+    p {
+        display: inline;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+}
+
 .result-score-chart {
     margin-bottom: 1em;
 
