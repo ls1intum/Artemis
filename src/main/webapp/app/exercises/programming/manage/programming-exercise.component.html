@@ -89,7 +89,7 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                     <td>{{ programmingExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
-                    <td *ngIf="!isOrion" class="d-flex flex-column">
+                    <td *ngIf="!isOrion">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
