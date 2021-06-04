@@ -68,7 +68,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
-    hasMultipleCorrectionRounds = true;
+    hasSecondCorrectionAndStarted: boolean;
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
@@ -101,7 +101,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
                     this.examScoreDTO = getExamScoresResponse!.body!;
                     if (this.examScoreDTO) {
-                        this.hasMultipleCorrectionRounds = this.examScoreDTO.hasMultipleCorrectionRounds;
+                        this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
 
@@ -365,13 +365,20 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const studentPointsSubmitted: number[] = [];
         const studentPointsTotal: number[] = [];
 
+        const studentPointsPassedInFirstCorrectionRound: number[] = [];
+        const studentPointsSubmittedInFirstCorrectionRound: number[] = [];
+        const studentPointsTotalInFirstCorrectionRound: number[] = [];
+
         // Collect student points independent from the filter settings
         for (const studentResult of this.studentResults) {
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
+            studentPointsTotalInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrectionRound!);
             if (studentResult.submitted) {
                 studentPointsSubmitted.push(studentResult.overallPointsAchieved!);
+                studentPointsSubmittedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrectionRound!);
                 if (studentResult.hasPassed) {
                     studentPointsPassed.push(studentResult.overallPointsAchieved!);
+                    studentPointsPassedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrectionRound!);
                 }
             }
         }
@@ -389,6 +396,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 examStatistics.meanGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
                 examStatistics.medianGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
             }
+            if (this.hasSecondCorrectionAndStarted) {
+                examStatistics.meanPointsPassedInFirstCorrection = SimpleStatistics.mean(studentPointsPassedInFirstCorrectionRound);
+                examStatistics.medianPassedInFirstCorrection = SimpleStatistics.median(studentPointsPassedInFirstCorrectionRound);
+                examStatistics.standardDeviationPassedInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsPassedInFirstCorrectionRound);
+                if (this.examScoreDTO.maxPoints) {
+                    examStatistics.meanPointsRelativePassedInFirstCorrection = (examStatistics.meanPointsPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.medianRelativePassedInFirstCorrection = (examStatistics.medianPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.meanGradePassedInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.meanPointsRelativePassedInFirstCorrection,
+                    )!.gradeName;
+                    examStatistics.medianGradePassedInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.medianRelativePassedInFirstCorrection,
+                    )!.gradeName;
+                }
+            }
         }
         // Calculate statistics for submitted exams
         if (studentPointsSubmitted.length) {
@@ -402,6 +426,25 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (this.gradingScaleExists) {
                     examStatistics.meanGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelative)!.gradeName;
                     examStatistics.medianGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelative)!.gradeName;
+                }
+            }
+            if (this.hasSecondCorrectionAndStarted) {
+                examStatistics.meanPointsInFirstCorrection = SimpleStatistics.mean(studentPointsSubmittedInFirstCorrectionRound);
+                examStatistics.medianInFirstCorrection = SimpleStatistics.median(studentPointsSubmittedInFirstCorrectionRound);
+                examStatistics.standardDeviationInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsSubmittedInFirstCorrectionRound);
+                if (this.examScoreDTO.maxPoints) {
+                    examStatistics.meanPointsRelativeInFirstCorrection = (examStatistics.meanPointsInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.medianRelativeInFirstCorrection = (examStatistics.medianInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    if (this.gradingScaleExists) {
+                        examStatistics.meanGradeInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.meanPointsRelativeInFirstCorrection,
+                        )!.gradeName;
+                        examStatistics.medianGradeInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.medianRelativeInFirstCorrection,
+                        )!.gradeName;
+                    }
                 }
             }
         }
@@ -420,6 +463,25 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         examStatistics.meanPointsRelativeTotal,
                     )!.gradeName;
                     examStatistics.medianGradeTotal = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
+                }
+            }
+            if (this.hasSecondCorrectionAndStarted) {
+                examStatistics.meanPointsTotalInFirstCorrection = SimpleStatistics.mean(studentPointsTotalInFirstCorrectionRound);
+                examStatistics.medianTotalInFirstCorrection = SimpleStatistics.median(studentPointsTotalInFirstCorrectionRound);
+                examStatistics.standardDeviationTotalInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsTotalInFirstCorrectionRound);
+                if (this.examScoreDTO.maxPoints) {
+                    examStatistics.meanPointsRelativeTotalInFirstCorrection = (examStatistics.meanPointsTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.medianRelativeTotalInFirstCorrection = (examStatistics.medianTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    if (this.gradingScaleExists) {
+                        examStatistics.meanGradeTotalInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.meanPointsRelativeTotalInFirstCorrection,
+                        )!.gradeName;
+                        examStatistics.medianGradeTotalInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.medianRelativeTotalInFirstCorrection,
+                        )!.gradeName;
+                    }
                 }
             }
         }

@@ -62,22 +62,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 hoverBackgroundColor: colors,
                 barPercentage: 0.75,
             },
-            {
-                data: this.standardDeviation,
-                backgroundColor: 'rgba(219, 53, 69, 0.3)',
-                borderColor: 'rgba(219, 53, 69, 0.3)',
-                hoverBackgroundColor: 'rgba(219, 53, 69, 0.3)',
-                barPercentage: 0.75,
-            },
-            {
-                data: this.standardDeviation,
-                backgroundColor: 'rgba(40, 167, 69, 0.3)',
-                borderColor: 'rgba(40, 167, 69, 0.3)',
-                hoverBackgroundColor: 'rgba(40, 167, 69, 0.3)',
-                barPercentage: 0.75,
-            },
         ];
-        console.log();
     }
 
     private createCharts() {

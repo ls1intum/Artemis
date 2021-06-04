@@ -3,7 +3,7 @@ export class ExamScoreDTO {
     public title: string;
     public maxPoints: number;
     public averagePointsAchieved: number;
-    public hasMultipleCorrectionRounds: boolean;
+    public hasSecondCorrectionAndStarted: boolean;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
 
@@ -37,6 +37,7 @@ export class StudentResult {
     public registrationNumber: string;
     public overallPointsAchieved?: number;
     public overallScoreAchieved?: number;
+    public overallPointsAchievedInFirstCorrectionRound?: number;
     public overallGrade?: string;
     public hasPassed?: boolean;
     public submitted: boolean;
@@ -63,8 +64,6 @@ export class AggregatedExamResult {
     public meanPointsRelative: number;
     public meanPointsTotal: number;
     public meanPointsRelativeTotal: number;
-    public meanPointsFirstCorrectionTotal = 1;
-    public meanPointsFirstCorrectionRelative = 1;
     public meanGradePassed?: string;
     public meanGrade?: string;
     public meanGradeTotal?: string;
@@ -74,18 +73,38 @@ export class AggregatedExamResult {
     public medianRelative: number;
     public medianTotal: number;
     public medianRelativeTotal: number;
-    public medianFirstCorrectionTotal = 1;
-    public medianFirstCorrectionRelative = 1;
     public medianGradePassed?: string;
     public medianGrade?: string;
     public medianGradeTotal?: string;
     public standardDeviationPassed?: number;
     public standardDeviation: number;
     public standardDeviationTotal: number;
-    public standardDeviationFirstCorrectionTotal = 1;
     public noOfExamsFilteredForPassed = 0;
     public noOfExamsFiltered = 0;
     public noOfRegisteredUsers = 0;
+
+    // same for first correction round
+    public meanPointsPassedInFirstCorrection?: number;
+    public meanPointsRelativePassedInFirstCorrection?: number;
+    public meanPointsInFirstCorrection: number;
+    public meanPointsRelativeInFirstCorrection: number;
+    public meanPointsTotalInFirstCorrection: number;
+    public meanPointsRelativeTotalInFirstCorrection: number;
+    public meanGradePassedInFirstCorrection?: string;
+    public meanGradeInFirstCorrection?: string;
+    public meanGradeTotalInFirstCorrection?: string;
+    public medianPassedInFirstCorrection?: number;
+    public medianRelativePassedInFirstCorrection?: number;
+    public medianInFirstCorrection: number;
+    public medianRelativeInFirstCorrection: number;
+    public medianTotalInFirstCorrection: number;
+    public medianRelativeTotalInFirstCorrection: number;
+    public medianGradePassedInFirstCorrection?: string;
+    public medianGradeInFirstCorrection?: string;
+    public medianGradeTotalInFirstCorrection?: string;
+    public standardDeviationPassedInFirstCorrection?: number;
+    public standardDeviationInFirstCorrection: number;
+    public standardDeviationTotalInFirstCorrection: number;
 
     constructor() {}
 }
@@ -108,7 +127,6 @@ export class AggregatedExerciseGroupResult {
         this.title = title;
         this.maxPoints = maxPoints;
         this.totalParticipants = totalParticipants;
-        this.standardDeviation = 10;
     }
 }
 
@@ -128,6 +146,5 @@ export class AggregatedExerciseResult {
         this.title = title;
         this.maxPoints = maxPoints;
         this.totalParticipants = totalParticipants;
-        this.standardDeviation = 10;
     }
 }
