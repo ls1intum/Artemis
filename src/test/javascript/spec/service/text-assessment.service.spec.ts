@@ -82,7 +82,7 @@ describe('TextAssessment Service', () => {
     });
 
     it('should not parse jwt from header', fakeAsync(() => {
-        service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
+        service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {
             expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBeUndefined();
         });
 
@@ -92,7 +92,7 @@ describe('TextAssessment Service', () => {
     }));
 
     it('should parse jwt from header', fakeAsync(() => {
-        service.getFeedbackDataForExerciseSubmission(1).subscribe((studentParticipation) => {
+        service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {
             expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toEqual('12345');
         });
 
@@ -104,12 +104,16 @@ describe('TextAssessment Service', () => {
     it('should get feedback data for submission', fakeAsync(() => {
         const submissionId = 42;
         const returnedFromService = Object.assign({}, mockResponse);
+        const participationId = mockResponse.participation.id;
         service
-            .getFeedbackDataForExerciseSubmission(submissionId)
+            .getFeedbackDataForExerciseSubmission(participationId, submissionId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(mockResponse.submissions[0].results[0].feedbacks));
 
-        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-submissions/${submissionId}/for-assessment?correction-round=0`, method: 'GET' });
+        const req = httpMock.expectOne({
+            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?correction-round=0`,
+            method: 'GET',
+        });
         req.flush(returnedFromService);
         tick();
     }));
@@ -117,6 +121,7 @@ describe('TextAssessment Service', () => {
     it('should get conflicting text submissions', fakeAsync(() => {
         const submissionId = 42;
         const feedbackId = 42;
+        const participationId = 42;
         const submission = {
             id: 1,
             submitted: true,
@@ -142,17 +147,21 @@ describe('TextAssessment Service', () => {
         ];
         const returnedFromService = [...[submission]];
         service
-            .getConflictingTextSubmissions(submissionId, feedbackId)
+            .getConflictingTextSubmissions(participationId, submissionId, feedbackId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual([submission]));
 
-        const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`, method: 'GET' });
+        const req = httpMock.expectOne({
+            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`,
+            method: 'GET',
+        });
         req.flush(returnedFromService);
         tick();
     }));
 
     it('should solve feedback conflicts', fakeAsync(() => {
-        const exerciseId = 1;
+        const participationId = 1;
+        const submissionId = 1;
         const feedbackConflict = {
             id: 1,
             conflict: false,
@@ -162,12 +171,12 @@ describe('TextAssessment Service', () => {
         } as unknown as FeedbackConflict;
         const returnedFromService = Object.assign({}, feedbackConflict);
         service
-            .solveFeedbackConflict(exerciseId, feedbackConflict.id!)
+            .solveFeedbackConflict(participationId, submissionId, feedbackConflict.id!)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(feedbackConflict));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercise/${exerciseId}/feedback-conflict/${feedbackConflict.id}/solve`,
+            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/feedback-conflicts/${feedbackConflict.id}/solve`,
             method: 'POST',
         });
         req.flush(returnedFromService);

@@ -609,5 +609,5 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findOneWithEagerSubmissionAndFeedback(long resultId) {
         return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + resultId + "\" does not exist"));
-    }
+    };
 }

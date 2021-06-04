@@ -189,7 +189,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
     public void createExampleTextAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
         database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        final Result exampleResult = request.get("/api/exercise/" + textExercise.getId() + "/submission/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
+        final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
                 HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);

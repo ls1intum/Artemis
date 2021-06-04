@@ -102,7 +102,8 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         await super.ngOnInit();
         if (!this.leftSubmission) {
             const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
-            const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
+            const participationId = Number(this.activatedRoute.snapshot.paramMap.get('participationId'));
+            const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId).toPromise();
             this.leftSubmission = participation.submissions![0];
             setLatestSubmissionResult(this.leftSubmission, getLatestSubmissionResult(this.leftSubmission));
             this.exercise = participation.exercise as TextExercise;
@@ -188,7 +189,12 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         this.overrideBusy = true;
         this.assessmentsService
-            .submit(this.exercise!.id!, this.leftSubmission!.latestResult!.id!, this.leftSubmission!.latestResult!.feedbacks!, this.textBlocksWithFeedbackForLeftSubmission)
+            .submit(
+                this.leftSubmission.latestResult!.participation!.id!,
+                this.leftSubmission!.latestResult!.id!,
+                this.leftSubmission!.latestResult!.feedbacks!,
+                this.textBlocksWithFeedbackForLeftSubmission,
+            )
             .subscribe(
                 (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
                 (error: HttpErrorResponse) => this.handleError(error),
@@ -228,7 +234,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         }
 
         this.markBusy = true;
-        this.assessmentsService.solveFeedbackConflict(this.exercise!.id!, feedbackConflictId).subscribe(
+        this.assessmentsService.solveFeedbackConflict(this.submission!.participation!.id!, this.submission!.id!, feedbackConflictId).subscribe(
             (response) => this.handleSolveConflictsSuccessWithAlert(response, 'artemisApp.textAssessment.solveFeedbackConflictSuccessful'),
             (error) => this.handleSolveConflictsError(error),
         );
