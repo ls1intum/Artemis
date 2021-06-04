@@ -26,9 +26,7 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
@@ -45,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -99,6 +98,10 @@ public class GitService {
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
+
+    private static final String ANONYMIZED_STUDENT_NAME = "student";
+
+    private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
     public GitService(FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
@@ -713,7 +716,7 @@ public class GitService {
             String commitHash;
 
             if (lastValidSubmission.isPresent()) {
-                log.debug("Last valid submission for participation {} is {}", lastValidSubmission.get().getParticipation().getId(), lastValidSubmission.get().toString());
+                log.debug("Last valid submission for participation {} is {}", lastValidSubmission.get().getParticipation().getId(), lastValidSubmission.get());
                 ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) lastValidSubmission.get();
                 commitHash = programmingSubmission.getCommitHash();
             }
@@ -746,8 +749,9 @@ public class GitService {
      *
      * @param repository          Local Repository Object.
      * @param programmingExercise ProgrammingExercise associated with this repo.
+     * @param overwriteMain       If false keeps main and creates squash commit in seperate branch, if true squashes main
      */
-    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteMain) {
         try {
             Git studentGit = new Git(repository);
             setRemoteUrl(repository);
@@ -763,8 +767,10 @@ public class GitService {
             // flush cache of files
             repository.setContent(null);
 
-            // checkout own local "diff" branch
-            studentGit.checkout().setCreateBranch(true).setName("diff").call();
+            // checkout own local "diff" branch to keep main as is
+            if (!overwriteMain) {
+                studentGit.checkout().setCreateBranch(true).setName("diff").call();
+            }
 
             studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
             studentGit.add().addFilepattern(".").call();
@@ -775,6 +781,81 @@ public class GitService {
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+        }
+        finally {
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
+        }
+    }
+
+    /**
+     * Removes all author information from the commits on the currently active branch.
+     * Also removes all remotes since they contain data about the student.
+     * Also deletes the .git/logs folder to prevent restoring commits from reflogs
+     *
+     * @param repository          Local Repository Object.
+     * @param programmingExercise ProgrammingExercise associated with this repo.
+     */
+    public void anonymizeStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
+        try {
+            Git studentGit = new Git(repository);
+            setRemoteUrl(repository);
+            String copyBranchName = "copy";
+            String headName = "HEAD";
+
+            // Get last commit hash from template repo
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
+
+            if (latestHash == null) {
+                // Template Repository is somehow empty. Should never happen
+                log.debug("Cannot find a commit in the template repo for: {}", repository.getLocalPath());
+                return;
+            }
+
+            // Create copy branch
+            Ref copyBranch = studentGit.branchCreate().setName(copyBranchName).call();
+            // Reset main branch back to template
+            studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestHash)).call();
+
+            // Get list of all student commits, that is all commits up to the last template commit
+            Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
+            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestHash)).collect(Collectors.toList());
+            // Sort them oldest to newest
+            Collections.reverse(commitList);
+            // Cherry-Pick all commits back into the main branch and immediately commit amend anonymized author information
+            for (RevCommit commit : commitList) {
+                ObjectId head = studentGit.getRepository().resolve(headName);
+                studentGit.cherryPick().include(commit).call();
+                // Only commit amend if head changed; cherry-picking empty commits does nothing
+                if (!head.equals(studentGit.getRepository().resolve(headName))) {
+                    PersonIdent authorIdent = commit.getAuthorIdent();
+                    PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
+                    studentGit.commit().setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
+                }
+            }
+            // Delete copy branch
+            studentGit.branchDelete().setBranchNames(copyBranchName).setForce(true).call();
+
+            // Delete all remotes
+            for (RemoteConfig remote : studentGit.remoteList().call()) {
+                studentGit.remoteRemove().setRemoteName(remote.getName()).call();
+                // Manually delete remote tracking branches since JGit apparently fails to do so
+                for (Ref ref : studentGit.getRepository().getRefDatabase().getRefs()) {
+                    if (ref.getName().startsWith("refs/remotes/" + remote.getName())) {
+                        RefUpdate update = studentGit.getRepository().updateRef(ref.getName());
+                        update.setForceUpdate(true);
+                        update.delete();
+                    }
+                }
+            }
+
+            // Delete .git/logs/ folder to delete git reflogs
+            Path logsPath = Paths.get(repository.getDirectory().getPath(), "logs");
+            FileUtils.deleteDirectory(logsPath.toFile());
+        }
+        catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
+            log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -949,6 +1030,7 @@ public class GitService {
 
     /**
      * delete the folder in the file system that contains all repositories for the given programming exercise
+     *
      * @param programmingExercise contains the project key which is used as the folder name
      */
     public void deleteLocalProgrammingExerciseReposFolder(ProgrammingExercise programmingExercise) {
@@ -968,7 +1050,7 @@ public class GitService {
      * Zip the content of a git repository that contains a participation.
      *
      * @param repo            Local Repository Object.
-     * @param repositoryDir      path where the repo is located on disk
+     * @param repositoryDir   path where the repo is located on disk
      * @param hideStudentName option to hide the student name for the zip file
      * @return path to zip file.
      * @throws IOException if the zipping process failed.
@@ -1000,9 +1082,9 @@ public class GitService {
     /**
      * Zips the contents of a git repository.
      *
-     * @param repository The repository
+     * @param repository    The repository
      * @param zipFilename   the name of the zipped file
-     * @param repositoryDir    path where the repo is located on disk
+     * @param repositoryDir path where the repo is located on disk
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */

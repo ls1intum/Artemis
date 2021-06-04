@@ -31,11 +31,11 @@
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.UPDATE" (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto">
                         <fa-icon [icon]="'save'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.updateSampleSolution' | artemisTranslate }}
+                        {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                     </button>
                     <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
                         <fa-icon [icon]="'edit'"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.editSampleSolution' | artemisTranslate }}
+                        {{ 'artemisApp.exampleSubmission.editExampleSubmission' | artemisTranslate }}
                     </button>
                 </ng-container>
 
