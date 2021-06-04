@@ -19,6 +19,7 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
+import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 
 @NgModule({
     imports: [
@@ -39,6 +40,7 @@ import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/s
         ExerciseDetailsModule,
         ArtemisMarkdownModule,
         NonProgrammingExerciseDetailCommonActionsModule,
+        ExampleSubmissionsModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],
