@@ -637,7 +637,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
 
-
         var submissions = database.getAllSubmissionsOfExercise(exercise);
         Submission submission1 = submissions.get(0);
         Submission submission2 = submissions.get(1);
