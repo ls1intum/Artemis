@@ -852,7 +852,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         gradingCriteria.remove(1);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=false", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=false", textExercise, TextExercise.class,
+                HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -874,7 +875,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         gradingCriteria.remove(0);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=true", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=true", textExercise, TextExercise.class,
+                HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria().size()).isEqualTo(1);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(0);

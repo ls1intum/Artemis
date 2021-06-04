@@ -21,7 +21,6 @@ import java.util.zip.ZipFile;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;

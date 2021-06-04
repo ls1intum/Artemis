@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
@@ -444,7 +444,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         gradingCriteria.remove(1);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedbacks=false", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedbacks=false", fileUploadExercise,
+                FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -466,7 +467,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         gradingCriteria.remove(0);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedbacks=true", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedbacks=true", fileUploadExercise,
+                FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().size()).isEqualTo(1);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(0);

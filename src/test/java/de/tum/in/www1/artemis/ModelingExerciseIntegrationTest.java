@@ -610,7 +610,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         gradingCriteria.remove(1);
         createdModelingExercise.setGradingCriteria(gradingCriteria);
 
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=false", createdModelingExercise, ModelingExercise.class, HttpStatus.OK);
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=false", createdModelingExercise,
+                ModelingExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
         assertThat(updatedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -633,7 +634,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         gradingCriteria.remove(0);
         createdModelingExercise.setGradingCriteria(gradingCriteria);
 
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=true", createdModelingExercise, ModelingExercise.class, HttpStatus.OK);
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=true", createdModelingExercise,
+                ModelingExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
         assertThat(updatedModelingExercise.getGradingCriteria().size()).isEqualTo(1);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
