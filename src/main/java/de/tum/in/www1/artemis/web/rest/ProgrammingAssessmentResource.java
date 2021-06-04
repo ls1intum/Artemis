@@ -208,10 +208,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * @param resultId     - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/programming-submissions/{submissionId}/delete/{resultId}")
+    @DeleteMapping("/participations/{participationId}/programming-submissions/{submissionId}/delete/{resultId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteAssessment(@PathVariable Long submissionId, @PathVariable Long resultId) {
-        return super.deleteAssessment(submissionId, resultId);
+    public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
+        return super.deleteAssessment(participationId, submissionId, resultId);
     }
 
     @Override

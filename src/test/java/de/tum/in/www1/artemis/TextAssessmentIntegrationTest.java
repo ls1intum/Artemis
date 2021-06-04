@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.util.FileUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -1310,7 +1309,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(submission.getResults().size()).isEqualTo(2);
         Result firstResult = submission.getResults().get(0);
         Result lastResult = submission.getLatestResult();
-        request.delete("/api/text-assessments/text-submissions/" + submission.getId() + "/delete/" + firstResult.getId(), HttpStatus.OK);
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/results/" + firstResult.getId(), HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(1);
         assertThat(submission.getResults().get(0)).isEqualTo(lastResult);

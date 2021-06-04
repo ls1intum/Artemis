@@ -4,12 +4,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -212,12 +209,15 @@ public abstract class AssessmentResource {
         return ResponseEntity.ok().build();
     }
 
-    protected ResponseEntity<Void> deleteAssessment(Long submissionId, Long resultId) {
+    protected ResponseEntity<Void> deleteAssessment(Long participationId, Long submissionId, Long resultId) {
         log.info("REST request by user: {} to delete result {}", userRepository.getUser().getLogin(), resultId);
         // check authentication
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (!studentParticipation.getId().equals(participationId)) {
+            return badRequest("participationId", "400", "participationId in path doesnt match the id of the participation to submission " + submissionId + " !");
+        }
         Exercise exercise = exerciseRepository.findByIdElseThrow(studentParticipation.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
