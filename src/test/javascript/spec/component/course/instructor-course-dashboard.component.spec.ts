@@ -65,7 +65,7 @@ describe('InstructorCourseDashboardComponent', () => {
         presentationScore: 0,
         registrationEnabled: false,
         requestMoreFeedbackEnabled: true,
-        studentQuestionsEnabled: true,
+        postsEnabled: true,
     } as Course;
     const course = { id: 10, exercises: [textExercise, modelingExercise] } as Course;
     const user = { id: 99, name: 'admin' } as User;

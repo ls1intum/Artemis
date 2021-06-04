@@ -53,7 +53,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a *ngIf="course.studentQuestionsEnabled" [routerLink]="['/course-management', course.id, 'questions']">
+                                <a *ngIf="course.postsEnabled" [routerLink]="['/course-management', course.id, 'posts']">
                                     <b>{{ 'artemisApp.instructorCourseDashboard.questionsAndAnswers' | artemisTranslate }}</b>
                                 </a>
                             </li>

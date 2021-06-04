@@ -45,6 +45,7 @@ import { ModelingExerciseGroupCellComponent } from './exercise-groups/modeling-e
 import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
+import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -72,6 +73,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisTutorParticipationGraphModule,
         ArtemisExamParticipantScoresModule,
         ArtemisTextSubmissionAssessmentModule,
+        ExampleSubmissionsModule,
     ],
     declarations: [
         ExamManagementComponent,

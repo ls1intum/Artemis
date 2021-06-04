@@ -4,9 +4,12 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -207,5 +210,23 @@ public abstract class AssessmentResource {
         }
         assessmentService.cancelAssessmentOfSubmission(submission);
         return ResponseEntity.ok().build();
+    }
+
+    protected ResponseEntity<Void> deleteAssessment(Long submissionId, Long resultId) {
+        log.info("REST request by user: {} to delete result {}", userRepository.getUser().getLogin(), resultId);
+        // check authentication
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
+        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(studentParticipation.getExercise().getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
+        if (!submission.getResults().contains(result)) {
+            throw new BadRequestAlertException("The specified result does not belong to the submission.", "Result", "invalidResultId");
+        }
+        // delete assessment
+        assessmentService.deleteAssessment(submission, result);
+
+        return ok();
     }
 }

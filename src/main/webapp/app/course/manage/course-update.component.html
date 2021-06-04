@@ -274,15 +274,13 @@
                     />
                 </div>
                 <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="studentQuestionsEnabled" id="field_studentQuestionsEnabled" formControlName="studentQuestionsEnabled" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.studentQuestionsEnabled.title" for="field_studentQuestionsEnabled"
-                        >Enable Questions and Answers</label
-                    >
+                    <input type="checkbox" class="form-check-input" name="postsEnabled" id="field_postsEnabled" formControlName="postsEnabled" />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.postsEnabled.title" for="field_postsEnabled">Enable Questions and Answers</label>
                     <fa-icon
                         [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
-                        ngbTooltip="{{ 'artemisApp.course.studentQuestionsEnabled.description' | artemisTranslate }}"
+                        ngbTooltip="{{ 'artemisApp.course.postsEnabled.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
                 <div class="form-check" *ngIf="!this.course.registrationEnabled">

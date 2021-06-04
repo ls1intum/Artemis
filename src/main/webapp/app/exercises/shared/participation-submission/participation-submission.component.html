@@ -72,6 +72,20 @@
                             [showGradedBadge]="!isTmpOrSolutionProgrParticipation"
                             [showTestDetails]="isTmpOrSolutionProgrParticipation"
                         ></jhi-result>
+                        <span
+                            class="badge"
+                            style="border-radius: 0px"
+                            jhiDeleteButton
+                            [buttonSize]="buttonSizeSmall"
+                            [actionType]="actionTypeEmpty"
+                            [entityTitle]="'deleteResultButton'"
+                            deleteQuestion="artemisApp.result.delete.question2"
+                            (delete)="deleteResult(result.submission, result)"
+                            [dialogError]="dialogError$"
+                        >
+                            <fa-icon [icon]="'times'"></fa-icon>
+                            {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
+                        </span>
                     </div>
                 </div>
             </ng-template>
