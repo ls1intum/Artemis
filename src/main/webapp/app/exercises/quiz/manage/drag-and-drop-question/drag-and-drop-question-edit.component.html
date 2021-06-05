@@ -144,7 +144,6 @@
             <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
                 <div class="custom-file">
                     <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)" />
-                    <label class="custom-file-label overflow-ellipsis" for="backgroundFileInput{{ questionIndex }}">{{ backgroundFileName }}</label>
                 </div>
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
@@ -300,7 +299,6 @@
                         (change)="setDragItemFile($event)"
                         placeholder="Upload file..."
                     />
-                    <label class="custom-file-label overflow-ellipsis" for="dragItemFileInput{{ questionIndex }}">{{ dragItemFileName }}</label>
                 </div>
             </div>
             <ng-container *ngIf="!reEvaluationInProgress">
