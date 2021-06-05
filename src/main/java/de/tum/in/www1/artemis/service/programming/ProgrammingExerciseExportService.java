@@ -470,6 +470,11 @@ public class ProgrammingExerciseExportService {
         }
     }
 
+    /**
+     * delete all files in the directory based on the given programming exercise and target path
+     * @param programmingExercise the programming exercise for which repos have been downloaded
+     * @param targetPath the path in which the repositories have been downloaded
+     */
     public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
         Path projectPath = Paths.get(targetPath, projectDirName);
