@@ -138,8 +138,8 @@ public class Post extends Posting {
         else if (getExercise() != null) {
             return getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
-        else if (getCourse() != null) {
-            return getCourse();
+        else if (course != null) {
+            return course;
         }
         return null;
     }
