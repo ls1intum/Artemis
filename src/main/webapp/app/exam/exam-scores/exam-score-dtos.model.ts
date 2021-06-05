@@ -37,7 +37,7 @@ export class StudentResult {
     public registrationNumber: string;
     public overallPointsAchieved?: number;
     public overallScoreAchieved?: number;
-    public overallPointsAchievedInFirstCorrectionRound?: number;
+    public overallPointsAchievedInFirstCorrection?: number;
     public overallGrade?: string;
     public hasPassed?: boolean;
     public submitted: boolean;

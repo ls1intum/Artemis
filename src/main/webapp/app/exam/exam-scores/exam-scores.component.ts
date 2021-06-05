@@ -372,13 +372,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         // Collect student points independent from the filter settings
         for (const studentResult of this.studentResults) {
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
-            studentPointsTotalInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrectionRound!);
+            studentPointsTotalInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
             if (studentResult.submitted) {
                 studentPointsSubmitted.push(studentResult.overallPointsAchieved!);
-                studentPointsSubmittedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrectionRound!);
+                studentPointsSubmittedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
                 if (studentResult.hasPassed) {
                     studentPointsPassed.push(studentResult.overallPointsAchieved!);
-                    studentPointsPassedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrectionRound!);
+                    studentPointsPassedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
                 }
             }
         }

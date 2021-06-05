@@ -55,10 +55,10 @@
                     <th>
                         {{ 'artemisApp.examScores.totalColumn' | artemisTranslate }}
                     </th>
-                    <th style="border-left: 1px solid" *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus">
+                    <th style="border-left: 3px solid grey" *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus">
                         {{ 'artemisApp.examScores.firstCorrectionRoundPassedColumn' | artemisTranslate }}
                     </th>
-                    <th *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '1px solid' } : {}">
+                    <th *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
                         {{ 'artemisApp.examScores.firstCorrectionRoundSubmittedColumn' | artemisTranslate }}
                     </th>
                     <th *ngIf="hasSecondCorrectionAndStarted">
@@ -72,7 +72,7 @@
                     <td *ngIf="gradingScaleExists && !isBonus">{{ aggregatedExamResults.noOfExamsFilteredForPassed }}</td>
                     <td>{{ aggregatedExamResults.noOfExamsFiltered }}</td>
                     <td>{{ aggregatedExamResults.noOfRegisteredUsers }}</td>
-                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus"></td>
+                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey"></td>
                     <td *ngIf="hasSecondCorrectionAndStarted"></td>
                     <td *ngIf="hasSecondCorrectionAndStarted"></td>
                 </tr>
@@ -93,7 +93,7 @@
                         ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal, 2, 2) : '-' }}
                         %)
                     </td>
-                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus">
+                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey">
                         {{
                             aggregatedExamResults.meanPointsPassedInFirstCorrection !== null
                                 ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsPassedInFirstCorrection, 2, 2)
@@ -140,7 +140,7 @@
                     <td *ngIf="!isBonus">{{ aggregatedExamResults.meanGradePassed !== null ? aggregatedExamResults.meanGradePassed : '-' }}</td>
                     <td>{{ aggregatedExamResults.meanGrade !== null ? aggregatedExamResults.meanGrade : '-' }}</td>
                     <td>{{ aggregatedExamResults.meanGradeTotal !== null ? aggregatedExamResults.meanGradeTotal : '-' }}</td>
-                    <td *ngIf="hasSecondCorrectionAndStarted && !isBonus">
+                    <td *ngIf="hasSecondCorrectionAndStarted && !isBonus" style="border-left: 3px solid lightgrey">
                         {{ aggregatedExamResults.meanGradePassedInFirstCorrection !== null ? aggregatedExamResults.meanGradePassedInFirstCorrection : '-' }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
@@ -167,7 +167,7 @@
                         ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal, 2, 2) : '-' }}
                         %)
                     </td>
-                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus">
+                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey">
                         {{
                             aggregatedExamResults.medianPassedInFirstCorrection !== null
                                 ? roundAndPerformLocalConversion(aggregatedExamResults.medianPassedInFirstCorrection, 2, 2)
@@ -210,7 +210,7 @@
                     <td *ngIf="!isBonus">{{ aggregatedExamResults.medianGradePassed !== null ? aggregatedExamResults.medianGradePassed : '-' }}</td>
                     <td>{{ aggregatedExamResults.medianGrade !== null ? aggregatedExamResults.medianGrade : '-' }}</td>
                     <td>{{ aggregatedExamResults.medianGradeTotal !== null ? aggregatedExamResults.medianGradeTotal : '-' }}</td>
-                    <td *ngIf="!isBonus && hasSecondCorrectionAndStarted">
+                    <td *ngIf="!isBonus && hasSecondCorrectionAndStarted" style="border-left: 3px solid lightgrey">
                         >{{ aggregatedExamResults.medianGradePassedInFirstCorrection !== null ? aggregatedExamResults.medianGradePassedInFirstCorrection : '-' }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
@@ -227,7 +227,7 @@
                     </td>
                     <td>{{ aggregatedExamResults.standardDeviation !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviation, 2, 2) : '-' }}</td>
                     <td>{{ aggregatedExamResults.standardDeviationTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationTotal, 2, 2) : '-' }}</td>
-                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus">
+                    <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey">
                         {{
                             aggregatedExamResults.standardDeviationPassedInFirstCorrection !== null
                                 ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationPassedInFirstCorrection, 2, 2)
