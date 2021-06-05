@@ -189,7 +189,8 @@
                     "results": "The existing results must be recalculated!",
                     "confirmtext": "Do you really want to perform these changes?"
                 }
-            }
+            },
+            "isUsedForTutorial": "Tutor needs to review"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",
