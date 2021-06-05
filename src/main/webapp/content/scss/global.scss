@@ -830,6 +830,11 @@ ngb-tooltip-window {
     }
 }
 
+/* Bootstrap 5 specific fix for flickering tooltips */
+.tooltip {
+    pointer-events: none;
+}
+
 /* ==========================================================================
     HACK: Workaround an angular 12 bug where the css precedence changes,
     causing all columns in a row to have 'width: 100%'
