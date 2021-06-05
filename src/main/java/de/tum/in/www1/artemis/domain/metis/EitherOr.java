@@ -13,7 +13,10 @@ import jakarta.validation.Payload;
 @Constraint(validatedBy = { EitherOrValidator.class })
 public @interface EitherOr {
 
-    String message() default "A post can only be linked to either an exercise context, a lecture context or a coursewide context ";
+    /**
+     * @return message that is shown in case of violation
+     */
+    String message() default "A post can only be linked to either an exercise context, a lecture context or a course-wide context ";
 
     Class<?>[] groups() default {};
 
