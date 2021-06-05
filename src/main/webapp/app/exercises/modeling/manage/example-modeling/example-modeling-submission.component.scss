@@ -1,5 +1,6 @@
 .editor-container-outer {
     min-width: 0; // prevent the min-width of the editor from pushing the instructions out the right side of the screen when resizing
+    flex: 0 0 90%;
 }
 
 .editor-container-inner {
