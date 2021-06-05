@@ -226,7 +226,7 @@
                                 />
                             </div>
                         </div>
-                        <div class="form-group" *ngIf="!isExamMode">
+                        <div class="form-select" *ngIf="!isExamMode">
                             <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
                             <select
                                 *ngIf="showDropdown === 'isOpenForPractice'"
@@ -242,7 +242,7 @@
                             </select>
                             <select
                                 *ngIf="showDropdown === 'isVisibleBeforeStart'"
-                                class="form-control"
+                                class="form-select"
                                 [(ngModel)]="quizExercise.isVisibleBeforeStart"
                                 (ngModelChange)="cacheValidation()"
                                 title="status"
@@ -354,7 +354,7 @@
             <div class="form-group question-options existing-question-container">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
-                    <select class="form-control ms-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
+                    <select class="form-select ms-5" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="flex: 1">
                         <option *ngFor="let course of courses" [value]="course.id">{{ course.title }}</option>
                     </select>
                 </div>
@@ -439,7 +439,7 @@
             <div class="form-group question-options existing-question-container">
                 <div class="existing-question-select-course w-100">
                     <span jhiTranslate="artemisApp.quizExercise.selectExam" class="font-weight-bold align-middle"></span>
-                    <select class="form-control ms-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
+                    <select class="form-select ms-5" [(ngModel)]="selectedExamId" (change)="onExamSelect()" style="flex: 1">
                         <option *ngFor="let exam of exams" [value]="exam.id">{{ exam.title }}</option>
                     </select>
                 </div>
