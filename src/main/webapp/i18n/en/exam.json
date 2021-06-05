@@ -111,7 +111,9 @@
             "registered": "Registered Students",
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
-            "firstCorrectionRound": "first correction",
+            "firstCorrectionRoundPassedColumn": "First correction passed",
+            "firstCorrectionRoundSubmittedColumn": "First correction submitted",
+            "firstCorrectionRoundTotalColumn": "First correction total",
             "totalColumn": "Total",
             "noScores": "No average"
         },
