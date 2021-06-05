@@ -199,6 +199,7 @@
                 "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "addTeamOrStudentName": "Namen der Teams/Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "combineStudentCommits": "Alle Änderungen von Studierenden in einem Commit zusammenfassen (um das Review zu vereinfachen)",
+                "anonymizeStudentCommits": "Alle Änderungen von Studierenden anonymisieren",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen."

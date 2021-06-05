@@ -17,7 +17,8 @@
             "error": {
                 "fail": "<strong>Registrierung fehlgeschlagen!</strong> Bitte versuche es später nochmal.",
                 "userexists": "<strong>Username bereits vergeben!</strong> Bitte wähle einen anderen aus.",
-                "emailexists": "<strong>E-Mail wird bereits verwendet!</strong> Bitte wähle eine andere aus."
+                "emailexists": "<strong>E-Mail wird bereits verwendet!</strong> Bitte wähle eine andere aus.",
+                "blocked": "<strong>Die Registrierung für die E-Mail bzw. den Usernamen ist gesperrt!</strong> Bitte versuche es später noch einmal."
             }
         }
     }
