@@ -63,7 +63,7 @@
                     <td>{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a
                                 *ngIf="modelingExercise.isAtLeastTutor"

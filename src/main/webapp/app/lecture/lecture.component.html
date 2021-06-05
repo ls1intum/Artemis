@@ -37,7 +37,7 @@
                             <a [routerLink]="['..']">{{ lecture.course?.title }}</a>
                         </div>
                     </td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">

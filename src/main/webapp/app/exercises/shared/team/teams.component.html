@@ -126,7 +126,7 @@
 
                 <ngx-datatable-column prop="" [minWidth]="220" [width]="220" [maxWidth]="220">
                     <ng-template ngx-datatable-cell-template let-value="row">
-                        <div class="w-100 text-right">
+                        <div class="w-100 text-end">
                             <jhi-team-update-button
                                 *ngIf="exercise.isAtLeastInstructor || value.owner?.id === currentUser.id"
                                 [exercise]="exercise"

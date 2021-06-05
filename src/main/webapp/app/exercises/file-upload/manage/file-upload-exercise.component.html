@@ -54,7 +54,7 @@
                     <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a
                                 *ngIf="fileUploadExercise.isAtLeastTutor"

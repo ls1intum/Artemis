@@ -93,7 +93,7 @@
                         </span>
                     </td>
 
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <a *ngIf="isAtLeastInstructor" [routerLink]="[exam.id]" class="btn btn-info btn-sm me-1 mb-1" id="checklist-button-{{ exam.id }}">
                                 <fa-icon [icon]="'th-list'"></fa-icon>

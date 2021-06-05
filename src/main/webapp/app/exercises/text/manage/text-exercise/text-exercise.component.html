@@ -62,7 +62,7 @@
                     <td>{{ textExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(textExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ textExercise.presentationScoreEnabled }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <jhi-text-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise"></jhi-text-exercise-row-buttons>
                     </td>
                 </tr>
