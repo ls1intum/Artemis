@@ -25,11 +25,17 @@ public class GradeStep extends DomainObject {
     @Column(name = "lower_bound_percentage")
     private double lowerBoundPercentage;
 
+    @Column(name = "lower_bound_points")
+    private double lowerBoundPoints;
+
     @Column(name = "lower_bound_inclusive")
     private boolean lowerBoundInclusive = true; // default
 
     @Column(name = "upper_bound_percentage")
     private double upperBoundPercentage;
+
+    @Column(name = "upper_bound_points")
+    private double upperBoundPoints;
 
     @Column(name = "upper_bound_inclusive")
     private boolean upperBoundInclusive = false; // default
@@ -56,6 +62,14 @@ public class GradeStep extends DomainObject {
         this.lowerBoundPercentage = lowerBoundPercentage;
     }
 
+    public double getLowerBoundPoints() {
+        return lowerBoundPoints;
+    }
+
+    public void setLowerBoundPoints(double lowerBoundPoints) {
+        this.lowerBoundPoints = lowerBoundPoints;
+    }
+
     public boolean isLowerBoundInclusive() {
         return lowerBoundInclusive;
     }
@@ -70,6 +84,14 @@ public class GradeStep extends DomainObject {
 
     public void setUpperBoundPercentage(double upperBoundPercentage) {
         this.upperBoundPercentage = upperBoundPercentage;
+    }
+
+    public double getUpperBoundPoints() {
+        return upperBoundPoints;
+    }
+
+    public void setUpperBoundPoints(double upperBoundPoints) {
+        this.upperBoundPoints = upperBoundPoints;
     }
 
     public boolean isUpperBoundInclusive() {
