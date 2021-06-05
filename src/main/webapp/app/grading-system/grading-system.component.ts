@@ -4,9 +4,10 @@ import { GradeStep } from 'app/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
 import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Observable, Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
+import { Observable, of, Subject } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { catchError, finalize } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-grading-system',
@@ -26,8 +27,9 @@ export class GradingSystemComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
     notFound = false;
     isLoading = false;
+    invalidGradeStepsMessage?: string;
 
-    constructor(private gradingSystemService: GradingSystemService, private route: ActivatedRoute) {}
+    constructor(private gradingSystemService: GradingSystemService, private route: ActivatedRoute, private translateService: TranslateService) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -51,6 +53,7 @@ export class GradingSystemComponent implements OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                catchError(() => of(new HttpResponse<GradingScale>({ status: 404 }))),
             )
             .subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
@@ -118,12 +121,70 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Checks if the currently entered grade steps are valid based on multiple criteria:
+     * - there must be at least one grade step
+     * - all fields must be filled out
+     * - the percentage values must lie between 0 and 100 (both inclusive)
+     * - the bonus bonus points are at least 0 if the scale is of BONUS type
+     * - the max and min % of adjacent grade steps overlap
+     * - the first grade step begins at 0% and the last ends at 100%
+     */
+    validGradeSteps(): boolean {
+        if (!this.gradingScale || this.gradingScale.gradeSteps.length === 0) {
+            this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.empty');
+            return false;
+        }
+        // check if any of the fields are empty
+        for (const gradeStep of this.gradingScale.gradeSteps) {
+            if (gradeStep.gradeName === '' || gradeStep.gradeName === null || gradeStep.lowerBoundPercentage === null || gradeStep.upperBoundPercentage === null) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.emptyFields');
+                return false;
+            }
+        }
+        // check if any of the fields have invalid percentages
+        for (const gradeStep of this.gradingScale.gradeSteps) {
+            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.upperBoundPercentage > 100 || gradeStep.lowerBoundPercentage > gradeStep.upperBoundPercentage) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
+                return false;
+            }
+        }
+        // check if when the grade type is BONUS the bonus points are at least 0
+        if (!this.isGradeType()) {
+            for (const gradeStep of this.gradingScale.gradeSteps) {
+                if (isNaN(Number(gradeStep.gradeName)) || Number(gradeStep.gradeName) < 0) {
+                    this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBonusPoints');
+                    return false;
+                }
+            }
+        }
+        // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
+        let sortedGradeSteps: GradeStep[] = [];
+        this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
+        sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
+        // check if grade steps have valid adjacency
+        for (let i = 0; i < sortedGradeSteps.length - 1; i++) {
+            if (sortedGradeSteps[i].upperBoundPercentage !== sortedGradeSteps[i + 1].lowerBoundPercentage) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidAdjacency');
+                return false;
+            }
+        }
+        // check if first and last grade step are valid
+        if (sortedGradeSteps[0].lowerBoundPercentage !== 0 || sortedGradeSteps[sortedGradeSteps.length - 1].upperBoundPercentage !== 100) {
+            this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
+            return false;
+        }
+        this.invalidGradeStepsMessage = undefined;
+        return true;
+    }
+
     private handleSaveObservable(saveObservable: Observable<EntityResponseType>) {
         saveObservable
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
             )
             .subscribe((gradingSystemResponse) => {
                 this.handleSaveResponse(gradingSystemResponse.body!);
@@ -164,6 +225,7 @@ export class GradingSystemComponent implements OnInit {
     handleDeleteObservable(deleteObservable: Observable<EntityResponseType>) {
         deleteObservable
             .pipe(
+                catchError(() => of(new HttpResponse<GradingScale>({ status: 400 }))),
                 finalize(() => {
                     this.isLoading = false;
                 }),
