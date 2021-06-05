@@ -1661,7 +1661,8 @@ public class CourseTestService {
         feedbackUpdate.feedbacks(feedbackListForMoreFeedback).complaintResponse(feedbackResponse);
         feedbackUpdate.setTextBlocks(new HashSet<>());
 
-        request.putWithResponseBody("/api/text-submissions/" + result2.getSubmission().getId() + "/assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
+                + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
         // API call
         var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
