@@ -4,7 +4,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 
 @Component({
     selector: 'jhi-language-table-cell',
-    template: '<span>{{ \'artemisApp.exerciseAssessmentDashboard.languages.\' + (textSubmission.language || \'UNKNOWN\') | artemisTranslate }}</span>',
+    template: "<span>{{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (textSubmission.language || 'UNKNOWN') | artemisTranslate }}</span>",
 })
 export class LanguageTableCellComponent {
     textSubmission: TextSubmission;
