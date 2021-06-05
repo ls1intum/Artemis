@@ -190,7 +190,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.overrideBusy = true;
         this.assessmentsService
             .submit(
-                this.leftSubmission!.latestResult!.participation!.id!,
+                this.leftSubmission!.latestResult!.participation?.id!,
                 this.leftSubmission!.latestResult!.id!,
                 this.leftSubmission!.latestResult!.feedbacks!,
                 this.textBlocksWithFeedbackForLeftSubmission,
@@ -234,7 +234,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         }
 
         this.markBusy = true;
-        this.assessmentsService.solveFeedbackConflict(this.submission!.participation!.id!, this.submission!.id!, feedbackConflictId).subscribe(
+        this.assessmentsService.solveFeedbackConflict(this.submission?.participation!.id!, this.submission?.id!, feedbackConflictId).subscribe(
             (response) => this.handleSolveConflictsSuccessWithAlert(response, 'artemisApp.textAssessment.solveFeedbackConflictSuccessful'),
             (error) => this.handleSolveConflictsError(error),
         );

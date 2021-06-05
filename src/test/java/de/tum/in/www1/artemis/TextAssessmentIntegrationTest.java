@@ -862,7 +862,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 textAssessmentDTO, Result.class, HttpStatus.OK);
 
         Participation participation2ndRequest = request.get(
-                "/api/participations/" + textSubmission.getParticipation().getId() + "submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
+                "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
                 Participation.class, params);
         TextSubmission submission2ndRequest = (TextSubmission) (participation2ndRequest).getSubmissions().iterator().next();
         var blocksFrom2ndRequest = submission2ndRequest.getBlocks();

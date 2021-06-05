@@ -318,7 +318,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     editSubmission(): void {
-        this.assessmentsService.deleteExampleFeedback(this.exerciseId, this.exampleSubmission?.id!).subscribe();
+        this.assessmentsService.deleteExampleFeedback(this.exercise!.id!, this.exampleSubmission?.id!).subscribe();
         delete this.submission?.blocks;
         delete this.result?.feedbacks;
         this.textBlockRefs = [];

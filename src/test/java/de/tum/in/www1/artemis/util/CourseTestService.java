@@ -1642,7 +1642,8 @@ public class CourseTestService {
         assessmentUpdate.feedbacks(feedbackListForComplaint).complaintResponse(complaintResponse);
         assessmentUpdate.setTextBlocks(new HashSet<>());
 
-        request.putWithResponseBody("/api/text-submissions/" + result1.getSubmission().getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
+                + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
 
         // Feedback request
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
