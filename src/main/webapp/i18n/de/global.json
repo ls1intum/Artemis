@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Artemis",
-        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
+        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Bedienbarkeit zu verbessern.",
         "generic": {
             "yes": "Ja",
             "no": "Nein",
@@ -83,11 +83,11 @@
             "admin": {
                 "main": "Server-Administration",
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
-                "userManagement": "Benutzerverwaltung",
+                "userManagement": "Userverwaltung",
                 "organizationManagement": "Organisationsverwaltung",
                 "systemNotifications": "Systemmitteilungen",
                 "featureToggles": "Feature Toggles",
-                "statistics": "Benutzerstatistiken",
+                "statistics": "Userstatistiken",
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
@@ -104,12 +104,12 @@
             "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
-            "username": "Benutzername",
+            "username": "Username",
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "username.placeholder": "Benutzername",
+            "username.placeholder": "Username",
             "currentpassword": "Aktuelles Passwort",
             "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
@@ -127,7 +127,7 @@
                 "authenticated": {
                     "prefix": "Wenn du dich ",
                     "link": "melde",
-                    "suffix": " möchtest, versuche es mit <br>- Administration (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                    "suffix": " möchtest, versuche es mit <br>- Administration (Name=\"admin\" und Passwort=\"admin\")<br>- User (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
                     "noaccount": "Du hast noch keinen Zugang?",
@@ -279,7 +279,7 @@
         "url.not.found": "Nicht gefunden",
         "NotNull": "Feld {{fieldName}} kann nicht leer sein!",
         "Size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Voraussetzungen!",
-        "userexists": "Benutzername bereits vergeben!",
+        "userexists": "Username bereits vergeben!",
         "emailexists": "E-Mail wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "invalid.template.build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",

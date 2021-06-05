@@ -9,7 +9,7 @@
             "500": "Interner Serverfehler."
         },
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
-        "concurrencyFailure": "Ein anderer Benutzer hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
+        "concurrencyFailure": "Ein anderer User hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnistext ist zu lange (max. 255 Zeichen)",

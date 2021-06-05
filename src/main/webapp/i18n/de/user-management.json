@@ -1,18 +1,18 @@
 {
     "userManagement": {
         "home": {
-            "title": "Benutzer",
-            "createLabel": "Neuen Benutzer erstellen",
-            "createOrEditLabel": "Benutzer erstellen oder bearbeiten"
+            "title": "User",
+            "createLabel": "Neuen User erstellen",
+            "createOrEditLabel": "User erstellen oder bearbeiten"
         },
-        "created": "Ein neuer Benutzer wurde mit ID {{ param }} erstellt",
-        "updated": "Ein Benutzer mit ID {{ param }} wurde geändert",
-        "deleted": "Ein Benutzer mit ID {{ param }} wurde gelöscht",
+        "created": "Ein neuer User wurde mit ID {{ param }} erstellt",
+        "updated": "Ein User mit ID {{ param }} wurde geändert",
+        "deleted": "Ein User mit ID {{ param }} wurde gelöscht",
         "delete": {
-            "question": "Soll der Benutzer <strong>{{ title }}</strong> wirklich gelöscht werden?"
+            "question": "Soll der User <strong>{{ title }}</strong> wirklich gelöscht werden?"
         },
         "detail": {
-            "title": "Benutzer"
+            "title": "User"
         },
         "login": "Login",
         "firstName": "Vorname",
@@ -24,7 +24,7 @@
         "groups": "Gruppen",
         "addGroup": "+ Gruppe",
         "enterGroup": "Gruppe eingeben",
-        "organizations": "Benutzer Organisationen",
+        "organizations": "User Organisationen",
         "email": "E-Mail",
         "activated": "Aktiv",
         "deactivated": "Deaktiviert",

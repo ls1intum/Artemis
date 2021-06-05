@@ -63,7 +63,7 @@
                 "all": "Alle Teams",
                 "own": "Eigene Teams"
             },
-            "missingUserNameOrId": "Studierende müssen entweder einen Benutzernamen oder eine Matrikelnummer haben.",
+            "missingUserNameOrId": "Studierende müssen entweder einen Usernamen oder eine Matrikelnummer haben.",
             "noStudentsAddedYet": "Noch keine Studierenden hinzugefügt.",
             "addStudentToTeam": "Studierende zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
@@ -74,7 +74,7 @@
             "errors": {
                 "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }.",
                 "registrationNumbersNotFound": "Studierende mit folgenden Matrikelnummern konnten nicht gefunden werden: {{ registrationNumbers }}",
-                "loginsNotFound": "Studierende mit folgenden Benutzernamen konnten nicht gefunden werden: {{ logins }}",
+                "loginsNotFound": "Studierende mit folgenden Usernamen konnten nicht gefunden werden: {{ logins }}",
                 "studentsWithoutRegistrationNumbers": "Folgende Studierende haben keine Matrikelnummern: {{ students }}",
                 "studentsAppearMultipleTimes": "Folgende Studierende erscheinen mehrmals in importierten Teams: {{ students }}",
                 "importFailed": "Team-Import Fehlgeschlagen! Ungültige Team-Datei."
