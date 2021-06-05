@@ -13,7 +13,6 @@
                     [isExamExercise]="false"
                 ></jhi-non-programming-exercise-detail-common-actions>
 
-
                 <a
                     *ngIf="modelingExercise.isAtLeastTutor && modelingExercise.course"
                     [routerLink]="['/course-management', modelingExercise.course!.id!, 'modeling-exercises', modelingExercise.id!, 'exercise-statistics']"

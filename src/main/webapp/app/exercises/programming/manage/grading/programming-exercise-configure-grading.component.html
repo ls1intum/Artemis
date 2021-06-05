@@ -193,11 +193,7 @@
                     <div>
                         <h2 class="mb-5">
                             <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
-                            <span
-                                *ngIf="!!changedTestCaseIds.length"
-                                class="badge bg-primary"
-                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
-                            ></span>
+                            <span *ngIf="!!changedTestCaseIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                         </h2>
 
                         <jhi-test-case-distribution-chart
@@ -354,11 +350,7 @@
                     <div>
                         <h2 class="mb-5">
                             <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
-                            <span
-                                *ngIf="!!changedCategoryIds.length"
-                                class="badge bg-primary"
-                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
-                            ></span>
+                            <span *ngIf="!!changedCategoryIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                         </h2>
 
                         <jhi-sca-category-distribution-chart
