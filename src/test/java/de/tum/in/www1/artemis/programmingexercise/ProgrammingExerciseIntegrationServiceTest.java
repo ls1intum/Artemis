@@ -26,7 +26,9 @@ import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -57,6 +59,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -69,10 +72,12 @@ public class ProgrammingExerciseIntegrationServiceTest {
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
-    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    @Autowired
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
 
-    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    @Autowired
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UrlService urlService;
 
     @Autowired
@@ -99,7 +104,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
     @Autowired
     private RequestUtilService request;
 
-    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    @Autowired
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
 
     private Course course;
@@ -251,13 +257,39 @@ public class ProgrammingExerciseIntegrationServiceTest {
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Mock and pretend first commit is template commit
+        ObjectId head1 = localGit.getRepository().findRef("HEAD").getObjectId();
+        ObjectId head2 = localGit2.getRepository().findRef("HEAD").getObjectId();
+        // Each head has to be returned twice, once for combineStudentCommits and once for anonymizeStudentCommits
+        when(gitService.getLastCommitHash(any())).thenReturn(head1, head1, head2, head2).thenCallRealMethod();
+
+        // Add commit to anonymize
+        assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
+        localGit.add().addFilepattern(".").call();
+        localGit.commit().setMessage("commit").setAuthor("user1", "email1").call();
+
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
                 String.join(",", participationIds));
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
-        // TODO: unzip the files and add some checks
+
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+
+        // Checks
+        assertThat(entries.stream().anyMatch(entry -> entry.endsWith("Test.java"))).isTrue();
+        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
+        assertThat(extractedRepo1).isPresent();
+        try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
+            RevCommit latestCommit = downloadedGit.log().setMaxCount(1).call().iterator().next();
+            assertThat(latestCommit.getAuthorIdent().getName()).isEqualTo("student");
+            assertThat(latestCommit.getFullMessage()).isEqualTo("All student changes in one commit");
+        }
     }
 
     public void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
@@ -290,6 +322,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setFilterLateSubmissions(true);
         repositoryExportOptions.setCombineStudentCommits(true);
+        repositoryExportOptions.setAnonymizeStudentCommits(true);
         repositoryExportOptions.setAddParticipantName(true);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         return repositoryExportOptions;

@@ -485,7 +485,12 @@ public class ProgrammingExerciseExportService {
 
             if (repositoryExportOptions.isCombineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise);
+                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeStudentCommits());
+            }
+
+            if (repositoryExportOptions.isAnonymizeStudentCommits()) {
+                log.debug("Anonymizing commits for participation {}", participation);
+                gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
 
             if (repositoryExportOptions.isNormalizeCodeStyle()) {

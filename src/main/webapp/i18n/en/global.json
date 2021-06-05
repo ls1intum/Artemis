@@ -190,6 +190,7 @@
             "editInEditor": "Edit in editor",
             "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",
+            "exampleSubmissions": "Example submissions",
             "generate": "Generate",
             "open": "Open",
             "save": "Save",
