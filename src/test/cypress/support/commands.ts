@@ -31,7 +31,7 @@ export {};
 declare global {
     namespace Cypress {
         interface Chainable {
-            login(username: String, password: String, url?: String): string;
+            login(username: String, password: String, url?: String): any;
             logout(): any;
             loginWithGUI(username: String, password: String): any;
             createCourse(course: String): Chainable<Cypress.Response>;
@@ -42,9 +42,8 @@ declare global {
 
 /**
  * Logs in using API and sets authToken in Cypress.env
- * @return authToken returns the resulting authentication token
  * */
-Cypress.Commands.add('login', (username, password, url = '/') => {
+Cypress.Commands.add('login', (username, password, url) => {
     cy.request({
         url: '/api/authenticate',
         method: 'POST',
@@ -59,9 +58,10 @@ Cypress.Commands.add('login', (username, password, url = '/') => {
         .then((res) => {
             localStorage.setItem(authTokenKey, '"' + res.id_token + '"');
             Cypress.env(authTokenKey, res.id_token);
-            cy.visit(url);
-            return res.id_token;
         });
+    if (url) {
+        cy.visit(url);
+    }
 });
 
 /**

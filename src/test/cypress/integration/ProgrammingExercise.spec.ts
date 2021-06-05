@@ -39,18 +39,18 @@ describe('Programming exercise', () => {
     });
 
     it('Creates a new course, participates in it and deletes it afterwards', function () {
-        cy.login(adminUsername, adminPassword);
+        cy.login(adminUsername, adminPassword, '/');
         createTestCourse();
         cy.log('Created course. Adding a programming exercise...');
         openExercisesFromCourseManagement();
         createProgrammingExercise();
         addStudentToCourse();
         // Login as the student
-        cy.login(username, password);
+        cy.login(username, password, '/');
         startParticipationInProgrammingExercise();
         makeCodeSubmissionAndCheckResults();
         // Login is admin again
-        cy.login(adminUsername, adminPassword);
+        cy.login(adminUsername, adminPassword, '/');
         deleteProgrammingExercise();
         deleteCourse();
     });
