@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
@@ -59,6 +60,8 @@ public class ExerciseService {
     private final QuizScheduleService quizScheduleService;
 
     private final ExampleSubmissionService exampleSubmissionService;
+
+    private final ProgrammingAssessmentService programmingAssessmentService;
 
     private final TeamRepository teamRepository;
 
@@ -108,7 +111,7 @@ public class ExerciseService {
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository, ComplaintRepository complaintRepository,
             TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
-            FeedbackRepository feedbackRepository) {
+            FeedbackRepository feedbackRepository, ProgrammingAssessmentService programmingAssessmentService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -135,6 +138,7 @@ public class ExerciseService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.feedbackRepository = feedbackRepository;
+        this.programmingAssessmentService = programmingAssessmentService;
     }
 
     /**
@@ -840,6 +844,23 @@ public class ExerciseService {
 
         List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
         // re-calculate the results after updating the feedbacks
-        resultRepository.reEvaluateResults(results, exercise);
+        if (!(exercise instanceof ProgrammingExercise)) {
+            resultRepository.reEvaluateResults(results, exercise);
+        }
+        else {
+            for (Result result : results) {
+                double points = programmingAssessmentService.calculateTotalScore(result);
+                result.setScore(points, exercise.getMaxPoints());
+                /*
+                 * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
+                 * student has achieved have changed
+                 */
+                String[] resultStringParts = result.getResultString().split(", ");
+                resultStringParts[resultStringParts.length - 1] = result.createResultString(points, exercise.getMaxPoints());
+                result.setResultString(String.join(", ", resultStringParts));
+                resultRepository.save(result);
+            }
+        }
+
     }
 }
