@@ -177,6 +177,7 @@ describe('ExamScoresComponent', () => {
         title: 'exam1',
         maxPoints: 100,
         averagePointsAchieved: 60,
+        hasSecondCorrectionAndStarted: false,
         exerciseGroups: [exGroup1],
         studentResults: [studentResult1, studentResult2, studentResult3],
     } as ExamScoreDTO;
