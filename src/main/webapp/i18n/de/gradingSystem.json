@@ -46,7 +46,7 @@
             "error": {
                 "empty": "Die Notenstufen sind leer!",
                 "emptyFields": "Alle Notenstufenfelder müssen ausgefüllt werden!",
-                "invalidMinMaxPercentages": "Die Prozentsätze der Notenstufen müssen alle zwischen 0 und 100 (jeweils einschließlich) liegen und der Min % darf nicht größer als der Max % sein!",
+                "invalidMinMaxPercentages": "Die Prozentsätze der Notenstufen müssen alle zwischen 0 und 100 (jeweils einschließlich) liegen und der Min % muss kleiner als der Max % sein!",
                 "nonUniqueGradeNames": "Alle Notenstufen müssen eindeutige Namen haben!",
                 "unsetFirstPassingGrade": "Die erste bestehende Note muss gesetzt sein!",
                 "invalidBonusPoints": "Die Bonuspunkte müssen mindestens 0 sein!",

@@ -146,7 +146,7 @@ export class GradingSystemComponent implements OnInit {
         }
         // check if any of the fields have invalid percentages
         for (const gradeStep of this.gradingScale.gradeSteps) {
-            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.upperBoundPercentage > 100 || gradeStep.lowerBoundPercentage > gradeStep.upperBoundPercentage) {
+            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.upperBoundPercentage > 100 || gradeStep.lowerBoundPercentage >= gradeStep.upperBoundPercentage) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
                 return false;
             }

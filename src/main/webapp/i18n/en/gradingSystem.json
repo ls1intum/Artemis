@@ -46,7 +46,7 @@
             "error": {
                 "empty": "Grade steps are empty!",
                 "emptyFields": "All grade step fields must be filled out!",
-                "invalidMinMaxPercentages": "The grade step percentages must be all between 0 and 100 (both inclusive) and the Min % must not be greater than the Max %!",
+                "invalidMinMaxPercentages": "The grade step percentages must be all between 0 and 100 (both inclusive) and the Min % must be less than the Max %!",
                 "nonUniqueGradeNames": "All grade steps must have unique names!",
                 "unsetFirstPassingGrade": "The first passing grade must be set!",
                 "invalidBonusPoints": "The bonus points must be at least 0!",
