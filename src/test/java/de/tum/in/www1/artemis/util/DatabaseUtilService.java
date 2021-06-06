@@ -1781,6 +1781,9 @@ public class DatabaseUtilService {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.ECLIPSE);
         }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setProjectType(ProjectType.PLAIN);
+        }
         else {
             programmingExercise.setProjectType(null);
         }
