@@ -45,10 +45,6 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     @ManyToOne
     private User reviewer;
 
-    @OneToOne
-    @JoinColumn(unique = true)
-    private Result result;
-
     /**
      * Calculates if the complaint response is still time locked or not
      * @return true if complaint response is time locked, false otherwise
