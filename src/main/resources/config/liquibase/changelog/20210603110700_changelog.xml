@@ -32,11 +32,11 @@
                 <constraints nullable="false"/>
             </column>
             <column name="creation_date" type="datetime"/>
-            <column name="author_id" type="BIGINT"/>
+            <column name="user_id" type="BIGINT"/>
             <column name="post_id" type="BIGINT"/>
             <column name="answer_post_id" type="BIGINT"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="reaction" constraintName="fk_reaction_author_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="reaction" constraintName="fk_reaction_user_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addForeignKeyConstraint baseColumnNames="post_id" baseTableName="reaction" constraintName="fk_reaction_post_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="post"/>
         <addForeignKeyConstraint baseColumnNames="answer_post_id" baseTableName="reaction" constraintName="fk_reaction_answer_post_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="answer_post"/>
     </changeSet>
