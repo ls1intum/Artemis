@@ -872,13 +872,14 @@ export class GuidedTourService {
     /**
      *  @return true if highlighted element is available, otherwise false
      */
-    private checkSelectorValidity(): boolean | void {
+    private checkSelectorValidity(): boolean {
         if (!this.currentTour) {
             return false;
         }
         const currentTourStep = this.currentTour.steps[this.currentTourStepIndex];
         if (!currentTourStep) {
             this.resetTour();
+            return false;
         }
         const selector = currentTourStep.highlightSelector ? currentTourStep.highlightSelector : undefined;
         const selectedElement = selector ? document.querySelector(selector) : undefined;
