@@ -120,7 +120,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 callbacks: {
                     label(tooltipItem: any) {
                         if (!self.absolutePoints && !self.chartData[0].data) {
-                            return ' 0';
+                            return ' -';
                         }
                         return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index], 2, 2)} (${round(
                             self.chartData[0].data![tooltipItem.index],

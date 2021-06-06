@@ -24,6 +24,7 @@ import { empty, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -196,6 +197,7 @@ describe('ExamScoresComponent', () => {
                 MockDirective(JhiSortByDirective),
                 MockDirective(JhiSortDirective),
                 MockDirective(DeleteButtonDirective),
+                MockComponent(ExamScoresAverageScoresGraphComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
