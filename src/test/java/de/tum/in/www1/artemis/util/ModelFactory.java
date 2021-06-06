@@ -477,17 +477,17 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            boolean studentQuestionsEnabled, int requestMoreFeedbackTimeDays) {
+            boolean postsEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID().toString());
-        course.setDescription("Course description " + UUID.randomUUID().toString());
+
         // must start with a letter
         course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
         course.setMaxComplaints(maxComplaints);
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setStudentQuestionsEnabled(studentQuestionsEnabled);
+        course.setPostsEnabled(postsEnabled);
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
@@ -710,7 +710,7 @@ public class ModelFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setTutorParticipations(null);
-        toBeImported.setStudentQuestions(null);
+        toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
         toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
         toBeImported.setExampleSubmissions(null);
@@ -847,6 +847,7 @@ public class ModelFactory {
         notification.setSuccessful(successfulTestNames.size());
         notification.setFailures(failedTestNames.size());
         notification.setRunDate(ZonedDateTime.now());
+        notification.setLogs(List.of());
         return notification;
     }
 

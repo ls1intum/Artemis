@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -156,7 +157,7 @@ public abstract class Exercise extends DomainObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
-    private Set<StudentQuestion> studentQuestions = new HashSet<>();
+    private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
@@ -467,12 +468,12 @@ public abstract class Exercise extends DomainObject {
         this.attachments = attachments;
     }
 
-    public Set<StudentQuestion> getStudentQuestions() {
-        return studentQuestions;
+    public Set<Post> getPosts() {
+        return posts;
     }
 
-    public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {
-        this.studentQuestions = studentQuestions;
+    public void setPosts(Set<Post> posts) {
+        this.posts = posts;
     }
 
     public Set<ExerciseHint> getExerciseHints() {

@@ -48,6 +48,7 @@ export class ModelingExerciseService {
         return this.http.get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
         );
     }
 

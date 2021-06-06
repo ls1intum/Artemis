@@ -13,6 +13,7 @@ import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercis
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash';
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -218,5 +219,12 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
         if (this.subscription) {
             this.subscription.unsubscribe();
         }
+    }
+
+    /**
+     * handles how the exercise is calculated into the course/ exam score
+     */
+    includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
+        this.quizExercise.includedInOverallScore = includedInOverallScore;
     }
 }

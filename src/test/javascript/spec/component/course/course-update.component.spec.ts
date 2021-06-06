@@ -71,7 +71,7 @@ describe('Course Management Update Component', () => {
         course.maxTeamComplaints = 13;
         course.maxComplaintTimeDays = 14;
         course.maxRequestMoreFeedbackTimeDays = 15;
-        course.studentQuestionsEnabled = true;
+        course.postsEnabled = true;
         course.registrationEnabled = true;
         course.registrationConfirmationMessage = 'testRegistrationConfirmationMessage';
         course.presentationScore = 16;
@@ -124,7 +124,7 @@ describe('Course Management Update Component', () => {
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
             const profileInfo = { inProduction: false } as ProfileInfo;
-            const profileInfoSubject = new BehaviorSubject<ProfileInfo | undefined>(profileInfo);
+            const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
             const getProfileStub = stub(profileService, 'getProfileInfo').returns(profileInfoSubject);
             const organization = new Organization();
             organization.id = 12344;
@@ -159,7 +159,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxTeamComplaints'])?.value).to.equal(course.maxTeamComplaints);
             expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).to.equal(course.maxComplaintTimeDays);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).to.equal(course.maxRequestMoreFeedbackTimeDays);
-            expect(comp.courseForm.get(['studentQuestionsEnabled'])?.value).to.equal(course.studentQuestionsEnabled);
+            expect(comp.courseForm.get(['postsEnabled'])?.value).to.equal(course.postsEnabled);
             expect(comp.courseForm.get(['registrationEnabled'])?.value).to.equal(course.registrationEnabled);
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).to.equal(course.registrationConfirmationMessage);
             expect(comp.courseForm.get(['presentationScore'])?.value).to.equal(course.presentationScore);
@@ -184,7 +184,7 @@ describe('Course Management Update Component', () => {
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
+                postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
@@ -213,7 +213,7 @@ describe('Course Management Update Component', () => {
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
+                postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),

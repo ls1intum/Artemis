@@ -107,6 +107,7 @@
                         <option value="ASSEMBLER" *ngIf="supportsAssembler">Assembler</option>
                         <option value="SWIFT" *ngIf="supportsSwift">Swift</option>
                         <option value="OCAML" *ngIf="supportsOCaml">OCaml</option>
+                        <option value="EMPTY" *ngIf="supportsEmpty">Empty</option>
                     </select>
                 </div>
 
@@ -161,7 +162,9 @@
                     ></jhi-programming-exercise-lifecycle>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
+                    <label class="form-control-label">{{
+                        'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
+                    }}</label>
                     <div>
                         <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
                     </div>
