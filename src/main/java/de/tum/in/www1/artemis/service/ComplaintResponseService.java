@@ -152,38 +152,11 @@ public class ComplaintResponseService {
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for creating the empty complaint response");
         }
-        // The ComplaintResponse which represents the lock
-        ComplaintResponse complaintResponse = new ComplaintResponse();
-        complaintResponse.setReviewer(user); // owner of the lock
-        complaintResponse.setComplaint(complaint);
 
-        Result result = new Result();
-
-        Submission submission = complaint.getResult().getSubmission();
-        result.setParticipation(submission.getParticipation());
-        result = resultRepository.save(result);
-        result.setSubmission(submission);
-        //submission.addResult(result);
-        submissionRepository.save(submission);
-
-        newResult.setAssessor(user);
-        newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        // Copy feedback into the new result
-        for (Feedback feedback : automaticFeedbacks) {
-            feedback = feedbackRepository.save(feedback);
-            feedback.setResult(newResult);
-        }
-        newResult.setFeedbacks(automaticFeedbacks);
-        if (optionalExistingResult.isPresent()) {
-            newResult.setResultString(optionalExistingResult.get().getResultString());
-        }
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = newResult.getAssessor();
-        newResult = resultRepository.save(newResult);
-
-
-
-        ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(complaintResponse);
+        ComplaintResponse complaintResponseRepresentingLock = new ComplaintResponse();
+        complaintResponseRepresentingLock.setReviewer(user); // owner of the lock
+        complaintResponseRepresentingLock.setComplaint(complaint);
+        ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(complaintResponseRepresentingLock);
         log.debug("Created empty complaint and thus lock for complaint with id : {}", complaint.getId());
         return persistedComplaintResponse;
     }

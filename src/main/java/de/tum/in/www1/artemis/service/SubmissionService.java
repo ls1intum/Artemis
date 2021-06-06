@@ -279,12 +279,22 @@ public class SubmissionService {
      */
     public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         List<Feedback> oldFeedback = oldResult.getFeedbacks();
-        oldFeedback.forEach(feedback -> {
-            Feedback newFeedback = feedback.copyFeedback();
-            newResult.addFeedback(newFeedback);
-        });
-        resultRepository.save(newResult);
+        copyFeedbackToResult(newResult, oldFeedback);
         return newResult.getFeedbacks();
+    }
+
+    /**
+     * Copy feedback from a feedbacks list to a Result
+     * @param result the result to copy feedback to
+     * @param feedbacks the feedbacks which are copied
+     */
+    private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
+        feedbacks.forEach(feedback -> {
+            Feedback newFeedback = feedback.copyFeedback();
+            newFeedback.setPositive(newFeedback.getCredits() >= 0);
+            result.addFeedback(newFeedback);
+        });
+        resultRepository.save(result);
     }
 
     /**
@@ -303,7 +313,35 @@ public class SubmissionService {
         Result newResult = new Result();
         newResult.setParticipation(submission.getParticipation());
         copyFeedbackToNewResult(newResult, oldResult);
+        return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+    }
 
+    /**
+     * This method is used to create a new result, after a complaint has been accepted or denied.
+     * The new result contains the updated feedback of the result the complaint belongs to.
+     *
+     * @param submission the submission where the original result and the result after the complaintResponse belong to
+     * @param oldResult the original result, before the response
+     * @param feedbacks the new feedbacks after the response
+     * @return the newly created result
+     */
+    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks) {
+        Result newResult = new Result();
+        newResult.setParticipation(submission.getParticipation());
+        copyFeedbackToResult(newResult, feedbacks);
+        newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        return newResult;
+    }
+
+    /**
+     * Copies the content of one result to another, and adds the second result to the submission.
+     *
+     * @param submission the submission which both results belong to, the newResult comes after the oldResult in the resultlist
+     * @param newResult the result where the content is set
+     * @param oldResult the result from which the content is copied from
+     * @return the newResult
+     */
+    private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult){
         newResult.setResultString(oldResult.getResultString());
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
