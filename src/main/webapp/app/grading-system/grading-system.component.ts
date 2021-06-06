@@ -19,7 +19,7 @@ export class GradingSystemComponent implements OnInit {
     gradingScale = new GradingScale();
     lowerBoundInclusivity = true;
     existingGradingScale = false;
-    firstPassingGrade: string;
+    firstPassingGrade?: string;
     courseId?: number;
     examId?: number;
     isExam = false;
@@ -54,7 +54,6 @@ export class GradingSystemComponent implements OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
-                catchError(() => of(new HttpResponse<GradingScale>({ status: 404 }))),
             )
             .subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
@@ -127,7 +126,10 @@ export class GradingSystemComponent implements OnInit {
      * - there must be at least one grade step
      * - all fields must be filled out
      * - the percentage values must lie between 0 and 100 (both inclusive)
-     * - the bonus bonus points are at least 0 if the scale is of BONUS type
+     * - all grade names must be unique
+     * - the first passing must be set if the scale is of GRADE type
+     * - the bonus points are at least 0 if the scale is of BONUS type
+     * - the bonus points must be strictly ascending in values
      * - the max and min % of adjacent grade steps overlap
      * - the first grade step begins at 0% and the last ends at 100%
      */
@@ -145,24 +147,46 @@ export class GradingSystemComponent implements OnInit {
         }
         // check if any of the fields have invalid percentages
         for (const gradeStep of this.gradingScale.gradeSteps) {
-            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.upperBoundPercentage > 100 || gradeStep.lowerBoundPercentage > gradeStep.upperBoundPercentage) {
+            if (gradeStep.lowerBoundPercentage < 0 || gradeStep.upperBoundPercentage > 100 || gradeStep.lowerBoundPercentage >= gradeStep.upperBoundPercentage) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
                 return false;
             }
         }
-        // check if when the grade type is BONUS the bonus points are at least 0
-        if (!this.isGradeType()) {
-            for (const gradeStep of this.gradingScale.gradeSteps) {
-                if (isNaN(Number(gradeStep.gradeName)) || Number(gradeStep.gradeName) < 0) {
-                    this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBonusPoints');
-                    return false;
-                }
+        if (this.isGradeType()) {
+            // check if all grade names are unique if the grading scale is of type GRADE
+            if (!this.gradingScale.gradeSteps.map((gradeStep) => gradeStep.gradeName).every((gradeName, index, gradeNames) => gradeNames.indexOf(gradeName) === index)) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.nonUniqueGradeNames');
+                return false;
+            }
+            // check if the first passing grade is set if the grading scale is of type GRADE
+            if (this.firstPassingGrade === undefined || this.firstPassingGrade === '') {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.unsetFirstPassingGrade');
+                return false;
             }
         }
         // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
         let sortedGradeSteps: GradeStep[] = [];
         this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
         sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
+        if (!this.isGradeType()) {
+            // check if when the grade type is BONUS the bonus points are at least 0
+            for (const gradeStep of sortedGradeSteps) {
+                if (isNaN(Number(gradeStep.gradeName)) || Number(gradeStep.gradeName) < 0) {
+                    this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBonusPoints');
+                    return false;
+                }
+            }
+            // check if when the grade type is BONUS the bonus points have strictly ascending values
+            if (
+                !sortedGradeSteps
+                    .map((gradeStep) => Number(gradeStep.gradeName))
+                    .every((bonusPoints, index, bonusPointsArray) => index === 0 || bonusPoints > bonusPointsArray[index - 1])
+            ) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
+                return false;
+            }
+        }
+
         // check if grade steps have valid adjacency
         for (let i = 0; i < sortedGradeSteps.length - 1; i++) {
             if (sortedGradeSteps[i].upperBoundPercentage !== sortedGradeSteps[i + 1].lowerBoundPercentage) {
@@ -271,10 +295,9 @@ export class GradingSystemComponent implements OnInit {
      * Called on initialization
      */
     determineFirstPassingGrade(): void {
-        this.firstPassingGrade =
-            this.gradingScale.gradeSteps.find((gradeStep) => {
-                return gradeStep.isPassingGrade;
-            })?.gradeName ?? this.gradingScale.gradeSteps[this.gradingScale.gradeSteps.length - 1].gradeName;
+        this.firstPassingGrade = this.gradingScale.gradeSteps.find((gradeStep) => {
+            return gradeStep.isPassingGrade;
+        })?.gradeName;
     }
 
     /**
@@ -321,20 +344,22 @@ export class GradingSystemComponent implements OnInit {
      * Create a new grade step add the end of the current grade step set
      */
     createGradeStep(): void {
-        const gradeStep: GradeStep = {
-            gradeName: '',
-            lowerBoundPercentage: 100,
-            upperBoundPercentage: 100,
-            isPassingGrade: true,
-            lowerBoundInclusive: this.lowerBoundInclusivity,
-            upperBoundInclusive: true,
-        };
         if (!this.gradingScale) {
             this.gradingScale = new GradingScale();
         }
         if (!this.gradingScale.gradeSteps) {
             this.gradingScale.gradeSteps = [];
         }
+        const gradeStepsArrayLength = this.gradingScale.gradeSteps.length;
+        const lowerBound = gradeStepsArrayLength === 0 ? 0 : this.gradingScale.gradeSteps[gradeStepsArrayLength - 1].upperBoundPercentage;
+        const gradeStep: GradeStep = {
+            gradeName: '',
+            lowerBoundPercentage: lowerBound,
+            upperBoundPercentage: 100,
+            isPassingGrade: true,
+            lowerBoundInclusive: this.lowerBoundInclusivity,
+            upperBoundInclusive: true,
+        };
         this.gradingScale.gradeSteps.push(gradeStep);
     }
 

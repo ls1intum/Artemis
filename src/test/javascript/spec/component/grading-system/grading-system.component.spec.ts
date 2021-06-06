@@ -91,6 +91,7 @@ describe('Grading System Component', () => {
         comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
         comp.courseId = 123;
         comp.examId = 456;
+        comp.firstPassingGrade = 'Pass';
         translateStub = sinon.stub(translateService, 'instant');
     });
 
@@ -384,6 +385,26 @@ describe('Grading System Component', () => {
         expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
     });
 
+    it('should validate invalid grading scale with non-unique grade names', () => {
+        comp.gradingScale.gradeType = GradeType.GRADE;
+        comp.gradingScale.gradeSteps[1].gradeName = 'Fail';
+        translateStub.returns('non-unique grade names');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('non-unique grade names');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.nonUniqueGradeNames');
+    });
+
+    it('should validate invalid grading scale with unset first passing grade', () => {
+        comp.gradingScale.gradeType = GradeType.GRADE;
+        comp.firstPassingGrade = undefined;
+        translateStub.returns('unset first passing grade');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('unset first passing grade');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.unsetFirstPassingGrade');
+    });
+
     it('should validate invalid grading scale with invalid bonus points', () => {
         comp.gradingScale.gradeSteps[0].gradeName = '-2';
         comp.gradingScale.gradeType = GradeType.BONUS;
@@ -392,6 +413,18 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).to.be.false;
         expect(comp.invalidGradeStepsMessage).to.be.equal('invalid bonus points');
         expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidBonusPoints');
+    });
+
+    it('should validate invalid grading scale without strictly ascending bonus points', () => {
+        comp.gradingScale.gradeSteps[0].gradeName = '0';
+        comp.gradingScale.gradeSteps[1].gradeName = '2';
+        comp.gradingScale.gradeSteps[2].gradeName = '1';
+        comp.gradingScale.gradeType = GradeType.BONUS;
+        translateStub.returns('descending bonus points');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('descending bonus points');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
     });
 
     it('should validate invalid grading scale with invalid adjacency', () => {
