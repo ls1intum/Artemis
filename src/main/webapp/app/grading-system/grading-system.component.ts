@@ -28,6 +28,7 @@ export class GradingSystemComponent implements OnInit {
     notFound = false;
     isLoading = false;
     invalidGradeStepsMessage?: string;
+    usesPoints = false;
 
     constructor(private gradingSystemService: GradingSystemService, private route: ActivatedRoute, private translateService: TranslateService) {}
 
