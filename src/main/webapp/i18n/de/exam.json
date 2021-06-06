@@ -81,6 +81,8 @@
             "ExerciseGroupsTitle": "Aufgabengruppen- & Aufgabenstatistics",
             "averagePointsTooltip": "Durchschnittspunktzahl",
             "studentResultsTitle": "Studentenergebnisse",
+            "firstCorrectionColumn": "Erstkorrektur",
+            "secondCorrectionColumn": "Zweitkorrektur",
             "titleExerciseGroupColumn": "Aufgabengruppe",
             "titleExerciseColumn": "Aufgabe",
             "averagePointsColumn": "Durchschnitt",
@@ -111,11 +113,7 @@
             "registered": "Angemeldete Studenten",
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
-            "firstCorrectionRoundPassedColumn": "Erstkorrektur Bestanden",
-            "firstCorrectionRoundSubmittedColumn": "Erstkorrektur Abgegeben",
-            "firstCorrectionRoundTotalColumn": "Erstkorrektur Total",
-            "totalColumn": "Total",
-            "noScores": "Kein Durchschnitt"
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Restzeit: ",

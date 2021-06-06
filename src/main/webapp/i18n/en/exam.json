@@ -81,6 +81,8 @@
             "ExerciseGroupsTitle": "Exercise groups & exercise Statistics",
             "averagePointsTooltip": "Average points",
             "studentResultsTitle": "Student Results",
+            "firstCorrectionColumn": "First correction",
+            "secondCorrectionColumn": "Second correction",
             "titleExerciseGroupColumn": "Exercise Group",
             "titleExerciseColumn": "Exercise",
             "averagePointsColumn": "Average",
@@ -111,11 +113,7 @@
             "registered": "Registered Students",
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
-            "firstCorrectionRoundPassedColumn": "First correction passed",
-            "firstCorrectionRoundSubmittedColumn": "First correction submitted",
-            "firstCorrectionRoundTotalColumn": "First correction total",
-            "totalColumn": "Total",
-            "noScores": "No average"
+            "totalColumn": "Total"
         },
         "examParticipation": {
             "timer": "Time left: ",
