@@ -1410,7 +1410,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         assertThat(result).isNull();
     }
 
-    public void testReEvaluateAndUpdateModelingExercise_instructorNotInCourse_forbidden() throws Exception {
+    public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         request.put(ROOT + PROGRAMMING_EXERCISES + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
     }

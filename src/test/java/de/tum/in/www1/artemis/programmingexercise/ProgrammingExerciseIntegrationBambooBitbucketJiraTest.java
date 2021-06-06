@@ -708,7 +708,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(value = "instructoralt1", roles = "INSTRUCTOR")
-    public void testReEvaluateAndUpdateModelingExercise_instructorNotInCourse_forbidden() throws Exception {
-        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateModelingExercise_instructorNotInCourse_forbidden();
+    public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden();
     }
 }
