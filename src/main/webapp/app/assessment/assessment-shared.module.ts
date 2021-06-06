@@ -21,6 +21,7 @@ import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { StructuredGradingInstructionAssessmentLinkComponent } from 'app/assessment/structured-grading-instruction-assessment-link/structured-grading-instruction-assessment-link.component';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 
@@ -47,6 +48,7 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         AssessmentLocksComponent,
         UnreferencedFeedbackComponent,
         AssessmentCorrectionRoundBadgeComponent,
+        StructuredGradingInstructionAssessmentLinkComponent,
     ],
     exports: [
         AssessmentLayoutComponent,
@@ -58,6 +60,7 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         AssessmentLocksComponent,
         UnreferencedFeedbackComponent,
         AssessmentCorrectionRoundBadgeComponent,
+        StructuredGradingInstructionAssessmentLinkComponent,
     ],
 })
 export class ArtemisAssessmentSharedModule {}
