@@ -228,10 +228,7 @@ public class BambooBuildPlanService {
                 if (isXcodeProject) {
                     // add a requirement to be able to run the Xcode build tasks
                     var requirement = new Requirement("system.builder.xcode.Simulator - iOS 14.5");
-                    var requirement2 = Requirement.exists("Simulator - iOS 14.5");
-                    var requirement3 = Requirement.exists("Simulator-iOS14.5");
-                    var requirement4 = Requirement.exists("Simulator_-_iOS_14.5");
-                    defaultJob.requirements(requirement, requirement2, requirement3, requirement4);
+                    defaultJob.requirements(requirement);
                 }
                 return defaultStage.jobs(defaultJob);
             }

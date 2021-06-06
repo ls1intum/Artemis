@@ -556,7 +556,7 @@ public class ProgrammingExerciseService {
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
-            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
+//            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
         }
 
         Map<String, String> replacements = new HashMap<>();
