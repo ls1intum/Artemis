@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis;
 
+import java.util.List;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -11,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.Course;
 
 /**
- * A AnswerPost.
+ * An AnswerPost.
  */
 @Entity
 @Table(name = "answer_post")
@@ -21,6 +23,10 @@ public class AnswerPost extends Posting {
 
     @Column(name = "tutor_approved")
     private Boolean tutorApproved;
+
+    // To be used with introduction of Metis
+    @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Reaction> reactions;
 
     @ManyToOne
     @JsonIgnoreProperties("answers")
@@ -32,6 +38,14 @@ public class AnswerPost extends Posting {
 
     public void setTutorApproved(Boolean tutorApproved) {
         this.tutorApproved = tutorApproved;
+    }
+
+    public List<Reaction> getReactions() {
+        return reactions;
+    }
+
+    public void setReactions(List<Reaction> reactions) {
+        this.reactions = reactions;
     }
 
     public Post getPost() {

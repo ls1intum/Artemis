@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
  * A Post, i.e. start of a Metis thread.
  */
 @Entity
-@EitherOr
+@PostConstraints
 @Table(name = "post")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -37,19 +38,23 @@ public class Post extends Posting {
     /**
      * Track the votes for a "Post"
      *
-     * @deprecated This will be removed with the introduction of Metis, where every Post will have a emoji reaction bar.
+     * @deprecated This will be removed with the introduction of Metis, where every Post will have an emoji reaction bar.
      */
     @Deprecated
     @Column(name = "votes", columnDefinition = "integer default 0")
     private Integer votes = 0;
+
+    // To be used with introduction of Metis
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Reaction> reactions;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
 
     // To be used with introduction of Metis
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "tags")
+    @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "tag")
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne
@@ -90,6 +95,14 @@ public class Post extends Posting {
 
     public void setVotes(Integer votes) {
         this.votes = votes;
+    }
+
+    public List<Reaction> getReactions() {
+        return reactions;
+    }
+
+    public void setReactions(List<Reaction> reactions) {
+        this.reactions = reactions;
     }
 
     public Set<AnswerPost> getAnswers() {
