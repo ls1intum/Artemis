@@ -396,6 +396,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 examStatistics.meanGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
                 examStatistics.medianGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
             }
+            // Calculate statistics for the first assessments of passed exams if second correction exists
             if (this.hasSecondCorrectionAndStarted) {
                 examStatistics.meanPointsPassedInFirstCorrection = SimpleStatistics.mean(studentPointsPassedInFirstCorrectionRound);
                 examStatistics.medianPassedInFirstCorrection = SimpleStatistics.median(studentPointsPassedInFirstCorrectionRound);
@@ -428,6 +429,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     examStatistics.medianGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelative)!.gradeName;
                 }
             }
+            // Calculate statistics for the first assessments of submitted exams if second correction exists
             if (this.hasSecondCorrectionAndStarted) {
                 examStatistics.meanPointsInFirstCorrection = SimpleStatistics.mean(studentPointsSubmittedInFirstCorrectionRound);
                 examStatistics.medianInFirstCorrection = SimpleStatistics.median(studentPointsSubmittedInFirstCorrectionRound);
@@ -465,6 +467,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     examStatistics.medianGradeTotal = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
                 }
             }
+            // Calculate total statistics if second correction exists
             if (this.hasSecondCorrectionAndStarted) {
                 examStatistics.meanPointsTotalInFirstCorrection = SimpleStatistics.mean(studentPointsTotalInFirstCorrectionRound);
                 examStatistics.medianTotalInFirstCorrection = SimpleStatistics.median(studentPointsTotalInFirstCorrectionRound);

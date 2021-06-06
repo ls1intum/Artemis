@@ -265,6 +265,7 @@ public class ExamService {
                         studentResult.overallPointsAchieved += achievedPoints;
                     }
 
+                    // collect points of first correction, if a second correction exists
                     if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                         Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
                         if (latestSubmission.isPresent()) {
