@@ -81,10 +81,10 @@ public class ModelingPlagiarismDetectionService {
      *
      * @param modelingSubmissions List of modeling submissions
      * @param minimumSimilarity   the minimum similarity so that the result is considered
-     * @param minimumModelSize    the minimum number of model elements to be considered as
-     *                            plagiarism
-     * @param minimumScore        the minimum result score (if available) to be considered as
-     *                            plagiarism
+     * @param minimumModelSize    the minimum number of model elements to be considered as plagiarism
+     * @param minimumScore        the minimum result score (if available) to be considered as plagiarism
+     * @param exerciseId          the id of the exercise for which the modeling submissions are compared
+     *
      * @return List of submission id pairs and similarity score
      */
     public ModelingPlagiarismResult compareSubmissions(List<ModelingSubmission> modelingSubmissions, double minimumSimilarity, int minimumModelSize, int minimumScore,
