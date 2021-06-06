@@ -171,8 +171,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         var jenkinsUser = getUser(user.getLogin());
         if (jenkinsUser != null) {
             deleteUser(user);
+            createUser(user);
         }
-        createUser(user);
     }
 
     /**

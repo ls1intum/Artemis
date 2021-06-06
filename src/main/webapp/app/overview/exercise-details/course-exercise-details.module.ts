@@ -36,7 +36,7 @@ const routes: Routes = [
             {
                 path: '',
                 pathMatch: 'full',
-                loadChildren: () => import('app/overview/student-questions/student-questions.module').then((m) => m.ArtemisStudentQuestionsModule),
+                loadChildren: () => import('app/overview/postings/postings.module').then((m) => m.ArtemisPostingsModule),
             },
         ],
     },

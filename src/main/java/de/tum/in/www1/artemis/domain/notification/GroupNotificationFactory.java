@@ -6,6 +6,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 
 public class GroupNotificationFactory {
 
@@ -127,17 +129,17 @@ public class GroupNotificationFactory {
      * @param notificationType      type of the notification that should be created
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(StudentQuestion question, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
+    public static GroupNotification createNotification(Post question, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
         String title, text;
         Course course;
         switch (notificationType) {
-            case NEW_QUESTION_FOR_EXERCISE -> {
+            case NEW_POST_FOR_EXERCISE -> {
                 Exercise exercise = question.getExercise();
                 title = "New Question";
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new question.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
             }
-            case NEW_QUESTION_FOR_LECTURE -> {
+            case NEW_POST_FOR_LECTURE -> {
                 Lecture lecture = question.getLecture();
                 title = "New Question";
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new question.";
@@ -148,7 +150,7 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        if (notificationType == NotificationType.NEW_QUESTION_FOR_EXERCISE) {
+        if (notificationType == NotificationType.NEW_POST_FOR_EXERCISE) {
             notification.setTarget(notification.getExerciseQuestionTarget(question.getExercise()));
         }
         else {
@@ -167,18 +169,18 @@ public class GroupNotificationFactory {
      * @param notificationType      type of the notification that should be created
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(StudentQuestionAnswer answer, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
+    public static GroupNotification createNotification(AnswerPost answer, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
         String text, title;
         Course course;
         switch (notificationType) {
-            case NEW_ANSWER_FOR_EXERCISE -> {
-                Exercise exercise = answer.getQuestion().getExercise();
+            case NEW_ANSWER_POST_FOR_EXERCISE -> {
+                Exercise exercise = answer.getPost().getExercise();
                 title = "New Answer";
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new answer.";
                 course = exercise.getCourseViaExerciseGroupOrCourseMember();
             }
-            case NEW_ANSWER_FOR_LECTURE -> {
-                Lecture lecture = answer.getQuestion().getLecture();
+            case NEW_ANSWER_POST_FOR_LECTURE -> {
+                Lecture lecture = answer.getPost().getLecture();
                 title = "New Answer";
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new answer.";
                 course = lecture.getCourse();
@@ -188,11 +190,11 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        if (notificationType == NotificationType.NEW_ANSWER_FOR_EXERCISE) {
-            notification.setTarget(notification.getExerciseAnswerTarget(answer.getQuestion().getExercise()));
+        if (notificationType == NotificationType.NEW_ANSWER_POST_FOR_EXERCISE) {
+            notification.setTarget(notification.getExerciseAnswerTarget(answer.getPost().getExercise()));
         }
         else {
-            notification.setTarget(notification.getLectureAnswerTarget(answer.getQuestion().getLecture()));
+            notification.setTarget(notification.getLectureAnswerTarget(answer.getPost().getLecture()));
         }
 
         return notification;

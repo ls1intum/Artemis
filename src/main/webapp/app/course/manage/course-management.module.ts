@@ -37,7 +37,7 @@ import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exerci
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ArtemisCourseQuestionsModule } from 'app/course/course-questions/course-questions.module';
+import { ArtemisCoursePostsModule } from 'app/course/course-posts/course-posts.module';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
@@ -85,7 +85,7 @@ import { CourseDetailBarChartComponent } from 'app/course/manage/detail/course-d
         NgxDatatableModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
-        ArtemisCourseQuestionsModule,
+        ArtemisCoursePostsModule,
         ArtemisSharedPipesModule,
         ArtemisTutorParticipationGraphModule,
         ArtemisMarkdownModule,
