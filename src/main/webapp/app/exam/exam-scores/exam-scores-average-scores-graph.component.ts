@@ -5,6 +5,8 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
@@ -13,7 +15,6 @@ import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-d
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
     @Input() legendPosition: string | undefined;
-    @Input() standardDeviation: number[] = [10];
 
     height = 25;
 
@@ -30,7 +31,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
-    constructor(private service: StatisticsService, private translateService: TranslateService) {}
+    constructor(private service: StatisticsService, private translateService: TranslateService, private localeConversionService: LocaleConversionService) {}
 
     ngOnInit(): void {
         this.averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
@@ -42,14 +43,13 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         const colors = [GraphColors.BLUE];
         const labels = [this.averageScores.title];
         const absoluteData = [this.averageScores.averagePoints!];
-        const relativeData: number[] = [this.averageScores.averagePercentage! - this.averageScores.standardDeviation!];
+        const relativeData: number[] = [this.averageScores.averagePercentage!];
         this.averageScores.exerciseResults.forEach((exercise) => {
             labels.push(exercise.title);
             colors.push(GraphColors.DARK_BLUE);
             absoluteData.push(exercise.averagePoints!);
-            relativeData.push(exercise.averagePercentage! - exercise.standardDeviation!);
+            relativeData.push(exercise.averagePercentage!);
             this.height += 25;
-            this.standardDeviation.push(10);
         });
         this.barChartLabels = labels;
         this.absolutePoints = absoluteData;
@@ -63,6 +63,10 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 barPercentage: 0.75,
             },
         ];
+    }
+
+    roundAndPerformLocalConversion(points: number | undefined, exp: number, fractions = 1) {
+        return this.localeConversionService.toLocaleString(round(points, exp), fractions);
     }
 
     private createCharts() {
@@ -82,7 +86,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             scales: {
                 xAxes: [
                     {
-                        stacked: true,
                         gridLines: {
                             display: true,
                         },
@@ -100,14 +103,10 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                 ],
                 yAxes: [
                     {
-                        stacked: true,
                         gridLines: {
                             display: true,
                         },
                         ticks: {
-                            padding: 15,
-                            autoSkip: false,
-                            fontStyle: 'bold',
                             callback() {
                                 return '';
                             },
@@ -123,7 +122,10 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                         if (!self.absolutePoints && !self.chartData[0].data) {
                             return ' 0';
                         }
-                        return `${self.averagePointsTooltip}: ${self.absolutePoints[tooltipItem.index]} (${self.chartData[0].data![tooltipItem.index]}%)`;
+                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index], 2, 2)} (${round(
+                            self.chartData[0].data![tooltipItem.index],
+                            2,
+                        )}%)`;
                     },
                 },
             },
