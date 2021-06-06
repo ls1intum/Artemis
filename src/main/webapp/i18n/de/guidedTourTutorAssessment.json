@@ -39,25 +39,25 @@
             },
             "reviewExampleSubmission": {
                 "headline": "Beispielabgaben ansehen",
-                "content": "Klick hier um eine Beispielabgabe für eine Textaufgabe und dessen Bewertung anzusehen."
+                "content": "Klick hier, um eine Beispielabgabe für eine Textaufgabe und deren Bewertung anzusehen."
             },
             "assessExampleSubmission": {
                 "headline": "Beispielabgabe bewerten",
-                "content": "Klick hier um an deiner ersten Bewertung für eine Textaufgabe zu arbeiten."
+                "content": "Klick hier, um an deiner ersten Bewertung für eine Textaufgabe zu arbeiten."
             },
             "submissionsAndComplaints": {
                 "headline": "Abgaben der Studierenden",
-                "content": "Die Abgaben der Studierenden, die bewertet werden müssen, werden nach der Einreichungsfrist der Übung hier angezeigt."
+                "content": "Die Abgaben der Studierenden, die noch nicht bewertet sind, werden nach der Einreichungsfrist der Übung hier angezeigt."
             },
             "assessSubmissions": {
                 "headline": "Bewertung von Abgaben der Studierenden",
-                "content": "Um eine Bewertung zu starten, musst du auf den Button <tt>Neue Bewertung starten</tt> klicken. Wir haben den Button hier für Tutor:inialzwecke deaktiviert."
+                "content": "Um eine Bewertung zu starten, musst du auf den Button <tt>Neue Bewertung starten</tt> klicken. Wir haben den Button hier für Tutorialzwecke deaktiviert."
             }
         },
         "exampleReview": {
             "reviewSubmission": {
                 "headline": "Beispielabgabe",
-                "content": "Das ist eine Beispielaufgabe, bei der bereits drei Textblöcke zur Bewertung markiert wurden."
+                "content": "Das ist eine Beispielaufgabe, bei der bereits drei Textblöcke zur Bewertung markiert sind."
             },
             "reviewAssessment": {
                 "headline": "Beispielbewertung",
@@ -72,11 +72,11 @@
             "addAssessment": {
                 "headline": "Beispielabgabe bewerten",
                 "content": "In diesem Schritt fängst du mit der Bewertung der Abgabe an. Befolge dafür die folgende Anleitung:",
-                "task": "Markiere den Text eines Software Patterns und klicke und bewerte ihn. Wiederhole diesen Schritt für die übrigen zwei Patterns. Am Ende solltest du drei markierte Textblöcke haben."
+                "task": "Markiere den Text eines Software Patterns und klicke und bewerte ihn. Wiederhole diesen Schritt für die übrigen zwei Patterns. Am Ende sollten es drei markierte Textblöcke geben."
             },
             "addScore": {
                 "headline": "Punktzahl hinzufügen",
-                "content": "Nun kannst du für jedes Bewertungselement eine Punktzahl und Feedbacktext hinterlegen.",
+                "content": "Nun kannst du für jedes Bewertungselement eine Punktzahl und ein Feedbacktext hinterlegen.",
                 "task": "Gib jedem Bewertungselement die Punktzahl '1'."
             },
             "submit": {
@@ -84,7 +84,7 @@
                 "content": "Jetzt kannst du deine Bewertung einreichen."
             },
             "back": {
-                "headline": "Tutor:inial für Beispielbewertungen abschließen",
+                "headline": "Tutorial für Beispielbewertungen abschließen",
                 "content": "Navigiere zum Aufgaben Dashboard zurück um dieses Tutorial abzuschließen."
             }
         }

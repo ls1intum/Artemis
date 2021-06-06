@@ -123,7 +123,7 @@
                 "date": "Datum",
                 "notReleased": "Nicht freigegeben",
                 "version": "Version",
-                "isDownloading": "Wird heruntergeladen..."
+                "isDownloading": "Herunterladen..."
             },
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
@@ -162,7 +162,7 @@
                     "newAnswerLabel": "Neuer Post",
                     "answerLabel": "Antwort",
                     "postLabel": "Post",
-                    "approvedLabel": "Vom Tutor bestätigt",
+                    "approvedLabel": "Von Tutor:in bestätigt",
                     "answerNow": "Jetzt beantworten",
                     "noAnswers": "Auf diesen Post wurde noch nicht reagiert",
                     "answerCount": "Zeige Antworten ({{count}})",

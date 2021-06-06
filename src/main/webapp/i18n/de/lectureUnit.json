@@ -25,8 +25,8 @@
             "tooltip": "Das ist eine Texteinheit.",
             "isolated": "Isoliert öffnen",
             "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrpersonen. Veröffentlichungsdatum:",
-            "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr informationen:",
-            "cachedMarkdown": "Artemis fand ungespeichertes Markdown im local storage. Möchtest du es laden? Speicherdatum:",
+            "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr Informationen:",
+            "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
             "createTextUnit": {
                 "title": "Erstelle Texteinheit",
                 "name": "Name",
@@ -64,7 +64,7 @@
                 "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
                 "sourceURLValidationError": "Keine valide URL",
                 "urlVideoHelper": "Umwandlung in einbettbares Format ",
-                "urlHelperPlaceholder": "Du kannst hier eine Video URL eingeben und den Pfeil benutzen um sie in die korrekte einbettbare URL umzuwandeln",
+                "urlHelperPlaceholder": "Du kannst hier eine Video URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
                 "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
             },
             "editVideoUnit": {

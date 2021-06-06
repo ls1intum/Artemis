@@ -45,7 +45,7 @@
             "studentLogin": "Studierenden-Login",
             "studentLoginRequired": "Studierenden-Login ist erforderlich.",
             "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
-            "studentOverride": "Die Einreichungsfrist dieser Aufgabe ist noch nicht erreicht. Der Student könnte das manuelle Ergebnis noch mit einer neuen Lösung überschreiben.",
+            "studentOverride": "Die Einreichungsfrist dieser Aufgabe ist noch nicht erreicht. Studierende könnten das manuelle Ergebnis noch mit einer neuen Lösung überschreiben.",
             "addFeedback": "Neues Feedback hinzufügen",
             "deleteFeedback": "Letztes Feedback löschen",
             "feedbackTextRequired": "Feedbacktext ist erforderlich.",

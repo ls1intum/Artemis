@@ -2,7 +2,7 @@
     "artemisApp": {
         "exerciseAssessmentDashboard": {
             "home": {
-                "title": "Dashboard für Lehrerübungen"
+                "title": "Dashboard für Übungsbewertungen"
             },
             "participation": {
                 "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
@@ -48,7 +48,7 @@
             "noComplaintsDisplayed": "Es gibt keine Beschwerden (abgesehen von Beschwerden über deine Bewertungen)",
             "evaluateComplaint": "Auswertung der Beschwerde.",
             "showComplaint": "Beschwerde anzeigen",
-            "complaintEvaluated": "Beschwerde wurde bereits bewertet",
+            "complaintEvaluated": "Beschwerde ist bereits bewertet",
             "complaintNotEvaluated": "Beschwerde muss noch bewertet werden",
             "moreFeedback": "Anfragen für weiteres Feedback",
             "noMoreFeedbackRequests": "Es gibt keine Feedbackanfragen.",

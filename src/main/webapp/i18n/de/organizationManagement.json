@@ -2,7 +2,7 @@
     "organizationManagement": {
         "title": "Organisationsverwaltung",
         "name": "Name",
-        "shortName": "Kurz Name",
+        "shortName": "Kurzname",
         "url": "URL",
         "description": "Beschreibung",
         "logoUrl": "Logo URL",
@@ -23,14 +23,14 @@
             "searchForUsers": "User zu dieser Organisation hinzufügen durch Suchen nach Login oder Namen",
             "searchNoResults": "Keine User gefunden",
             "removeFromOrganization": {
-                "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Organisation entfernt werden?"
+                "modalQuestion": "Soll der User mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Organisation entfernt werden?"
             }
         },
         "modalSelector": {
             "select": "Auswählen",
             "title": "Organisationen"
         },
-        "patternChangeWarning": "Beim ändern des Emailmusters, wird eine Neuzuweisung der Nutzern zu dieser Organisation ausgeführt"
+        "patternChangeWarning": "Beim Ändern des Email Musters, wird eine Neuzuweisung der User zu dieser Organisation ausgeführt"
     },
     "artemisApp": {
         "organization": {

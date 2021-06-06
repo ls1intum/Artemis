@@ -50,7 +50,7 @@
             },
             "customizeGroupNames": {
                 "title": "Passe Gruppennamen an",
-                "description": "Stelle sicher, dass die Gruppen in der externen Nutzerverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
+                "description": "Stelle sicher, dass die Gruppen in der externen Userverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
             },
             "studentGroupName": "Gruppe der Studierenden",
             "teachingAssistantGroupName": "Gruppe der Tutor:innen",
@@ -88,11 +88,11 @@
             "students": "Studierende",
             "participations": "Teilnahmen",
             "tutors": "Tutor:innen",
-            "editors": "Editoren",
+            "editors": "Editor:innen",
             "instructors": "Lehrpersonen",
-            "student": "Student",
-            "tutor": "Tutor",
-            "editor": "Editor",
+            "student": "Studierende:r",
+            "tutor": "Tutor:in",
+            "editor": "Editor:in",
             "instructor": "Lehrperson",
             "form": {
                 "shortname": {
@@ -117,10 +117,10 @@
                 "name": "Name",
                 "email": "E-Mail",
                 "removeFromGroup": {
-                    "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
+                    "modalQuestion": "Soll der User mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 }
             },
-            "averageScore": "Punkte im Schnitt",
+            "averageScore": "Durchschnittliche Punktanzahl",
             "releasedSoon": "Bald veröffentlicht",
             "currentWorking": "Derzeitig in Bearbeitung",
             "inAssessment": "Derzeitig in Bewertung",

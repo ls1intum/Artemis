@@ -7,13 +7,13 @@
                 "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",
                 "exampleAssessment": "Beispiel Bewertungseditor der Textaufgabe {{exerciseTitle}}"
             },
-            "assessor": "Prüfer/in",
+            "assessor": "Bewertende Person",
             "save": "Bewertung speichern",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
             "submit": "Bewertung einreichen",
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "override": "Bewertung überschreiben",
-            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
+            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da andere Tutor:innen bereits bewertet haben.",
             "exampleSubmissisonInstruction": "Erstelle eine Beispielabgabe",
             "error": {
                 "invalidAssessments": "Deine Bewertung ist nicht gültig!",
@@ -54,8 +54,8 @@
             "feedbackImpactWarning": "Diese Feedback kann <strong style=\"color:red\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
             "assessmentInstruction": "Bitte halte deine Maus über und klicke auf den Textblock, den du bewerten möchten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
             "conflict": {
-                "assessor": "Bewerter: Du",
-                "otherAssessor": "Bewerter: {{otherUser}}",
+                "assessor": "Bewertende Person: Du",
+                "otherAssessor": "Bewertende Person: {{otherUser}}",
                 "conflictingAssessments": "{{number}} Konflikte",
                 "discard": "Konflikt verwerfen",
                 "notFound": "Wir haben für das ausgewählte Feedback keine Konflikte gefunden, bitte gehe zurück.",

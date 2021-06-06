@@ -17,7 +17,7 @@
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "submitFailed": "Absenden deiner Bewertung ist fehlgeschlagen!",
             "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
-            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da eine andere Person (Tutor:in) bereits bewertet hat.",
+            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da es bereits eine Bewertung von Tutor:innen gibt.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "confirmSubmission": "Du hast nicht alle Modellelemente bewertet. Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst es nachträglich nicht mehr ändern.",

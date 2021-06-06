@@ -25,7 +25,7 @@
             "rating": "Ratings",
             "questionsAndAnswers": "Fragen",
             "tutorLeaderboard": {
-                "courseTitle": "Tutor-Bestenliste",
+                "courseTitle": "Tutor:innen-Bestenliste",
                 "id": "ID",
                 "name": "Name",
                 "numberOfAssessments": "Assessments",

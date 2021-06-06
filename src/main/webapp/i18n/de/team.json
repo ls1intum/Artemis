@@ -20,7 +20,7 @@
                     "name": "Name",
                     "email": "E-Mail"
                 },
-                "noOwner": "Kein Tutor",
+                "noOwner": "Kein/e Tutor:in",
                 "participationsTable": {
                     "title": "Teilnahmen in \"{{ courseTitle }}\" für",
                     "columns": {
@@ -52,13 +52,13 @@
                 "alreadyTaken": "Dieser Kurzname ist bereits an ein anderes Team vergeben."
             },
             "owner": {
-                "label": "Tutor",
-                "tooltip": "Nur Lehrpersonen können die Tutor-Zuweisung für Teams ändern."
+                "label": "Tutor:in",
+                "tooltip": "Nur Lehrpersonen können die Zuweisung von Tutor:innen für Teams ändern."
             },
-            "ownerChangeWarning": "Wichtig: Der Tutor für das Team {{ shortName }} wird hiermit für den ganzen Kurs geändert!",
+            "ownerChangeWarning": "Wichtig: Tutor:in für das Team {{ shortName }} wird hiermit für den ganzen Kurs geändert!",
             "image": "Bild",
             "students": "Studierende",
-            "tutor": "Tutor",
+            "tutor": "Tutor:in",
             "filters": {
                 "all": "Alle Teams",
                 "own": "Eigene Teams"
@@ -72,14 +72,14 @@
                 "noResults": "Keine Studierenden im Kurs gefunden für Suche:"
             },
             "errors": {
-                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }.",
+                "studentAlreadyAssignedToTeam": "Studierende:r mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }.",
                 "registrationNumbersNotFound": "Studierende mit folgenden Matrikelnummern konnten nicht gefunden werden: {{ registrationNumbers }}",
                 "loginsNotFound": "Studierende mit folgenden Usernamen konnten nicht gefunden werden: {{ logins }}",
                 "studentsWithoutRegistrationNumbers": "Folgende Studierende haben keine Matrikelnummern: {{ students }}",
                 "studentsAppearMultipleTimes": "Folgende Studierende erscheinen mehrmals in importierten Teams: {{ students }}",
                 "importFailed": "Team-Import Fehlgeschlagen! Ungültige Team-Datei."
             },
-            "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
+            "selectOwnerForTeam": "Tutor:in auswählen (nach Login oder Name suchen)",
             "ownerSearch": {
                 "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",

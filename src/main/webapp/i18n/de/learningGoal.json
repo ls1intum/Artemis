@@ -28,9 +28,9 @@
                     "releaseDate": "Veröffentlichungsdatum",
                     "lecture": "Vorlesung",
                     "scoreAchievedByStudent": "Deine Bewertung",
-                    "averageScoreAchievedByStudent": "Durchschnittliche Bewertung eines Teilnehmers",
+                    "averageScoreAchievedByStudent": "Durchschnittliche Bewertung für Teilnehmende",
                     "totalPointsAchievable": "Erreichbare Punkte",
-                    "noOfParticipants": "Anzahl der Teilnehmer",
+                    "noOfParticipants": "Anzahl der Teilnehmenden",
                     "participationRate": "Teilnahmerate"
                 }
             },

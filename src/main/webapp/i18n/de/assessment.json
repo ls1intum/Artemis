@@ -2,7 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
-            "assessmentIllegalSubmission": "Achtung: Es handelt sich um eine illegale Einreichung.",
+            "assessmentIllegalSubmission": "Achtung: Es handelt sich, um eine illegale Einreichung.",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
             "feedback": "Feedback",
@@ -11,9 +11,9 @@
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
-            "assessmentLockedComplaintView": "Ursprüngliche Tutor:in: {{otherUser}}",
+            "assessmentLockedComplaintView": "Ursprüngliche/r Tutor:in: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
-            "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Ein anderer Tutor muss antworten.",
+            "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Ein/e andere/r Tutor:in muss antworten.",
             "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
@@ -33,7 +33,7 @@
             "detail": {
                 "feedback": "Feedback",
                 "scoreFor": "Bewertung für",
-                "tutorComment": "Tutorkommentar:"
+                "tutorComment": "Kommentar von Tutor:in:"
             },
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
@@ -55,9 +55,9 @@
                     "score": "Punkte",
                     "duration": "Dauer",
                     "assessmentType": "Bewertungsart",
-                    "student": "Student/in",
-                    "assessor": "Prüfer/in",
-                    "assessors": "Prüfer/innen",
+                    "student": "Studierende:r",
+                    "assessor": "Bewertende Person",
+                    "assessors": "Bewertende Personen",
                     "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"
