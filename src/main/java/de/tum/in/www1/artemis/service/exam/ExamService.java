@@ -269,12 +269,13 @@ public class ExamService {
                     if (exam.getNumberOfCorrectionRoundsInExam() == 2 && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                         Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
                         if (latestSubmission.isPresent()) {
+                            Submission submission = latestSubmission.get();
                             // Check if second correction already started
-                            if (latestSubmission.get().getManualResults().size() > 1) {
+                            if (submission.getManualResults().size() > 1) {
                                 if (!scores.hasSecondCorrectionAndStarted) {
                                     scores.hasSecondCorrectionAndStarted = true;
                                 }
-                                Result firstManualResult = latestSubmission.get().getFirstManualResult();
+                                Result firstManualResult = submission.getFirstManualResult();
                                 double achievedPointsInFirstCorrection;
                                 if (firstManualResult != null) {
                                     Double resultScore = firstManualResult.getScore();
