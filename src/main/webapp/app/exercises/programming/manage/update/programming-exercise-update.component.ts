@@ -173,6 +173,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     set selectedProjectType(type: ProjectType) {
         this.selectedProjectTypeValue = type;
 
+        this.updateProjectTypeSettings(type);
+
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
@@ -183,6 +185,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     get selectedProjectType() {
         return this.selectedProjectTypeValue;
+    }
+
+    private updateProjectTypeSettings(type: ProjectType) {
+        if (ProjectType.XCODE === type) {
+            // Disable SCA for Xcode
+            this.programmingExercise.staticCodeAnalysisEnabled = false;
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+            // Disable Online Editor
+            this.programmingExercise.allowOnlineEditor = false;
+        }
     }
 
     /**

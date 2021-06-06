@@ -269,25 +269,27 @@ public class ProgrammingExerciseService {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
             String projectType = programmingExercise.getProjectType().name().toLowerCase();
+            String projectTypePrefix = programmingLanguage + "/" + projectType;
 
             exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
 
+
             if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
                 // For Xcode we don't share source code, so we only copy files once
-                exercisePrefix = programmingLanguageProjectTypePath + "/exercise";
-                testPrefix = programmingLanguageProjectTypePath + "/test";
-                solutionPrefix = programmingLanguageProjectTypePath + "/solution";
+                exercisePrefix = projectTypePrefix + "/exercise";
+                testPrefix = projectTypePrefix + "/test";
+                solutionPrefix = projectTypePrefix + "/solution";
 
                 exerciseResources = resourceLoaderService.getResources(exercisePath);
                 testResources = resourceLoaderService.getResources(testPath);
                 solutionResources = resourceLoaderService.getResources(solutionPath);
             }
             else {
-                projectTypeExercisePrefix = programmingLanguageProjectTypePath + "/exercise";
-                projectTypeTestPrefix = programmingLanguageProjectTypePath + "/test";
-                projectTypeSolutionPrefix = programmingLanguageProjectTypePath + "/solution";
+                projectTypeExercisePrefix = projectTypePrefix + "/exercise";
+                projectTypeTestPrefix = projectTypePrefix + "/test";
+                projectTypeSolutionPrefix = projectTypePrefix + "/solution";
 
                 projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
                 projectTypeTestResources = resourceLoaderService.getResources(testPath);

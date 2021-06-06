@@ -210,7 +210,7 @@ public class BambooBuildPlanService {
             }
             case SWIFT -> {
                 var isXcodeProject = ProjectType.XCODE.equals(projectType);
-                var subDirectory = isXcodeProject ? "xcode/" : "";
+                var subDirectory = isXcodeProject ? "/xcode" : "";
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false);
                 tasks.add(0, checkoutTask);
@@ -228,7 +228,10 @@ public class BambooBuildPlanService {
                 if (isXcodeProject) {
                     // add a requirement to be able to run the Xcode build tasks
                     var requirement = new Requirement("Simulator - iOS 14.5");
-                    defaultJob.requirements(requirement);
+                    var requirement2 = Requirement.exists("Simulator - iOS 14.5");
+                    var requirement3 = Requirement.exists("Simulator-iOS14.5");
+                    var requirement4 = Requirement.exists("Simulator_-_iOS_14.5");
+                    defaultJob.requirements(requirement, requirement2, requirement3, requirement4);
                 }
                 return defaultStage.jobs(defaultJob);
             }
