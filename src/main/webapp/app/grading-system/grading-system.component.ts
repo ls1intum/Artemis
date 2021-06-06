@@ -125,7 +125,10 @@ export class GradingSystemComponent implements OnInit {
      * - there must be at least one grade step
      * - all fields must be filled out
      * - the percentage values must lie between 0 and 100 (both inclusive)
-     * - the bonus bonus points are at least 0 if the scale is of BONUS type
+     * - all grade names must be unique
+     * - the first passing must be set if the scale is of GRADE type
+     * - the bonus points are at least 0 if the scale is of BONUS type
+     * - the bonus points must be strictly ascending in values
      * - the max and min % of adjacent grade steps overlap
      * - the first grade step begins at 0% and the last ends at 100%
      */
