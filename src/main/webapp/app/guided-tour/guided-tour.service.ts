@@ -877,18 +877,15 @@ export class GuidedTourService {
             return false;
         }
         const currentTourStep = this.currentTour.steps[this.currentTourStepIndex];
-        if (currentTourStep) {
-            const selector = currentTourStep.highlightSelector ? currentTourStep.highlightSelector : undefined;
-            if (selector) {
-                const selectedElement = document.querySelector(selector);
-                if (!selectedElement) {
-                    return false;
-                }
-            }
-            return true;
-        } else {
+        if (!currentTourStep) {
             this.resetTour();
         }
+        const selector = currentTourStep.highlightSelector ? currentTourStep.highlightSelector : undefined;
+        const selectedElement = selector ? document.querySelector(selector) : undefined;
+        if (!selectedElement) {
+            return false;
+        }
+        return true;
     }
 
     /**
