@@ -269,7 +269,7 @@ public class ExamService {
                         Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
                         if (latestSubmission.isPresent()) {
                             // Check if second correction already started
-                            if (!scores.hasSecondCorrectionAndStarted && latestSubmission.get().getManualResults().size() > 1) {
+                            if (!scores.hasSecondCorrectionAndStarted && latestSubmission.get().getManualResults().size() > 1 && exam.getNumberOfCorrectionRoundsInExam() == 2) {
                                 scores.hasSecondCorrectionAndStarted = true;
                             }
                             Result firstManualResult = latestSubmission.get().getFirstManualResult();
