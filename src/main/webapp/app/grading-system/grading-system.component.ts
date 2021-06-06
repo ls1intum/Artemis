@@ -343,20 +343,22 @@ export class GradingSystemComponent implements OnInit {
      * Create a new grade step add the end of the current grade step set
      */
     createGradeStep(): void {
-        const gradeStep: GradeStep = {
-            gradeName: '',
-            lowerBoundPercentage: 100,
-            upperBoundPercentage: 100,
-            isPassingGrade: true,
-            lowerBoundInclusive: this.lowerBoundInclusivity,
-            upperBoundInclusive: true,
-        };
         if (!this.gradingScale) {
             this.gradingScale = new GradingScale();
         }
         if (!this.gradingScale.gradeSteps) {
             this.gradingScale.gradeSteps = [];
         }
+        const gradeStepsArrayLength = this.gradingScale.gradeSteps.length;
+        const lowerBound = gradeStepsArrayLength === 0 ? 0 : this.gradingScale.gradeSteps[gradeStepsArrayLength - 1].upperBoundPercentage;
+        const gradeStep: GradeStep = {
+            gradeName: '',
+            lowerBoundPercentage: lowerBound,
+            upperBoundPercentage: 100,
+            isPassingGrade: true,
+            lowerBoundInclusive: this.lowerBoundInclusivity,
+            upperBoundInclusive: true,
+        };
         this.gradingScale.gradeSteps.push(gradeStep);
     }
 
