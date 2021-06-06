@@ -266,23 +266,25 @@ public class ExamService {
                     }
 
                     // collect points of first correction, if a second correction exists
-                    if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                    if (exam.getNumberOfCorrectionRoundsInExam() == 2 && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                         Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
                         if (latestSubmission.isPresent()) {
                             // Check if second correction already started
-                            if (!scores.hasSecondCorrectionAndStarted && latestSubmission.get().getManualResults().size() > 1 && exam.getNumberOfCorrectionRoundsInExam() == 2) {
-                                scores.hasSecondCorrectionAndStarted = true;
+                            if (latestSubmission.get().getManualResults().size() > 1) {
+                                if (!scores.hasSecondCorrectionAndStarted) {
+                                    scores.hasSecondCorrectionAndStarted = true;
+                                }
+                                Result firstManualResult = latestSubmission.get().getFirstManualResult();
+                                double achievedPointsInFirstCorrection;
+                                if (firstManualResult != null) {
+                                    Double resultScore = firstManualResult.getScore();
+                                    achievedPointsInFirstCorrection = resultScore != null ? round(resultScore / 100.0 * exercise.getMaxPoints()) : 0.0;
+                                }
+                                else {
+                                    achievedPointsInFirstCorrection = 0.0;
+                                }
+                                studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
                             }
-                            Result firstManualResult = latestSubmission.get().getFirstManualResult();
-                            double achievedPointsInFirstCorrection;
-                            if (firstManualResult != null) {
-                                Double resultScore = firstManualResult.getScore();
-                                achievedPointsInFirstCorrection = resultScore != null ? round(resultScore / 100.0 * exercise.getMaxPoints()) : 0.0;
-                            }
-                            else {
-                                achievedPointsInFirstCorrection = 0.0;
-                            }
-                            studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
                         }
                     }
 
