@@ -897,6 +897,12 @@ public class ProgrammingExerciseResource {
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+
+        // Only instructors or higher may override the anonymization setting
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, null)) {
+            repositoryExportOptions.setAnonymizeStudentCommits(true);
+        }
+
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }

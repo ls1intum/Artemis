@@ -12,7 +12,7 @@ import java.util.zip.ZipFile;
 import org.springframework.stereotype.Service;
 
 /**
- * Zip file service containing utiliity methods
+ * Zip file service containing utility methods
  * used only for testing purposes.
  *
  */
@@ -33,7 +33,7 @@ public class ZipFileTestUtilService {
         String newPath = zipFile.substring(0, zipFile.length() - 4);
 
         new File(newPath).mkdir();
-        Enumeration zipFileEntries = zip.entries();
+        Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
 
         // Process each entry
         while (zipFileEntries.hasMoreElements()) {
@@ -50,7 +50,7 @@ public class ZipFileTestUtilService {
                 BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
                 int currentByte;
                 // establish buffer for writing file
-                byte data[] = new byte[BUFFER];
+                byte[] data = new byte[BUFFER];
 
                 // write the current file to disk
                 FileOutputStream fos = new FileOutputStream(destFile);
