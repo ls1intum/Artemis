@@ -6,7 +6,7 @@
     <property name="fileExtensions" value="java, properties, xml" />
     <module name="TreeWalker">
         <module name="JavadocMethod">
-            <property name="scope" value="public" />
+            <property name="accessModifiers" value="public" />
             <property name="tokens" value="METHOD_DEF,ANNOTATION_FIELD_DEF"/>
             <property name="severity" value="error"/>
         </module>
