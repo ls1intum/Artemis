@@ -19,7 +19,7 @@ export class GradingSystemComponent implements OnInit {
     gradingScale = new GradingScale();
     lowerBoundInclusivity = true;
     existingGradingScale = false;
-    firstPassingGrade: string;
+    firstPassingGrade?: string;
     courseId?: number;
     examId?: number;
     isExam = false;
@@ -53,7 +53,6 @@ export class GradingSystemComponent implements OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
-                catchError(() => of(new HttpResponse<GradingScale>({ status: 404 }))),
             )
             .subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
@@ -149,19 +148,41 @@ export class GradingSystemComponent implements OnInit {
                 return false;
             }
         }
-        // check if when the grade type is BONUS the bonus points are at least 0
-        if (!this.isGradeType()) {
-            for (const gradeStep of this.gradingScale.gradeSteps) {
-                if (isNaN(Number(gradeStep.gradeName)) || Number(gradeStep.gradeName) < 0) {
-                    this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBonusPoints');
-                    return false;
-                }
+        if (this.isGradeType()) {
+            // check if all grade names are unique if the grading scale is of type GRADE
+            if (!this.gradingScale.gradeSteps.map((gradeStep) => gradeStep.gradeName).every((gradeName, index, gradeNames) => gradeNames.indexOf(gradeName) === index)) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.nonUniqueGradeNames');
+                return false;
+            }
+            // check if the first passing grade is set if the grading scale is of type GRADE
+            if (this.firstPassingGrade === undefined || this.firstPassingGrade === '') {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.unsetFirstPassingGrade');
+                return false;
             }
         }
         // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
         let sortedGradeSteps: GradeStep[] = [];
         this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
         sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
+        if (!this.isGradeType()) {
+            // check if when the grade type is BONUS the bonus points are at least 0
+            for (const gradeStep of sortedGradeSteps) {
+                if (isNaN(Number(gradeStep.gradeName)) || Number(gradeStep.gradeName) < 0) {
+                    this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBonusPoints');
+                    return false;
+                }
+            }
+            // check if when the grade type is BONUS the bonus points have strictly ascending values
+            if (
+                !sortedGradeSteps
+                    .map((gradeStep) => Number(gradeStep.gradeName))
+                    .every((bonusPoints, index, bonusPointsArray) => index === 0 || bonusPoints > bonusPointsArray[index - 1])
+            ) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
+                return false;
+            }
+        }
+
         // check if grade steps have valid adjacency
         for (let i = 0; i < sortedGradeSteps.length - 1; i++) {
             if (sortedGradeSteps[i].upperBoundPercentage !== sortedGradeSteps[i + 1].lowerBoundPercentage) {
@@ -270,10 +291,9 @@ export class GradingSystemComponent implements OnInit {
      * Called on initialization
      */
     determineFirstPassingGrade(): void {
-        this.firstPassingGrade =
-            this.gradingScale.gradeSteps.find((gradeStep) => {
-                return gradeStep.isPassingGrade;
-            })?.gradeName ?? this.gradingScale.gradeSteps[this.gradingScale.gradeSteps.length - 1].gradeName;
+        this.firstPassingGrade = this.gradingScale.gradeSteps.find((gradeStep) => {
+            return gradeStep.isPassingGrade;
+        })?.gradeName;
     }
 
     /**
