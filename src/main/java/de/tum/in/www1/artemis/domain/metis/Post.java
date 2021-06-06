@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.metis;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,8 +46,8 @@ public class Post extends Posting {
     private Integer votes = 0;
 
     // To be used with introduction of Metis
-    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<Reaction> reactions;
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<Reaction> reactions = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();

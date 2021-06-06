@@ -1,5 +1,5 @@
 export class PostTag {
-    public tag?: string;
+    public text?: string;
 
     constructor() {}
 }

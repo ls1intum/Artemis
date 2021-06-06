@@ -10,8 +10,8 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
@@ -35,11 +35,11 @@ public class Reaction extends DomainObject {
     private String content;
 
     @ManyToOne
-    @JsonIgnoreProperties("reactions")
+    @JsonIncludeProperties("id")
     private Post post;
 
     @ManyToOne
-    @JsonIgnoreProperties("reactions")
+    @JsonIncludeProperties("id")
     private AnswerPost answerPost;
 
     public User getUser() {
