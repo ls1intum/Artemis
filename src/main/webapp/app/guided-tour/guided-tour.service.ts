@@ -972,31 +972,31 @@ export class GuidedTourService {
      * @return guided tour step with defined orientation
      */
     private setTourOrientation(step: TourStep): TourStep {
-        if (step) {
-            const convertedStep = cloneDeep(step);
-            if (convertedStep.orientation && !(typeof convertedStep.orientation === 'string') && (convertedStep.orientation as OrientationConfiguration[]).length) {
-                (convertedStep.orientation as OrientationConfiguration[]).sort((a: OrientationConfiguration, b: OrientationConfiguration) => {
-                    if (!b.maximumSize) {
-                        return 1;
-                    }
-                    if (!a.maximumSize) {
-                        return -1;
-                    }
-                    return b.maximumSize - a.maximumSize;
-                });
-
-                let currentOrientation: Orientation = Orientation.TOP;
-                (convertedStep.orientation as OrientationConfiguration[]).forEach((orientationConfig: OrientationConfiguration) => {
-                    if (!orientationConfig.maximumSize || window.innerWidth <= orientationConfig.maximumSize) {
-                        currentOrientation = orientationConfig.orientationDirection;
-                    }
-                });
-
-                convertedStep.orientation = currentOrientation;
-            }
-            return convertedStep;
+        if (!step) {
+            return step;
         }
-        return step;
+        const convertedStep = cloneDeep(step);
+        if (convertedStep.orientation && !(typeof convertedStep.orientation === 'string') && (convertedStep.orientation as OrientationConfiguration[]).length) {
+            (convertedStep.orientation as OrientationConfiguration[]).sort((a: OrientationConfiguration, b: OrientationConfiguration) => {
+                if (!b.maximumSize) {
+                    return 1;
+                }
+                if (!a.maximumSize) {
+                    return -1;
+                }
+                return b.maximumSize - a.maximumSize;
+            });
+
+            let currentOrientation: Orientation = Orientation.TOP;
+            (convertedStep.orientation as OrientationConfiguration[]).forEach((orientationConfig: OrientationConfiguration) => {
+                if (!orientationConfig.maximumSize || window.innerWidth <= orientationConfig.maximumSize) {
+                    currentOrientation = orientationConfig.orientationDirection;
+                }
+            });
+
+            convertedStep.orientation = currentOrientation;
+        }
+        return convertedStep;
     }
 
     /** If the current tour step cannot be displayed because it has already been successfully completed, then this
