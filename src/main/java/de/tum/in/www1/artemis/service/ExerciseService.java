@@ -824,6 +824,50 @@ public class ExerciseService {
         }
         feedbackRepository.saveAll(feedbackList);
 
+        List<Feedback> feedbacksDeleted = getFeedbacksShouldDeleteAfterSGIChanged(deleteFeedbacks, instructionList, exercise);
+
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+
+        // re-calculate the results after updating the feedbacks
+        for (Result result : results) {
+            if (!feedbacksDeleted.isEmpty()) {
+                List<Feedback> existingFeedbacks = result.getFeedbacks();
+                if (!existingFeedbacks.isEmpty()) {
+                    existingFeedbacks.removeAll(feedbacksDeleted);
+                }
+                // first save the feedback (that is not yet in the database) to prevent null index exception
+                var savedFeedbackList = feedbackRepository.saveFeedbacks(existingFeedbacks);
+                result.updateAllFeedbackItems(savedFeedbackList, exercise instanceof ProgrammingExercise);
+            }
+
+            if (!(exercise instanceof ProgrammingExercise)) {
+                resultRepository.submitResult(result, exercise);
+            }
+            else {
+                double points = programmingAssessmentService.calculateTotalScore(result);
+                result.setScore(points, exercise.getMaxPoints());
+                /*
+                 * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
+                 * student has achieved have changed
+                 */
+                String[] resultStringParts = result.getResultString().split(", ");
+                resultStringParts[resultStringParts.length - 1] = result.createResultString(points, exercise.getMaxPoints());
+                result.setResultString(String.join(", ", resultStringParts));
+                resultRepository.save(result);
+            }
+        }
+    }
+
+    /**
+     * Gets the list of feedback that associated with deleted structured grading instructions
+     *
+     * @param deleteFeedbacks check for deleting the feedbacks
+     * @param instructionList grading instruction list to update
+     * @param exercise exercise will be used to get existing grading instructions from database
+     * @return list of feedback that should remove from feedback list of results
+     */
+    public List<Feedback> getFeedbacksShouldDeleteAfterSGIChanged(boolean deleteFeedbacks, List<GradingInstruction> instructionList, Exercise exercise) {
+        List<Feedback> feedbacksDeleted = new ArrayList<>();
         // check if the user decided to remove the feedbacks after deleting the associated grading instructions
         if (deleteFeedbacks) {
             List<Long> updatedInstructionIds = instructionList.stream().map(GradingInstruction::getId).collect(Collectors.toList());
@@ -837,30 +881,8 @@ public class ExerciseService {
                     .collect(Collectors.toList());
 
             // find the feedbacks will be deleted
-            List<Feedback> feedbacks = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
-            feedbackRepository.deleteAll(feedbacks);
-
+            feedbacksDeleted = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
         }
-
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
-        // re-calculate the results after updating the feedbacks
-        if (!(exercise instanceof ProgrammingExercise)) {
-            resultRepository.reEvaluateResults(results, exercise);
-        }
-        else {
-            for (Result result : results) {
-                double points = programmingAssessmentService.calculateTotalScore(result);
-                result.setScore(points, exercise.getMaxPoints());
-                /*
-                 * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
-                 * student has achieved have changed
-                 */
-                String[] resultStringParts = result.getResultString().split(", ");
-                resultStringParts[resultStringParts.length - 1] = result.createResultString(points, exercise.getMaxPoints());
-                result.setResultString(String.join(", ", resultStringParts));
-                resultRepository.save(result);
-            }
-        }
-
+        return feedbacksDeleted;
     }
 }

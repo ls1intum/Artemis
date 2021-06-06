@@ -624,16 +624,4 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", +resultId));
     }
-
-    /**
-     * Runs 'submitResult' for each result in the given list
-     *
-     * @param resultList the list of results
-     * @param exercise exercise that is needed for 'submitResult'
-     */
-    default void reEvaluateResults(List<Result> resultList, Exercise exercise) {
-        for (Result result : resultList) {
-            submitResult(result, exercise);
-        }
-    }
 }
