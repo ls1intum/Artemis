@@ -12,7 +12,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 
 /**
  * A Post, i.e. start of a Metis thread.
@@ -44,6 +46,7 @@ public class Post extends Posting {
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
 
+    // To be used with introduction of Metis
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "tags")
@@ -64,18 +67,6 @@ public class Post extends Posting {
     @Enumerated(EnumType.STRING)
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
-
-    public void setCourse(Course course) {
-        this.course = course;
-    }
-
-    public CourseWideContext getCourseWideContext() {
-        return courseWideContext;
-    }
-
-    public void setCourseWideContext(CourseWideContext courseWideContext) {
-        this.courseWideContext = courseWideContext;
-    }
 
     public String getTitle() {
         return title;
@@ -107,6 +98,14 @@ public class Post extends Posting {
 
     public void setAnswers(Set<AnswerPost> answerPosts) {
         this.answers = answerPosts;
+    }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
     }
 
     public Exercise getExercise() {
@@ -142,6 +141,18 @@ public class Post extends Posting {
             return course;
         }
         return null;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public CourseWideContext getCourseWideContext() {
+        return courseWideContext;
+    }
+
+    public void setCourseWideContext(CourseWideContext courseWideContext) {
+        this.courseWideContext = courseWideContext;
     }
 
     @Override
