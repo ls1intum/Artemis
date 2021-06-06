@@ -446,8 +446,9 @@ public class ProgrammingExerciseExportService {
             log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
             return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isHideStudentNameInZippedFolder());
         }
-        catch (InterruptedException | GitAPIException | GitException e) {
-            log.error("Cannot create zip for participation id {} because the repo download clone path is invalid.", participation.getId());
+        catch (InterruptedException | GitAPIException | GitException ex) {
+            log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception", participation.getId(),
+                    participation.getProgrammingExercise().getId(), ex);
             return null;
         }
     }
