@@ -9,7 +9,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
@@ -37,7 +37,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private accountService: AccountService,
         private exerciseService: ExerciseService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
-        private fileUploadAssessmentsService: FileUploadAssessmentsService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
@@ -122,7 +122,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.fileUploadAssessmentsService.cancelAssessment(submission.id!).subscribe(() => {
+            this.fileUploadAssessmentService.cancelAssessment(submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
         }

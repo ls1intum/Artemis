@@ -7,7 +7,7 @@ import * as sinonChai from 'sinon-chai';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisTestModule } from '../test.module';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
@@ -21,7 +21,7 @@ const expect = chai.expect;
 describe('Modeling Assessment Service', () => {
     let injector: TestBed;
     let httpMock: HttpTestingController;
-    let service: FileUploadAssessmentsService;
+    let service: FileUploadAssessmentService;
     let expectedResult: any;
     let httpExpectedResult: any;
     let elemDefault: Result;
@@ -35,7 +35,7 @@ describe('Modeling Assessment Service', () => {
             ],
         });
         injector = getTestBed();
-        service = injector.get(FileUploadAssessmentsService);
+        service = injector.get(FileUploadAssessmentService);
         httpMock = injector.get(HttpTestingController);
 
         expectedResult = {} as Result;

@@ -73,6 +73,15 @@ export class ModelingAssessmentService {
         return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
     }
 
+    /**
+     * Deletes an assessment.
+     * @param submissionId id of the submission, to which the assessment belongs to
+     * @param resultId     id of the result which is deleted
+     */
+    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/delete/${resultId}`);
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         let result = this.convertItemFromServer(res.body!);
         result = this.convertResult(result);

@@ -48,6 +48,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             filterLateSubmissions: false,
             addParticipantName: true,
             combineStudentCommits: false,
+            anonymizeStudentCommits: false,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
             hideStudentNameInZippedFolder: false,
         };

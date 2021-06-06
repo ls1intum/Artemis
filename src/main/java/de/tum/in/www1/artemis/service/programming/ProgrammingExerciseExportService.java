@@ -424,7 +424,12 @@ public class ProgrammingExerciseExportService {
 
             if (repositoryExportOptions.isCombineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise);
+                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.isAnonymizeStudentCommits());
+            }
+
+            if (repositoryExportOptions.isAnonymizeStudentCommits()) {
+                log.debug("Anonymizing commits for participation {}", participation);
+                gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
 
             if (repositoryExportOptions.isNormalizeCodeStyle()) {
@@ -465,6 +470,11 @@ public class ProgrammingExerciseExportService {
         }
     }
 
+    /**
+     * delete all files in the directory based on the given programming exercise and target path
+     * @param programmingExercise the programming exercise for which repos have been downloaded
+     * @param targetPath the path in which the repositories have been downloaded
+     */
     public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
         Path projectPath = Paths.get(targetPath, projectDirName);
