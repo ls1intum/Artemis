@@ -346,37 +346,37 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                sq.creationDate, count(sq.id)
+                post.creationDate, count(post.id)
                 )
-            from StudentQuestion sq left join sq.lecture lectures left join sq.exercise exercises
-            where sq.creationDate >= :#{#startDate} and sq.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
-            group by sq.creationDate
-            order by sq.creationDate asc
+            from Post post left join post.lecture lectures left join post.exercise exercises
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
+            group by post.creationDate
+            order by post.creationDate asc
             """)
     List<StatisticsEntry> getQuestionsAskedForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
 
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                sq.creationDate, count(sq.id)
+                post.creationDate, count(post.id)
                 )
-            from StudentQuestion sq left join sq.exercise exercise
-            where sq.creationDate >= :#{#startDate} and sq.creationDate <= :#{#endDate} and exercise.id = :#{#exerciseId}
-            group by sq.creationDate
-            order by sq.creationDate asc
+            from Post post left join post.exercise exercise
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and exercise.id = :#{#exerciseId}
+            group by post.creationDate
+            order by post.creationDate asc
             """)
     List<StatisticsEntry> getQuestionsAskedForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
 
     @Query("""
-            select count(sq)
-            from StudentQuestion sq left join sq.exercise exercise
+            select count(post)
+            from Post post left join post.exercise exercise
             where exercise.id = :#{#exerciseId}
             """)
     long getNumberOfQuestionsAskedForExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("""
-            select count(distinct sq.id)
-            from StudentQuestion sq left join sq.exercise exercise left join sq.answers answers
+            select count(distinct post.id)
+            from Post post left join post.exercise exercise left join post.answers answers
             where exercise.id = :#{#exerciseId} and answers.tutorApproved = true
             """)
     long getNumberOfQuestionsAnsweredForExercise(@Param("exerciseId") Long exerciseId);
@@ -384,24 +384,24 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                a.answerDate, count(a.id)
+                answer.creationDate, count(answer.id)
                 )
-            from StudentQuestionAnswer a left join a.question question left join question.lecture lectures left join question.exercise exercises
-            where a.answerDate >= :#{#startDate} and a.answerDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
-            group by a.answerDate
-            order by a.answerDate asc
+            from AnswerPost answer left join answer.post post left join post.lecture lectures left join post.exercise exercises
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
+            group by answer.creationDate
+            order by answer.creationDate asc
             """)
     List<StatisticsEntry> getQuestionsAnsweredForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
 
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                a.answerDate, count(a.id)
+                answer.creationDate, count(answer.id)
                 )
-            from StudentQuestionAnswer a left join a.question question left join question.exercise exercise
-            where a.answerDate >= :#{#startDate} and a.answerDate <= :#{#endDate} and exercise.course.id = :#{#exerciseId}
-            group by a.answerDate
-            order by a.answerDate asc
+            from AnswerPost answer left join answer.post post left join post.exercise exercise
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and exercise.course.id = :#{#exerciseId}
+            group by answer.creationDate
+            order by answer.creationDate asc
             """)
     List<StatisticsEntry> getQuestionsAnsweredForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseId") Long exerciseId);
@@ -572,7 +572,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
             }
-            case QUESTIONS_ASKED -> {
+            case POSTS -> {
                 switch (view) {
                     case COURSE -> {
                         return getQuestionsAskedForCourse(startDate, endDate, entityId);
@@ -583,7 +583,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                     default -> throw new UnsupportedOperationException("Unsupported view: " + view);
                 }
             }
-            case QUESTIONS_ANSWERED -> {
+            case ANSWERED_POSTS -> {
                 switch (view) {
                     case COURSE -> {
                         return getQuestionsAnsweredForCourse(startDate, endDate, entityId);

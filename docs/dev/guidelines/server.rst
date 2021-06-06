@@ -105,20 +105,28 @@ It gets activated when a particular jar file is detected on the classpath. The s
 
 Route naming conventions:
 
-* Always use kebab-case (e.g. "/exampleAssessment" → "/example-assessment").
-* The routes should follow the general structure entity > entityId > sub-entity ... (e.g. "/exercises/{exerciseId}/participations").
-* Use plural for a route's entities.
+* Always use kebab-case (e.g. ".../exampleAssessment" → ".../example-assessment").
+* The routes should follow the general structure list-entity > entityId > sub-entity ... (e.g. "exercises/{exerciseId}/participations").
+* Use plural for a route's list-entities (e.g. "exercises/..."), use singular for a singleton (e.g. ".../assessment"), use verbs for naming remote methods on the server (e.g. ".../submit").
 * Specify the key entity at the end of the route (e.g. "text-editor/participations/{participationId}" should be changed to "participations/{participationId}/text-editor").
-* Use consistent routes that start with ``courses``, ``exercises`` or ``lectures`` to simplify access control. Do not start routes with other entity names.
+* Use consistent routes that start with ``courses``, ``exercises``, ``participations``, ``exams`` or ``lectures`` to simplify access control. Do not start routes with other entity names.
+* When defining a new route, all subroutes should be addressable as well, e.g. your new route is "exercises/{exerciseId}/statistics", then both "exercises/{exerciseId}" and "exercises" should be addressable.
+* If you want an alternative representation of the entity that e.g. sends extra data needed for assessment, then specify the reason for this alternative route at the end of the route, for example "participations/{participationId}/for-assessment".
 
 Additional notes on the controller methods:
 
-* POST should return the newly created entity
+* The REST Controllers route should end with a tailing "/" and not start with a "/" (e.g. "api/"), the individual endpoints routes should not start and not end with a "/" (e.g. "exercises/{exerciseId}").
+* Use ...ElseThrow alternatives of all Repository and AuthorizationCheck calls whenever applicable, this increases readability (e.g. ``findByIdElseThrow(...)`` instead of ``findById(...)`` and then checking for ``null``).
+* POST should return the newly created entity.
+* POST should be used to trigger remote methods (e.g. ".../{participationId}/submit" should be triggered with a POST).
 * Verify that API endpoints perform appropriate authorization and authentication consistent with the rest of the code base.
     * Always use ``@PreAuthorize`` to only allow certain roles to access the method.
     * Perform additional security checks using the ``AuthorizationCheckService``.
 * Check for other common weaknesses, e.g., weak configuration, malicious user input, missing log events, etc.
 * Never trust user input and check if the passed data exists in the database.
+    * Verify the consistency of user input by e.g. checking ids in body and path to see if they match, comparing course in the `RequestBody` with the one referenced by id in the path.
+    * Check for user input consistency first, then check the authorization, if e.g. the ids of the course in body and path don't match, the user may be INSTRUCTOR in one course and just a USER in another, this may lead to unauthorized access.
+* REST Controller should only handle authentication, error handling, input validation and output creation, the actual logic behind an endpoint should happen in the respective `Service` or `Repository`.
 * Handle exceptions and errors with a standard response. Errors are very important in REST APIs. They inform clients that something went wrong, after all.
 * Always use different response status codes to notify the client about errors on the server, e.g.:
     * Forbidden - the user is not authorized to access the controller.

@@ -129,8 +129,8 @@ export class ExerciseService {
                         if (res.body.exerciseHints === undefined) {
                             res.body.exerciseHints = [];
                         }
-                        if (res.body.studentQuestions === undefined) {
-                            res.body.studentQuestions = [];
+                        if (res.body.posts === undefined) {
+                            res.body.posts = [];
                         }
                     }
                     return res;
