@@ -5,5 +5,6 @@
     [icon]="confirmIcon"
     [ngbTooltip]="'artemisApp.assessment.messages.removeSGILink' | artemisTranslate"
     container="body"
+    (mouseleave)="toggle()"
     (click)="removeLink()"
 ></fa-icon>
