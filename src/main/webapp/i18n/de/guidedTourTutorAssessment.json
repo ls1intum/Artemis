@@ -24,8 +24,8 @@
                 "content": "Dieser Graph visualisiert deinen aktuellen Bewertungsprozess und markiert alle Knoten in grün, wenn der dazugehörige Prozessschritt erledigt ist: <ol><li>Lese die Bewertungsanleitung</li><li>Übe an Beispieleinreichungen (wenn vorhanden)</li><li>Bewerte Einreichungen von Studierenden</li><li>Evaluiere die Beschwerden und Feedbackanfragen der Studierenden</li></ol>"
             },
             "exerciseDashboardButton": {
-                "headline": "Aufgaben Dashboard",
-                "content": "Nun gehen wir ins Aufgaben Dashboard und schauen uns die Aufgabendetails und Abgaben der Studierenden an."
+                "headline": "Aufgaben-Dashboard",
+                "content": "Nun gehen wir ins Aufgaben-Dashboard und schauen uns die Aufgabendetails und Abgaben der Studierenden an."
             }
         },
         "exerciseAssessmentDashboard": {
@@ -85,7 +85,7 @@
             },
             "back": {
                 "headline": "Tutorial für Beispielbewertungen abschließen",
-                "content": "Navigiere zum Aufgaben Dashboard zurück um dieses Tutorial abzuschließen."
+                "content": "Navigiere zum Aufgaben-Dashboard zurück um dieses Tutorial abzuschließen."
             }
         }
     }

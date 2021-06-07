@@ -100,7 +100,7 @@
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
                 }
             },
-            "courseDashboard": "Kurs Dashboard",
+            "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Kursdashboard für Lehrpersonen",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
