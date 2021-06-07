@@ -82,6 +82,8 @@
         </ng-template>
     </div>
 
+    <jhi-structured-grading-instruction-assessment-link *ngIf="feedback.gradingInstruction!" [assessment]="feedback"></jhi-structured-grading-instruction-assessment-link>
+
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>
 </div>

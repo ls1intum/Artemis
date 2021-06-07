@@ -1,1 +1,9 @@
-<fa-icon [icon]="linkIcon" [ngbTooltip]="setTooltip(instruction!)" container="body" (click)="removeLink()"></fa-icon>
+<fa-icon *ngIf="!showConfirm" [icon]="linkIcon" [ngbTooltip]="setTooltip(instruction!)" container="body" (click)="toggle()"></fa-icon>
+<fa-icon
+    *ngIf="showConfirm"
+    [ngClass]="'text-danger'"
+    [icon]="confirmIcon"
+    [ngbTooltip]="'artemisApp.assessment.messages.removeSGILink' | artemisTranslate"
+    container="body"
+    (click)="removeLink()"
+></fa-icon>

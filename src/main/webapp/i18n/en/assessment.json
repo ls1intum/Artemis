@@ -42,7 +42,8 @@
                 "saveSuccessful": "Your assessment was saved successfully!",
                 "saveFailed": "Saving your assessment failed!",
                 "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
-                "updateAfterComplaintFailed": "Updating the assessment failed."
+                "updateAfterComplaintFailed": "Updating the assessment failed.",
+                "removeSGILink": "Do you want to remove the link to the structured grading instruction?"
             },
             "dashboard": {
                 "warning": "Warning: The due date is not over yet and students can still submit their solutions. Please do not start the assessment yet.",

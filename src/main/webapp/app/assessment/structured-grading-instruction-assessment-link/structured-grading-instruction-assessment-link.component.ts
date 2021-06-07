@@ -11,6 +11,8 @@ export class StructuredGradingInstructionAssessmentLinkComponent implements OnIn
     @Input() linkIcon = <IconProp>'link';
     @Input() assessment: Feedback;
     instruction: GradingInstruction | undefined;
+    confirmIcon = <IconProp>'trash';
+    showConfirm = false;
 
     ngOnInit(): void {
         this.instruction = this.assessment.gradingInstruction;
@@ -20,6 +22,7 @@ export class StructuredGradingInstructionAssessmentLinkComponent implements OnIn
      * remove grading instruction on click
      */
     removeLink(): void {
+        this.toggle();
         this.assessment.gradingInstruction = undefined;
     }
 
@@ -29,5 +32,12 @@ export class StructuredGradingInstructionAssessmentLinkComponent implements OnIn
      */
     setTooltip(instruction: GradingInstruction) {
         return 'Grading Instruction: ' + instruction.instructionDescription;
+    }
+
+    /**
+     * toggle showConfirm
+     */
+    toggle(): void {
+        this.showConfirm = !this.showConfirm;
     }
 }
