@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@4tw/cypress-drag-drop@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@4tw/cypress-drag-drop/-/cypress-drag-drop-1.6.0.tgz#528cf837f16d16e059b2e3cae702d9de2c9e1088"
+  integrity sha512-B61iPspk2hZuuo3mjmlTqYZXJ9tusc8VyEk+5KMO/FTBrHKDWqYp8ANOJnIkRz6QfYZbx+qBoKBu7MTfvBCKew==
+
 "@angular-devkit/architect@0.1102.12":
   version "0.1102.12"
   resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1102.12.tgz#ef03c39ccce8969a36a4844cf796ecf48f579cbc"
@@ -13083,7 +13088,7 @@ utils-merge@1.0.1:
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=
 
-uuid@8.3.2, uuid@^8.3.0, uuid@^8.3.2:
+uuid@8.3.2, uuid@^8.3.0:
   version "8.3.2"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
