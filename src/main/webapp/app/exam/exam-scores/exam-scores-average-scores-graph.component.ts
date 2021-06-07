@@ -14,7 +14,6 @@ import { round } from 'app/shared/util/utils';
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
-    @Input() legendPosition: string | undefined;
 
     height = 25;
 
@@ -90,7 +89,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                             display: true,
                         },
                         ticks: {
-                            display: !!self.legendPosition,
+                            display: true,
                             beginAtZero: true,
                             min: 0,
                             max: 100,
