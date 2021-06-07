@@ -2,7 +2,7 @@
     "artemisApp": {
         "assessmentDashboard": {
             "home": {
-                "title": "Kurs-Dashboard für Tutor:in"
+                "title": "Kurs-Dashboard für Tutor:innen"
             },
             "title": "Bewertungsübersicht",
             "noSubmissionFound": "Keine Abgaben gefunden",

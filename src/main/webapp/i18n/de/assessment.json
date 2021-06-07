@@ -11,9 +11,9 @@
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
-            "assessmentLockedComplaintView": "Ursprüngliche/r Tutor:in: {{otherUser}}",
+            "assessmentLockedComplaintView": "Ursprüngliche:r Tutor:in: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
-            "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Ein/e andere/r Tutor:in muss antworten.",
+            "assessmentReadOnlyUnhandledComplaint": "Es gibt eine Beschwerde für diese Bewertung. Andere:r Tutor:in muss antworten.",
             "moreFeedbackRequest": "Du musst auf die Feedback Anfrage antworten.",
             "assessmentReadOnlyHandledComplaint": "Die Beschwerde über deine Bewertung wurde bearbeitet.",
             "assessmentDueDateIsOver": "Die Einreichungsfrist der Bewertung ist vorbei, die nächste Einreichung wird direkt veröffentlicht",
