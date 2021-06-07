@@ -21,6 +21,11 @@ import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
+enum EditType {
+    CREATE,
+    UPDATE,
+}
+
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
@@ -62,6 +67,10 @@ export class TextExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
     ) {}
+
+    get editType(): EditType {
+        return this.textExercise.id === undefined ? EditType.CREATE : EditType.UPDATE;
+    }
 
     /**
      * Initializes all relevant data for creating or editing text exercise
@@ -183,14 +192,20 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.isImport) {
             this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));
-        } else if (this.textExercise.id !== undefined) {
-            const requestOptions = {} as any;
-            if (this.notificationText) {
-                requestOptions.notificationText = this.notificationText;
-            }
-            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise, requestOptions));
-        } else {
-            this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
+            return;
+        }
+
+        switch (this.editType) {
+            case EditType.CREATE:
+                this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
+                break;
+            case EditType.UPDATE:
+                const requestOptions = {} as any;
+                if (this.notificationText) {
+                    requestOptions.notificationText = this.notificationText;
+                }
+                this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise, requestOptions));
+                break;
         }
     }
 
@@ -212,15 +227,28 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
         result.subscribe(
-            () => this.onSaveSuccess(),
+            (exercise: HttpResponse<TextExercise>) => {
+                this.onSaveSuccess(exercise.body!.id!);
+            },
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exerciseId: number) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
-        this.previousState();
+
+        switch (this.editType) {
+            case EditType.CREATE:
+                setTimeout(() => {
+                    this.router.navigate(['course-management', this.textExercise.course!.id!, this.textExercise.type! + '-exercises', exerciseId, 'example-submissions']);
+                }, 1000);
+
+                break;
+            case EditType.UPDATE:
+                this.previousState();
+                break;
+        }
     }
 
     private onSaveError(error: HttpErrorResponse) {
