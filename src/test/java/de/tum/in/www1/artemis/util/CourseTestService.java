@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -11,7 +14,9 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,7 +34,10 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -37,6 +45,9 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 
 @Service
 public class CourseTestService {
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     @Autowired
     private DatabaseUtilService database;
@@ -79,6 +90,24 @@ public class CourseTestService {
 
     @Autowired
     private ComplaintRepository complaintRepo;
+
+    @Autowired
+    private CourseExamExportService courseExamExportService;
+
+    @Autowired
+    private ZipFileService zipFileService;
+
+    @Autowired
+    private FileService fileService;
+
+    @Autowired
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     private final static int numberOfStudents = 8;
 
@@ -1226,6 +1255,74 @@ public class CourseTestService {
 
         var updatedCourse = courseRepo.findById(course.getId()).get();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+    }
+
+    // Test
+    public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        assertThat(modelingExercise).isPresent();
+
+        archiveCourseAndAssertExerciseDoesntExist(course, modelingExercise.get());
+    }
+
+    // Test
+    public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+
+        Optional<TextExercise> textExercise = textExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        assertThat(textExercise).isPresent();
+
+        archiveCourseAndAssertExerciseDoesntExist(course, textExercise.get());
+    }
+
+    // Test
+    public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        assertThat(fileUploadExercise).isPresent();
+
+        archiveCourseAndAssertExerciseDoesntExist(course, fileUploadExercise.get());
+    }
+
+    private void archiveCourseAndAssertExerciseDoesntExist(Course course, Exercise exercise) throws Exception {
+        Files.createDirectories(Path.of(courseArchivesDirPath));
+
+        String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
+        String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
+        doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)),
+                any(List.class), any(Path.class));
+
+        List<Path> files = archiveCourseAndExtractFiles(course);
+        assertThat(files.size()).isEqualTo(2);
+
+        String exerciseType = "";
+        if (exercise instanceof FileUploadExercise) {
+            exerciseType = "FileUpload";
+        }
+        else if (exercise instanceof ModelingExercise) {
+            exerciseType = "Modeling";
+        }
+        else if (exercise instanceof TextExercise) {
+            exerciseType = "Text";
+        }
+        assertThat(files).doesNotContain(Path.of(exerciseType + "-student1"));
+    }
+
+    private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
+        List<String> exportErrors = new ArrayList<>();
+        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        assertThat(exportedCourse).isNotEmpty();
+
+        // Extract the archive
+        Path archivePath = exportedCourse.get();
+        zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
+        String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
+
+        return Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip"))
+                .collect(Collectors.toList());
     }
 
     // Test
