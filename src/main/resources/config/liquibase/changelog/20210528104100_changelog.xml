@@ -8,8 +8,8 @@
 
         <!-- refactoring changes: column names -->
         <renameColumn tableName="post" oldColumnName="question_text" newColumnName="content" columnDataType="VARCHAR(1000)"/>
-        <renameColumn tableName="answer_post" oldColumnName="answer_text" newColumnName="content" columnDataType="VARCHAR(1000)"/>
-        <renameColumn tableName="answer_post" oldColumnName="answer_date" newColumnName="creation_date" columnDataType="VARCHAR(1000)"/>
+        <renameColumn tableName="answer_post" oldColumnName="answer_text" newColumnName="content" columnDataType="LONGTEXT"/>
+        <renameColumn tableName="answer_post" oldColumnName="answer_date" newColumnName="creation_date" columnDataType="datetime"/>
         <renameColumn tableName="answer_post" oldColumnName="question_id" newColumnName="post_id" columnDataType="BIGINT"/>
 
         <renameColumn tableName="course" oldColumnName="student_questions_enabled" newColumnName="posts_enabled" columnDataType="BIT(1)"/>
