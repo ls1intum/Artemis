@@ -90,6 +90,10 @@ public class CourseExamExportService {
 
         // Export course exercises and exams
         List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors);
+        if (exportedFiles.isEmpty()) {
+            exportErrors.add("Did not export course " + course.getId() + " because the exercises/exams to export.");
+            return Optional.empty();
+        }
 
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
