@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -29,6 +30,8 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,9 +45,12 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -119,6 +125,15 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
+
+    @Autowired
+    private FileService fileService;
+
+    @Autowired
+    private CourseExamExportService courseExamExportService;
 
     public Course course;
 
@@ -919,6 +934,117 @@ public class ProgrammingExerciseTestService {
         var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
 
+    }
+
+    // Test
+    public void testExportCourseCannotCreateTmpCourseDir() throws Exception {
+
+        Course course = createCourseWithProgrammingExerciseAndParticipationWithFiles();
+
+        String courseDir = fileService.removeIllegalCharacters(course.getShortName() + "-" + course.getTitle() + "-");
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.createDirectories(ArgumentMatchers.argThat(argument -> argument.toString().contains(courseDir)))).thenThrow(IOException.class);
+
+        List<String> errors = new ArrayList<>();
+        var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
+        assertThat(optionalExportedCourse).isEmpty();
+    }
+
+    // Test
+    public void testExportCourseCannotCreateCourseExerciseDir() throws Exception {
+        Course course = createCourseWithProgrammingExerciseAndParticipationWithFiles();
+
+        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        mockedFiles.when(() -> Files.createDirectory(ArgumentMatchers.argThat(argument -> argument.toString().contains("course-exercises")))).thenThrow(IOException.class);
+
+        List<String> errors = new ArrayList<>();
+        var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
+        assertThat(optionalExportedCourse).isEmpty();
+    }
+
+    // Test
+    public void testExportCourseCannotExportSingleParticipationInterruptException() throws Exception {
+        createCourseWithProgrammingExerciseAndParticipationWithFiles();
+        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InterruptedException("interruptedException"));
+    }
+
+    // Test
+    public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
+        createCourseWithProgrammingExerciseAndParticipationWithFiles();
+        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InvalidRemoteException("InvalidRemoteException"));
+    }
+
+    // Test
+    public void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
+        createCourseWithProgrammingExerciseAndParticipationWithFiles();
+        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new GitException("GitException"));
+    }
+
+    private void testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(Exception exceptionToThrow) throws IOException, GitAPIException, InterruptedException {
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
+
+        // Mock error when exporting a participation
+        doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        course = courseRepository.findByIdWithExercisesAndLecturesElseThrow(course.getId());
+        List<String> errors = new ArrayList<>();
+        var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
+        assertThat(optionalExportedCourse).isPresent();
+
+        // Extract the archive
+        Path archivePath = optionalExportedCourse.get();
+        zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
+        String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
+
+        // Check that the dummy files we created exist in the archive
+        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        assertThat(filenames).contains(Path.of("Template.java"));
+        assertThat(filenames).contains(Path.of("Solution.java"));
+        assertThat(filenames).contains(Path.of("Tests.java"));
+        assertThat(filenames).contains(Path.of("HelloWorld.java"));
+    }
+
+    private Course createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException, InterruptedException {
+        course.setEndDate(ZonedDateTime.now().minusMinutes(4));
+        course.setCourseArchivePath(null);
+        course.setExercises(Set.of(exercise));
+        course = courseRepository.save(course);
+
+        // Create a programming exercise with solution, template, and tests participations
+        exercise = programmingExerciseRepository.save(exercise);
+        exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
+        exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
+        database.addTestCasesToProgrammingExercise(exercise);
+
+        // Add student participation
+        exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
+
+        // Mock student repo
+        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
+        disableAutoGC(studentRepository);
+        createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Mock template repo
+        Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
+        disableAutoGC(templateRepository);
+        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), anyString(), anyBoolean());
+
+        // Mock solution repo
+        Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
+        disableAutoGC(solutionRepository);
+        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), anyString(), anyBoolean());
+
+        // Mock tests repo
+        Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
+        disableAutoGC(testsRepository);
+        createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
+
+        return course;
     }
 
     /**

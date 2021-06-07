@@ -293,6 +293,42 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotCreateTmpCourseDir() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotCreateTmpCourseDir();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotCreateCourseExerciseDir() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotCreateCourseExerciseDir();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotExportSingleParticipationInterruptException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationInterruptException();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationGitApiException();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotSingleParticipationGitException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationGitException();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseParticipationCannotResetToOrigin() throws Exception {
+        programmingExerciseTestService.testExportCourseParticipationCannotResetToOrigin();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
         programmingExerciseTestService.testDownloadCourseArchiveAsInstructor();
     }
