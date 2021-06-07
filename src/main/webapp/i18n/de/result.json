@@ -7,13 +7,18 @@
                 "createOrEditLabel": "Result erstellen oder bearbeiten"
             },
             "created": "Result erstellt mit ID {{ param }}",
-            "updated": "Result aktualisiert mit ID {{ param }}",
-            "deleted": "Result gelöscht mit ID {{ param }}",
+            "updated": "Bewertung aktualisiert mit ID {{ param }}",
+            "deleted": "Bewertung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Result {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Bewertung {{ id }} wirklich dauerhaft gelöscht werden?",
+                "question2": "Soll die Bewertung wirklich gelöscht werden? Es kann nicht rückgängig gemacht werden!",
+                "buttonText": "Löschen",
+                "error": {
+                    "hasComplaint": "Eine Bewertung kann nicht gelöscht werden wenn es zu ihr eine Beschwerde gibt!"
+                }
             },
             "detail": {
-                "title": "Result"
+                "title": "Bewertung"
             },
             "noResult": "Kein gewertetes Ergebnis",
             "resultString": "Ergebnistext",

@@ -242,6 +242,6 @@
                 <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
             </div>
         </div>
-        <router-outlet *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>
+        <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" class="ml-3" (activate)="onChildActivate($event)"></router-outlet>
     </div>
 </div>

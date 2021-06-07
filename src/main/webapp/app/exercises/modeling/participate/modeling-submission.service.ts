@@ -104,6 +104,17 @@ export class ModelingSubmissionService {
     }
 
     /**
+     * Get a submission with given Id without locking it on artemis so plagiarism detection doesn't disrupt assessment
+     * @param {number} submissionId - Id of the submission
+     */
+    getSubmissionWithoutLock(submissionId: number): Observable<ModelingSubmission> {
+        const url = `api/modeling-submissions/${submissionId}`;
+        let params = new HttpParams();
+        params = params.set('withoutResults', 'true');
+        return this.http.get<ModelingSubmission>(url, { params });
+    }
+
+    /**
      * Get latest submission for a given participation
      * @param {number} participationId - Id of the participation
      */
