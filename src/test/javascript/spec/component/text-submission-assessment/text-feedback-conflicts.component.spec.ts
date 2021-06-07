@@ -324,7 +324,7 @@ describe('TextFeedbackConflictsComponent', () => {
             ),
         );
         component.discardConflict();
-        expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(participation.id!, textSubmission.id!, feedbackConflict.id!);
+        expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise!.id!, feedbackConflict.id!);
     });
 
     it('should switch submissions when it changed in the header', () => {

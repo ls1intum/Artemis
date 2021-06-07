@@ -160,8 +160,7 @@ describe('TextAssessment Service', () => {
     }));
 
     it('should solve feedback conflicts', fakeAsync(() => {
-        const participationId = 1;
-        const submissionId = 1;
+        const exerciseId = 1;
         const feedbackConflict = {
             id: 1,
             conflict: false,
@@ -171,12 +170,12 @@ describe('TextAssessment Service', () => {
         } as unknown as FeedbackConflict;
         const returnedFromService = Object.assign({}, feedbackConflict);
         service
-            .solveFeedbackConflict(participationId, submissionId, feedbackConflict.id!)
+            .solveFeedbackConflict(exerciseId, feedbackConflict.id!)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(feedbackConflict));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/feedback-conflicts/${feedbackConflict.id}/solve`,
+            url: `${SERVER_API_URL}api/exercises/${exerciseId}/feedback-conflicts/${feedbackConflict.id}/solve`,
             method: 'POST',
         });
         req.flush(returnedFromService);

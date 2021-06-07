@@ -484,34 +484,26 @@ public class TextAssessmentResource extends AssessmentResource {
      * Checks; if the feedback conflict is present, if the user is the assessor of one of the feedback or
      * if the user is at least the instructor for the exercise.
      *
-     * @param participationId - participation id to check access rights.
-     * @param submissionId - id of submission to the feedback
+     * @param exerciseId - exercise id to check access rights.
      * @param feedbackConflictId - feedback conflict id to set the conflict as solved
      * @return - solved feedback conflict
      */
-    @PostMapping("/participations/{participationId}/submissions/{submissionId}/feedback-conflicts/{feedbackConflictId}/solve")
+    @PostMapping("/exercises/{exerciseId}/feedback-conflicts/{feedbackConflictId}/solve")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long participationId, @PathVariable long submissionId, @PathVariable long feedbackConflictId) {
+    public ResponseEntity<FeedbackConflict> solveFeedbackConflict(@PathVariable long exerciseId, @PathVariable long feedbackConflictId) {
         log.debug("REST request to set feedback conflict as solved for feedbackConflictId: {}", feedbackConflictId);
 
         if (automaticTextAssessmentConflictService.isEmpty()) {
             throw new BadRequestAlertException("Automatic text assessment conflict service is not available!", "automaticTextAssessmentConflictService",
                     "AutomaticTextAssessmentConflictServiceNotFound");
         }
-        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!(submission.getParticipation().getExercise() instanceof TextExercise)) {
-            badRequest("exercisetype", "400", "Exercise isn't a Textexercise!");
-        }
-        final TextExercise textExercise = (TextExercise) submission.getParticipation().getExercise();
-
-        if (!submission.getParticipation().getId().equals(participationId)) {
-            badRequest("participationId", "400",
-                    "The participation to the submission with submissionId " + submissionId + "does not have the participationId " + participationId + " !");
-        }
-
         final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
+        if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().equals(exerciseId)) {
+            badRequest("exerciseId", "400", "The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !");
+        }
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 

@@ -165,11 +165,8 @@ export class TextAssessmentService {
      * @param exerciseId id of the exercise feedback conflict belongs to
      * @param feedbackConflictId id of the feedback conflict to be solved
      */
-    public solveFeedbackConflict(participationId: number, submissionId: number, feedbackConflictId: number): Observable<FeedbackConflict> {
-        return this.http.post<FeedbackConflict>(
-            `${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/feedback-conflicts/${feedbackConflictId}/solve`,
-            undefined,
-        );
+    public solveFeedbackConflict(exerciseId: number, feedbackConflictId: number): Observable<FeedbackConflict> {
+        return this.http.post<FeedbackConflict>(`${this.resourceUrl}/exercises/${exerciseId}/feedback-conflicts/${feedbackConflictId}/solve`, undefined);
     }
 
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
