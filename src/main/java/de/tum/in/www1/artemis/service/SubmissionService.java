@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -48,9 +52,11 @@ public class SubmissionService {
 
     protected final ParticipationRepository participationRepository;
 
+    protected final ComplaintRepository complaintRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -61,6 +67,7 @@ public class SubmissionService {
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -568,5 +575,47 @@ public class SubmissionService {
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add((T) submission.get()));
         return submissions;
     }
+    // TODO SE add docs
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, Principal principal, boolean isAtLeastInstructor) {
+        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = new ArrayList<>();
 
+        // get all complaints which belong to the exercise
+        List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        var complaintMap = complaints.stream().collect(Collectors.toMap(complaint -> complaint.getResult().getId(), value -> value));
+
+        if (complaints.isEmpty()) {
+            return submissionWithComplaintDTOs;
+        }
+        // get the ids of all results which have a complaint, and with those fetch all their submissions
+        List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).collect(Collectors.toList());
+        List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
+
+        // add each submission with its complaint to the DTO
+        submissions.forEach(submission -> {
+            Result resultWithComplaint = submission.getResultWithComplaint();
+            if (resultWithComplaint == null) {
+                return;
+            }
+            // get the complaint which belongs to the submission
+            Complaint complaintOfSubmission = complaintMap.get(resultWithComplaint.getId());
+            prepareComplaint(complaintOfSubmission, principal, false, false, isAtLeastInstructor);
+            submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+        });
+        return submissionWithComplaintDTOs;
+    }
+
+    private void prepareComplaint(Complaint complaint, Principal principal, boolean assessorSameAsCaller, boolean isTestRun, boolean isAtLeastInstructor) {
+        String submissorName = principal.getName();
+        User assessor = complaint.getResult().getAssessor();
+        User student = complaint.getStudent();
+
+        if (assessor != null && (assessor.getLogin().equals(submissorName) == assessorSameAsCaller || isAtLeastInstructor)
+            && (student != null && assessor.getLogin().equals(student.getLogin())) == isTestRun) {
+            // Remove data about the student
+            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+            studentParticipation.setParticipant(null);
+            studentParticipation.setExercise(null);
+            complaint.setParticipant(null);
+        }
+    }
 }

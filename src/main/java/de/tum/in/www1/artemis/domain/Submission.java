@@ -314,4 +314,14 @@ public abstract class Submission extends DomainObject {
             setResults(resultList);
         }
     }
+
+    /**
+     * Returns the result of a submission which has a complaint
+     * @return the result which has a complaint
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getResultWithComplaint() {
+        return results.stream().filter(Result::hasComplaint).findFirst().orElse(null);
+    }
 }

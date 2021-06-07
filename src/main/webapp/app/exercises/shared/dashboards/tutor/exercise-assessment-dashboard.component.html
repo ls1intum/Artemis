@@ -420,7 +420,7 @@
                 </h4>
                 <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
-                    <table class="table table-striped exercise-table" *ngIf="complaints && complaints!.length > 0; else noComplaints">
+                    <table class="table table-striped exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -431,27 +431,27 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let complaint of complaints; let i = index">
+                            <tr *ngFor="let submissionWithComplaint of submissionsWithComplaints; let i = index">
                                 <td>{{ i + 1 }}</td>
-                                <td>{{ complaint.submittedTime | artemisDate }}</td>
+                                <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [result]="complaint.result" [participation]="complaint.result!.participation!"></jhi-result>
+                                    <jhi-result [result]="submissionWithComplaint.submission.latestResult" [participation]="submissionWithComplaint.complaint.result!.participation!"></jhi-result>
                                 </td>
                                 <td>
-                                    {{ calculateComplaintStatus(complaint) }}
+                                    {{ calculateComplaintStatus(submissionWithComplaint.complaint) }}
                                 </td>
                                 <td>
                                     <button
-                                        *ngIf="complaint.accepted === undefined; else continueButton"
-                                        [disabled]="isComplaintLocked(complaint)"
+                                        *ngIf="submissionWithComplaint.complaint.accepted === undefined; else continueButton"
+                                        [disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
                                         class="btn btn-success btn-sm"
-                                        (click)="viewComplaint(complaint)"
+                                        (click)="viewComplaint(submissionWithComplaint.complaint)"
                                     >
                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                     </button>
                                     <ng-template #continueButton>
-                                        <button class="btn btn-primary btn-sm" (click)="viewComplaint(complaint)">
+                                        <button class="btn btn-primary btn-sm" (click)="viewComplaint(submissionWithComplaint.complaint)">
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                         </button>

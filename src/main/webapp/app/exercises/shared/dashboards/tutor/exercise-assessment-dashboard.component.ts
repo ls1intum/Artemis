@@ -34,7 +34,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
@@ -61,7 +61,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exam?: Exam;
     examId: number;
     exerciseGroupId: number;
-    // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
     isTestRun = false;
     isAtLeastInstructor = false;
@@ -95,6 +94,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exampleSolutionModel: UMLModel;
     complaints: Complaint[] = [];
     moreFeedbackRequests: Complaint[] = [];
+    submissionsWithComplaints: SubmissionWithComplaintDTO[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
     secondCorrectionEnabled = false;
@@ -249,10 +249,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         );
 
         if (!this.isTestRun) {
-            this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+            /* this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<Complaint[]>) => {
+                    (this.complaints = res.body as Complaint[]);
+                    console.log(this.complaints);
+                },
+                (error: HttpErrorResponse) => this.onError(error.message)
+            );
+
+             */
+
+            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                    this.submissionsWithComplaints = res.body || [];
+                    console.log(this.submissionsWithComplaints);
+                },
                 (error: HttpErrorResponse) => this.onError(error.message),
             );
+
             this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
                 (error: HttpErrorResponse) => this.onError(error.message),

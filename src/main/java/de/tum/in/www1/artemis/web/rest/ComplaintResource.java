@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
@@ -8,6 +9,7 @@ import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import liquibase.pro.packaged.S;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,8 +60,10 @@ public class ComplaintResource {
 
     private final CourseRepository courseRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository,
-            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
+            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository, SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
@@ -67,6 +71,7 @@ public class ComplaintResource {
         this.complaintService = complaintService;
         this.courseRepository = courseRepository;
         this.complaintRepository = complaintRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -219,6 +224,7 @@ public class ComplaintResource {
      * @param principal that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
+    @Deprecated // will be replace with a method which returns the submissions
     @GetMapping("/exercises/{exerciseId}/complaints-for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
