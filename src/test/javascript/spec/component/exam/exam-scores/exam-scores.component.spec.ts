@@ -127,6 +127,7 @@ describe('ExamScoresComponent', () => {
         registrationNumber: '111',
         overallPointsAchieved: 100,
         overallScoreAchieved: 100,
+        overallPointsAchievedInFirstCorrection: 90,
         submitted: true,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult1ForGroup1 },
     } as StudentResult;
@@ -139,6 +140,7 @@ describe('ExamScoresComponent', () => {
         registrationNumber: '222',
         overallPointsAchieved: 20,
         overallScoreAchieved: 20,
+        overallPointsAchievedInFirstCorrection: 20,
         submitted: true,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult2ForGroup1 },
     } as StudentResult;
@@ -151,6 +153,7 @@ describe('ExamScoresComponent', () => {
         registrationNumber: '333',
         overallPointsAchieved: 50,
         overallScoreAchieved: 50,
+        overallPointsAchievedInFirstCorrection: 40,
         submitted: false,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult3ForGroup1 },
     } as StudentResult;
@@ -177,7 +180,7 @@ describe('ExamScoresComponent', () => {
         title: 'exam1',
         maxPoints: 100,
         averagePointsAchieved: 60,
-        hasSecondCorrectionAndStarted: false,
+        hasSecondCorrectionAndStarted: true,
         exerciseGroups: [exGroup1],
         studentResults: [studentResult1, studentResult2, studentResult3],
     } as ExamScoreDTO;
@@ -470,6 +473,7 @@ describe('ExamScoresComponent', () => {
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
         spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ body: gradingScale })));
+        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
         expect(comp.gradingScaleExists).to.be.true;
