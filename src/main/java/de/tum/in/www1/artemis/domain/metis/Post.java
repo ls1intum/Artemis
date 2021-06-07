@@ -63,7 +63,7 @@ public class Post extends Posting {
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIgnoreProperties("posts")
+    @JsonIgnoreProperties({ "posts", "course.exercises" })
     private Lecture lecture;
 
     @ManyToOne
