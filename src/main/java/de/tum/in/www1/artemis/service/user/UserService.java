@@ -100,6 +100,7 @@ public class UserService {
 
     /**
      * Make sure that the internal artemis admin (in case it is defined in the yml configuration) is available in the database
+     * and add an anonymous user (if not already present) to anonymize Posts
      */
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {

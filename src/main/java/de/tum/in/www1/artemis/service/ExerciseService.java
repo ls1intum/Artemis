@@ -358,7 +358,8 @@ public class ExerciseService {
     }
 
     /**
-     * Resets an Exercise by deleting all its participations
+     * Resets an Exercise by deleting all its participations and
+     * anonymizing its Posts
      * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
