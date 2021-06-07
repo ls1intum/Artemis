@@ -43,8 +43,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     invalidRepositoryNamePattern: RegExp;
     invalidDirectoryNamePattern: RegExp;
+    invalidWarnings: boolean;
     submitButtonTitle: string;
     isImport: boolean;
+    isEdit: boolean;
     isExamMode: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
@@ -130,6 +132,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.name = newValue;
+            this.invalidWarnings = true;
             return editedAuxiliaryRepository.name;
         };
     }
@@ -268,6 +271,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImport) {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
+                        this.isEdit = true;
                         this.submitButtonTitle = 'entity.action.save';
                     } else {
                         this.submitButtonTitle = 'entity.action.generate';

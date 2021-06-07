@@ -123,15 +123,27 @@
                                 </ng-template>
                             </ng-template>
                         </ngx-datatable-column>
-                        <ngx-datatable-column name="" prop="">
+                        <ngx-datatable-column name="RemoveButton" prop="removeButton">
                             <ng-template ngx-datatable-cell-template let-row="row">
-                                <jhi-remove-auxiliary-repository-button
-                                    *ngIf="!row.id"
-                                    placement="right"
-                                    [programmingExercise]="programmingExercise"
-                                    [row]="row"
-                                    class="ml-2"
-                                ></jhi-remove-auxiliary-repository-button>
+                                <div *ngIf="!row.id">
+                                    <jhi-remove-auxiliary-repository-button
+                                        *ngIf="!row.id"
+                                        placement="right"
+                                        [programmingExercise]="programmingExercise"
+                                        [row]="row"
+                                        class="ml-2"
+                                    ></jhi-remove-auxiliary-repository-button>
+                                    <span *ngIf="isEdit">
+                                        <fa-icon
+                                            [icon]="'exclamation-triangle'"
+                                            class="text-warning mr-1"
+                                            ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
+                                        ></fa-icon>
+                                        <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
+                                            >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
+                                        >
+                                    </span>
+                                </div>
                             </ng-template>
                         </ngx-datatable-column>
                     </ngx-datatable>
@@ -560,6 +572,16 @@
                     (click)="save()"
                 >
                 </jhi-button>
+                <span *ngIf="isEdit && invalidWarnings">
+                    <fa-icon
+                        [icon]="'exclamation-triangle'"
+                        class="text-warning mr-1"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
+                    ></fa-icon>
+                    <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
+                        >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
+                    >
+                </span>
             </div>
         </form>
     </div>
