@@ -1069,7 +1069,7 @@ public class GitService {
             studentTeamOrDefault = participation.getTeam().get().getName();
         }
 
-        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle());
+        String zipRepoName = fileService.removeIllegalCharacters(participation.getId() + "-" + courseShortName + "-" + exercise.getTitle());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }
