@@ -616,7 +616,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Delegates to the service to download the submission
+     * Delegates to the {@link programmingSubmissionService} to download the submission
      *
      * @param submission submission to send to Orion
      * @param correctionRound correction round

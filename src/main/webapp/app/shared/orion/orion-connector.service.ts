@@ -223,7 +223,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
     }
 
     /**
-     * Assess the exercise as Tutor. Triggers downloading/opening the exercise as tutor
+     * Assess the exercise as a tutor. Triggers downloading/opening the exercise as tutor
      *
      * @param exercise The exercise to be imported
      */

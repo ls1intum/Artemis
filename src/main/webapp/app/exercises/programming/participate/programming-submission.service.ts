@@ -15,6 +15,7 @@ import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -84,6 +85,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         private participationService: ProgrammingExerciseParticipationService,
         private javaBridge: OrionConnectorService,
         private repositoryExportService: ProgrammingAssessmentRepoExportService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnDestroy(): void {
@@ -679,17 +681,18 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             normalizeCodeStyle: false,
             hideStudentNameInZippedFolder: true,
         };
-        this.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission: ProgrammingSubmission) => {
-            this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).subscribe((res: HttpResponse<Blob>) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(res.body!);
-                reader.onloadend = () => {
-                    const result = reader.result as string;
-                    // remove prefix
-                    const base64data = result.substr(result.indexOf(',') + 1);
-                    this.javaBridge.downloadSubmission(submissionId, correctionRound, base64data);
-                };
-            });
-        });
+        const programmingSubmission = await this.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).toPromise();
+        const submissionFile = (await this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).toPromise()).body!;
+        const reader = new FileReader();
+        reader.readAsDataURL(submissionFile);
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            // remove prefix
+            const base64data = result.substr(result.indexOf(',') + 1);
+            this.javaBridge.downloadSubmission(submissionId, correctionRound, base64data);
+        };
+        reader.onerror = () => {
+            this.jhiAlertService.error('artemisApp.assessmentDashboard.orion.downloadFailed')
+        }
     }
 }
