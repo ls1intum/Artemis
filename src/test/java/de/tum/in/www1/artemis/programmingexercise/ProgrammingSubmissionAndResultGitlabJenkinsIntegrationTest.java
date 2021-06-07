@@ -92,7 +92,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
         notification.setLogs(logs);
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
         assertThat(submissionWithLogsOptional).isPresent();
@@ -135,7 +135,6 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());

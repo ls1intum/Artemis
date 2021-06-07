@@ -627,7 +627,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-
      * Get the result with the given id from the database. The result is loaded together with its feedback. Throws an EntityNotFoundException if no
      * result could be found for the given id.
      *

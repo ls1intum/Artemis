@@ -60,6 +60,8 @@ public class ResultResource {
 
     private final ParticipationService participationService;
 
+    private final SubmissionRepository submissionRepository;
+
     private final ResultService resultService;
 
     private final ExamDateService examDateService;
@@ -92,10 +94,10 @@ public class ResultResource {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService, ResultService resultService,
-            ExerciseService exerciseService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, ResultRepository resultRepository,
-            WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
+    public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
+            SubmissionRepository submissionRepository, ResultService resultService, ExerciseService exerciseService, ExerciseRepository exerciseRepository,
+            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -103,6 +105,7 @@ public class ResultResource {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
+        this.submissionRepository = submissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -149,26 +152,21 @@ public class ResultResource {
         try {
             planKey = continuousIntegrationService.get().getPlanKey(requestBody);
         }
-        // TODO: How can we catch a more specific exception here? Because of the adapter pattern this is always just Exception...
+        catch (BitbucketException bitbucketException) {
+            log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {} :"
+                    + "BitBucket encountered an Exception while trying to retrieve the build plan ", bitbucketException, requestBody);
+            return badRequest();
+        }
+        catch (JenkinsException jenkinsException) {
+            log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}:"
+                    + " The full name of the Jenkins build plan was malformed!", jenkinsException, requestBody);
+            return badRequest();
+        }
         catch (Exception ex) {
-            if (ex instanceof BitbucketException) {
-                log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {} :"
-                        + "BitBucket encountered an Exception while trying to retrieve the build plan ", ex, requestBody);
-                return badRequest();
-            }
-            if (ex instanceof IndexOutOfBoundsException) {
-                log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}:"
-                        + " The full name of the Jenkins build plan was malformed!", ex, requestBody);
-                return badRequest();
-            }
-            if (ex instanceof JenkinsException) {
-                log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}:"
-                        + " The full name of the Jenkins build plan was malformed!", ex, requestBody);
-                return badRequest();
-            }
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             return badRequest();
         }
+
         log.info("Artemis received a new result for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
@@ -287,12 +285,16 @@ public class ResultResource {
      * @param resultId the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @GetMapping("/results/{resultId}")
+    @GetMapping("participations/{participationId}/results/{resultId}")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> getResult(@PathVariable Long resultId) {
+    public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Result result = resultRepository.findOneElseThrow(resultId);
         Participation participation = result.getParticipation();
+        if (!participation.getId().equals(participationId)) {
+            badRequest("participationId", "400",
+                    "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
+        }
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return new ResponseEntity<>(result, HttpStatus.OK);
@@ -328,13 +330,16 @@ public class ResultResource {
      * @param resultId the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the endpoint will return forbidden!
      * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
      */
-    @GetMapping(value = "/results/{resultId}/details")
+    @GetMapping(value = "participations/{participationId}/results/{resultId}/details")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
+    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
-
         Participation participation = result.getParticipation();
+        if (!participation.getId().equals(participationId)) {
+            badRequest("participationId", "400",
+                    "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
+        }
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
         if (participation instanceof StudentParticipation) {
@@ -384,12 +389,16 @@ public class ResultResource {
      * @param resultId the id of the result to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/results/{resultId}")
+    @DeleteMapping("participations/{participationId}/results/{resultId}")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Void> deleteResult(@PathVariable Long resultId) {
+    public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Result result = resultRepository.findOneElseThrow(resultId);
         Participation participation = result.getParticipation();
+        if (!participation.getId().equals(participationId)) {
+            badRequest("participationId", "400",
+                    "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
+        }
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         resultRepository.deleteById(resultId);
@@ -402,11 +411,16 @@ public class ResultResource {
      * @param submissionId the id of the submission
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @GetMapping(value = "/results/submission/{submissionId}")
+    @GetMapping(value = "participations/{participationId}/results/from-submission/{submissionId}")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> getResultForSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<Result> getResultForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId) {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Result result = resultRepository.findDistinctBySubmissionIdElseThrow(submissionId);
+        if (!result.getParticipation().getId().equals(participationId)) {
+            badRequest("participationId", "400",
+                    "participationId of the path doesnt match the participationId of the participation corresponding to the result to submission " + submissionId + " !");
+        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getParticipation().getExercise(), null);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
@@ -417,11 +431,17 @@ public class ResultResource {
      * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
      * @return The newly created result
      */
-    @PostMapping("/submissions/{submissionId}/example-result")
+    @PostMapping("participations/{participationId}/submissions/{submissionId}/example-result")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Result> createExampleResult(@PathVariable long submissionId,
+    public ResponseEntity<Result> createExampleResult(@PathVariable long participationId, @PathVariable long submissionId,
             @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
         log.debug("REST request to create a new example result for submission: {}", submissionId);
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        if (!submission.getParticipation().getId().equals(participationId)) {
+            badRequest("participationId", "400",
+                    "participationId of the path doesnt match the participationId of the participation corresponding to the submission " + submissionId + " !");
+        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
         final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
@@ -435,12 +455,14 @@ public class ResultResource {
      * @return The newly created result
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "/exercises/{exerciseId}/external-submission-results")
+    @PostMapping(value = "exercises/{exerciseId}/external-submission-results")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
-
+        if (result.getParticipation() != null && result.getParticipation().getExercise() != null && !result.getParticipation().getExercise().getId().equals(exerciseId)) {
+            badRequest("exerciseId", "400", "exerciseId in RequestBody doesnt match exerciseId in path!");
+        }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 

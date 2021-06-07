@@ -275,8 +275,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws Exception {
-        final var result = TestResultsDTO.convert(requestBody);
-        final var nameParams = result.getFullName().split(" ");
+        final String[] nameParams;
+        try {
+            final var result = TestResultsDTO.convert(requestBody);
+            nameParams = result.getFullName().split(" ");
+        }
+        catch (Exception ex) {
+            throw new JenkinsException("Something went wrong when getting the PlanKey from Jenkins!");
+        }
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
@@ -288,6 +294,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
 
         return nameParams[2];
+
     }
 
     @Override
