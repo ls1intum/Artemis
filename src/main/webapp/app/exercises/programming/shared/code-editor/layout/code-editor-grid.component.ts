@@ -164,7 +164,6 @@ export class CodeEditorGridComponent implements AfterViewInit {
         const event = interactableEvent.event;
         const horizontal = interactableEvent.horizontal;
         const interactResizable = interactableEvent.interactable;
-        console.log(event);
         const target = event.event?.toElement || event.relatedTarget || event.target;
         target.blur();
         const card = $(target).closest('.collapsable');
