@@ -189,7 +189,7 @@
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
                     "confirmtext": "Möchtest du die Änderungen wirklich übernehmen?",
                     "reevaluate": "Neu bewerten",
-                    "deleteFeedbacks": "Löschen Sie zusätzlich alle entsprechende Rückmeldungen, die zur Beurteilung von Einsendungen herangezogen werden.",
+                    "deleteFeedback": "Lösche zusätzlich sämtliches Feedback, das mit den gelöschten Benotungshinweisen zusammenhängt.",
                     "information": "Wenn Sie auf 'Neu bewerten' klicken, werden die Bewertungen neu bewertet und die Übung wird aktualisiert. Wenn Sie bestehende Bewertungen nicht ändern möchten, können Sie auf 'Änderungen bestätigen' klicken und müssen die Konsequenzen akzeptieren. Dadurch werden nur die Übung und die Benotungsanweisungen aktualisiert, was zu Inkonsistenzen führen kann."
                 }
             }

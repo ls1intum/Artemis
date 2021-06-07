@@ -21,9 +21,9 @@
             </li>
         </ul>
         <div *ngIf="instructionDeleted">
-            <input type="checkbox" name="deleteFeedbacks" id="deleteFeedbacks" [ngModel]="deleteFeedbacks" (ngModelChange)="triggerDeleteFeedbacks()" />
-            <label class="form-check-label text-danger" for="deleteFeedbacks">
-                {{ 'artemisApp.exercise.update.warning.deleteFeedbacks' | artemisTranslate }}
+            <input type="checkbox" name="deleteFeedback" id="deleteFeedback" [ngModel]="deleteFeedback" (ngModelChange)="toggleDeleteFeedback()" />
+            <label class="form-check-label text-danger" for="deleteFeedback">
+                {{ 'artemisApp.exercise.update.warning.deleteFeedback' | artemisTranslate }}
             </label>
         </div>
         <h6><span jhiTranslate="artemisApp.exercise.update.warning.information"></span></h6>
@@ -37,7 +37,7 @@
             <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <button type="submit" (click)="confirmChange()" [disabled]="instructionDeleted && deleteFeedbacks" class="btn btn-primary">
+            <button type="submit" (click)="confirmChange()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-primary">
                 &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.confirm"></span>
             </button>
             <button type="submit" (click)="reEvaluate()" class="btn btn-primary">&nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.reevaluate"></span></button>

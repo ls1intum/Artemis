@@ -329,7 +329,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     });
                     reference.componentInstance.reEvaluated.subscribe(() => {
                         const requestOptions = {} as any;
-                        requestOptions.deleteFeedbacks = reference.componentInstance.deleteFeedbacks;
+                        requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
                         this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
                     });
                 });

@@ -677,7 +677,7 @@ public class ProgrammingExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
-        exerciseService.checkExerciseIfGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -1156,8 +1156,8 @@ public class ProgrammingExerciseResource {
     /**
      * PUT /programming-exercises/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
      *
-     * @param programmingExercise the ProgrammingExercise to re-evaluate and update
-     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     * @param programmingExercise           the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or
      * with status 400 (Bad Request) if the ProgrammingExercise is not valid, or with status 500 (Internal
@@ -1167,7 +1167,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
-            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
 
         // fetch course from database to make sure client didn't change groups
@@ -1175,7 +1175,7 @@ public class ProgrammingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbacks);
+        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterSGIUpdate);
 
         return updateProgrammingExercise(programmingExercise, null);
     }

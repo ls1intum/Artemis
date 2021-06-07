@@ -3412,7 +3412,7 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public void addAssessmentWithFeedbacksWithGradingInstructionsForExercise(Exercise exercise, String login) {
+    public void addAssessmentWithFeedbackWithGradingInstructionsForExercise(Exercise exercise, String login) {
         // add participation and submission for exercise
         StudentParticipation studentParticipation = createAndSaveParticipationForExercise(exercise, login);
         Submission submission = null;

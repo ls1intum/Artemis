@@ -437,14 +437,14 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(fileUploadExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(fileUploadExercise, "instructor1");
 
         // change grading instruction score
         gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
         gradingCriteria.remove(1);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedbacks=false", fileUploadExercise,
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedback=false", fileUploadExercise,
                 FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
@@ -460,14 +460,14 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(fileUploadExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(fileUploadExercise, "instructor1");
 
         // remove instruction which is associated with feedbacks
         gradingCriteria.remove(1);
         gradingCriteria.remove(0);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedbacks=true", fileUploadExercise,
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedback=true", fileUploadExercise,
                 FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().size()).isEqualTo(1);

@@ -96,7 +96,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     });
                     reference.componentInstance.reEvaluated.subscribe(() => {
                         const requestOptions = {} as any;
-                        requestOptions.deleteFeedbacks = reference.componentInstance.deleteFeedbacks;
+                        requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
                         this.subscribeToSaveResponse(this.fileUploadExerciseService.reevaluateAndUpdate(this.fileUploadExercise, requestOptions));
                     });
                 });

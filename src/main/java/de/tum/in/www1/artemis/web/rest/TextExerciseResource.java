@@ -296,7 +296,7 @@ public class TextExerciseResource {
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
 
-        exerciseService.checkExerciseIfGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
 
         return ResponseEntity.ok().body(textExercise);
     }
@@ -591,8 +591,8 @@ public class TextExerciseResource {
     /**
      * PUT /text-exercises/re-evaluate : Re-evaluates and updates an existing textExercise.
      *
-     * @param textExercise     the textExercise to re-evaluate and update
-     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     * @param textExercise                  the textExercise to re-evaluate and update
+     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
      * with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
@@ -602,10 +602,9 @@ public class TextExerciseResource {
     @PutMapping("/text-exercises/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@RequestBody TextExercise textExercise,
-            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 
-        // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
         // Check that the user is authorized to update the exercise
@@ -614,7 +613,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        exerciseService.reEvaluateExercise(textExercise, deleteFeedbacks);
+        exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterSGIUpdate);
 
         return updateTextExercise(textExercise, null);
     }

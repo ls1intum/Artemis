@@ -778,17 +778,17 @@ public class ExerciseService {
     }
 
     /**
-     * Checks the exercise grading instructions if any of them is associated with the feedback
+     * Checks the exercise structured grading instructions if any of them is associated with the feedback
      * then, sets the corresponding exercise field
      *
      * @param gradingCriteria grading criteria list of exercise
      * @param exercise exercise to update
      *
      */
-    public void checkExerciseIfGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
+        List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
-        if (!feedbackList.isEmpty()) {
+        if (!feedback.isEmpty()) {
             exercise.setGradingInstructionFeedbackUsed(true);
         }
     }
@@ -796,25 +796,25 @@ public class ExerciseService {
     /**
      * Re-evaluates the exercise before saving
      * 1. The feedback associated with the exercise grading instruction needs to be updated
-     * 2. After updating feedbacks, result needs to be re-calculated
+     * 2. After updating feedback, result needs to be re-calculated
      *
      * @param exercise exercise to re-evaluate
-     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      */
-    public void reEvaluateExercise(Exercise exercise, Boolean deleteFeedbacks) {
+    public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterSGIUpdate) {
 
         List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
-        // retrieve the feedbacks associated with the grading instructions
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
+        // retrieve the feedback associated with the structured grading instructions
+        List<Feedback> feedbackToBeUpdated = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
 
-        // collect each sub-grading instructions into the list
-        List<GradingInstruction> instructionList = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
+        // collect all structured grading instructions into the list
+        List<GradingInstruction> gradingInstructions = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                 .collect(Collectors.toList());
 
-        // update the related fields for feedbacks
-        for (GradingInstruction instruction : instructionList) {
-            for (Feedback feedback : feedbackList) {
+        // update the related fields for feedback
+        for (GradingInstruction instruction : gradingInstructions) {
+            for (Feedback feedback : feedbackToBeUpdated) {
                 if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
                     feedback.setCredits(instruction.getCredits());
                     feedback.setPositive(feedback.getCredits() >= 0);
@@ -822,36 +822,36 @@ public class ExerciseService {
                 }
             }
         }
-        feedbackRepository.saveAll(feedbackList);
+        feedbackRepository.saveAll(feedbackToBeUpdated);
 
-        List<Feedback> feedbacksDeleted = getFeedbacksShouldDeleteAfterSGIChanged(deleteFeedbacks, instructionList, exercise);
+        List<Feedback> feedbackToBeDeleted = getFeedbackToBeDeletedAfterStructuredGradingInstructionUpdate(deleteFeedbackAfterSGIUpdate, gradingInstructions, exercise);
 
         List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
 
-        // re-calculate the results after updating the feedbacks
+        // re-calculate the results after updating the feedback
         for (Result result : results) {
-            if (!feedbacksDeleted.isEmpty()) {
-                List<Feedback> existingFeedbacks = result.getFeedbacks();
-                if (!existingFeedbacks.isEmpty()) {
-                    existingFeedbacks.removeAll(feedbacksDeleted);
+            if (!feedbackToBeDeleted.isEmpty()) {
+                List<Feedback> existingFeedback = result.getFeedbacks();
+                if (!existingFeedback.isEmpty()) {
+                    existingFeedback.removeAll(feedbackToBeDeleted);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
-                var savedFeedbackList = feedbackRepository.saveFeedbacks(existingFeedbacks);
-                result.updateAllFeedbackItems(savedFeedbackList, exercise instanceof ProgrammingExercise);
+                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(existingFeedback);
+                result.updateAllFeedbackItems(savedFeedback, exercise instanceof ProgrammingExercise);
             }
 
             if (!(exercise instanceof ProgrammingExercise)) {
                 resultRepository.submitResult(result, exercise);
             }
             else {
-                double points = programmingAssessmentService.calculateTotalScore(result);
-                result.setScore(points, exercise.getMaxPoints());
+                double totalScore = programmingAssessmentService.calculateTotalScore(result);
+                result.setScore(totalScore, exercise.getMaxPoints());
                 /*
                  * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
                  * student has achieved have changed
                  */
                 String[] resultStringParts = result.getResultString().split(", ");
-                resultStringParts[resultStringParts.length - 1] = result.createResultString(points, exercise.getMaxPoints());
+                resultStringParts[resultStringParts.length - 1] = result.createResultString(totalScore, exercise.getMaxPoints());
                 result.setResultString(String.join(", ", resultStringParts));
                 resultRepository.save(result);
             }
@@ -859,30 +859,31 @@ public class ExerciseService {
     }
 
     /**
-     * Gets the list of feedback that associated with deleted structured grading instructions
+     * Gets the list of feedback that is associated with deleted structured grading instructions
      *
-     * @param deleteFeedbacks check for deleting the feedbacks
-     * @param instructionList grading instruction list to update
-     * @param exercise exercise will be used to get existing grading instructions from database
-     * @return list of feedback that should remove from feedback list of results
+     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param gradingInstructions grading instruction list to update
+     * @param exercise exercise for which the grading instructions have to be updated
+     * @return list including Feedback entries that have to be deleted due to updated grading instructions
      */
-    public List<Feedback> getFeedbacksShouldDeleteAfterSGIChanged(boolean deleteFeedbacks, List<GradingInstruction> instructionList, Exercise exercise) {
-        List<Feedback> feedbacksDeleted = new ArrayList<>();
-        // check if the user decided to remove the feedbacks after deleting the associated grading instructions
-        if (deleteFeedbacks) {
-            List<Long> updatedInstructionIds = instructionList.stream().map(GradingInstruction::getId).collect(Collectors.toList());
+    public List<Feedback> getFeedbackToBeDeletedAfterStructuredGradingInstructionUpdate(boolean deleteFeedbackAfterSGIUpdate, List<GradingInstruction> gradingInstructions,
+            Exercise exercise) {
+        List<Feedback> feedbackToBeDeleted = new ArrayList<>();
+        // check if the user decided to remove the feedback after deleting the associated grading instructions
+        if (deleteFeedbackAfterSGIUpdate) {
+            List<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).collect(Collectors.toList());
             // retrieve the grading instructions from database for backup
             List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                     .map(GradingInstruction::getId).collect(Collectors.toList());
 
             // collect deleted grading instruction ids into the list
-            List<Long> deletedInstructionIds = backupInstructionIds.stream().filter(backupinstructionId -> !updatedInstructionIds.contains(backupinstructionId))
+            List<Long> gradingInstructionIdsToBeDeleted = backupInstructionIds.stream().filter(backupinstructionId -> !updatedInstructionIds.contains(backupinstructionId))
                     .collect(Collectors.toList());
 
-            // find the feedbacks will be deleted
-            feedbacksDeleted = feedbackRepository.findFeedbacksByStructuredGradingInstructionIds(deletedInstructionIds);
+            // determine the feedback to be deleted
+            feedbackToBeDeleted = feedbackRepository.findFeedbackByStructuredGradingInstructionIds(gradingInstructionIdsToBeDeleted);
         }
-        return feedbacksDeleted;
+        return feedbackToBeDeleted;
     }
 }

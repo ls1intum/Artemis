@@ -603,14 +603,14 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(createdModelingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
 
         // change grading instruction score
         gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
         gradingCriteria.remove(1);
         createdModelingExercise.setGradingCriteria(gradingCriteria);
 
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=false", createdModelingExercise,
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedback=false", createdModelingExercise,
                 ModelingExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
         assertThat(updatedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
@@ -627,14 +627,14 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(createdModelingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
 
         // remove instruction which is associated with feedbacks
         gradingCriteria.remove(1);
         gradingCriteria.remove(0);
         createdModelingExercise.setGradingCriteria(gradingCriteria);
 
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedbacks=true", createdModelingExercise,
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedback=true", createdModelingExercise,
                 ModelingExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
         assertThat(updatedModelingExercise.getGradingCriteria().size()).isEqualTo(1);

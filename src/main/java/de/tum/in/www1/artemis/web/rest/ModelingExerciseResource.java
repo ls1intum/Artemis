@@ -257,7 +257,7 @@ public class ModelingExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
 
-        exerciseService.checkExerciseIfGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
 
         return ResponseEntity.ok().body(modelingExercise);
     }
@@ -414,8 +414,8 @@ public class ModelingExerciseResource {
     /**
      * PUT /modeling-exercises/re-evaluate : Re-evaluates and updates an existing modelingExercise.
      *
-     * @param modelingExercise     the modelingExercise to re-evaluate and update
-     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     * @param modelingExercise              the modelingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
      * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 500 (Internal
@@ -425,7 +425,7 @@ public class ModelingExerciseResource {
     @PutMapping("/modeling-exercises/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -433,7 +433,7 @@ public class ModelingExerciseResource {
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbacks);
+        exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterSGIUpdate);
 
         return updateModelingExercise(modelingExercise, null);
     }

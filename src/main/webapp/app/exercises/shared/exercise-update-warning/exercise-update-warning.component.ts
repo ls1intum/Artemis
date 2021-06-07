@@ -9,7 +9,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 export class ExerciseUpdateWarningComponent {
     instructionDeleted = false;
     scoringChanged = false;
-    deleteFeedbacks = false;
+    deleteFeedback = false;
 
     @Output()
     confirmed = new EventEmitter<object>();
@@ -43,9 +43,9 @@ export class ExerciseUpdateWarningComponent {
     }
 
     /**
-     * Toggle the option to DeleteFeedbacks.
+     * Toggle the option to deleteFeedback
      */
-    triggerDeleteFeedbacks() {
-        this.deleteFeedbacks = !this.deleteFeedbacks;
+    toggleDeleteFeedback() {
+        this.deleteFeedback = !this.deleteFeedback;
     }
 }

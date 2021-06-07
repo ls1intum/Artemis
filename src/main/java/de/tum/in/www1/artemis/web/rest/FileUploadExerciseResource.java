@@ -254,7 +254,7 @@ public class FileUploadExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        exerciseService.checkExerciseIfGradingInstructionFeedbackUsed(gradingCriteria, fileUploadExercise);
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, fileUploadExercise);
 
         return ResponseEntity.ok().body(fileUploadExercise);
     }
@@ -345,8 +345,8 @@ public class FileUploadExerciseResource {
     /**
      * PUT /file-upload-exercises/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
-     * @param fileUploadExercise the fileUploadExercise to re-evaluate and update
-     * @param deleteFeedbacks  about checking if the feedbacks should be deleted when the associated grading instructions are deleted
+     * @param fileUploadExercise            the fileUploadExercise to re-evaluate and update
+     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
      * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 500 (Internal
@@ -356,10 +356,9 @@ public class FileUploadExerciseResource {
     @PutMapping("/file-upload-exercises/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "deleteFeedbacks", required = false) Boolean deleteFeedbacks) throws URISyntaxException {
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
-        // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
 
         // Check that the user is authorized to update the exercise
@@ -368,7 +367,7 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
 
-        exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbacks);
+        exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterSGIUpdate);
 
         return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
     }

@@ -845,14 +845,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(textExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, "instructor1");
 
         // change grading instruction score
         gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
         gradingCriteria.remove(1);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=false", textExercise, TextExercise.class,
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedback=false", textExercise, TextExercise.class,
                 HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
@@ -868,15 +868,14 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbacksWithGradingInstructionsForExercise(textExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, "instructor1");
 
         // remove instruction which is associated with feedbacks
         gradingCriteria.remove(1);
         gradingCriteria.remove(0);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedbacks=true", textExercise, TextExercise.class,
-                HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedback=true", textExercise, TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria().size()).isEqualTo(1);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
