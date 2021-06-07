@@ -740,7 +740,7 @@ public class ExerciseService {
 
     public void validateGeneralSettings(Exercise exercise) {
         validateScoreSettings(exercise);
-        validateDateSettings(exercise);
+        exercise.validateDates();
     }
 
     /**
@@ -750,7 +750,6 @@ public class ExerciseService {
      *
      * @param exercise exercise to validate
      */
-
     public void validateScoreSettings(Exercise exercise) {
         // Check if max score is set
         if (exercise.getMaxPoints() == null || exercise.getMaxPoints() <= 0) {
@@ -770,9 +769,5 @@ public class ExerciseService {
         if (!exercise.getIncludedInOverallScore().validateBonusPoints(exercise.getBonusPoints())) {
             throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
-    }
-
-    private void validateDateSettings(Exercise exercise) {
-        exercise.validateDates();
     }
 }

@@ -58,18 +58,20 @@ export class ExerciseService {
 
         if (exercise.releaseDate && exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate) && !exercise.assessmentDueDate.isAfter(exercise.releaseDate);
+                exercise.assessmentDueDateError = exercise.assessmentDueDate.isBefore(exercise.dueDate) || exercise.assessmentDueDate.isBefore(exercise.releaseDate);
+                return;
             } else {
-                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.releaseDate);
+                exercise.assessmentDueDateError = true;
+                return;
             }
         }
 
-        if (exercise.dueDate && exercise.assessmentDueDate) {
-            exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate);
-        }
-
-        if (!exercise.dueDate && exercise.assessmentDueDate) {
-            exercise.assessmentDueDateError = true;
+        if (exercise.assessmentDueDate) {
+            if (exercise.dueDate) {
+                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate);
+            } else {
+                exercise.assessmentDueDateError = true;
+            }
         }
     }
 

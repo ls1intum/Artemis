@@ -258,7 +258,7 @@ public class ProgrammingExerciseResource {
      *
      * @param programmingExercise exercise to validate
      */
-    private void validateGeneralProgrammingSettings(ProgrammingExercise programmingExercise) {
+    private void validateProgrammingSettings(ProgrammingExercise programmingExercise) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
@@ -331,7 +331,7 @@ public class ProgrammingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         exerciseService.validateGeneralSettings(programmingExercise);
-        validateGeneralProgrammingSettings(programmingExercise);
+        validateProgrammingSettings(programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -464,7 +464,7 @@ public class ProgrammingExerciseResource {
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         exerciseService.validateGeneralSettings(newExercise);
-        validateGeneralProgrammingSettings(newExercise);
+        validateProgrammingSettings(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
