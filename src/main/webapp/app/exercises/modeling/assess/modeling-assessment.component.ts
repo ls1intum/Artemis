@@ -4,7 +4,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import interact from 'interactjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import * as $ from 'jquery';
-import { JhiLanguageService } from 'ng-jhipster';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
