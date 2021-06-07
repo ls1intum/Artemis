@@ -135,6 +135,19 @@ public class UserService {
                     userCreationService.createUser(userDto);
                 }
             }
+            // adding anonymous user at startup for Q&A / Posts anonymization
+            if (userRepository.findOneWithGroupsAndAuthoritiesByLogin("anonymous").isEmpty()) {
+                log.info("Create internal anonymous user");
+                ManagedUserVM userDto = new ManagedUserVM();
+                userDto.setLogin("anonymous");
+                userDto.setActivated(true);
+                userDto.setFirstName("anonymous");
+                userDto.setLastName("anonymous");
+                userDto.setEmail("anonymous@anonymous");
+                userDto.setCreatedBy("system");
+                userDto.setLastModifiedBy("system");
+                userCreationService.createUser(userDto);
+            }
         }
         catch (Exception ex) {
             log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);

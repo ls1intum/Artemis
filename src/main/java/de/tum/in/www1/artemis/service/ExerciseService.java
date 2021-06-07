@@ -22,12 +22,16 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
@@ -96,6 +100,10 @@ public class ExerciseService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
@@ -103,7 +111,8 @@ public class ExerciseService {
             ProgrammingExerciseRepository programmingExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository) {
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -128,6 +137,8 @@ public class ExerciseService {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -355,6 +366,20 @@ public class ExerciseService {
 
         // delete all participations for this exercise
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
+
+        // anonymize Posts
+        exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).orElseThrow();
+        User anonymousUser = userRepository.findOneByLogin("anonymous")
+                .orElseThrow(() -> new EntityNotFoundException("Anonymization could not be completed. Anonymous user missing."));
+        for (Post post : exercise.getPosts()) {
+            post.setAuthor(anonymousUser);
+
+            for (AnswerPost answerPost : post.getAnswers()) {
+                answerPost.setAuthor(anonymousUser);
+                answerPostRepository.save(answerPost);
+            }
+            postRepository.save(post);
+        }
 
         if (exercise instanceof QuizExercise) {
             quizExerciseService.resetExercise(exercise.getId());
