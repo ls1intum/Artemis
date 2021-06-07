@@ -282,7 +282,7 @@
                 "registerAllFromCourseTooltip": "Registriere alle zu diesem Kurs angemeldeten Studierende",
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
-                    "deleteParticipationsAndSubmission": "Teilnahme und Abgaben der Person in der zugehörigen Klausur löschen?"
+                    "deleteParticipationsAndSubmission": "Teilnahme und Abgaben in der zugehörigen Klausur löschen?"
                 },
                 "importStudents": {
                     "buttonLabel": "Studierende importieren",

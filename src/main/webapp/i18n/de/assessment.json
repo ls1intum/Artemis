@@ -56,8 +56,8 @@
                     "duration": "Dauer",
                     "assessmentType": "Bewertungsart",
                     "student": "Studierende:r",
-                    "assessor": "Bewertende Person",
-                    "assessors": "Bewertende Personen",
+                    "assessor": "Bewertet von",
+                    "assessors": "Bewertet von",
                     "action": "Bewertungsaktionen",
                     "assessmentFirst": "Korrekturrunde 1",
                     "assessmentSecond": "Korrekturrunde 2"

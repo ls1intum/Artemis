@@ -48,7 +48,7 @@
                 "submissionDate": "Abgabedatum",
                 "resultCount": "Anzahl Ergebnisse",
                 "results": "Ergebnisse",
-                "assessor": "Bewertende Person",
+                "assessor": "Bewertet von",
                 "submissionsForParticipation": "Abgaben von {{ participant }} für die Übung {{ exercise }}",
                 "action": "Aktion",
                 "delete": "Soll diese Abgabe wirklich gelöscht werden?"
