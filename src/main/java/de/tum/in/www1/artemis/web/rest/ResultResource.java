@@ -280,8 +280,9 @@ public class ResultResource {
     }
 
     /**
-     * GET /results/:id : get the "id" result.
+     * GET /participations/:participationId/results/:resultId : get the "id" result.
      *
+     * @param participationId the id of the participation to the result
      * @param resultId the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
@@ -324,9 +325,10 @@ public class ResultResource {
     }
 
     /**
-     * GET /results/:id/details : get the build result details from CI service for the "id" result.
+     * GET /participations/:participationId/results/:resultId/details : get the build result details from CI service for the "id" result.
      * This method is only invoked if the result actually includes details (e.g. feedback or build errors)
      *
+     * @param participationId  the id of the participation to the result
      * @param resultId the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the endpoint will return forbidden!
      * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
      */
@@ -384,8 +386,9 @@ public class ResultResource {
     }
 
     /**
-     * DELETE /results/:id : delete the "id" result.
+     * DELETE /participations/:participationId/results/:resultId : delete the "id" result.
      *
+     * @param participationId the id of the participation to the result
      * @param resultId the id of the result to delete
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -406,8 +409,9 @@ public class ResultResource {
     }
 
     /**
-     * GET /results/submission/{submissionId} : get the result for a submission id
+     * GET /participations/:participationId/results/from-submission/:submissionId : get the result for a submission id
      *
+     * @param participationId the id of the participation to the submission
      * @param submissionId the id of the submission
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
@@ -425,8 +429,9 @@ public class ResultResource {
     }
 
     /**
-     * Creates a new example result for the provided example submission ID.
+     * POST participations/:participationId/submissions/:submissionId/example-result : Creates a new example result for the provided example submission ID.
      *
+     * @param participationId participation to the submission
      * @param submissionId The submission ID for which an example result should get created
      * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
      * @return The newly created result
@@ -447,7 +452,7 @@ public class ResultResource {
     }
 
     /**
-     * Creates a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
+     * POST exercises/:exerciseId/external-submission-results : Creates a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
      *
      * @param exerciseId The exercise ID for which a result should get created
      * @param studentLogin The student login (username) for which a result should get created
