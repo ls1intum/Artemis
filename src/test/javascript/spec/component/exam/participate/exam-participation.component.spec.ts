@@ -145,29 +145,29 @@ describe('ExamParticipationComponent', () => {
 
     describe('isProgrammingExercise', () => {
         it('should return true if active exercise is a programming exercise', () => {
-            comp.activeExercise = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExercise()).to.equal(true);
         });
         it('should return false if active exercise is not a programming exercise', () => {
-            comp.activeExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+            comp.activeExamPage = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             expect(comp.isProgrammingExercise()).to.equal(false);
         });
     });
 
     describe('isProgrammingExerciseWithCodeEditor', () => {
         it('should return true if programming exercise is with code editor', () => {
-            comp.activeExercise = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExerciseWithCodeEditor()).to.equal(false);
-            (comp.activeExercise as ProgrammingExercise).allowOnlineEditor = true;
+            (comp.activeExamPage as ProgrammingExercise).allowOnlineEditor = true;
             expect(comp.isProgrammingExerciseWithCodeEditor()).to.equal(true);
         });
     });
 
     describe('isProgrammingExerciseWithOfflineIDE', () => {
         it('should return true if active exercise is with offline ide', () => {
-            comp.activeExercise = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExerciseWithOfflineIDE()).to.equal(true);
-            (comp.activeExercise as ProgrammingExercise).allowOfflineIde = false;
+            (comp.activeExamPage as ProgrammingExercise).allowOfflineIde = false;
             expect(comp.isProgrammingExerciseWithOfflineIDE()).to.equal(false);
         });
     });
@@ -278,7 +278,7 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.submitted).to.equal(false);
 
         // Initialize exercise
-        expect(comp.activeExercise).to.deep.equal(firstExercise);
+        expect(comp.activeExamPage).to.deep.equal(firstExercise);
         expect(createParticipationForExerciseStub).to.have.been.calledWith(firstExercise);
     };
 
@@ -555,7 +555,7 @@ describe('ExamParticipationComponent', () => {
         const triggerStub = stub(comp, 'triggerSave');
         const exerciseChange = { exercise, forceSave: true };
         const createParticipationForExerciseStub = stub(comp, 'createParticipationForExercise').returns(of(new StudentParticipation()));
-        comp.onExerciseChange(exerciseChange);
+        comp.onPageChange(exerciseChange);
         expect(triggerStub).to.have.been.calledWith(true);
         expect(createParticipationForExerciseStub).to.have.been.calledWith(exercise);
     });
