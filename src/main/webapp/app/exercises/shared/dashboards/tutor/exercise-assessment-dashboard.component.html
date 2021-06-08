@@ -300,8 +300,8 @@
                                             >{{ round(submission.results![correctionRound]!.score) }} %</span
                                         >
                                     </td>
-                                    <td>
-                                        <jhi-language-table-cell *ngIf="exercise.type === ExerciseType.TEXT" [submission]="submission"></jhi-language-table-cell>
+                                    <td *ngIf="exercise.type === ExerciseType.TEXT">
+                                        <jhi-language-table-cell [submission]="submission"></jhi-language-table-cell>
                                     </td>
                                     <td>
                                         <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
@@ -345,11 +345,8 @@
                                         <td></td>
                                         <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | artemisTranslate }}</td>
                                         <td></td>
-                                        <td>
-                                            <jhi-language-table-cell
-                                                *ngIf="exercise.type === ExerciseType.TEXT"
-                                                [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"
-                                            ></jhi-language-table-cell>
+                                        <td *ngIf="exercise.type === ExerciseType.TEXT">
+                                            <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"></jhi-language-table-cell>
                                         </td>
 
                                         <td>
