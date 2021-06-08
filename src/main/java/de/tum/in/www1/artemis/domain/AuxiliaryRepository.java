@@ -161,7 +161,7 @@ public class AuxiliaryRepository extends DomainObject {
             return new VcsRepositoryUrl(repositoryUrl);
         }
         catch (MalformedURLException e) {
-            log.error("Malformed URL " + getRepositoryUrl() + " you could not be used to instantiate VcsRepositoryUrl.", e);
+            log.error("Malformed URL " + getRepositoryUrl() + " could not be used to instantiate VcsRepositoryUrl.", e);
         }
         return null;
     }
