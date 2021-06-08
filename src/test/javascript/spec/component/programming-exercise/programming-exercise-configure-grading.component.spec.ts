@@ -390,6 +390,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         expect(comp.changedTestCaseIds).to.deep.equal([orderedTests[0].id]);
 
+        tick();
         expect(multiplierInput.value).to.equal('1');
         expect(bonusInput.value).to.equal('1');
 
