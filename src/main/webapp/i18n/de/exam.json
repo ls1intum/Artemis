@@ -11,7 +11,7 @@
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
-                "noCommitHash": "Es gibt keinen Commit Hash",
+                "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrperson.",
