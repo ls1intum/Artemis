@@ -46,7 +46,12 @@ export class NotificationPopupComponent implements OnInit {
     private notificationTargetRoute(notification: Notification): UrlTree | string {
         if (notification.target) {
             const target = JSON.parse(notification.target);
-            return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
+
+            if (notification.title === 'Quiz started' && target.status) {
+                return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id, target.status]);
+            } else {
+                return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
+            }
         }
         return this.router.url;
     }
@@ -77,6 +82,7 @@ export class NotificationPopupComponent implements OnInit {
         if (notification.target) {
             const target = JSON.parse(notification.target);
             target.entity = 'quiz-exercises';
+            target.status = 'live';
             const notificationWithLiveQuizTarget = {
                 target: JSON.stringify(target),
             } as GroupNotification;
@@ -84,6 +90,7 @@ export class NotificationPopupComponent implements OnInit {
                 !this.router.isActive(this.notificationTargetRoute(notification), true) &&
                 !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', true)
             ) {
+                notification.target = notificationWithLiveQuizTarget.target;
                 this.notifications.unshift(notification);
             }
         }

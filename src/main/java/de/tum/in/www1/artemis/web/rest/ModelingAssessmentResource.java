@@ -182,7 +182,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return super.cancelAssessment(submissionId);
     }
 
-
     /**
      * Delete an assessment of a given submission.
      *
