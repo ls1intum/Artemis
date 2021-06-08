@@ -230,6 +230,19 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.inserted).to.be.true;
     });
 
+    it('should disable exam button', () => {
+        component.ngOnInit();
+        component.testRun = false;
+        const now = moment();
+        spyOn(artemisServerDateService, 'now').and.returnValue(now);
+        component.enteredName = 'user';
+        component.accountName = 'user';
+        component.confirmed = true;
+        component.exam.visibleDate = moment().subtract(1, 'hours');
+        component.exam.visibleDate = moment().add(1, 'hours');
+        expect(component.startButtonEnabled).to.be.false;
+    });
+
     it('should get whether student failed to submit', () => {
         component.testRun = true;
         expect(component.studentFailedToSubmit).to.be.false;

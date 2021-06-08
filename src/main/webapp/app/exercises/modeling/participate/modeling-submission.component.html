@@ -51,7 +51,7 @@
                     <div class="flex flex-column h-100">
                         <jhi-modeling-assessment
                             [model]="umlModel"
-                            [feedbacks]="assessmentResult?.feedbacks || []"
+                            [resultFeedbacks]="assessmentResult?.feedbacks || []"
                             [diagramType]="modelingExercise.diagramType!"
                             [maxScore]="modelingExercise.maxPoints || 0"
                             [maxBonusPoints]="modelingExercise.bonusPoints || 0"

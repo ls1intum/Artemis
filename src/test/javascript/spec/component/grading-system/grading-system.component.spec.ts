@@ -3,13 +3,14 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import { SinonStub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
@@ -20,6 +21,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateService } from '@ngx-translate/core';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,6 +30,8 @@ describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
     let fixture: ComponentFixture<GradingSystemComponent>;
     let gradingSystemService: GradingSystemService;
+    let translateService: TranslateService;
+    let translateStub: SinonStub;
 
     const route = { params: of({ courseId: 1, examId: 1 }) } as any as ActivatedRoute;
 
@@ -71,6 +75,7 @@ describe('Grading System Component', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -78,6 +83,7 @@ describe('Grading System Component', () => {
         comp = fixture.componentInstance;
 
         gradingSystemService = TestBed.inject(GradingSystemService);
+        translateService = TestBed.inject(TranslateService);
     });
 
     beforeEach(() => {
@@ -85,6 +91,8 @@ describe('Grading System Component', () => {
         comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
         comp.courseId = 123;
         comp.examId = 456;
+        comp.firstPassingGrade = 'Pass';
+        translateStub = sinon.stub(translateService, 'instant');
     });
 
     afterEach(() => {
@@ -343,5 +351,114 @@ describe('Grading System Component', () => {
         expect(comp.firstPassingGrade).to.be.equal('Pass');
         expect(comp.lowerBoundInclusivity).to.be.equal(true);
         expect(comp.existingGradingScale).to.be.equal(true);
+    });
+
+    it('should validate valid grading scale correctly', () => {
+        expect(comp.validGradeSteps()).to.be.true;
+        expect(comp.invalidGradeStepsMessage).to.be.undefined;
+    });
+
+    it('should validate invalid grading scale with empty grade steps correctly', () => {
+        comp.gradingScale.gradeSteps = [];
+        translateStub.returns('empty set');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('empty set');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.empty');
+    });
+
+    it('should validate invalid grading scale with empty grade step fields correctly', () => {
+        comp.gradingScale.gradeSteps[0].gradeName = '';
+        translateStub.returns('empty field');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('empty field');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.emptyFields');
+    });
+
+    it('should validate invalid grading scale with invalid percentages', () => {
+        comp.gradingScale.gradeSteps[0].lowerBoundPercentage = -10;
+        translateStub.returns('invalid percentage');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('invalid percentage');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
+    });
+
+    it('should validate invalid grading scale with non-unique grade names', () => {
+        comp.gradingScale.gradeType = GradeType.GRADE;
+        comp.gradingScale.gradeSteps[1].gradeName = 'Fail';
+        translateStub.returns('non-unique grade names');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('non-unique grade names');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.nonUniqueGradeNames');
+    });
+
+    it('should validate invalid grading scale with unset first passing grade', () => {
+        comp.gradingScale.gradeType = GradeType.GRADE;
+        comp.firstPassingGrade = undefined;
+        translateStub.returns('unset first passing grade');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('unset first passing grade');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.unsetFirstPassingGrade');
+    });
+
+    it('should validate invalid grading scale with invalid bonus points', () => {
+        comp.gradingScale.gradeSteps[0].gradeName = '-2';
+        comp.gradingScale.gradeType = GradeType.BONUS;
+        translateStub.returns('invalid bonus points');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('invalid bonus points');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidBonusPoints');
+    });
+
+    it('should validate invalid grading scale without strictly ascending bonus points', () => {
+        comp.gradingScale.gradeSteps[0].gradeName = '0';
+        comp.gradingScale.gradeSteps[1].gradeName = '2';
+        comp.gradingScale.gradeSteps[2].gradeName = '1';
+        comp.gradingScale.gradeType = GradeType.BONUS;
+        translateStub.returns('descending bonus points');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('descending bonus points');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
+    });
+
+    it('should validate invalid grading scale with invalid adjacency', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Grade',
+            isPassingGrade: false,
+            lowerBoundInclusive: true,
+            lowerBoundPercentage: 0,
+            upperBoundInclusive: false,
+            upperBoundPercentage: 30,
+        };
+        translateStub.returns('invalid adjacency');
+        sinon.stub(gradingSystemService, 'sortGradeSteps').returns([gradeStep, gradeStep2, gradeStep3]);
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('invalid adjacency');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidAdjacency');
+    });
+
+    it('should validate invalid grading scale with invalid first grade step', () => {
+        const invalidFirstGradeStep: GradeStep = {
+            gradeName: 'Name',
+            isPassingGrade: false,
+            lowerBoundInclusive: true,
+            lowerBoundPercentage: 20,
+            upperBoundInclusive: false,
+            upperBoundPercentage: 40,
+        };
+        sinon.stub(gradingSystemService, 'sortGradeSteps').returns([invalidFirstGradeStep, gradeStep2, gradeStep3]);
+        comp.gradingScale.gradeSteps[0].lowerBoundPercentage = 10;
+        translateStub.returns('invalid first grade step');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('invalid first grade step');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
     });
 });
