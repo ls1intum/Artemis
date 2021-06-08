@@ -332,7 +332,7 @@ public class ResultResource {
      * @param resultId the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the endpoint will return forbidden!
      * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
      */
-    @GetMapping(value = "participations/{participationId}/results/{resultId}/details")
+    @GetMapping("participations/{participationId}/results/{resultId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
@@ -415,7 +415,7 @@ public class ResultResource {
      * @param submissionId the id of the submission
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @GetMapping(value = "participations/{participationId}/results/from-submission/{submissionId}")
+    @GetMapping("participations/{participationId}/results/from-submission/{submissionId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResultForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId) {
         log.debug("REST request to get Result for submission : {}", submissionId);
@@ -460,7 +460,7 @@ public class ResultResource {
      * @return The newly created result
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "exercises/{exerciseId}/external-submission-results")
+    @PostMapping("exercises/{exerciseId}/external-submission-results")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
             throws URISyntaxException {

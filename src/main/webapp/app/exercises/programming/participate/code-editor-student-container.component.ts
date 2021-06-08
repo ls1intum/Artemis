@@ -144,7 +144,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
      * Mutates the input parameter result.
      */
     loadResultDetails(result: Result): Observable<Feedback[]> {
-        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
+        return this.resultService.getFeedbackDetailsForResult(result.participation!.id!, result.id!).pipe(
             map((res) => {
                 return res.body || [];
             }),

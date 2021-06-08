@@ -171,7 +171,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(result.id!).pipe(
+        return this.resultService.getFeedbackDetailsForResult(result.participation!.id!, result.id!).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;

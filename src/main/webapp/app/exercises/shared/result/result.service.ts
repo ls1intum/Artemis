@@ -20,11 +20,11 @@ export type EntityArrayResponseType = HttpResponse<Result[]>;
 
 export interface IResultService {
     find: (id: number) => Observable<EntityResponseType>;
-    findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
+    findBySubmissionId: (participationId: number, submissionId: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
-    getLatestResultWithFeedbacks: (particpationId: number) => Observable<HttpResponse<Result>>;
-    getFeedbackDetailsForResult: (resultId: number) => Observable<HttpResponse<Feedback[]>>;
-    delete: (id: number) => Observable<HttpResponse<void>>;
+    getLatestResultWithFeedbacks: (participationId: number) => Observable<HttpResponse<Result>>;
+    getFeedbackDetailsForResult: (participationId: number, resultId: number) => Observable<HttpResponse<Feedback[]>>;
+    delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,9 +40,9 @@ export class ResultService implements IResultService {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
+    findBySubmissionId(participationId: number, submissionId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Result>(`${this.resultResourceUrl}/submission/${submissionId}`, { observe: 'response' })
+            .get<Result>(`${this.participationResourceUrl}/${participationId}/results/from-submissions/${submissionId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -56,15 +56,15 @@ export class ResultService implements IResultService {
             .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
     }
 
-    getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
-        return this.http.get<Feedback[]>(`${this.resultResourceUrl}/${resultId}/details`, { observe: 'response' });
+    getFeedbackDetailsForResult(participationId: number, resultId: number): Observable<HttpResponse<Feedback[]>> {
+        return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${resultId}/details`, { observe: 'response' });
     }
 
-    getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
-        return this.http.get<Result>(`${this.participationResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
+    getLatestResultWithFeedbacks(participationId: number): Observable<HttpResponse<Result>> {
+        return this.http.get<Result>(`${this.participationResourceUrl}/${participationId}/latest-result`, { observe: 'response' });
     }
 
-    delete(resultId: number): Observable<HttpResponse<void>> {
+    delete(participationId: number, resultId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
 
@@ -74,8 +74,8 @@ export class ResultService implements IResultService {
      * @param submissionId The ID of the example submission for which a result should get created
      * @return The newly created (and empty) example result
      */
-    createNewExampleResult(submissionId: number): Observable<HttpResponse<Result>> {
-        return this.http.post<Result>(`${this.submissionResourceUrl}/${submissionId}/example-result`, null, { observe: 'response' });
+    createNewExampleResult(participationId: number, submissionId: number): Observable<HttpResponse<Result>> {
+        return this.http.post<Result>(`${this.participationResourceUrl}/${participationId}/submissions/${submissionId}/example-result`, null, { observe: 'response' });
     }
 
     public convertDateFromClient(result: Result): Result {
