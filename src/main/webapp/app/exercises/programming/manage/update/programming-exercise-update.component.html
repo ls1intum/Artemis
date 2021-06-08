@@ -132,22 +132,24 @@
                                         [programmingExercise]="programmingExercise"
                                         [row]="row"
                                         class="ml-2"
+                                        (click)="computeInvalidWarnings()"
                                     ></jhi-remove-auxiliary-repository-button>
-                                    <span *ngIf="isEdit">
-                                        <fa-icon
-                                            [icon]="'exclamation-triangle'"
-                                            class="text-warning mr-1"
-                                            ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
-                                        ></fa-icon>
-                                        <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
-                                            >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
-                                        >
-                                    </span>
                                 </div>
                             </ng-template>
                         </ngx-datatable-column>
                     </ngx-datatable>
-                    <jhi-add-auxiliary-repository-button [programmingExercise]="programmingExercise" class="ml-2"></jhi-add-auxiliary-repository-button>
+                    <jhi-add-auxiliary-repository-button [programmingExercise]="programmingExercise" class="ml-2" (click)="computeInvalidWarnings()">
+                    </jhi-add-auxiliary-repository-button>
+                    <span *ngIf="isEdit && invalidWarnings">
+                        <fa-icon
+                            [icon]="'exclamation-triangle'"
+                            class="text-warning mr-1"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
+                        ></fa-icon>
+                        <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning">
+                            This Auxiliary Repository needs to be manually added to the VCS and the buildplan
+                        </span>
+                    </span>
                 </div>
                 <div *ngIf="!isExamMode" class="form-group-narrow position-relative">
                     <div>
@@ -572,16 +574,37 @@
                     (click)="save()"
                 >
                 </jhi-button>
-                <span *ngIf="isEdit && invalidWarnings">
-                    <fa-icon
-                        [icon]="'exclamation-triangle'"
-                        class="text-warning mr-1"
-                        ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}"
-                    ></fa-icon>
+
+                <ng-template #warningTranslate>
+                    <div *ngFor="let warning of invalidWarnings">
+                        <p
+                            *ngIf="(warning.translateValues | json) != '{}'"
+                            jhiTranslate="{{ warning.translateKey }}"
+                            [translateValues]="{ auxRepoName: warning.translateValues.auxRepoName }"
+                        ></p>
+                        <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
+                    </div>
+                </ng-template>
+                <span *ngIf="isEdit && invalidWarnings.length > 0" [ngbTooltip]="warningTranslate">
+                    <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1"></fa-icon>
                     <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
                         >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
                     >
                 </span>
+
+                <!--
+                <span *ngIf="!quizIsValid" class="badge badge-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
+                                <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                                <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
+                                <span>({{ computeInvalidReasons().length }})</span>
+                            </span>
+
+
+                            <span *ngIf="warningQuizCache" class="badge badge-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right">
+                                <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
+                                <span>({{ computeInvalidWarnings().length }})</span>
+                            </span>
+                -->
             </div>
         </form>
     </div>

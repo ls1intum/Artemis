@@ -27,6 +27,11 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
+interface Warning {
+    translateKey: string;
+    translateValues: any;
+}
+
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -43,7 +48,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     invalidRepositoryNamePattern: RegExp;
     invalidDirectoryNamePattern: RegExp;
-    invalidWarnings: boolean;
+    invalidWarnings: Warning[];
     submitButtonTitle: string;
     isImport: boolean;
     isEdit: boolean;
@@ -132,7 +137,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.name = newValue;
-            this.invalidWarnings = true;
             return editedAuxiliaryRepository.name;
         };
     }
@@ -159,6 +163,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             editedAuxiliaryRepository.description = newValue;
             return editedAuxiliaryRepository.description;
         };
+    }
+
+    /**
+     * Get the reasons, why the programming exercise needs warnings
+     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
+     */
+    computeInvalidWarnings() {
+        const invalidWarnings = !this.programmingExercise
+            ? []
+            : this.programmingExercise.auxiliaryRepositories
+                  ?.map((auxiliaryRepository) => {
+                      if (auxiliaryRepository.id === undefined) {
+                          return {
+                              translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.auxiliaryRepositoryCreationNotAutomatic',
+                              translateValues: { auxRepoName: auxiliaryRepository.name },
+                          };
+                      }
+                  })
+                  .filter(Boolean);
+        this.invalidWarnings = invalidWarnings as Warning[];
+        this.invalidWarnings = [...this.invalidWarnings];
     }
 
     /**
@@ -307,6 +332,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.setInvalidRepoNamePattern();
         this.setInvalidDirectoryNamePattern();
+        this.invalidWarnings = [];
     }
 
     /**
