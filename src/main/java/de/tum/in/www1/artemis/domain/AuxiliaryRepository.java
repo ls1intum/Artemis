@@ -10,7 +10,6 @@ import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -157,7 +156,7 @@ public class AuxiliaryRepository extends DomainObject {
             return new VcsRepositoryUrl(repositoryUrl);
         }
         catch (MalformedURLException e) {
-            LoggerFactory.getLogger(AuxiliaryRepository.class).error("Malformed URL " + getRepositoryUrl() + " you could not be used to instantiate VcsRepositoryUrl.", e);
+            e.printStackTrace();
         }
         return null;
     }
