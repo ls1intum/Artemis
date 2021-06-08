@@ -1,5 +1,4 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { plugins } from 'chart.js';
 import { ChartDataset, ChartHoverOptions, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartTooltipOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 
@@ -39,7 +38,17 @@ export class ChartComponent {
     chartType: ChartType = 'bar';
     chartLabels: Label[] = [];
     chartOptions: ChartOptions = {
-        plugins: {},
+        plugins: {
+            legend: {
+                display: false,
+            },
+            title: {
+                display: false,
+            },
+            tooltip: {
+                enabled: false,
+            },
+        },
         responsive: true,
         maintainAspectRatio: false,
         layout: {
@@ -49,15 +58,6 @@ export class ChartComponent {
                 top: 0,
                 bottom: 0,
             },
-        },
-        legend: {
-            display: false,
-        },
-        title: {
-            display: false,
-        },
-        tooltips: {
-            enabled: false,
         },
         scales: {
             y: {},
@@ -118,20 +118,20 @@ export class ChartComponent {
 
     setYAxe(index: number, axe: ChartYAxe, shouldUpdate = true) {
         this.applyOptions((options) => {
-            if (!options.scales!.yAxes![index]) {
-                options.scales!.yAxes![index] = axe;
+            if (!options.scales!.y![index]) {
+                options.scales!.y![index] = axe;
             } else {
-                Object.assign(options.scales!.yAxes![index], axe);
+                Object.assign(options.scales!.y![index], axe);
             }
         }, shouldUpdate);
     }
 
     setXAxe(index: number, axe: ChartXAxe, shouldUpdate = true) {
         this.applyOptions((options) => {
-            if (!options.scales!.xAxes![index]) {
-                options.scales!.xAxes![index] = axe;
+            if (!options.scales!.x![index]) {
+                options.scales!.x![index] = axe;
             } else {
-                Object.assign(options.scales!.xAxes![index], axe);
+                Object.assign(options.scales!.x![index], axe);
             }
         }, shouldUpdate);
     }
@@ -146,5 +146,11 @@ export class ChartComponent {
 
     setLabels(labels: Label[]) {
         this.chartLabels = labels;
+    }
+
+    setBarChartToHorizontal(shouldUpdate: boolean) {
+        this.applyOptions((options) => {
+            Object.assign(options.indexAxis, 'y');
+        }, shouldUpdate);
     }
 }

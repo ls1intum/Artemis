@@ -30,7 +30,6 @@ export class StatisticsGraphComponent implements OnChanges {
     // Histogram related properties
     barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'bar';
-    lineChartType: ChartType = 'line';
     labelTitle: string;
     chartName: string;
     barChartLegend = false;
@@ -229,14 +228,10 @@ export class StatisticsGraphComponent implements OnChanges {
                 },
             },
             scales: {
-                yAxes: [
-                    {
-                        ticks: {
-                            beginAtZero: true,
-                            min: 0,
-                        },
-                    },
-                ],
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                },
             },
         };
     }

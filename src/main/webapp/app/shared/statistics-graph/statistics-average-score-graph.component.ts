@@ -110,28 +110,22 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 },
             },
             scales: {
-                yAxes: [
-                    {
-                        ticks: {
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                },
+                x: {
+                    gridLines: {
+                        offsetGridLines: false,
+                    },
+                    ticks: {
+                        autoSkip: false,
+                        callback(title: string) {
+                            return title.length > 10 ? title.substr(0, 10) + '...' : title;
                         },
                     },
-                ],
-                xAxes: [
-                    {
-                        gridLines: {
-                            offsetGridLines: false,
-                        },
-                        ticks: {
-                            autoSkip: false,
-                            callback(title: string) {
-                                return title.length > 10 ? title.substr(0, 10) + '...' : title;
-                            },
-                        },
-                    },
-                ],
+                },
             },
         };
     }

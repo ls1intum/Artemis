@@ -145,20 +145,18 @@ export class CourseDetailBarChartComponent implements OnChanges {
                 },
             },
             scales: {
-                yAxes: [
-                    {
-                        ticks: {
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
-                            precision: 0,
-                            autoSkip: true,
-                            callback(value: number) {
-                                return value + '%';
-                            },
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        precision: 0,
+                        autoSkip: true,
+                        callback(value: number) {
+                            return value + '%';
                         },
                     },
-                ],
+                },
             },
             tooltips: {
                 enabled: true,

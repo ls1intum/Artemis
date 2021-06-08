@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
-import { ChartDataSets, ChartType } from 'chart.js';
+import { ChartDataset, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy } from '@angular/core';
@@ -32,7 +32,7 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
 
     // Data
     barChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataset[] = [];
     dataForSpanType: number[] = [];
 
     constructor(private translateService: TranslateService) {}
@@ -76,21 +76,19 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
                 },
             },
             scales: {
-                yAxes: [
-                    {
-                        ticks: {
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
-                            autoSkip: true,
-                            precision: 0,
-                            stepSize: 20,
-                            callback(value: number) {
-                                return value + '%';
-                            },
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        autoSkip: true,
+                        precision: 0,
+                        stepSize: 20,
+                        callback(value: number) {
+                            return value + '%';
                         },
                     },
-                ],
+                },
             },
             tooltips: {
                 enabled: true,

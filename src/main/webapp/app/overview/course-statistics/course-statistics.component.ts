@@ -111,28 +111,25 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ];
 
     public barChartOptions: any = {
+        indexAxis: 'y',
         scaleShowVerticalLines: false,
         maintainAspectRatio: false,
         responsive: true,
         scales: {
-            xAxes: [
-                {
-                    stacked: true,
-                    ticks: {
-                        autoSkip: false,
-                        maxRotation: 0,
-                        minRotation: 0,
-                    },
-                    gridLines: {
-                        display: false,
-                    },
+            x: {
+                stacked: true,
+                ticks: {
+                    autoSkip: false,
+                    maxRotation: 0,
+                    minRotation: 0,
                 },
-            ],
-            yAxes: [
-                {
-                    stacked: true,
+                gridLines: {
+                    display: false,
                 },
-            ],
+            },
+            y: {
+                stacked: true,
+            },
         },
         tooltips: {
             backgroundColor: 'rgba(0, 0, 0, 1)',
@@ -147,7 +144,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             },
         },
     };
-    public barChartType: ChartType = 'horizontalBar';
+    public barChartType: ChartType = 'bar';
 
     public doughnutChartType: ChartType = 'doughnut';
     public totalScoreOptions: object = {

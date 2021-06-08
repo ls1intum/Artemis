@@ -21,7 +21,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
 import * as Chart from 'chart.js';
-import { ChartDataSets, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -63,7 +63,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public barChartLabels: Label[] = [];
     public barChartType: ChartType = 'bar';
     public barChartLegend = true;
-    public barChartData: ChartDataSets[] = [];
+    public barChartData: ChartDataset[] = [];
 
     gradingScaleExists = false;
     gradingScale?: GradingScale;
@@ -213,7 +213,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         max: this.calculateTickMax(),
                     } as LinearTickOptions,
                 },
-                xAxes: {
+                x: {
                     title: {
                         display: true,
                         text: this.translateService.instant('artemisApp.examScores.xAxes'),
@@ -229,7 +229,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     const chartInstance = this.chart,
                         ctx = chartInstance.ctx;
 
-                    ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
+                    ctx.font = Chart.helpers.fontString(Chart.defaults.font.size, Chart.defaults.font.style, Chart.defaults.font.family);
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
 

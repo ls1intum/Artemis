@@ -33,7 +33,7 @@
         "angular-fittext": "2.1.1",
         "blob-util": "2.0.2",
         "bootstrap": "4.6.0",
-        "chart.js": "3.2.1",
+        "chart.js": "^3.3.2",
         "compare-versions": "3.6.0",
         "core-js": "3.12.1",
         "diff-match-patch": "1.0.5",
