@@ -626,7 +626,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (submission === 'new') {
             this.programmingSubmissionService
                 .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, true, correctionRound)
-                .subscribe((submission) => this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission.id!, correctionRound));
+                .subscribe((newSubmission) => this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, newSubmission.id!, correctionRound));
         } else {
             this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission.id!, correctionRound);
         }
