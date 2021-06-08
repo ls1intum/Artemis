@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -37,6 +37,9 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { getFirstResultWithComplaint } from 'app/entities/submission.model';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { Complaint } from 'app/entities/complaint.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -59,6 +62,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public courseId: number;
     private subscription: Subscription;
     public exercise?: Exercise;
+    public resultWithComplaint?: Result;
+    public complaint?: Complaint;
     public showMoreResults = false;
     public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
     public exerciseCategories: ExerciseCategory[];
@@ -99,6 +104,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
         private submissionService: ProgrammingSubmissionService,
+        private complaintService: ComplaintService,
     ) {}
 
     ngOnInit() {
@@ -353,6 +359,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!this.studentParticipation || !this.hasResults) {
             return undefined;
         }
+        const resultWithComplaint = getFirstResultWithComplaint(this.studentParticipation?.submissions?.pop());
+        if (resultWithComplaint) {
+            this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
+                (res) => {
+                    if (!res.body) {
+                        return;
+                    }
+                    this.complaint = res.body;
+                },
+                (err: HttpErrorResponse) => {
+                    this.onError(err.message);
+                },
+            );
+        }
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
@@ -410,6 +430,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             instance.exercise = this.exercise;
             instance.loadPosts(); // reload the posts
         }
+    }
+
+    private onError(error: string) {
+        this.jhiAlertService.error(error);
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################

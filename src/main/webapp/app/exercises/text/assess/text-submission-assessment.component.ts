@@ -21,6 +21,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-a
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import {
+    getFirstResultWithComplaint,
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
     getSubmissionResultById,
@@ -375,12 +376,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private getComplaint(): void {
-        if (!this.result?.hasComplaint) {
+        console.log(this.submission);
+        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
+        if (!resultWithComplaint) {
             return;
         }
 
         this.isLoading = true;
-        this.complaintService.findByResultId(this.result!.id!).subscribe(
+        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

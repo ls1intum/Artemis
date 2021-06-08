@@ -615,7 +615,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     viewComplaint(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
-        this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
+        if (submissionToView) {
+            this.openAssessmentEditor(submissionToView, submissionToView.results!.length - 1);
+        }
     }
 
     toggleSecondCorrection() {

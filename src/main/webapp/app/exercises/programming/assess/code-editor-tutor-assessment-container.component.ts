@@ -38,7 +38,7 @@ import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/ex
 import { round } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Observable } from 'rxjs';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 
@@ -217,10 +217,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.checkPermissions();
         this.handleFeedback();
-
-        if (this.manualResult?.hasComplaint) {
-            this.getComplaint();
-        }
+        this.getComplaint();
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -480,7 +477,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private getComplaint(): void {
-        this.complaintService.findByResultId(this.manualResult!.id!).subscribe(
+        console.log(this.submission);
+        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
+        if (!resultWithComplaint) {
+            return;
+        }
+        this.complaintService.findByResultId(resultWithComplaint!.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

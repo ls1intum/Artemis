@@ -222,12 +222,13 @@
                     exercise.type === PROGRAMMING &&
                     studentParticipation &&
                     latestRatedResult &&
+                    resultWithComplaint &&
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation!"
-                [result]="latestRatedResult"
+                [result]="resultWithComplaint"
             >
             </jhi-complaint-interactions>
             <div

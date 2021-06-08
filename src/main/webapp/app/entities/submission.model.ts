@@ -129,3 +129,12 @@ export function getFirstResult(submission: Submission | undefined): Result | und
         }
     }
 }
+
+export function getFirstResultWithComplaint(submission: Submission | undefined): Result | undefined {
+    if (submission?.results) {
+        const resultsWithComplaint = submission.results.filter((result) => result.hasComplaint);
+        if (resultsWithComplaint.length > 0) {
+            return resultsWithComplaint[0];
+        }
+    }
+}
