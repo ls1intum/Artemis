@@ -361,17 +361,17 @@
                 <div class="existing-question-filter w-100" *ngIf="allExistingQuestions.length !== 0">
                     <input class="form-control search-query" [(ngModel)]="searchQueryText" placeholder="Search Query" />
                     <div class="checkboxes">
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbDnDFilter" class="form-check-input custom-control-input" [(ngModel)]="dndFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbDnDFilter" jhiTranslate="artemisApp.quizExercise.filter.dnd"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbDnDFilter" class="form-check-input" [(ngModel)]="dndFilterEnabled" />
+                            <label class="form-check-label" for="cbDnDFilter" jhiTranslate="artemisApp.quizExercise.filter.dnd"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbMCFilter" class="form-check-input custom-control-input" [(ngModel)]="mcqFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbMCFilter" jhiTranslate="artemisApp.quizExercise.filter.mcq"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbMCFilter" class="form-check-input" [(ngModel)]="mcqFilterEnabled" />
+                            <label class="form-check-label" for="cbMCFilter" jhiTranslate="artemisApp.quizExercise.filter.mcq"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbShortAnswerFilter" class="form-check-input custom-control-input" [(ngModel)]="shortAnswerFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbShortAnswerFilter" class="form-check-input" [(ngModel)]="shortAnswerFilterEnabled" />
+                            <label class="form-check-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
                         </div>
                     </div>
                     <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
@@ -408,14 +408,15 @@
                                     <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge bg-success align-text-top">SA</span></h5>
                                 </td>
                                 <td width="5%">
-                                    <div class="form-check custom-control custom-checkbox">
+                                    <div class="form-check">
                                         <input
                                             type="checkbox"
                                             id="cbExportQuizQuestion{{ question.id }}"
-                                            class="form-check-input custom-control-input"
+                                            class="form-check-input"
                                             [(ngModel)]="question.exportQuiz"
+                                            style="margin-left: 0"
                                         />
-                                        <label class="form-check-label custom-control-label" for="cbExportQuizQuestion{{ question.id }}">&nbsp;</label>
+                                        <label class="form-check-label" for="cbExportQuizQuestion{{ question.id }}">&nbsp;</label>
                                     </div>
                                 </td>
                             </tr>
@@ -446,17 +447,17 @@
                 <div class="existing-question-filter w-100" *ngIf="allExistingQuestions.length !== 0">
                     <input class="form-control search-query" [(ngModel)]="searchQueryText" placeholder="Search Query" />
                     <div class="checkboxes">
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbDnDFilterExam" class="form-check-input custom-control-input" [(ngModel)]="dndFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbDnDFilterExam" jhiTranslate="artemisApp.quizExercise.filter.dnd"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbDnDFilterExam" class="form-check-input" [(ngModel)]="dndFilterEnabled" />
+                            <label class="form-check-label" for="cbDnDFilterExam" jhiTranslate="artemisApp.quizExercise.filter.dnd"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbMCFilterExam" class="form-check-input custom-control-input" [(ngModel)]="mcqFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbMCFilterExam" jhiTranslate="artemisApp.quizExercise.filter.mcq"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbMCFilterExam" class="form-check-input" [(ngModel)]="mcqFilterEnabled" />
+                            <label class="form-check-label" for="cbMCFilterExam" jhiTranslate="artemisApp.quizExercise.filter.mcq"></label>
                         </div>
-                        <div class="form-check custom-control custom-checkbox">
-                            <input type="checkbox" id="cbShortAnswerFilterExam" class="form-check-input custom-control-input" [(ngModel)]="shortAnswerFilterEnabled" />
-                            <label class="form-check-label custom-control-label" for="cbShortAnswerFilterExam" jhiTranslate="artemisApp.quizExercise.filter.sa"> </label>
+                        <div class="form-check">
+                            <input type="checkbox" id="cbShortAnswerFilterExam" class="form-check-input" [(ngModel)]="shortAnswerFilterEnabled" />
+                            <label class="form-check-label" for="cbShortAnswerFilterExam" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
                         </div>
                     </div>
                     <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
@@ -493,14 +494,15 @@
                                     <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge bg-success align-text-top">SA</span></h5>
                                 </td>
                                 <td width="5%">
-                                    <div class="form-check custom-control custom-checkbox">
+                                    <div class="form-check">
                                         <input
                                             type="checkbox"
                                             id="cbExportExamQuizQuestion{{ question.id }}"
-                                            class="form-check-input custom-control-input"
+                                            class="form-check-input"
                                             [(ngModel)]="question.exportQuiz"
+                                            style="margin-left: 0"
                                         />
-                                        <label class="form-check-label custom-control-label" for="cbExportExamQuizQuestion{{ question.id }}">&nbsp;</label>
+                                        <label class="form-check-label" for="cbExportExamQuizQuestion{{ question.id }}">&nbsp;</label>
                                     </div>
                                 </td>
                             </tr>
