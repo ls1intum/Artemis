@@ -609,25 +609,18 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         exercise.setPosts(posts);
         exerciseRepository.save(exercise);
 
-        request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
-
-        exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).get();
-
         User anonymousUser;
         try {
             anonymousUser = userRepository.getUserByLoginElseThrow("anonymous");
         }
         catch (EntityNotFoundException e) {
-            anonymousUser = new User();
-            anonymousUser.setLogin("anonymous");
-            anonymousUser.setActivated(true);
-            anonymousUser.setFirstName("anonymous");
-            anonymousUser.setLastName("anonymous");
-            anonymousUser.setEmail("anonymous@anonymous");
-            anonymousUser.setCreatedBy("system");
-            anonymousUser.setLastModifiedBy("system");
-            anonymousUser = userRepository.save(anonymousUser);
+            anonymousUser = userRepository.save(ModelFactory.generateActivatedUser("anonymous"));
         }
+
+        request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
+
+        exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).get();
+
         assertThat(exercise.getPosts().iterator().next().getAuthor()).isEqualTo(anonymousUser);
         assertThat(exercise.getPosts().iterator().next().getAnswers().iterator().next().getAuthor()).isEqualTo(anonymousUser);
     }
