@@ -382,9 +382,22 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-
-        const examStatistics = new AggregatedExamResult();
         // Calculate statistics for passed exams
+        let examStatistics = this.calculatePassedExamStatistics(new AggregatedExamResult(), studentPointsPassed, studentPointsPassedInFirstCorrectionRound);
+        // Calculate statistics for submitted exams
+        examStatistics = this.calculateSubmittedExamStatistics(examStatistics, studentPointsSubmitted, studentPointsSubmittedInFirstCorrectionRound);
+        // Calculate total statistics
+        this.aggregatedExamResults = this.calculateTotalExamStatistics(examStatistics, studentPointsTotal, studentPointsTotalInFirstCorrectionRound);
+    }
+
+    /**
+     * Calculates statistics like mean, median and standard deviation specifically for passed exams
+     */
+    private calculatePassedExamStatistics(
+        examStatistics: AggregatedExamResult,
+        studentPointsPassed: number[],
+        studentPointsPassedInFirstCorrectionRound: number[],
+    ): AggregatedExamResult {
         if (studentPointsPassed.length && this.gradingScaleExists && !this.isBonus) {
             examStatistics.meanPointsPassed = SimpleStatistics.mean(studentPointsPassed);
             examStatistics.medianPassed = SimpleStatistics.median(studentPointsPassed);
@@ -415,7 +428,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        // Calculate statistics for submitted exams
+        return examStatistics;
+    }
+
+    /**
+     * Calculates statistics like mean, median and standard deviation specifically for submitted exams
+     */
+    private calculateSubmittedExamStatistics(
+        examStatistics: AggregatedExamResult,
+        studentPointsSubmitted: number[],
+        studentPointsSubmittedInFirstCorrectionRound: number[],
+    ): AggregatedExamResult {
         if (studentPointsSubmitted.length) {
             examStatistics.meanPoints = SimpleStatistics.mean(studentPointsSubmitted);
             examStatistics.median = SimpleStatistics.median(studentPointsSubmitted);
@@ -450,7 +473,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        // Calculate total statistics
+        return examStatistics;
+    }
+
+    /**
+     * Calculates statistics like mean, median and standard deviation for all exams
+     */
+    private calculateTotalExamStatistics(
+        examStatistics: AggregatedExamResult,
+        studentPointsTotal: number[],
+        studentPointsTotalInFirstCorrectionRound: number[],
+    ): AggregatedExamResult {
         if (studentPointsTotal.length) {
             examStatistics.meanPointsTotal = SimpleStatistics.mean(studentPointsTotal);
             examStatistics.medianTotal = SimpleStatistics.median(studentPointsTotal);
@@ -488,7 +521,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        this.aggregatedExamResults = examStatistics;
+        return examStatistics;
     }
 
     /**

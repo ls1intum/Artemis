@@ -8,6 +8,8 @@ import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-d
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { round } from 'app/shared/util/utils';
 
+const BAR_HEIGHT = 25;
+
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
@@ -15,7 +17,7 @@ import { round } from 'app/shared/util/utils';
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
 
-    height = 25;
+    height = BAR_HEIGHT;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
@@ -48,7 +50,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             colors.push(GraphColors.DARK_BLUE);
             absoluteData.push(exercise.averagePoints!);
             relativeData.push(exercise.averagePercentage!);
-            this.height += 25;
+            this.height += BAR_HEIGHT;
         });
         this.barChartLabels = labels;
         this.absolutePoints = absoluteData;
