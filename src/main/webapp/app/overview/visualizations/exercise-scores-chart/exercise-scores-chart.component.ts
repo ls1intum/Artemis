@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import * as Chart from 'chart.js';
-import { ChartDataSets, ChartOptions } from 'chart.js';
+import { ChartDataset, ChartOptions } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -136,7 +136,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
      * 3.) Best score achieved by a user in the exercise
      */
 
-    public dataSets: ChartDataSets[] = [
+    public dataSets: ChartDataset[] = [
         // score of logged in user in exercise
         {
             fill: false,
@@ -144,7 +144,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             label: this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel'),
             pointStyle: 'circle',
             borderWidth: 3,
-            lineTension: 0,
+            tension: 0,
             spanGaps: true,
         },
         // average score in exercise
@@ -154,7 +154,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             label: this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel'),
             pointStyle: 'rect',
             borderWidth: 3,
-            lineTension: 0,
+            tension: 0,
             spanGaps: true,
             borderDash: [1, 1],
         },
@@ -165,7 +165,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             label: this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel'),
             pointStyle: 'triangle',
             borderWidth: 3,
-            lineTension: 0,
+            tension: 0,
             spanGaps: true,
             borderDash: [15, 3, 3, 3],
         },
@@ -189,7 +189,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         },
         tooltips: {
             callbacks: {
-                label(tooltipItem, data) {
+                label(tooltipItem: any, data: any) {
                     let label = data.datasets![tooltipItem.datasetIndex!].label || '';
 
                     if (label) {
@@ -199,7 +199,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
                     label += ' %';
                     return label;
                 },
-                footer(tooltipItem, data) {
+                footer(tooltipItem: any, data: any) {
                     const dataset = data.datasets![tooltipItem[0].datasetIndex!].data![tooltipItem[0].index!];
                     const exerciseType = (dataset as any).exerciseType;
                     return [`Exercise Type: ${exerciseType}`];
@@ -215,43 +215,45 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             position: 'left',
         },
         scales: {
-            yAxes: [
-                {
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.translateService.instant('artemisApp.exercise-scores-chart.yAxis'),
-                        fontSize: 12,
-                    },
-                    ticks: {
-                        suggestedMax: 100,
-                        suggestedMin: 0,
-                        beginAtZero: true,
-                        precision: 0,
-                        fontSize: 12,
+            y: {
+                title: {
+                    display: true,
+                    text: this.translateService.instant('artemisApp.exercise-scores-chart.yAxis'),
+                    font: {
+                        size: 12,
                     },
                 },
-            ],
-            xAxes: [
-                {
-                    scaleLabel: {
-                        display: true,
-                        labelString: this.translateService.instant('artemisApp.exercise-scores-chart.xAxis'),
-                        fontSize: 12,
-                    },
-                    ticks: {
-                        autoSkip: false,
-                        fontSize: 12,
-                        callback(exerciseTitle: string) {
-                            if (exerciseTitle.length > 20) {
-                                // shorten exercise title if too long (will be displayed in full in tooltip)
-                                return exerciseTitle.substr(0, 20) + '...';
-                            } else {
-                                return exerciseTitle;
-                            }
-                        },
+                suggestedMax: 100,
+                suggestedMin: 0,
+                beginAtZero: true,
+                ticks: {
+                    precision: 0,
+                    font: {
+                        size: 12,
                     },
                 },
-            ],
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: this.translateService.instant('artemisApp.exercise-scores-chart.xAxis'),
+                    font: {
+                        size: 12,
+                    },
+                },
+                ticks: {
+                    autoskip: false,
+                    fontSize: 12,
+                    callback(exerciseTitle: string) {
+                        if (exerciseTitle.length > 20) {
+                            // shorten exercise title if too long (will be displayed in full in tooltip)
+                            return exerciseTitle.substr(0, 20) + '...';
+                        } else {
+                            return exerciseTitle;
+                        }
+                    },
+                },
+            },
         },
     };
     public chartColors: Color[] = [
