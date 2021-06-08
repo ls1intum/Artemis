@@ -8,7 +8,7 @@
         "logoUrl": "Logo URL",
         "users": "User",
         "courses": "Kurse",
-        "emailPattern": "Email Muster",
+        "emailPattern": "Email-Muster",
         "delete": {
             "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
         },
@@ -30,7 +30,7 @@
             "select": "Auswählen",
             "title": "Organisationen"
         },
-        "patternChangeWarning": "Beim Ändern des Email Musters, wird eine Neuzuweisung der User zu dieser Organisation ausgeführt"
+        "patternChangeWarning": "Beim Ändern des Email-Musters, wird eine Neuzuweisung der User zu dieser Organisation ausgeführt"
     },
     "artemisApp": {
         "organization": {
