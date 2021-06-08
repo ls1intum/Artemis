@@ -225,10 +225,34 @@
                         <td class="align-middle">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                         <!-- Programming exercise specific cells -->
                         <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
-                            <jhi-programming-exercise-group-cell
-                                *ngIf="exercise.type === exerciseType.PROGRAMMING; else emptyProgrammingCells"
-                                [exercise]="exercise"
-                            ></jhi-programming-exercise-group-cell>
+                            <td class="align-middle">
+                                <jhi-programming-exercise-group-cell
+                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
+                                    [exercise]="exercise"
+                                    [displayShortName]="true"
+                                ></jhi-programming-exercise-group-cell>
+                            </td>
+                            <td class="align-middle">
+                                <jhi-programming-exercise-group-cell
+                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
+                                    [exercise]="exercise"
+                                    [displayRepositoryUrl]="true"
+                                ></jhi-programming-exercise-group-cell>
+                            </td>
+                            <td class="align-middle">
+                                <jhi-programming-exercise-group-cell
+                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
+                                    [exercise]="exercise"
+                                    [displayTemplateUrls]="true"
+                                ></jhi-programming-exercise-group-cell>
+                            </td>
+                            <td class="align-middle">
+                                <jhi-programming-exercise-group-cell
+                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
+                                    [exercise]="exercise"
+                                    [displayEditorModus]="true"
+                                ></jhi-programming-exercise-group-cell>
+                            </td>
                         </ng-container>
                         <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)">
                             <td class="align-middle">
@@ -271,12 +295,6 @@
                                 (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
                             ></jhi-exam-exercise-row-buttons>
                         </td>
-                        <ng-template #emptyProgrammingCells>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </ng-template>
                     </tr>
                 </tbody>
             </table>
