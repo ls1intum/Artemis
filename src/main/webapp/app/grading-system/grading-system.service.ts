@@ -4,7 +4,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { GradeDTO, GradeStep } from 'app/entities/grade-step.model';
+import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 
@@ -94,6 +94,23 @@ export class GradingSystemService {
         return this.http.delete<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
     }
 
+    /**
+     * Finds all grade steps for exam
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the grade steps are retrieved
+     */
+    findGradeStepsForExam(courseId: number, examId: number): Observable<HttpResponse<GradeStepsDTO>> {
+        return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/grade-steps`, { observe: 'response' });
+    }
+
+    /**
+     * Finds a grade step for exam that matches the given percentage
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the grade step is retrieved
+     * @param percentage the percentage which will be matched
+     */
     public matchPercentageToGradeStepForExam(courseId: number, examId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
         return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
     }
