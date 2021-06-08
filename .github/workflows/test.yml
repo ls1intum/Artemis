@@ -75,10 +75,9 @@ jobs:
           ${{ runner.os }}-gradle-
     - name: Java Code Style
       run: ./gradlew spotlessCheck
-#   Checkstyle does not yet seem to support JDK16
-#   - name: Java Documentation
-#     run: ./gradlew checkstyleMain -x yarn -x webpack
-#     if: success() || failure()
+    - name: Java Documentation
+      run: ./gradlew checkstyleMain -x yarn -x webpack
+      if: success() || failure()
 
   client-tests-fast:
     runs-on: ubuntu-latest
