@@ -137,14 +137,12 @@
         </div>
         <hr />
         <div class="question-options row d-flex justify-content-start">
-            <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis">
+            <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis" style="width: max-content !important">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
             <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
-                <div class="custom-file">
-                    <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)" />
-                </div>
+                <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="form-control" (change)="setBackgroundFile($event)" />
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
                         <span *ngIf="isUploadingBackgroundFile" jhiTranslate="artemisApp.dragAndDropQuestion.uploading"></span>
@@ -290,16 +288,14 @@
                         <span *ngIf="!isUploadingDragItemFile && reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"> </span>
                     </button>
                 </div>
-                <div class="custom-file">
-                    <input
-                        id="dragItemFileInput{{ questionIndex }}"
-                        type="file"
-                        accept="image/*"
-                        class="custom-file-input"
-                        (change)="setDragItemFile($event)"
-                        placeholder="Upload file..."
-                    />
-                </div>
+                <input
+                    id="dragItemFileInput{{ questionIndex }}"
+                    type="file"
+                    accept="image/*"
+                    class="form-control"
+                    (change)="setDragItemFile($event)"
+                    placeholder="Upload file..."
+                />
             </div>
             <ng-container *ngIf="!reEvaluationInProgress">
                 <div class="question-options">
