@@ -48,6 +48,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             filterLateSubmissions: false,
             addParticipantName: true,
             combineStudentCommits: false,
+            anonymizeStudentCommits: false,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
             hideStudentNameInZippedFolder: false,
         };
@@ -112,7 +113,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     handleExportRepoResponse = (response: HttpResponse<Blob>) => {
-        this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessage');
+        this.jhiAlertService.success('artemisApp.programmingExercise.export.successMessageRepos');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
         downloadZipFileFromResponse(response);

@@ -65,22 +65,22 @@ describe('InstructorCourseDashboardComponent', () => {
         presentationScore: 0,
         registrationEnabled: false,
         requestMoreFeedbackEnabled: true,
-        studentQuestionsEnabled: true,
+        postsEnabled: true,
     } as Course;
     const course = { id: 10, exercises: [textExercise, modelingExercise] } as Course;
     const user = { id: 99, name: 'admin' } as User;
-    const stats = ({
+    const stats = {
         numberOfSubmissions: { inTime: 10, late: 5 } as DueDateStat,
         totalNumberOfAssessments: { inTime: 8, late: 1 } as DueDateStat,
         numberOfAutomaticAssistedAssessments: { inTime: 4, late: 0 } as DueDateStat,
-    } as unknown) as StatsForDashboard;
+    } as unknown as StatsForDashboard;
 
-    const route = ({
+    const route = {
         snapshot: {
             paramMap: convertToParamMap({ courseId: course.id }),
             url: { path: '/course-management/10/assessment-locks', parameterMap: {}, parameters: {} } as UrlSegment,
         },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
     const responseFakeStats = { body: stats as StatsForDashboard } as HttpResponse<StatsForDashboard>;

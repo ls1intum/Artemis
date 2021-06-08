@@ -56,7 +56,7 @@ public class UserTestService {
 
     private MockDelegate mockDelegate;
 
-    private User student;
+    public User student;
 
     private final static int numberOfStudents = 50;
 
@@ -412,13 +412,15 @@ public class UserTestService {
     public void createUserWithGroups() throws Exception {
         var course = database.addEmptyCourse();
         database.addProgrammingExerciseToCourse(course, false);
+        course = database.addEmptyCourse();
+        course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
 
         var newUser = student;
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor"));
+        newUser.setGroups(Set.of("tutor", "instructor2"));
 
         mockDelegate.mockCreateUserInUserManagement(newUser, false);
 
@@ -515,5 +517,9 @@ public class UserTestService {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
         User userInDB = userRepository.findOneByLogin("student1").get();
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
+    }
+
+    public UserRepository getUserRepository() {
+        return userRepository;
     }
 }

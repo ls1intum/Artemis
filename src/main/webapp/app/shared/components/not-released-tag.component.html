@@ -1,0 +1,8 @@
+<span
+    class="ml-1 badge badge-warning"
+    *ngIf="exercise.isAtLeastTutor && exercise.releaseDate != undefined && !moment(exercise.releaseDate).isBefore(moment())"
+    placement="right"
+    ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
+>
+    {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
+</span>

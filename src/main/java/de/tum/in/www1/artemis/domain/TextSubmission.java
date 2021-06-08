@@ -101,6 +101,10 @@ public class TextSubmission extends Submission {
         return "TextSubmission{" + "id=" + getId() + ", text='" + getExcerpt() + "'" + ", language='" + getLanguage() + "'" + "}";
     }
 
+    /**
+     * counts the number of words in the text of the text submission in case
+     * @return the number of words
+     */
     public int countWords() {
         if (text == null || text.isEmpty()) {
             return 0;

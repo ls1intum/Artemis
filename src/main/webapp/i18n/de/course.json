@@ -32,9 +32,9 @@
                 "title": "Beschwerdefrist in Tagen nach dem Ergebnis",
                 "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Einreichungsfrist der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können sich nach Ablauf dieser Frist nicht mehr beschweren."
             },
-            "studentQuestionsEnabled": {
-                "title": "Fragen und Antworten von Studierenden aktivieren",
-                "description": "Fragen und Antworten Abschnitt in Vorlesung- und Übungsseite aktivieren / deaktivieren"
+            "postsEnabled": {
+                "title": "Posts von Studierenden aktivieren",
+                "description": "Postings auf Vorlesung- und Übungsseite aktivieren / deaktivieren"
             },
             "complaintsEnabled": {
                 "title": "Beschwerden von Studierenden aktivieren",
@@ -139,7 +139,7 @@
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
-                "averageStudentScore": "Durchschnittliche Studentenpunktzahl"
+                "averageStudentScoreTitle": "Durchschnittliche Studentenpunktzahl"
             }
         },
         "courseStatistics": {

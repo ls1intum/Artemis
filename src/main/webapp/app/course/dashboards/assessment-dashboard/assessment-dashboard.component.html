@@ -12,9 +12,9 @@
                     {{ exam?.title }}
                 </h2>
                 <a
-                    *ngIf="!isExamMode && course?.studentQuestionsEnabled && course?.isAtLeastTutor"
+                    *ngIf="!isExamMode && course?.postsEnabled && course?.isAtLeastTutor"
                     routerLinkActive="active"
-                    [routerLink]="['/course-management', course?.id, 'questions']"
+                    [routerLink]="['/course-management', course?.id, 'posts']"
                     class="text-white card-link"
                 >
                     <fa-icon [icon]="'comment'"></fa-icon>
@@ -108,14 +108,7 @@
                     </td>
                     <td>
                         <span>{{ exercise.title }}</span>
-                        <span
-                            class="badge badge-warning"
-                            *ngIf="!asQuizExercise(exercise).visibleToStudents"
-                            placement="right"
-                            ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{ exercise.releaseDate | artemisDate }}"
-                        >
-                            {{ 'artemisApp.assessmentDashboard.notReleased' | artemisTranslate }}</span
-                        >
+                        <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
                         <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
                     </td>
                     <td *ngIf="!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]">

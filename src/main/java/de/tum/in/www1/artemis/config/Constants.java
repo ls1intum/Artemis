@@ -52,6 +52,8 @@ public final class Constants {
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
 
+    public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon-convert/pdf";
+
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
 
@@ -134,6 +136,9 @@ public final class Constants {
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
 
     public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERS_FROM_EXAM";
+
+    // same constant as in the client
+    public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
 
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 

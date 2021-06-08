@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import de.tum.in.www1.artemis.domain.Course;
-
 public class CourseManagementDetailViewDTO {
-
-    private Course course;
 
     private Integer numberOfStudentsInCourse;
 
@@ -178,13 +174,5 @@ public class CourseManagementDetailViewDTO {
 
     public void setActiveStudents(Integer[] activeStudents) {
         this.activeStudents = activeStudents;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
     }
 }

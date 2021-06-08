@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div class="col-lg-8 col-sm-12">
-        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
+        <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
             <h4 *ngIf="!isImport && !programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
                 Generate new Programming Exercise
             </h4>
@@ -107,6 +107,7 @@
                         <option value="ASSEMBLER" *ngIf="supportsAssembler">Assembler</option>
                         <option value="SWIFT" *ngIf="supportsSwift">Swift</option>
                         <option value="OCAML" *ngIf="supportsOCaml">OCaml</option>
+                        <option value="EMPTY" *ngIf="supportsEmpty">Empty</option>
                     </select>
                 </div>
 
@@ -161,7 +162,9 @@
                     ></jhi-programming-exercise-lifecycle>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
+                    <label class="form-control-label">{{
+                        'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
+                    }}</label>
                     <div>
                         <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
                     </div>
@@ -485,6 +488,7 @@
                     [isLoading]="isSaving"
                     [icon]="'save'"
                     [title]="submitButtonTitle"
+                    (click)="save()"
                 >
                 </jhi-button>
             </div>

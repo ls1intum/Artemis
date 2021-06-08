@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
+import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 
@@ -54,6 +55,20 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                s.submissionDate,
+                count(s.id)
+                )
+            from Submission s
+            where s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and s.participation.exercise.id = :exerciseId
+            group by s.submissionDate
+            order by s.submissionDate asc
+            """)
+    List<StatisticsEntry> getTotalSubmissionsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
+            @Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 s.submissionDate, u.login
                 )
             from User u, Submission s, StudentParticipation p
@@ -75,6 +90,18 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             """)
     List<StatisticsEntry> getActiveUsersForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                s.submissionDate, u.login
+                )
+            from User u, Submission s, StudentParticipation p
+            where s.participation.id = p.id and p.student.id = u.id and s.submissionDate >= :#{#startDate} and s.submissionDate <= :#{#endDate} and u.login not like '%test%'
+            and p.exercise.id = :exerciseId
+            order by s.submissionDate asc
+            """)
+    List<StatisticsEntry> getActiveUsersForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
 
     @Query("""
             select
@@ -234,6 +261,17 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, r.assessor.login
+                )
+            from Result r
+            where (r.assessmentType = 'MANUAL' or r.assessmentType = 'SEMI_AUTOMATIC') and r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.assessor.login not like '%test%'
+            and r.participation.exercise.id = :exerciseId
+            """)
+    List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 r.completionDate, count(r.id)
                 )
             from Result r
@@ -255,6 +293,18 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             """)
     List<StatisticsEntry> getCreatedResultsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
             @Param("exerciseIds") List<Long> exerciseIds);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                r.completionDate, count(r.id)
+                )
+            from Result r
+            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.participation.exercise.id = :exerciseId
+            group by r.completionDate
+            order by r.completionDate
+            """)
+    List<StatisticsEntry> getCreatedResultsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
 
     @Query("""
             select
@@ -284,26 +334,77 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                sq.creationDate, count(sq.id)
+                r.completionDate, sum(size(r.feedbacks))
                 )
-            from StudentQuestion sq left join sq.lecture lectures left join sq.exercise exercises
-            where sq.creationDate >= :#{#startDate} and sq.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
-            group by sq.creationDate
-            order by sq.creationDate asc
+            from Result r
+            where r.completionDate >= :#{#startDate} and r.completionDate <= :#{#endDate} and r.participation.exercise.id = :exerciseId
+            group by r.completionDate
+            order by r.completionDate
+            """)
+    List<StatisticsEntry> getResultFeedbacksForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                post.creationDate, count(post.id)
+                )
+            from Post post left join post.lecture lectures left join post.exercise exercises
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
+            group by post.creationDate
+            order by post.creationDate asc
             """)
     List<StatisticsEntry> getQuestionsAskedForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
 
     @Query("""
             select
             new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                a.answerDate, count(a.id)
+                post.creationDate, count(post.id)
                 )
-            from StudentQuestionAnswer a left join a.question question left join question.lecture lectures left join question.exercise exercises
-            where a.answerDate >= :#{#startDate} and a.answerDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
-            group by a.answerDate
-            order by a.answerDate asc
+            from Post post left join post.exercise exercise
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and exercise.id = :#{#exerciseId}
+            group by post.creationDate
+            order by post.creationDate asc
+            """)
+    List<StatisticsEntry> getQuestionsAskedForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select count(post)
+            from Post post left join post.exercise exercise
+            where exercise.id = :#{#exerciseId}
+            """)
+    long getNumberOfQuestionsAskedForExercise(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select count(distinct post.id)
+            from Post post left join post.exercise exercise left join post.answers answers
+            where exercise.id = :#{#exerciseId} and answers.tutorApproved = true
+            """)
+    long getNumberOfQuestionsAnsweredForExercise(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                answer.creationDate, count(answer.id)
+                )
+            from AnswerPost answer left join answer.post post left join post.lecture lectures left join post.exercise exercises
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and (lectures.course.id = :#{#courseId} or exercises.course.id = :#{#courseId})
+            group by answer.creationDate
+            order by answer.creationDate asc
             """)
     List<StatisticsEntry> getQuestionsAnsweredForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") Long courseId);
+
+    @Query("""
+            select
+            new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
+                answer.creationDate, count(answer.id)
+                )
+            from AnswerPost answer left join answer.post post left join post.exercise exercise
+            where answer.creationDate >= :#{#startDate} and answer.creationDate <= :#{#endDate} and exercise.course.id = :#{#exerciseId}
+            group by answer.creationDate
+            order by answer.creationDate asc
+            """)
+    List<StatisticsEntry> getQuestionsAnsweredForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate,
+            @Param("exerciseId") Long exerciseId);
 
     @Query("""
             select e.id
@@ -333,23 +434,43 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
     /**
-     * Gets the number of entries for the specific graphType and the span
+     * Gets the number of entries for the specific graphType and the span. First we distribute into the different types of graphs.
+     * After that, we distinguish between the views in which this graph can be shown and call the corresponding method
      *
      * @param span the spanType for which the call is executed
      * @param startDate The startDate of which the data should be fetched
      * @param endDate The endDate of which the data should be fetched
      * @param graphType the type of graph the data should be fetched for (see GraphType.java)
-     * @param courseId the courseId which is null for a user statistics call and contains the courseId for the course statistics
+     * @param view the view in which the data will be displayed (Artemis, Course, Exercise)
+     * @param entityId the entityId which is null for a user statistics call and contains the Id for the other statistics pages
      * @return the return value of the processed database call which returns a list of entries
      */
-    default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, Long courseId) {
-        var exerciseIds = courseId != null ? findExerciseIdsByCourseId(courseId) : null;
+    default List<StatisticsEntry> getNumberOfEntriesPerTimeSlot(SpanType span, ZonedDateTime startDate, ZonedDateTime endDate, GraphType graphType, StatisticsView view,
+            Long entityId) {
+        var exerciseIds = view == StatisticsView.COURSE ? findExerciseIdsByCourseId(entityId) : null;
         switch (graphType) {
             case SUBMISSIONS -> {
-                return courseId == null ? getTotalSubmissions(startDate, endDate) : getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getTotalSubmissions(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getTotalSubmissionsForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return getTotalSubmissionsForExercise(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case ACTIVE_USERS -> {
-                List<StatisticsEntry> result = courseId == null ? getActiveUsers(startDate, endDate) : getActiveUsersForCourse(startDate, endDate, exerciseIds);
+                List<StatisticsEntry> result;
+                switch (view) {
+                    case ARTEMIS -> result = getActiveUsers(startDate, endDate);
+                    case COURSE -> result = getActiveUsersForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> result = getActiveUsersForExercise(startDate, endDate, entityId);
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case LOGGED_IN_USERS -> {
@@ -359,35 +480,119 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case RELEASED_EXERCISES -> {
-                return courseId == null ? getReleasedExercises(startDate, endDate) : getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getReleasedExercises(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getReleasedExercisesForCourse(startDate, endDate, exerciseIds);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case EXERCISES_DUE -> {
-                return courseId == null ? getExercisesDue(startDate, endDate) : getExercisesDueForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getExercisesDue(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getExercisesDueForCourse(startDate, endDate, exerciseIds);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case CONDUCTED_EXAMS -> {
-                return courseId == null ? getConductedExams(startDate, endDate) : getConductedExamsForCourse(startDate, endDate, courseId);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getConductedExams(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getConductedExamsForCourse(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case EXAM_PARTICIPATIONS -> {
-                return courseId == null ? getExamParticipations(startDate, endDate) : getExamParticipationsForCourse(startDate, endDate, courseId);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getExamParticipations(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getExamParticipationsForCourse(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case EXAM_REGISTRATIONS -> {
-                return courseId == null ? getExamRegistrations(startDate, endDate) : getExamRegistrationsForCourse(startDate, endDate, courseId);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getExamRegistrations(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getExamRegistrationsForCourse(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case ACTIVE_TUTORS -> {
-                List<StatisticsEntry> result = courseId == null ? getActiveTutors(startDate, endDate) : getActiveTutorsForCourse(startDate, endDate, exerciseIds);
+                List<StatisticsEntry> result;
+                switch (view) {
+                    case ARTEMIS -> result = getActiveTutors(startDate, endDate);
+                    case COURSE -> result = getActiveTutorsForCourse(startDate, endDate, exerciseIds);
+                    case EXERCISE -> result = getActiveTutorsForExercise(startDate, endDate, entityId);
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
                 return filterDuplicatedUsers(span, result, startDate, graphType);
             }
             case CREATED_RESULTS -> {
-                return courseId == null ? getCreatedResults(startDate, endDate) : getCreatedResultsForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getCreatedResults(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getCreatedResultsForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return getCreatedResultsForExercise(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             case CREATED_FEEDBACKS -> {
-                return courseId == null ? getResultFeedbacks(startDate, endDate) : getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
+                switch (view) {
+                    case ARTEMIS -> {
+                        return getResultFeedbacks(startDate, endDate);
+                    }
+                    case COURSE -> {
+                        return getResultFeedbacksForCourse(startDate, endDate, exerciseIds);
+                    }
+                    case EXERCISE -> {
+                        return getResultFeedbacksForExercise(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
-            case QUESTIONS_ASKED -> {
-                return courseId != null ? getQuestionsAskedForCourse(startDate, endDate, courseId) : new ArrayList<>();
+            case POSTS -> {
+                switch (view) {
+                    case COURSE -> {
+                        return getQuestionsAskedForCourse(startDate, endDate, entityId);
+                    }
+                    case EXERCISE -> {
+                        return getQuestionsAskedForExercise(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
-            case QUESTIONS_ANSWERED -> {
-                return courseId != null ? getQuestionsAnsweredForCourse(startDate, endDate, courseId) : new ArrayList<>();
+            case ANSWERED_POSTS -> {
+                switch (view) {
+                    case COURSE -> {
+                        return getQuestionsAnsweredForCourse(startDate, endDate, entityId);
+                    }
+                    case EXERCISE -> {
+                        return getQuestionsAnsweredForExercise(startDate, endDate, entityId);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported view: " + view);
+                }
             }
             default -> {
                 return new ArrayList<>();
@@ -578,7 +783,14 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             int amount = (int) map.getAmount();
             int monthOfDate = date.getMonth().getValue();
             int monthOfStartDate = startDate.getMonth().getValue();
-            result[(monthOfDate + monthOfStartDate + 2) % 12] += amount;
+            if (monthOfDate >= monthOfStartDate) {
+                // Date is in same year as startDate
+                result[monthOfDate - monthOfStartDate] += amount;
+            }
+            else {
+                // Date is in different year as startDate
+                result[12 - monthOfStartDate + monthOfDate] += amount;
+            }
         }
         return result;
     }

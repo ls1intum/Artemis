@@ -1,10 +1,10 @@
 {
     "artemisApp": {
         "gradingSystem": {
-            "title": "Grade key",
-            "titleCourse": "Grade key for course",
-            "titleExam": "Grade key for exam",
-            "defaultButton": "Generate Default Grade key",
+            "title": "Grade Key",
+            "titleCourse": "Grade Key for Course",
+            "titleExam": "Grade Key for Exam",
+            "defaultButton": "Generate Default Grade Key",
             "gradeType": {
                 "title": "Grade Type",
                 "grade": "Grade",
@@ -42,6 +42,17 @@
                     "title": "First Passing Grade",
                     "explanation": "Sets the first passing grade for a grade key. Every grade with higher percentages will be considered passing as well"
                 }
+            },
+            "error": {
+                "empty": "Grade steps are empty!",
+                "emptyFields": "All grade step fields must be filled out!",
+                "invalidMinMaxPercentages": "The grade step percentages must be all between 0 and 100 (both inclusive) and the Min % must be less than the Max %!",
+                "nonUniqueGradeNames": "All grade steps must have unique names!",
+                "unsetFirstPassingGrade": "The first passing grade must be set!",
+                "invalidBonusPoints": "The bonus points must be at least 0!",
+                "nonStrictlyIncreasingBonusPoints": "Consecutive grade steps must have increasing bonus point values!",
+                "invalidAdjacency": "The Max % of all grade steps (excluding the last one), must be equal to the Min % of their subsequent grade step!",
+                "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be 100!"
             }
         },
         "gradingScale": {
