@@ -12,6 +12,8 @@ export const SERVER_API_URL = '';
 export const MIN_SCORE_GREEN = 80;
 export const MIN_SCORE_ORANGE = 40;
 
+export const EXAM_START_WAIT_TIME_MINUTES = 5;
+
 export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';

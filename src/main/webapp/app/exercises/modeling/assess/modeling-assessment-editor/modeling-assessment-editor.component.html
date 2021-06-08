@@ -40,10 +40,11 @@
             [totalScore]="totalScore"
             [model]="model!"
             [readOnly]="readOnly"
-            [feedbacks]="result?.feedbacks || []"
+            [resultFeedbacks]="result?.feedbacks || []"
             [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
             [explanation]="submission?.explanationText || ''"
+            [highlightDifferences]="highlightDifferences"
         ></jhi-modeling-assessment>
         <jhi-collapsable-assessment-instructions
             *ngIf="modelingExercise"

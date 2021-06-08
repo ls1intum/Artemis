@@ -95,6 +95,7 @@
                 </div>
             </div>
             <ng-container #startButton *ngIf="startView; else endButton">
+                <div *ngIf="!startButtonEnabled">{{ 'artemisApp.exam.startExamToolTip' | artemisTranslate }}</div>
                 <button [disabled]="!startButtonEnabled || waitingForExamStart" type="submit" (click)="startExam()" class="btn btn-primary">
                     <span jhiTranslate="artemisApp.exam.startExam">Start Exam</span>
                 </button>

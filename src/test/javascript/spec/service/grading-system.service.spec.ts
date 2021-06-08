@@ -1,10 +1,10 @@
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
 import { RouterTestingModule } from '@angular/router/testing';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 
 describe('Grading System Service', () => {
     let injector: TestBed;
@@ -127,6 +127,32 @@ describe('Grading System Service', () => {
         service.deleteGradingScaleForExam(123, 456).pipe(take(1)).subscribe();
 
         httpMock.expectOne({ method: 'DELETE' }).flush(elemDefault);
+        tick();
+    }));
+
+    it('should find all grade steps for exam', fakeAsync(() => {
+        const dto: GradeStepsDTO = {
+            gradeSteps,
+            examTitle: 'Exam Title',
+            gradeType: GradeType.GRADE,
+        };
+
+        service
+            .findGradeStepsForExam(123, 456)
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(dto));
+
+        httpMock.expectOne({ method: 'GET' }).flush(dto);
+        tick();
+    }));
+
+    it('should match a grade step for exam to a percentage', fakeAsync(() => {
+        service
+            .matchPercentageToGradeStepForExam(123, 456, 70)
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(gradeStep2));
+
+        httpMock.expectOne({ method: 'GET' }).flush(gradeStep2);
         tick();
     }));
 
