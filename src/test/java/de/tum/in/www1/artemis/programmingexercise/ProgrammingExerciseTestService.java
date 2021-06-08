@@ -30,8 +30,6 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
-import org.mockito.ArgumentMatchers;
-import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -936,31 +934,31 @@ public class ProgrammingExerciseTestService {
 
     }
 
-    // Test
-    public void testExportCourseCannotCreateTmpCourseDir() throws Exception {
-
-        Course course = createCourseWithProgrammingExerciseAndParticipationWithFiles();
-
-        String courseDir = fileService.removeIllegalCharacters(course.getShortName() + "-" + course.getTitle() + "-");
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.createDirectories(ArgumentMatchers.argThat(argument -> argument.toString().contains(courseDir)))).thenThrow(IOException.class);
-
-        List<String> errors = new ArrayList<>();
-        var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
-        assertThat(optionalExportedCourse).isEmpty();
-    }
-
-    // Test
-    public void testExportCourseCannotCreateCourseExerciseDir() throws Exception {
-        Course course = createCourseWithProgrammingExerciseAndParticipationWithFiles();
-
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.createDirectory(ArgumentMatchers.argThat(argument -> argument.toString().contains("course-exercises")))).thenThrow(IOException.class);
-
-        List<String> errors = new ArrayList<>();
-        var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
-        assertThat(optionalExportedCourse).isEmpty();
-    }
+    // // Test
+    // public void testExportCourseCannotCreateTmpCourseDir() throws Exception {
+    //
+    // Course course = createCourseWithProgrammingExerciseAndParticipationWithFiles();
+    //
+    // String courseDir = fileService.removeIllegalCharacters(course.getShortName() + "-" + course.getTitle() + "-");
+    // MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+    // mockedFiles.when(() -> Files.createDirectories(ArgumentMatchers.argThat(argument -> argument.toString().contains(courseDir)))).thenThrow(IOException.class);
+    //
+    // List<String> errors = new ArrayList<>();
+    // var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
+    // assertThat(optionalExportedCourse).isEmpty();
+    // }
+    //
+    // // Test
+    // public void testExportCourseCannotCreateCourseExerciseDir() throws Exception {
+    // Course course = createCourseWithProgrammingExerciseAndParticipationWithFiles();
+    //
+    // // MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+    // // mockedFiles.when(() -> Files.createDirectory(ArgumentMatchers.argThat(argument -> argument.toString().contains("course-exercises")))).thenThrow(IOException.class);
+    //
+    // List<String> errors = new ArrayList<>();
+    // var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
+    // assertThat(optionalExportedCourse).isEmpty();
+    // }
 
     // Test
     public void testExportCourseCannotExportSingleParticipationInterruptException() throws Exception {

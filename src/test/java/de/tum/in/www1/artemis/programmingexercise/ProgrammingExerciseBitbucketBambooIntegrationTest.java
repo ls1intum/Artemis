@@ -291,17 +291,17 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         programmingExerciseTestService.testArchiveCourseWithProgrammingExercise();
     }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExportCourseCannotCreateTmpCourseDir() throws Exception {
-        programmingExerciseTestService.testExportCourseCannotCreateTmpCourseDir();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExportCourseCannotCreateCourseExerciseDir() throws Exception {
-        programmingExerciseTestService.testExportCourseCannotCreateCourseExerciseDir();
-    }
+    // @Test
+    // @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    // public void testExportCourseCannotCreateTmpCourseDir() throws Exception {
+    // programmingExerciseTestService.testExportCourseCannotCreateTmpCourseDir();
+    // }
+    //
+    // @Test
+    // @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    // public void testExportCourseCannotCreateCourseExerciseDir() throws Exception {
+    // programmingExerciseTestService.testExportCourseCannotCreateCourseExerciseDir();
+    // }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
