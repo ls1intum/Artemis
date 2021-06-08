@@ -9,6 +9,16 @@ export const navigateBack = (router: Router, fallbackUrl: string[]): void => {
     }
 };
 
+export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
+    router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
+};
+
+/**
+ * Revert to the previous state, equivalent with pressing the back button on your browser
+ * Returns to the detail page if there is no previous state and we edited an existing exercise
+ * Returns to the overview page if there is no previous state and we created a new exercise
+ * Returns to the exercise group page if we are in exam mode
+ */
 export const navigateBackFromExerciseUpdate = (router: Router, exercise: Exercise): void => {
     if (window.history.length > 1) {
         window.history.back();

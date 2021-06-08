@@ -15,16 +15,12 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { navigateBackFromExerciseUpdate, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
-enum EditType {
-    CREATE,
-    UPDATE,
-}
+import { EditType } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -69,6 +65,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     ) {}
 
     get editType(): EditType {
+        if (this.isImport) return EditType.IMPORT;
         return this.textExercise.id === undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
@@ -142,12 +139,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
     }
 
-    /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exercise
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise group page if we are in exam mode
-     */
     previousState() {
         navigateBackFromExerciseUpdate(this.router, this.textExercise);
     }
@@ -158,6 +149,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     validateDate() {
         this.exerciseService.validateDate(this.textExercise);
     }
+
     /**
      * Updates the exercise categories
      * @param categories list of exercise categories
@@ -178,9 +170,10 @@ export class TextExerciseUpdateComponent implements OnInit {
                     });
                 });
             }
-        } else {
-            this.saveExercise();
+            return;
         }
+
+        this.saveExercise();
     }
 
     /**
@@ -190,12 +183,11 @@ export class TextExerciseUpdateComponent implements OnInit {
         Exercise.sanitize(this.textExercise);
 
         this.isSaving = true;
-        if (this.isImport) {
-            this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));
-            return;
-        }
 
         switch (this.editType) {
+            case EditType.IMPORT:
+                this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));
+                break;
             case EditType.CREATE:
                 this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
                 break;
@@ -227,9 +219,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
         result.subscribe(
-            (exercise: HttpResponse<TextExercise>) => {
-                this.onSaveSuccess(exercise.body!.id!);
-            },
+            (exercise: HttpResponse<TextExercise>) => this.onSaveSuccess(exercise.body!.id!),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }
@@ -240,11 +230,15 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         switch (this.editType) {
             case EditType.CREATE:
-                setTimeout(() => {
-                    this.router.navigate(['course-management', this.textExercise.course!.id!, this.textExercise.type! + '-exercises', exerciseId, 'example-submissions']);
-                }, 1000);
+                // Assigning id received from the backend.
+                // Required for navigation to the example submission dashboard in case of the exercise CREATE.
+                this.textExercise.id = exerciseId;
 
+                setTimeout(() => {
+                    navigateToExampleSubmissions(this.router, this.textExercise);
+                }, 1000);
                 break;
+            case EditType.IMPORT:
             case EditType.UPDATE:
                 this.previousState();
                 break;
