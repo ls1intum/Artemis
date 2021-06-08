@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -611,7 +612,22 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
 
         exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).get();
-        User anonymousUser = userRepository.getUserByLoginElseThrow("anonymous");
+
+        User anonymousUser;
+        try {
+            anonymousUser = userRepository.getUserByLoginElseThrow("anonymous");
+        }
+        catch (EntityNotFoundException e) {
+            anonymousUser = new User();
+            anonymousUser.setLogin("anonymous");
+            anonymousUser.setActivated(true);
+            anonymousUser.setFirstName("anonymous");
+            anonymousUser.setLastName("anonymous");
+            anonymousUser.setEmail("anonymous@anonymous");
+            anonymousUser.setCreatedBy("system");
+            anonymousUser.setLastModifiedBy("system");
+            anonymousUser = userRepository.save(anonymousUser);
+        }
         assertThat(exercise.getPosts().iterator().next().getAuthor()).isEqualTo(anonymousUser);
         assertThat(exercise.getPosts().iterator().next().getAnswers().iterator().next().getAuthor()).isEqualTo(anonymousUser);
     }

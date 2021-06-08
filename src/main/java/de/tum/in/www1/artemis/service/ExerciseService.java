@@ -370,18 +370,21 @@ public class ExerciseService {
 
         // anonymize Posts
         exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).orElseThrow();
-        User anonymousUser = userRepository.findOneByLogin("anonymous")
-                .orElseThrow(() -> new EntityNotFoundException("Anonymization could not be completed. Anonymous user missing."));
-        for (Post post : exercise.getPosts()) {
-            post.setAuthor(anonymousUser);
+        Optional<User> anonymousUser = userRepository.findOneByLogin("anonymous");
+        if (anonymousUser.isPresent()) {
+            for (Post post : exercise.getPosts()) {
+                post.setAuthor(anonymousUser.get());
 
-            for (AnswerPost answerPost : post.getAnswers()) {
-                answerPost.setAuthor(anonymousUser);
-                answerPostRepository.save(answerPost);
+                for (AnswerPost answerPost : post.getAnswers()) {
+                    answerPost.setAuthor(anonymousUser.get());
+                    answerPostRepository.save(answerPost);
+                }
+                postRepository.save(post);
             }
-            postRepository.save(post);
         }
-
+        else {
+            log.warn("Anonymization could not be completed. Anonymous user missing.");
+        }
         if (exercise instanceof QuizExercise) {
             quizExerciseService.resetExercise(exercise.getId());
         }
