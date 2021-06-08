@@ -172,29 +172,25 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 position: 'bottom',
             },
             scales: {
-                yAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.yAxes'),
-                        },
-                        ticks: {
-                            maxTicksLimit: 11,
-                            beginAtZero: true,
-                            precision: 0,
-                            min: 0,
-                            max: this.calculateTickMax(),
-                        } as LinearTickOptions,
+                y: {
+                    title: {
+                        display: true,
+                        text: this.translateService.instant('artemisApp.examScores.yAxes'),
                     },
-                ],
-                xAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.xAxes'),
-                        },
+                    ticks: {
+                        maxTicksLimit: 11,
+                        beginAtZero: true,
+                        precision: 0,
+                        min: 0,
+                        max: this.calculateTickMax(),
+                    } as LinearTickOptions,
+                },
+                xAxes: {
+                    title: {
+                        display: true,
+                        text: this.translateService.instant('artemisApp.examScores.xAxes'),
                     },
-                ],
+                },
             },
             hover: {
                 animationDuration: 0,

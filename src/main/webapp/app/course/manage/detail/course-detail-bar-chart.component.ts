@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { ChartDataSets, ChartType } from 'chart.js';
+import { ChartDataset, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -34,7 +34,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
     barChartLegend = false;
     // Data
     barChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataset[] = [];
     data: number[] = [];
     absoluteData: number[] = [];
 
