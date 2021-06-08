@@ -28,7 +28,7 @@ export class OrionBuildAndTestService {
     constructor(
         private submissionService: ProgrammingSubmissionService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
         private buildLogService: BuildLogService,
     ) {}
 
@@ -53,7 +53,7 @@ export class OrionBuildAndTestService {
      */
     listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise, participation?: Participation): Observable<void> {
         const participationId = participation ? participation.id! : exercise.studentParticipations![0].id!;
-        this.javaBridge.onBuildStarted(exercise.problemStatement!);
+        this.orionConnectorService.onBuildStarted(exercise.problemStatement!);
 
         // Listen for the new result on the websocket
         if (this.resultSubscription) {
@@ -76,8 +76,8 @@ export class OrionBuildAndTestService {
                     } else {
                         // TODO: Deal with static code analysis feedback in Orion
                         const testCaseFeedback = result.feedbacks!.filter((feedback) => !Feedback.isStaticCodeAnalysisFeedback(feedback));
-                        testCaseFeedback.forEach((feedback) => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
-                        this.javaBridge.onBuildFinished();
+                        testCaseFeedback.forEach((feedback) => this.orionConnectorService.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
+                        this.orionConnectorService.onBuildFinished();
                         this.buildFinished.next();
                     }
                     this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise);
@@ -95,7 +95,7 @@ export class OrionBuildAndTestService {
                 map((logs) => new BuildLogEntryArray(...logs)),
                 tap((logs: BuildLogEntryArray) => {
                     const logErrors = logs.extractErrors(programmingLanguage);
-                    this.javaBridge.onBuildFailed(logErrors);
+                    this.orionConnectorService.onBuildFailed(logErrors);
                     this.buildFinished.next();
                 }),
             )

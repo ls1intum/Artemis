@@ -12,7 +12,7 @@ export interface OrionState {
 
 /**
  * Enumeration defining the view options for an exercise,
- * (As a student or instructor).
+ * as a student (participation), tutor (assessment), or instructor (to edit the exercise).
  */
 export enum ExerciseView {
     STUDENT = 'STUDENT',

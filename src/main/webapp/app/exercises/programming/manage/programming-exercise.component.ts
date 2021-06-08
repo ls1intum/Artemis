@@ -47,7 +47,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private sortService: SortService,
         courseService: CourseManagementService,
@@ -62,7 +62,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe((state) => {
+        this.orionConnectorService.state().subscribe((state) => {
             this.orionState = state;
         });
     }
@@ -136,14 +136,14 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     editInIDE(programmingExercise: ProgrammingExercise) {
-        this.javaBridge.editExercise(programmingExercise);
+        this.orionConnectorService.editExercise(programmingExercise);
     }
 
     openOrionEditor(exercise: ProgrammingExercise) {
         try {
             this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation?.id]);
         } catch (e) {
-            this.javaBridge.log(e);
+            this.orionConnectorService.log(e);
         }
     }
 

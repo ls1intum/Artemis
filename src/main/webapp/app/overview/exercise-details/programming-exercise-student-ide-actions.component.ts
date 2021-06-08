@@ -40,7 +40,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     constructor(
         private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
         private ideBuildAndTestService: OrionBuildAndTestService,
         private route: ActivatedRoute,
     ) {}
@@ -49,7 +49,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * get ideState and submit changes if withIdeSubmit set in route query
      */
     ngOnInit(): void {
-        this.javaBridge.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
+        this.orionConnectorService.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
         this.route.queryParams.subscribe((params) => {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
@@ -106,14 +106,14 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      */
     importIntoIDE() {
         const repo = this.repositoryUrl(this.exercise.studentParticipations![0])!;
-        this.javaBridge.importParticipation(repo, this.exercise as ProgrammingExercise);
+        this.orionConnectorService.importParticipation(repo, this.exercise as ProgrammingExercise);
     }
 
     /**
      * Submits the changes made in the IDE by staging everything, committing the changes and pushing them to master.
      */
     submitChanges() {
-        this.javaBridge.submit();
+        this.orionConnectorService.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
     }
 

@@ -9,7 +9,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionType } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -83,7 +83,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         private http: HttpClient,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ProgrammingExerciseParticipationService,
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
         private repositoryExportService: ProgrammingAssessmentRepoExportService,
         private jhiAlertService: JhiAlertService,
     ) {}
@@ -663,15 +663,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * Locks the given submission, exports it, transforms it to base64, and sends it to Orion
      *
      * @param exerciseId id of the exercise the submission belongs to
-     * @param submission submission to send to Orion
+     * @param submissionId id of the submission to send to Orion
      * @param correctionRound correction round
      */
-    async downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0) {
-        this.javaBridge.isCloning(true);
-        const submissionId: number =
-            submission === 'new'
-                ? (await this.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound).toPromise()).id!
-                : submission.id!;
+    downloadSubmissionInOrion(exerciseId: number, submissionId: number, correctionRound = 0) {
+        this.orionConnectorService.isCloning(true);
         const exportOptions: RepositoryExportOptions = {
             exportAllParticipants: false,
             filterLateSubmissions: false,
@@ -681,18 +677,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             normalizeCodeStyle: false,
             hideStudentNameInZippedFolder: true,
         };
-        const programmingSubmission = await this.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).toPromise();
-        const submissionFile = (await this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).toPromise()).body!;
-        const reader = new FileReader();
-        reader.readAsDataURL(submissionFile);
-        reader.onloadend = () => {
-            const result = reader.result as string;
-            // remove prefix
-            const base64data = result.substr(result.indexOf(',') + 1);
-            this.javaBridge.downloadSubmission(submissionId, correctionRound, base64data);
-        };
-        reader.onerror = () => {
-            this.jhiAlertService.error('artemisApp.assessmentDashboard.orion.downloadFailed')
-        }
+        this.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission) => {
+            this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).subscribe((response) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(response.body!);
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    // remove prefix
+                    const base64data = result.substr(result.indexOf(',') + 1);
+                    this.orionConnectorService.downloadSubmission(submissionId, correctionRound, base64data);
+                };
+                reader.onerror = () => {
+                    this.jhiAlertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');
+                };
+            });
+        });
     }
 }

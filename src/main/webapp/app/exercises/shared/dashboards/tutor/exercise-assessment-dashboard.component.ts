@@ -136,7 +136,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
     tutor?: User;
-    toggelingSecondCorrectionButton = false;
+    togglingSecondCorrectionButton = false;
 
     exerciseForGuidedTour?: Exercise;
 
@@ -160,7 +160,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
     ) {}
 
     /**
@@ -177,7 +177,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
 
-        this.javaBridge.state().subscribe((state) => {
+        this.orionConnectorService.state().subscribe((state) => {
             this.orionState = state;
         });
 
@@ -612,17 +612,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Triggers downloading the test repository and opening it, allowing for submissions to be downloaded
      */
     openAssessmentInOrion() {
-        this.javaBridge.assessExercise(this.exercise);
+        this.orionConnectorService.assessExercise(this.exercise);
     }
 
     /**
-     * Delegates to the {@link programmingSubmissionService} to download the submission
+     * Retrieves a new submission if necessary and then delegates to the
+     * {@link programmingSubmissionService} to download the submission
      *
-     * @param submission submission to send to Orion
+     * @param submission submission to send to Orion or 'new' if a new one should be loaded
      * @param correctionRound correction round
      */
-    async downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        await this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission, correctionRound);
+    downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
+        if (submission === 'new') {
+            this.programmingSubmissionService
+                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, true, correctionRound)
+                .subscribe((submission) => this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission.id!, correctionRound));
+        } else {
+            this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission.id!, correctionRound);
+        }
     }
 
     /**
@@ -636,12 +643,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     toggleSecondCorrection() {
-        this.toggelingSecondCorrectionButton = true;
+        this.togglingSecondCorrectionButton = true;
         this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: Boolean) => {
             this.secondCorrectionEnabled = res as boolean;
             this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
-            this.toggelingSecondCorrectionButton = false;
+            this.togglingSecondCorrectionButton = false;
         });
     }
 
