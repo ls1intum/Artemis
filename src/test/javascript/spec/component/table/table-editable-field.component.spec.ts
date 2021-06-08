@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
@@ -37,6 +37,7 @@ describe('TableEditableFieldComponent', () => {
         const tableInput = debugElement.query(By.css(tableInputValue));
 
         expect(tableInput).to.exist;
+        tableInput.nativeElement.dispatchEvent(new Event('input'));
         expect(tableInput.nativeElement.value).to.equal(value);
     });
 
@@ -50,6 +51,8 @@ describe('TableEditableFieldComponent', () => {
 
         const tableInput = debugElement.query(By.css(tableInputValue));
         expect(tableInput).to.exist;
+        tableInput.nativeElement.dispatchEvent(new Event('input'));
+        tick();
         expect(tableInput.nativeElement.value).to.equal(value);
 
         tableInput.nativeElement.dispatchEvent(new Event('blur'));

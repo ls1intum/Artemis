@@ -1,12 +1,22 @@
 <div class="table-editable-field">
     <input
-        #editingInput
-        [id]="id"
-        class="table-editable-field__input form-control mr-2"
+        #valueToValidate="ngModel"
         (blur)="sendValueUpdate($event)"
-        (keyup.enter)="sendValueUpdate($event)"
-        [value]="inputValue"
         (input)="storeInputValue($event)"
+        (keyup.enter)="sendValueUpdate($event)"
+        [id]="id"
+        [(ngModel)]="inputValue"
+        [pattern]="pattern"
+        [required]="isRequired"
+        class="table-editable-field__input form-control mr-2"
         type="text"
     />
+    <span class="text-danger" *ngIf="valueToValidate?.invalid && valueToValidate?.errors?.required" jhiTranslate="{{ translationRequiredMessage }}">
+        This field is required to be filled out.
+    </span>
+    <ng-container>
+        <div *ngIf="valueToValidate.invalid && (valueToValidate.dirty || valueToValidate.touched)" class="alert alert-danger">
+            <div jhiTranslate="{{ translationInvalidMessage }}">Invalid input!</div>
+        </div>
+    </ng-container>
 </div>
