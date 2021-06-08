@@ -357,7 +357,7 @@ public class CourseExamExportService {
                     continue;
                 }
             }
-            catch (IOException e) {
+            catch (Exception e) {
                 logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage(), exportErrors, e);
             }
 

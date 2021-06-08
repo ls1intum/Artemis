@@ -184,14 +184,22 @@ public class ProgrammingExerciseExportService {
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
-        var includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).collect(Collectors.toList());
 
-        // Create the zip folder of the exported programming exercise and return the path to the created folder
         try {
+            // Only create zip file if there's files to zip
+            if (includedFilePathsNotNull.isEmpty()) {
+                String info = "Will not export programming exercise " + exercise.getId() + " with title " + exercise.getTitle() + " because it's empty";
+                log.info(info);
+                exportErrors.add(info);
+                return null;
+            }
+
+            // Create the zip folder of the exported programming exercise and return the path to the created folder
             zipFileService.createZipFile(pathToZippedExercise, includedFilePathsNotNull, false);
             return pathToZippedExercise;
         }
-        catch (IOException e) {
+        catch (Exception e) {
             var error = "Failed to export programming exercise because the zip file " + pathToZippedExercise + " could not be created: " + e.getMessage();
             log.info(error);
             exportErrors.add(error);
@@ -261,7 +269,7 @@ public class ProgrammingExerciseExportService {
                 return Optional.of(new File(zippedRepo.toString()));
             }
         }
-        catch (IOException | UncheckedIOException | GitAPIException | GitException | InterruptedException ex) {
+        catch (Exception ex) {
             var error = "Failed to export instructor repository " + repositoryType + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
             log.info(error + ": " + ex.getMessage());
             exportErrors.add(error);
@@ -329,7 +337,7 @@ public class ProgrammingExerciseExportService {
                     exportedStudentRepositories.add(zipFile);
                 }
             }
-            catch (IOException | UncheckedIOException e) {
+            catch (Exception e) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                 exportErrors.add(error);
@@ -448,7 +456,7 @@ public class ProgrammingExerciseExportService {
             return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isHideStudentNameInZippedFolder());
         }
         catch (InterruptedException | GitAPIException | GitException ex) {
-            log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception", participation.getId(),
+            log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
                     participation.getProgrammingExercise().getId(), ex);
             return null;
         }

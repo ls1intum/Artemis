@@ -156,8 +156,8 @@ public abstract class SubmissionExportService {
                 this.saveSubmissionToFile(exercise, latestSubmission, submissionFilePath.toFile());
                 return Optional.of(submissionFilePath);
             }
-            catch (IOException ioException) {
-                String message = "Could not create file" + submissionFilePath + "  for exporting: " + ioException.getMessage();
+            catch (Exception ex) {
+                String message = "Could not create file" + submissionFilePath + "  for exporting: " + ex.getMessage();
                 log.error(message);
                 exportErrors.add(message);
                 return Optional.<Path>empty();
