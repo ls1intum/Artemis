@@ -27,9 +27,9 @@ export class ExerciseUpdateWarningComponent {
     }
 
     /**
-     * Confirm changes
+     * Save changes without re-evaluation
      */
-    confirmChange(): void {
+    saveExerciseWithoutReevaluation(): void {
         this.confirmed.emit();
         this.activeModal.close();
     }
@@ -37,7 +37,7 @@ export class ExerciseUpdateWarningComponent {
     /**
      * Re-evaluate the exercise
      */
-    reEvaluate(): void {
+    reEvaluateExercise(): void {
         this.reEvaluated.emit();
         this.activeModal.close();
     }

@@ -1,46 +1,37 @@
 <div style="padding: 20px">
-    <h2><span jhiTranslate="artemisApp.exercise.update.warning.warning"></span></h2>
-    <div class="warning-problem">
-        <h4><span jhiTranslate="artemisApp.exercise.update.warning.problems"></span></h4>
-        <ul>
-            <li *ngIf="instructionDeleted" class="warning-problem-result-wrapper">
-                <span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span>
-                <ul class="warning-problem-result">
-                    <li class="warning-problem-result-element">
-                        <span jhiTranslate="artemisApp.exercise.update.warning.results"></span>
-                    </li>
-                </ul>
-            </li>
-            <li *ngIf="scoringChanged" class="warning-problem-result-wrapper">
-                <span jhiTranslate="artemisApp.exercise.update.warning.scoringChange"></span>
-                <ul class="warning-problem-result">
-                    <li class="warning-problem-result-element">
-                        <span jhiTranslate="artemisApp.exercise.update.warning.results"></span>
-                    </li>
-                </ul>
-            </li>
+    <div class="warning">
+        <div><span jhiTranslate="artemisApp.exercise.update.warning.warning"></span></div>
+
+        <ul class="warning-problem">
+            <li *ngIf="scoringChanged" class="warning-problem"><span jhiTranslate="artemisApp.exercise.update.warning.scoringChange"></span></li>
+            <li *ngIf="instructionDeleted" class="warning-problem"><span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span></li>
         </ul>
-        <div *ngIf="instructionDeleted">
+
+        <div class="warning-info" *ngIf="instructionDeleted">
             <input type="checkbox" name="deleteFeedback" id="deleteFeedback" [ngModel]="deleteFeedback" (ngModelChange)="toggleDeleteFeedback()" />
             <label class="form-check-label text-danger" for="deleteFeedback">
                 {{ 'artemisApp.exercise.update.warning.deleteFeedback' | artemisTranslate }}
             </label>
         </div>
-        <h6><span jhiTranslate="artemisApp.exercise.update.warning.information"></span></h6>
+
+        <ul class="warning-info">
+            <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.problems"></span></li>
+            <li class="warning-info"><span jhiTranslate="artemisApp.exercise.update.warning.information"></span></li>
+        </ul>
     </div>
     <div class="edit-modal-footer-content">
-        <h4>
-            <span jhiTranslate="artemisApp.exercise.update.warning.confirmtext"></span>
-        </h4>
+        <div class="warning"><span jhiTranslate="artemisApp.exercise.update.warning.confirmText"></span></div>
         &nbsp;
         <div class="form-group">
             <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <button type="submit" (click)="confirmChange()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-primary">
-                &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.confirm"></span>
+            <button type="submit" (click)="saveExerciseWithoutReevaluation()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-primary">
+                &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not Re-evaluate</span>
             </button>
-            <button type="submit" (click)="reEvaluate()" class="btn btn-primary">&nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.reevaluate"></span></button>
+            <button type="submit" (click)="reEvaluateExercise()" class="btn btn-primary">
+                &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
+            </button>
         </div>
     </div>
 </div>

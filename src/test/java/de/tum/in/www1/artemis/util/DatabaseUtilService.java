@@ -3434,7 +3434,10 @@ public class DatabaseUtilService {
 
         // add feedback which is associated with structured grading instructions
         Feedback feedback = new Feedback();
-        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        GradingCriterion gradingCriterion = exercise.getGradingCriteria().get(0);
+        if (gradingCriterion != null && !gradingCriterion.getStructuredGradingInstructions().isEmpty()) {
+            feedback.setGradingInstruction(gradingCriterion.getStructuredGradingInstructions().get(0));
+        }
         feedback.setResult(result);
         Feedback feedbackWithResult = feedbackRepo.save(feedback);
         result.addFeedback(feedbackWithResult);
