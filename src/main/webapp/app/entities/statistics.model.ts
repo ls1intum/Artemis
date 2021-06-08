@@ -40,7 +40,4 @@ export enum GraphColors {
     DARK_BLUE = 'rgba(53,61,71,1)',
     BLUE = 'rgba(93,138,201,1)',
     TRANSPARENT = 'rgba(93,138,201,0)',
-    BLUE_TRANSPARENT = 'rgba(93,138,201,0.5)',
-    RED_TRANSPARENT = 'rgba(93,138,201,0.5)',
-    GREEN_TRANSPARENT = 'rgba(93,138,201,0.5)',
 }
