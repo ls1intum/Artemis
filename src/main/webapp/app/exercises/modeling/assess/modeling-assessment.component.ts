@@ -250,7 +250,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             newElements = new Map<string, string>();
         }
 
-        if (this.apollonEditor !== null) {
+        if (this.apollonEditor != undefined) {
             const model: UMLModel = this.apollonEditor!.model;
             for (const element of model.elements) {
                 element.highlight = newElements.get(element.id);
