@@ -213,7 +213,7 @@
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
-                        <div class="form-group flex-fill ms-1" *ngIf="!isExamMode && quizExercise.id">
+                        <div class="input-group flex-fill ms-1" *ngIf="!isExamMode && quizExercise.id">
                             <div class="form-group flex-fill">
                                 <input
                                     minlength="3"
@@ -226,11 +226,12 @@
                                 />
                             </div>
                         </div>
-                        <div class="form-select" *ngIf="!isExamMode">
-                            <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix"></span>
+
+                        <div class="input-group" *ngIf="!isExamMode" style="width: max-content !important;">
+                            <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix me-1" style="align-self: center"></span>
                             <select
                                 *ngIf="showDropdown === 'isOpenForPractice'"
-                                class="form-control"
+                                class="form-select"
                                 [(ngModel)]="quizExercise.isOpenForPractice"
                                 (ngModelChange)="cacheValidation()"
                                 title="status"
@@ -252,7 +253,7 @@
                                     <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
                                 </option>
                             </select>
-                            <select *ngIf="showDropdown === 'active'" class="form-control" title="status" disabled>
+                            <select *ngIf="showDropdown === 'active'" class="form-select" title="status" disabled>
                                 <option *ngFor="let option of statusOptionsActive" [value]="option.key">
                                     {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}
                                 </option>
