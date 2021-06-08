@@ -1,8 +1,8 @@
 {
     "artemisApp": {
         "instructorExerciseDashboard": {
-            "title": "Übungs-Dashboard für Lehrpersonen",
-            "pageHeader": "Übungs-Dashboard für Lehrpersonen",
+            "title": "Übungs-Dashboard für Lehrende",
+            "pageHeader": "Übungs-Dashboard für Lehrende",
             "back": "Zurück",
             "noProblemStatement": "Keine Problembeschreibung verfügbar",
             "informationAboutExercise": "Informationen über die Aufgabe",

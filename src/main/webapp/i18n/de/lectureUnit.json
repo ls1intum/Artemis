@@ -24,7 +24,7 @@
             "updated": "Texteinheit aktualisiert",
             "tooltip": "Das ist eine Texteinheit.",
             "isolated": "Isoliert öffnen",
-            "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrpersonen. Veröffentlichungsdatum:",
+            "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr Informationen:",
             "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
             "createTextUnit": {
@@ -49,7 +49,7 @@
             "updated": "Videoeinheit aktualisiert",
             "tooltip": "Das ist eine Videoeinheit.",
             "description": "Beschreibung",
-            "notReleasedTooltip": "Video nur sichtbar für Tutor:innen und Lehrpersonen. Veröffentlichungsdatum:",
+            "notReleasedTooltip": "Video nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createVideoUnit": {
                 "title": "Erstelle Videoeinheit",
                 "name": "Name",
@@ -79,7 +79,7 @@
         "attachmentUnit": {
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
-            "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrpersonen. Veröffentlichungsdatum:",
+            "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createAttachmentUnit": {
                 "title": "Dateieinheit erstellen",
                 "name": "Name",

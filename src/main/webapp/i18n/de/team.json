@@ -53,7 +53,7 @@
             },
             "owner": {
                 "label": "Tutor:in",
-                "tooltip": "Nur Lehrpersonen können die Zuweisung von Tutor:innen für Teams ändern."
+                "tooltip": "Nur Lehrende können die Zuweisung von Tutor:innen für Teams ändern."
             },
             "ownerChangeWarning": "Wichtig: Tutor:in für das Team {{ shortName }} wird hiermit für den ganzen Kurs geändert!",
             "image": "Bild",

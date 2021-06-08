@@ -1,8 +1,8 @@
 {
     "artemisApp": {
         "instructorCourseDashboard": {
-            "title": "Kurs-Dashboard für Lehrpersonen",
-            "pageHeader": "Kurs-Dashboard für Lehrpersonen von",
+            "title": "Kurs-Dashboard für Lehrende",
+            "pageHeader": "Kurs-Dashboard für Lehrende von",
             "informationAboutCourse": "Informationen zum Kurs",
             "noDescription": "Keine Beschreibung vorhanden",
             "students": "Studierende",

@@ -3,8 +3,8 @@
         "title": "Onlineklausuren in Artemis",
         "featureDetails": "Featuredetails",
         "instructor": {
-            "pageTitle": "Klausurfeatures für Lehrpersonen",
-            "featureOverview": "Features für Lehrpersonen",
+            "pageTitle": "Klausurfeatures für Lehrende",
+            "featureOverview": "Features für Lehrende",
             "feature": {
                 "createConductAssess": {
                     "title": "Klausur Erstellen, Durchführen und Bewerten",
@@ -39,7 +39,7 @@
                 "plagiarismDetection": {
                     "title": "Plagiatserkennung",
                     "shortDescription": "Plagiatsversuche automatisch erkennen und kennzeichnen.",
-                    "descriptionTextOne": "Artemis kann Lehrpersonen dabei unterstützen, Plagiatsversuche zu erkennen. Dies geschieht, indem die Ähnlichkeiten zwischen allen studentischen Abgaben analysiert werden und diejenigen, die einen bestimmten Schwellenwert überschreiten, markiert werden. Mit dem integrierten Plagiat-Editor kannst du alle markierten Abgaben nebeneinander vergleichen und diejenigen Fälle bestätigen, die als echte Plagiatsversuche gelten. Du kannst zwischen verschiedenen Plagiatserkennungsstrategien wählen, um diejenige auszuwählen, die deinen Bedürfnissen entspricht. Lehrpersonen haben auch die Möglichkeit, einen CSV-Bericht über akzeptierte und abgelehnte Plagiatsversuche zur weiteren Verarbeitung auf externen Systemen herunterzuladen.\n\n"
+                    "descriptionTextOne": "Artemis kann Lehrende dabei unterstützen, Plagiatsversuche zu erkennen. Dies geschieht, indem die Ähnlichkeiten zwischen allen studentischen Abgaben analysiert werden und diejenigen, die einen bestimmten Schwellenwert überschreiten, markiert werden. Mit dem integrierten Plagiat-Editor kannst du alle markierten Abgaben nebeneinander vergleichen und diejenigen Fälle bestätigen, die als echte Plagiatsversuche gelten. Du kannst zwischen verschiedenen Plagiatserkennungsstrategien wählen, um diejenige auszuwählen, die deinen Bedürfnissen entspricht. Lehrende haben auch die Möglichkeit, einen CSV-Bericht über akzeptierte und abgelehnte Plagiatsversuche zur weiteren Verarbeitung auf externen Systemen herunterzuladen.\n\n"
                 },
                 "anonymousAssessment": {
                     "title": "Anonyme Bewertung",

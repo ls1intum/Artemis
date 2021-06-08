@@ -55,7 +55,7 @@
             "studentGroupName": "Gruppe der Studierenden",
             "teachingAssistantGroupName": "Gruppe der Tutor:innen",
             "editorGroupName": "Editorengruppe",
-            "instructorGroupName": "Gruppe der Lehrpersonen",
+            "instructorGroupName": "Gruppe der Lehrenden",
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
@@ -89,7 +89,7 @@
             "participations": "Teilnahmen",
             "tutors": "Tutor:innen",
             "editors": "Editor:innen",
-            "instructors": "Lehrpersonen",
+            "instructors": "Lehrende",
             "student": "Studierende:r",
             "tutor": "Tutor:in",
             "editor": "Editor:in",
@@ -101,7 +101,7 @@
                 }
             },
             "courseDashboard": "Kurs-Dashboard",
-            "instructorDashboard": "Kursdashboard für Lehrpersonen",
+            "instructorDashboard": "Kursdashboard für Lehrende",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen Studierende halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
