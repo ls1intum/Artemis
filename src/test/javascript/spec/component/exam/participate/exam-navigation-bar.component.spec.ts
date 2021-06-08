@@ -55,51 +55,51 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should change the exercise', () => {
-        spyOn(comp.onExerciseChanged, 'emit');
+        spyOn(comp.onPageChanged, 'emit');
         spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toEqual(0);
+        expect(comp.pageIndex).toEqual(0);
 
         const exerciseIndex = 1;
         const force = false;
 
         comp.changeExercise(exerciseIndex, force);
 
-        expect(comp.exerciseIndex).toEqual(exerciseIndex);
-        expect(comp.onExerciseChanged.emit).toHaveBeenCalled();
+        expect(comp.pageIndex).toEqual(exerciseIndex);
+        expect(comp.onPageChanged.emit).toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should not change the exercise with invalid index', () => {
-        spyOn(comp.onExerciseChanged, 'emit');
+        spyOn(comp.onPageChanged, 'emit');
         spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toEqual(0);
+        expect(comp.pageIndex).toEqual(0);
 
         const exerciseIndex = 5;
         const force = false;
 
         comp.changeExercise(exerciseIndex, force);
 
-        expect(comp.exerciseIndex).toEqual(0);
-        expect(comp.onExerciseChanged.emit).not.toHaveBeenCalled();
+        expect(comp.pageIndex).toEqual(0);
+        expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should tell the type of the selected programming exercise', () => {
-        comp.exerciseIndex = 0;
+        comp.pageIndex = 0;
 
         expect(comp.isProgrammingExercise()).toBe(true);
     });
 
     it('should tell the type of the selected text exercise', () => {
-        comp.exerciseIndex = 1;
+        comp.pageIndex = 1;
 
         expect(comp.isProgrammingExercise()).toBe(false);
     });
 
     it('should tell the type of the selected modeling exercise', () => {
-        comp.exerciseIndex = 2;
+        comp.pageIndex = 2;
 
         expect(comp.isProgrammingExercise()).toBe(false);
     });

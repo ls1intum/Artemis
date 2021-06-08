@@ -13,10 +13,11 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 })
 export class ExamNavigationBarComponent implements OnInit {
     @Input() exercises: Exercise[] = [];
-    @Input() exerciseIndex = 0;
+    @Input() pageIndex = 0;
     @Input() endDate: Moment;
+    @Input() overviewPageOpen: boolean;
 
-    @Output() onExerciseChanged = new EventEmitter<{ exercise: Exercise; forceSave: boolean }>();
+    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
@@ -42,11 +43,20 @@ export class ExamNavigationBarComponent implements OnInit {
                 this.itemsVisiblePerSide = 0;
             }
         });
+        console.log(this.pageIndex);
     }
 
     triggerExamAboutToEnd() {
         this.saveExercise(false);
         this.examAboutToEnd.emit();
+    }
+
+    openExerciseOverview() {
+        // set index and emit event
+        this.pageIndex = 0;
+        // save current exercise
+        this.onPageChanged.emit({ overViewChange: true, exercise: this.exercises[this.pageIndex], forceSave: false });
+        this.setExerciseButtonStatus(this.pageIndex);
     }
 
     changeExercise(exerciseIndex: number, forceSave: boolean) {
@@ -55,8 +65,8 @@ export class ExamNavigationBarComponent implements OnInit {
             return;
         }
         // set index and emit event
-        this.exerciseIndex = exerciseIndex;
-        this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], forceSave });
+        this.pageIndex = exerciseIndex;
+        this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[exerciseIndex], forceSave });
         this.setExerciseButtonStatus(exerciseIndex);
     }
 
@@ -65,16 +75,16 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param changeExercise whether to go to the next exercise {boolean}
      */
     saveExercise(changeExercise = true) {
-        const newIndex = this.exerciseIndex + 1;
-        const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const newIndex = this.pageIndex + 1;
+        const submission = this.getSubmissionForExercise(this.exercises[this.pageIndex]);
         // we do not submit programming exercises on a save
-        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
+        if (submission && this.exercises[this.pageIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
         if (changeExercise) {
             if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changeExercise(this.exerciseIndex, true);
+                this.changeExercise(this.pageIndex, true);
             } else {
                 this.changeExercise(newIndex, true);
             }
@@ -82,11 +92,15 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     isProgrammingExercise() {
-        return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
+        return this.exercises[this.pageIndex].type === ExerciseType.PROGRAMMING;
     }
 
     isFileUploadExercise() {
-        return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
+        return this.exercises[this.pageIndex].type === ExerciseType.FILE_UPLOAD;
+    }
+
+    setOverviewStatus(): 'active' | '' {
+        return this.overviewPageOpen ? 'active' : '';
     }
 
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
@@ -99,7 +113,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             if (submission.isSynced) {
                 // make button blue
-                if (exerciseIndex === this.exerciseIndex) {
+                if (exerciseIndex === this.pageIndex && !this.overviewPageOpen) {
                     return 'synced active';
                 } else {
                     return 'synced';
