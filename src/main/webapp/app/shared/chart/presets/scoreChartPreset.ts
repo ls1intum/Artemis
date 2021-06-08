@@ -1,9 +1,9 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
-import { ChartDataSets, ChartLegendLabelItem } from 'chart.js';
+import { ChartDataset, ChartLegendLabelItem } from 'chart.js';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
-    private datasets: ChartDataSets[] = [];
+    private datasets: ChartDataset[] = [];
 
     private readonly redGreenPattern: CanvasPattern;
     private readonly redTransparentPattern: CanvasPattern;

@@ -49,29 +49,25 @@ export function createOptions(dataSetProvider: DataSetProvider, max: number, ste
             enabled: false,
         },
         scales: {
-            yAxes: [
-                {
+            y: {
+                display: true,
+                title: {
+                    text: xLabel,
                     display: true,
-                    scaleLabel: {
-                        labelString: xLabel,
-                        display: true,
-                    },
-                    ticks: {
-                        beginAtZero: true,
-                        stepSize,
-                        max,
-                        min: 0,
-                    } as LinearTickOptions,
                 },
-            ],
-            xAxes: [
-                {
-                    scaleLabel: {
-                        labelString: yLabel,
-                        display: true,
-                    },
+                ticks: {
+                    beginAtZero: true,
+                    stepSize,
+                    max,
+                    min: 0,
+                } as LinearTickOptions,
+            },
+            x: {
+                title: {
+                    text: yLabel,
+                    display: true,
                 },
-            ],
+            },
         },
         hover: { animationDuration: 0 },
         animation: createAnimation(dataSetProvider),
@@ -86,7 +82,7 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
             const chartInstance = chartElement.chart;
             const ctx = chartInstance.ctx!;
 
-            ctx.font = Chart.helpers.fontString(Chart.defaults.global.defaultFontSize, Chart.defaults.global.defaultFontStyle, Chart.defaults.global.defaultFontFamily);
+            ctx.font = Chart.helpers.fontString(Chart.defaults.font.size, Chart.defaults.font.style, Chart.defaults.font.family);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             const participants = dataSetProvider.getParticipants();

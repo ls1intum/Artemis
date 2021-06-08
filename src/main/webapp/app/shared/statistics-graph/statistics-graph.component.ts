@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,7 +36,7 @@ export class StatisticsGraphComponent implements OnChanges {
     chartTime: any;
     // Data
     barChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataset[] = [];
     dataForSpanType: number[];
 
     // Left arrow -> decrease, right arrow -> increase

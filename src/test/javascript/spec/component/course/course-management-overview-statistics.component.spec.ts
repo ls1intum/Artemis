@@ -55,7 +55,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         expect(component.chartData[0].data).to.deep.equal([0, 44, 36, 92]);
 
         // Test formatting
-        expect(component.barChartOptions.scales.yAxes[0].ticks.callback(44)).to.equal('44%');
+        expect(component.barChartOptions.scales.y.ticks.callback(44)).to.equal('44%');
         expect(component.barChartOptions.tooltips.callbacks.label({ index: 2 })).to.equal(' ' + initialStats[2]);
     });
 

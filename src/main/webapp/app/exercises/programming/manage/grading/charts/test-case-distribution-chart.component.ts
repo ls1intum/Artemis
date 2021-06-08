@@ -3,7 +3,7 @@ import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programmin
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
-import { ChartDataSets } from 'chart.js';
+import { ChartDataset } from 'chart.js';
 
 @Component({
     selector: 'jhi-test-case-distribution-chart',
@@ -37,8 +37,8 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     weightChartPreset = new HorizontalStackedBarChartPreset(['Weight', 'Weight & Bonus'], ['all weights', 'all weights and bonuses']);
     pointsChartPreset = new HorizontalStackedBarChartPreset(['Points'], ['all exercise points']);
 
-    weightChartDatasets: ChartDataSets[] = [];
-    pointsChartDatasets: ChartDataSets[] = [];
+    weightChartDatasets: ChartDataset[] = [];
+    pointsChartDatasets: ChartDataset[] = [];
 
     ngOnChanges(): void {
         this.testCases = this.testCases.filter((testCase) => testCase.visibility !== Visibility.Never);

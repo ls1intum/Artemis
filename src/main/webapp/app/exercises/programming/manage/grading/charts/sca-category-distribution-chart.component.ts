@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
-import { ChartDataSets } from 'chart.js';
+import { ChartDataset } from 'chart.js';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 @Component({
@@ -27,7 +27,7 @@ export class ScaCategoryDistributionChartComponent implements OnChanges {
     @Output() categoryColorsChange = new EventEmitter<{}>();
 
     chartPreset = new HorizontalStackedBarChartPreset(['Penalty', 'Issues', 'Deductions'], ['all penalties', 'all detected issues', 'all deducted points']);
-    chartDatasets: ChartDataSets[] = [];
+    chartDatasets: ChartDataset[] = [];
 
     ngOnChanges(): void {
         const categoryPenalties = this.categories

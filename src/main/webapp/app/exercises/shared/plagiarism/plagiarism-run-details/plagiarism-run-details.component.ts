@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
@@ -35,7 +35,7 @@ export class PlagiarismRunDetailsComponent implements OnChanges {
      *
      * Only one dataset is necessary to display the similarity distribution.
      */
-    chartDataSets: ChartDataSets[] = [
+    chartDataSets: ChartDataset[] = [
         {
             backgroundColor: 'lightskyblue',
             data: [],
@@ -49,14 +49,12 @@ export class PlagiarismRunDetailsComponent implements OnChanges {
      */
     chartOptions: ChartOptions = {
         scales: {
-            yAxes: [
-                {
-                    ticks: {
-                        beginAtZero: true,
-                        stepSize: 1,
-                    },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1,
                 },
-            ],
+            },
         },
     };
 
