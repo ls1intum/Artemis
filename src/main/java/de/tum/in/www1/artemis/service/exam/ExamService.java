@@ -276,13 +276,10 @@ public class ExamService {
                                     scores.hasSecondCorrectionAndStarted = true;
                                 }
                                 Result firstManualResult = submission.getFirstManualResult();
-                                double achievedPointsInFirstCorrection;
+                                double achievedPointsInFirstCorrection = 0.0;
                                 if (firstManualResult != null) {
                                     Double resultScore = firstManualResult.getScore();
                                     achievedPointsInFirstCorrection = resultScore != null ? round(resultScore / 100.0 * exercise.getMaxPoints()) : 0.0;
-                                }
-                                else {
-                                    achievedPointsInFirstCorrection = 0.0;
                                 }
                                 studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
                             }
