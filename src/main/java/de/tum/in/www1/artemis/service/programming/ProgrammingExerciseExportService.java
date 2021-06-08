@@ -159,9 +159,10 @@ public class ProgrammingExerciseExportService {
         var pathsToBeZipped = new ArrayList<Path>();
 
         if (includingStudentRepos) {
-            // Lazy load student participation and set the export options
+            // Lazy load student participation, sort by id, and set the export options
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
-                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).collect(Collectors.toList());
+                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId))
+                    .collect(Collectors.toList());
             var exportOptions = new RepositoryExportOptionsDTO();
             exportOptions.setHideStudentNameInZippedFolder(false);
 

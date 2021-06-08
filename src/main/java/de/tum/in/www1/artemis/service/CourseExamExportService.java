@@ -84,7 +84,7 @@ public class CourseExamExportService {
             Files.createDirectories(tmpCourseDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.", exportErrors);
+            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.", exportErrors, e);
             return Optional.empty();
         }
 
@@ -134,7 +134,7 @@ public class CourseExamExportService {
             Files.createDirectories(tempExamsDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export exam " + exam.getId() + " because the temporary directory: " + tempExamsDir + " cannot be created.", exportErrors);
+            logMessageAndAppendToList("Failed to export exam " + exam.getId() + " because the temporary directory: " + tempExamsDir + " cannot be created.", exportErrors, e);
             return Optional.empty();
         }
 
@@ -213,7 +213,7 @@ public class CourseExamExportService {
             return exportExercises(notificationTopic, course.getExercises(), exercisesDir.toString(), progress, totalExerciseCount, exportErrors);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to create course exercise directory" + exercisesDir + ".", exportErrors);
+            logMessageAndAppendToList("Failed to create course exercise directory" + exercisesDir + ".", exportErrors, e);
             return List.of();
         }
     }
@@ -257,7 +257,7 @@ public class CourseExamExportService {
             return exportedExams;
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors);
+            logMessageAndAppendToList("Failed to create course exams directory " + examsDir + ".", exportErrors, e);
             return List.of();
         }
     }
@@ -287,7 +287,7 @@ public class CourseExamExportService {
             return exportExercises(notificationTopic, examExercises, examDir.toString(), progress, totalExerciseCount, exportErrors);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors);
+            logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors, e);
             return List.of();
         }
     }
@@ -307,7 +307,12 @@ public class CourseExamExportService {
     private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
         List<Path> exportedExercices = new ArrayList<>();
         int currentProgress = progress;
-        for (var exercise : exercises) {
+
+        // Sort exercises by id.
+        List<Exercise> sortedExercises = new ArrayList<>(exercises);
+        sortedExercises.sort(Comparator.comparing(DomainObject::getId));
+
+        for (var exercise : sortedExercises) {
             log.info("Exporting exercise {} with id {} ", exercise.getTitle(), exercise.getId());
 
             // Notify the user after the progress
@@ -353,7 +358,7 @@ public class CourseExamExportService {
                 }
             }
             catch (IOException e) {
-                logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage(), exportErrors);
+                logMessageAndAppendToList("Failed to export exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + "): " + e.getMessage(), exportErrors, e);
             }
 
             // Exported submissions are stored somewhere else so we move the generated zip file into the
@@ -363,13 +368,14 @@ public class CourseExamExportService {
                 try {
                     Path newExportedSubmissionsFilePath = Path.of(outputDir, exportedSubmissionsFile.getName());
                     Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
-                    // Delete the directory where the zip was located before it was moved
-                    FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
 
                     exportedExercices.add(newExportedSubmissionsFilePath);
+
+                    // Delete the directory where the zip was located before it was moved
+                    FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
                 }
                 catch (IOException e) {
-                    logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors);
+                    logMessageAndAppendToList("Failed to move file " + exportedSubmissionsFile.toPath() + " to " + outputDir + ".", exportErrors, e);
                 }
             }
         }
@@ -392,13 +398,13 @@ public class CourseExamExportService {
             return Optional.of(outputZipFile);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to create zip file" + outputZipFile + ".", exportErrors);
+            logMessageAndAppendToList("Failed to create zip file" + outputZipFile + ".", exportErrors, e);
             return Optional.empty();
         }
     }
 
-    private void logMessageAndAppendToList(String message, List<String> messageList) {
-        log.error(message);
+    private void logMessageAndAppendToList(String message, List<String> messageList, Exception ex) {
+        log.error(message, ex);
         messageList.add(message);
     }
 

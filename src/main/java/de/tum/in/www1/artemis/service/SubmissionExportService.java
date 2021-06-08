@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -87,6 +88,9 @@ public abstract class SubmissionExportService {
                 filterLateSubmissionsDate = submissionExportOptions.getFilterLateSubmissionsDate();
             }
         }
+
+        // Sort the student participations by id
+        exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
         return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate);
 
