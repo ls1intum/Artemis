@@ -25,8 +25,10 @@
                     "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
                 },
-                "grade": "Note:",
-                "bonus": "Bonuspunkte für die Klausur:"
+                "grade": "Note",
+                "bonus": "Bonuspunkte für die Klausur",
+                "interval": "Intervall (%)",
+                "gradeKeyButton": "Notenschlüssel ansehen"
             },
             "title": "Klausur",
             "startExam": "Starten",

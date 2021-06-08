@@ -2,8 +2,8 @@
     "artemisApp": {
         "gradingSystem": {
             "title": "Grade key",
-            "titleCourse": "Grade key for course",
-            "titleExam": "Grade key for exam",
+            "titleCourse": "Grade Key for Course",
+            "titleExam": "Grade Key for Exam",
             "defaultButton": "Generate Default Grade key",
             "gradeType": {
                 "title": "Grade Type",
