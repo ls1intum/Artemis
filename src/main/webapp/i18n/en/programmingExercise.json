@@ -38,7 +38,7 @@
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Solution Repository Url",
             "auxiliaryRepositories": "Auxiliary Repositories",
-            "noCheckoutDirectorySet": "No Checkout Directory was set.",
+            "noCheckoutDirectorySet": "No checkout directory was set.",
             "noCheckoutDirectorySetTooltip": "Since no checkout directory was specified, the repository was not automatically added to a build plan.",
             "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id",
@@ -77,7 +77,7 @@
             },
             "recreateBuildPlans": {
                 "title": "Recreate Build Plans",
-                "warning": "Build Plans will be recreated. All previous changes will be overwritten!",
+                "warning": "Build plans will be recreated. All previous changes will be overwritten!",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
             "updateTemplate": {
@@ -285,8 +285,8 @@
                 "repositoryNameRequired": "The repository name is required.",
                 "invalidRepositoryName": "The repository name does already exist for this exercise!",
                 "invalidDirectoryName": "An existing repository is already checked out into this directory!",
-                "noModificationPossibleWarning": "It is not possible to modify the entered details (repository name, checkout directory, description) after the generation of the auxiliary repository.",
-                "warning": "Auxiliary Repositories that are added after the creation of the exercise need to be manually added to the VCS and the buildplan!"
+                "noModificationPossibleWarning": "It is not possible to modify the entered details (repository name, checkout directory, description) after the generation of the auxiliary repository!",
+                "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!"
             }
         },
         "error": {
