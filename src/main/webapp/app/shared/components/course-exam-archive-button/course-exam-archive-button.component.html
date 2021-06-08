@@ -5,9 +5,7 @@
                 <span *ngIf="archiveMode === 'Course'" [jhiTranslate]="'artemisApp.courseExamArchive.archiveCourseSuccess'">The course has been archived!</span>
                 <span *ngIf="archiveMode === 'Exam'" [jhiTranslate]="'artemisApp.courseExamArchive.archiveExamSuccess'">The exam has been archived!</span>
             </h4>
-            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
             <ng-container>
@@ -28,9 +26,7 @@
                 <span *ngIf="archiveMode === 'Course'" [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.title'">Confirm Archive Course Operation</span>
                 <span *ngIf="archiveMode === 'Exam'" [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.title'">Confirm Archive Exam Operation</span>
             </h4>
-            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
             <ng-container *ngIf="archiveMode === 'Course'">

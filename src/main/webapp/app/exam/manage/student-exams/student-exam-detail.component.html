@@ -73,9 +73,7 @@
                 <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
                 <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
             </h4>
-            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
             <p jhiTranslate="artemisApp.studentExams.confirmDialog.question">Are you sure you want to change the submission state?</p>

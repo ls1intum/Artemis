@@ -3,9 +3,7 @@
         {{ 'health.indicator.' + health.key | artemisTranslate }}
     </h4>
 
-    <button aria-label="Close" data-dismiss="modal" class="close" type="button" (click)="dismiss()">
-        <span aria-hidden="true">&times;</span>
-    </button>
+    <button aria-label="Close" data-dismiss="modal" class="btn-close" type="button" (click)="dismiss()"></button>
 </div>
 <div class="modal-body pad">
     <div *ngIf="health">
