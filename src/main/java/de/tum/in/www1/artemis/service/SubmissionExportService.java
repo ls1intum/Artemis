@@ -49,10 +49,11 @@ public abstract class SubmissionExportService {
      * Exports student submissions to a zip file for an exercise
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
+     * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
      * @return a reference to the zipped file
      * @throws IOException if an error occurred while zipping
      */
-    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
+    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, List<String> exportErrors) throws IOException {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
@@ -92,7 +93,7 @@ public abstract class SubmissionExportService {
         // Sort the student participations by id
         exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
-        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate);
+        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate, exportErrors);
 
     }
 
@@ -101,11 +102,12 @@ public abstract class SubmissionExportService {
      * @param exercise the exercise in question
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
+     * @param  exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
      * @return the zipped file
      * @throws IOException if an error occurred while zipping
      */
-    private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter)
-            throws IOException {
+    private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter,
+            List<String> exportErrors) throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
@@ -120,6 +122,7 @@ public abstract class SubmissionExportService {
         File submissionFolder = submissionsFolderPath.toFile();
         if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {
             log.error("Couldn't create dir: {}", submissionFolder);
+            exportErrors.add("Cannot create directory: " + submissionFolder.toPath());
             return Optional.empty();
         }
 
@@ -154,7 +157,9 @@ public abstract class SubmissionExportService {
                 return Optional.of(submissionFilePath);
             }
             catch (IOException ioException) {
-                log.error("Could not create file {} for exporting: {}", submissionFilePath.toString(), ioException.getMessage());
+                String message = "Could not create file" + submissionFilePath + "  for exporting: " + ioException.getMessage();
+                log.error(message);
+                exportErrors.add(message);
                 return Optional.<Path>empty();
             }
 

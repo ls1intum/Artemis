@@ -338,15 +338,15 @@ public class CourseExamExportService {
 
             try {
                 if (exercise instanceof FileUploadExercise) {
-                    exportedSubmissionsFileOrEmpty = fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions);
+                    exportedSubmissionsFileOrEmpty = fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, exportErrors);
 
                 }
                 else if (exercise instanceof TextExercise) {
-                    exportedSubmissionsFileOrEmpty = textSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions);
+                    exportedSubmissionsFileOrEmpty = textSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, exportErrors);
 
                 }
                 else if (exercise instanceof ModelingExercise) {
-                    exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions);
+                    exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, exportErrors);
                 }
                 else if (exercise instanceof QuizExercise) {
                     // TODO: Quiz submissions aren't supported yet

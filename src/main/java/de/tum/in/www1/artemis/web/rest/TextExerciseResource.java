@@ -521,7 +521,7 @@ public class TextExerciseResource {
         }
 
         try {
-            Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+            Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, new ArrayList<>());
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()

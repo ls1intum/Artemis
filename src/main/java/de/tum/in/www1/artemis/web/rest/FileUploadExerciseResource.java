@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -330,7 +331,7 @@ public class FileUploadExerciseResource {
         }
 
         try {
-            Optional<File> zipFile = fileUploadSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+            Optional<File> zipFile = fileUploadSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, new ArrayList<>());
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()
