@@ -141,7 +141,7 @@ public class CourseExamExportService {
         // Export exam exercises
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."));
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
-        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir.toString(), 0, exercises.size(), exportErrors);
+        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors);
 
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
@@ -210,7 +210,7 @@ public class CourseExamExportService {
         Path exercisesDir = Path.of(outputDir, "course-exercises");
         try {
             Files.createDirectory(exercisesDir);
-            return exportExercises(notificationTopic, course.getExercises(), exercisesDir.toString(), progress, totalExerciseCount, exportErrors);
+            return exportExercises(notificationTopic, course.getExercises(), exercisesDir, progress, totalExerciseCount, exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create course exercise directory" + exercisesDir + ".", exportErrors, e);
@@ -284,7 +284,7 @@ public class CourseExamExportService {
             Files.createDirectory(examDir);
 
             // We retrieve every exercise from each exercise group and flatten the list.
-            return exportExercises(notificationTopic, examExercises, examDir.toString(), progress, totalExerciseCount, exportErrors);
+            return exportExercises(notificationTopic, examExercises, examDir, progress, totalExerciseCount, exportErrors);
         }
         catch (IOException e) {
             logMessageAndAppendToList("Failed to create exam directory " + examDir + ".", exportErrors, e);
@@ -304,8 +304,8 @@ public class CourseExamExportService {
      * @param totalExerciseCount The total amount of exercises that will be exported
      * @param exportErrors List of failures that occurred during the export
      */
-    private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
-        List<Path> exportedExercices = new ArrayList<>();
+    private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, Path outputDir, int progress, int totalExerciseCount, List<String> exportErrors) {
+        List<Path> exportedExercises = new ArrayList<>();
         int currentProgress = progress;
 
         // Sort exercises by id.
@@ -322,8 +322,7 @@ public class CourseExamExportService {
             // Export programming exercise
             if (exercise instanceof ProgrammingExercise) {
                 // Download the repositories template, solution, tests and students' repositories
-                exportedExercices
-                        .add(programmingExerciseExportService.exportProgrammingExerciseRepositories((ProgrammingExercise) exercise, true, Path.of(outputDir), exportErrors));
+                exportedExercises.add(programmingExerciseExportService.exportProgrammingExerciseRepositories((ProgrammingExercise) exercise, true, outputDir, exportErrors));
                 continue;
             }
 
@@ -338,15 +337,16 @@ public class CourseExamExportService {
 
             try {
                 if (exercise instanceof FileUploadExercise) {
-                    exportedSubmissionsFileOrEmpty = fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, exportErrors);
+                    exportedSubmissionsFileOrEmpty = fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir,
+                            exportErrors);
 
                 }
                 else if (exercise instanceof TextExercise) {
-                    exportedSubmissionsFileOrEmpty = textSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, exportErrors);
+                    exportedSubmissionsFileOrEmpty = textSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors);
 
                 }
                 else if (exercise instanceof ModelingExercise) {
-                    exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, exportErrors);
+                    exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors);
                 }
                 else if (exercise instanceof QuizExercise) {
                     // TODO: Quiz submissions aren't supported yet
@@ -366,10 +366,10 @@ public class CourseExamExportService {
             if (exportedSubmissionsFileOrEmpty.isPresent()) {
                 var exportedSubmissionsFile = exportedSubmissionsFileOrEmpty.get();
                 try {
-                    Path newExportedSubmissionsFilePath = Path.of(outputDir, exportedSubmissionsFile.getName());
+                    Path newExportedSubmissionsFilePath = Path.of(outputDir.toString(), exportedSubmissionsFile.getName());
                     Files.move(exportedSubmissionsFile.toPath(), newExportedSubmissionsFilePath);
 
-                    exportedExercices.add(newExportedSubmissionsFilePath);
+                    exportedExercises.add(newExportedSubmissionsFilePath);
 
                     // Delete the directory where the zip was located before it was moved
                     FileUtils.deleteDirectory(Path.of(exportedSubmissionsFile.getParent()).toFile());
@@ -379,7 +379,7 @@ public class CourseExamExportService {
                 }
             }
         }
-        return exportedExercices.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        return exportedExercises.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     /**

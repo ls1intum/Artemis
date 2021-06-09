@@ -145,6 +145,9 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Export instructor repositories and optionally students' repositories in a zip file.
+    
+     * The outputDir is used to store the zip file and temporary files used for zipping so make
+     * sure to delete it if it's no longer used.
      *
      * @param exercise              the programming exercise
      * @param includingStudentRepos flag for including the students repos as well
@@ -204,10 +207,6 @@ public class ProgrammingExerciseExportService {
             log.info(error);
             exportErrors.add(error);
             return null;
-        }
-        finally {
-            // Delete the output directory
-            fileService.scheduleForDirectoryDeletion(outputDir, 2);
         }
     }
 

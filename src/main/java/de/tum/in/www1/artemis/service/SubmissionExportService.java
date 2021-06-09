@@ -14,7 +14,6 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -42,18 +41,20 @@ public abstract class SubmissionExportService {
         this.fileService = fileService;
     }
 
-    @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
-
     /**
-     * Exports student submissions to a zip file for an exercise
+     * Exports student submissions to a zip file for an exercise.
+     *
+     * The outputDir is used to store the zip file and temporary files used for zipping so make
+     * sure to delete it if it's no longer used.
+     *
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
      * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
      * @return a reference to the zipped file
      * @throws IOException if an error occurred while zipping
      */
-    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, List<String> exportErrors) throws IOException {
+    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, Path outputDir, List<String> exportErrors)
+            throws IOException {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
@@ -93,12 +94,15 @@ public abstract class SubmissionExportService {
         // Sort the student participations by id
         exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
-        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate, exportErrors);
-
+        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate, outputDir, exportErrors);
     }
 
     /**
-     * Creates a zip file from a list of participations for an exercise
+     * Creates a zip file from a list of participations for an exercise.
+     *
+     * The outputDir is used to store the zip file and temporary files used for zipping so make
+     * sure to delete it if it's no longer used.
+     *
      * @param exercise the exercise in question
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
@@ -107,17 +111,16 @@ public abstract class SubmissionExportService {
      * @throws IOException if an error occurred while zipping
      */
     private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter,
-            List<String> exportErrors) throws IOException {
+            Path outputDir, List<String> exportErrors) throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
         String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
-
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
-        Path submissionsFolderPath = Paths.get(submissionExportPath, "zippedSubmissions", zipGroupName);
-        Path zipFilePath = Paths.get(submissionExportPath, "zippedSubmissions", zipFileName);
+        Path submissionsFolderPath = Paths.get(outputDir.toString(), "zippedSubmissions", zipGroupName);
+        Path zipFilePath = Paths.get(outputDir.toString(), "zippedSubmissions", zipFileName);
 
         File submissionFolder = submissionsFolderPath.toFile();
         if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {
@@ -175,8 +178,6 @@ public abstract class SubmissionExportService {
         finally {
             deleteTempFiles(submissionFilePaths);
         }
-
-        fileService.scheduleForDeletion(zipFilePath, 5);
 
         return Optional.of(zipFilePath.toFile());
     }

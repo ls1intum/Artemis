@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,9 @@ public class ModelingExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    @Value("${artemis.submission-export-path}")
+    private String submissionExportPath;
+
     private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final UserRepository userRepository;
@@ -78,11 +82,14 @@ public class ModelingExerciseResource {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final FileService fileService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository,
+            FileService fileService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -98,6 +105,7 @@ public class ModelingExerciseResource {
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
+        this.fileService = fileService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -347,7 +355,9 @@ public class ModelingExerciseResource {
         }
 
         try {
-            Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, new ArrayList<>());
+            Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
+            Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>());
+            fileService.scheduleForDirectoryDeletion(outputDir, 30);
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()

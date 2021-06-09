@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -50,6 +51,9 @@ public class TextExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    @Value("${artemis.submission-export-path}")
+    private String submissionExportPath;
+
     private final FeedbackRepository feedbackRepository;
 
     private final TextBlockRepository textBlockRepository;
@@ -90,13 +94,15 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final FileService fileService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
             ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, FileService fileService) {
         this.feedbackRepository = feedbackRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
@@ -117,6 +123,7 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
+        this.fileService = fileService;
     }
 
     /**
@@ -521,7 +528,9 @@ public class TextExerciseResource {
         }
 
         try {
-            Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, new ArrayList<>());
+            Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
+            Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>());
+            fileService.scheduleForDirectoryDeletion(outputDir, 30);
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()
