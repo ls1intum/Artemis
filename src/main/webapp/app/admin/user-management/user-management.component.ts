@@ -19,7 +19,7 @@ import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
     templateUrl: './user-management.component.html',
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-    search = new Subject<string>();
+    search = new Subject<void>();
     loadingSearchResult = false;
     currentAccount?: User;
     users: User[];

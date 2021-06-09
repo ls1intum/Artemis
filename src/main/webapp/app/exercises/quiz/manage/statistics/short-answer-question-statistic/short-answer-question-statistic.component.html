@@ -34,13 +34,13 @@
                 <div>
                     <p>&nbsp;</p>
                     <div class="row">
-                        <div class="col-md-7 text-left">
+                        <div class="col-md-7 text-start">
                             <p id="text" style="font-size: large">
                                 <span *ngIf="rated" jhiTranslate="showStatistic.questionStatistic.titleRated"></span>
                                 <span *ngIf="!rated" jhiTranslate="showStatistic.questionStatistic.titleUnrated"></span>
                             </p>
                         </div>
-                        <div class="col-md-5 text-right">
+                        <div class="col-md-5 text-end">
                             <p style="font-size: large">
                                 <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                             </p>

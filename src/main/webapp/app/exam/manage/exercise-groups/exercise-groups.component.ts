@@ -115,10 +115,10 @@ export class ExerciseGroupsComponent implements OnInit {
     /**
      * Delete the exercise group with the given id.
      * @param exerciseGroupId {number}
-     * @param $event representation of users choices to delete the student repositories and base repositories
+     * @param event representation of users choices to delete the student repositories and base repositories
      */
-    deleteExerciseGroup(exerciseGroupId: number, $event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+    deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
+        this.exerciseGroupService.delete(this.courseId, this.examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.jhiEventManager.broadcast({
                     name: 'exerciseGroupOverviewModification',

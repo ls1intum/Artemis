@@ -18,6 +18,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 
 import interact from 'interactjs';
 import * as moment from 'moment';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',
@@ -102,7 +103,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         await super.ngOnInit();
         if (!this.leftSubmission) {
             const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
-            const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
+            const participation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId));
             this.leftSubmission = participation.submissions![0];
             setLatestSubmissionResult(this.leftSubmission, getLatestSubmissionResult(this.leftSubmission));
             this.exercise = participation.exercise as TextExercise;

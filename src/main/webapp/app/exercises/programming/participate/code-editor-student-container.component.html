@@ -12,7 +12,7 @@
     </div>
 </nav>
 <div *ngIf="isIllegalSubmission" class="row-container">
-    <span class="badge badge-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
+    <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
 </div>
 <jhi-code-editor-container
     *ngIf="!loadingParticipation && !participationCouldNotBeFetched"
@@ -34,7 +34,7 @@
     <!-- prettier-ignore -->
     <div editorToolbar class="d-inline-flex">
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked"
-                                              class="mr-3"></jhi-code-editor-repository-is-locked>
+                                              class="me-3"></jhi-code-editor-repository-is-locked>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"
@@ -43,15 +43,15 @@
             [participation]="participation"
             [short]="true"
             [personalParticipation]="true"
-            class="mr-2"
+            class="me-2"
         ></jhi-updating-result>
         <jhi-programming-exercise-student-trigger-build-button
-            class="mr-2"
+            class="me-2"
             [exercise]="exercise"
             [participation]="participation"
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
-        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints || []" class="mr-2"></jhi-exercise-hint-student>
+        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" [exerciseHints]="exercise.exerciseHints || []" class="me-2"></jhi-exercise-hint-student>
     </div>
     <jhi-programming-exercise-instructions
         editorSidebar
@@ -63,7 +63,7 @@
         class="instructions-wrapper__content card-body p-0"
     ></jhi-programming-exercise-instructions>
 </jhi-code-editor-container>
-<div class="row ml-0">
+<div class="row ms-0">
     <jhi-additional-feedback *ngIf="unreferencedFeedback.length > 0" class="col-xl-8 mt-3 alert unreferencedFeedback" [feedback]="unreferencedFeedback" [additional]="true">
     </jhi-additional-feedback>
 </div>
