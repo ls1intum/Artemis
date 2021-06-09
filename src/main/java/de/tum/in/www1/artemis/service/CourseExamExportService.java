@@ -98,9 +98,10 @@ public class CourseExamExportService {
             return Optional.empty();
         }
 
-        // Write report
+        // Write report and error file
         try {
             exportedFiles.add(writeReport(reportData, tmpCourseDir));
+            exportedFiles.add(writeFile(exportErrors, tmpCourseDir, "exportErrors.txt"));
         }
         catch (IOException ex) {
             log.error("Could not write report file for course {} due to the exception ", course.getId(), ex);
@@ -474,13 +475,24 @@ public class CourseExamExportService {
      * @throws IOException if any error occurs
      */
     private Path writeReport(List<ArchivalReportEntry> data, Path outputDir) throws IOException {
-        Path outputFile = outputDir.resolve("report.csv");
-        try (FileWriter writer = new FileWriter(outputFile.toFile())) {
-            writer.write(ArchivalReportEntry.getHeadline());
-            writer.write(System.lineSeparator());
+        List<String> lines = data.stream().map(ArchivalReportEntry::toString).collect(Collectors.toList());
+        lines.add(0, ArchivalReportEntry.getHeadline());
+        return writeFile(lines, outputDir, "report.csv");
+    }
 
-            for (ArchivalReportEntry entry : data) {
-                writer.write(entry.toString());
+    /**
+     * Writes the given lines in a file with the given name in the given output directory
+     * @param data line to write
+     * @param outputDir directory to create the file in
+     * @param fileName name of the file to write to
+     * @return the created file
+     * @throws IOException if any error occurs
+     */
+    private Path writeFile(List<String> data, Path outputDir, String fileName) throws IOException {
+        Path outputFile = outputDir.resolve(fileName);
+        try (FileWriter writer = new FileWriter(outputFile.toFile())) {
+            for (String line : data) {
+                writer.write(line);
                 writer.write(System.lineSeparator());
             }
         }
