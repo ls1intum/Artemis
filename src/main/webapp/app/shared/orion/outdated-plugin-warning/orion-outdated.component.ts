@@ -9,11 +9,11 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
     template: `
         <h2 class="text-danger font-weight-bold" jhiTranslate="artemisApp.orion.version.outdated">The version of Orion you are currently using is outdated!</h2>
         <div class="font-weight-bold ">
-            {{ 'artemisApp.orion.version.usedVersion' | artemisTranslate }}<span class="badge badge-pill badge-danger">{{ versionString }}</span
+            {{ 'artemisApp.orion.version.usedVersion' | artemisTranslate }}<span class="badge bg-pill bg-danger">{{ versionString }}</span
             >!
         </div>
         <div>
-            {{ 'artemisApp.orion.version.allowedVersion' | artemisTranslate }}<span class="badge badge-pill badge-info">{{ allowedMinimumVersion }}</span>
+            {{ 'artemisApp.orion.version.allowedVersion' | artemisTranslate }}<span class="badge bg-pill bg-info">{{ allowedMinimumVersion }}</span>
         </div>
     `,
 })

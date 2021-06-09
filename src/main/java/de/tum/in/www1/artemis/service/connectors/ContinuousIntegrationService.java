@@ -43,6 +43,13 @@ public interface ContinuousIntegrationService {
             VcsRepositoryUrl solutionRepositoryURL);
 
     /**
+     * Recreates BASE and SOLUTION Build Plan for the given programming exercise
+     *
+     * @param exercise for which the build plans should be recreated
+     */
+    void recreateBuildPlansForExercise(ProgrammingExercise exercise);
+
+    /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
      *
      * @param sourceProjectKey The key of the source project, normally the key of the exercise -> courseShortName + exerciseShortName.

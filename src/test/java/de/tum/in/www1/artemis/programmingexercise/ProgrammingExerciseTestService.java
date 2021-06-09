@@ -120,6 +120,9 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.lti.user-prefix-edx:#{null}}")
     private Optional<String> userPrefixEdx;
 
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     public Course course;
 
     public ProgrammingExercise exercise;
@@ -142,11 +145,15 @@ public class ProgrammingExerciseTestService {
 
     public LocalRepository solutionRepo = new LocalRepository();
 
+    public LocalRepository auxRepo = new LocalRepository();
+
     public LocalRepository sourceExerciseRepo = new LocalRepository();
 
     public LocalRepository sourceTestRepo = new LocalRepository();
 
     public LocalRepository sourceSolutionRepo = new LocalRepository();
+
+    public LocalRepository sourceAuxRepo = new LocalRepository();
 
     public LocalRepository studentRepo = new LocalRepository();
 
@@ -172,13 +179,15 @@ public class ProgrammingExerciseTestService {
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
         sourceExerciseRepo.configureRepos("sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
         sourceTestRepo.configureRepos("sourceTestLocalRepo", "sourceTestOriginRepo");
         sourceSolutionRepo.configureRepos("sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
+        sourceAuxRepo.configureRepos("sourceAuxLocalRepo", "sourceAuxOriginRepo");
         studentRepo.configureRepos("studentRepo", "studentOriginRepo");
         studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginRepo");
 
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupRepositoryMocksParticipant(exercise, studentLogin, studentRepo);
         setupRepositoryMocksParticipant(exercise, teamShortName, studentTeamRepo);
     }
@@ -191,29 +200,43 @@ public class ProgrammingExerciseTestService {
         sourceExerciseRepo.resetLocalRepo();
         sourceTestRepo.resetLocalRepo();
         sourceSolutionRepo.resetLocalRepo();
+        sourceAuxRepo.resetLocalRepo();
         studentRepo.resetLocalRepo();
         studentTeamRepo.resetLocalRepo();
     }
 
     public void setupRepositoryMocks(ProgrammingExercise exercise) throws Exception {
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
-    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository)
-            throws Exception {
+    /**
+     * Mocks the access and interaction with repository mocks on the local file system.
+     *
+     * @param exercise for which mock repositories should be created
+     * @param exerciseRepository represents exercise template code repository
+     * @param solutionRepository represents exercise solution code repository
+     * @param testRepository represents exercise test code repository
+     * @param auxRepository represents an arbitrary template code repository
+     * @throws Exception in case any repository url is malformed or the GitService fails
+     */
+    public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
+            LocalRepository auxRepository) throws Exception {
         final var projectKey = exercise.getProjectKey();
 
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
+        final var auxRepoName = exercise.generateRepositoryName("auxrepo");
 
         var exerciseRepoTestUrl = new MockFileRepositoryUrl(exerciseRepository.originRepoFile);
         var testRepoTestUrl = new MockFileRepositoryUrl(testRepository.originRepoFile);
         var solutionRepoTestUrl = new MockFileRepositoryUrl(solutionRepository.originRepoFile);
+        var auxRepoTestUrl = new MockFileRepositoryUrl(auxRepository.originRepoFile);
 
         doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, exerciseRepoName);
         doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
         doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, solutionRepoName);
+        doReturn(auxRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, auxRepoName);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(exerciseRepoTestUrl, true);
@@ -221,6 +244,7 @@ public class ProgrammingExerciseTestService {
                 true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionRepoTestUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(auxRepoTestUrl, true);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
@@ -228,14 +252,17 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(exerciseRepoName, exerciseRepoTestUrl);
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(testRepoName, testRepoTestUrl);
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(solutionRepoName, solutionRepoTestUrl);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUrl(auxRepoName, auxRepoTestUrl);
 
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, exerciseRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, testRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, solutionRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, auxRepoTestUrl);
 
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + exerciseRepoName, exerciseRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + testRepoName, testRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + solutionRepoName, solutionRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + auxRepoName, auxRepoTestUrl);
 
         mockDelegate.mockGetProjectKeyFromAnyUrl(projectKey);
     }
@@ -264,7 +291,7 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
         exercise.setSequentialTestRuns(true);
-        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -331,7 +358,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
-        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
@@ -345,8 +372,15 @@ public class ProgrammingExerciseTestService {
         // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
     }
 
+    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws MalformedURLException {
+        AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
+        var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
+        repository.setRepositoryUrl(url.toString());
+        auxiliaryRepositoryRepository.save(repository);
+    }
+
     // TEST
-    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
+    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.SWIFT;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
@@ -358,10 +392,13 @@ public class ProgrammingExerciseTestService {
         commonImportSetup(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
+        if (addAuxRepos) {
+            addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
+        }
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request parameters
         var params = new LinkedMultiValueMap<String, String>();
@@ -407,8 +444,8 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, true, true);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
@@ -431,8 +468,8 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, false, false);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
@@ -467,8 +504,8 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
@@ -507,8 +544,8 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
@@ -532,8 +569,8 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
@@ -559,8 +596,8 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();

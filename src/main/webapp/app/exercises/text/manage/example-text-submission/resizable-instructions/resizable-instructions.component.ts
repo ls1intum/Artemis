@@ -11,7 +11,7 @@ export class ResizableInstructionsComponent {
     @Input() public problemStatement?: string;
     @Input() public sampleSolution?: string;
     @Input() public gradingInstructions?: string;
-    @Input() public toggleCollapse: ($event: any, type?: string) => void;
+    @Input() public toggleCollapse: (event: any, type?: string) => void;
     @Input() public toggleCollapseId?: string;
     @Input() readOnly: boolean;
 

@@ -1,30 +1,28 @@
 const webpack = require('webpack');
 const { merge } = require('webpack-merge');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const OptimizeCSSAssetsPlugin = require('css-minimizer-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const MomentLocalesPlugin = require('moment-locales-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const WorkboxPlugin = require('workbox-webpack-plugin');
 
-const utils = require('./utils.js');
-const commonConfig = require('./webpack.common.js');
+import { commonConfig } from './webpack.common';
+import { root } from './utils';
 
-const ENV = 'production';
 const sass = require('sass');
 
-module.exports = merge(commonConfig({ env: ENV }), {
+module.exports = merge(commonConfig({ env: '"production"' }), {
     // Enable source maps. Please note that this will slow down the build.
-    // You have to enable it in Terser config below and in tsconfig.app.json as well
     devtool: 'source-map',
     entry: {
         global: './src/main/webapp/content/scss/global.scss',
         main: './src/main/webapp/app/app.main'
     },
     output: {
-        path: utils.root('build/resources/main/static/'),
-        filename: 'app/[name].[hash].bundle.js',
-        chunkFilename: 'app/[id].[hash].chunk.js'
+        path: root('build/resources/main/static/'),
+        filename: 'app/[name].[chunkhash].bundle.js',
+        chunkFilename: 'app/[id].[chunkhash].chunk.js'
     },
     module: {
         rules: [
@@ -97,8 +95,6 @@ module.exports = merge(commonConfig({ env: ENV }), {
         minimizer: [
             new TerserPlugin({
                 parallel: 2,
-                cache: true,
-                sourceMap: true, // Enable source maps. Please note that this will slow down the build
                 terserOptions: {
                     ecma: 6,
                     ie8: false,
@@ -137,17 +133,12 @@ module.exports = merge(commonConfig({ env: ENV }), {
     },
     plugins: [
         new MiniCssExtractPlugin({
-            // Options similar to the same options in webpackOptions.output
-            // both options are optional
+            // Options similar to the same options in webpackOptions.output, both options are optional
             filename: 'content/[name].[contenthash].css',
             chunkFilename: '[id].css'
         }),
         new MomentLocalesPlugin({
-            localesToKeep: [
-                'en',
-                'de'
-                // jhipster-needle-i18n-language-moment-webpack - JHipster will add/remove languages in this array
-            ]
+            localesToKeep: ['en', 'de']
         }),
         new BundleAnalyzerPlugin({
             analyzerMode: 'static',
