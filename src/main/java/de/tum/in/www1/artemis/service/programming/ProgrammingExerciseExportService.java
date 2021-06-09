@@ -265,14 +265,13 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
-     * solution, or tests repository
+     * Exports an auxiliary repository for a given programming exercise.
      *
      * @param exerciseId     The id of the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
-     * @param outputDir The directory used for store the zip file
+     * @param outputDir The directory used for storing the zip file
      * @param exportErrors   List of failures that occurred during the export
-     * @return a zipped file
+     * @return the zipped file containing the auxiliary repository
      */
     public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, Path outputDir, List<String> exportErrors) {
         var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, auxiliaryRepository.getName(), exportErrors);

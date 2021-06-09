@@ -371,7 +371,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * Sets the attribute invalidRepositoryNamePattern to an updated RegExp that does not allow auxiliary repository names that are already used for this exercise and only allows
-     * "-" besides [A-z]
+     * "-" besides [0-9A-z]
      */
     private setInvalidRepoNamePattern() {
         let invalidRepoNames = '';
@@ -381,7 +381,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * Sets the attribute invalidDirectoryNamePattern to an updated RegExp that does not allow directory names that are already used for other auxiliary repositories of this
-     * exercise "-" besides [A-z]
+     * exercise "-" besides [0-9A-z]
      */
     private setInvalidDirectoryNamePattern() {
         let invalidDirectoryNames = '';

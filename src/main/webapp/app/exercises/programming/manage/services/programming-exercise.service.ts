@@ -53,7 +53,15 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the programming exercise for which the structure oracle should be created
      */
     generateStructureOracle(exerciseId: number): Observable<string> {
-        return this.http.put<string>(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
+        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/generate-tests`, { responseType: 'text' });
+    }
+
+    /**
+     * Recreates the BASE and SOLUTION build plan for this exercise
+     * @param exerciseId of the programming exercise for which the build plans should be recreated
+     */
+    recreateBuildPlans(exerciseId: number): Observable<string> {
+        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/recreate-build-plans`, { responseType: 'text' });
     }
 
     /**
@@ -114,7 +122,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the particular programming exercise
      */
     combineTemplateRepositoryCommits(exerciseId: number) {
-        return this.http.put(this.resourceUrl + '/' + exerciseId + '/combine-template-commits', { responseType: 'text' });
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/combine-template-commits`, { responseType: 'text' });
     }
 
     /**
@@ -352,6 +360,7 @@ export class ProgrammingExerciseService {
      * Exports the solution, template or test repository for a given exercise.
      * @param exerciseId
      * @param repositoryType
+     * @param auxiliaryRepositoryId
      */
     exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType, auxiliaryRepositoryId: number): Observable<HttpResponse<Blob>> {
         if (repositoryType === 'AUXILIARY') {
