@@ -286,7 +286,8 @@
                 "invalidRepositoryName": "The repository name does already exist for this exercise!",
                 "invalidDirectoryName": "An existing repository is already checked out into this directory!",
                 "noModificationPossibleWarning": "It is not possible to modify the entered details (repository name, checkout directory, description) after the generation of the auxiliary repository!",
-                "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!"
+                "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!",
+                "auxiliaryRepositoryCreationNotAutomatic": "The auxiliary repository {{auxRepoName}} needs to be manually created and added to the build plan!"
             }
         },
         "error": {

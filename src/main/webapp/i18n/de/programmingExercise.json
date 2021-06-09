@@ -286,7 +286,8 @@
                 "invalidRepositoryName": "Es existiert bereits ein Repository mit dem angegebenen Namen für diese Aufgabe!",
                 "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
                 "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfs-Repositories zu ändern.",
-                "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
+                "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden.",
+                "auxiliaryRepositoryCreationNotAutomatic": "Das Hilfs-Repository {{auxRepoName}} muss manuell erstellt und zum Build Plan hinzugefügt werden!"
             }
         },
         "error": {

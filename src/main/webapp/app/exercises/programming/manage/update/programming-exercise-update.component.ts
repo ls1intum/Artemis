@@ -137,6 +137,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
         return (newValue: any) => {
             editedAuxiliaryRepository.name = newValue;
+            this.computeInvalidWarnings();
             return editedAuxiliaryRepository.name;
         };
     }
