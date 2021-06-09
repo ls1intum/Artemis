@@ -193,7 +193,7 @@ public class ProgrammingExerciseExportService {
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
         List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).collect(Collectors.toList());
 
-        reportData.add(new ArchivalReportEntry(exercise.getId(), exercise.getProjectName(), pathsToBeZipped.size(), includedFilePathsNotNull.size()));
+        reportData.add(new ArchivalReportEntry(exercise.getId(), cleanFilename.replace(".zip", ""), pathsToBeZipped.size(), includedFilePathsNotNull.size()));
 
         try {
             // Only create zip file if there's files to zip
