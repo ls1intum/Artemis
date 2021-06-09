@@ -27,7 +27,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public orientation: Orientation;
     public transformX: number;
     /**
-     * The current tour step should be of type the TourStep subclasses or null but have to be declared as any in this case
+     * The current tour step should be of type the TourStep subclasses or undefined but have to be declared as any in this case
      * since the build would fail with Property 'x' does not exist on type 'y' when accessing properties of subclasses in the html template
      * that are not available for all subclasses
      */
