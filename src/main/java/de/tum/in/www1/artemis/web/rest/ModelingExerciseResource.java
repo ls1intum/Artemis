@@ -358,7 +358,7 @@ public class ModelingExerciseResource {
 
         try {
             Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
-            Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>());
+            Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
             fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
 
             if (zipFile.isEmpty()) {
