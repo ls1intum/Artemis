@@ -241,7 +241,7 @@ describe('GuidedTourService', () => {
             });
 
             it('should start and skip the tour', () => {
-                const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.close'));
+                const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.btn-close'));
                 expect(skipButton).to.exist;
                 skipButton.nativeElement.click();
                 guidedTourComponentFixture.detectChanges();

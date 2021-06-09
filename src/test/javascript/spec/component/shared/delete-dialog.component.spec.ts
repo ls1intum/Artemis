@@ -52,7 +52,7 @@ describe('DeleteDialogComponent', () => {
         comp.dialogError = new Observable<string>();
         fixture.detectChanges();
 
-        const closeButton = fixture.debugElement.query(By.css('.close'));
+        const closeButton = fixture.debugElement.query(By.css('.btn-close'));
         expect(closeButton).to.exist;
         closeButton.nativeElement.click();
         expect(ngbActiveModal.dismiss).to.be.calledOnce;
