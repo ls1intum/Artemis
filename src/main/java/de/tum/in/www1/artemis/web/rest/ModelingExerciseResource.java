@@ -84,6 +84,8 @@ public class ModelingExerciseResource {
 
     private final FileService fileService;
 
+    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
@@ -357,7 +359,7 @@ public class ModelingExerciseResource {
         try {
             Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
             Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>());
-            fileService.scheduleForDirectoryDeletion(outputDir, 30);
+            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()
