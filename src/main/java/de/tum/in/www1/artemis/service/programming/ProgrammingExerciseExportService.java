@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
@@ -103,7 +104,8 @@ public class ProgrammingExerciseExportService {
         var pathsToBeZipped = new ArrayList<Path>();
 
         // Add the exported zip folder containing template, solution, and tests repositories
-        pathsToBeZipped.add(exportProgrammingExerciseRepositories(exercise, false, exportDir, exportErrors));
+        // Ignore report data
+        pathsToBeZipped.add(exportProgrammingExerciseRepositories(exercise, false, exportDir, exportErrors, new ArrayList<>()));
 
         // Add problem statement as .md file
         var problemStatementFileExtension = ".md";
@@ -153,9 +155,11 @@ public class ProgrammingExerciseExportService {
      * @param includingStudentRepos flag for including the students repos as well
      * @param outputDir             the path to a directory that will be used to store the zipped programming exercise.
      * @param exportErrors          List of failures that occurred during the export
+     * @param reportData            List of all exercises and their statistics
      * @return the path to the zip file
      */
-    public Path exportProgrammingExerciseRepositories(ProgrammingExercise exercise, Boolean includingStudentRepos, Path outputDir, List<String> exportErrors) {
+    public Path exportProgrammingExerciseRepositories(ProgrammingExercise exercise, Boolean includingStudentRepos, Path outputDir, List<String> exportErrors,
+            List<ArchivalReportEntry> reportData) {
         log.info("Exporting programming exercise {} with title {}", exercise.getId(), exercise.getTitle());
         // List to add paths of files that should be contained in the zip folder of exported programming exercise repositories:
         // i.e., student repositories (if `includingStudentRepos` is true), instructor repositories template, solution and tests
@@ -188,6 +192,8 @@ public class ProgrammingExerciseExportService {
 
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
         List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).collect(Collectors.toList());
+
+        reportData.add(new ArchivalReportEntry(exercise.getId(), exercise.getProjectName(), pathsToBeZipped.size(), includedFilePathsNotNull.size()));
 
         try {
             // Only create zip file if there's files to zip

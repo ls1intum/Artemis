@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 @Service
@@ -50,11 +51,12 @@ public abstract class SubmissionExportService {
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
      * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
+     * @param reportData   a list of all exercises and their statistics
      * @return a reference to the zipped file
      * @throws IOException if an error occurred while zipping
      */
-    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, Path outputDir, List<String> exportErrors)
-            throws IOException {
+    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, Path outputDir, List<String> exportErrors,
+            List<ArchivalReportEntry> reportData) throws IOException {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
@@ -94,7 +96,7 @@ public abstract class SubmissionExportService {
         // Sort the student participations by id
         exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
-        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate, outputDir, exportErrors);
+        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate, outputDir, exportErrors, reportData);
     }
 
     /**
@@ -107,11 +109,12 @@ public abstract class SubmissionExportService {
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
      * @param  exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
+     * @param reportData   a list of all exercises and their statistics
      * @return the zipped file
      * @throws IOException if an error occurred while zipping
      */
     private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter,
-            Path outputDir, List<String> exportErrors) throws IOException {
+            Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
@@ -167,6 +170,8 @@ public abstract class SubmissionExportService {
             }
 
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+
+        reportData.add(new ArchivalReportEntry(exercise.getId(), exercise.getTitle(), participations.size(), submissionFilePaths.size()));
 
         if (submissionFilePaths.isEmpty()) {
             return Optional.empty();
