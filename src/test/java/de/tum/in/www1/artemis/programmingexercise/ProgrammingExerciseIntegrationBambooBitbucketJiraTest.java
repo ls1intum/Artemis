@@ -706,6 +706,162 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationServiceTest.testGetPlagiarismResultWithoutExercise();
     }
 
+    // Auxiliary Repository Tests
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateValidAuxiliaryRepository() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateValidAuxiliaryRepository();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryIdSetOnRequest();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithoutName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithTooLongName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithDuplicatedName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithRestrictedName();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithoutCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithNullCheckoutDirectory();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithTooLongDescription();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
+        programmingExerciseIntegrationServiceTest.testValidateAuxiliaryRepositoryWithoutDescription();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesMissingExercise();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetAuxiliaryRepositoriesOk() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesOk();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    public void testGetAuxiliaryRepositoriesForbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
+        programmingExerciseIntegrationServiceTest.testGetAuxiliaryRepositoriesEmptyOk();
+    }
+
+    // Tests for recreate build plan endpoint
+
+    @Test
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    public void testRecreateBuildPlansForbiddenStudent() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testRecreateBuildPlansForbiddenTutor() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testRecreateBuildPlansExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testRecreateBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationServiceTest.testRecreateBuildPlansExerciseSuccess();
+    }
+
+    // Tests for export auxiliary repository for exercise endpoint
+
+    @Test
+    @WithMockUser(value = "student1", roles = "STUDENT")
+    public void testExportAuxiliaryRepositoryForbidden() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryForbidden();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(value = "editor1", roles = "EDITOR")
+    public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testExportAuxiliaryRepositoryRepositoryNotFound();
+    }
+
     @Test
     @WithMockUser(value = "instructoralt1", roles = "INSTRUCTOR")
     public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {

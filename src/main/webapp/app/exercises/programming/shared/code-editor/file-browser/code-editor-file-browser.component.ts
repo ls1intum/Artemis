@@ -6,7 +6,6 @@ import { compose, filter, fromPairs, toPairs } from 'lodash/fp';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { textFileExtensions } from './text-files.json';
 import {
     CommitState,
     CreateFileChange,
@@ -22,6 +21,16 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
+import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
+
+export type InteractableEvent = {
+    // Click event object; contains target information
+    event: any;
+    // Used to decide which height to use for the collapsed element
+    horizontal: boolean;
+    // The interactjs element, used to en-/disable resizing
+    interactable: Interactable;
+};
 
 @Component({
     selector: 'jhi-code-editor-file-browser',
@@ -55,8 +64,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     isTutorAssessment = false;
     @Input()
     highlightFileChanges = false;
+
     @Output()
-    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
+    onToggleCollapse = new EventEmitter<InteractableEvent>();
     @Output()
     onFileChange = new EventEmitter<[string[], FileChange]>();
     @Output()
@@ -243,7 +253,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     handleNodeSelected(item: TreeviewItem) {
         if (item && item.value !== this.selectedFile) {
             item.checked = true;
-            // If we had selected a file prior to this, we "uncheck" it
+            // If we had selected a file prior to this, we 'uncheck' it
             if (this.selectedFile) {
                 const priorFileSelection = TreeviewHelper.findItemInList(this.filesTreeViewItem, this.selectedFile);
                 // Avoid issues after file deletion
@@ -362,10 +372,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
-     * @param $event
+     * @param event
      */
-    toggleEditorCollapse($event: any) {
-        this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.resizableMinWidth });
+    toggleEditorCollapse(event: any) {
+        this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
     }
 
     /**
@@ -373,8 +383,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * and emit the changes to the parent.
      * After rename the rename state is exited.
      **/
-    onRenameFile($event: any) {
-        const newFileName: string = $event as string;
+    onRenameFile(event: any) {
+        const newFileName = event as string;
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
         if (!this.renamingFile) {
             return;
@@ -387,7 +397,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
             this.onError.emit('fileExists');
             return;
-        } else if (newFileName.split('.').length > 1 && !textFileExtensions.includes(newFileName.split('.').pop()!)) {
+        } else if (newFileName.split('.').length > 1 && !supportedTextFileExtensions.includes(newFileName.split('.').pop()!)) {
             this.onError.emit('unsupportedFile');
             return;
         }
@@ -425,7 +435,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
         const [folderPath, fileType] = this.creatingFile;
 
-        if (fileName.split('.').length > 1 && !textFileExtensions.includes(fileName.split('.').pop()!)) {
+        if (fileName.split('.').length > 1 && !supportedTextFileExtensions.includes(fileName.split('.').pop()!)) {
             this.onError.emit('unsupportedFile');
             return;
         } else if (Object.keys(this.repositoryFiles).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
@@ -488,7 +498,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     filter(([filename]) => {
                         const fileSplit = filename.split('.');
                         // Either the file has no ending or the file ending is allowed
-                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop()!);
+                        return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
                     }),
                     toPairs,
                 )(files),
@@ -508,7 +518,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     filter(([filename]) => {
                         const fileSplit = filename.split('.');
                         // Either the file has no ending or the file ending is allowed
-                        return fileSplit.length === 1 || textFileExtensions.includes(fileSplit.pop()!);
+                        return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
                     }),
                     toPairs,
                 )(files),

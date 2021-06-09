@@ -18,7 +18,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
 
-    public exerciseStatusBadge = 'badge-success';
+    public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
 
     getIcon = getIcon;
@@ -57,7 +57,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
-            this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+            this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
         }
     }
 }

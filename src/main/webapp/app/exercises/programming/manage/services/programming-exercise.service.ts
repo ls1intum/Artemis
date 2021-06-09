@@ -26,7 +26,7 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: Moment;
 };
 
-export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS';
+export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
@@ -53,7 +53,15 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the programming exercise for which the structure oracle should be created
      */
     generateStructureOracle(exerciseId: number): Observable<string> {
-        return this.http.put<string>(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
+        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/generate-tests`, { responseType: 'text' });
+    }
+
+    /**
+     * Recreates the BASE and SOLUTION build plan for this exercise
+     * @param exerciseId of the programming exercise for which the build plans should be recreated
+     */
+    recreateBuildPlans(exerciseId: number): Observable<string> {
+        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/recreate-build-plans`, { responseType: 'text' });
     }
 
     /**
@@ -106,7 +114,7 @@ export class ProgrammingExerciseService {
      * @param exerciseId of the particular programming exercise
      */
     combineTemplateRepositoryCommits(exerciseId: number) {
-        return this.http.put(this.resourceUrl + '/' + exerciseId + '/combine-template-commits', { responseType: 'text' });
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/combine-template-commits`, { responseType: 'text' });
     }
 
     /**
@@ -344,12 +352,20 @@ export class ProgrammingExerciseService {
      * Exports the solution, template or test repository for a given exercise.
      * @param exerciseId
      * @param repositoryType
+     * @param auxiliaryRepositoryId
      */
-    exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-repository/${repositoryType}`, {
-            observe: 'response',
-            responseType: 'blob',
-        });
+    exportInstructorRepository(exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType, auxiliaryRepositoryId: number): Observable<HttpResponse<Blob>> {
+        if (repositoryType === 'AUXILIARY') {
+            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository/${auxiliaryRepositoryId}`, {
+                observe: 'response',
+                responseType: 'blob',
+            });
+        } else {
+            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-repository/${repositoryType}`, {
+                observe: 'response',
+                responseType: 'blob',
+            });
+        }
     }
 
     /**

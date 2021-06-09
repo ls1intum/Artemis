@@ -18,6 +18,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
@@ -38,6 +39,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
+    supportsAuxiliaryRepositories: boolean;
 
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
@@ -58,6 +60,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
+        private profileService: ProfileService,
         private statisticsService: StatisticsService,
     ) {}
 
@@ -89,6 +92,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
+        });
+
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+            }
         });
     }
 
@@ -157,14 +166,29 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
+    recreateBuildPlans() {
+        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe(
+            (res) => {
+                const jhiAlert = this.jhiAlertService.success(res);
+                jhiAlert.msg = res;
+            },
+            (error) => {
+                const errorMessage = error.headers.get('X-artemisApp-alert');
+                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+                const jhiAlert = this.jhiAlertService.error(errorMessage);
+                jhiAlert.msg = errorMessage;
+            },
+        );
+    }
+
     /**
      * Cleans up programming exercise
-     * @param $event contains additional checks from the dialog
+     * @param event contains additional checks from the dialog
      */
-    cleanupProgrammingExercise($event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(this.programmingExercise.id!, $event.deleteRepositories).subscribe(
+    cleanupProgrammingExercise(event: { [key: string]: boolean }) {
+        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe(
             () => {
-                if ($event.deleteRepositories) {
+                if (event.deleteRepositories) {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
                 } else {
                     this.jhiAlertService.success('artemisApp.programmingExercise.cleanup.successMessage');
@@ -175,8 +199,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
-    public deleteProgrammingExercise($event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.programmingExercise.id!, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+    public deleteProgrammingExercise(event: { [key: string]: boolean }) {
+        this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',

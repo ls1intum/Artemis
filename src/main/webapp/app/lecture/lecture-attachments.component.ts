@@ -152,12 +152,12 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     /**
      * @function setLectureAttachment
-     * @param $event {object} Event object which contains the uploaded file
+     * @param event {object} Event object which contains the uploaded file
      */
-    setLectureAttachment($event: any): void {
-        if ($event.target.files.length) {
+    setLectureAttachment(event: any): void {
+        if (event.target.files.length) {
             this.erroredFile = undefined;
-            const fileList: FileList = $event.target.files;
+            const fileList: FileList = event.target.files;
             const attachmentFile = fileList[0];
             this.attachmentFile = attachmentFile;
             this.attachmentToBeCreated!.link = attachmentFile['name'];

@@ -16,7 +16,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
@@ -25,7 +25,7 @@ import { MockComponent } from 'ng-mocks/dist/lib/mock-component/mock-component';
 import { MockDirective } from 'ng-mocks/dist/lib/mock-directive/mock-directive';
 import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import { spy } from 'sinon';
 import * as sinonChai from 'sinon-chai';
@@ -228,6 +228,19 @@ describe('ExamParticipationCoverComponent', () => {
     it('should get end button enabled', () => {
         component.enteredName = 'admin';
         expect(component.inserted).to.be.true;
+    });
+
+    it('should disable exam button', () => {
+        component.ngOnInit();
+        component.testRun = false;
+        const now = moment();
+        spyOn(artemisServerDateService, 'now').and.returnValue(now);
+        component.enteredName = 'user';
+        component.accountName = 'user';
+        component.confirmed = true;
+        component.exam.visibleDate = moment().subtract(1, 'hours');
+        component.exam.visibleDate = moment().add(1, 'hours');
+        expect(component.startButtonEnabled).to.be.false;
     });
 
     it('should get whether student failed to submit', () => {

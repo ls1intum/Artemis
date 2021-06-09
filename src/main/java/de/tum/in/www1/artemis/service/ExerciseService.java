@@ -103,6 +103,8 @@ public class ExerciseService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final PlagiarismResultRepository plagiarismResultRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
             QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
@@ -110,7 +112,7 @@ public class ExerciseService {
             ProgrammingExerciseRepository programmingExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository,
             FeedbackRepository feedbackRepository, ProgrammingAssessmentService programmingAssessmentService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
@@ -139,6 +141,7 @@ public class ExerciseService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.feedbackRepository = feedbackRepository;
         this.programmingAssessmentService = programmingAssessmentService;
+        this.plagiarismResultRepository = plagiarismResultRepository;
     }
 
     /**
@@ -358,11 +361,15 @@ public class ExerciseService {
     }
 
     /**
-     * Resets an Exercise by deleting all its participations
+     * Resets an Exercise by deleting all its participations and plagiarsim results
+     *
      * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
+
+        // delete all plagiarism results for this exercise
+        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
         // delete all participations for this exercise
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
@@ -389,6 +396,9 @@ public class ExerciseService {
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             this.lectureUnitService.removeLectureUnit(exerciseUnit);
         }
+
+        // delete all plagiarism results belonging to this exercise
+        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
 
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);

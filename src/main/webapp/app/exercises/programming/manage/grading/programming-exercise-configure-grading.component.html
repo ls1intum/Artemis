@@ -39,7 +39,7 @@
                                 <h2 class="mb-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title">Test Cases</h2>
                                 <label class="d-flex align-items-center mb-2">
                                     <input type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
-                                    <span class="ml-2" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive">Show inactive</span>
+                                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive">Show inactive</span>
                                 </label>
                             </div>
                             <jhi-programming-exercise-grading-table-actions
@@ -72,7 +72,7 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] || 'transparent' }" class="mr-2"></fa-icon>
+                                    <fa-icon [icon]="'square'" [styles]="{ color: testCaseColors[value] || 'transparent' }" class="me-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -83,7 +83,7 @@
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'weight')"></fa-icon
                                         ><fa-icon
                                             [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
+                                            class="text-secondary ms-2"
                                             placement="bottom"
                                             [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | artemisTranslate"
                                             container="body"
@@ -105,7 +105,7 @@
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'bonusMultiplier')"></fa-icon
                                         ><fa-icon
                                             [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
+                                            class="text-secondary ms-2"
                                             placement="bottom"
                                             [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | artemisTranslate"
                                             container="body"
@@ -127,7 +127,7 @@
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'bonusPoints')"></fa-icon>
                                         <fa-icon
                                             [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
+                                            class="text-secondary ms-2"
                                             placement="bottom"
                                             [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | artemisTranslate"
                                             container="body"
@@ -147,7 +147,7 @@
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Visibility</span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'visibility')"></fa-icon>
-                                        <fa-icon [icon]="'question-circle'" class="text-secondary ml-2" [ngbPopover]="popoverContent" placement="bottom" container="body"></fa-icon>
+                                        <fa-icon [icon]="'question-circle'" class="text-secondary ms-2" [ngbPopover]="popoverContent" placement="bottom" container="body"></fa-icon>
                                     </span>
                                     <ng-template #popoverContent>
                                         <div class="d-flex flex-column run-after-due-date-disabled">
@@ -193,11 +193,7 @@
                     <div>
                         <h2 class="mb-5">
                             <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
-                            <span
-                                *ngIf="!!changedTestCaseIds.length"
-                                class="badge badge-primary"
-                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
-                            ></span>
+                            <span *ngIf="!!changedTestCaseIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                         </h2>
 
                         <jhi-test-case-distribution-chart
@@ -246,7 +242,7 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value">
-                                    <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] || 'white' }" class="mr-2"></fa-icon>
+                                    <fa-icon [icon]="'square'" [styles]="{ color: categoryColors[value] || 'white' }" class="me-2"></fa-icon>
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
@@ -257,7 +253,7 @@
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'state')"></fa-icon>
                                         <fa-icon
                                             [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
+                                            class="text-secondary ms-2"
                                             placement="bottom"
                                             [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.state' | artemisTranslate"
                                             container="body"
@@ -282,7 +278,7 @@
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'penalty')"></fa-icon>
                                         <fa-icon
                                             [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
+                                            class="text-secondary ms-2"
                                             placement="bottom"
                                             [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.penalty' | artemisTranslate"
                                             container="body"
@@ -307,7 +303,7 @@
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'maxPenalty')"></fa-icon>
                                         <fa-icon
                                             [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
+                                            class="text-secondary ms-2"
                                             placement="bottom"
                                             [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.maxPenalty' | artemisTranslate"
                                             container="body"
@@ -332,7 +328,7 @@
                                         <fa-icon [icon]="iconForSortPropField('codeAnalysis', 'detectedIssues')"></fa-icon>
                                         <fa-icon
                                             [icon]="'question-circle'"
-                                            class="text-secondary ml-2"
+                                            class="text-secondary ms-2"
                                             placement="bottom"
                                             [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.detectedIssues' | artemisTranslate"
                                             container="body"
@@ -354,11 +350,7 @@
                     <div>
                         <h2 class="mb-5">
                             <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
-                            <span
-                                *ngIf="!!changedCategoryIds.length"
-                                class="badge badge-primary"
-                                jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"
-                            ></span>
+                            <span *ngIf="!!changedCategoryIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                         </h2>
 
                         <jhi-sca-category-distribution-chart
