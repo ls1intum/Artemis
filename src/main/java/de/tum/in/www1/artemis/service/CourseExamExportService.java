@@ -304,7 +304,7 @@ public class CourseExamExportService {
      * @param progress              The previous export progress that should be used as a base
      * @param totalExerciseCount    The total amount of exercises that will be exported
      * @param exportErrors          List of failures that occurred during the export
-     * @param reportData         List of all exercises and their statistics
+     * @param reportData            List of all exercises and their statistics
      * @return                      List of paths
      */
     private List<Path> exportExam(String notificationTopic, Exam exam, Set<Exercise> examExercises, String outputDir, int progress, int totalExerciseCount,
@@ -338,7 +338,7 @@ public class CourseExamExportService {
      * @param progress              The previous export progress that should be used as a base
      * @param totalExerciseCount    The total amount of exercises that will be exported
      * @param exportErrors          List of failures that occurred during the export
-     * @param exportErrors       List of failures that occurred during the export
+     * @param reportData            List of all exercises and their statistics
      * @return                      List of paths of the exported exercises
      */
     private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, Path outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
