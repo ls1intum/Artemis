@@ -137,6 +137,9 @@ public final class Constants {
 
     public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERS_FROM_EXAM";
 
+    // same constant as in the client
+    public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
+
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 
     public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
