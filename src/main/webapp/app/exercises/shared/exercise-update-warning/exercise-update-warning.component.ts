@@ -8,7 +8,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 })
 export class ExerciseUpdateWarningComponent {
     instructionDeleted = false;
-    scoringChanged = false;
+    creditChanged = false;
     deleteFeedback = false;
 
     @Output()

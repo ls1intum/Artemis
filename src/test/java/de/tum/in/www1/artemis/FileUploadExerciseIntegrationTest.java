@@ -444,8 +444,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         gradingCriteria.remove(1);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedback=false", fileUploadExercise,
-                FileUploadExercise.class, HttpStatus.OK);
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
+                "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -467,8 +467,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         gradingCriteria.remove(0);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/re-evaluate" + "?deleteFeedback=true", fileUploadExercise,
-                FileUploadExercise.class, HttpStatus.OK);
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
+                "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().size()).isEqualTo(1);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
@@ -484,7 +484,30 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         course.setInstructorGroupName("test");
         courseRepo.save(course);
 
-        request.putWithResponseBody("/api/file-upload-exercises/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateFileUploadExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findOne(fileUploadExercise.getId());
+        fileUploadExerciseToBeConflicted.setId(123456789L);
+        fileUploadExerciseRepository.save(fileUploadExerciseToBeConflicted);
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
+                HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateFileUploadExercise_notFound() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
     }
 
 }

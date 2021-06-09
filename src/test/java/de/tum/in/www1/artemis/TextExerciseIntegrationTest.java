@@ -852,8 +852,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         gradingCriteria.remove(1);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedback=false", textExercise, TextExercise.class,
-                HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise,
+                TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -875,7 +875,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         gradingCriteria.remove(0);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/re-evaluate" + "?deleteFeedback=true", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", textExercise,
+                TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria().size()).isEqualTo(1);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
@@ -890,6 +891,27 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.putWithResponseBody("/api/text-exercises/re-evaluate", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateTextExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseId(course.getId()).get(0);
+        textExerciseToBeConflicted.setId(123456789L);
+        textExerciseRepository.save(textExerciseToBeConflicted);
+
+        request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate", textExerciseToBeConflicted, TextExercise.class, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateTextExercise_notFound() throws Exception {
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseId(course.getId()).get(0);
+
+        request.putWithResponseBody("/api/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
     }
 }

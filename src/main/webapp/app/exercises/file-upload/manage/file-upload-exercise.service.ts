@@ -84,6 +84,7 @@ export class FileUploadExerciseService {
 
     /**
      * Re-evaluates and updates an file upload exercise.
+     *
      * @param fileUploadExercise that should be updated of type {FileUploadExercise}
      * @param req optional request options
      */
@@ -92,7 +93,7 @@ export class FileUploadExerciseService {
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
+        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
         );

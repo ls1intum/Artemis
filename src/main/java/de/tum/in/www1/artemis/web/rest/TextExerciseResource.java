@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import de.tum.in.www1.artemis.security.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
@@ -590,21 +590,28 @@ public class TextExerciseResource {
     }
 
     /**
-     * PUT /text-exercises/re-evaluate : Re-evaluates and updates an existing textExercise.
+     * PUT /text-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing textExercise.
      *
-     * @param textExercise                  the textExercise to re-evaluate and update
-     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param exerciseId                                   of the exercise
+     * @param textExercise                                 the textExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
-     * with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
-     * Server Error) if the textExercise couldn't be updated
+     * with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500
+     * (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/text-exercises/re-evaluate")
+    @PutMapping("/text-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@RequestBody TextExercise textExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) throws URISyntaxException {
+    public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
+
+        // check that the exercise is exist for given id
+        TextExercise originalTextExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, textExercise);
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
 
@@ -612,7 +619,7 @@ public class TextExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterSGIUpdate);
+        exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateTextExercise(textExercise, null);
     }

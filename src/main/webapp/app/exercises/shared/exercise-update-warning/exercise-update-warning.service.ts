@@ -9,7 +9,7 @@ export class ExerciseUpdateWarningService {
     private ngbModalRef: NgbModalRef;
 
     instructionDeleted: boolean;
-    scoringChanged: boolean;
+    creditChanged: boolean;
     isSaving: boolean;
 
     constructor(private modalService: NgbModal) {}
@@ -21,7 +21,7 @@ export class ExerciseUpdateWarningService {
     open(component: Component): NgbModalRef {
         const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.instructionDeleted = this.instructionDeleted;
-        modalRef.componentInstance.scoringChanged = this.scoringChanged;
+        modalRef.componentInstance.creditChanged = this.creditChanged;
 
         return modalRef;
     }
@@ -35,10 +35,10 @@ export class ExerciseUpdateWarningService {
      */
     checkExerciseBeforeUpdate(exercise: Exercise, backupExercise: Exercise): Promise<NgbModalRef> {
         this.instructionDeleted = false;
-        this.scoringChanged = false;
+        this.creditChanged = false;
         this.loadExercise(exercise, backupExercise);
         return new Promise<NgbModalRef>((resolve) => {
-            if (this.scoringChanged || this.instructionDeleted) {
+            if (this.creditChanged || this.instructionDeleted) {
                 this.ngbModalRef = this.open(ExerciseUpdateWarningComponent as Component);
             }
             resolve(this.ngbModalRef);
@@ -84,9 +84,9 @@ export class ExerciseUpdateWarningService {
      * @param backupInstruction original not changed instruction
      */
     checkInstruction(instruction: GradingInstruction, backupInstruction: GradingInstruction): void {
-        // instruction credits changed?
+        // structured grading instruction credits changed?
         if (instruction.credits !== backupInstruction.credits) {
-            this.scoringChanged = true;
+            this.creditChanged = true;
         }
     }
 }

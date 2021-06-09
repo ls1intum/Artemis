@@ -3432,12 +3432,12 @@ public class DatabaseUtilService {
         Result result = addResultToParticipation(studentParticipation, submissionWithParticipation);
         resultRepo.save(result);
 
+        assertThat(exercise.getGradingCriteria()).isNotNull();
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).isNotNull();
+
         // add feedback which is associated with structured grading instructions
         Feedback feedback = new Feedback();
-        GradingCriterion gradingCriterion = exercise.getGradingCriteria().get(0);
-        if (gradingCriterion != null && !gradingCriterion.getStructuredGradingInstructions().isEmpty()) {
-            feedback.setGradingInstruction(gradingCriterion.getStructuredGradingInstructions().get(0));
-        }
+        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
         feedback.setResult(result);
         Feedback feedbackWithResult = feedbackRepo.save(feedback);
         result.addFeedback(feedbackWithResult);

@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.security.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -344,21 +344,28 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * PUT /file-upload-exercises/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
+     * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
-     * @param fileUploadExercise            the fileUploadExercise to re-evaluate and update
-     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param exerciseId                                   of the exercise
+     * @param fileUploadExercise                           the fileUploadExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
-     * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 500 (Internal
+     * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      * Server Error) if the fileUploadExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/file-upload-exercises/re-evaluate")
+    @PutMapping("/file-upload-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) throws URISyntaxException {
+    public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
+
+        // check that the exercise is exist for given id
+        FileUploadExercise originalFileUploadExercise = fileUploadExerciseRepository.findOne(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, fileUploadExercise);
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
 
@@ -366,7 +373,7 @@ public class FileUploadExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterSGIUpdate);
+        exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
     }

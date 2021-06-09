@@ -25,7 +25,7 @@ describe('Exercise Update Warning Service', () => {
         updateWarningService = injector.get(ExerciseUpdateWarningService);
 
         updateWarningService.instructionDeleted = false;
-        updateWarningService.scoringChanged = false;
+        updateWarningService.creditChanged = false;
     });
 
     it('should set instructionDeleted as true', () => {
@@ -35,10 +35,10 @@ describe('Exercise Update Warning Service', () => {
         expect(updateWarningService.instructionDeleted).to.equal(true);
     });
 
-    it('should set scoringChanged as true', () => {
+    it('should set creditChanged as true', () => {
         exercise.gradingCriteria = [gradingCriterionCreditsChanged];
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.scoringChanged).to.equal(true);
+        expect(updateWarningService.creditChanged).to.equal(true);
     });
 });

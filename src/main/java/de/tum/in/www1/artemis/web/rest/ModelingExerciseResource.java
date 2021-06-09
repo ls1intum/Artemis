@@ -412,28 +412,34 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * PUT /modeling-exercises/re-evaluate : Re-evaluates and updates an existing modelingExercise.
+     * PUT /modeling-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing modelingExercise.
      *
-     * @param modelingExercise              the modelingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param exerciseId                                   of the exercise
+     * @param modelingExercise                             the modelingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
-     * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 500 (Internal
+     * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      * Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/modeling-exercises/re-evaluate")
+    @PutMapping("/modeling-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) throws URISyntaxException {
+    public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
+
+        ModelingExercise originalModelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, modelingExercise);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // make sure the course actually exists
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterSGIUpdate);
+        exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateModelingExercise(modelingExercise, null);
     }

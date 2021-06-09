@@ -711,4 +711,16 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_notFound();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        programmingExerciseIntegrationServiceTest.testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict();
+    }
 }

@@ -1154,28 +1154,35 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
+     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
      *
-     * @param programmingExercise           the ProgrammingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterSGIUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param exerciseId                                   of the exercise
+     * @param programmingExercise                          the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
      *
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or
-     * with status 400 (Bad Request) if the ProgrammingExercise is not valid, or with status 500 (Internal
+     * with status 400 (Bad Request) if the ProgrammingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      * Server Error) if the ProgrammingExercise couldn't be updated
      */
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterSGIUpdate) {
+    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
+
+        // check that the exercise is exist for given id
+        ProgrammingExercise originalProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, programmingExercise);
 
         // fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterSGIUpdate);
+        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateProgrammingExercise(programmingExercise, null);
     }
@@ -1226,7 +1233,7 @@ public class ProgrammingExerciseResource {
 
         public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
 
-        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISES + "/re-evaluate";
+        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
 
         private Endpoints() {
         }

@@ -181,15 +181,15 @@
             "isTeamExercise": "This is a team exercise.",
             "update": {
                 "warning": {
-                    "warning": "Warning: This change will possibly cause problems",
-                    "saveExerciseWithoutReevaluation": "Do not Re-evaluate",
+                    "warning": "Warning: These changes will possibly cause problems",
+                    "saveExerciseWithoutReevaluation": "Do not re-evaluate",
                     "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
                     "instructionDeleted": "Grading instruction deleted",
-                    "scoringChange": "Grading instruction credit changed",
+                    "creditChanged": "Grading instruction credit changed",
                     "confirmText": "Do you want to perform these changes with or without the re-evaluation of the exercise?",
                     "reevaluateExercise": "Re-evaluate",
                     "deleteFeedback": "Additionally delete all corresponding feedback that is associated with the deleted Grading Instruction.",
-                    "information": "If you do not want to trigger a re-evaluation, we can not guarantee the consistence of feedback associated to this grading instruction."
+                    "information": "If you do not want to trigger a re-evaluation, we can not guarantee the consistency of feedback associated to this grading instruction."
                 }
             },
             "isUsedForTutorial": "Tutor needs to review"

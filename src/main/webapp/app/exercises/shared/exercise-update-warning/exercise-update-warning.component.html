@@ -3,8 +3,8 @@
         <div><span jhiTranslate="artemisApp.exercise.update.warning.warning"></span></div>
 
         <ul class="warning-problem">
-            <li *ngIf="scoringChanged" class="warning-problem"><span jhiTranslate="artemisApp.exercise.update.warning.scoringChange"></span></li>
-            <li *ngIf="instructionDeleted" class="warning-problem"><span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span></li>
+            <li *ngIf="creditChanged" class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.creditChanged"></span></li>
+            <li *ngIf="instructionDeleted" class="warning-problem-element"><span jhiTranslate="artemisApp.exercise.update.warning.instructionDeleted"></span></li>
         </ul>
 
         <div class="warning-info" *ngIf="instructionDeleted">
@@ -24,12 +24,15 @@
         &nbsp;
         <div class="form-group">
             <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+                <fa-icon [icon]="'ban'"></fa-icon>
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <button type="submit" (click)="saveExerciseWithoutReevaluation()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-primary">
-                &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not Re-evaluate</span>
+            <button type="submit" (click)="saveExerciseWithoutReevaluation()" [disabled]="instructionDeleted && deleteFeedback" class="btn btn-warning">
+                <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
+                &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
             </button>
-            <button type="submit" (click)="reEvaluateExercise()" class="btn btn-primary">
+            <button type="submit" (click)="reEvaluateExercise()" class="btn btn-success">
+                <fa-icon [icon]="'check'"></fa-icon>
                 &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
             </button>
         </div>

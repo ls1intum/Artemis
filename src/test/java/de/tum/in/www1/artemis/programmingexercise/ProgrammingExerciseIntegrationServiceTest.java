@@ -1412,6 +1412,21 @@ public class ProgrammingExerciseIntegrationServiceTest {
 
     public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        request.put(ROOT + PROGRAMMING_EXERCISES + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+        request.put("/api/programming-exercises/" + 123456789 + "/re-evaluate", programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
+
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
     }
 }

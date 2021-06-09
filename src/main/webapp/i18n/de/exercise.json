@@ -181,15 +181,15 @@
             "isTeamExercise": "Diese Aufgabe ist eine Teamaufgabe.",
             "update": {
                 "warning": {
-                    "warning": "Warnung: Diese Änderung wird möglicherweise Probleme verursachen",
+                    "warning": "Warnung: Diese Änderungen wird möglicherweise Probleme verursachen",
                     "saveExerciseWithoutReevaluation": "Nicht neu bewerten",
-                    "problems": "Um Inkonsistenzen zwischen bestehenden Rückmeldungen und zukünftigen Rückmeldungen zu vermeiden, die mit der betroffenen Benotungsanweisung verbunden sind, muss die Übung neu bewertet werden. Dazu gehört auch die Neuberechnung der Ergebnisse.",
+                    "problems": "Um Inkonsistenzen zwischen bestehendem und zukünftigem Feedback, das mit der betroffenen Benotungshinweis verbunden ist, zu vermeiden, muss die Aufgabe neu bewertet werden. Dazu gehört auch die Neuberechnung der Ergebnisse.",
                     "instructionDeleted": "Benotungshinweise gelöscht",
-                    "scoringChange": "Benotungshinweise Kredit geändert",
-                    "confirmText": "Möchten Sie diese Änderungen mit oder ohne die Neubewertung der Übung durchführen?",
+                    "creditChanged": "Punkte-Bewertung im Benotungshinweis geändert",
+                    "confirmText": "Möchtest du diese Änderungen mit oder ohne eine Neubewertung der Aufgabe durchführen?",
                     "reevaluateExercise": "Neu bewerten",
                     "deleteFeedback": "Lösche zusätzlich sämtliches Feedback, das mit den gelöschten Benotungshinweisen zusammenhängt.",
-                    "information": "Wenn Sie keine Neubewertung auslösen möchten, können wir die Konsistenz der Rückmeldungen, die mit dieser Benotungsanweisung verbunden sind, nicht garantieren."
+                    "information": "Wenn du keine Neubewertung auslösen möchtest, können wir die Konsistenz des Feedbacks, das mit dem Benotungshinweis zusammenhängt, nicht mehr garantieren."
                 }
             }
         },

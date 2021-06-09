@@ -53,6 +53,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
+    @Autowired
+    private CourseRepository courseRepo;
+
     private ModelingExercise classExercise;
 
     private List<GradingCriterion> gradingCriteria;
@@ -597,21 +600,19 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateAndUpdateModelingExercise() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
 
-        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(createdModelingExercise);
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, "instructor1");
 
         // change grading instruction score
         gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
         gradingCriteria.remove(1);
-        createdModelingExercise.setGradingCriteria(gradingCriteria);
+        classExercise.setGradingCriteria(gradingCriteria);
 
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedback=false", createdModelingExercise,
-                ModelingExercise.class, HttpStatus.OK);
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
+                classExercise, ModelingExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
         assertThat(updatedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -621,21 +622,18 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateAndUpdateModelingExercise_shouldDeleteFeedbacks() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-
-        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(createdModelingExercise);
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(createdModelingExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, "instructor1");
 
         // remove instruction which is associated with feedbacks
         gradingCriteria.remove(1);
         gradingCriteria.remove(0);
-        createdModelingExercise.setGradingCriteria(gradingCriteria);
+        classExercise.setGradingCriteria(gradingCriteria);
 
-        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/re-evaluate" + "?deleteFeedback=true", createdModelingExercise,
-                ModelingExercise.class, HttpStatus.OK);
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=true",
+                classExercise, ModelingExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
         assertThat(updatedModelingExercise.getGradingCriteria().size()).isEqualTo(1);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
@@ -645,6 +643,26 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void testReEvaluateAndUpdateModelingExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        request.put("/api/modeling-exercises/re-evaluate", classExercise, HttpStatus.FORBIDDEN);
+        Course course = database.addCourseWithOneModelingExercise();
+        classExercise = (ModelingExercise) course.getExercises().iterator().next();
+        course.setInstructorGroupName("test");
+        courseRepo.save(course);
+        request.put("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate", classExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        ModelingExercise modelingExerciseToBeConflicted = modelingExerciseRepository.findByIdElseThrow(classExercise.getId());
+        modelingExerciseToBeConflicted.setId(123456789L);
+        modelingExerciseRepository.save(modelingExerciseToBeConflicted);
+
+        request.put("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate", modelingExerciseToBeConflicted, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_notFound() throws Exception {
+        request.put("/api/modeling-exercises/" + 123456789 + "/re-evaluate", classExercise, HttpStatus.NOT_FOUND);
     }
 }
