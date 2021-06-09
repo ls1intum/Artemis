@@ -2,9 +2,10 @@
 
 $background-color: #353d47;
 
-.posts-container {
+.postings-container {
     display: flex;
     height: 100%;
+    margin-left: auto;
 }
 
 .expanded-posts {
@@ -42,12 +43,12 @@ $background-color: #353d47;
     }
 }
 
-.collapsed-posts {
+.collapsed-postings {
     width: 50px;
     justify-content: space-between;
     flex-flow: column nowrap;
     background-color: $background-color;
-    margin-left: 15px;
+    margin-left: auto;
     cursor: pointer;
 
     span {
