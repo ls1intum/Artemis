@@ -140,7 +140,7 @@
                     </ngx-datatable>
                     <jhi-add-auxiliary-repository-button [programmingExercise]="programmingExercise" class="ml-2" (click)="computeInvalidWarnings()">
                     </jhi-add-auxiliary-repository-button>
-                    <span *ngIf="isEdit && invalidWarnings">
+                    <span *ngIf="isEdit && invalidWarnings.length > 0">
                         <fa-icon
                             [icon]="'exclamation-triangle'"
                             class="text-warning mr-1"
@@ -557,7 +557,7 @@
                 </div>
                 <div class="form-group-narrow" *ngIf="programmingExercise.id && !isImport && !isExamMode">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-                    <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
+                    <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
                 </div>
             </div>
             <div>
@@ -574,7 +574,6 @@
                     (click)="save()"
                 >
                 </jhi-button>
-
                 <ng-template #warningTranslate>
                     <div *ngFor="let warning of invalidWarnings">
                         <p
@@ -588,23 +587,9 @@
                 <span *ngIf="isEdit && invalidWarnings.length > 0" [ngbTooltip]="warningTranslate">
                     <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1"></fa-icon>
                     <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"
-                        >This Auxiliary Repository needs to be manually added to the VCS and the buildplan</span
+                        >Auxiliary Repositories need to be manually added to the VCS and the build plan</span
                     >
                 </span>
-
-                <!--
-                <span *ngIf="!quizIsValid" class="badge badge-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
-                                <fa-icon [icon]="'exclamation-circle'"></fa-icon>
-                                <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                                <span>({{ computeInvalidReasons().length }})</span>
-                            </span>
-
-
-                            <span *ngIf="warningQuizCache" class="badge badge-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right">
-                                <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
-                                <span>({{ computeInvalidWarnings().length }})</span>
-                            </span>
-                -->
             </div>
         </form>
     </div>
