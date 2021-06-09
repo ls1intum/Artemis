@@ -98,7 +98,7 @@ public class AssessmentService {
         // resultService.addFeedbackToResult(newResult, assessmentUpdate.getFeedbacks(), true);
 
         if (exercise instanceof ProgrammingExercise) {
-            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(originalResult);
+            double points = ((ProgrammingAssessmentService) this).calculateTotalScore(newResult);
             newResult.setScore(points, exercise.getMaxPoints());
             /*
              * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
@@ -107,8 +107,12 @@ public class AssessmentService {
             String[] resultStringParts = newResult.getResultString().split(", ");
             resultStringParts[resultStringParts.length - 1] = newResult.createResultString(points, exercise.getMaxPoints());
             newResult.setResultString(String.join(", ", resultStringParts));
+            newResult.setCompletionDate(ZonedDateTime.now());
+            newResult.setHasFeedback(true);
+            newResult.setRated(true);
+
             Result savedResult = resultRepository.save(newResult);
-            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).get(); // to eagerly load assessor
+            return  resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
         }
         else {
             return resultRepository.submitResult(newResult, exercise);

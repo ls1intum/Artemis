@@ -322,6 +322,6 @@ public abstract class Submission extends DomainObject {
     @Nullable
     @JsonIgnore
     public Result getResultWithComplaint() {
-        return results.stream().filter(Result::hasComplaint).findFirst().orElse(null);
+        return results.stream().filter((result -> result.hasComplaint() != null && result.hasComplaint())).findFirst().orElse(null);
     }
 }
