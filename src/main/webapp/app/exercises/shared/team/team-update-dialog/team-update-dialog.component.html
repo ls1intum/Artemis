@@ -6,7 +6,7 @@
             </span>
             <span>({{ exercise.title }})</span>
         </h4>
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -58,7 +58,7 @@
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.owner.label">Tutor</label>
-                    <jhi-help-icon placement="right" text="artemisApp.team.owner.tooltip" class="mr-1"></jhi-help-icon>
+                    <jhi-help-icon placement="right" text="artemisApp.team.owner.tooltip" class="me-1"></jhi-help-icon>
                 </div>
                 <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingOwner"></fa-icon>
                 <span *ngIf="searchingOwnerQueryTooShort" class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort">
@@ -96,7 +96,7 @@
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">
-                <label class="label-narrow mr-1" jhiTranslate="artemisApp.team.students">Students</label>
+                <label class="label-narrow me-1" jhiTranslate="artemisApp.team.students">Students</label>
                 <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
                 <span *ngIf="searchingStudentsQueryTooShort" class="label-inline-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort">
                     Please enter at least 3 characters.
@@ -129,12 +129,12 @@
                     </div>
                     <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
                         <div class="student-name">{{ student.name }} ({{ student.login }})</div>
-                        <button class="jest-student-remove-link student-remove-link ml-4" (click)="onRemoveStudent(student)">
+                        <button class="jest-student-remove-link student-remove-link ms-4" (click)="onRemoveStudent(student)">
                             <fa-icon [icon]="'trash-alt'"></fa-icon>
                         </button>
                     </div>
                     <div class="list-group-item-error hidden-md-down" *ngIf="hasConflictingTeam(student)">
-                        <fa-icon class="mr-1" [icon]="'exclamation-triangle'"></fa-icon>
+                        <fa-icon class="me-1" [icon]="'exclamation-triangle'"></fa-icon>
                         Already assigned to team with id {{ getConflictingTeam(student) }}.
                     </div>
                 </li>
@@ -163,7 +163,7 @@
                         />
                         <label class="form-check-label" for="ignoreTeamSizeRecommendation">
                             <span jhiTranslate="artemisApp.team.ignoreTeamSizeRecommendation">Proceed against recommendation</span>
-                            <fa-icon class="ml-1" [icon]="'exclamation-triangle'"></fa-icon>
+                            <fa-icon class="ms-1" [icon]="'exclamation-triangle'"></fa-icon>
                         </label>
                     </div>
                 </div>

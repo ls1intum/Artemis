@@ -37,6 +37,9 @@
             "templateRepositoryUrl": "Vorlagen-Repository-Url",
             "testRepositoryUrl": "Test-Repository-Url",
             "solutionRepositoryUrl": "Lösungs-Repository-Url",
+            "auxiliaryRepositories": "Hilfs-Repositories",
+            "noCheckoutDirectorySet": "Es wurde kein Checkout-Verzeichnis gesetzt.",
+            "noCheckoutDirectorySetTooltip": "Da kein Checkout-Verzeichnis angegeben wurde, wurde das Repository nicht automatisch zu einem Build-Plan hinzugefügt.",
             "templateBuildPlanId": "Vorlagen-Build-Plan-Id",
             "solutionBuildPlanId": "Lösungs-Build-Plan-Id",
             "repositories": "Repositories",
@@ -74,6 +77,7 @@
             },
             "recreateBuildPlans": {
                 "title": "Build-Pläne neu erstellen",
+                "warning": "Die Build-Pläne werden neu erstellt. Alle bisherigen Veränderungen gehen verloren!",
                 "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
             },
             "updateTemplate": {
@@ -252,6 +256,7 @@
                 "templateRepoTooltip": "Das Repository, welches die Vorlage der Aufgabe beinhaltet",
                 "solutionRepoTooltip": "Das Repository, welches die Lösung der Aufgabe beinhaltet",
                 "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
+                "auxiliaryRepoTooltip": "{{description}}",
                 "templateBuildPlanTooltip": "Der Build-Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
                 "solutionBuildPlanTooltip": "Der Build-Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
             },
@@ -272,7 +277,17 @@
             "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studenten können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutze diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
             "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
             "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
-            "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war."
+            "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
+            "auxiliaryRepository": {
+                "addAuxiliaryRepository": "Hilfs-Repository anlegen",
+                "repositoryName": "Name des Repositorys",
+                "checkoutDirectory": "Checkout-Verzeichnis",
+                "repositoryNameRequired": "Der Name des Repositories wird benötigt",
+                "invalidRepositoryName": "Es existiert bereits ein Repository mit dem angegebenen Namen für diese Aufgabe!",
+                "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
+                "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfs-Repositories zu ändern.",
+                "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
+            }
         },
         "error": {
             "noparticipations": "Kein existierender User wurde angegeben oder es existieren keine Abgaben."

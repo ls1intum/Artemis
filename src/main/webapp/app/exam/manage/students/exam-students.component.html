@@ -10,14 +10,14 @@
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
             </span>
             <jhi-students-exam-import-button
-                class="ml-4"
+                class="ms-4"
                 [courseId]="courseId"
                 [exam]="exam"
                 [buttonSize]="ButtonSize.MEDIUM"
                 (finish)="reloadExamWithRegisteredUsers()"
             ></jhi-students-exam-import-button>
             <button
-                class="btn btn btn-primary ml-auto"
+                class="btn btn btn-primary ms-auto"
                 (click)="registerAllStudentsFromCourse()"
                 title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
             >
@@ -31,7 +31,7 @@
                 [renderButtonText]="false"
                 [buttonSize]="ButtonSize.MEDIUM"
                 jhiDeleteButton
-                class="btn btn-primary ml-auto"
+                class="btn btn-primary ms-auto"
                 deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
                 (delete)="removeAllStudents($event)"
                 [dialogError]="dialogError$"
@@ -147,7 +147,7 @@
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template></ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-right">
+                        <div class="w-100 text-end">
                             <button
                                 jhiDeleteButton
                                 [actionType]="ActionType.Remove"
@@ -159,7 +159,7 @@
                                 }"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="'user-slash'" class="mr-1"></fa-icon>
+                                <fa-icon [icon]="'user-slash'" class="me-1"></fa-icon>
                             </button>
                         </div>
                     </ng-template>

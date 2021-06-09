@@ -8,7 +8,7 @@ import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FormsModule } from '@angular/forms';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
