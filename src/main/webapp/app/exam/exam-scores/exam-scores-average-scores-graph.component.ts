@@ -73,6 +73,11 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private createCharts() {
         const self = this;
         this.barChartOptions = {
+            layout: {
+                padding: {
+                    left: 130,
+                },
+            },
             title: {
                 display: true,
                 text: self.averageScores.title,
@@ -108,9 +113,11 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
                             display: true,
                         },
                         ticks: {
-                            callback() {
-                                return '';
+                            callback(title: string) {
+                                return title.length > 20 ? title.substr(0, 20) + '...' : title;
                             },
+                            mirror: true,
+                            padding: 130,
                         },
                     },
                 ],
