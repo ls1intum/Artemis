@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { Chart, ChartAnimationOptions, ChartOptions, ChartType, LinearTickOptions } from 'chart.js';
+import { Chart, ChartOptions, ChartType } from 'chart.js';
 import { Subscription } from 'rxjs';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -55,12 +55,12 @@ export function createOptions(dataSetProvider: DataSetProvider, max: number, ste
                     text: xLabel,
                     display: true,
                 },
+                beginAtZero: true,
+                max,
+                min: 0,
                 ticks: {
-                    beginAtZero: true,
                     stepSize,
-                    max,
-                    min: 0,
-                } as LinearTickOptions,
+                },
             },
             x: {
                 title: {
@@ -75,7 +75,7 @@ export function createOptions(dataSetProvider: DataSetProvider, max: number, ste
 }
 
 // this code is reused in 4 different statistic components
-export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimationOptions {
+export function createAnimation(dataSetProvider: DataSetProvider) {
     return {
         duration: 500,
         onComplete: (chartElement: ChartElement) => {

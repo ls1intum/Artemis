@@ -1,6 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
-import { ChartDataset, ChartHoverOptions, ChartLayoutPaddingObject, ChartLegendOptions, ChartOptions, ChartTooltipOptions, ChartType, ChartXAxe, ChartYAxe } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
+import Chart from 'chart.js/auto';
 
 export interface ChartPreset {
     applyTo(chart: ChartComponent): void;
@@ -80,13 +81,13 @@ export class ChartComponent {
         }
     }
 
-    setPadding(padding: ChartLayoutPaddingObject, shouldUpdate = true) {
+    setPadding(padding: Chart.ChartLayoutPaddingObject, shouldUpdate = true) {
         this.applyOptions((options) => {
             Object.assign(options.layout!.padding, padding);
         }, shouldUpdate);
     }
 
-    setLegend(legend: ChartLegendOptions | boolean, shouldUpdate = true) {
+    setLegend(legend: Chart.ChartLegendOptions | boolean, shouldUpdate = true) {
         this.applyOptions((options) => {
             if (typeof legend === 'boolean') {
                 Object.assign(options.plugins?.legend, { display: legend });
@@ -96,7 +97,7 @@ export class ChartComponent {
         }, shouldUpdate);
     }
 
-    setTooltip(tooltip: ChartTooltipOptions | boolean, shouldUpdate = true) {
+    setTooltip(tooltip: Chart.ChartTooltipOptions | boolean, shouldUpdate = true) {
         this.applyOptions((options) => {
             if (typeof tooltip === 'boolean') {
                 Object.assign(options.plugins?.tooltip, { enabled: tooltip });
@@ -106,7 +107,7 @@ export class ChartComponent {
         }, shouldUpdate);
     }
 
-    setHover(hover: ChartHoverOptions, shouldUpdate = true) {
+    setHover(hover: Chart.ChartHoverOptions, shouldUpdate = true) {
         this.applyOptions((options) => {
             if (!options.hover) {
                 options.hover = hover;
@@ -116,17 +117,17 @@ export class ChartComponent {
         }, shouldUpdate);
     }
 
-    setYAxe(index: number, axe: ChartYAxe, shouldUpdate = true) {
+    setYAxe(index: number, axe: Chart.ChartYAxe, shouldUpdate = true) {
         this.applyOptions((options) => {
-            if (!options.scales!.y![index]) {
-                options.scales!.y![index] = axe;
+            if (!options.scales!.y) {
+                options.scales!.y = axe;
             } else {
-                Object.assign(options.scales!.y![index], axe);
+                Object.assign(options.scales!.y!, axe);
             }
         }, shouldUpdate);
     }
 
-    setXAxe(index: number, axe: ChartXAxe, shouldUpdate = true) {
+    setXAxe(index: number, axe: Chart.ChartXAxe, shouldUpdate = true) {
         this.applyOptions((options) => {
             if (!options.scales!.x![index]) {
                 options.scales!.x![index] = axe;

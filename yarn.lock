@@ -1814,7 +1814,7 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.18.tgz#0c8e298dbff8205e2266606c1ea5fbdba29b46e4"
   integrity sha512-rS27+EkB/RE1Iz3u0XtVL5q36MGDWbgYe7zWiodyKNUnthxY0rukK5V36eiUCtCisB7NN8zKYH6DO2M37qxFEQ==
 
-"@types/chart.js@2.9.32", "@types/chart.js@^2.9.24":
+"@types/chart.js@^2.9.24":
   version "2.9.32"
   resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.9.32.tgz#b17d9a8c41ad348183a2ce041ebdeef892998251"
   integrity sha512-d45JiRQwEOlZiKwukjqmqpbqbYzUX2yrXdH9qVn6kXpPDsTYCo6YbfFOlnUaJ8S/DhJwbBJiLsMjKpW5oP8B2A==

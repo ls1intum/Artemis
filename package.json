@@ -87,7 +87,6 @@
         "@types/chai": "4.2.18",
         "@types/chai-as-promised": "7.1.4",
         "@types/chai-string": "1.4.2",
-        "@types/chart.js": "2.9.32",
         "@types/dompurify": "2.2.2",
         "@types/jest": "26.0.23",
         "@types/jquery": "3.5.5",

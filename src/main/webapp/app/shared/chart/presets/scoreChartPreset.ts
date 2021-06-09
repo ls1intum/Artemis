@@ -1,5 +1,6 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
-import { ChartDataset, ChartLegendLabelItem } from 'chart.js';
+import { ChartDataset } from 'chart.js';
+import Chart from 'chart.js/auto';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
@@ -21,9 +22,9 @@ export class ScoreChartPreset implements ChartPreset {
 
     applyTo(chart: ChartComponent): void {
         this.chart = chart;
-        chart.setType('horizontalBar');
+        chart.setType('bar');
         chart.setYAxe(0, { stacked: true }, false);
-        chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, suggestedMax: 100, callback: (value) => value + '%' } }, false);
+        chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, suggestedMax: 100, callback: (value: any) => value + '%' } }, false);
         chart.setLegend({
             position: 'bottom',
             labels: {
@@ -43,9 +44,10 @@ export class ScoreChartPreset implements ChartPreset {
                             strokeStyle: '#dc3545',
                             lineWidth: 1,
                         },
-                    ] as ChartLegendLabelItem[],
+                    ] as Chart.ChartLegendLabelItem[],
             },
         });
+        chart.setBarChartToHorizontal(false);
         chart.chartDatasets = this.datasets;
     }
 
