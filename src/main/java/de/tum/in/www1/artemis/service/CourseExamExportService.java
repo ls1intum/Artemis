@@ -160,6 +160,7 @@ public class CourseExamExportService {
         // Write report
         try {
             exportedExercises.add(writeReport(reportData, tempExamsDir));
+            exportedExercises.add(writeFile(exportErrors, tempExamsDir, "exportErrors.txt"));
         }
         catch (IOException ex) {
             log.error("Could not write report file for exam {} due to the exception ", exam.getId(), ex);
