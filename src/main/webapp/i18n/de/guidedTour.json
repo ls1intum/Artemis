@@ -13,7 +13,7 @@
         },
         "cancel": {
             "headline": "Tutorial abgebrochen",
-            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial fortsetzen</tt> im Account-Menü."
+            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial fortsetzen</tt> im Konto-Menü."
         },
         "completed": {
             "headline": "Herzlichen Glückwunsch 🎉",

@@ -53,7 +53,7 @@
             },
             "cloneRepository": {
                 "headline": "Klone das Repository in SourceTree",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Account Menü aus fortsetzen.",
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Konto-Menü aus fortsetzen.",
                 "videoUrl": "https://www.youtube.com/embed/0YYxgs14S6A?rel=0"
             },
             "inspectSourceTree": {

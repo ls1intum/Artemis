@@ -104,8 +104,8 @@
                 },
                 "login": {
                     "title": "LRZ Login",
-                    "shortDescription": "Logge dich über dein LRZ-Konto ein. Kein spezieller Account erforderlich.",
-                    "descriptionTextOne": "Benutze die gleichen LRZ-Zugangsdaten, die du für alle Universitätsanwendungen verwendest, um auf Artemis zuzugreifen. Es ist nicht nötig, einen neuen Account zu erstellen und ein anderes Passwort zu verwalten! Logge dich mit deiner TUMID und deinem Passwort ein und du kannst loslegen."
+                    "shortDescription": "Logge dich über dein LRZ-Konto ein. Kein spezielles Konto erforderlich.",
+                    "descriptionTextOne": "Benutze die gleichen LRZ-Zugangsdaten, die du für alle Universitätsanwendungen verwendest, um auf Artemis zuzugreifen. Es ist nicht nötig, ein neues Konto zu erstellen und ein anderes Passwort zu verwalten! Logge dich mit deiner TUMID und deinem Passwort ein und du kannst loslegen."
                 },
                 "userInterface": {
                     "title": "Intuitive UI",
