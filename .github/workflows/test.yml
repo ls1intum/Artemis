@@ -29,8 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Java
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2.1.0
       with:
+        distribution: 'zulu'
         java-version: '${{ env.java }}'
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
@@ -47,10 +48,10 @@ jobs:
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         coverage-reports: build/reports/jacoco/test/jacocoTestReport.xml
-      if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure())
+      if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
     - name: Annotate Server Test Results
       uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
-      if: always()
+      if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
       with:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
@@ -60,9 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Java
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2.1.0
       with:
-        java-version: '${{ env.java }}'  #spotless does not yet seem to support JDK16
+        distribution: 'zulu'
+        java-version: '${{ env.java }}'
     - uses: actions/checkout@v2
     - name: Cache Gradle dependencies
       uses: actions/cache@v2
@@ -81,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v1
+          uses: actions/setup-node@v2.1.5
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -101,10 +103,10 @@ jobs:
           with:
               project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
               coverage-reports: coverage/lcov.info
-          if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure())
+          if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
         - name: Annotate Client Test Results
           uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
-          if: always()
+          if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
           with:
               access-token: ${{ secrets.GITHUB_TOKEN }}
               path: junit.xml
@@ -114,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v1
+          uses: actions/setup-node@v2.1.5
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -131,7 +133,7 @@ jobs:
           run: yarn test --ci
         - name: Annotate Client Test Results
           uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
-          if: always()
+          if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
           with:
               access-token: ${{ secrets.GITHUB_TOKEN }}
               path: junit.xml
@@ -141,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2.1.5
       with:
         node-version: '${{ env.node }}'
     - uses: actions/checkout@v2

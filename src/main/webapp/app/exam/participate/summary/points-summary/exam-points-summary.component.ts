@@ -1,21 +1,42 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { catchError } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { GradeType } from 'app/entities/grading-scale.model';
 
 @Component({
     selector: 'jhi-exam-points-summary',
+    styleUrls: ['./exam-points-summary.component.scss'],
     templateUrl: './exam-points-summary.component.html',
 })
-export class ExamPointsSummaryComponent {
+export class ExamPointsSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     @Input() exercises: Exercise[];
     @Input() exam: Exam;
+    @Input() courseId: number;
 
-    constructor(private serverDateService: ArtemisServerDateService, public exerciseService: ExerciseService) {}
+    gradingScaleExists = false;
+    isBonus = false;
+    hasPassed = false;
+    grade?: string;
+
+    constructor(
+        private serverDateService: ArtemisServerDateService,
+        public exerciseService: ExerciseService,
+        private changeDetector: ChangeDetectorRef,
+        private gradingSystemService: GradingSystemService,
+    ) {}
+
+    ngOnInit() {
+        this.calculateExamGrade();
+    }
 
     /**
      * The points summary table will only be shown if:
@@ -25,6 +46,33 @@ export class ExamPointsSummaryComponent {
      */
     show(): boolean {
         return !!(this.exam && this.exam.publishResultsDate && moment(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && this.hasAtLeastOneResult());
+    }
+
+    /**
+     * Calculate the student's exam grade if a grading scale exists for the exam
+     */
+    calculateExamGrade() {
+        const achievedPointsRelative = (this.calculatePointsSum() / this.calculateMaxPointsSum()) * 100;
+        this.gradingSystemService
+            .matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative)
+            .pipe(
+                catchError((error: HttpErrorResponse) => {
+                    if (error.status === 404) {
+                        return of(undefined);
+                    }
+                    return throwError(error);
+                }),
+            )
+            .subscribe((gradeObservable) => {
+                if (gradeObservable && gradeObservable!.body) {
+                    const gradeDTO = gradeObservable!.body;
+                    this.gradingScaleExists = true;
+                    this.grade = gradeDTO.gradeName;
+                    this.hasPassed = gradeDTO.isPassingGrade;
+                    this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+                    this.changeDetector.detectChanges();
+                }
+            });
     }
 
     /**

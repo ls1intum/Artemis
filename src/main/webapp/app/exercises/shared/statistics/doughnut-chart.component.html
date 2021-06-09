@@ -1,0 +1,27 @@
+<div class="mx-3">
+    <a *ngIf="titleLink" [routerLink]="titleLink">
+        <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
+    </a>
+    <h4 *ngIf="!titleLink" class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
+    <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
+        <div class="doughnut-chart-text">
+            <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }}%</h2>
+            <h4 *ngIf="receivedStats" class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
+            <h1 *ngIf="!receivedStats" class="text-center" style="z-index: 1">
+                <fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+            </h1>
+        </div>
+        <canvas
+            baseChart
+            id="doughnut"
+            height="150"
+            width="150"
+            [legend]="false"
+            [datasets]="doughnutChartData"
+            [options]="totalScoreOptions"
+            [colors]="doughnutChartColors"
+            [labels]="doughnutChartLabels"
+            [chartType]="doughnutChartType"
+        ></canvas>
+    </div>
+</div>

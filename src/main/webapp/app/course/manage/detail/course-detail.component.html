@@ -63,8 +63,8 @@
             </a>
             <div class="ml-auto">
                 <a
-                    *ngIf="course.studentQuestionsEnabled && course.isAtLeastTutor"
-                    [routerLink]="['/course-management', course.id!, 'questions']"
+                    *ngIf="course.postsEnabled && course.isAtLeastTutor"
+                    [routerLink]="['/course-management', course.id!, 'posts']"
                     class="tab-item btn btn-primary btn-md ml-1 mr-1"
                 >
                     <fa-icon [icon]="'comment'"></fa-icon>
@@ -126,7 +126,7 @@
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
                         [courseId]="course.id!"
-                        [contentType]="DoughnutChartType.AVERAGESCORE"
+                        [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
                         [currentPercentage]="courseDTO?.currentPercentageAverageScore"
                         [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"
                         [currentMax]="courseDTO?.currentMaxAverageScore"

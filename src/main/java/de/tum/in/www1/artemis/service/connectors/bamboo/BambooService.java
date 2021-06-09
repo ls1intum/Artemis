@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -82,8 +83,21 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
+        var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
+                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl())))
+                .collect(Collectors.toList());
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL));
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
+    }
+
+    @Override
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
+        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
+        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Override

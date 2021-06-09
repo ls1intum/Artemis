@@ -88,6 +88,9 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
      * @param repositoryType The type of repository to be updated
      */
     private void upgradeTemplateFiles(ProgrammingExercise exercise, RepositoryType repositoryType) {
+        if (repositoryType == RepositoryType.AUXILIARY) {
+            return;
+        }
         try {
             String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
