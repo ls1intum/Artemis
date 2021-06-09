@@ -70,6 +70,8 @@ public class FileUploadExerciseResource {
 
     private final FileService fileService;
 
+    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
@@ -340,7 +342,7 @@ public class FileUploadExerciseResource {
         try {
             Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
             Optional<File> zipFile = fileUploadSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>());
-            fileService.scheduleForDirectoryDeletion(outputDir, 30);
+            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()

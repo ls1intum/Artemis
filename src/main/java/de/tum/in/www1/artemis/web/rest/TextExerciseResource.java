@@ -96,6 +96,8 @@ public class TextExerciseResource {
 
     private final FileService fileService;
 
+    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
@@ -530,7 +532,7 @@ public class TextExerciseResource {
         try {
             Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
             Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>());
-            fileService.scheduleForDirectoryDeletion(outputDir, 30);
+            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
 
             if (zipFile.isEmpty()) {
                 return ResponseEntity.badRequest()
