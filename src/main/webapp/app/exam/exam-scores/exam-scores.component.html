@@ -11,7 +11,7 @@
             <h2 class="font-weigth-bold" *ngIf="examScoreDTO.title">
                 {{ examScoreDTO.title }}
             </h2>
-            <button class="ml-auto btn btn-primary btn-sm" (click)="exportToCsv()">
+            <button class="ms-auto btn btn-primary btn-sm" (click)="exportToCsv()">
                 <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
             </button>
@@ -19,8 +19,8 @@
 
         <div class="d-flex mb-1">
             <h6 *ngIf="examScoreDTO.maxPoints">{{ toLocaleString(examScoreDTO.maxPoints) }} {{ 'artemisApp.examScores.maxPoints' | artemisTranslate }} ,</h6>
-            <h6 class="ml-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }} ,</h6>
-            <h6 class="ml-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+            <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }} ,</h6>
+            <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
         </div>
 
         <div class="mb-2">
@@ -33,11 +33,11 @@
         <div class="d-flex align-items-center align-content-center mb-2">
             <label class="radio-inline mb-0 d-flex align-items-center">
                 <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                <span class="ml-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</span>
+                <span class="ms-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</span>
             </label>
-            <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+            <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                 <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                <span class="ml-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
+                <span class="ms-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
             </label>
         </div>
 
