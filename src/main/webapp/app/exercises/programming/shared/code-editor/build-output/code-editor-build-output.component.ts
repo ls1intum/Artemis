@@ -205,11 +205,11 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     /**
      * @function toggleEditorCollapse
      * @desc Calls the parent (editorComponent) toggleCollapse method
-     * @param $event
+     * @param event
      */
-    toggleEditorCollapse($event: any) {
+    toggleEditorCollapse(event: any) {
         this.onToggleCollapse.emit({
-            event: $event,
+            event,
             horizontal: false,
             interactable: this.interactResizable,
             resizableMinWidth: undefined,

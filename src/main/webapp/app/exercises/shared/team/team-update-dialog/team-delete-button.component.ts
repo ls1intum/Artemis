@@ -19,7 +19,7 @@ import { JhiAlertService } from 'ng-jhipster';
             (delete)="removeTeam($event)"
             [dialogError]="dialogError$"
         >
-            <fa-icon [icon]="'trash-alt'" class="mr-1"></fa-icon>
+            <fa-icon [icon]="'trash-alt'" class="me-1"></fa-icon>
         </button>
     `,
 })

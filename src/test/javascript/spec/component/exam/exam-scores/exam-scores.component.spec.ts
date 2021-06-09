@@ -13,7 +13,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import * as chai from 'chai';
 import { cloneDeep } from 'lodash';
@@ -214,9 +214,16 @@ describe('ExamScoresComponent', () => {
                     findGradingScaleForExam: () => {
                         return of(
                             new HttpResponse({
+                                body: new GradingScale(),
                                 status: 200,
                             }),
                         );
+                    },
+                    findMatchingGradeStep: () => {
+                        return gradeStep1;
+                    },
+                    sortGradeSteps: () => {
+                        return [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
                     },
                 }),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
@@ -306,6 +313,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should have correct entries', () => {
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ status: 404 })));
         fixture.detectChanges();
 
         expectCorrectExamScoreDto(comp, examScoreDTO);
@@ -351,6 +359,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should skip not submitted exams', () => {
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ status: 404 })));
         fixture.detectChanges();
         comp.toggleFilterForSubmittedExam();
 

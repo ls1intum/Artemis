@@ -35,13 +35,13 @@
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                 <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
                 <td>
-                    <a class="btn btn-primary mr-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
+                    <a class="btn btn-primary me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
                         Open
                     </a>
                     <ng-container *ngIf="isAtLeastInstructor">
                         <button
                             *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                            class="btn btn-danger mr-1"
+                            class="btn btn-danger me-1"
                             (click)="delete(apollonDiagram)"
                             jhiTranslate="entity.action.delete"
                         >

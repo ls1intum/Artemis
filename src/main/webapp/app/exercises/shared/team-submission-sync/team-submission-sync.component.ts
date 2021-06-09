@@ -19,7 +19,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
     readonly throttleTime = 2000; // ms
 
     @Input() exerciseType: ExerciseType;
-    @Input() submission$: Observable<Submission>;
+    @Input() submissionObservable: Observable<Submission>;
     @Input() participation: StudentParticipation;
 
     @Output() receiveSubmission = new EventEmitter<Submission>();
@@ -57,10 +57,10 @@ export class TeamSubmissionSyncComponent implements OnInit {
     }
 
     /**
-     * Subscribes to the submission$ stream and sends out updated submissions based on those own changes via websockets
+     * Subscribes to the submission stream and sends out updated submissions based on those own changes via websockets
      */
     private setupSender() {
-        this.submission$.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe(
+        this.submissionObservable.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe(
             (submission: Submission) => {
                 if (submission.participation) {
                     submission.participation.exercise = undefined;

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 
 import java.io.FileNotFoundException;
@@ -70,12 +71,14 @@ public class ProgrammingExerciseService {
 
     private final ResultRepository resultRepository;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResourceLoaderService resourceLoaderService,
-            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService) {
+            GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -90,6 +93,7 @@ public class ProgrammingExerciseService {
         this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -129,9 +133,11 @@ public class ProgrammingExerciseService {
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
+        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+
         setupExerciseTemplate(programmingExercise, user);
 
-        // Save programmning exercise to prevent transiant exception
+        // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         setupBuildPlansForNewExercise(programmingExercise);
@@ -205,6 +211,20 @@ public class ProgrammingExerciseService {
         programmingExercise.setSolutionParticipation(solutionParticipation);
     }
 
+    private void connectAuxiliaryRepositoriesToExercise(ProgrammingExercise exercise) {
+        List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null).toList());
+        exercise.getAuxiliaryRepositories().stream().filter(repository -> repository.getId() == null).forEach(repository -> {
+            // We have to disconnect the exercise from the auxiliary repository
+            // since the auxiliary repositories of an exercise are represented as
+            // a sorted collection (list).
+            repository.setExercise(null);
+            repository = auxiliaryRepositoryRepository.save(repository);
+            repository.setExercise(exercise);
+            savedRepositories.add(repository);
+        });
+        exercise.setAuxiliaryRepositories(savedRepositories);
+    }
+
     private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
@@ -220,6 +240,11 @@ public class ProgrammingExerciseService {
         solutionParticipation.setBuildPlanId(solutionPlanId);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    }
+
+    private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(
+                versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     /**
@@ -310,12 +335,25 @@ public class ProgrammingExerciseService {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
-    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) {
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
         final var projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
+
+        // Create auxiliary repositories
+        createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
+    }
+
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+        for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
+            String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
+            versionControlService.get().createRepository(projectKey, repositoryName, null);
+            repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
+            Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
+            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, null);
+        }
     }
 
     /**
@@ -324,6 +362,10 @@ public class ProgrammingExerciseService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
+
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
+        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
@@ -731,6 +773,14 @@ public class ProgrammingExerciseService {
             if (programmingExercise.getTestRepositoryUrl() != null) {
                 versionControlService.get().deleteRepository(testRepositoryUrlAsUrl);
             }
+
+            // We also want to delete any auxiliary repositories
+            programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
+                if (repo.getRepositoryUrl() != null) {
+                    versionControlService.get().deleteRepository(repo.getVcsRepositoryUrl());
+                }
+            });
+
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
         /*
