@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "participantScores": {
-            "pageTitle": "Teilnahme Ergebnisse",
+            "pageTitle": "Teilnahmeergebnisse",
             "participantScoreDTO": {
                 "id": "Id",
                 "userId": "User Id",

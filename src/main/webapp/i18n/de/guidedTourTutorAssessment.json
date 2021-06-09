@@ -76,7 +76,7 @@
             },
             "addScore": {
                 "headline": "Punktzahl hinzufügen",
-                "content": "Nun kannst du für jedes Bewertungselement eine Punktzahl und ein Feedbacktext hinterlegen.",
+                "content": "Nun kannst du für jedes Bewertungselement eine Punktzahl und einen Feedbacktext hinterlegen.",
                 "task": "Gib jedem Bewertungselement die Punktzahl '1'."
             },
             "submit": {
@@ -85,7 +85,7 @@
             },
             "back": {
                 "headline": "Tutorial für Beispielbewertungen abschließen",
-                "content": "Navigiere zum Aufgaben-Dashboard zurück um dieses Tutorial abzuschließen."
+                "content": "Navigiere zum Aufgaben-Dashboard zurück, um dieses Tutorial abzuschließen."
             }
         }
     }

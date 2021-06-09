@@ -11,7 +11,7 @@
                 "exportPDF": "Als PDF exportieren",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "lastCommitHash": "Hash des letzten Commits",
-                "noCommitHash": "Es gibt keinen Commit Hash",
+                "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
                 "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrperson.",
@@ -284,7 +284,7 @@
                 "registerAllFromCourse": "Registriere alle Studierenden des Kurses",
                 "registerAllFromCourseTooltip": "Registriere alle zu diesem Kurs angemeldeten Studierende",
                 "removeFromExam": {
-                    "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Seine individuelle Klausur wird dabei gelöscht.",
+                    "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Teilnahme und Abgaben in der zugehörigen Klausur löschen?"
                 },
                 "importStudents": {

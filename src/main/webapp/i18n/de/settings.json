@@ -14,7 +14,7 @@
                 "fail": "<strong>Es ist ein Fehler aufgetreten!</strong> Die Einstellungen konnten nicht gespeichert werden.",
                 "emailexists": "<strong>E-Mail ist bereits in Verwendung!</strong> Bitte wähle eine andere aus."
             },
-            "success": "<strong>Einstellungen sind gespeichert!</strong>",
+            "success": "<strong>Einstellungen wurden gespeichert!</strong>",
             "validate": {
                 "firstname": {
                     "required": "Dein Vorname wird benötigt.",

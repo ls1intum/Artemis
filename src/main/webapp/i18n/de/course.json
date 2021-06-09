@@ -54,7 +54,7 @@
             },
             "studentGroupName": "Gruppe der Studierenden",
             "teachingAssistantGroupName": "Gruppe der Tutor:innen",
-            "editorGroupName": "Editorengruppe",
+            "editorGroupName": "Gruppe der Editor:innen",
             "instructorGroupName": "Gruppe der Lehrenden",
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
@@ -120,7 +120,7 @@
                     "modalQuestion": "Soll der User mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
                 }
             },
-            "averageScore": "Durchschnittliche Punktanzahl",
+            "averageScore": "Durchschnittliche Punktzahl",
             "releasedSoon": "Bald veröffentlicht",
             "currentWorking": "Derzeitig in Bearbeitung",
             "inAssessment": "Derzeitig in Bewertung",
