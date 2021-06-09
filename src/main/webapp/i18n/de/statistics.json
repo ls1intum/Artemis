@@ -1,7 +1,7 @@
 {
     "statistics": {
         "statistics-title": "Statistiken",
-        "amountOfStudents": "# an Studierenden",
+        "amountOfStudents": "# Studierende",
         "span": {
             "day": "Tag",
             "week": "Woche",
@@ -25,20 +25,20 @@
         "questions_asked": "Gestellte Fragen",
         "questions_answered": "Beantwortete Fragen",
         "score_distribution": "Bewertungsverteilung",
-        "submissionsTitle": "# an Abgaben",
-        "active_usersTitle": "# an User",
-        "logged_in_usersTitle": "# an User",
-        "released_exercisesTitle": "# an Aufgaben",
-        "exercises_dueTitle": "# an Aufgaben",
-        "conducted_examsTitle": "# an Klausuren",
-        "exam_participationsTitle": "# an Klausurteilnahmen",
-        "exam_registrationsTitle": "# an Klausuranmeldungen",
-        "active_tutorsTitle": "# an Tutor:innen",
-        "created_resultsTitle": "# an Bewertungen",
-        "created_feedbacksTitle": "# an Feedbacks",
-        "questions_askedTitle": "# an Fragen",
-        "questions_answeredTitle": "# an Antworten",
-        "score_distributionTitle": "% an Studierenden"
+        "submissionsTitle": "# Abgaben",
+        "active_usersTitle": "# User",
+        "logged_in_usersTitle": "# User",
+        "released_exercisesTitle": "# Aufgaben",
+        "exercises_dueTitle": "# Aufgaben",
+        "conducted_examsTitle": "# Klausuren",
+        "exam_participationsTitle": "# Klausurteilnahmen",
+        "exam_registrationsTitle": "# Klausuranmeldungen",
+        "active_tutorsTitle": "# Tutor:innen",
+        "created_resultsTitle": "# Bewertungen",
+        "created_feedbacksTitle": "# Feedbacks",
+        "questions_askedTitle": "# Fragen",
+        "questions_answeredTitle": "# Antworten",
+        "score_distributionTitle": "% Studierende"
     },
     "calendar_week": "KW",
     "overview": {
