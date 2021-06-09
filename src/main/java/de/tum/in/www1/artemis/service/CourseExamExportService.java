@@ -138,6 +138,7 @@ public class CourseExamExportService {
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
         var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
+        List<ArchivalReportEntry> reportData = new LinkedList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
         Path tempExamsDir = Path.of("./exports", cleanExamDirName);
@@ -153,7 +154,15 @@ public class CourseExamExportService {
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."));
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
         // Ignore reporting data
-        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors, new ArrayList<>());
+        List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors, reportData);
+
+        // Write report
+        try {
+            exportedExercises.add(writeReport(reportData, tempExamsDir));
+        }
+        catch (IOException ex) {
+            log.error("Could not write report file for exam {} due to the exception ", exam.getId(), ex);
+        }
 
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
