@@ -14,6 +14,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { SinonStub } from 'sinon';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,7 +45,10 @@ describe('ProgrammingExercise Management Detail Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseDetailComponent],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useValue: new MockProfileService() },
+            ],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
             .compileComponents();
