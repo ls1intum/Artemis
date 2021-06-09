@@ -65,8 +65,8 @@
             </div>
         </div>
         <jhi-complaint-interactions
-            *ngIf="fileUploadExercise && resultWithComplaint && result && participation && isAfterAssessmentDueDate"
-            [result]="resultWithComplaint"
+            *ngIf="fileUploadExercise && result && participation && isAfterAssessmentDueDate"
+            [result]="resultWithComplaint ? resultWithComplaint : result"
             [participation]="participation"
             [exercise]="fileUploadExercise"
         >

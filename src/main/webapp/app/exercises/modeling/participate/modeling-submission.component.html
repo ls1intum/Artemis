@@ -115,10 +115,10 @@
             <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
         <jhi-complaint-interactions
-            *ngIf="modelingExercise && result && resultWithComplaint"
+            *ngIf="modelingExercise && result"
             [exercise]="modelingExercise"
             [participation]="participation"
-            [result]="resultWithComplaint"
+            [result]="resultWithComplaint ? resultWithComplaint : result"
         >
         </jhi-complaint-interactions>
     </div>
