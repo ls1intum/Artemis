@@ -160,7 +160,7 @@ public abstract class SubmissionExportService {
                 return Optional.of(submissionFilePath);
             }
             catch (Exception ex) {
-                String message = "Could not create file" + submissionFilePath + "  for exporting: " + ex.getMessage();
+                String message = "Could not create file " + submissionFilePath + "  for exporting: " + ex.getMessage();
                 log.error(message);
                 exportErrors.add(message);
                 return Optional.<Path>empty();
