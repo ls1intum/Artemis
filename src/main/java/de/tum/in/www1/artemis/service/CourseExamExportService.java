@@ -94,7 +94,7 @@ public class CourseExamExportService {
         // Export course exercises and exams
         List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors, reportData);
         if (exportedFiles.isEmpty()) {
-            exportErrors.add("Did not export course " + course.getId() + " because the exercises/exams to export.");
+            exportErrors.add("Did not export course " + course.getId() + " because there are no exercises/exams to export.");
             return Optional.empty();
         }
 
@@ -154,7 +154,6 @@ public class CourseExamExportService {
         // Export exam exercises
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."));
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
-        // Ignore reporting data
         List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors, reportData);
 
         // Write report

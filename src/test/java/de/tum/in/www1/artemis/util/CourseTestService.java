@@ -1296,7 +1296,7 @@ public class CourseTestService {
                 any(List.class), any(Path.class));
 
         List<Path> files = archiveCourseAndExtractFiles(course);
-        assertThat(files.size()).isEqualTo(2);
+        assertThat(files.size()).isEqualTo(4);
 
         String exerciseType = "";
         if (exercise instanceof FileUploadExercise) {
