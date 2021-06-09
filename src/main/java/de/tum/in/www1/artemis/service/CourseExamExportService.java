@@ -468,8 +468,11 @@ public class CourseExamExportService {
         Path outputFile = outputDir.resolve("report.csv");
         try (FileWriter writer = new FileWriter(outputFile.toFile())) {
             writer.write(ArchivalReportEntry.getHeadline());
+            writer.write(System.lineSeparator());
+
             for (ArchivalReportEntry entry : data) {
                 writer.write(entry.toString());
+                writer.write(System.lineSeparator());
             }
         }
         return outputFile;
