@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -126,9 +125,6 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
-
-    @Autowired
-    private FileService fileService;
 
     @Autowired
     private CourseExamExportService courseExamExportService;
