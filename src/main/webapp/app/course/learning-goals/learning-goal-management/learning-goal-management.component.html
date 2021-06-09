@@ -20,9 +20,9 @@
         </div>
     </div>
     <hr [hidden]="!learningGoals || learningGoals.length === 0" />
-    <div class="card-deck">
+    <div class="row row-cols-auto">
         <jhi-learning-goal-card
-            class="mx-auto"
+            class="mx-auto col"
             *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
             [learningGoal]="learningGoal"
             [learningGoalProgress]="getLearningGoalCourseProgress(learningGoal)"

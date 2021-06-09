@@ -17,18 +17,18 @@ export class ManualTextSelectionComponent {
 
     /**
      * Handle user's selection of solution text.
-     * @param $event fired on text selection of type {TextSelectEvent}
+     * @param event fired on text selection of type {TextSelectEvent}
      */
-    didSelectSolutionText($event: TextSelectEvent): void {
+    didSelectSolutionText(event: TextSelectEvent): void {
         if (this.disabled) {
             return;
         }
 
         // If a new selection has been created, the viewport and host rectangles will
         // exist. Or, if a selection is being removed, the rectangles will be null.
-        if ($event.hostRectangle) {
-            this.hostRectangle = $event.hostRectangle;
-            this.selectedText = convertToHtmlLinebreaks($event.text);
+        if (event.hostRectangle) {
+            this.hostRectangle = event.hostRectangle;
+            this.selectedText = convertToHtmlLinebreaks(event.text);
         } else {
             this.hostRectangle = undefined;
             this.selectedText = undefined;

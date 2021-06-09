@@ -4,6 +4,7 @@ import { AfterViewInit, Component, ContentChild, ElementRef, ViewEncapsulation, 
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 
 @Component({
     selector: 'jhi-code-editor-grid',
@@ -157,24 +158,22 @@ export class CodeEditorGridComponent implements AfterViewInit {
 
     /**
      * Collapse parts of the editor (file browser, build output...)
-     * @param $event {object} Click event object; contains target information
-     * @param horizontal {boolean} Used to decide which height to use for the collapsed element
-     * @param interactResizable {Interactable} The interactjs element, used to en-/disable resizing
-     * @param minWidth {number} Width to set the element to after toggling the collapse
-     * @param minHeight {number} Height to set the element to after toggling the collapse
+     * @param interactableEvent {object} The custom event object with additional information
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    toggleCollapse($event: any, horizontal: boolean, interactResizable: Interactable, minWidth?: number, minHeight?: number) {
-        const target = $event.toElement || $event.relatedTarget || $event.target;
+    toggleCollapse(interactableEvent: InteractableEvent) {
+        const event = interactableEvent.event;
+        const horizontal = interactableEvent.horizontal;
+        const interactResizable = interactableEvent.interactable;
+        const target = event.event?.toElement || event.relatedTarget || event.target;
         target.blur();
-        const $card = $(target).closest('.collapsable');
+        const card = $(target).closest('.collapsable');
         const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;
 
-        if ($card.hasClass(collapsed)) {
-            $card.removeClass(collapsed);
+        if (card.hasClass(collapsed)) {
+            card.removeClass(collapsed);
             interactResizable.resizable({ enabled: true });
         } else {
-            $card.addClass(collapsed);
+            card.addClass(collapsed);
             interactResizable.resizable({ enabled: false });
         }
     }
