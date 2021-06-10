@@ -24,13 +24,13 @@ export class TextUnitComponent implements OnInit {
         }
     }
 
-    handleCollapse($event: any) {
-        $event.stopPropagation();
+    handleCollapse(event: any) {
+        event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
     }
 
-    openPopup($event: any) {
-        $event.stopPropagation();
+    openPopup(event: any) {
+        event.stopPropagation();
 
         const win = window.open('about:blank', '_blank');
         win!.document.write(`<html><head><title>${this.textUnit.name}</title>`);

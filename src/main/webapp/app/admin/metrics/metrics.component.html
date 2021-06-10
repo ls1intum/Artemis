@@ -1,7 +1,7 @@
 <div>
     <h2>
         <span id="metrics-page-heading" jhiTranslate="metrics.title">Application Metrics</span>
-        <button class="btn btn-primary float-right" (click)="refresh()"><fa-icon [icon]="'sync'"></fa-icon> <span jhiTranslate="metrics.refresh.button">Refresh</span></button>
+        <button class="btn btn-primary float-end" (click)="refresh()"><fa-icon [icon]="'sync'"></fa-icon> <span jhiTranslate="metrics.refresh.button">Refresh</span></button>
     </h2>
 
     <h3 jhiTranslate="metrics.jvm.title">JVM Metrics</h3>
@@ -12,7 +12,7 @@
             <jhi-metrics-system [updating]="updatingMetrics" [systemMetrics]="metrics.processMetrics"> </jhi-metrics-system>
             <div class="row">
                 <div class="col-md-4">{{ 'metrics.jvm.processMetricsCustom.activeUsers' | artemisTranslate }}</div>
-                <div class="col-md-8 text-right">{{ metrics.customMetrics.activeUsers }}</div>
+                <div class="col-md-8 text-end">{{ metrics.customMetrics.activeUsers }}</div>
             </div>
         </div>
     </div>

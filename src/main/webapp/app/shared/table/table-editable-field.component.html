@@ -8,7 +8,7 @@
         [(ngModel)]="inputValue"
         [pattern]="pattern"
         [required]="isRequired"
-        class="table-editable-field__input form-control mr-2"
+        class="table-editable-field__input form-control me-2"
         type="text"
     />
     <span class="text-danger" *ngIf="valueToValidate?.invalid && valueToValidate?.errors?.required" jhiTranslate="{{ translationRequiredMessage }}">
