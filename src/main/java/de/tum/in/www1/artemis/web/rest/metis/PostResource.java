@@ -122,8 +122,11 @@ public class PostResource {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the Post that should be changed");
         }
         mayUpdateOrDeletePostElseThrow(existingPost, user);
+        existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
+        existingPost.setTags(post.getTags());
+        existingPost.setReactions(post.getReactions());
         Post result = postRepository.save(existingPost);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, post.getId().toString())).body(result);
     }
@@ -174,7 +177,7 @@ public class PostResource {
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the exercise that should be returned");
         }
-        List<Post> posts = postRepository.findPostsForExercise(exerciseId);
+        List<Post> posts = postRepository.findPostsByExercise_Id(exerciseId);
         hideSensitiveInformation(posts);
         return new ResponseEntity<>(posts, null, HttpStatus.OK);
     }
