@@ -5,8 +5,8 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-left">
-                <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1" style="margin-bottom: 10px">
+            <div class="text-start">
+                <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
                     <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>
 
@@ -23,7 +23,7 @@
                         'code-editor',
                         programmingExercise.templateParticipation.id
                     ]"
-                    class="btn btn-warning btn-sm mr-1"
+                    class="btn btn-warning btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
@@ -33,7 +33,7 @@
                 <a
                     *ngIf="programmingExercise.course !== undefined"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'participations']"
-                    class="btn btn-primary btn-sm mr-1"
+                    class="btn btn-primary btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
@@ -42,7 +42,7 @@
                 <a
                     *ngIf="programmingExercise.course !== undefined"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'scores']"
-                    class="btn btn-info btn-sm mr-1"
+                    class="btn btn-info btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'table'"></fa-icon>
@@ -52,7 +52,7 @@
                 <a
                     *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastEditor"
                     [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
-                    class="btn btn-info btn-sm mr-1"
+                    class="btn btn-info btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'file-signature'"></fa-icon>
@@ -62,7 +62,7 @@
                 <a
                     *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course !== undefined"
                     [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
-                    class="btn btn-info btn-sm mr-1"
+                    class="btn btn-info btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
@@ -70,22 +70,35 @@
                 </a>
 
                 <a
+                    *ngIf="programmingExercise.isAtLeastTutor && programmingExercise.course !== undefined"
+                    [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
+                    class="btn btn-info btn-sm me-1"
+                    style="margin-bottom: 10px"
+                >
+                    <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+                </a>
+
+                <a
                     *ngIf="programmingExercise.isAtLeastEditor"
                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    class="btn btn-outline-primary btn-sm mr-1"
+                    class="btn btn-outline-primary btn-sm me-1"
                     routerLink="plagiarism"
                     style="margin-bottom: 10px"
                 >
                     <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
 
-                <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" class="mr-1" [exercise]="programmingExercise"></jhi-external-submission>
+                <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="me-1"></jhi-external-submission>
+                <jhi-programming-exercise-instructor-exercise-download
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [exerciseId]="programmingExercise.id!"
+                    class="me-1"
+                ></jhi-programming-exercise-instructor-exercise-download>
                 <jhi-programming-assessment-repo-export
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [exerciseId]="programmingExercise.id!"
-                    class="mr-1"
+                    class="me-1"
                 ></jhi-programming-assessment-repo-export>
-
                 <button
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -125,10 +138,10 @@
                         programmingExercise.programmingLanguage === ProgrammingLanguage.C ||
                         programmingExercise.programmingLanguage === ProgrammingLanguage.PYTHON
                     "
-                    class="mr-1"
+                    class="me-1"
                 >
                 </span>
-                <span class="mr-1" *ngIf="programmingExercise.isAtLeastEditor">
+                <span class="me-1" *ngIf="programmingExercise.isAtLeastEditor">
                     <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="combineTemplateCommits()" class="btn btn-secondary btn-sm">
                         <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
                     </button>
@@ -138,7 +151,7 @@
                         ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
                     ></fa-icon>
                 </span>
-                <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor" class="mr-1">
+                <span *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.isAtLeastEditor" class="me-1">
                     <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="generateStructureOracle()" class="btn btn-secondary btn-sm">
                         <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                     </button>
@@ -148,9 +161,19 @@
                         ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
                     ></fa-icon>
                 </span>
+                <span *ngIf="programmingExercise.isAtLeastEditor" class="mr-1">
+                    <button [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES" type="button" (click)="recreateBuildPlans()" class="btn btn-secondary btn-sm">
+                        <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
+                    </button>
+                    <fa-icon
+                        [icon]="'question-circle'"
+                        class="text-secondary"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.recreateBuildPlans.warning' | artemisTranslate }}"
+                    ></fa-icon>
+                </span>
                 <button
                     id="unlockAllRepositoriesButton"
-                    class="btn btn-danger btn-sm mr-1"
+                    class="btn btn-danger btn-sm me-1"
                     (click)="handleUnlockAllRepositories()"
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [disabled]="lockingOrUnlockingRepositories"
@@ -161,7 +184,7 @@
                 </button>
                 <button
                     id="lockAllRepositoriesButton"
-                    class="btn btn-danger btn-sm mr-1"
+                    class="btn btn-danger btn-sm me-1"
                     (click)="handleLockAllRepositories()"
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [disabled]="lockingOrUnlockingRepositories"
@@ -171,8 +194,16 @@
                     <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                 </button>
             </div>
+            <div *ngIf="programmingExercise.releaseDate != undefined && moment(programmingExercise.releaseDate).isBefore(moment())" class="mt-3">
+                <jhi-exercise-detail-statistics [exercise]="programmingExercise" [doughnutStats]="doughnutStats" [exerciseType]="PROGRAMMING"></jhi-exercise-detail-statistics>
+                <hr />
+                <div>
+                    <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+                </div>
+                <hr />
+            </div>
             <dl class="row-md jh-entity-details">
-                <jhi-exercise-details [exercise]="programmingExercise"> </jhi-exercise-details>
+                <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
@@ -193,16 +224,13 @@
                 <dd>
                     <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
-                <dd>
-                    <div class="d-flex align-items-center" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
-                        <a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
-                            programmingExercise.templateParticipation.repositoryUrl
-                        }}</a>
+                <dt>
+                    <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span>
+                    <div class="clone-buttons" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                         <jhi-clone-repo-button
                             class="ml-2"
                             [smallButtons]="true"
-                            [repositoryUrl]="programmingExercise.templateParticipation.repositoryUrl"
+                            [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl! || ''"
                             [isTeamParticipation]="false"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
@@ -211,39 +239,100 @@
                             [repositoryType]="'TEMPLATE'"
                         ></jhi-programming-exercise-instructor-repo-download>
                     </div>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
+                </dt>
                 <dd>
-                    <div class="d-flex align-items-center" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
-                        <a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
-                            programmingExercise.solutionParticipation.repositoryUrl
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
+                        <a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
+                            programmingExercise.templateParticipation.repositoryUrl
                         }}</a>
+                    </div>
+                </dd>
+                <dt>
+                    <span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span>
+                    <div class="clone-buttons" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
                         <jhi-clone-repo-button
-                            class="ml-2"
+                            class="ms-2"
                             [smallButtons]="true"
                             [repositoryUrl]="programmingExercise.solutionParticipation.repositoryUrl"
                             [isTeamParticipation]="false"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
-                            class="ml-2"
+                            class="ms-2"
                             [exerciseId]="programmingExercise.id!"
                             [repositoryType]="'SOLUTION'"
                         ></jhi-programming-exercise-instructor-repo-download>
                     </div>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
+                </dt>
                 <dd>
-                    <div class="d-flex align-items-center" *ngIf="programmingExercise.testRepositoryUrl">
-                        <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUrl }}</a>
-                        <jhi-clone-repo-button class="ml-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl" [isTeamParticipation]="false">
-                        </jhi-clone-repo-button>
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
+                        <a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank" rel="noopener noreferrer">{{
+                            programmingExercise.solutionParticipation.repositoryUrl
+                        }}</a>
+                    </div>
+                </dd>
+                <dt>
+                    <span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span>
+                    <div class="clone-buttons" *ngIf="programmingExercise.testRepositoryUrl">
+                        <jhi-clone-repo-button
+                            class="ms-2"
+                            [smallButtons]="true"
+                            [repositoryUrl]="programmingExercise.testRepositoryUrl"
+                            [isTeamParticipation]="false"
+                        ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
-                            class="ml-2"
+                            class="ms-2"
                             [exerciseId]="programmingExercise.id!"
                             [repositoryType]="'TESTS'"
                         ></jhi-programming-exercise-instructor-repo-download>
                     </div>
+                </dt>
+                <dd>
+                    <div class="d-flex align-items-center" *ngIf="programmingExercise.testRepositoryUrl">
+                        <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ programmingExercise.testRepositoryUrl }}</a>
+                    </div>
                 </dd>
+                <dt>
+                    <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepositories">Auxiliary Repositories</span>
+                </dt>
+                <dd></dd>
+                <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0 && supportsAuxiliaryRepositories">
+                    <ul>
+                        <li *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
+                            <dt>
+                                <span>{{ auxiliaryRepository.name }} Repository</span>
+                                <jhi-clone-repo-button
+                                    class="ml-2"
+                                    [smallButtons]="true"
+                                    [repositoryUrl]="auxiliaryRepository.repositoryUrl!"
+                                    [isTeamParticipation]="false"
+                                ></jhi-clone-repo-button>
+                                <jhi-programming-exercise-instructor-repo-download
+                                    class="ml-2"
+                                    [exerciseId]="programmingExercise.id!"
+                                    [repositoryType]="'AUXILIARY'"
+                                    [auxiliaryRepositoryId]="auxiliaryRepository.id!"
+                                ></jhi-programming-exercise-instructor-repo-download>
+                                <div class="auxiliaryRepositoryDescription">
+                                    <span *ngIf="auxiliaryRepository.checkoutDirectory != undefined; else noCheckoutDirectorySet"
+                                        >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
+                                    </span>
+                                    <ng-template #noCheckoutDirectorySet>
+                                        <fa-icon [icon]="'exclamation-triangle'" class="text-warning mr-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
+                                    </ng-template>
+                                    <ng-template #noCheckoutDirectorySetTooltip>
+                                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
+                                    </ng-template>
+                                </div>
+                            </dt>
+                            <dd>
+                                <a href="{{ auxiliaryRepository.repositoryUrl }}" target="_blank" rel="noopener noreferrer" class="repository-url">{{
+                                    auxiliaryRepository.repositoryUrl
+                                }}</a>
+                            </dd>
+                        </li>
+                    </ul>
+                </div>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
@@ -298,11 +387,11 @@
                             [showUngradedResults]="true"
                             [showTestNames]="true"
                             [personalParticipation]="false"
-                            class="mr-2"
+                            class="me-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.templateParticipation?.results?.length"
-                            class="repository-status-icon mr-2"
+                            class="repository-status-icon me-2"
                             [participationType]="ProgrammingExerciseParticipationType.TEMPLATE"
                             [participation]="programmingExercise.templateParticipation!"
                             [exercise]="programmingExercise"
@@ -340,11 +429,11 @@
                             [showUngradedResults]="true"
                             [showTestNames]="true"
                             [personalParticipation]="false"
-                            class="mr-2"
+                            class="me-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.solutionParticipation?.results?.length"
-                            class="repository-status-icon mr-2"
+                            class="repository-status-icon me-2"
                             [participationType]="ProgrammingExerciseParticipationType.SOLUTION"
                             [participation]="programmingExercise.solutionParticipation!"
                             [exercise]="programmingExercise"

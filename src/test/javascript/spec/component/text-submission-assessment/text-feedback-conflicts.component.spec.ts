@@ -47,11 +47,11 @@ describe('TextFeedbackConflictsComponent', () => {
         assessmentType: AssessmentType.MANUAL,
         course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
-    const participation: StudentParticipation = ({
+    const participation: StudentParticipation = {
         type: ParticipationType.STUDENT,
         exercise,
-    } as unknown) as StudentParticipation;
-    const textSubmission = ({
+    } as unknown as StudentParticipation;
+    const textSubmission = {
         submissionExerciseType: SubmissionExerciseType.TEXT,
         id: 2278,
         submitted: true,
@@ -59,9 +59,9 @@ describe('TextFeedbackConflictsComponent', () => {
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
         text: 'First text. Second text.',
         participation,
-    } as unknown) as TextSubmission;
+    } as unknown as TextSubmission;
     textSubmission.results = [
-        ({
+        {
             id: 2374,
             resultString: '1 of 12 points',
             completionDate: moment('2019-07-09T11:51:23.251Z'),
@@ -71,7 +71,7 @@ describe('TextFeedbackConflictsComponent', () => {
             hasFeedback: true,
             hasComplaint: false,
             textSubmission,
-        } as unknown) as Result,
+        } as unknown as Result,
     ];
     textSubmission.latestResult = getLatestSubmissionResult(textSubmission);
 
@@ -84,20 +84,20 @@ describe('TextFeedbackConflictsComponent', () => {
         } as Feedback,
     ];
     textSubmission.blocks = [
-        ({
+        {
             id: 'First text id',
             text: 'First text.',
             startIndex: 0,
             endIndex: 11,
             textSubmission,
-        } as unknown) as TextBlock,
-        ({
+        } as unknown as TextBlock,
+        {
             id: 'second text id',
             text: 'Second text.',
             startIndex: 12,
             endIndex: 24,
             textSubmission,
-        } as unknown) as TextBlock,
+        } as unknown as TextBlock,
     ];
     textSubmission.latestResult!.feedbacks![0].conflictingTextAssessments = [
         {
@@ -110,16 +110,16 @@ describe('TextFeedbackConflictsComponent', () => {
         } as FeedbackConflict,
     ];
 
-    const conflictingSubmission = ({
+    const conflictingSubmission = {
         submissionExerciseType: SubmissionExerciseType.TEXT,
         id: 2280,
         submitted: true,
         type: SubmissionType.MANUAL,
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
         text: 'First Conflicting Submission Text.',
-    } as unknown) as TextSubmission;
+    } as unknown as TextSubmission;
     conflictingSubmission.results = [
-        ({
+        {
             id: 2375,
             completionDate: moment('2020-02-10T11:51:23.251Z'),
             successful: false,
@@ -128,7 +128,7 @@ describe('TextFeedbackConflictsComponent', () => {
             hasFeedback: true,
             hasComplaint: false,
             conflictingSubmission,
-        } as unknown) as Result,
+        } as unknown as Result,
     ];
     conflictingSubmission.latestResult = getLatestSubmissionResult(conflictingSubmission);
     conflictingSubmission.latestResult!.feedbacks = [
@@ -140,13 +140,13 @@ describe('TextFeedbackConflictsComponent', () => {
         } as Feedback,
     ];
     conflictingSubmission.blocks = [
-        ({
+        {
             id: 'Conflicting text id',
             text: 'First Conflicting Submission Text.',
             startIndex: 0,
             endIndex: 34,
             conflictingSubmission,
-        } as unknown) as TextBlock,
+        } as unknown as TextBlock,
     ];
 
     beforeEach(async () => {

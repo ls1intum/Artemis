@@ -1,40 +1,113 @@
-<jhi-markdown-editor
-    #markdownEditor
-    style="height: 350px"
-    class="markdown-editor"
-    [markdown]="questionEditorText"
-    [showPreviewButton]="true"
-    [domainCommands]="domainCommands"
-    (markdownChange)="prepareForSave()"
-    (textWithDomainCommandsFound)="domainCommandsFound($event)"
->
-    <!-- Preview -->
-    <ng-container #preview>
-        <div class="pt-1 background-editor-high markdown-preview">
-            <div *ngFor="let criterion of exercise.gradingCriteria">
-                <label class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></label>
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <td class="font-weight-bold">Credits</td>
-                            <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.gradingScale">Grading Scale</td>
-                            <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.instrDescription">Instruction Description</td>
-                            <td class="font-weight-bold">Feedback</td>
-                            <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.usageCount">Max Count in Score</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let instruction of criterion.structuredGradingInstructions">
-                            <td style="width: 5%" [innerHTML]="instruction.credits"></td>
-                            <td style="width: 10%" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                            <td style="width: 40%" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
-                            <td style="width: 35%" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
-                            <td style="width: 10%" [innerHTML]="instruction.usageCount"></td>
-                        </tr>
-                    </tbody>
-                </table>
+<div *ngIf="!exercise.gradingInstructionFeedbackUsed">
+    <jhi-markdown-editor
+        #markdownEditor
+        style="height: 350px"
+        class="markdown-editor"
+        [markdown]="questionEditorText"
+        [showPreviewButton]="true"
+        [domainCommands]="domainCommands"
+        (markdownChange)="prepareForSave()"
+        (textWithDomainCommandsFound)="domainCommandsFound($event)"
+    >
+        <!-- Preview -->
+        <ng-container #preview>
+            <div class="pt-1 background-editor-high markdown-preview">
+                <div *ngFor="let criterion of exercise.gradingCriteria">
+                    <label class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></label>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.credits">Credits</td>
+                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.gradingScale">Grading Scale</td>
+                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.instructionDescription">Instruction Description</td>
+                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.feedback">Feedback</td>
+                                <td class="font-weight-bold" jhiTranslate="artemisApp.exercise.usageCount">Max Count in Score</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let instruction of criterion.structuredGradingInstructions">
+                                <td style="width: 5%" [innerHTML]="instruction.credits"></td>
+                                <td style="width: 10%" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
+                                <td style="width: 40%" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
+                                <td style="width: 35%" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
+                                <td style="width: 10%" [innerHTML]="instruction.usageCount"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </ng-container>
+        <!-- End of Preview-->
+    </jhi-markdown-editor>
+</div>
+
+<div class="edit-sqi" *ngIf="exercise.gradingInstructionFeedbackUsed">
+    <div class="grading-instructions-update-border">
+        <div *ngFor="let criteria of exercise.gradingCriteria">
+            <div class="criteria-content" style="padding-bottom: 12px">
+                <div class="row">
+                    <div class="col-md-10 text-start">
+                        <div class="input-group" style="height: 33px; width: 75%">
+                            <input
+                                class="form-control"
+                                type="text"
+                                [(ngModel)]="criteria.title!"
+                                (change)="onCriterionTitleChange($event, criteria)"
+                                placeholder="Criterion Title"
+                            />
+                            <span class="col-auto input-group-btn d-flex align-items-center" id="reset-criteria-button" (click)="resetCriterionTitle(criteria)">
+                                <fa-icon [icon]="'undo'"></fa-icon>
+                            </span>
+                            <div class="col-auto input-group-btn d-flex align-items-center">
+                                <span class="btn btn-block btn-danger" id="delete-criteria-button" (click)="deleteGradingCriterion(criteria)">
+                                    <fa-icon [icon]="'trash'"></fa-icon>
+                                    <span jhiTranslate="artemisApp.exercise.deleteGradingCriterion"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="criteria.structuredGradingInstructions!">
+                    <div *ngFor="let instruction of criteria.structuredGradingInstructions">
+                        <div class="instructions">
+                            <jhi-markdown-editor
+                                #markdownEditor
+                                [metaCommands]="[]"
+                                [defaultCommands]="[]"
+                                [headerCommands]="[]"
+                                [colorCommands]="[]"
+                                [showEditButton]="false"
+                                [showPreviewButton]="false"
+                                [domainCommands]="domainCommandsGradingInstructions"
+                                (markdownChange)="prepareForSave()"
+                                (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
+                                class="editor"
+                                style="width: 65%"
+                            ></jhi-markdown-editor>
+                            <div class="form-group text-center" style="width: 25%">
+                                <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">
+                                    <fa-icon [icon]="'undo'" size="2x"></fa-icon>
+                                </span>
+                                <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
+                                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                                </span>
+                                <span class="re-evaluate-button" id="add-button" (click)="addInstruction(criteria)">
+                                    <fa-icon [icon]="'plus'" size="2x"></fa-icon>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </ng-container>
-    <!-- End of Preview-->
-</jhi-markdown-editor>
+        <div class="row mt-2">
+            <div class="col-12 col-sm-6 col-xl-3 mb-1">
+                <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()">
+                    <fa-icon [icon]="'plus'"></fa-icon>
+                    <span jhiTranslate="artemisApp.exercise.addGradingCriterion"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

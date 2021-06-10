@@ -20,7 +20,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as moment from 'moment';
 import { JhiEventManager } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -54,7 +54,7 @@ describe('Exercise Groups Component', () => {
     let router: Router;
 
     const data = of({ exam });
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

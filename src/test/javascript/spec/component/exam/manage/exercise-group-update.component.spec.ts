@@ -11,7 +11,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockComponent } from 'ng-mocks/dist/lib/mock-component/mock-component';
@@ -45,7 +45,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     let alertService: JhiAlertService;
 
     const data = of({ exam, exerciseGroup });
-    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any) as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
     const navigateSpy = sinon.spy(mockRouter, 'navigate');
 
     beforeEach(() => {

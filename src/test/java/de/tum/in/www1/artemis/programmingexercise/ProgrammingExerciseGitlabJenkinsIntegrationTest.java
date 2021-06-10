@@ -101,7 +101,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @MethodSource("generateArgumentsForImportExercise")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
-        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans);
+        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, false);
     }
 
     @Test
@@ -268,6 +268,24 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "student1", roles = "USER")
     public void exportInstructorRepositories_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportProgrammingExerciseInstructorMaterial() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void exportProgrammingExerciseInstructorMaterialAsTutor_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void exportProgrammingExerciseInstructorMaterialAsStudent_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
     @Test

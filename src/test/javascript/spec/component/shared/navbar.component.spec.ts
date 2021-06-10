@@ -23,7 +23,7 @@ import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -352,10 +352,16 @@ describe('NavbarComponent', () => {
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
                 translate: true,
+                uri: '/course-management/1/modeling-exercises/2/example-submissions/',
+            } as MockBreadcrumb;
+
+            const editorSubmissionCrumb = {
+                label: 'artemisApp.exampleSubmission.home.editor',
+                translate: true,
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/new/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(5);
+            expect(component.breadcrumbs.length).to.equal(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -367,6 +373,7 @@ describe('NavbarComponent', () => {
             } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/modeling-exercises/2/' } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[4], submissionCrumb);
+            sinon.assert.match(component.breadcrumbs[5], editorSubmissionCrumb);
         });
 
         it('modeling exercise example submission', () => {
@@ -381,10 +388,16 @@ describe('NavbarComponent', () => {
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
                 translate: true,
+                uri: '/course-management/1/modeling-exercises/2/example-submissions/',
+            } as MockBreadcrumb;
+
+            const editorSubmissionCrumb = {
+                label: 'artemisApp.exampleSubmission.home.editor',
+                translate: true,
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/3/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).to.equal(5);
+            expect(component.breadcrumbs.length).to.equal(6);
 
             // Use matching here to ignore non-semantic differences between objects
             sinon.assert.match(component.breadcrumbs[0], courseManagementCrumb);
@@ -396,6 +409,7 @@ describe('NavbarComponent', () => {
             } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[3], { label: 'Test Exercise', translate: false, uri: '/course-management/1/modeling-exercises/2/' } as MockBreadcrumb);
             sinon.assert.match(component.breadcrumbs[4], submissionCrumb);
+            sinon.assert.match(component.breadcrumbs[5], editorSubmissionCrumb);
         });
 
         it('lecture units', () => {

@@ -41,7 +41,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
@@ -89,7 +89,7 @@ describe('CourseExerciseDetailsComponent', () => {
     let getTeamPayloadStub: SinonStub;
     let mergeStudentParticipationStub: SinonStub;
     let subscribeForParticipationChangesStub: SinonStub;
-    const exercise = ({ id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown) as Exercise;
+    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
     beforeEach(async(() => {
@@ -219,7 +219,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.studentParticipation?.exercise?.id).to.equal(exerciseDetail.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal(changedResult);
         expect(comp.hasMoreResults).to.be.false;
-        expect(comp.exerciseRatedBadge(result)).to.equal('badge-info');
+        expect(comp.exerciseRatedBadge(result)).to.equal('bg-info');
 
         // has correct router link
         expect(comp.exerciseRouterLink).to.equal(`/course-management/1/text-exercises/42/submissions`);

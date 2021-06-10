@@ -120,8 +120,8 @@ export class ExerciseService {
                         if (res.body.exerciseHints === undefined) {
                             res.body.exerciseHints = [];
                         }
-                        if (res.body.studentQuestions === undefined) {
-                            res.body.studentQuestions = [];
+                        if (res.body.posts === undefined) {
+                            res.body.posts = [];
                         }
                     }
                     return res;
@@ -131,12 +131,10 @@ export class ExerciseService {
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
-            .pipe(
-                map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
-                map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
-            );
+        return this.http.get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)),
+            map((res: EntityArrayResponseType) => this.convertExerciseCategoryArrayFromServer(res)),
+        );
     }
 
     /**
@@ -354,12 +352,10 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of exercise to retreive
      */
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
-        return this.http
-            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-assessment-dashboard`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     /**

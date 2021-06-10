@@ -4,7 +4,7 @@ import { JhiLanguageService } from 'ng-jhipster';
 
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/core/user/user.model';
-import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
+import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormBuilder, Validators } from '@angular/forms';
 
@@ -20,6 +20,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     error = false;
     errorEmailExists = false;
     errorUserExists = false;
+    errorAccountRegistrationBlocked = false;
     success = false;
 
     usernamePattern = '^[a-zA-Z0-9]*';
@@ -96,10 +97,12 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     }
 
     private processError(response: HttpErrorResponse): void {
-        if (response.status === 400 && response.error.type === LOGIN_ALREADY_USED_TYPE) {
+        if (response.status === 400 && response.error.type.includes(LOGIN_ALREADY_USED_TYPE)) {
             this.errorUserExists = true;
-        } else if (response.status === 400 && response.error.type === EMAIL_ALREADY_USED_TYPE) {
+        } else if (response.status === 400 && response.error.type.includes(EMAIL_ALREADY_USED_TYPE)) {
             this.errorEmailExists = true;
+        } else if (response.status === 400 && response.error.type.includes(ACCOUNT_REGISTRATION_BLOCKED)) {
+            this.errorAccountRegistrationBlocked = true;
         } else {
             this.error = true;
         }

@@ -6,7 +6,7 @@ import { TutorParticipation } from 'app/entities/participation/tutor-participati
 import { Course } from 'app/entities/course.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
-import { StudentQuestion } from 'app/entities/student-question.model';
+import { Post } from 'app/entities/metis/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
@@ -88,7 +88,7 @@ export abstract class Exercise implements BaseEntity {
     public participationStatus?: ParticipationStatus;
     public exampleSubmissions?: ExampleSubmission[];
     public attachments?: Attachment[];
-    public studentQuestions?: StudentQuestion[];
+    public posts?: Post[];
     public exerciseHints?: ExerciseHint[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
@@ -120,6 +120,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfSuccessfulParticipations?: number;
     public averagePoints?: number;
     public presentationScoreEnabled?: boolean;
+    public gradingInstructionFeedbackUsed?: boolean;
 
     protected constructor(type: ExerciseType) {
         this.type = type;

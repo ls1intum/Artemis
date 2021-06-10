@@ -3,8 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from './profile-info.model';
-import { BehaviorSubject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, OperatorFunction } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
@@ -16,7 +16,7 @@ export class ProfileService {
 
     constructor(private http: HttpClient, private featureToggleService: FeatureToggleService) {}
 
-    getProfileInfo(): BehaviorSubject<ProfileInfo | undefined> {
+    getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {
             this.profileInfo = new BehaviorSubject(undefined);
             this.http
@@ -41,14 +41,19 @@ export class ProfileService {
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
                         }
+                        profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
+
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
                         profileInfo.commitHashURLTemplate = data.commitHashURLTemplate;
                         profileInfo.sshCloneURLTemplate = data.sshCloneURLTemplate;
                         profileInfo.sshKeysURL = data.sshKeysURL;
-                        profileInfo.externalUserManagementName = data.externalUserManagementName;
-                        profileInfo.externalUserManagementURL = data.externalUserManagementURL;
+
+                        // Both properties below are mandatory Strings (see profile-info.model.ts)
+                        profileInfo.externalUserManagementName = data.externalUserManagementName ?? '';
+                        profileInfo.externalUserManagementURL = data.externalUserManagementURL ?? '';
+
                         profileInfo.contact = data.contact;
                         profileInfo.registrationEnabled = data.registrationEnabled;
                         profileInfo.needsToAcceptTerms = data.needsToAcceptTerms;
@@ -69,7 +74,7 @@ export class ProfileService {
                 });
         }
 
-        return this.profileInfo;
+        return this.profileInfo.pipe(filter((x) => x != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {

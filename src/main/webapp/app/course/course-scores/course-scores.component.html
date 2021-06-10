@@ -6,7 +6,7 @@
             [translateValues]="{ exercisesLength: exercisesOfCourseThatAreIncludedInScoreCalculation.length, studentsLength: students.length }"
             >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
         >
-        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-right" (click)="exportResults()">
+        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-end" (click)="exportResults()">
             <fa-icon [icon]="'download'" [fixedWidth]="true"></fa-icon>
             <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
         </button>
@@ -42,6 +42,16 @@
                         </th>
                     </ng-container>
                     <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th *ngIf="gradingScaleExists" jhiSortBy="overallPoints">
+                        <span>
+                            {{
+                                isBonus
+                                    ? ('artemisApp.courseScoreCalculation.gradingSystemBonus' | artemisTranslate)
+                                    : ('artemisApp.courseScoreCalculation.gradingSystemGrade' | artemisTranslate)
+                            }}
+                        </span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                 </tr>
                 <tr>
                     <th><span jhiTranslate="instructorDashboard.max">Max</span></th>
@@ -52,6 +62,7 @@
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0">{{ maxNumberOfPointsPerExerciseType.get(exerciseType) }}</th>
                     </ng-container>
                     <th>{{ maxNumberOfOverallPoints }}</th>
+                    <th *ngIf="gradingScaleExists">{{ maxGrade }}</th>
                 </tr>
                 <tr>
                     <th><span jhiTranslate="instructorDashboard.average">Average</span></th>
@@ -85,6 +96,9 @@
                         {{ getLocaleConversionService().toLocaleString(averageNumberOfOverallPoints) }} ({{
                             getLocaleConversionService().toLocaleString(round((averageNumberOfOverallPoints / maxNumberOfOverallPoints) * 100))
                         }}%)
+                    </th>
+                    <th *ngIf="gradingScaleExists">
+                        {{ averageGrade }}
                     </th>
                 </tr>
             </thead>
@@ -121,6 +135,9 @@
                         {{ getLocaleConversionService().toLocaleString(student.overallPoints) }} ({{
                             getLocaleConversionService().toLocaleString(round((student.overallPoints / maxNumberOfOverallPoints) * 100))
                         }}%)
+                    </td>
+                    <td *ngIf="gradingScaleExists">
+                        {{ student.gradeStep?.gradeName }}
                     </td>
                 </tr>
             </tbody>

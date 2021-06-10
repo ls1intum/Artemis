@@ -22,6 +22,10 @@ import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/sha
 import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { cloneDeep } from 'lodash';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -37,11 +41,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
+    invalidRepositoryNamePattern: RegExp;
+    invalidDirectoryNamePattern: RegExp;
+    invalidWarnings: boolean;
     submitButtonTitle: string;
     isImport: boolean;
+    isEdit: boolean;
     isExamMode: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
+    backupExercise: ProgrammingExercise;
     isSaving: boolean;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
@@ -68,6 +77,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
+
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
@@ -83,6 +93,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public supportsAssembler = false;
     public supportsSwift = false;
     public supportsOCaml = false;
+    public supportsEmpty = false;
 
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
@@ -98,6 +109,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
+        private modalService: NgbModal,
+        private popupService: ExerciseUpdateWarningService,
         private courseService: CourseManagementService,
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
@@ -110,6 +123,43 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private router: Router,
     ) {}
+
+    /**
+     * Updates the name of the editedAuxiliaryRepository.
+     *
+     * @param editedAuxiliaryRepository
+     */
+    updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
+        return (newValue: any) => {
+            editedAuxiliaryRepository.name = newValue;
+            this.invalidWarnings = true;
+            return editedAuxiliaryRepository.name;
+        };
+    }
+
+    /**
+     * Updates the checkouDirectory name of the editedAuxiliaryRepository.
+     *
+     * @param editedAuxiliaryRepository
+     */
+    updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
+        return (newValue: any) => {
+            editedAuxiliaryRepository.checkoutDirectory = newValue;
+            return editedAuxiliaryRepository.checkoutDirectory;
+        };
+    }
+
+    /**
+     * Updates the description of the editedAuxiliaryRepository.
+     *
+     * @param editedAuxiliaryRepository
+     */
+    updateDescription(editedAuxiliaryRepository: AuxiliaryRepository) {
+        return (newValue: any) => {
+            editedAuxiliaryRepository.description = newValue;
+            return editedAuxiliaryRepository.description;
+        };
+    }
 
     /**
      * Will also trigger loading the corresponding programming exercise language template.
@@ -140,11 +190,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         // Automatically enable the checkout of the solution repository for Haskell exercises
-        if (this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL) {
-            this.programmingExercise.checkoutSolutionRepository = true;
-        } else {
-            this.programmingExercise.checkoutSolutionRepository = false;
-        }
+        this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
@@ -186,9 +232,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             this.selectedProjectTypeValue = this.programmingExercise.projectType!;
         });
+
         // If it is an import, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
             .pipe(
@@ -223,6 +271,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImport) {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
+                        this.isEdit = true;
                         this.submitButtonTitle = 'entity.action.save';
                     } else {
                         this.submitButtonTitle = 'entity.action.generate';
@@ -254,6 +303,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
         this.supportsSwift = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT);
         this.supportsOCaml = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML);
+        this.supportsEmpty = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY);
+
+        this.setInvalidRepoNamePattern();
+        this.setInvalidDirectoryNamePattern();
     }
 
     /**
@@ -291,6 +344,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
+     * Sets the attribute invalidRepositoryNamePattern to an updated RegExp that does not allow auxiliary repository names that are already used for this exercise and only allows
+     * "-" besides [0-9A-z]
+     */
+    private setInvalidRepoNamePattern() {
+        let invalidRepoNames = '';
+        this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidRepoNames += '|' + auxiliaryRepository.name));
+        this.invalidRepositoryNamePattern = new RegExp('^(?!(solution|exercise|tests' + invalidRepoNames + ')\\b)\\b(\\w|-)+$');
+    }
+
+    /**
+     * Sets the attribute invalidDirectoryNamePattern to an updated RegExp that does not allow directory names that are already used for other auxiliary repositories of this
+     * exercise "-" besides [0-9A-z]
+     */
+    private setInvalidDirectoryNamePattern() {
+        let invalidDirectoryNames = '';
+        this.programmingExercise.auxiliaryRepositories?.forEach((auxiliaryRepository) => (invalidDirectoryNames += '|' + auxiliaryRepository.checkoutDirectory));
+        this.invalidDirectoryNamePattern = new RegExp('^(?!( ' + invalidDirectoryNames + ')\\b)\\b(\\w|-|/)+$');
+    }
+
+    /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state and we edited an existing exercise
      * Returns to the overview page if there is no previous state and we created a new exercise
@@ -308,10 +381,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.categories = categories;
     }
 
+    save() {
+        if (this.programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && this.programmingExercise.gradingInstructionFeedbackUsed) {
+            const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise);
+            if (!this.modalService.hasOpenModals()) {
+                this.saveExercise();
+            } else {
+                ref.then((reference) => {
+                    reference.componentInstance.confirmed.subscribe(() => {
+                        this.saveExercise();
+                    });
+                });
+            }
+        } else {
+            this.saveExercise();
+        }
+    }
+
     /**
      * Saves the programming exercise with the provided input
      */
-    save() {
+    saveExercise() {
         // If no release date is set, we warn the user.
         if (!this.programmingExercise.releaseDate && !this.isExamMode) {
             const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');

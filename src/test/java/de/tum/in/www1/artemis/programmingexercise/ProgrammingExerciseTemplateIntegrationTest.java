@@ -55,6 +55,8 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
     private final LocalRepository solutionRepo = new LocalRepository();
 
+    private final LocalRepository auxRepo = new LocalRepository();
+
     @BeforeAll
     public static void detectMavenHome() {
         /*
@@ -99,9 +101,10 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
     @AfterEach
@@ -114,6 +117,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
+        auxRepo.resetLocalRepo();
     }
 
     /**

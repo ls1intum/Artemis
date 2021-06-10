@@ -97,7 +97,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @MethodSource("generateArgumentsForImportExercise")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
-        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans);
+        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, true);
     }
 
     @Test
@@ -269,9 +269,21 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void exportInstructorRepositories_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportProgrammingExerciseInstructorMaterial() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void exportProgrammingExerciseInstructorMaterialAsTutor_forbidden() throws Exception {
+        programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
     @Test

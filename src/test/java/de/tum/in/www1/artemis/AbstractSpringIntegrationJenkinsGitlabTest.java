@@ -421,7 +421,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
-        gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, projectKey, users);
+        gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, users);
     }
 
     @Override

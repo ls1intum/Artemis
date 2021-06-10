@@ -1,8 +1,8 @@
 <ng-container *ngIf="programmingExercise">
-    <td class="align-middle">
+    <div *ngIf="displayShortName">
         {{ programmingExercise.shortName || '' }}
-    </td>
-    <td class="align-middle">
+    </div>
+    <div *ngIf="displayRepositoryUrl">
         <div>
             <span *ngIf="programmingExercise.templateParticipation?.repositoryUrl">
                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
@@ -59,8 +59,8 @@
             </span>
             <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
         </div>
-    </td>
-    <td class="align-middle">
+    </div>
+    <div *ngIf="displayTemplateUrls">
         <span *ngIf="programmingExercise.templateParticipation?.buildPlanId"
             ><a
                 *ngIf="
@@ -89,8 +89,8 @@
         >
         <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
         <br />
-    </td>
-    <td class="align-middle d-none d-md-table-cell">
+    </div>
+    <div *ngIf="displayEditorModus">
         <div class="d-flex justify-content-between">
             {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}
             : {{ programmingExercise.allowOfflineIde || false }}
@@ -99,5 +99,5 @@
             {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}
             : {{ programmingExercise.allowOnlineEditor || false }}
         </div>
-    </td>
+    </div>
 </ng-container>

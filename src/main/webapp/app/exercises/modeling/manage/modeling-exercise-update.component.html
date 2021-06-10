@@ -40,7 +40,7 @@
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
-            <div class="form-group-narrow flex-grow-1 ml-3">
+            <div class="form-group-narrow flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     name="dueDate"
                     [error]="!!modelingExercise.dueDateError"
@@ -62,7 +62,9 @@
             <span *ngIf="modelingExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
         </div>
         <div class="form-group">
-            <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScoreLabel' | artemisTranslate }}</label>
+            <label class="form-control-label">{{
+                'artemisApp.exercise.includedInOverallScore' + (modelingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
+            }}</label>
             <div>
                 <jhi-included-in-overall-score-picker [(includedInOverallScore)]="modelingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
             </div>
@@ -220,51 +222,8 @@
                 [editorMode]="EditorMode.LATEX"
             ></jhi-markdown-editor>
         </div>
-        <div class="form-group">
+        <div class="form-group" *ngIf="!modelingExercise.id || isImport">
             <span jhiTranslate="artemisApp.modelingExercise.exampleSubmissions">Example submissions</span>
-
-            <ul *ngIf="modelingExercise.id">
-                <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
-                    <button
-                        [routerLink]="['/course-management', examCourseId, 'modeling-exercises', modelingExercise.id, 'example-submissions', exampleSubmission.id]"
-                        class="btn btn-link"
-                        type="button"
-                        jhiTranslate="artemisApp.modelingExercise.exampleSubmission"
-                        [translateValues]="{ number: i + 1 }"
-                    >
-                        Example submission {{ i + 1 }}
-                    </button>
-                    <fa-icon *ngIf="exampleSubmission.usedForTutorial" [icon]="'chalkboard-teacher'" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
-                    <fa-icon
-                        *ngIf="exampleSubmission.submission?.latestResult?.exampleResult"
-                        [icon]="'check-circle'"
-                        style="margin-left: 10px"
-                        title="An assessment is available"
-                    ></fa-icon>
-                    <button *ngIf="!isImport" class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id!, i)">
-                        <fa-icon [icon]="'ban'"></fa-icon>
-                    </button>
-                </li>
-            </ul>
-
-            <button
-                *ngIf="modelingExercise.id && !isImport && !isExamMode"
-                class="btn btn-primary"
-                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
-                jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
-            >
-                Create example submission
-            </button>
-
-            <button
-                *ngIf="modelingExercise.id && !isImport && isExamMode"
-                class="btn btn-primary"
-                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course!.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', 'new']"
-                jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
-            >
-                Create example submission
-            </button>
-
             <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id || isImport" jhiTranslate="artemisApp.modelingExercise.exampleSubmissionsRequireExercise">
                 To create an example submission, you first need to finish creating the modeling exercise
             </div>

@@ -14,7 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { DebugElement } from '@angular/core';
+import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
@@ -24,7 +24,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -59,7 +59,7 @@ describe('Component Tests', () => {
         let service: ModelingSubmissionService;
         let router: Router;
 
-        const route = ({ params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any) as ActivatedRoute;
+        const route = { params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any as ActivatedRoute;
         const participation = new StudentParticipation();
         participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         participation.id = 1;
@@ -85,6 +85,7 @@ describe('Component Tests', () => {
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent), MockPipe(HtmlForMarkdownPipe)],
                 providers: [
+                    MockProvider(ChangeDetectorRef),
                     { provide: ComplaintService, useClass: MockComplaintService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },

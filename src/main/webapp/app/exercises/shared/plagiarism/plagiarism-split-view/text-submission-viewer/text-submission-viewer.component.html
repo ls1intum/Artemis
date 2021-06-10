@@ -1,6 +1,6 @@
 <jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
 
-<div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }" *ngIf="!loading">
+<div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }" *ngIf="!loading && !binaryFile!!">
     {{ 'artemisApp.plagiarism.no-file-selected' | artemisTranslate }}
 </div>
 
@@ -8,4 +8,9 @@
     <div class="spinner-border text-primary" role="status">
         <span class="sr-only">Loading...</span>
     </div>
+</div>
+
+<div class="binaryFileDialogue" *ngIf="binaryFile">
+    <span class="me-1">{{ 'artemisApp.plagiarism.binary-file-not-rendered' | artemisTranslate }}</span>
+    <a class="text-primary" (click)="downloadCurrentFile()">{{ 'entity.action.download' | artemisTranslate }}</a>
 </div>

@@ -50,7 +50,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
 
     @SpyBean
@@ -180,6 +180,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        for (var auxiliaryRepository : exercise.getAuxiliaryRepositories()) {
+            final var auxiliaryRepoName = exercise.generateRepositoryName(auxiliaryRepository.getName());
+            bitbucketRequestMockProvider.mockCreateRepository(exercise, auxiliaryRepoName);
+        }
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
 
@@ -240,6 +244,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testsRepoName);
         bitbucketRequestMockProvider.mockDefaultBranch("master", exerciseToBeImported.getProjectKey());
+        for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
+            final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
+            bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, auxRepoName);
+        }
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
@@ -264,6 +272,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName(), planExistsInCi, shouldPlanEnableFail);
         mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
         mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
+            final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
+            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), repository.getName(), auxRepoName, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), repository.getName(), auxRepoName, List.of());
+        }
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
         bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());

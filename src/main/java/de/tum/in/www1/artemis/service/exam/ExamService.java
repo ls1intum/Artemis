@@ -271,6 +271,13 @@ public class ExamService {
 
             if (scores.maxPoints != null) {
                 studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+                // Sets grading scale related properties for exam scores
+                Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
+                if (gradingScale.isPresent()) {
+                    GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                    studentResult.overallGrade = studentGrade.getGradeName();
+                    studentResult.hasPassed = studentGrade.getIsPassingGrade();
+                }
             }
             scores.studentResults.add(studentResult);
         }
@@ -369,8 +376,8 @@ public class ExamService {
         }
 
         // Check that the exam max points is set
-        if (exam.getMaxPoints() == null) {
-            throw new BadRequestAlertException("The exam max points is not set.", "Exam", "artemisApp.exam.validation.maxPointsNotSet");
+        if (exam.getMaxPoints() == 0) {
+            throw new BadRequestAlertException("The exam max points can not be 0.", "Exam", "artemisApp.exam.validation.maxPointsNotSet");
         }
 
         // Ensure that all exercises in an exercise group have the same amount of max points and max bonus points

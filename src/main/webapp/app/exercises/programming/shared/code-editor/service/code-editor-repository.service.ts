@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
 import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -18,6 +18,7 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
+import { downloadFile } from 'app/shared/util/download.util';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -142,6 +143,20 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     /**
+     * downloads a file from the repository to the users device.
+     * @param fileName the name of the file in the repository
+     * @param downloadName the name of the file as suggested to the browser
+     */
+    downloadFile(fileName: string, downloadName: string) {
+        this.http
+            .get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
+            .pipe(handleErrorResponse(this.conflictService))
+            .subscribe((res) => {
+                downloadFile(res, downloadName);
+            });
+    }
+
+    /**
      * Calls setDomain of super and updates fileUpdateUrl. If this service is used at the time complete usage and unsubscribe.
      * @param domain - defines new domain of super.
      */
@@ -173,20 +188,22 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         );
     };
 
+    getFileHeaders = (fileName: string) => {
+        return this.http
+            .head<Observable<HttpResponse<Blob>>>(`${this.restResourceUrl}/file`, { observe: 'response', params: new HttpParams().set('file', fileName) })
+            .pipe(handleErrorResponse(this.conflictService));
+    };
+
     getFilesWithContent = () => {
         return this.http.get(`${this.restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
     };
 
     createFile = (fileName: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/file`, '', { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
     };
 
     createFolder = (folderName: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) }).pipe(handleErrorResponse(this.conflictService));
     };
 
     updateFileContent = (fileName: string, fileContent: string) => {
@@ -230,14 +247,10 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     }
 
     renameFile = (currentFilePath: string, newFilename: string) => {
-        return this.http
-            .post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.post<void>(`${this.restResourceUrl}/rename-file`, { currentFilePath, newFilename }).pipe(handleErrorResponse(this.conflictService));
     };
 
     deleteFile = (fileName: string) => {
-        return this.http
-            .delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) })
-            .pipe(handleErrorResponse(this.conflictService));
+        return this.http.delete<void>(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName) }).pipe(handleErrorResponse(this.conflictService));
     };
 }

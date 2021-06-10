@@ -113,7 +113,7 @@ public class LectureResource {
         }
 
         // Make sure that the original references are preserved.
-        Lecture originalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
 
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
@@ -161,7 +161,7 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
+        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
         if (lectureOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -240,7 +240,7 @@ public class LectureResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Lecture> optionalLecture = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(id);
+        Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
         if (optionalLecture.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

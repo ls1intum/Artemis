@@ -14,7 +14,7 @@ import { StudentsExamImportButtonComponent } from 'app/exam/manage/students/stud
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -35,11 +35,11 @@ describe('ExamStudentsComponent', () => {
     const user2 = { id: 2, login: 'user2' } as User;
     const examWithCourse: Exam = { course, id: 2, registeredUsers: [user1, user2] } as Exam;
 
-    const route = ({
+    const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
         url: new Observable<UrlSegment[]>(),
         data: { subscribe: (fn: (value: any) => void) => fn({ exam: examWithCourse }) },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     let component: ExamStudentsComponent;
     let fixture: ComponentFixture<ExamStudentsComponent>;
@@ -155,7 +155,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should register all enrolled students of the course to the exam', () => {
-        const examServiceStubAddAll = sinon.stub(examManagementService, 'addAllStudentsOfCourseToExam').returns(of(new HttpResponse()));
+        const examServiceStubAddAll = sinon.stub(examManagementService, 'addAllStudentsOfCourseToExam').returns(of(new HttpResponse<StudentDTO[]>()));
         const examWithOneUser = { course, id: 2, registeredUsers: [user2] };
         const examServiceStub = sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();

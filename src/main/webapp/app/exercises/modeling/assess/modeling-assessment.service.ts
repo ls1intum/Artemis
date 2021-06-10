@@ -25,9 +25,7 @@ export class ModelingAssessmentService {
             params = params.set('submit', 'true');
         }
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/result/${resultId}/assessment`;
-        return this.http
-            .put<Result>(url, feedbacks, { params })
-            .pipe(map((res: Result) => this.convertResult(res)));
+        return this.http.put<Result>(url, feedbacks, { params }).pipe(map((res: Result) => this.convertResult(res)));
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
@@ -41,9 +39,7 @@ export class ModelingAssessmentService {
             feedbacks,
             complaintResponse,
         };
-        return this.http
-            .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     getAssessment(submissionId: number): Observable<Result> {
@@ -75,6 +71,15 @@ export class ModelingAssessmentService {
 
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
+    /**
+     * Deletes an assessment.
+     * @param submissionId id of the submission, to which the assessment belongs to
+     * @param resultId     id of the result which is deleted
+     */
+    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/delete/${resultId}`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

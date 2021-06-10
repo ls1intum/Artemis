@@ -120,9 +120,7 @@ export class TeamService implements ITeamService {
      */
     create(exercise: Exercise, team: Team): Observable<TeamResponse> {
         const copy = TeamService.convertDateFromClient(team);
-        return this.http
-            .post<Team>(TeamService.resourceUrl(exercise.id!), copy, { observe: 'response' })
-            .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
+        return this.http.post<Team>(TeamService.resourceUrl(exercise.id!), copy, { observe: 'response' }).pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
     }
 
     /**

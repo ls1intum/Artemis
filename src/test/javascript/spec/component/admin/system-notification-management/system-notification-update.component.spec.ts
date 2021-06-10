@@ -7,7 +7,7 @@ import { SystemNotification } from 'app/entities/system-notification.model';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -24,11 +24,11 @@ describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponent: SystemNotificationManagementUpdateComponent;
     let service: SystemNotificationService;
 
-    const route = ({
+    const route = {
         parent: {
             data: of({ notification: { id: 1, title: 'test' } as SystemNotification }),
         },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
     const router = { navigate() {} };
 
     beforeEach(() => {

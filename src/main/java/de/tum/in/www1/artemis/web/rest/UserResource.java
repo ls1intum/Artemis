@@ -150,10 +150,16 @@ public class UserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+
+        final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         final var oldUserLogin = existingUser.getLogin();
         final var oldGroups = existingUser.getGroups();
         var updatedUser = userCreationService.updateInternalUser(existingUser, managedUserVM);
         userService.updateUserInConnectorsAndAuthProvider(existingUser, oldUserLogin, oldGroups);
+
+        if (shouldActivateUser) {
+            userService.activateUser(updatedUser);
+        }
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
     }

@@ -10,10 +10,10 @@ import { Authority } from 'app/shared/constants/authority.constants';
 describe('User Management Detail Component', () => {
     let comp: UserManagementDetailComponent;
     let fixture: ComponentFixture<UserManagementDetailComponent>;
-    const route = ({
+    const route = {
         data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin']) }),
         children: [],
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({

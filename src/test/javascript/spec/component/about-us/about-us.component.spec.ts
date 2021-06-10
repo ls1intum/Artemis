@@ -20,7 +20,7 @@ describe('AboutUsComponent', () => {
     let fixture: ComponentFixture<AboutUsComponent>;
     const sandbox = sinon.createSandbox();
 
-    const route = ({ snapshot: { url: ['about'] } } as any) as ActivatedRoute;
+    const route = { snapshot: { url: ['about'] } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,9 +44,7 @@ describe('AboutUsComponent', () => {
 
         const getStaticJsonFromArtemisServerStub = sandbox.stub(staticContentService, 'getStaticJsonFromArtemisServer').returns(of(new AboutUsModel([], [])));
         const getProfileInfoSub = sandbox.stub(profileService, 'getProfileInfo');
-        getProfileInfoSub.returns(
-            new BehaviorSubject<ProfileInfo | undefined>({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo),
-        );
+        getProfileInfoSub.returns(new BehaviorSubject<ProfileInfo>({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo).asObservable());
 
         fixture.detectChanges();
         tick();

@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -36,7 +37,6 @@ class ExerciseForTeam extends Exercise {
 export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly moment = moment;
-    readonly cellClassLeftSpace = 'datatable-cell-space-left';
 
     @Input() team: Team;
     @Input() course: Course;
@@ -47,7 +47,13 @@ export class TeamParticipationTableComponent implements OnInit {
     exercises: ExerciseForTeam[];
     isLoading: boolean;
 
-    constructor(private teamService: TeamService, private exerciseService: ExerciseService, private jhiAlertService: JhiAlertService, private router: Router) {}
+    constructor(
+        private teamService: TeamService,
+        private exerciseService: ExerciseService,
+        private jhiAlertService: JhiAlertService,
+        private router: Router,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * Loads all needed data from the server for this component
@@ -63,7 +69,14 @@ export class TeamParticipationTableComponent implements OnInit {
     loadAll() {
         this.isLoading = true;
         this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe((courseResponse) => {
-            this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []);
+            this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
+                return {
+                    ...exercise,
+                    isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course!),
+                    isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course!),
+                    isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course!),
+                };
+            });
             this.isLoading = false;
         }, this.onError);
     }
@@ -94,9 +107,11 @@ export class TeamParticipationTableComponent implements OnInit {
      *
      * @param exercise Exercise is passed in from the template (instead of doing this.exercise) to trigger the ngx-datatable change detection
      */
-    rowClass = (exercise: Exercise) => (row: Exercise): string => {
-        return exercise.id === row.id ? currentExerciseRowClass : '';
-    };
+    rowClass =
+        (exercise: Exercise) =>
+        (row: Exercise): string => {
+            return exercise.id === row.id ? currentExerciseRowClass : '';
+        };
 
     /**
      * Uses the router to navigate to the assessment editor for a given/new submission
@@ -105,18 +120,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     async openAssessmentEditor(exercise: Exercise, submission: Submission | 'new'): Promise<void> {
         const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        let route;
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            // Ensure that submission has the value 'new' for the first assessment
-            const isFirstAssessment = this.assessmentAction(submission === 'new' ? undefined : submission) === AssessmentAction.START;
-            if (isFirstAssessment) {
-                submission = 'new';
-            }
-            const participationURLParameter: number | 'new' = submission === 'new' ? 'new' : getLatestSubmissionResult(submission)?.participation?.id!;
-            route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/code-editor/${participationURLParameter}/assessment`;
-        } else {
-            route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
-        }
+        const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
         await this.router.navigate([route]);
     }
 
@@ -137,13 +141,34 @@ export class TeamParticipationTableComponent implements OnInit {
         return AssessmentAction.OPEN;
     }
 
+    onActivate() {
+        window.scroll(0, 0);
+    }
+
     /**
      * Returns whether the assessment button should be disabled
-     * @param exercise Exercise to which the submission belongs
-     * @param submission Submission for which to check
+     * @param exercise Exercise for which the submission is to be assessed
+     * @param submission Submission that is to be assessed
      */
-    assessmentButtonDisabled(exercise: Exercise, submission: Submission | null) {
-        return !submission; // there is no submission yet to assess
+    isAssessmentButtonDisabled(exercise: Exercise, submission?: Submission): boolean {
+        // Non-Submitted exercises can not be assessed
+        if (!submission || !submission.submitted) {
+            return true;
+        }
+        // Exercises without due date can be assessed
+        if (!exercise.dueDate) {
+            return false;
+        }
+        // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
+        // if the exercise due date has passed
+        if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
+            if (exercise.dueDate.isBefore(moment())) {
+                return false;
+            }
+        } else if (exercise.isAtLeastInstructor) {
+            return false;
+        }
+        return true;
     }
 
     private onError(error: HttpErrorResponse) {

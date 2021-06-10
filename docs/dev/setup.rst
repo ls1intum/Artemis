@@ -338,6 +338,17 @@ above in Server Setup) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
+In case you encounter any problems regarding JavaScript heap memory leaks when executing ``yarn start`` or any other scripts from ``package.json``, you can change the memory limit parameter used in the ``webpack-ts`` script in ``package.json`` to the following:
+
+::
+   
+   # This local change in `package.json` should not be comitted.
+   "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=5120 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack" # possible higher values are 6144, 7168, and 8192
+
+
+Make sure to **not commit this change** in ``package.json``.
+
+
 For more information, review `Working with
 Angular <https://www.jhipster.tech/development/#working-with-angular>`__.
 For further instructions on how to develop with JHipster, have a look at
@@ -422,3 +433,32 @@ HTTP. We need to extend the configuration in the file
        token-validity-in-seconds: 10800
 
 .. _Athene: https://github.com/ls1intum/Athene
+
+Athene Service
+--------------
+
+The semi-automatic text assessment relies on the Athene_ service.
+To enable automatic text assessments, special configuration is required:
+
+Enable the ``apollon`` Spring profile:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,apollon
+
+Configure API Endpoints:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Apollon conversion service is running on a dedicated machine and is adressed via
+HTTP. We need to extend the configuration in the file
+``src/main/resources/config/application-artemis.yml`` like so:
+
+.. code:: yaml
+
+   apollon:
+      conversion-service-url: http://localhost:8080
+
+
+.. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
+
