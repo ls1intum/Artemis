@@ -42,7 +42,9 @@ describe('Programming exercise', () => {
     it('Creates a new course, participates in it and deletes it afterwards', function () {
         cy.login(adminUsername, adminPassword, '/');
         createTestCourse();
-        cy.log('Created course. Adding a programming exercise...');
+        // We sleep for 80 seconds to allow bamboo/bitbucket to synchronize the group rights, because they programming exercise creation fails otherwise
+        cy.log('Created course. Sleeping before adding a programming exercise...');
+        cy.wait(80000);
         openExercisesFromCourseManagement();
         createProgrammingExercise();
         addStudentToCourse();
