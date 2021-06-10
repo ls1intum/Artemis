@@ -115,13 +115,8 @@ describe('FileUploadSubmissionComponent', () => {
         expect(fileUploadInput).to.exist;
         expect(fileUploadInput.nativeElement.disabled).to.be.false;
 
-        // check if fileUploadLabel value is not set
-        const fileUploadLabel = debugElement.query(By.css('.custom-file-label.overflow-ellipsis'));
-        expect(fileUploadLabel).to.exist;
-        expect(fileUploadLabel.nativeElement.value).to.be.undefined;
-
         // check if extension elements are set
-        const extension = debugElement.query(By.css('.ml-1.badge.badge-info'));
+        const extension = debugElement.query(By.css('.ms-1.badge.bg-info'));
         expect(extension).to.exist;
         expect(extension.nativeElement.textContent.replace(/\s/g, '')).to.be.equal(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
     }));
@@ -135,11 +130,6 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submissionFile = new File([''], fileName, { type: 'application/pdf' });
         comp.submission = createFileUploadSubmission();
         fixture.detectChanges();
-
-        // check if fileUploadLabel value is not set
-        const fileUploadLabel = debugElement.query(By.css('.custom-file-label.overflow-ellipsis'));
-        expect(fileUploadLabel).to.exist;
-        expect(fileUploadLabel.nativeElement.textContent).to.be.equal(fileName);
 
         let submitFileButton = debugElement.query(By.css('jhi-button'));
         spyOn(fileUploaderService, 'uploadFile').and.returnValue(Promise.resolve({ path: 'test' }));

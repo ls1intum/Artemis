@@ -1,6 +1,6 @@
 <!-- question not in edit mode -->
 <ng-container *ngIf="!isEditMode">
-    <div class="row pl-2 mb-1">
+    <div class="row ps-2 mb-1">
         <div class="col-auto px-0">
             <fa-icon [icon]="'comment'"></fa-icon>
         </div>
@@ -9,7 +9,7 @@
         </div>
         <div class="col-auto px-0">
             <fa-icon
-                class="clickable mr-1"
+                class="clickable me-1"
                 *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate"
                 container="body"
@@ -17,10 +17,10 @@
                 (click)="toggleEditMode()"
             ></fa-icon>
             <jhi-confirm-icon
-                class="clickable mr-1"
+                class="clickable me-1"
                 *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
                 (confirmEvent)="deletePost()"
-                [ngClass]="'mr-1'"
+                [ngClass]="'me-1'"
                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deletePost' | artemisTranslate"
                 [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeletePost' | artemisTranslate"
             ></jhi-confirm-icon>
@@ -34,7 +34,7 @@
             [innerHTML]="post.content ? (post.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
         ></div>
     </div>
-    <div class="row pl-2 mb-2">
+    <div class="row ps-2 mb-2">
         <span class="text-black-50 posting-subtitle">{{ post.author!.name }} - {{ post.creationDate | artemisDate: 'short' }}</span>
     </div>
 </ng-container>
@@ -42,7 +42,7 @@
 <ng-container *ngIf="isEditMode">
     <div class="row mb-2">
         <div class="col-12">
-            <div class="row pl-2 mb-1">
+            <div class="row ps-2 mb-1">
                 <div class="col-auto px-0">
                     <fa-icon [icon]="'comment'"></fa-icon>
                 </div>
@@ -51,7 +51,7 @@
                 </div>
                 <div class="col-auto px-0">
                     <fa-icon
-                        class="clickable mr-1"
+                        class="clickable me-1"
                         *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editPost' | artemisTranslate"
                         container="body"
@@ -59,10 +59,10 @@
                         (click)="toggleEditMode()"
                     ></fa-icon>
                     <jhi-confirm-icon
-                        class="clickable mr-1"
+                        class="clickable me-1"
                         *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)"
                         (confirmEvent)="deletePost()"
-                        [ngClass]="'mr-1'"
+                        [ngClass]="'me-1'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deletePost' | artemisTranslate"
                         [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeletePost' | artemisTranslate"
                     ></jhi-confirm-icon>

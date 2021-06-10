@@ -6,7 +6,7 @@
                 [translateValues]="{ paramTitle: this.question.title, paramIndex: this.questionIndex }"
             ></span>
         </h5>
-        <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="btn-close" aria-label="Close" (click)="d()"></button>
     </div>
 
     <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.ALL_OR_NOTHING">

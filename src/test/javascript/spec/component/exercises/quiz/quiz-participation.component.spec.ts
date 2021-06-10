@@ -21,7 +21,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as chai from 'chai';
 import * as moment from 'moment';

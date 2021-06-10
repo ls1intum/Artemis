@@ -14,7 +14,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { By } from '@angular/platform-browser';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 chai.use(sinonChai);
