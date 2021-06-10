@@ -10,7 +10,9 @@ export const navigateBack = (router: Router, fallbackUrl: string[]): void => {
 };
 
 export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
-    router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
+    setTimeout(() => {
+        router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
+    }, 1000);
 };
 
 /**

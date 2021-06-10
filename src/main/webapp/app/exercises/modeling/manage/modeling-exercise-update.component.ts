@@ -242,15 +242,10 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
         switch (this.editType) {
             case EditType.CREATE:
-                // Assigning id received from the backend.
-                // Required for navigation to the example submission dashboard in case of the exercise CREATE.
-                this.modelingExercise.id = exerciseId;
-
-                setTimeout(() => {
-                    navigateToExampleSubmissions(this.router, this.modelingExercise);
-                }, 1000);
-                break;
             case EditType.IMPORT:
+                // Passing exerciseId since it is required for navigation to the example submission dashboard.
+                navigateToExampleSubmissions(this.router, { ...this.modelingExercise, id: exerciseId });
+                break;
             case EditType.UPDATE:
                 this.previousState();
                 break;

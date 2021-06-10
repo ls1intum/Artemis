@@ -233,15 +233,10 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         switch (this.editType) {
             case EditType.CREATE:
-                // Assigning id received from the backend.
-                // Required for navigation to the example submission dashboard in case of the exercise CREATE.
-                this.textExercise.id = exerciseId;
-
-                setTimeout(() => {
-                    navigateToExampleSubmissions(this.router, this.textExercise);
-                }, 1000);
-                break;
             case EditType.IMPORT:
+                // Passing exerciseId since it is required for navigation to the example submission dashboard.
+                navigateToExampleSubmissions(this.router, { ...this.textExercise, id: exerciseId });
+                break;
             case EditType.UPDATE:
                 this.previousState();
                 break;
