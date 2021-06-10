@@ -32,6 +32,7 @@ const modalDeleteButton = '.modal-footer > .btn-danger';
 describe('Programming exercise', () => {
     before(() => {
         cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
+        cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
         cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
         cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
         cy.intercept('POST', '/api/courses').as('createCourseQuery');
@@ -131,9 +132,10 @@ function startParticipationInProgrammingExercise() {
  */
 function addStudentToCourse() {
     openCourseManagement();
-    cy.get('.course-table-container').contains('0 Students').click();
+    getCourseCard().contains('0 Students').click();
     cy.get('#typeahead-basic').type(username);
-    cy.contains(new RegExp(username)).should(beVisible).click();
+    cy.wait('@getStudentQuery');
+    cy.get('#ngb-typeahead-0').contains(new RegExp(username)).should(beVisible).click();
     cy.wait('@addStudentQuery');
     cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should('be.visible');
 }
@@ -147,10 +149,7 @@ function createProgrammingExercise() {
     cy.log('Filling out programming exercise info...');
     cy.get(fieldTitle).type(programmingExerciseName);
     cy.get(shortName).type(programmingExerciseShortName);
-    cy.get('#field_packageName').type('tum.exercise');
-    cy.get('#field_points').type('100');
-    cy.get('#field_allowOnlineEditor').check();
-
+    cy.get('#field_packageName').type('com.cypress.test');
     cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
     cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
 
@@ -158,7 +157,10 @@ function createProgrammingExercise() {
     cy.get('.owl-dt-control-arrow-button').eq(1).click();
     cy.get('.owl-dt-day-3').eq(2).click();
     cy.get(datepickerButtons).eq(1).should(beVisible).click();
-    cy.get('[type="submit"]').click();
+    cy.get('#field_points').type('100');
+    cy.get('#field_allowOnlineEditor').check();
+
+    cy.get('[type="submit"]').eq(1).click();
     cy.wait('@createProgrammingExerciseQuery');
     // Creating a programming exercise takes a lot of time, so we increase the timeout here
     cy.url().should('include', exercisePath);
