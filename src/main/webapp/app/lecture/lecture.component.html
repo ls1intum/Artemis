@@ -1,7 +1,7 @@
 <div>
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
-        <a id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-lecture" [routerLink]="['new']">
+        <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-lecture" [routerLink]="['new']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.lecture.home.createLabel">Create new Lecture</span>
         </a>
@@ -37,9 +37,9 @@
                             <a [routerLink]="['..']">{{ lecture.course?.title }}</a>
                         </div>
                     </td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
                                     <fa-icon [icon]="'file'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
@@ -50,7 +50,7 @@
                                 </a>
                             </div>
 
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <a *ngIf="lecture.isAtLeastEditor" [routerLink]="[lecture.id, 'edit']" class="btn btn-primary mb-1 btn-sm">
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>

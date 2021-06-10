@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const writeFilePlugin = require('write-file-webpack-plugin');
 const { merge } = require('webpack-merge');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
@@ -8,12 +7,11 @@ const WebpackNotifierPlugin = require('webpack-notifier');
 const path = require('path');
 const sass = require('sass');
 const ESLintPlugin = require('eslint-webpack-plugin');
-const utils = require('./utils.js');
-const commonConfig = require('./webpack.common.js');
 
-const ENV = 'development';
+import { commonConfig } from './webpack.common';
+import { root } from './utils';
 
-module.exports = (options) => merge(commonConfig({ env: ENV }), {
+module.exports = (options: any) => merge(commonConfig({ env: '"development"' }), {
     devtool: 'eval-source-map',
     devServer: {
         contentBase: './build/resources/main/static/',
@@ -25,7 +23,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             secure: false,
             changeOrigin: options.tls,
             headers: { host: 'localhost:9000' }
-        },{
+        }, {
             context: [
                 '/websocket'
             ],
@@ -34,7 +32,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         }],
         stats: options.stats,
         watchOptions: {
-            ignored: /node_modules/
+            ignored: 'node_modules/**'
         },
         https: options.tls,
         historyApiFallback: true
@@ -44,7 +42,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
         main: './src/main/webapp/app/app.main'
     },
     output: {
-        path: utils.root('build/resources/main/static/'),
+        path: root('build/resources/main/static/'),
         filename: 'app/[name].bundle.js',
         chunkFilename: 'app/[id].chunk.js'
     },
@@ -88,7 +86,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             : new SimpleProgressWebpackPlugin({
                 format: options.stats === 'minimal' ? 'compact' : 'expanded'
               }),
-        new ESLintPlugin({ }),
+        new ESLintPlugin(),
         new FriendlyErrorsWebpackPlugin(),
         new BrowserSyncPlugin({
             https: options.tls,
@@ -98,7 +96,7 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
                 target: `http${options.tls ? 's' : ''}://localhost:9060`,
                 ws: true,
                 proxyOptions: {
-                    changeOrigin: false  //pass the Host header to the server unchanged  https://github.com/Browsersync/browser-sync/issues/430
+                    changeOrigin: false  // pass the Host header to the server unchanged  https://github.com/Browsersync/browser-sync/issues/430
                 }
             },
             socket: {
@@ -110,13 +108,12 @@ module.exports = (options) => merge(commonConfig({ env: ENV }), {
             reload: false
         }),
         new webpack.ContextReplacementPlugin(
-            /angular(\\|\/)core(\\|\/)/,
+            /angular([\\/])core([\\/])/,
             path.resolve(__dirname, './src/main/webapp')
         ),
-        new writeFilePlugin(),
-        new webpack.WatchIgnorePlugin([
-            utils.root('src/test'),
-        ]),
+        new webpack.WatchIgnorePlugin({
+            paths: [root('src/test')],
+        }),
         new WebpackNotifierPlugin({
             title: 'Artemis'
         })

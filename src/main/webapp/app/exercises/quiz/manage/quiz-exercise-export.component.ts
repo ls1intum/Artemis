@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
 

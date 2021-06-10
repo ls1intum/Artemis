@@ -12,7 +12,7 @@ import { isMoment, Moment } from 'moment';
         <div class="d-flex">
             <input
                 #dateInput="ngModel"
-                class="form-control position-relative pl-5"
+                class="form-control position-relative ps-5"
                 [ngClass]="{ 'is-invalid': error }"
                 [ngModel]="value"
                 [disabled]="disabled"

@@ -87,6 +87,16 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
     }
 
+    /**
+     * Auxiliary repositories are not supported for Gitlab/Jenkins configurations.
+     *
+     * @param exercise for which the build plans should be recreated
+     */
+    @Override
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+        // Auxiliary repositories are currently not supported for Gitlab/Jenkins configurations.
+    }
+
     @Override
     public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
         // Not needed for Jenkins
