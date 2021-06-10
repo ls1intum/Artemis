@@ -47,7 +47,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateAnswerPostAsInstructor() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
+        Post post = database.createPostsWithinCourse().get(0);
 
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
@@ -65,7 +65,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateAnswerPostWithWrongCourseId() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
+        Post post = database.createPostsWithinCourse().get(0);
         Course courseDummy = database.createCourse();
 
         AnswerPost answerPost = new AnswerPost();
@@ -82,7 +82,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateAnswerPostWithLectureNotNullAndExerciseNull() throws Exception {
-        List<Post> posts = database.createCourseWithExerciseAndLectureAndPosts();
+        List<Post> posts = database.createPostsWithinCourse();
         Post post = posts.get(0);
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("instructor1"));
@@ -107,7 +107,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testCreateAnswerPost_asTA() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
+        Post post = database.createPostsWithinCourse().get(0);
 
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("tutor1"));
@@ -123,7 +123,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateAnswerPost_asStudent() throws Exception {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
+        Post post = database.createPostsWithinCourse().get(0);
 
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
@@ -335,7 +335,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     private List<AnswerPost> createAnswerPostsOnServer() {
-        Post post = database.createCourseWithExerciseAndPosts().get(0);
+        Post post = database.createPostsWithinCourse().get(0);
         List<AnswerPost> answers = new ArrayList<>();
 
         AnswerPost answerPost = new AnswerPost();
