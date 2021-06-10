@@ -10,7 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { now } from 'moment';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';

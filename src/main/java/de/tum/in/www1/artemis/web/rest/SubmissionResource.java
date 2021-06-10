@@ -7,6 +7,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,7 +136,7 @@ public class SubmissionResource {
      * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
      *
-     * @param exerciseId the id of the exercise we are interested in
+     * @param exerciseId of the exercise we are interested in
      * @param principal that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
      */
@@ -143,11 +144,11 @@ public class SubmissionResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
         List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, principal, isAtLeastInstructor);
+
         return ResponseEntity.ok(submissionWithComplaintDTOs);
     }
 

@@ -9,8 +9,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { Complaint } from "app/entities/complaint.model";
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
@@ -60,20 +59,14 @@ export class SubmissionService {
      */
     getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' }).pipe(
-                map((res) => {
-                    console.log(res.body);
-                    const acc =  this.convertDTOsFromServer(res);
-                    console.log(res.body);
-                    return acc;
-                }),
-            );
+            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
     protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
         if (res.body) {
             res.body.forEach((dto) => {
-                console.log('te')
+                console.log('te');
                 dto.submission = this.convertSubmissionDateFromServer(dto.submission);
                 dto.complaint = this.convertDateFromServerComplaint(dto.complaint);
             });

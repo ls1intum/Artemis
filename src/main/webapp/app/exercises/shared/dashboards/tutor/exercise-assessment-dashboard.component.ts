@@ -1,52 +1,46 @@
-import {Component, OnInit} from '@angular/core';
-import {SafeHtml} from '@angular/platform-browser';
-import {ActivatedRoute, Router} from '@angular/router';
-import {CourseManagementService} from 'app/course/manage/course-management.service';
-import {JhiAlertService} from 'ng-jhipster';
-import {User} from 'app/core/user/user.model';
-import {HttpErrorResponse, HttpResponse} from '@angular/common/http';
-import {TutorParticipationService} from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import {TextSubmissionService} from 'app/exercises/text/participate/text-submission.service';
-import {ExampleSubmission} from 'app/entities/example-submission.model';
-import {ArtemisMarkdownService} from 'app/shared/markdown.service';
-import {TextExercise} from 'app/entities/text-exercise.model';
-import {ModelingExercise} from 'app/entities/modeling-exercise.model';
-import {UMLModel} from '@ls1intum/apollon';
-import {ComplaintService} from 'app/complaints/complaint.service';
-import {Complaint, ComplaintType} from 'app/entities/complaint.model';
-import {
-    getLatestSubmissionResult,
-    getSubmissionResultByCorrectionRound,
-    setLatestSubmissionResult,
-    Submission,
-    SubmissionExerciseType
-} from 'app/entities/submission.model';
-import {ModelingSubmissionService} from 'app/exercises/modeling/participate/modeling-submission.service';
-import {Observable, of} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {StatsForDashboard} from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
-import {TranslateService} from '@ngx-translate/core';
-import {FileUploadSubmissionService} from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import {FileUploadExercise} from 'app/entities/file-upload-exercise.model';
-import {ProgrammingExercise} from 'app/entities/programming-exercise.model';
-import {ProgrammingSubmissionService} from 'app/exercises/programming/participate/programming-submission.service';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {AccountService} from 'app/core/auth/account.service';
-import {GuidedTourService} from 'app/guided-tour/guided-tour.service';
-import {tutorAssessmentTour} from 'app/guided-tour/tours/tutor-assessment-tour';
-import {Exercise, ExerciseType} from 'app/entities/exercise.model';
-import {TutorParticipation, TutorParticipationStatus} from 'app/entities/participation/tutor-participation.model';
-import {ExerciseService} from 'app/exercises/shared/exercise/exercise.service';
-import {DueDateStat} from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
-import {Exam} from 'app/entities/exam.model';
-import {TextSubmission} from 'app/entities/text-submission.model';
-import {SubmissionService, SubmissionWithComplaintDTO} from 'app/exercises/shared/submission/submission.service';
-import {Result} from 'app/entities/result.model';
-import {ArtemisDatePipe} from 'app/shared/pipes/artemis-date.pipe';
-import {SortService} from 'app/shared/service/sort.service';
-import {round} from 'app/shared/util/utils';
-import {getExerciseSubmissionsLink, getLinkToSubmissionAssessment} from 'app/utils/navigation.utils';
-import {AssessmentType} from "app/entities/assessment-type.model";
+import { Component, OnInit } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { User } from 'app/core/user/user.model';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { UMLModel } from '@ls1intum/apollon';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
+import { TranslateService } from '@ngx-translate/core';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
+import { Exam } from 'app/entities/exam.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
+import { Result } from 'app/entities/result.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SortService } from 'app/shared/service/sort.service';
+import { round } from 'app/shared/util/utils';
+import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -256,20 +250,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         );
 
         if (!this.isTestRun) {
-            /* this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<Complaint[]>) => {
-                    (this.complaints = res.body as Complaint[]);
-                    console.log(this.complaints);
-                },
-                (error: HttpErrorResponse) => this.onError(error.message)
-            );
-
-             */
-
             this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe(
                 (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
-                    console.log(this.submissionsWithComplaints);
                 },
                 (error: HttpErrorResponse) => this.onError(error.message),
             );

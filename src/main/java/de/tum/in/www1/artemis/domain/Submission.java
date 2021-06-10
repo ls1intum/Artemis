@@ -317,7 +317,7 @@ public abstract class Submission extends DomainObject {
 
     /**
      * Returns the result of a submission which has a complaint
-     * @return the result which has a complaint
+     * @return the result which has a complaint or null if there is no result which has a complaint
      */
     @Nullable
     @JsonIgnore

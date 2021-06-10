@@ -291,7 +291,7 @@ public class SubmissionService {
     }
 
     /**
-     * Copy feedback from a feedbacks list to a Result
+     * Copy feedback from a feedback list to a Result
      * @param result the result to copy feedback to
      * @param feedbacks the feedbacks which are copied
      */
@@ -575,7 +575,15 @@ public class SubmissionService {
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted())).forEach(submission -> submissions.add((T) submission.get()));
         return submissions;
     }
-    // TODO SE add docs
+
+    /**
+     * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
+     *
+     * @param exerciseId the exerciseId of the exercise of which the complaints are fetched
+     * @param principal the current user
+     * @param isAtLeastInstructor if the user is an instructor
+     * @return a list of DTOs containing a complaint and its submission
+     */
     public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, Principal principal, boolean isAtLeastInstructor) {
         List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = new ArrayList<>();
 
@@ -587,7 +595,7 @@ public class SubmissionService {
             return submissionWithComplaintDTOs;
         }
         // get the ids of all results which have a complaint, and with those fetch all their submissions
-        List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).collect(Collectors.toList());
+        List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).collect(toList());
         List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
 
         // add each submission with its complaint to the DTO
@@ -604,6 +612,14 @@ public class SubmissionService {
         return submissionWithComplaintDTOs;
     }
 
+    /**
+     * Helper method to prepare the complaint for the client
+     * @param complaint the complaint which gets prepared
+     * @param principal the current user
+     * @param assessorSameAsCaller whether or not the user accessing the complaint is the same who assessed the original submission
+     * @param isTestRun if the complaint is part of an exam testrun
+     * @param isAtLeastInstructor if the user is an instructor
+     */
     private void prepareComplaint(Complaint complaint, Principal principal, boolean assessorSameAsCaller, boolean isTestRun, boolean isAtLeastInstructor) {
         String submissorName = principal.getName();
         User assessor = complaint.getResult().getAssessor();

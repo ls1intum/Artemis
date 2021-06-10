@@ -57,10 +57,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findAllWithResultsAndAssessorByParticipationId(Long participationId);
 
     /**
-     * Get all submissions associated to each result in the result list
+     * Get all submissions with their results by the submission ids
      *
-     * @param submissionIds the ids of the submissions
-     * @return a list of submissions which contain the results
+     * @param submissionIds the ids of the submissions which should be retrieved
+     * @return a list of submissions with their results eagerly loaded
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
     @Query("""

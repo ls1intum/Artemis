@@ -34,18 +34,12 @@ public class ComplaintResponseService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ResultRepository resultRepository;
-
-    private final SubmissionRepository submissionRepository;
-
     public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, ResultRepository resultRepository, SubmissionRepository submissionRepository) {
+            AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.submissionRepository = submissionRepository;
-        this.resultRepository = resultRepository;
     }
 
     /**

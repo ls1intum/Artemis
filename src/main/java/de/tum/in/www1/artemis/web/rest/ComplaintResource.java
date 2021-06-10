@@ -60,10 +60,8 @@ public class ComplaintResource {
 
     private final CourseRepository courseRepository;
 
-    private final SubmissionRepository submissionRepository;
-
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository,
-            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository, SubmissionRepository submissionRepository) {
+            ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
@@ -71,7 +69,6 @@ public class ComplaintResource {
         this.complaintService = complaintService;
         this.courseRepository = courseRepository;
         this.complaintRepository = complaintRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -212,31 +209,6 @@ public class ComplaintResource {
         }
         long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
         return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
-    }
-
-    /**
-     * Get /exercises/:exerciseId/complaints-for-assessment-dashboard
-     * <p>
-     * Get all the complaints associated to an exercise, but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
-     * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
-     *
-     * @param exerciseId the id of the exercise we are interested in
-     * @param principal that wants to get complaints
-     * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
-     */
-    @Deprecated // will be replace with a method which returns the submissions
-    @GetMapping("/exercises/{exerciseId}/complaints-for-assessment-dashboard")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Complaint>> getComplaintsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            return forbidden();
-        }
-        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
-
-        List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, false, false, isAtLeastInstructor);
-        return ResponseEntity.ok(responseComplaints);
     }
 
     /**

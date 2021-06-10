@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 
@@ -87,17 +87,6 @@ export class ComplaintService implements IComplaintService {
      */
     findByResultId(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Complaint>(`${this.resourceUrl}/result/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
-    // TODO remove
-    /**
-     * Find complaints for tutor for specified exercise (complaintType == 'COMPLAINT').
-     * @param exerciseId
-     */
-    getComplaintsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return this.http
-            .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/complaints-for-assessment-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
     }
 
     /**

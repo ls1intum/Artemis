@@ -6,7 +6,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -112,7 +111,6 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         if (!this.correctionRound) {
             this.correctionRound = 0;
-
         }
         if (complaint.accepted !== undefined) {
             this.correctionRound += 1;
