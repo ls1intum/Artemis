@@ -182,7 +182,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
-    }));
+    });
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
         // GIVEN
