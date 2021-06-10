@@ -109,6 +109,20 @@ Exercise Creation
 
     |
 
+    .. figure:: programming/programming-options-auxiliary-repositories.png
+              :align: center
+
+    - **Auxiliary Repositories:** Instructors can add auxiliary repositories with a name, checkout directory and description.
+      These repositories are created and added to the build plan when the exercise is created. Auxiliary repositories
+      cannot be changed after the creation of the exercise.
+
+      .. note::
+              Auxiliary repositories are checked out to the specified checkout directory during the automatic testing
+              of a student submission in case the checkout directory is set. This can be used e.g. for providing
+              additional resources or overwriting template source code in testing exercises.
+
+    |
+
     .. figure:: programming/programming-options-general-information.png
               :align: center
 

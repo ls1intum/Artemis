@@ -6,7 +6,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { MockPipe } from 'ng-mocks';

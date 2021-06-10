@@ -13,7 +13,7 @@
         </button>
         <button
             *ngIf="!isExamMode && course?.requestMoreFeedbackEnabled"
-            class="btn btn-primary ml-1"
+            class="btn btn-primary ms-1"
             [class.not-allowed]="!isTimeOfFeedbackRequestValid"
             (click)="toggleRequestMoreFeedbackForm()"
             [disabled]="!isTimeOfFeedbackRequestValid"
