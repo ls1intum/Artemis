@@ -10,6 +10,7 @@ import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { lastValueFrom } from 'rxjs';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 const MAX_SIZE_UNIT = 200;
@@ -66,7 +67,7 @@ export async function generateDragAndDropQuizExercise(
     const quizExercise = createDragAndDropQuizExercise(course, title, dragAndDropQuestion);
 
     // Save the quiz exercise
-    await quizExerciseService.create(quizExercise).toPromise();
+    await lastValueFrom(quizExerciseService.create(quizExercise));
 
     return quizExercise;
 }

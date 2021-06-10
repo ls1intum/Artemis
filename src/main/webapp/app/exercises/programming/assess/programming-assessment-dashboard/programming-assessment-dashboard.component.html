@@ -131,7 +131,7 @@
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                     </a>
-                                    <div class="btn-group-vertical mr-1 mb-10">
+                                    <div class="btn-group-vertical me-1 mb-10">
                                         <!-- Continue button -->
                                         <a
                                             *ngIf="submission.results && submission.results.length == 1 && submission.latestResult && !submission.latestResult.completionDate"
@@ -177,7 +177,7 @@
                                             </span>
                                         </a>
                                         <!-- buttons for existing result with lock-->
-                                        <div class="btn-group-vertical mr-1 mb-10" *ngIf="submission.results && !submission.results[correctionRound].completionDate">
+                                        <div class="btn-group-vertical me-1 mb-10" *ngIf="submission.results && !submission.results[correctionRound].completionDate">
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
