@@ -264,7 +264,7 @@ public class JenkinsRequestMockProvider {
         }
     }
 
-    private void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
+    public void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
         doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
