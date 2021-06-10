@@ -121,7 +121,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(receivedLogs.size()).isGreaterThan(0);
     }
 
-    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
         return Arrays.stream(ProgrammingLanguage.values())
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
