@@ -881,12 +881,8 @@ export class GuidedTourService {
             this.resetTour();
             return false;
         }
-        const selector = currentTourStep.highlightSelector ? currentTourStep.highlightSelector : undefined;
-        const selectedElement = selector ? document.querySelector(selector) : undefined;
-        if (!selectedElement) {
-            return false;
-        }
-        return true;
+
+        return !(!currentTourStep.highlightSelector || !document.querySelector(currentTourStep.highlightSelector));
     }
 
     /**
@@ -969,9 +965,9 @@ export class GuidedTourService {
      * @param step passed on tour step of a guided tour
      * @return guided tour step with defined orientation
      */
-    private setTourOrientation(step: TourStep): TourStep {
+    private setTourOrientation(step: TourStep): TourStep | undefined {
         if (!step) {
-            return step;
+            return undefined;
         }
         const convertedStep = cloneDeep(step);
         if (convertedStep.orientation && !(typeof convertedStep.orientation === 'string') && (convertedStep.orientation as OrientationConfiguration[]).length) {
