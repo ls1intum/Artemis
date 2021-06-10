@@ -1388,7 +1388,7 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
 
         // check that the exercise is exist for given id
-        ProgrammingExercise originalProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, programmingExercise);
 

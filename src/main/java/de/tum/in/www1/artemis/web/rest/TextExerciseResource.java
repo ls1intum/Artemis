@@ -609,7 +609,7 @@ public class TextExerciseResource {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 
         // check that the exercise is exist for given id
-        TextExercise originalTextExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+        textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
 
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, textExercise);
 
