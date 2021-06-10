@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -324,8 +325,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         courseRepository.save(course);
 
         final var params = new LinkedMultiValueMap<String, String>();
-        params.add("complaintType", ComplaintType.COMPLAINT.name());
-        request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-assessment-dashboard", HttpStatus.FORBIDDEN, Complaint.class, params);
+        request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
     }
 
     @Test
@@ -333,17 +333,24 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getComplaintsForAssessmentDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
+        complaint.getResult().setHasComplaint(true);
+        resultRepo.save(complaint.getResult());
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-assessment-dashboard", HttpStatus.OK, Complaint.class, params);
+        final var submissionWithComplaintDTOs = request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK, SubmissionWithComplaintDTO.class, params);
 
-        complaints.forEach(compl -> {
-            final var participation = (StudentParticipation) compl.getResult().getParticipation();
-            assertThat(participation.getStudent()).as("No student information").isNull();
-            assertThat(compl.getParticipant()).as("No student information").isNull();
+        submissionWithComplaintDTOs.forEach(dto -> {
+            final var participation = (StudentParticipation) dto.complaint().getResult().getParticipation();
+            assertThat(participation.getStudent()).as("No student information").isEmpty();
+            assertThat(dto.complaint().getParticipant()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
-            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
+            assertThat(dto.complaint().getResultBeforeComplaint()).as("No old result information").isNull();
+            assertThat(((StudentParticipation) dto.submission().getParticipation()).getParticipant())
+                .as("No student information in participation").isNull();
+            assertThat(dto.submission().getParticipation().getExercise())
+                .as("No additional exercise information").isNull();
+
         });
     }
 

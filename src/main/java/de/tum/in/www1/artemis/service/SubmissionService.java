@@ -324,7 +324,7 @@ public class SubmissionService {
     }
 
     /**
-     * This method is used to create a new result, after a complaint has been accepted or denied.
+     * This method is used to create a new result, after a complaint has been accepted.
      * The new result contains the updated feedback of the result the complaint belongs to.
      *
      * @param submission the submission where the original result and the result after the complaintResponse belong to
@@ -606,7 +606,7 @@ public class SubmissionService {
             }
             // get the complaint which belongs to the submission
             Complaint complaintOfSubmission = complaintMap.get(resultWithComplaint.getId());
-            prepareComplaint(complaintOfSubmission, principal, false, false, isAtLeastInstructor);
+            prepareComplaintAndSubmission(complaintOfSubmission, submission);
             submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
         });
         return submissionWithComplaintDTOs;
@@ -615,23 +615,15 @@ public class SubmissionService {
     /**
      * Helper method to prepare the complaint for the client
      * @param complaint the complaint which gets prepared
-     * @param principal the current user
-     * @param assessorSameAsCaller whether or not the user accessing the complaint is the same who assessed the original submission
-     * @param isTestRun if the complaint is part of an exam testrun
-     * @param isAtLeastInstructor if the user is an instructor
      */
-    private void prepareComplaint(Complaint complaint, Principal principal, boolean assessorSameAsCaller, boolean isTestRun, boolean isAtLeastInstructor) {
-        String submissorName = principal.getName();
-        User assessor = complaint.getResult().getAssessor();
-        User student = complaint.getStudent();
+    private void prepareComplaintAndSubmission(Complaint complaint, Submission submission) {
+        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        studentParticipation.setParticipant(null);
+        studentParticipation.setExercise(null);
+        complaint.setParticipant(null);
 
-        if (assessor != null && (assessor.getLogin().equals(submissorName) == assessorSameAsCaller || isAtLeastInstructor)
-            && (student != null && assessor.getLogin().equals(student.getLogin())) == isTestRun) {
-            // Remove data about the student
-            StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-            studentParticipation.setParticipant(null);
-            studentParticipation.setExercise(null);
-            complaint.setParticipant(null);
-        }
+        StudentParticipation submissionsParticipation = (StudentParticipation) submission.getParticipation();
+        submissionsParticipation.setParticipant(null);
+        submissionsParticipation.setExercise(null);
     }
 }
