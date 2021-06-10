@@ -1,9 +1,8 @@
 <div>
     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceFile.label">Source file</label>
-    <jhi-help-icon placement="right" text="artemisApp.team.sourceFile.tooltip" class="mr-1"></jhi-help-icon>
+    <jhi-help-icon placement="right" text="artemisApp.team.sourceFile.tooltip" class="me-1"></jhi-help-icon>
     <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="loading"></fa-icon>
 </div>
 <div class="custom-file">
     <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
-    <label class="custom-file-label overflow-ellipsis" for="importFileInput">{{ importFileName }}</label>
 </div>

@@ -1,4 +1,6 @@
-<p *ngIf="text.length < smallCharacterLimit; else longText">{{ text }}</p>
+<div class="feedback-text">
+    <p *ngIf="text.length < smallCharacterLimit; else longText">{{ text }}</p>
+</div>
 
 <ng-template #longText>
     <div *ngIf="isCollapsed; else opened">
@@ -6,9 +8,9 @@
         {{ text.substring(0, 100) }} ...
     </div>
     <ng-template #opened>
-        <div>
+        <div class="feedback-text">
             <fa-icon class="fa-angle" [icon]="'angle-down'" (click)="isCollapsed = !isCollapsed"></fa-icon>
-            {{ text }}
+            <p>{{ text }}</p>
         </div>
     </ng-template>
 </ng-template>

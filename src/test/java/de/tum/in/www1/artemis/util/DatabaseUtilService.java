@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import liquibase.pro.packaged.S;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -218,6 +217,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
@@ -1945,6 +1947,18 @@ public class DatabaseUtilService {
         assertThat(tests).as("test case is initialized").hasSize(3);
     }
 
+    public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
+        AuxiliaryRepository repository = new AuxiliaryRepository();
+        repository.setName("auxrepo");
+        repository.setDescription("Description");
+        repository.setCheckoutDirectory("assignment/src");
+        repository = auxiliaryRepositoryRepository.save(repository);
+        programmingExercise.setAuxiliaryRepositories(List.of(repository));
+        repository.setExercise(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
+        return repository;
+    }
+
     public Course addCourseWithModelingAndTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -2023,6 +2037,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(assessedFileUploadExercise);
         return course;
     }
+
     /**
      * Generates a course with one specific exercise, and an arbitrare amount of submissions.
      *
@@ -2030,7 +2045,7 @@ public class DatabaseUtilService {
      * @param numberOfSubmissions       - the amount of submissions which should be generated for an exercise
      * @return a course with an exercise with submissions
      */
-    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions){
+    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions) {
         return addCourseWithOneExerciseAndSubmissions(exerciseType, numberOfSubmissions, Optional.empty());
     }
 
@@ -2042,14 +2057,14 @@ public class DatabaseUtilService {
      * @param modelForModelingExercise  - the model string for a modeling exercise
      * @return a course with an exercise with submissions
      */
-    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions, Optional<String> modelForModelingExercise){
+    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions, Optional<String> modelForModelingExercise) {
         Course course;
         Exercise exercise;
         switch (exerciseType) {
             case "modeling":
                 course = addCourseWithOneModelingExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
-                for (int j = 1; j <= numberOfSubmissions; j++){
+                for (int j = 1; j <= numberOfSubmissions; j++) {
                     StudentParticipation participation = createAndSaveParticipationForExercise(exercise, "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
@@ -2060,7 +2075,7 @@ public class DatabaseUtilService {
             case "programming":
                 course = addCourseWithOneProgrammingExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
-                for (int j = 1; j <= numberOfSubmissions; j++){
+                for (int j = 1; j <= numberOfSubmissions; j++) {
                     ProgrammingSubmission submission = new ProgrammingSubmission();
                     addProgrammingSubmission((ProgrammingExercise) exercise, submission, "student" + j);
                 }
@@ -2082,7 +2097,8 @@ public class DatabaseUtilService {
                     saveFileUploadSubmission((FileUploadExercise) exercise, submission, "student" + j);
                 }
                 return course;
-            default: return null;
+            default:
+                return null;
         }
     }
 
@@ -2111,20 +2127,20 @@ public class DatabaseUtilService {
      * @param assessor - the assessor which is set for the results of the submission
      */
     public void addAssessmentToExercise(Exercise exercise, User assessor) {
-    var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
-    participations.forEach(participation -> {
-        Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
-        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
-        participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
-        Result result = generateResult(submission, assessor);
-        submission.addResult(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
-        submissionRepository.save(submission);
+        var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
+        participations.forEach(participation -> {
+            Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
+            submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+            participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
+            Result result = generateResult(submission, assessor);
+            submission.addResult(result);
+            participation.addResult(result);
+            studentParticipationRepo.save(participation);
+            submissionRepository.save(submission);
         });
     }
 
-    public List<Submission> getAllSubmissionsOfExercise(Exercise exercise){
+    public List<Submission> getAllSubmissionsOfExercise(Exercise exercise) {
         var participations = studentParticipationRepo.findByExerciseId(exercise.getId());
         var allSubmissions = new ArrayList<Submission>();
         participations.forEach(participation -> {

@@ -32,7 +32,7 @@ export class DeleteButtonDirective implements OnInit {
             this.renderer.addClass(this.el.nativeElement, 'btn');
             this.renderer.addClass(this.el.nativeElement, 'btn-danger');
             this.renderer.addClass(this.el.nativeElement, this.buttonSize);
-            this.renderer.addClass(this.el.nativeElement, 'mr-1');
+            this.renderer.addClass(this.el.nativeElement, 'me-1');
         }
         this.renderer.setProperty(this.el.nativeElement, 'type', 'submit');
 

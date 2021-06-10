@@ -74,10 +74,10 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         });
     }
 
-    onFileChange($event: any): void {
-        if ($event.target.files.length) {
+    onFileChange(event: any): void {
+        if (event.target.files.length) {
             this.fileUploadErrorMessage = undefined; // removes the file size error message when the user selects a new file
-            const fileList = $event.target.files;
+            const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file['name'];
         }
