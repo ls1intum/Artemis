@@ -31,8 +31,8 @@ public class Reaction extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate;
 
-    @Column(name = "content")
-    private String content;
+    @Column(name = "emoji_id")
+    private String emojiId;
 
     @ManyToOne
     @JsonIncludeProperties("id")
@@ -58,12 +58,12 @@ public class Reaction extends DomainObject {
         this.creationDate = creationDate;
     }
 
-    public String getContent() {
-        return content;
+    public String getEmojiId() {
+        return emojiId;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setEmojiId(String content) {
+        this.emojiId = content;
     }
 
     public Post getPost() {

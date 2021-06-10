@@ -28,7 +28,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="reactionPK"/>
             </column>
-            <column name="content" type="VARCHAR(20)">
+            <column name="emoji_id" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
             <column name="creation_date" type="datetime"/>
