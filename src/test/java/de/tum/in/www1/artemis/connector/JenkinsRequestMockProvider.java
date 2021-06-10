@@ -146,7 +146,7 @@ public class JenkinsRequestMockProvider {
         doReturn(mockXml).when(jenkinsServer).getJobXml(any(FolderJob.class), eq(jobName));
     }
 
-    private void mockGetFolderConfig(String folderName) throws IOException {
+    public void mockGetFolderConfig(String folderName) throws IOException {
         doReturn(new JobWithDetails()).when(jenkinsServer).getJob(folderName);
         var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
         doReturn(mockXml).when(jenkinsServer).getJobXml(eq(folderName));
