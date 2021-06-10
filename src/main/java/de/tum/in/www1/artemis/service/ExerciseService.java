@@ -112,8 +112,8 @@ public class ExerciseService {
             ProgrammingExerciseRepository programmingExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository,
-            FeedbackRepository feedbackRepository, ProgrammingAssessmentService programmingAssessmentService) {
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, PlagiarismResultRepository plagiarismResultRepository,
+            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, ProgrammingAssessmentService programmingAssessmentService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
