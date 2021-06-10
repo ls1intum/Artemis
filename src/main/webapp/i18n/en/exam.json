@@ -207,8 +207,8 @@
                 "titleToUnsubmitted": "Change Student Exam to Unsubmitted",
                 "titleToSubmitted": "Change Student Exam to Submitted",
                 "question": "Are you sure you want to change the submission state?",
-                "submitText": "This will set the submission date of the exam to this moment, and set the Submitted status to 'Yes'. Un-submitting the student exam later is possible.\n",
-                "unSubmitText": "This will delete the submission date and set the Submitted status to 'No'.",
+                "submitText": "This will set the submission date of the exam to this moment, and the submission state to 'submitted'. You will be allowed to un-submit the exam later.\n",
+                "unSubmitText": "This will delete the submission date and set the submission state to 'unsubmitted'.",
                 "warningRemove": "<strong class='text-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
                 "submit": "Submit",
                 "unsubmit": "Unsubmit"
