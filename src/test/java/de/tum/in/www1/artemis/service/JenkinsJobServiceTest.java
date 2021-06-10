@@ -31,20 +31,20 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     @Autowired
     private JenkinsJobService jenkinsJobService;
 
-    private static MockedStatic<XmlFileUtils> MockedXmlFileUtils;
+    private static MockedStatic<XmlFileUtils> mockedXmlFileUtils;
 
     @BeforeEach
     public void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
-        MockedXmlFileUtils = mockStatic(XmlFileUtils.class);
+        mockedXmlFileUtils = mockStatic(XmlFileUtils.class);
     }
 
     @AfterEach
     public void tearDown() throws IOException {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
-        MockedXmlFileUtils.close();
+        mockedXmlFileUtils.close();
     }
 
     @Test
@@ -54,7 +54,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
 
         jenkinsRequestMockProvider.mockGetFolderJob("JenkinsFolder", new FolderJob());
 
-        MockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
+        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
 
         assertThrows(JenkinsException.class, () -> jenkinsJobService.createJobInFolder(document, "JenkinsFolder", "JenkinsJob"));
     }
@@ -64,7 +64,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     public void testUpdateJobThrowIOExceptionOnXmlError() throws IOException, ParserConfigurationException {
         Document document = createEmptyDOMDocument();
 
-        MockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
+        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
 
         assertThrows(IOException.class, () -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", document));
     }
@@ -74,7 +74,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     public void testUpdateFolderJobThrowIOExceptionOnXmlError() throws IOException, ParserConfigurationException {
         Document document = createEmptyDOMDocument();
 
-        MockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
+        mockedXmlFileUtils.when(() -> XmlFileUtils.writeToString(eq(document))).thenThrow(TransformerException.class);
 
         assertThrows(IOException.class, () -> jenkinsJobService.updateFolderJob("JenkinsFolder", document));
     }

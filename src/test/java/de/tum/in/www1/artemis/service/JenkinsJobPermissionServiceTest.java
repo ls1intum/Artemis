@@ -28,21 +28,20 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
     @Autowired
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
-    private static MockedStatic<JenkinsJobPermissionsUtils> MockedJenkinsJobPermissionsUtils;
+    private static MockedStatic<JenkinsJobPermissionsUtils> mockedJenkinsJobPermissionsUtils;
 
     @BeforeEach
     public void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
-
-        MockedJenkinsJobPermissionsUtils = mockStatic(JenkinsJobPermissionsUtils.class);
+        mockedJenkinsJobPermissionsUtils = mockStatic(JenkinsJobPermissionsUtils.class);
     }
 
     @AfterEach
     public void tearDown() throws IOException {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
-        MockedJenkinsJobPermissionsUtils.close();
+        mockedJenkinsJobPermissionsUtils.close();
     }
 
     @Test
@@ -54,7 +53,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
         Set<String> taLogins = Set.of("ta1");
         var permissionsToRemove = Set.of(JenkinsJobPermission.values());
 
-        MockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(taLogins)))
+        mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(taLogins)))
                 .thenThrow(DOMException.class);
 
         Exception exception = assertThrows(IOException.class, () -> {
@@ -72,7 +71,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
         String taLogin = "ta1";
         var permissionsToRemove = Set.of(JenkinsJobPermission.values());
 
-        MockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(Set.of(taLogin))))
+        mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(Set.of(taLogin))))
                 .thenThrow(DOMException.class);
 
         Exception exception = assertThrows(IOException.class, () -> {
@@ -90,7 +89,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
-        MockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.addPermissionsToFolder(any(), eq(taPermissions), eq(taLogins))).thenThrow(DOMException.class);
+        mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.addPermissionsToFolder(any(), eq(taPermissions), eq(taLogins))).thenThrow(DOMException.class);
 
         Exception exception = assertThrows(IOException.class, () -> {
             jenkinsJobPermissionsService.addPermissionsForUsersToFolder(taLogins, folderName, taPermissions);
@@ -107,7 +106,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
-        MockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(taPermissions), eq(Set.of(taLogin))))
+        mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(taPermissions), eq(Set.of(taLogin))))
                 .thenThrow(DOMException.class);
 
         Exception exception = assertThrows(IOException.class, () -> {
@@ -125,7 +124,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
-        MockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(taPermissions), eq(taLogins)))
+        mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(taPermissions), eq(taLogins)))
                 .thenThrow(DOMException.class);
 
         Exception exception = assertThrows(IOException.class, () -> {
