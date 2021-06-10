@@ -157,11 +157,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * $event {object} Event object which contains the uploaded file
+     * event {object} Event object which contains the uploaded file
      */
-    setBackgroundFile($event: any): void {
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setBackgroundFile(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             this.backgroundFile = fileList[0];
             this.backgroundFileName = this.backgroundFile['name'];
         }
@@ -415,11 +415,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
 
     /**
      * Sets drag item file.
-     * @param $event {object} Event object which contains the uploaded file
+     * @param event {object} Event object which contains the uploaded file
      */
-    setDragItemFile($event: any): void {
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setDragItemFile(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             this.dragItemFile = fileList[0];
             this.dragItemFileName = this.dragItemFile['name'];
         }

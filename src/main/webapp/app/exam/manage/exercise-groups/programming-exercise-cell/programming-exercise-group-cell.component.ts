@@ -15,6 +15,15 @@ export class ProgrammingExerciseGroupCellComponent {
     programmingExercise: ProgrammingExercise;
 
     @Input()
+    displayShortName = false;
+    @Input()
+    displayRepositoryUrl = false;
+    @Input()
+    displayTemplateUrls = false;
+    @Input()
+    displayEditorModus = false;
+
+    @Input()
     set exercise(exercise: Exercise) {
         this.programmingExercise = exercise as ProgrammingExercise;
     }

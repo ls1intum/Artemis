@@ -44,16 +44,16 @@
         </div>
     </div>
     <div class="col">
-        <div class="row justify-content-end align-items-start pr-2">
+        <div class="row justify-content-end align-items-start pe-2">
             <div class="d-flex mb-2">
                 <button [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                 </button>
-                <button class="btn btn-danger ml-2" (click)="handInEarly()">
+                <button class="btn btn-danger ms-2" (click)="handInEarly()">
                     {{ 'artemisApp.examParticipation.handInEarly' | artemisTranslate }}
                 </button>
             </div>
-            <div class="ml-3 mb-2">
+            <div class="ms-3 mb-2">
                 <jhi-exam-timer
                     class="d-flex justify-content-end mx-0"
                     [criticalTime]="criticalTime"
