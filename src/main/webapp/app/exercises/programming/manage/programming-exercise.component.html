@@ -198,7 +198,7 @@
                             "
                             buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
                             [smallButton]="false"
-                            (click)="openOrionEditor(programmingExercise)"
+                            (clickHandler)="openOrionEditor(programmingExercise)"
                         >
                         </jhi-ide-button>
                         <ng-template #importAsInstructor>
@@ -207,7 +207,7 @@
                                 [buttonLabel]="'entity.action.editInIntelliJ' | artemisTranslate"
                                 [buttonLoading]="orionState.cloning"
                                 [smallButton]="false"
-                                (click)="editInIDE(programmingExercise)"
+                                (clickHandler)="editInIDE(programmingExercise)"
                             >
                             </jhi-ide-button>
                         </ng-template>

@@ -2,10 +2,10 @@
     class="btn"
     [jhiFeatureToggle]="featureToggle"
     [overwriteDisabled]="buttonLoading"
-    [disabled]="buttonLoading"
     [class.btn-outline-primary]="outlined"
     [class.btn-primary]="btnPrimary"
     [class.btn-sm]="smallButton"
+    (click)="handleClick()"
 >
     <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="'circle-notch'"></fa-icon>
     <span *ngIf="!buttonLoading" class="intellij-logo"></span>

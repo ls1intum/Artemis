@@ -79,7 +79,7 @@
                 class="ms-1"
                 [buttonLoading]="orionState.building"
                 buttonLabel="{{ 'artemisApp.editor.intellij.testLocally' | artemisTranslate }}"
-                (click)="buildLocally()"
+                (clickHandler)="buildLocally()"
             ></jhi-ide-button>
         </div>
         <jhi-programming-exercise-editable-instructions
