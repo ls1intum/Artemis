@@ -50,6 +50,7 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
+     * @param outputDir directory to store the temporary files in
      * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
      * @param reportData   a list of all exercises and their statistics
      * @return a reference to the zipped file
@@ -108,6 +109,7 @@ public abstract class SubmissionExportService {
      * @param exercise the exercise in question
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
+     * @param outputDir directory to store the temporary files in
      * @param  exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
      * @param reportData   a list of all exercises and their statistics
      * @return the zipped file
@@ -118,10 +120,12 @@ public abstract class SubmissionExportService {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
+        // Create unique name for directory
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
         String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
+        // Create directory
         Path submissionsFolderPath = Paths.get(outputDir.toString(), "zippedSubmissions", zipGroupName);
         Path zipFilePath = Paths.get(outputDir.toString(), "zippedSubmissions", zipFileName);
 
@@ -143,6 +147,7 @@ public abstract class SubmissionExportService {
                     // ignore unsubmitted submissions
                     continue;
                 }
+                // filter late submissions
                 if (lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
                     if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
                         latestSubmission = submission;
@@ -154,10 +159,12 @@ public abstract class SubmissionExportService {
                 return Optional.<Path>empty();
             }
 
+            // create file path
             String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
                     + this.getFileEndingForSubmission(latestSubmission);
             Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
 
+            // store file
             try {
                 this.saveSubmissionToFile(exercise, latestSubmission, submissionFilePath.toFile());
                 return Optional.of(submissionFilePath);
@@ -171,12 +178,14 @@ public abstract class SubmissionExportService {
 
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
+        // Add report entry
         reportData.add(new ArchivalReportEntry(exercise.getId(), fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size()));
 
         if (submissionFilePaths.isEmpty()) {
             return Optional.empty();
         }
 
+        // zip stores submissions
         try {
             zipFileService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }

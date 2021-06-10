@@ -532,6 +532,7 @@ public class TextExerciseResource {
         try {
             Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
             Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
+            // Assume user finished download after the given delay
             fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
 
             if (zipFile.isEmpty()) {

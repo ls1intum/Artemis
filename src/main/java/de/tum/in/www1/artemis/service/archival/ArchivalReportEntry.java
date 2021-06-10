@@ -35,7 +35,7 @@ public class ArchivalReportEntry {
     }
 
     /**
-     * Returns a line of a csv file for this entry
+     * @return a line of a csv file for this entry
      */
     @Override
     public String toString() {
@@ -43,7 +43,7 @@ public class ArchivalReportEntry {
     }
 
     /**
-     * Returns the headline of a csv file containing entries of this class
+     * @return the headline of a csv file containing entries of this class
      */
     public static String getHeadline() {
         return "exerciseId,exerciseName,totalEntries,successfulEntries,failedEntries";

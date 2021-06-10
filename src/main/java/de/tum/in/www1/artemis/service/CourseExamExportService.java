@@ -79,7 +79,7 @@ public class CourseExamExportService {
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
         String cleanCourseDirName = fileService.removeIllegalCharacters(courseDirName);
-        List<ArchivalReportEntry> reportData = new LinkedList<>();
+        List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
         Path tmpCourseDir = Path.of("./exports", cleanCourseDirName);
@@ -139,7 +139,7 @@ public class CourseExamExportService {
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
         var cleanExamDirName = fileService.removeIllegalCharacters(examDirName);
-        List<ArchivalReportEntry> reportData = new LinkedList<>();
+        List<ArchivalReportEntry> reportData = new ArrayList<>();
 
         // Create a temporary directory that will contain the files that will be zipped
         Path tempExamsDir = Path.of("./exports", cleanExamDirName);
@@ -156,7 +156,7 @@ public class CourseExamExportService {
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
         List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors, reportData);
 
-        // Write report
+        // Write report and error file
         try {
             exportedExercises.add(writeReport(reportData, tempExamsDir));
             exportedExercises.add(writeFile(exportErrors, tempExamsDir, "exportErrors.txt"));
@@ -350,6 +350,7 @@ public class CourseExamExportService {
         List<Exercise> sortedExercises = new ArrayList<>(exercises);
         sortedExercises.sort(Comparator.comparing(DomainObject::getId));
 
+        // Export exercises
         for (var exercise : sortedExercises) {
             log.info("Exporting exercise {} with id {} ", exercise.getTitle(), exercise.getId());
 
@@ -377,12 +378,10 @@ public class CourseExamExportService {
                 if (exercise instanceof FileUploadExercise) {
                     exportedSubmissionsFileOrEmpty = fileUploadSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
                             reportData);
-
                 }
                 else if (exercise instanceof TextExercise) {
                     exportedSubmissionsFileOrEmpty = textSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
                             reportData);
-
                 }
                 else if (exercise instanceof ModelingExercise) {
                     exportedSubmissionsFileOrEmpty = modelingSubmissionExportService.exportStudentSubmissions(exercise.getId(), submissionsExportOptions, outputDir, exportErrors,
