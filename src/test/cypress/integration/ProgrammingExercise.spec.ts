@@ -137,7 +137,10 @@ function addStudentToCourse() {
     getCourseCard().contains('0 Students').click();
     cy.get('#typeahead-basic').type(username);
     cy.wait('@getStudentQuery');
-    cy.get('#ngb-typeahead-0').contains(new RegExp(username)).should(beVisible).click();
+    cy.get('#ngb-typeahead-0')
+        .contains(new RegExp('\\(' + username + '\\)'))
+        .should(beVisible)
+        .click();
     cy.wait('@addStudentQuery');
     cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should('be.visible');
 }
