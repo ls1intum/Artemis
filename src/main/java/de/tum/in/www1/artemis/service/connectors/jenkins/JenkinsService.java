@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
@@ -156,12 +156,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             String jobXmlString = XmlFileUtils.writeToString(jobXmlDocument);
             final var entity = new HttpEntity<>(jobXmlString, headers);
 
-            final var response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                throw new JenkinsException(errorMessage + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
+            restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
         }
-        catch (HttpClientErrorException | TransformerException e) {
+        catch (RestClientException | TransformerException e) {
             log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
         }

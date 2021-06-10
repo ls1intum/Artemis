@@ -222,6 +222,16 @@ public class JenkinsRequestMockProvider {
         mockTriggerBuild(projectKey, planName, false);
     }
 
+    public void mockUpdatePlanRepository(String projectKey, String planName, HttpStatus expectedHttpStatus) throws IOException, URISyntaxException {
+        var mockXml = loadFileFromResources("test-data/jenkins-response/job-config.xml");
+
+        mockGetFolderJob(projectKey, new FolderJob());
+        mockGetJobXmlForBuildPlanWith(projectKey, mockXml);
+
+        final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("job", projectKey, "job", planName, "config.xml").build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(expectedHttpStatus));
+    }
+
     private void mockGetJobXmlForBuildPlanWith(String projectKey, String xmlToReturn) throws IOException {
         mockGetFolderJob(projectKey, new FolderJob());
         doReturn(xmlToReturn).when(jenkinsServer).getJobXml(any(), any());
