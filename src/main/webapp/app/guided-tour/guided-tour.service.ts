@@ -882,7 +882,7 @@ export class GuidedTourService {
             return false;
         }
 
-        return !(!currentTourStep.highlightSelector || !document.querySelector(currentTourStep.highlightSelector));
+        return !!currentTourStep.highlightSelector && !!document.querySelector(currentTourStep.highlightSelector);
     }
 
     /**
