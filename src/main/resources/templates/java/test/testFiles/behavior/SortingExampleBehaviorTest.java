@@ -20,8 +20,8 @@ import de.tum.in.test.api.jupiter.Public;
  * @version 5.1 (11.06.2021)
  */
 @Public
-@WhitelistPath("target")
-@BlacklistPath(value = "target/test-classes/**", type = PathType.GLOB)
+@WhitelistPath("target") // mainly for Artemis
+@BlacklistPath("target/test-classes") // prevent access to test-related classes and resources
 class SortingExampleBehaviorTest {
 
     private List<Date> dates;

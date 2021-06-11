@@ -20,8 +20,8 @@ import de.tum.in.test.api.structural.MethodTestProvider;
  * and annotations, based on its definition in the structure oracle (test.json)
  */
 @Public
-@WhitelistPath("target")
-@BlacklistPath(value = "target/test-classes/**", type = PathType.GLOB)
+@WhitelistPath("target") // mainly for Artemis
+@BlacklistPath("target/test-classes") // prevent access to test-related classes and resources
 class MethodTest extends MethodTestProvider {
 
     /**
