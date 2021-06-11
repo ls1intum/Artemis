@@ -36,13 +36,13 @@
                 "studentName": "Student's Name",
                 "actions": "Actions",
                 "title": "List of complaints",
+                "dateAndTime": "Date and Time",
                 "status": "Status",
                 "noReply": "No reply yet",
                 "accepted": "Accepted",
                 "rejected": "Rejected",
                 "showAddressedComplaints": "Show addressed complaints",
-                "noComplaintsToShow": "There are no complaints to show at the moment",
-                "dateAndTime": "Date and Time",
+                "noComplaintsToShow": "There are no complaints to show at the moment"
             },
             "review": "Review Complaint"
         },
