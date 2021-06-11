@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.TestFactory;
 
+import de.tum.in.test.api.AddTrustedPackage;
 import de.tum.in.test.api.BlacklistPath;
 import de.tum.in.test.api.PathType;
 import de.tum.in.test.api.StrictTimeout;

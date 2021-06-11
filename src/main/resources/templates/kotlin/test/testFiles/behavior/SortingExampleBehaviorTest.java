@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import static org.junit.jupiter.api.Assertions.*;
 import static de.tum.in.test.api.util.ReflectionTestUtils.*;
 
+import de.tum.in.test.api.AddTrustedPackage;
 import de.tum.in.test.api.BlacklistPath;
 import de.tum.in.test.api.AddTrustedPackage;
 import de.tum.in.test.api.PathType;
