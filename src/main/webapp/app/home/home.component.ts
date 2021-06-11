@@ -194,12 +194,12 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         return this.accountService.isAuthenticated();
     }
 
-    inputChange($event: any) {
-        if ($event.target && $event.target.name === 'username') {
-            this.username = $event.target.value;
+    inputChange(event: any) {
+        if (event.target && event.target.name === 'username') {
+            this.username = event.target.value;
         }
-        if ($event.target && $event.target.name === 'password') {
-            this.password = $event.target.value;
+        if (event.target && event.target.name === 'password') {
+            this.password = event.target.value;
         }
     }
 }

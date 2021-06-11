@@ -22,7 +22,7 @@ import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { UserService } from 'app/core/user/user.service';
 import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -233,7 +233,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.notifications = notifications;
             notificationSidebarComponent.recentNotificationCount = 2;
             notificationSidebarComponentFixture.detectChanges();
-            const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.badge-danger > span'));
+            const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.bg-danger > span'));
             expect(plus).to.be.not.null;
         });
     });

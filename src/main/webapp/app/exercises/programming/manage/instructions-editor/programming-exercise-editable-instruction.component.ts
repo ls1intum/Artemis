@@ -187,10 +187,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /** Save the problem statement on the server.
-     * @param $event
+     * @param event
      **/
-    saveInstructions($event: any) {
-        $event.stopPropagation();
+    saveInstructions(event: any) {
+        event.stopPropagation();
         this.savingInstructions = true;
         return this.programmingExerciseService
             .updateProblemStatement(this.exercise.id!, this.exercise.problemStatement!)

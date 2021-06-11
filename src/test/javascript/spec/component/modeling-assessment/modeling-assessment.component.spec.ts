@@ -8,12 +8,11 @@ import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/model
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import * as chai from 'chai';
-import { MockModule } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 chai.use(sinonChai);
@@ -22,6 +21,7 @@ const expect = chai.expect;
 describe('ModelingAssessmentComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
     let comp: ModelingAssessmentComponent;
+    let translatePipe: ArtemisTranslatePipe;
 
     const generateMockModel = (elementId: string, elementId2: string, relationshipId: string) => {
         return {
@@ -80,6 +80,13 @@ describe('ModelingAssessmentComponent', () => {
 
     const mockModel = generateMockModel('elementId1', 'elementId2', 'relationshipId');
     const mockFeedbackWithReference = { text: 'FeedbackWithReference', referenceId: 'relationshipId', reference: 'referemce', credits: 30 } as Feedback;
+    const mockFeedbackWithReferenceCopied = {
+        text: 'FeedbackWithReference Copied',
+        referenceId: 'relationshipId',
+        reference: 'referemce',
+        credits: 35,
+        copiedFeedbackId: 12,
+    } as Feedback;
     const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
     const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference' };
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
@@ -89,12 +96,13 @@ describe('ModelingAssessmentComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule)],
             declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
-            schemas: [],
+            providers: [MockProvider(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingAssessmentComponent);
                 comp = fixture.componentInstance;
+                translatePipe = fixture.debugElement.injector.get(ArtemisTranslatePipe);
             });
     });
 
@@ -213,6 +221,45 @@ describe('ModelingAssessmentComponent', () => {
         expect(notHighlightedElement!.highlight).to.not.exist;
         expect(relationship).to.exist;
         expect(relationship!.highlight).to.not.exist;
+    });
+
+    it('should update highlighted assessments first round', () => {
+        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
+        comp.highlightDifferences = true;
+        comp.model = mockModel;
+        fixture.detectChanges();
+        comp.feedbacks = [mockFeedbackWithReference];
+        comp.referencedFeedbacks = [mockFeedbackWithReference];
+        sinon.stub(translatePipe, 'transform').returns('Second correction round');
+
+        comp.ngOnChanges(changes);
+
+        expect(comp.apollonEditor).to.exist;
+        const apollonModel = comp.apollonEditor!.model;
+        const assessments: any = apollonModel.assessments;
+        expect(assessments[0].labelColor).to.equal(comp.secondCorrectionRoundColor);
+        expect(assessments[0].label).to.equal('Second correction round');
+        expect(assessments[0].score).to.equal(30);
+    });
+
+    it('should update highlighted assessments', () => {
+        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
+        const highlightDifferences = true;
+        comp.highlightDifferences = highlightDifferences;
+        comp.model = mockModel;
+        fixture.detectChanges();
+        comp.feedbacks = [mockFeedbackWithReferenceCopied];
+        comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
+        sinon.stub(translatePipe, 'transform').returns('First correction round');
+
+        comp.ngOnChanges(changes);
+
+        expect(comp.apollonEditor).to.exist;
+        const apollonModel = comp.apollonEditor!.model;
+        const assessments: any = apollonModel.assessments;
+        expect(assessments[0].labelColor).to.equal(comp.firstCorrectionRoundColor);
+        expect(assessments[0].label).to.equal('First correction round');
+        expect(assessments[0].score).to.equal(35);
     });
 
     it('should update feedbacks', () => {

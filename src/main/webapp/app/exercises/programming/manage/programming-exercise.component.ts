@@ -88,10 +88,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     /**
      * Deletes programming exercise
      * @param programmingExerciseId the id of the programming exercise that we want to delete
-     * @param $event contains additional checks for deleting exercise
+     * @param event contains additional checks for deleting exercise
      */
-    deleteProgrammingExercise(programmingExerciseId: number, $event: { [key: string]: boolean }) {
-        return this.programmingExerciseService.delete(programmingExerciseId, $event.deleteStudentReposBuildPlans, $event.deleteBaseReposBuildPlans).subscribe(
+    deleteProgrammingExercise(programmingExerciseId: number, event: { [key: string]: boolean }) {
+        return this.programmingExerciseService.delete(programmingExerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe(
             () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',

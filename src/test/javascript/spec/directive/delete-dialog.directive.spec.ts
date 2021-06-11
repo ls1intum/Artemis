@@ -59,7 +59,7 @@ describe('DeleteDialogDirective', () => {
         expect(translateSpy.lastCall.lastArg).to.be.equal('entity.action.delete');
 
         // Check that button was assigned with proper classes and type.
-        const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.mr-1'));
+        const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.me-1'));
         expect(deleteButton).to.exist;
         expect(deleteButton.properties['type']).to.be.equal('submit');
 
