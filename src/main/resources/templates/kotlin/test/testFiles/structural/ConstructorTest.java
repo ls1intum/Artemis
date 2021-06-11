@@ -22,8 +22,7 @@ import de.tum.in.test.api.structural.ConstructorTestProvider;
 @Public
 @WhitelistPath("target")
 @BlacklistPath(value = "target/test-classes/**", type = PathType.GLOB)
-//This disables security but allows all Kotlin libraries to work (AJTS Security Error)
-@AddTrustedPackage("**")
+@AddTrustedPackage("kotlin.**")
 class ConstructorTest extends ConstructorTestProvider {
 
     /**
