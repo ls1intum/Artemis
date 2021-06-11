@@ -1,7 +1,7 @@
 <li class="nav-item pointer">
     <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
         <fa-icon [icon]="'bell'"></fa-icon>
-        <span class="badge badge-danger badge-pill" *ngIf="recentNotificationCount > 0">
+        <span class="badge bg-danger rounded-pill" *ngIf="recentNotificationCount > 0">
             {{ recentNotificationCount }}<span *ngIf="recentNotificationCount >= notifications.length">+</span>
         </span>
     </button>
@@ -18,7 +18,7 @@
             <h5 class="mb-3 text-center">
                 {{ 'artemisApp.notification.notifications' | artemisTranslate }}
             </h5>
-            <div class="text-right">
+            <div class="text-end">
                 <small class="text-muted">
                     {{ 'artemisApp.notification.loadedNotificationCount' | artemisTranslate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
                 </small>
@@ -32,10 +32,10 @@
                 <div>
                     <h5>
                         {{ notification.title }}
-                        <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
+                        <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
                     <div class="mb-1 text-break" [innerHTML]="notification.text"></div>
-                    <div class="info text-muted text-right">
+                    <div class="info text-muted text-end">
                         {{ notification.notificationDate?.toDate() | date: 'dd.MM.yy HH:mm' }}
                         {{ 'artemisApp.notification.by' | artemisTranslate }}
                         <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>

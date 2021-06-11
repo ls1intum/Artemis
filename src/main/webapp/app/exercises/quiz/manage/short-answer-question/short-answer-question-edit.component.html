@@ -23,14 +23,14 @@
                 <input class="form-control" title="score" type="number" min="1" max="9999" [(ngModel)]="shortAnswerQuestion.points" (ngModelChange)="questionUpdated.emit()" />
             </div>
             <div class="question-type">
-                <h3 class="mb-0"><span class="badge badge-success align-text-top">SA</span></h3>
+                <h3 class="mb-0"><span class="badge bg-success align-text-top">SA</span></h3>
             </div>
         </div>
     </div>
 
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex }}">
         <div class="row" *ngIf="reEvaluationInProgress">
-            <div class="col-md-10 text-left">
+            <div class="col-md-10 text-start">
                 <div class="input-group">
                     <input
                         class="form-control"
@@ -45,7 +45,7 @@
                     </span>
                 </div>
             </div>
-            <div class="col-md-2 text-right">
+            <div class="col-md-2 text-end">
                 <div class="form-group">
                     <div class="re-evaluate-button" (click)="moveUp()">
                         <fa-icon [icon]="'chevron-up'" size="2x"></fa-icon>

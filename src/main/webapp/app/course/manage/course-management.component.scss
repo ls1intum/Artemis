@@ -28,3 +28,14 @@
 .table-responsive {
     overflow-x: hidden;
 }
+
+/* Default the color to white even on bootstrap 5 */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:disabled,
+.btn-info,
+.btn-info:hover,
+.btn-success,
+.btn-success:hover {
+    color: #fff;
+}

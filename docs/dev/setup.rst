@@ -338,6 +338,17 @@ above in Server Setup) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
+In case you encounter any problems regarding JavaScript heap memory leaks when executing ``yarn start`` or any other scripts from ``package.json``, you can change the memory limit parameter used in the ``webpack-ts`` script in ``package.json`` to the following:
+
+::
+   
+   # This local change in `package.json` should not be comitted.
+   "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=5120 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack" # possible higher values are 6144, 7168, and 8192
+
+
+Make sure to **not commit this change** in ``package.json``.
+
+
 For more information, review `Working with
 Angular <https://www.jhipster.tech/development/#working-with-angular>`__.
 For further instructions on how to develop with JHipster, have a look at

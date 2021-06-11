@@ -1,4 +1,4 @@
-<div class="row mb-1 pl-2 answer-post" [class.answer-approved]="answerPost.tutorApproved">
+<div class="row mb-1 ps-2 answer-post" [class.answer-approved]="answerPost.tutorApproved">
     <div class="col-12">
         <!-- edit Mode on -->
         <ng-container *ngIf="isEditMode">
@@ -13,21 +13,21 @@
                         </div>
                         <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)">
                             <fa-icon
-                                class="mr-1 clickable"
+                                class="me-1 clickable"
                                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
                                 container="body"
                                 [icon]="'pencil-alt'"
                                 (click)="toggleEditMode()"
                             ></fa-icon>
                             <jhi-confirm-icon
-                                class="mr-1 clickable"
+                                class="me-1 clickable"
                                 (confirmEvent)="deleteAnswerPost()"
-                                [ngClass]="'mr-1 clickable'"
+                                [ngClass]="'me-1 clickable'"
                                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
                                 [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
                             ></jhi-confirm-icon>
                             <fa-icon
-                                class="mr-1 clickable"
+                                class="me-1 clickable"
                                 *ngIf="isAtLeastTutorInCourse"
                                 [ngbTooltip]="
                                     (answerPost.tutorApproved
@@ -73,21 +73,21 @@
                 </div>
                 <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)">
                     <fa-icon
-                        class="mr-1 clickable"
+                        class="me-1 clickable"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
                         container="body"
                         [icon]="'pencil-alt'"
                         (click)="toggleEditMode()"
                     ></fa-icon>
                     <jhi-confirm-icon
-                        class="mr-1 clickable"
+                        class="me-1 clickable"
                         (confirmEvent)="deleteAnswerPost()"
-                        [ngClass]="'mr-1 clickable'"
+                        [ngClass]="'me-1 clickable'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
                         [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
                     ></jhi-confirm-icon>
                     <fa-icon
-                        class="mr-1 clickable"
+                        class="me-1 clickable"
                         *ngIf="isAtLeastTutorInCourse"
                         [ngbTooltip]="
                             (answerPost.tutorApproved

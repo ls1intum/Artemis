@@ -5,7 +5,7 @@
 <ng-container [ngSwitch]="templateStatus">
     <ng-container *ngSwitchCase="ResultTemplateStatus.IS_BUILDING">
         <span class="text-primary">
-            <fa-icon [icon]="'circle-notch'" size="lg" [spin]="true" class="mr-2"></fa-icon>
+            <fa-icon [icon]="'circle-notch'" size="lg" [spin]="true" class="me-2"></fa-icon>
             <span jhiTranslate="artemisApp.editor.building">Building...</span>
         </span>
     </ng-container>
@@ -38,7 +38,7 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'badge-info': !result.rated, 'badge-success': result.rated }">
+            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'bg-info': !result.rated, 'bg-success': result.rated }">
                 {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
             </span>
         </ng-container>

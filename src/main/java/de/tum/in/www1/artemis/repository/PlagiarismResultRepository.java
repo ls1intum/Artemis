@@ -36,4 +36,10 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
         save(result);
         optionalPreviousResult.ifPresent(this::delete);
     }
+
+    /**
+     * Deletes all plagiarism results associated to the given exercise id
+     * @param exerciseId Id of exercise with plagiarism results that will be deleted.
+     */
+    void deletePlagiarismResultsByExerciseId(Long exerciseId);
 }
