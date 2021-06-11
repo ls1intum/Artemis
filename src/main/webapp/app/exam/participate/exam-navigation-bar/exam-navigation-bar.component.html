@@ -1,19 +1,22 @@
-<div class="row justify-content-between align-items-start exam-navigation pt-2">
-    <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0">
-        {{ 'artemisApp.examParticipation.progress' | artemisTranslate: { current: pageIndex + 1, all: exercises.length } }}
+<div class="row justify-content-between align-items-start exam-navigation pt-3">
+    <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
+        {{ 'artemisApp.examParticipation.progress' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
-    <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0">
-        {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate: { current: pageIndex + 1, all: exercises.length } }}
+    <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
+        {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
+    </div>
+    <div class="h3 m-0 text-overflow d-block col" *ngIf="overviewPageOpen">
+        {{ 'artemisApp.examParticipation.examOverview' | artemisTranslate }}
     </div>
     <div class="col">
         <div class="d-flex justify-content-center">
             <div class="navigation-item">
-                <button *ngIf="!overviewPageOpen" class="btn btn-secondary w-100" (click)="changeExercise(pageIndex - 1, false)">
+                <button *ngIf="!overviewPageOpen && exerciseIndex !== 0" class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex - 1, false)">
                     <span aria-hidden="true">&laquo;</span>
                     <span class="sr-only">Previous</span>
                 </button>
             </div>
-            <!-- testing new item -->
+            <!-- exam overview item -->
             <div class="navigation-item">
                 <button class="btn w-100 synced" [ngClass]="setOverviewStatus()" [ngbTooltip]="'Exam Exercise Overview'" (click)="openExerciseOverview()">
                     <fa-icon [icon]="'bars'"></fa-icon>
@@ -24,10 +27,10 @@
                     class="navigation-item"
                     *ngIf="
                         i >=
-                            pageIndex -
+                            exerciseIndex -
                                 itemsVisiblePerSide -
-                                (pageIndex + 1 + itemsVisiblePerSide > exercises.length ? pageIndex + 1 + itemsVisiblePerSide - exercises.length : 0) &&
-                        i <= pageIndex + itemsVisiblePerSide - (pageIndex - itemsVisiblePerSide <= 0 ? pageIndex - itemsVisiblePerSide : 0)
+                                (exerciseIndex + 1 + itemsVisiblePerSide > exercises.length ? exerciseIndex + 1 + itemsVisiblePerSide - exercises.length : 0) &&
+                        i <= exerciseIndex + itemsVisiblePerSide - (exerciseIndex - itemsVisiblePerSide <= 0 ? exerciseIndex - itemsVisiblePerSide : 0)
                     "
                 >
                     <button
@@ -42,7 +45,7 @@
                 </div>
             </ng-container>
             <div class="navigation-item">
-                <button *ngIf="!overviewPageOpen" class="btn btn-secondary w-100" (click)="changeExercise(pageIndex + 1, false)">
+                <button *ngIf="!overviewPageOpen" class="btn btn-secondary w-100" (click)="changeExercise(exerciseIndex + 1, false)">
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
                 </button>
@@ -57,7 +60,7 @@
         <div class="row justify-content-end align-items-start pr-2">
             <div *ngIf="!overviewPageOpen" class="d-flex mb-2">
                 <button [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
-                    {{ 'artemisApp.examParticipation.' + (pageIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
+                    {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                 </button>
                 <button class="btn btn-danger ml-2" (click)="handInEarly()">
                     {{ 'artemisApp.examParticipation.handInEarly' | artemisTranslate }}

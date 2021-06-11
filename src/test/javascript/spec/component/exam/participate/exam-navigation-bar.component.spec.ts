@@ -58,14 +58,14 @@ describe('Exam Navigation Bar Component', () => {
         spyOn(comp.onPageChanged, 'emit');
         spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.pageIndex).toEqual(0);
+        expect(comp.exerciseIndex).toEqual(0);
 
         const exerciseIndex = 1;
         const force = false;
 
         comp.changeExercise(exerciseIndex, force);
 
-        expect(comp.pageIndex).toEqual(exerciseIndex);
+        expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onPageChanged.emit).toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
@@ -74,32 +74,32 @@ describe('Exam Navigation Bar Component', () => {
         spyOn(comp.onPageChanged, 'emit');
         spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.pageIndex).toEqual(0);
+        expect(comp.exerciseIndex).toEqual(0);
 
         const exerciseIndex = 5;
         const force = false;
 
         comp.changeExercise(exerciseIndex, force);
 
-        expect(comp.pageIndex).toEqual(0);
+        expect(comp.exerciseIndex).toEqual(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should tell the type of the selected programming exercise', () => {
-        comp.pageIndex = 0;
+        comp.exerciseIndex = 0;
 
         expect(comp.isProgrammingExercise()).toBe(true);
     });
 
     it('should tell the type of the selected text exercise', () => {
-        comp.pageIndex = 1;
+        comp.exerciseIndex = 1;
 
         expect(comp.isProgrammingExercise()).toBe(false);
     });
 
     it('should tell the type of the selected modeling exercise', () => {
-        comp.pageIndex = 2;
+        comp.exerciseIndex = 2;
 
         expect(comp.isProgrammingExercise()).toBe(false);
     });

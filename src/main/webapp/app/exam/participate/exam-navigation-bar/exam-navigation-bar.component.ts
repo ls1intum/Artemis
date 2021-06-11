@@ -13,7 +13,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 })
 export class ExamNavigationBarComponent implements OnInit {
     @Input() exercises: Exercise[] = [];
-    @Input() pageIndex = 0;
+    @Input() exerciseIndex = 0;
     @Input() endDate: Moment;
     @Input() overviewPageOpen: boolean;
 
@@ -43,7 +43,7 @@ export class ExamNavigationBarComponent implements OnInit {
                 this.itemsVisiblePerSide = 0;
             }
         });
-        console.log(this.pageIndex);
+        console.log(this.exerciseIndex, this.overviewPageOpen);
     }
 
     triggerExamAboutToEnd() {
@@ -53,10 +53,10 @@ export class ExamNavigationBarComponent implements OnInit {
 
     openExerciseOverview() {
         // set index and emit event
-        this.pageIndex = 0;
+        this.exerciseIndex = 0;
         // save current exercise
-        this.onPageChanged.emit({ overViewChange: true, exercise: this.exercises[this.pageIndex], forceSave: false });
-        this.setExerciseButtonStatus(this.pageIndex);
+        this.onPageChanged.emit({ overViewChange: true, exercise: this.exercises[this.exerciseIndex], forceSave: false });
+        this.setExerciseButtonStatus(this.exerciseIndex);
     }
 
     changeExercise(exerciseIndex: number, forceSave: boolean) {
@@ -65,7 +65,7 @@ export class ExamNavigationBarComponent implements OnInit {
             return;
         }
         // set index and emit event
-        this.pageIndex = exerciseIndex;
+        this.exerciseIndex = exerciseIndex;
         this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[exerciseIndex], forceSave });
         this.setExerciseButtonStatus(exerciseIndex);
     }
@@ -75,16 +75,16 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param changeExercise whether to go to the next exercise {boolean}
      */
     saveExercise(changeExercise = true) {
-        const newIndex = this.pageIndex + 1;
-        const submission = this.getSubmissionForExercise(this.exercises[this.pageIndex]);
+        const newIndex = this.exerciseIndex + 1;
+        const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
-        if (submission && this.exercises[this.pageIndex].type !== ExerciseType.PROGRAMMING) {
+        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
         if (changeExercise) {
             if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changeExercise(this.pageIndex, true);
+                this.changeExercise(this.exerciseIndex, true);
             } else {
                 this.changeExercise(newIndex, true);
             }
@@ -92,11 +92,11 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     isProgrammingExercise() {
-        return this.exercises[this.pageIndex].type === ExerciseType.PROGRAMMING;
+        return this.exercises[this.exerciseIndex].type === ExerciseType.PROGRAMMING;
     }
 
     isFileUploadExercise() {
-        return this.exercises[this.pageIndex].type === ExerciseType.FILE_UPLOAD;
+        return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
     }
 
     setOverviewStatus(): 'active' | '' {
@@ -113,7 +113,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             if (submission.isSynced) {
                 // make button blue
-                if (exerciseIndex === this.pageIndex && !this.overviewPageOpen) {
+                if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
                     return 'synced active';
                 } else {
                     return 'synced';
