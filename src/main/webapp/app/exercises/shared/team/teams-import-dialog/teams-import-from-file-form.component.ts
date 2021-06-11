@@ -55,11 +55,11 @@ export class TeamsImportFromFileFormComponent {
 
     /**
      * Assigns the uploaded import file
-     * @param $event object containing the uploaded file
+     * @param event object containing the uploaded file
      */
-    setImportFile($event: any): void {
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setImportFile(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             this.importFile = fileList[0];
             this.importFileName = this.importFile['name'];
             this.loading = true;

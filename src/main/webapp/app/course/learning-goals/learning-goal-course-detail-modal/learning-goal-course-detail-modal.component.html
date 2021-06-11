@@ -1,8 +1,6 @@
 <div class="modal-header">
     <h4 class="modal-title">{{ learningGoal?.title }}</h4>
-    <button type="button" class="close" (click)="activeModal.close()">
-        <span>&times;</span>
-    </button>
+    <button type="button" class="btn-close" (click)="activeModal.close()"></button>
 </div>
 <div class="modal-body">
     <p *ngIf="learningGoal?.description">{{ learningGoal?.description }}</p>
@@ -82,7 +80,7 @@
     </div>
     <div *ngIf="isProgressAvailable">
         <p class="text-muted">
-            <span class="badge badge-info">Info</span>
+            <span class="badge bg-info">Info</span>
             {{ 'artemisApp.learningGoal.learningGoalCard.exerciseNote' | artemisTranslate }}
         </p>
         <div>

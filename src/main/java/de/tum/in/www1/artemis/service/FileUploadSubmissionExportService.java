@@ -24,7 +24,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
     protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
 
         if (((FileUploadSubmission) submission).getFilePath() == null) {
-            throw new IOException("Could not find uploaded file for submission.");
+            throw new IOException("Cannot export submission " + submission.getId() + " for exercise " + exercise.getId() + " because the file path is null.");
         }
 
         // we need to get the 'real' file path here, the submission only has the api url path
@@ -34,7 +34,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
         Path submissionPath = Paths.get(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
 
         if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
-            throw new IOException("Could not find uploaded file for submission.");
+            throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + submissionPath + " doesn't exist.");
         }
 
         Files.copy(submissionPath, file.toPath());

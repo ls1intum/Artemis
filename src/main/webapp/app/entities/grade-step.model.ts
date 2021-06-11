@@ -16,3 +16,9 @@ export class GradeDTO {
     public isPassingGrade = false;
     public gradeType: GradeType;
 }
+
+export class GradeStepsDTO {
+    public examTitle: string;
+    public gradeType: GradeType;
+    public gradeSteps: GradeStep[];
+}

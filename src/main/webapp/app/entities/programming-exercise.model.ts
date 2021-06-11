@@ -4,6 +4,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -15,6 +16,7 @@ export enum ProgrammingLanguage {
     ASSEMBLER = 'ASSEMBLER',
     SWIFT = 'SWIFT',
     OCAML = 'OCAML',
+    EMPTY = 'EMPTY',
 }
 
 export enum ProjectType {
@@ -38,6 +40,7 @@ export class ProgrammingExercise extends Exercise {
     public sequentialTestRuns?: boolean;
     public showTestNamesToStudents?: boolean;
     public checkoutSolutionRepository?: boolean;
+    public auxiliaryRepositories?: AuxiliaryRepository[];
 
     public buildAndTestStudentSubmissionsAfterDueDate?: Moment;
     public testCasesChanged?: boolean;

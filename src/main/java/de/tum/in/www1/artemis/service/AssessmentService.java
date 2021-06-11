@@ -309,4 +309,23 @@ public class AssessmentService {
         result = resultRepository.saveResult(result, exercise);
         return result;
     }
+
+    /**
+     * Deletes the result of a submission.
+     *
+     * @param submission - the submission which the result belongs to
+     * @param result     - the result that should get deleted
+     */
+    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
+    public void deleteAssessment(Submission submission, Result result) {
+
+        if (complaintRepository.findByResult_Id(result.getId()).isPresent()) {
+            throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
+        }
+        submission.getResults().remove(result);
+        feedbackRepository.deleteByResult_Id(result.getId());
+        resultRepository.deleteById(result.getId());
+        // this keeps the result order intact
+        submissionRepository.save(submission);
+    }
 }

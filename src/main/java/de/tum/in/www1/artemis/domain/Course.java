@@ -101,9 +101,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays;
 
-    @Column(name = "student_questions_enabled")
+    @Column(name = "posts_enabled")
     @JsonView(QuizView.Before.class)
-    private boolean studentQuestionsEnabled;
+    private boolean postsEnabled;
 
     @Column(name = "max_request_more_feedback_time_days")
     @JsonView(QuizView.Before.class)
@@ -326,12 +326,12 @@ public class Course extends DomainObject {
         return this.maxComplaintTimeDays > 0;
     }
 
-    public boolean getStudentQuestionsEnabled() {
-        return studentQuestionsEnabled;
+    public boolean getPostsEnabled() {
+        return postsEnabled;
     }
 
-    public void setStudentQuestionsEnabled(boolean studentQuestionsEnabled) {
-        this.studentQuestionsEnabled = studentQuestionsEnabled;
+    public void setPostsEnabled(boolean postsEnabled) {
+        this.postsEnabled = postsEnabled;
     }
 
     public boolean getRequestMoreFeedbackEnabled() {

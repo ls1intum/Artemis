@@ -76,7 +76,7 @@ public class LectureService {
      */
     @Transactional // ok
     public void delete(Lecture lecture) {
-        Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture.getId());
+        Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId());
         if (lectureToDeleteOptional.isEmpty()) {
             return;
         }

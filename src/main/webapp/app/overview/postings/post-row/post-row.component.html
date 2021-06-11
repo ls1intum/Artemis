@@ -1,0 +1,190 @@
+<!-- unexpanded answers -->
+<div class="row mb-2 post-row" *ngIf="!isExpanded">
+    <div class="col-12">
+        <jhi-post [post]="post" [user]="user" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" (interactPost)="interactPost($event)"></jhi-post>
+    </div>
+    <div class="col-12">
+        <div class="row">
+            <div class="col-auto answer-posts-line p-0"></div>
+            <div class="col" *ngIf="post.answers && post.answers.length !== 0">
+                <div class="row align-items-center justify-content-center mb-2" (click)="isExpanded = true">
+                    <div class="col line"></div>
+                    <div class="col-auto">
+                        <span class="posting-subtitle m-2">{{
+                            'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | artemisTranslate: { count: post.answers ? post.answers.length : 0 }
+                        }}</span>
+                        <fa-icon class="clickable" [icon]="'angle-down'"></fa-icon>
+                    </div>
+                    <div class="col line"></div>
+                </div>
+                <!-- new answer -->
+                <div class="row my-2" *ngIf="!isAnswerMode">
+                    <div class="col-12 px-0">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = true">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | artemisTranslate }}
+                        </button>
+                    </div>
+                </div>
+                <ng-container *ngIf="isAnswerMode">
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <div class="row ps-2 mb-1">
+                                <div class="col-auto px-0">
+                                    <fa-icon [icon]="'comment'"></fa-icon>
+                                </div>
+                                <div class="col">
+                                    <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newAnswerLabel' | artemisTranslate }}</span>
+                                </div>
+                            </div>
+                            <div class="row px-0">
+                                <jhi-markdown-editor
+                                    class="markdown-editor background-editor-color w-100"
+                                    [(markdown)]="answerPostContent"
+                                    [editorMode]="EditorMode.LATEX"
+                                    [enableResize]="true"
+                                    [metaCommands]="[]"
+                                    [enableFileUpload]="false"
+                                ></jhi-markdown-editor>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex justify-content-between">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = false">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | artemisTranslate }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" (click)="addAnswerPost()">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.addAnswer' | artemisTranslate }}
+                        </button>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- expanded answers -->
+<div class="row mb-2">
+    <div class="col-12 post-row">
+        <jhi-post *ngIf="isExpanded" [post]="post" [user]="user" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" (interactPost)="interactPost($event)"></jhi-post>
+        <div class="row">
+            <div class="col-auto answer-posts-line p-0"></div>
+            <div class="col">
+                <!-- hide answers -->
+                <div class="row align-items-center justify-content-center mb-2" *ngIf="isExpanded && post.answers && post.answers.length !== 0" (click)="isExpanded = false">
+                    <div class="col line"></div>
+                    <div class="col-auto">
+                        <span class="posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | artemisTranslate }}</span>
+                        <fa-icon class="clickable" [icon]="'angle-up'"></fa-icon>
+                    </div>
+                    <div class="col line"></div>
+                </div>
+                <div class="row m-0">
+                    <div class="col-12 px-0">
+                        <!-- approved answers -->
+                        <ng-container *ngIf="isExpanded">
+                            <jhi-answer-post
+                                *ngFor="let answerPost of approvedAnswerPosts"
+                                [answerPost]="answerPost"
+                                [user]="user"
+                                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+                                (interactAnswer)="interactAnswerPost($event)"
+                            ></jhi-answer-post>
+                        </ng-container>
+                        <!-- show more answers -->
+                        <div
+                            class="row mb-1 clickable"
+                            *ngIf="isExpanded && approvedAnswerPosts.length !== 0 && sortedAnswerPosts.length !== 0 && !showOtherAnswerPosts"
+                            [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | artemisTranslate: { count: sortedAnswerPosts.length }"
+                            (click)="showOtherAnswerPosts = !showOtherAnswerPosts"
+                        >
+                            <div class="col-auto overflow-parent ps-0">
+                                <div class="overflow-ellipsis posting-subtitle">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | artemisTranslate: { count: sortedAnswerPosts.length } }}
+                                </div>
+                            </div>
+                            <div class="col px-0 line"></div>
+                            <div class="col-auto">
+                                <fa-icon [icon]="'angle-down'"></fa-icon>
+                            </div>
+                            <div class="col ps-0 line"></div>
+                        </div>
+                        <!-- show less answers -->
+                        <ng-container *ngIf="isExpanded && (approvedAnswerPosts.length === 0 || showOtherAnswerPosts)">
+                            <ng-container *ngIf="approvedAnswerPosts.length !== 0 && sortedAnswerPosts.length !== 0 && showOtherAnswerPosts">
+                                <div
+                                    class="row mb-1 clickable"
+                                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | artemisTranslate"
+                                    (click)="showOtherAnswerPosts = !showOtherAnswerPosts"
+                                >
+                                    <div class="col-auto overflow-parent ps-0">
+                                        <div class="overflow-ellipsis posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | artemisTranslate }}</div>
+                                    </div>
+                                    <div class="col px-0 line"></div>
+                                    <div class="col-auto">
+                                        <fa-icon [icon]="'angle-up'"></fa-icon>
+                                    </div>
+                                    <div class="col ps-0 line"></div>
+                                </div>
+                            </ng-container>
+                            <!-- unapproved answers -->
+                            <jhi-answer-post
+                                *ngFor="let answerPost of sortedAnswerPosts"
+                                [answerPost]="answerPost"
+                                [user]="user"
+                                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+                                (interactAnswer)="interactAnswerPost($event)"
+                            ></jhi-answer-post>
+                        </ng-container>
+                        <!-- no answers -->
+                        <div class="row mb-3" *ngIf="!post.answers || post.answers.length === 0">
+                            <div class="col-12">
+                                <span>{{ 'artemisApp.courseOverview.exerciseDetails.faq.noAnswers' | artemisTranslate }}</span>
+                            </div>
+                        </div>
+                        <!-- new answer -->
+                        <div class="row my-2" *ngIf="isExpanded && !isAnswerMode">
+                            <div class="col-12 px-0">
+                                <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = true">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | artemisTranslate }}
+                                </button>
+                            </div>
+                        </div>
+                        <ng-container *ngIf="isExpanded && isAnswerMode">
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <div class="row ps-2 mb-1">
+                                        <div class="col-auto px-0">
+                                            <fa-icon [icon]="'comment'"></fa-icon>
+                                        </div>
+                                        <div class="col">
+                                            <span class="form-control-label posting-subtitle">{{
+                                                'artemisApp.courseOverview.exerciseDetails.faq.newAnswerLabel' | artemisTranslate
+                                            }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row px-0">
+                                        <jhi-markdown-editor
+                                            class="markdown-editor background-editor-color w-100"
+                                            [(markdown)]="answerPostContent"
+                                            [editorMode]="EditorMode.LATEX"
+                                            [enableResize]="true"
+                                            [metaCommands]="[]"
+                                            [enableFileUpload]="false"
+                                        ></jhi-markdown-editor>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = false">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | artemisTranslate }}
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" (click)="addAnswerPost()">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.addAnswer' | artemisTranslate }}
+                                </button>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

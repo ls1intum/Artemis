@@ -506,6 +506,9 @@ public class ProgrammingExerciseGradingService {
             if (successfulTestPoints > maxPoints) {
                 successfulTestPoints = maxPoints;
             }
+            if (Double.isNaN(successfulTestPoints)) {
+                successfulTestPoints = 0.0;
+            }
 
             // if static code analysis is enabled, reduce the points by the calculated penalty
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())
@@ -519,7 +522,6 @@ public class ProgrammingExerciseGradingService {
 
             // The score is calculated as a percentage of the maximum points
             double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
-
             result.setScore(score);
         }
     }
