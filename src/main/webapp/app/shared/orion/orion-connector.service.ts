@@ -21,7 +21,7 @@ function theWindow(): any {
  *
  * The communication itself is bidirectional, meaning that the IDE can call Typescript code
  * using the by the JavaUpcallBridge interface defined methods. On the other side, the Angular app can execute
- * Kotlin/Java coode inside the IDE by calling the JavaDowncallBridge interface.
+ * Kotlin/Java code inside the IDE by calling the JavaDowncallBridge interface.
  *
  * In order to be always available, it is essential that this service gets instantiated right after loading the app
  * in the browser. This service has to always be available in the native window object, so that if an IDE is connected,
@@ -38,7 +38,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
 
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;
-        connector.orionState = { opened: -1, inInstructorView: false, cloning: false, building: false };
+        connector.orionState = { opened: -1, view: ExerciseView.STUDENT, cloning: false, building: false };
         connector.orionStateSubject = new BehaviorSubject<OrionState>(connector.orionState);
     }
 
@@ -103,11 +103,11 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
-     * @param view ExerciseView which is currently open in in the IDE (instructor vs. student)
+     * @param viewString ExerciseView which is currently open in in the IDE as string
      */
-    onExerciseOpened(opened: number, view: string): void {
-        const inInstructorView = view === ExerciseView.INSTRUCTOR;
-        this.setIDEStateParameter({ inInstructorView });
+    onExerciseOpened(opened: number, viewString: string): void {
+        const view = ExerciseView[viewString];
+        this.setIDEStateParameter({ view });
         this.setIDEStateParameter({ opened });
     }
 
@@ -201,7 +201,7 @@ export class OrionConnectorService implements ArtemisOrionConnector {
      * @param exercise The exercise to be imported
      */
     editExercise(exercise: ProgrammingExercise): void {
-        this.setIDEStateParameter({ cloning: true });
+        this.isCloning(true);
         theWindow().orionExerciseConnector.editExercise(stringifyCircular(exercise));
     }
 
@@ -215,7 +215,31 @@ export class OrionConnectorService implements ArtemisOrionConnector {
         theWindow().orionVCSConnector.selectRepository(repository);
     }
 
+    /**
+     * Orders the plugin to run the maven test command locally
+     */
     buildAndTestLocally(): void {
         theWindow().orionBuildConnector.buildAndTestLocally();
+    }
+
+    /**
+     * Assess the exercise as a tutor. Triggers downloading/opening the exercise as tutor
+     *
+     * @param exercise The exercise to be imported
+     */
+    assessExercise(exercise: ProgrammingExercise): void {
+        this.isCloning(true);
+        theWindow().orionExerciseConnector.assessExercise(stringifyCircular(exercise));
+    }
+
+    /**
+     * Downloads a submission into the opened tutor project
+     *
+     * @param submissionId id of the submission, used to navigate to the corresponding URL
+     * @param correctionRound correction round, also needed to navigate to the correct URL
+     * @param base64data the student's submission as base64
+     */
+    downloadSubmission(submissionId: number, correctionRound: number, base64data: String) {
+        theWindow().orionExerciseConnector.downloadSubmission(String(submissionId), String(correctionRound), base64data);
     }
 }
