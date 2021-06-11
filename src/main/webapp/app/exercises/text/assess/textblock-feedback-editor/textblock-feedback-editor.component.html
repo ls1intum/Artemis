@@ -81,6 +81,13 @@
             ></jhi-confirm-icon>
         </ng-template>
     </div>
+    <a href="#">Show where this feedback came from</a>
+    Coming from: Length = {{ feedback.suggestedFeedbackOriginSubmission?.blocks?.length }}:
+    <br />
+    Text = {{ feedback.suggestedFeedbackOriginSubmission?.text }}:
+    <br />
+    Submission Id = {{ feedback.suggestedFeedbackOriginSubmission?.id }}
+    <br />
 
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>

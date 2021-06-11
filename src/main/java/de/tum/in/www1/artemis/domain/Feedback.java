@@ -13,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
@@ -68,6 +69,21 @@ public class Feedback extends DomainObject {
 
     @ManyToOne
     private GradingInstruction gradingInstruction;
+
+    /**
+     * Represents the id of the previously assessed block, whose feedback we are reusing
+     */
+    @Transient
+    @JsonSerialize
+    private String suggestedFeedbackOriginBlockId;
+
+    /**
+     * Represents the submission of the previously assessed block, whose feedback we are reusing
+     * The specific block refers to the field `suggestedFeedbackOriginBlockId`
+     */
+    @Transient
+    @JsonSerialize
+    private TextSubmission suggestedFeedbackOriginSubmission;
 
     // TODO: JP remove these two references as they are not really needed
     @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
@@ -234,6 +250,28 @@ public class Feedback extends DomainObject {
 
     public void setGradingInstruction(GradingInstruction gradingInstruction) {
         this.gradingInstruction = gradingInstruction;
+    }
+
+    public String getSuggestedFeedbackOriginBlock() {
+        return suggestedFeedbackOriginBlockId;
+    }
+
+    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockId, TextSubmission submission) {
+        this.suggestedFeedbackOriginBlockId = suggestedFeedbackOriginBlockId;
+        this.suggestedFeedbackOriginSubmission = submission;
+        return this;
+    }
+
+    public void setSuggestedFeedbackOriginBlock(String suggestedFeedbackOriginBlockId) {
+        this.suggestedFeedbackOriginBlockId = suggestedFeedbackOriginBlockId;
+    }
+
+    public TextSubmission getSuggestedFeedbackOriginSubmission() {
+        return suggestedFeedbackOriginSubmission;
+    }
+
+    public void setSuggestedFeedbackOriginSubmission(TextSubmission suggestedFeedbackOriginSubmission) {
+        this.suggestedFeedbackOriginSubmission = suggestedFeedbackOriginSubmission;
     }
 
     public List<FeedbackConflict> getFirstConflicts() {

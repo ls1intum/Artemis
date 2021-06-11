@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -36,6 +37,8 @@ export class Feedback implements BaseEntity {
     public result?: Result;
     public positive?: boolean;
     public conflictingTextAssessments?: FeedbackConflict[];
+    public suggestedFeedbackOriginBlockId?: string;
+    public suggestedFeedbackOriginSubmission?: TextSubmission;
 
     // helper attributes for modeling exercise assessments stored in Feedback
     public referenceType?: string; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
