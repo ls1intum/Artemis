@@ -135,11 +135,18 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
         log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
-        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(exampleSubmissionId);
-        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-            badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findBySubmissionId(exampleSubmissionId);
+        if (optionalExampleSubmission.isPresent()) {
+            ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
+            if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+                badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+            }
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+        else {
+            TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
+        }
         final var response = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         if (response.getStatusCode().is2xxSuccessful()) {
             final Submission submission = response.getBody().getSubmission();
@@ -501,7 +508,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
-        if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().equals(exerciseId)) {
+        if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().getId().equals(exerciseId)) {
             badRequest("exerciseId", "400", "The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !");
         }
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
