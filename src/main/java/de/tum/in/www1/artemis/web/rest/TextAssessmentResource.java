@@ -122,9 +122,9 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT exercises/:exerciseId/example-submissions/:examplesubmissionId/example-text-assessment : save manual example text assessment
+     * PUT exercises/:exerciseId/example-submissions/:exampleSubmissionId/example-text-assessment : save manual example text assessment
      *
-     * @param exerciseId the id of the exercise the examplesubmission belongs to
+     * @param exerciseId the id of the exercise the exampleSubmission belongs to
      * @param exampleSubmissionId id of the submission
      * @param textAssessment list of text assessments (consists of feedbacks and text blocks)
      * @return result after saving example text assessment
@@ -159,7 +159,7 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * DELETE exercises/:exerciseId/example-submissions/:exampleSubmissionId/example-assessment/feedback : delete feedback for example submission.
      *
-     * @param exerciseId the id of the exercise the examplesubmission belongs to
+     * @param exerciseId the id of the exercise the exampleSubmission belongs to
      * @param exampleSubmissionId id of the submission
      * @return 204 No Content
      */
@@ -312,7 +312,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
-     * @param participationId the id of the participaton the submissions belongs to
+     * @param participationId the id of the participation the submissions belongs to
      * @param submissionId the id of the submission we want
      * @param correctionRound correction round for which we want the submission
      * @param resultId if result already exists, we want to get the submission for this specific result
@@ -327,7 +327,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            badRequest("participationId", "400", "Submission with submissionId " + submissionId + "doesnt fit to participation with particpationId" + participationId + " !");
+            badRequest("participationId", "400", "Submission with submissionId " + submissionId + "doesnt fit to participation with participationId" + participationId + " !");
         }
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
