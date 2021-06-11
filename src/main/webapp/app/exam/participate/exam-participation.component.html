@@ -17,7 +17,7 @@
                 id="exam-navigation-bar"
                 class="sticky-top d-block"
                 [exercises]="studentExam.exercises!"
-                [pageIndex]="exerciseIndex"
+                [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
                 [overviewPageOpen]="activePageIndex === -1"
                 (onPageChanged)="onPageChange($event)"
@@ -28,7 +28,6 @@
                 <jhi-alert></jhi-alert>
             </div>
             <!-- exercises -->
-            <div>nico testing</div>
             <div [hidden]="activePageIndex !== -1">
                 <jhi-exam-exercise-overview-page [exercises]="studentExam.exercises!"> </jhi-exam-exercise-overview-page>
             </div>
