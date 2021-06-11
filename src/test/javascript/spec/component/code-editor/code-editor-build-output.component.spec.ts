@@ -178,7 +178,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         getFeedbackDetailsForResultStub.returns(of({ ...result, feedbacks: [] }));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(participation.id, result.id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(participation.id!, result.id!);
         expect(getBuildLogsStub).to.not.have.been.called;
         expect(comp.rawBuildLogs).to.deep.equal(new BuildLogEntryArray());
 
