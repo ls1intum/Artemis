@@ -109,7 +109,7 @@
                     </td>
 
                     <td>
-                        <span>{{ complaint.submittedTime?.moment().format("lll") }}</span>
+                        <span>{{ complaint.submittedTime? | artemisDate }}</span>
                     </td>
 
                     <td>
