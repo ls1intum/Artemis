@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.metis;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.*;
@@ -26,7 +27,7 @@ public class AnswerPost extends Posting {
 
     // To be used with introduction of Metis
     @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<Reaction> reactions;
+    private List<Reaction> reactions = new ArrayList<>();
 
     @ManyToOne
     @JsonIgnoreProperties("answers")
