@@ -14,14 +14,15 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 @Service
@@ -41,17 +42,22 @@ public abstract class SubmissionExportService {
         this.fileService = fileService;
     }
 
-    @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
-
     /**
-     * Exports student submissions to a zip file for an exercise
+     * Exports student submissions to a zip file for an exercise.
+     *
+     * The outputDir is used to store the zip file and temporary files used for zipping so make
+     * sure to delete it if it's no longer used.
+     *
      * @param exerciseId the id of the exercise to be exported
      * @param submissionExportOptions the options for the export
+     * @param outputDir directory to store the temporary files in
+     * @param exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
+     * @param reportData   a list of all exercises and their statistics
      * @return a reference to the zipped file
      * @throws IOException if an error occurred while zipping
      */
-    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) throws IOException {
+    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions, Path outputDir, List<String> exportErrors,
+            List<ArchivalReportEntry> reportData) throws IOException {
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exerciseId);
 
@@ -88,34 +94,45 @@ public abstract class SubmissionExportService {
             }
         }
 
-        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate);
+        // Sort the student participations by id
+        exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
+        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, filterLateSubmissionsDate, outputDir, exportErrors, reportData);
     }
 
     /**
-     * Creates a zip file from a list of participations for an exercise
+     * Creates a zip file from a list of participations for an exercise.
+     *
+     * The outputDir is used to store the zip file and temporary files used for zipping so make
+     * sure to delete it if it's no longer used.
+     *
      * @param exercise the exercise in question
      * @param participations a list of participations to include
      * @param lateSubmissionFilter an optional date filter for submissions
+     * @param outputDir directory to store the temporary files in
+     * @param  exportErrors a list of errors for submissions that couldn't be exported and are not included in the file
+     * @param reportData   a list of all exercises and their statistics
      * @return the zipped file
      * @throws IOException if an error occurred while zipping
      */
-    private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter)
-            throws IOException {
+    private Optional<File> createZipFileFromParticipations(Exercise exercise, List<StudentParticipation> participations, @Nullable ZonedDateTime lateSubmissionFilter,
+            Path outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) throws IOException {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
+        // Create unique name for directory
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
         String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
-
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
-        Path submissionsFolderPath = Paths.get(submissionExportPath, "zippedSubmissions", zipGroupName);
-        Path zipFilePath = Paths.get(submissionExportPath, "zippedSubmissions", zipFileName);
+        // Create directory
+        Path submissionsFolderPath = Paths.get(outputDir.toString(), "zippedSubmissions", zipGroupName);
+        Path zipFilePath = Paths.get(outputDir.toString(), "zippedSubmissions", zipFileName);
 
         File submissionFolder = submissionsFolderPath.toFile();
         if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {
             log.error("Couldn't create dir: {}", submissionFolder);
+            exportErrors.add("Cannot create directory: " + submissionFolder.toPath());
             return Optional.empty();
         }
 
@@ -130,6 +147,7 @@ public abstract class SubmissionExportService {
                     // ignore unsubmitted submissions
                     continue;
                 }
+                // filter late submissions
                 if (lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
                     if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
                         latestSubmission = submission;
@@ -141,33 +159,39 @@ public abstract class SubmissionExportService {
                 return Optional.<Path>empty();
             }
 
+            // create file path
             String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
                     + this.getFileEndingForSubmission(latestSubmission);
             Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
 
+            // store file
             try {
                 this.saveSubmissionToFile(exercise, latestSubmission, submissionFilePath.toFile());
                 return Optional.of(submissionFilePath);
             }
-            catch (IOException ioException) {
-                log.error("Could not create file {} for exporting: {}", submissionFilePath.toString(), ioException.getMessage());
+            catch (Exception ex) {
+                String message = "Could not create file " + submissionFilePath + "  for exporting: " + ex.getMessage();
+                log.error(message);
+                exportErrors.add(message);
                 return Optional.<Path>empty();
             }
 
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
+        // Add report entry
+        reportData.add(new ArchivalReportEntry(exercise.getId(), fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size()));
+
         if (submissionFilePaths.isEmpty()) {
             return Optional.empty();
         }
 
+        // zip stores submissions
         try {
             zipFileService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }
         finally {
             deleteTempFiles(submissionFilePaths);
         }
-
-        fileService.scheduleForDeletion(zipFilePath, 5);
 
         return Optional.of(zipFilePath.toFile());
     }

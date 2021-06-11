@@ -9,6 +9,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.xml.transform.TransformerException;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
@@ -19,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
@@ -45,6 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
+import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Service
@@ -143,20 +146,19 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             replaceRemoteURLs(jobXmlDocument, repoUrl, ciRepoName);
         }
 
-        final var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_XML);
-        final var entity = new HttpEntity<>(jenkinsJobService.writeXmlToString(jobXmlDocument), headers);
-
-        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
-
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
-            final var response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                throw new JenkinsException(errorMessage + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
+            URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
+
+            final var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+
+            String jobXmlString = XmlFileUtils.writeToString(jobXmlDocument);
+            final var entity = new HttpEntity<>(jobXmlString, headers);
+
+            restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
         }
-        catch (HttpClientErrorException e) {
+        catch (RestClientException | TransformerException e) {
             log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
         }

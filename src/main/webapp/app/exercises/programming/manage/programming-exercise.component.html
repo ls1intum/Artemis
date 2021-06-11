@@ -190,7 +190,7 @@
                     <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
                         <jhi-ide-button
                             *ngIf="
-                                orionState.inInstructorView &&
+                                orionState.view === ExerciseView.INSTRUCTOR &&
                                     orionState.opened === programmingExercise.id &&
                                     programmingExercise.isAtLeastEditor &&
                                     programmingExercise.templateParticipation;
