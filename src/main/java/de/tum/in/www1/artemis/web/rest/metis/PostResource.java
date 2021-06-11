@@ -87,6 +87,9 @@ public class PostResource {
         }
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        if (!post.getCourse().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body that should be added");
+        }
         // set author to current user
         post.setAuthor(user);
         Post savedPost = postRepository.save(post);
@@ -198,7 +201,7 @@ public class PostResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (lecture.getCourse().getId().equals(courseId)) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
-            List<Post> posts = postRepository.findPostsForLecture(lectureId);
+            List<Post> posts = postRepository.findPostsByLecture_Id(lectureId);
             hideSensitiveInformation(posts);
             return new ResponseEntity<>(posts, null, HttpStatus.OK);
         }
@@ -246,6 +249,7 @@ public class PostResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         courseRepository.findByIdElseThrow(courseId);
         Post post = postRepository.findByIdElseThrow(postId);
+        Course course = post.getCourse();
         String entity = "";
         if (post.getLecture() != null) {
             entity = "lecture with id: " + post.getLecture().getId();
@@ -255,6 +259,9 @@ public class PostResource {
         }
         if (post.getCourse() == null) {
             return ResponseEntity.badRequest().build();
+        }
+        if (!course.getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the AnswerPost that should be deleted");
         }
         mayUpdateOrDeletePostElseThrow(post, user);
         log.info("Post deleted by " + user.getLogin() + ". Post: " + post.getContent() + " for " + entity);

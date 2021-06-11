@@ -90,7 +90,7 @@ public class AnswerPostResource {
         }
         // answer post is automatically approved if written by an instructor
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
-        // use question from database rather than user input
+        // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);
