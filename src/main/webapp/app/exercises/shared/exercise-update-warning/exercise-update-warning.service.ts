@@ -10,6 +10,7 @@ export class ExerciseUpdateWarningService {
 
     instructionDeleted: boolean;
     creditChanged: boolean;
+    usageCountChanged: boolean;
     isSaving: boolean;
 
     constructor(private modalService: NgbModal) {}
@@ -22,6 +23,7 @@ export class ExerciseUpdateWarningService {
         const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.instructionDeleted = this.instructionDeleted;
         modalRef.componentInstance.creditChanged = this.creditChanged;
+        modalRef.componentInstance.usageCountChanged = this.usageCountChanged;
 
         return modalRef;
     }
@@ -36,9 +38,10 @@ export class ExerciseUpdateWarningService {
     checkExerciseBeforeUpdate(exercise: Exercise, backupExercise: Exercise): Promise<NgbModalRef> {
         this.instructionDeleted = false;
         this.creditChanged = false;
+        this.usageCountChanged = false;
         this.loadExercise(exercise, backupExercise);
         return new Promise<NgbModalRef>((resolve) => {
-            if (this.creditChanged || this.instructionDeleted) {
+            if (this.creditChanged || this.instructionDeleted || this.usageCountChanged) {
                 this.ngbModalRef = this.open(ExerciseUpdateWarningComponent as Component);
             }
             resolve(this.ngbModalRef);
@@ -48,24 +51,27 @@ export class ExerciseUpdateWarningService {
     /**
      * check if the changes affect the existing results
      *  1. check if a grading criterion is deleted
-     *  2. check for each instruction if:
+     *  2. check for each grading instruction if:
      *          - it is deleted
      *          - the credit is changed
+     *          - usage count is changed
      *
      * @param exercise the exercise for which the modal should be shown
      * @param backupExercise the copy of exercise for which the modal should be shown
      */
     loadExercise(exercise: Exercise, backupExercise: Exercise): void {
-        // check each instruction
-        backupExercise.gradingCriteria!.forEach((criteriaBackup) => {
-            // find same question in backUp (necessary if the order has been changed)
-            const updatedCriteria = exercise.gradingCriteria?.find((criteria) => criteria.id === criteriaBackup.id);
+        // check each grading criterion
+        backupExercise.gradingCriteria!.forEach((backupCriterion) => {
+            // find same grading criterion in backup exercise (necessary if the order has been changed)
+            const updatedCriterion = exercise.gradingCriteria?.find((criterion) => criterion.id === backupCriterion.id);
 
-            if (updatedCriteria) {
-                criteriaBackup.structuredGradingInstructions?.forEach((instructionBackup) => {
-                    const updatedInstruction = updatedCriteria.structuredGradingInstructions?.find((instruction) => instruction.id === instructionBackup.id);
-                    if (updatedInstruction) {
-                        this.checkInstruction(updatedInstruction, instructionBackup);
+            if (updatedCriterion) {
+                backupCriterion.structuredGradingInstructions?.forEach((backupGradingInstruction) => {
+                    const updatedGradingInstruction = updatedCriterion.structuredGradingInstructions?.find(
+                        (gradingInstruction) => gradingInstruction.id === backupGradingInstruction.id,
+                    );
+                    if (updatedGradingInstruction) {
+                        this.checkGradingInstruction(updatedGradingInstruction, backupGradingInstruction);
                     } else {
                         this.instructionDeleted = true;
                     }
@@ -83,10 +89,13 @@ export class ExerciseUpdateWarningService {
      * @param instruction changed instruction
      * @param backupInstruction original not changed instruction
      */
-    checkInstruction(instruction: GradingInstruction, backupInstruction: GradingInstruction): void {
-        // structured grading instruction credits changed?
-        if (instruction.credits !== backupInstruction.credits) {
+    checkGradingInstruction(gradingInstruction: GradingInstruction, backupGradingInstruction: GradingInstruction): void {
+        // checking whether structured grading instruction credits or usageCount changed
+        if (gradingInstruction.credits !== backupGradingInstruction.credits) {
             this.creditChanged = true;
+        }
+        if (gradingInstruction.usageCount !== backupGradingInstruction.usageCount) {
+            this.usageCountChanged = true;
         }
     }
 }

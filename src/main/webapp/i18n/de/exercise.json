@@ -186,6 +186,7 @@
                     "problems": "Um Inkonsistenzen zwischen bestehendem und zukünftigem Feedback, das mit der betroffenen Benotungshinweis verbunden ist, zu vermeiden, muss die Aufgabe neu bewertet werden. Dazu gehört auch die Neuberechnung der Ergebnisse.",
                     "instructionDeleted": "Benotungshinweise gelöscht",
                     "creditChanged": "Punkte-Bewertung im Benotungshinweis geändert",
+                    "usageCountChanged": "Nutzungsanzahl im Benotungshinweis geändert",
                     "confirmText": "Möchtest du diese Änderungen mit oder ohne eine Neubewertung der Aufgabe durchführen?",
                     "reevaluateExercise": "Neu bewerten",
                     "deleteFeedback": "Lösche zusätzlich sämtliches Feedback, das mit den gelöschten Benotungshinweisen zusammenhängt.",

@@ -14,8 +14,10 @@ describe('Exercise Update Warning Service', () => {
 
     const gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
     const gradingInstructionCreditsChanged = { ...gradingInstruction, credits: 3 } as GradingInstruction;
+    const gradingInstructionUsageCountChanged = { ...gradingInstruction, usageCount: 2 } as GradingInstruction;
     const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
     const gradingCriterionCreditsChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionCreditsChanged] } as GradingCriterion;
+    const gradingCriterionUsageCountChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionUsageCountChanged] } as GradingCriterion;
     const gradingCriterionWithoutInstruction = { id: 1, title: 'testCriteria' } as GradingCriterion;
     const exercise = { id: 1 } as Exercise;
     const backupExercise = { id: 1 } as Exercise;
@@ -26,6 +28,7 @@ describe('Exercise Update Warning Service', () => {
 
         updateWarningService.instructionDeleted = false;
         updateWarningService.creditChanged = false;
+        updateWarningService.usageCountChanged = false;
     });
 
     it('should set instructionDeleted as true', () => {
@@ -40,5 +43,12 @@ describe('Exercise Update Warning Service', () => {
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
         expect(updateWarningService.creditChanged).to.equal(true);
+    });
+
+    it('should set usageCountChanged as true', () => {
+        exercise.gradingCriteria = [gradingCriterionUsageCountChanged];
+        backupExercise.gradingCriteria = [gradingCriterion];
+        updateWarningService.loadExercise(exercise, backupExercise);
+        expect(updateWarningService.usageCountChanged).to.equal(true);
     });
 });

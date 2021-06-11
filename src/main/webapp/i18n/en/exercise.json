@@ -186,6 +186,7 @@
                     "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
                     "instructionDeleted": "Grading instruction deleted",
                     "creditChanged": "Grading instruction credit changed",
+                    "usageCountChanged": "Grading instruction usage count changed",
                     "confirmText": "Do you want to perform these changes with or without the re-evaluation of the exercise?",
                     "reevaluateExercise": "Re-evaluate",
                     "deleteFeedback": "Additionally delete all corresponding feedback that is associated with the deleted Grading Instruction.",

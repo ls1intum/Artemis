@@ -10,6 +10,7 @@ export class ExerciseUpdateWarningComponent {
     instructionDeleted = false;
     creditChanged = false;
     deleteFeedback = false;
+    usageCountChanged = false;
 
     @Output()
     confirmed = new EventEmitter<object>();
