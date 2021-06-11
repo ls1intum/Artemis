@@ -5,7 +5,9 @@ export class GradeStep implements BaseEntity {
     public id?: number;
     public gradeName: string;
     public lowerBoundPercentage: number;
+    public lowerBoundPoints?: number;
     public upperBoundPercentage: number;
+    public upperBoundPoints?: number;
     public lowerBoundInclusive = true;
     public upperBoundInclusive = false;
     public isPassingGrade = false;
