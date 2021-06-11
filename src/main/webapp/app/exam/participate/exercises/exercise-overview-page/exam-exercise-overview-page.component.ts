@@ -16,6 +16,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     ngOnInit(): void {
-        console.log('right component');
+        console.log('right component testing', this.exercises);
     }
 }
