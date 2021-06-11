@@ -156,8 +156,8 @@
                 "practice": "Practice",
                 "faq": {
                     "header": "Postings",
-                    "show": "Show replies",
-                    "hide": "Hide replies",
+                    "show": "Show postings",
+                    "hide": "Hide postings",
                     "noPosts": "There are no postings",
                     "addNewPost": "Add a new post",
                     "newPostLabel": "New post",

@@ -27,7 +27,7 @@
         </div>
     </div>
     <div class="row">
-        <jhi-post-votes [postId]="post.id!" [votes]="post.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
+        <jhi-post-votes class="col-auto" [postId]="post.id!" [votes]="post.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
         <div
             id="content"
             class="col posting-content markdown-preview"
