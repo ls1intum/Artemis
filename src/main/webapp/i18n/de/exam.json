@@ -127,6 +127,7 @@
             "finishExam": "Beenden",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
+            "examOverview": "Klausur Übersicht",
             "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an deinen Dozenten.",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",

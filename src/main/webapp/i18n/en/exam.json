@@ -128,6 +128,7 @@
             "finishExam": "Finish",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
+            "examOverview": "Exam Overview",
             "noStudentExam": "You are not registered for the exam {{ examTitle }}. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
