@@ -41,7 +41,8 @@
                 "accepted": "Accepted",
                 "rejected": "Rejected",
                 "showAddressedComplaints": "Show addressed complaints",
-                "noComplaintsToShow": "There are no complaints to show at the moment"
+                "noComplaintsToShow": "There are no complaints to show at the moment",
+                "dateAndTime": "Date and Time",
             },
             "review": "Review Complaint"
         },
