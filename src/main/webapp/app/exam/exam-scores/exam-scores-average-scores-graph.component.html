@@ -1,12 +1,5 @@
 <div class="row">
-    <canvas
-        class="col-md-7"
-        baseChart
-        [height]="height"
-        [datasets]="chartData"
-        [labels]="barChartLabels"
-        [options]="barChartOptions"
-        [legend]="chartLegend"
-        [chartType]="barChartType"
-    ></canvas>
+    <div class="col-md-7">
+        <canvas baseChart [height]="height" [datasets]="chartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="chartLegend" [chartType]="barChartType"></canvas>
+    </div>
 </div>
