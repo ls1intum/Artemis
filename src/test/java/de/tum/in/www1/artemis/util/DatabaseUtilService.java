@@ -9,6 +9,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -39,6 +40,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -48,6 +50,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
@@ -173,6 +176,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @Autowired
     private ModelingSubmissionService modelSubmissionService;
@@ -680,19 +686,38 @@ public class DatabaseUtilService {
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createListOfPosts(textExercise));
+        posts.addAll(createBasicPosts(textExercise));
 
         // add posts to lecture
-        posts.addAll(createListOfPosts(lecture));
+        posts.addAll(createBasicPosts(lecture));
 
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
-        posts.addAll(createListOfPosts(course1, courseWideContexts));
+        posts.addAll(createBasicPosts(course1, courseWideContexts));
 
         return posts;
     }
 
-    private List<Post> createListOfPosts(Lecture lectureContext) {
+    public List<Post> createPostsWithAnswerPostsWithinCourse() {
+        List<Post> posts = createPostsWithinCourse();
+
+        // add answer for one post in each context (lecture, exercise, course-wide)
+        Post lecturePost = posts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList()).get(0);
+        lecturePost.setAnswers(createBasicAnswers(lecturePost));
+        postRepository.save(lecturePost);
+
+        Post exercisePost = posts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList()).get(0);
+        exercisePost.setAnswers(createBasicAnswers(exercisePost));
+        postRepository.save(exercisePost);
+
+        Post courseWidePost = posts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList()).get(0);
+        courseWidePost.setAnswers(createBasicAnswers(courseWidePost));
+        postRepository.save(courseWidePost);
+
+        return posts;
+    }
+
+    private List<Post> createBasicPosts(Lecture lectureContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
@@ -703,7 +728,7 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createListOfPosts(Exercise exerciseContext) {
+    private List<Post> createBasicPosts(Exercise exerciseContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i);
@@ -714,7 +739,7 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createListOfPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
+    private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             Post postToAdd = createBasicPost(i);
@@ -732,11 +757,23 @@ public class DatabaseUtilService {
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
+        post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();
         tags.add(tag);
         post.setTags(tags);
         return post;
+    }
+
+    private Set<AnswerPost> createBasicAnswers(Post post) {
+        Set<AnswerPost> answerPosts = new HashSet<>();
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setContent(post.getContent() + " Answer");
+        answerPost.setAuthor(getUserByLoginWithoutAuthorities(String.format("student1")));
+        answerPost.setPost(post);
+        answerPosts.add(answerPost);
+        answerPostRepository.save(answerPost);
+        return answerPosts;
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
