@@ -61,7 +61,7 @@ class SortingExampleBehaviorTest {
 
     @Test
     @StrictTimeout(1)
-    void testUseMergeSortForBigList() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
+    void testUseMergeSortForBigList() throws ReflectiveOperationException {
         List<Date> bigList = new ArrayList<Date>();
         for (int i = 0; i < 11; i++) {
             bigList.add(new Date());
@@ -74,7 +74,7 @@ class SortingExampleBehaviorTest {
 
     @Test
     @StrictTimeout(1)
-    void testUseBubbleSortForSmallList()  throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
+    void testUseBubbleSortForSmallList()  throws ReflectiveOperationException {
         List<Date> smallList = new ArrayList<Date>();
         for (int i = 0; i < 3; i++) {
             smallList.add(new Date());
@@ -85,8 +85,7 @@ class SortingExampleBehaviorTest {
         }
     }
 
-    private Object configurePolicyAndContext(List<Date> dates) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
-
+    private Object configurePolicyAndContext(List<Date> dates) throws ReflectiveOperationException {
         Object context = newInstance("${packageName}.Context");
         invokeMethod(context, getMethod(context, "setDates", List.class), dates);
 
