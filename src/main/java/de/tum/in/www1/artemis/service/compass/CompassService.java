@@ -83,9 +83,10 @@ public class CompassService {
      * Returns null if no feedback can be selected or the submission has already a manual feedback
      *
      * @param modelingSubmission the submission to select feedbacks for
+     * @param modelingExercise the modeling exercise to which the submission belongs
      * @return the semi automatic result that has the feedbacks inside
      */
-    public Result getSuggestionResult(ModelingSubmission modelingSubmission) {
+    public Result getSuggestionResult(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         Result result = getAutomaticResultForSubmission(modelingSubmission);
         if (result != null) {
             List<Feedback> feedbacksForSuggestion = new ArrayList<>();
@@ -99,7 +100,7 @@ public class CompassService {
                         Set<ModelElement> similarElements = cluster.get().getModelElements();
                         List<String> references = similarElements.stream().map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId())
                                 .collect(Collectors.toList());
-                        List<Feedback> feedbacks = feedbackRepository.findByReferenceInAndResult_Submission(references, modelingSubmission);
+                        List<Feedback> feedbacks = feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, modelingExercise);
                         Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, feedbacks, result);
                         if (suggestedFeedback != null) {
                             feedbacksForSuggestion.add(suggestedFeedback);
