@@ -383,7 +383,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                const sub = submissions.map((submission) => {
+                const sub = submissions.filter((submission) => {
+                    return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound]
+                }).map((submission) => {
                     submission.participation!.submissions = [submission];
                     submission.participation!.results = submission.results;
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
@@ -582,7 +584,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param submission Either submission or 'new'.
      * @param correctionRound
      */
-    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0): Promise<void> {
+    async openAssessmentEditor(submission: Submission | 'new', correctionRound = 0, isAfterComplaint?: boolean): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
