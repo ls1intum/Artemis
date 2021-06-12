@@ -55,6 +55,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import {ComplaintService} from "app/complaints/complaint.service";
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -133,6 +134,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
+                MockProvider(ComplaintService),
             ],
         })
             .compileComponents()

@@ -38,8 +38,11 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/sha
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { OrionConnectorService } from "app/shared/orion/orion-connector.service";
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;

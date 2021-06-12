@@ -61,6 +61,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
+import {SubmissionWithComplaintDTO} from "app/exercises/shared/submission/submission.service";
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -168,6 +169,15 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         numberOfAssessmentsOfCorrectionRounds,
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
+
+    const submissionWithComplaintDTO = {
+        submission: {
+            id: 23, results: [result1]
+        },
+        complaint: {
+            result: result1
+        }
+    } as SubmissionWithComplaintDTO;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();
     const navigateSpy = sinon.spy(router, 'navigate');
@@ -256,6 +266,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
                 modelingSubmissionStubWithoutAssessment.returns(of(modelingSubmission));
+                comp.submissionsWithComplaints = [submissionWithComplaintDTO];
             });
     });
 
