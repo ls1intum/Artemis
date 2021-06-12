@@ -10,25 +10,62 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import * as sinonChai from 'sinon-chai';
+import * as chai from 'chai';
+import * as sinon from 'sinon';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
+import { MockRouterLinkDirective } from '../lecture-unit/lecture-unit-management.component.spec';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;
     let fixture: ComponentFixture<TextExerciseDetailComponent>;
-    let service: TextExerciseService;
+    let exerciseService: TextExerciseService;
+    let statisticsService: StatisticsService;
+
+    const textExerciseStatistics = {
+        averageScoreOfExercise: 50,
+        maxPointsOfExercise: 10,
+        absoluteAveragePoints: 5,
+        scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+        numberOfExerciseScores: 10,
+        numberOfParticipations: 10,
+        numberOfStudentsOrTeamsInCourse: 10,
+        participationsInPercent: 100,
+        numberOfQuestions: 4,
+        numberOfAnsweredQuestions: 2,
+        questionsAnsweredInPercent: 50,
+    } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextExerciseDetailComponent, MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
+            declarations: [
+                TextExerciseDetailComponent,
+                MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
+                MockComponent(AlertComponent),
+                MockComponent(AlertErrorComponent),
+                MockComponent(ExerciseDetailStatisticsComponent),
+                MockComponent(ExerciseDetailsComponent),
+                MockRouterLinkDirective,
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }, MockProvider(TranslateService)],
-        })
-            .overrideTemplate(TextExerciseDetailComponent, '')
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(TextExerciseDetailComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(TextExerciseService);
+        exerciseService = fixture.debugElement.injector.get(TextExerciseService);
+        statisticsService = fixture.debugElement.injector.get(StatisticsService);
     });
 
     describe('OnInit with course exercise', () => {
@@ -44,7 +81,7 @@ describe('TextExercise Management Detail Component', () => {
         it('Should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            const exerciseServiceStub = sinon.stub(exerciseService, 'find').returns(
                 of(
                     new HttpResponse({
                         body: textExerciseWithCourse,
@@ -52,14 +89,19 @@ describe('TextExercise Management Detail Component', () => {
                     }),
                 ),
             );
+            const statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(textExerciseStatistics));
             // WHEN
             fixture.detectChanges();
             comp.ngOnInit();
 
             // THEN
-            expect(service.find).toHaveBeenCalled();
-            expect(comp.isExamExercise).toBeFalsy();
-            expect(comp.textExercise).toEqual(textExerciseWithCourse);
+            expect(exerciseServiceStub).to.have.been.called;
+            expect(statisticsServiceStub).to.have.been.called;
+            expect(comp.isExamExercise).to.be.false;
+            expect(comp.textExercise).to.deep.equal(textExerciseWithCourse);
+            expect(comp.doughnutStats.participationsInPercent).to.equal(100);
+            expect(comp.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
         });
     });
 
@@ -76,7 +118,7 @@ describe('TextExercise Management Detail Component', () => {
         it('Should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'find').and.returnValue(
+            const exerciseServiceStub = sinon.stub(exerciseService, 'find').returns(
                 of(
                     new HttpResponse({
                         body: textExerciseWithExerciseGroup,
@@ -84,14 +126,17 @@ describe('TextExercise Management Detail Component', () => {
                     }),
                 ),
             );
+            const statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(textExerciseStatistics));
+
             // WHEN
             fixture.detectChanges();
             comp.ngOnInit();
 
             // THEN
-            expect(service.find).toHaveBeenCalled();
-            expect(comp.isExamExercise).toBeTruthy();
-            expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
+            expect(exerciseServiceStub).to.have.been.called;
+            expect(statisticsServiceStub).to.have.been.called;
+            expect(comp.isExamExercise).to.be.true;
+            expect(comp.textExercise).to.deep.equal(textExerciseWithExerciseGroup);
         });
     });
 });

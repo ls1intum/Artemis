@@ -21,8 +21,14 @@
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Punkte",
                     "bonus": "Bonuspunkte",
-                    "youAchieved": "Du hast {{achievedPoints}} Punkte von möglichen {{normalPoints}} normalen Punkten und {{bonusPoints}} Bonuspunkten erreicht"
-                }
+                    "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten, und {{bonusPoints}} Bonuspunkten erreicht.",
+                    "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
+                    "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
+                },
+                "grade": "Note",
+                "bonus": "Bonuspunkte für die Klausur",
+                "interval": "Intervall (%)",
+                "gradeKeyButton": "Notenschlüssel ansehen"
             },
             "title": "Klausur",
             "startExam": "Starten",
@@ -50,6 +56,7 @@
             "notConfirmed": "Bitte setze einen Haken in das Kästchen um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
+            "startExamToolTip": "Button wird 5 Minuten vor der Klausur aktiviert.",
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",

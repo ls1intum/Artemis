@@ -43,7 +43,7 @@ describe('Course Service', () => {
         elemDefault.endDate = currentDate;
         elemDefault.semester = 'SS20';
         elemDefault.complaintsEnabled = false;
-        elemDefault.studentQuestionsEnabled = false;
+        elemDefault.postsEnabled = false;
     });
 
     it('should find an element', fakeAsync(() => {

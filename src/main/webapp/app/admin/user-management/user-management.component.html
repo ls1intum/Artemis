@@ -1,7 +1,7 @@
 <div>
     <h2>
         <span id="user-management-page-heading" jhiTranslate="userManagement.home.title">Users</span>
-        <a class="btn btn-primary float-right jh-create-entity" [routerLink]="['./new']">
+        <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
             <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
         </a>
     </h2>
@@ -12,7 +12,7 @@
             <div class="form-group form-inline">
                 <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.searchForUser">Search for User: </label>
                 <input
-                    class="form-control ml-3"
+                    class="form-control ms-3"
                     type="text"
                     name="searchTerm"
                     id="field_searchTerm"
@@ -20,15 +20,15 @@
                     [(ngModel)]="searchTerm"
                     (focusout)="loadAll()"
                 />
-                <button class="btn btn-primary ml-3" (click)="loadAll()">
+                <button class="btn btn-primary ms-3" (click)="loadAll()">
                     <span jhiTranslate="userManagement.search">Search</span>
                 </button>
                 <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
-                    <div class="alert alert-danger ml-3 mb-0">
+                    <div class="alert alert-danger ms-3 mb-0">
                         <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
                     </div>
                 </ng-container>
-                <span class="ml-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+                <span class="ms-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
             </div>
         </form>
         <table class="table table-striped" aria-describedby="user-management-page-heading">
@@ -77,18 +77,18 @@
                     <td>{{ user.langKey }}</td>
                     <td>
                         <div *ngFor="let authority of user.authorities">
-                            <span class="badge badge-info">{{ authority }}</span>
+                            <span class="badge bg-info">{{ authority }}</span>
                         </div>
                     </td>
                     <td>
                         <div *ngFor="let group of user.groups">
-                            <span class="badge badge-info">{{ group }}</span>
+                            <span class="badge bg-info">{{ group }}</span>
                         </div>
                     </td>
                     <td>{{ user.createdDate | artemisDate }}</td>
                     <td>{{ user.lastModifiedBy }}</td>
                     <td>{{ user.lastModifiedDate | artemisDate }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a [routerLink]="['./', user.login]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="'eye'"></fa-icon>

@@ -40,9 +40,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submission: TextSubmission;
     isSaving: boolean;
     private textEditorInput = new Subject<string>();
-    textEditorInputStream$ = this.textEditorInput.asObservable();
+    textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
-    submissionStream$ = this.buildSubmissionStream$();
+    submissionObservable = this.buildSubmissionObservable();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
     isAllowedToSubmitAfterDeadline: boolean;
@@ -185,9 +185,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
+    unloadNotification(event: any) {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
+            event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 
@@ -247,13 +247,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * 1. text editor input after a debounce time of 2 seconds
      * 2. manually triggered change on submission (e.g. when submit was clicked)
      */
-    private buildSubmissionStream$() {
-        const textEditorStream$ = this.textEditorInput
+    private buildSubmissionObservable() {
+        const textEditorStream = this.textEditorInput
             .asObservable()
             .pipe(debounceTime(2000), distinctUntilChanged())
             .pipe(map((answer: string) => this.submissionForAnswer(answer)));
-        const submissionChangeStream$ = this.submissionChange.asObservable();
-        return merge(textEditorStream$, submissionChangeStream$);
+        const submissionChangeStream = this.submissionChange.asObservable();
+        return merge(textEditorStream, submissionChangeStream);
     }
 
     private submissionForAnswer(answer: string): TextSubmission {

@@ -41,9 +41,11 @@ import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.Bitbucket
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
+import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -95,20 +97,22 @@ public class BambooBuildPlanService {
      *                               unique identifier
      * @param solutionRepositoryName the slug of the solution repository, i.e. the
      *                               unique identifier
+     * @param auxiliaryRepositories  List of auxiliary repositories to be included in
+     *                               the build plan
      */
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName,
-            String solutionRepositoryName) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName, String solutionRepositoryName,
+            List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
-                programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName)
+                programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)
                         .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.hasSequentialTestRuns(),
-                                programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository()));
+                                programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
+                                programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
 
         bambooServer.publish(plan);
-
         setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());
     }
 
@@ -137,16 +141,16 @@ public class BambooBuildPlanService {
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
-            boolean checkoutSolutionRepository) {
+            boolean checkoutSolutionRepository, List<AuxiliaryRepository> auxiliaryRepositories) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask;
         if (checkoutSolutionRepository) {
             final var solutionPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            checkoutTask = createCheckoutTask(assignmentPath, testPath, Optional.of(solutionPath));
+            checkoutTask = createCheckoutTask(assignmentPath, testPath, Optional.of(solutionPath), auxiliaryRepositories);
         }
         else {
-            checkoutTask = createCheckoutTask(assignmentPath, testPath);
+            checkoutTask = createCheckoutTask(assignmentPath, testPath, auxiliaryRepositories);
         }
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
@@ -194,7 +198,7 @@ public class BambooBuildPlanService {
                 // Final tasks:
                 final TestParserTask testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
                 final ScriptTask cleanupTask = new ScriptTask().description("cleanup").inlineBody("sudo rm -rf tests/\nsudo rm -rf assignment/\nsudo rm -rf test-reports/");
-                defaultJob.finalTasks(new Task[] { testParserTask, cleanupTask });
+                defaultJob.finalTasks(testParserTask, cleanupTask);
                 defaultStage.jobs(defaultJob);
                 return defaultStage;
             }
@@ -220,6 +224,11 @@ public class BambooBuildPlanService {
                 }
                 return defaultStage.jobs(defaultJob);
             }
+            case EMPTY -> {
+                ScriptTask mvnVersionTask = new ScriptTask().description("Print Maven Version").inlineBody("mvn --version").interpreterShell()
+                        .location(ScriptTaskProperties.Location.INLINE);
+                return defaultStage.jobs(defaultJob.tasks(checkoutTask, mvnVersionTask));
+            }
             // this is needed, otherwise the compiler complaints with missing return
             // statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
@@ -235,7 +244,7 @@ public class BambooBuildPlanService {
     }
 
     private Plan createDefaultBuildPlan(String planKey, String planDescription, String projectKey, String projectName, String repositoryName, String vcsTestRepositorySlug,
-            boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug) {
+            boolean checkoutSolutionRepository, String vcsSolutionRepositorySlug, List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
         List<VcsRepositoryIdentifier> vcsTriggerRepositories = new LinkedList<>();
         // Trigger the build when a commit is pushed to the ASSIGNMENT_REPO.
         vcsTriggerRepositories.add(new VcsRepositoryIdentifier(ASSIGNMENT_REPO_NAME));
@@ -248,6 +257,9 @@ public class BambooBuildPlanService {
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
         planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName));
         planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug));
+        for (var repo : auxiliaryRepositories) {
+            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug()));
+        }
         if (checkoutSolutionRepository) {
             planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug));
         }
@@ -258,14 +270,17 @@ public class BambooBuildPlanService {
                 .planBranchManagement(createPlanBranchManagement()).notifications(createNotification());
     }
 
-    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
-        return createCheckoutTask(assignmentPath, testPath, Optional.empty());
+    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, List<AuxiliaryRepository> auxiliaryRepositories) {
+        return createCheckoutTask(assignmentPath, testPath, Optional.empty(), auxiliaryRepositories);
     }
 
-    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Optional<String> solutionPath) {
+    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath, Optional<String> solutionPath, List<AuxiliaryRepository> auxiliaryRepositories) {
         List<CheckoutItem> checkoutItems = new ArrayList<>();
         checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(TEST_REPO_NAME)).path(testPath));
         checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(ASSIGNMENT_REPO_NAME)).path(assignmentPath));
+        for (AuxiliaryRepository repo : auxiliaryRepositories) {
+            checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(repo.getName())).path(repo.getCheckoutDirectory()));
+        }
         solutionPath.ifPresent(s -> checkoutItems.add(new CheckoutItem().repository(new VcsRepositoryIdentifier().name(SOLUTION_REPO_NAME)).path(s)));
         return new VcsCheckoutTask().description("Checkout Default Repository").checkoutItems(checkoutItems.toArray(CheckoutItem[]::new));
     }

@@ -5,7 +5,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
 import { first, switchMap } from 'rxjs/operators';
-import { from, of } from 'rxjs';
+import { from, lastValueFrom, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
@@ -36,7 +36,7 @@ export class UserRouteAccessService implements CanActivate {
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
-        return (
+        return lastValueFrom(
             this.orionVersionValidator
                 // Returns true, if the Orion version is up-to-date, or the connected client is just a regular browser
                 .validateOrionVersion()
@@ -52,8 +52,7 @@ export class UserRouteAccessService implements CanActivate {
                         // 3. Case: The Orion Version is not up-to-date
                         return of(false);
                     }),
-                )
-                .toPromise()
+                ),
         );
     }
 

@@ -80,7 +80,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // submission sync with team members
     teamSyncInterval: number;
     private submissionChange = new Subject<ModelingSubmission>();
-    submissionStream$ = this.submissionChange.asObservable();
+    submissionObservable = this.submissionChange.asObservable();
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -524,9 +524,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any): void {
+    unloadNotification(event: any): void {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
+            event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 

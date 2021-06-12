@@ -1,15 +1,15 @@
 <ng-container *ngIf="exercise">
-    <a *ngIf="exercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm mr-1">
+    <a *ngIf="exercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm me-1">
         <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
     </a>
 
-    <a *ngIf="exercise.course" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id!, 'scores']" class="btn btn-info btn-sm mr-1">
+    <a *ngIf="exercise.course" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id!, 'scores']" class="btn btn-info btn-sm me-1">
         <fa-icon [icon]="'table'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
     </a>
 
     <!-- Participations  -->
-    <a *ngIf="exercise.course" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id!, 'participations']" class="btn btn-primary btn-sm mr-1">
+    <a *ngIf="exercise.course" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id!, 'participations']" class="btn btn-primary btn-sm me-1">
         <fa-icon [icon]="'list-alt'"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
     </a>
@@ -18,14 +18,24 @@
     <a
         *ngIf="exercise.isAtLeastInstructor && exercise.course"
         [routerLink]="['/course-management', courseId, exercise.type! + '-exercises', exercise.id!, 'submissions']"
-        class="btn btn-primary btn-sm mr-1"
+        class="btn btn-primary btn-sm me-1"
     >
         <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
     </a>
 
+    <!-- Example Submission -->
+    <a
+        *ngIf="exercise.isAtLeastEditor && (exercise.type == 'modeling' || exercise.type == 'text')"
+        [routerLink]="['/course-management', courseId, exercise.type! + '-exercises', exercise.id, 'example-submissions']"
+        class="btn btn-success btn-sm me-1"
+    >
+        <fa-icon [icon]="'book'"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
+    </a>
+
     <!-- Export submissions -->
-    <jhi-exercise-submission-export *ngIf="exercise.isAtLeastInstructor" [exerciseId]="exercise.id!" [exerciseType]="exercise.type!" class="mr-1"></jhi-exercise-submission-export>
+    <jhi-exercise-submission-export *ngIf="exercise.isAtLeastInstructor" [exerciseId]="exercise.id!" [exerciseType]="exercise.type!" class="me-1"></jhi-exercise-submission-export>
 
     <!-- Delete exercise -->
     <button
