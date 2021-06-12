@@ -904,6 +904,19 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * returns the number of correction rounds for an exercise. For course exercises this is 1, for exam exercises this must get fetched
+     * @return the number of correctionRounds
+     */
+    @JsonIgnore
+    public Integer getNumberOfCorrectionRounds() {
+        if (isExamExercise()) {
+            return getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+        } else {
+            return 1;
+        }
+    }
+
+    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */

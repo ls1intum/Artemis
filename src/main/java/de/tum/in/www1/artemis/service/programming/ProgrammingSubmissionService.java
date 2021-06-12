@@ -737,6 +737,21 @@ public class ProgrammingSubmissionService extends SubmissionService {
         else {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
+
+        switch (correctionRound){
+            case 0: {
+                if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC.equals(submission.getLatestResult().getAssessmentType()))
+
+                break;
+            }
+            case 1: {
+                break;
+            }
+            case 2: {
+                break;
+            }
+        }
+
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
             automaticFeedbacks = optionalExistingResult.get().getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
