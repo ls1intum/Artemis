@@ -92,6 +92,14 @@ public class CompassService {
             List<Feedback> feedbacksForSuggestion = new ArrayList<>();
             ModelClusterFactory clusterBuilder = new ModelClusterFactory();
             List<UMLElement> elements = clusterBuilder.getModelElements(modelingSubmission);
+            // TODO: the following for loop has too many database calls and will be very inefficient, because those are done for each model element and a model can easily have 100
+            // model elements
+            // we should instead fetch all elements with only 3 database calls
+            // 1x modelElementRepository.findAllModelElementsByIds
+            // 1x modelClusterRepository.findAllClustersWithEagerElementsByIds
+            // 1x feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise with all references of all model elements.
+            // The for loop can then search in the retrieved Lists without additional database queries
+
             for (UMLElement element : elements) {
                 ModelElement modelElement = modelElementRepository.findByModelElementIdWithCluster(element.getJSONElementID());
                 if (modelElement != null) {
