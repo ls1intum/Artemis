@@ -60,13 +60,16 @@ public class CompassService {
 
         List<ModelCluster> currentClusters = modelClusterRepository.findAllByExerciseIdWithEagerElements(modelingExercise.getId());
         if (!currentClusters.isEmpty()) {
+            log.info("Clusters have already been built. First delete existing clusters and then rebuild them!");
             // Do not build submissions if this process has already been done before
             return;
         }
         List<ModelingSubmission> submissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(modelingExercise.getId());
+        log.info("ModelCluster: start building clusters of {} submissions for modeling exercise {}", submissions.size(), modelingExercise.getId());
+
         ModelClusterFactory clusterFactory = new ModelClusterFactory();
         List<ModelCluster> modelClusters = clusterFactory.buildClusters(submissions, modelingExercise);
-        log.info("ModelClusterTimelog: building clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
+        log.info("ModelClusterTimelog: building clusters of {} submissions for modeling exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
         modelClusterRepository.saveAll(modelClusters);
         modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).collect(Collectors.toList()));

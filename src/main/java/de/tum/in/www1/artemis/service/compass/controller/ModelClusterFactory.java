@@ -45,17 +45,20 @@ public class ModelClusterFactory {
         HashSet<UMLElement> uniqueElements = new HashSet<>();
 
         // The map of similarity id and clusters. We are using similarity id instead of cluster id here since clusters do not exist in database yet
-        Map<Integer, ModelCluster> clusters = new ConcurrentHashMap();
+        Map<Integer, ModelCluster> clusters = new ConcurrentHashMap<>();
+        // TODO: this should work without unproxy!
         for (Submission submission : modelingSubmissions) {
             // We have to unproxy here as sometimes the Submission is a Hibernate proxy resulting in a cast exception
             // when iterating over the ModelingSubmissions directly (i.e. for (ModelingSubmission submission : submissions)).
             ModelingSubmission modelingSubmission = (ModelingSubmission) Hibernate.unproxy(submission);
 
             List<UMLElement> modelElements = getModelElements(modelingSubmission);
-            for (UMLElement element : modelElements) {
-                selectCluster(element, uniqueElements, clusters, exercise, modelingSubmission);
+            if (modelElements != null) {
+                for (UMLElement element : modelElements) {
+                    selectCluster(element, uniqueElements, clusters, exercise, modelingSubmission);
+                }
+                setContextOfModelElements(modelElements);
             }
-            setContextOfModelElements(modelElements);
         }
 
         return clusters.values().stream().filter(modelCluster -> modelCluster.getModelElements().size() > 1).collect(Collectors.toList());
@@ -73,12 +76,10 @@ public class ModelClusterFactory {
         for (UMLElement element : elements) {
             context = Context.NO_CONTEXT;
 
-            if (element instanceof UMLAttribute) {
-                UMLAttribute attribute = (UMLAttribute) element;
+            if (element instanceof UMLAttribute attribute) {
                 context = new Context(attribute.getParentElement().getSimilarityID());
             }
-            else if (element instanceof UMLMethod) {
-                UMLMethod method = (UMLMethod) element;
+            else if (element instanceof UMLMethod method) {
                 context = new Context(method.getParentElement().getSimilarityID());
             }
 
