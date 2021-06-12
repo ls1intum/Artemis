@@ -98,7 +98,7 @@ task testReport(type: TestReport) {
 }
 
 jacoco {
-    toolVersion = "0.8.6"
+    toolVersion = "0.8.7"
 }
 
 private excludedClassFilesForReport(classDirectories) {
