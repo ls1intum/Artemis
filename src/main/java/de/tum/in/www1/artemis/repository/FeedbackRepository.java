@@ -40,9 +40,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     List<Feedback> findByResult(Result result);
 
-    List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
+    List<Feedback> findByReferenceInAndResult_Submission(List<String> references, Submission submission);
 
-    List<Feedback> findByReferenceIn(List<String> references);
+    List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
 
     @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
     List<Feedback> findFeedbacksByStructuredGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);

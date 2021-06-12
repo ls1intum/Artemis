@@ -99,7 +99,7 @@ public class CompassService {
                         Set<ModelElement> similarElements = cluster.get().getModelElements();
                         List<String> references = similarElements.stream().map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId())
                                 .collect(Collectors.toList());
-                        List<Feedback> feedbacks = feedbackRepository.findByReferenceIn(references);
+                        List<Feedback> feedbacks = feedbackRepository.findByReferenceInAndResult_Submission(references, modelingSubmission);
                         Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, feedbacks, result);
                         if (suggestedFeedback != null) {
                             feedbacksForSuggestion.add(suggestedFeedback);
