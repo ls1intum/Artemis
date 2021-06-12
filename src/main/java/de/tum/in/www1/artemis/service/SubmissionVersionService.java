@@ -80,7 +80,7 @@ public class SubmissionVersionService {
 
     private String getSubmissionContent(Submission submission) {
         if (submission instanceof ModelingSubmission) {
-            return ((ModelingSubmission) submission).getModel();
+            return ("Model: " + ((ModelingSubmission) submission).getModel() + "Explanation: " + ((ModelingSubmission) submission).getExplanationText());
         }
         else if (submission instanceof TextSubmission) {
             return ((TextSubmission) submission).getText();
