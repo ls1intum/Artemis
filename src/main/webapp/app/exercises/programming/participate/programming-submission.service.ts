@@ -49,6 +49,7 @@ export interface IProgrammingSubmissionService {
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
     unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
+    downloadSubmissionInOrion: (exerciseId: number, submissionId: number, correctionRound: number) => void;
 }
 
 @Injectable({ providedIn: 'root' })
