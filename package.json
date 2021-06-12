@@ -212,7 +212,7 @@
         "webpack:prod:main": "yarn run webpack-ts --config webpack/webpack.prod.ts --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
         "cypress:open": "yarn run cypress open ",
-        "cypress:run": "yarn run cypress run --headless --browser chrome"
+        "cypress:run": "yarn run cypress run --headless --browser chrome",
         "webpack-dev-server": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js",
         "webpack": "node --report-on-fatalerror node_modules/webpack/bin/webpack.js",
         "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=4096 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack"
