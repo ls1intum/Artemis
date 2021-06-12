@@ -169,7 +169,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
         UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
         assertThat(jwtToken.getIdToken()).as("JWT token is present").isNotNull();
-        assertThat(this.tokenProvider.validateToken(jwtToken.getIdToken())).as("JWT token is valid").isTrue();
+        assertThat(this.tokenProvider.validateTokenForAuthority(jwtToken.getIdToken())).as("JWT token is valid").isTrue();
     }
 
     @Test
