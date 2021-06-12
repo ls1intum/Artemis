@@ -69,7 +69,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             return EditType.IMPORT;
         }
 
-        return this.modelingExercise.id === undefined ? EditType.CREATE : EditType.UPDATE;
+        return this.modelingExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
     /**

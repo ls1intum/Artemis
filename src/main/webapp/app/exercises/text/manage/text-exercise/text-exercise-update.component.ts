@@ -69,7 +69,7 @@ export class TextExerciseUpdateComponent implements OnInit {
             return EditType.IMPORT;
         }
 
-        return this.textExercise.id === undefined ? EditType.CREATE : EditType.UPDATE;
+        return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
     /**
