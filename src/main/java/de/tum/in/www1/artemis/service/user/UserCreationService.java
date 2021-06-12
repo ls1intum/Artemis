@@ -127,7 +127,7 @@ public class UserCreationService {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
             newUser.setOrganizations(matchingOrganizations);
         } catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
-            log.warn("Could not retrieve matching organizations from pattern: " + pse.getMessage());
+            log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         saveUser(newUser);
         log.debug("Created user: {}", newUser);
@@ -170,7 +170,7 @@ public class UserCreationService {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
             user.setOrganizations(matchingOrganizations);
         } catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
-            log.warn("Could not retrieve matching organizations from pattern: " + pse.getMessage());
+            log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
