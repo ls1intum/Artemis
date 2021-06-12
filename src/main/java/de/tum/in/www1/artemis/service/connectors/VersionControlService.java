@@ -154,7 +154,14 @@ public interface VersionControlService {
      * @param repositoryUrl The repository url to get the default branch for.
      * @return the name of the default branch, e.g. 'main'
      */
-    String getDefaultBranch(VcsRepositoryUrl repositoryUrl) throws VersionControlException;
+    String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws VersionControlException;
+
+    /**
+     * Get the default branch of the VCS
+     *
+     * @return the name of the default branch, e.g. 'main'
+     */
+    String getDefaultBranchOfVCS() throws VersionControlException;
 
     /**
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).

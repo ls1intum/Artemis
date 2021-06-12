@@ -93,7 +93,7 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
 
-        var defaultBranch = getDefaultBranch(repositoryUrl);
+        var defaultBranch = getDefaultBranchOfRepository(repositoryUrl);
         protectBranch(repositoryUrl, defaultBranch);
     }
 
@@ -142,7 +142,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      */
     @Override
-    public String getDefaultBranch(VcsRepositoryUrl repositoryUrl) throws GitLabException {
+    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws GitLabException {
         var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
 
         try {
@@ -151,6 +151,11 @@ public class GitLabService extends AbstractVersionControlService {
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to get default branch for repository " + repositoryId, e);
         }
+    }
+
+    @Override
+    public String getDefaultBranchOfVCS() throws GitLabException {
+        throw new UnsupportedOperationException("Work in progress");
     }
 
     private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {

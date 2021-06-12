@@ -109,7 +109,7 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
-        var defaultBranch = getDefaultBranch(exercise.getVcsTemplateRepositoryUrl());
+        var defaultBranch = getDefaultBranchOfRepository(exercise.getVcsTemplateRepositoryUrl());
         setDefaultBranch(repositoryUrl, defaultBranch);
         protectBranches(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl));
     }
@@ -351,7 +351,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      */
     @Override
-    public String getDefaultBranch(VcsRepositoryUrl repositoryUrl) throws BitbucketException {
+    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws BitbucketException {
         String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/branches/default";
@@ -370,6 +370,27 @@ public class BitbucketService extends AbstractVersionControlService {
         catch (HttpClientErrorException e) {
             log.error("Unable to get default branch for repository " + repositorySlug, e);
             throw new BitbucketException("Unable to get default branch for repository " + repositorySlug, e);
+        }
+    }
+
+    @Override
+    public String getDefaultBranchOfVCS() throws BitbucketException {
+        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/admin/default-branch";
+
+        try {
+            var response = restTemplate.exchange(getDefaultBranchUrl, HttpMethod.GET, null, BitbucketDefaultBranchDTO.class);
+            var body = response.getBody();
+
+            if (body == null) {
+                log.error("Unable to get default branch of the vcs");
+                throw new BitbucketException("Unable to get default branch of the vcs");
+            }
+
+            return body.getDisplayId();
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Unable to get default branch of the vcs", e);
+            throw new BitbucketException("Unable to get default branch of the vcs", e);
         }
     }
 

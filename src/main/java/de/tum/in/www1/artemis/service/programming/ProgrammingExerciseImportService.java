@@ -172,7 +172,7 @@ public class ProgrammingExerciseImportService {
 
         // Unprotect the default branch of the template exercise repo.
         var templateVcsRepositoryUrl = newExercise.getVcsTemplateRepositoryUrl();
-        var templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranch(templateVcsRepositoryUrl);
+        var templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
         versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed

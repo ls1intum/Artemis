@@ -97,6 +97,8 @@ public class GitService {
 
     private final ZipFileService zipFileService;
 
+    private final VersionControlService versionControlService;
+
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
@@ -105,13 +107,14 @@ public class GitService {
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
-    public GitService(FileService fileService, ZipFileService zipFileService) {
+    public GitService(FileService fileService, ZipFileService zipFileService, VersionControlService versionControlService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
         this.fileService = fileService;
         this.zipFileService = zipFileService;
+        this.versionControlService = versionControlService;
     }
 
     /**
@@ -473,11 +476,12 @@ public class GitService {
 
             // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
 
+            String defaultBranch = versionControlService.getDefaultBranchOfVCS();
+
             // Open the repository from the filesystem
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             final Path gitPath = localPath.resolve(".git");
-            // TODO DEFAULTBRANCH: Use actual branch name which is set for the project!
-            builder.setGitDir(gitPath.toFile()).setInitialBranch("main").readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+            builder.setGitDir(gitPath.toFile()).setInitialBranch(defaultBranch).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
             // Create the JGit repository object
             Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
@@ -486,10 +490,9 @@ public class GitService {
             // and https://git-scm.com/docs/git-gc for an explanation of the parameter
             repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
 
-            // TODO DEFAULTBRANCH: Use actual branch name which is set for the project!
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
-            refUpdate.link("refs/heads/main");
+            refUpdate.link("refs/heads/" + defaultBranch);
 
             // Cache the JGit repository object for later use: avoids the expensive re-opening of local repositories
             cachedRepositories.put(localPath, repository);

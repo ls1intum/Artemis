@@ -68,7 +68,7 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
     @ValueSource(strings = { "master", "main", "someOtherName" })
     public void testGetDefaultBranch(String defaultBranch) throws IOException {
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, "PROJECTNAME");
-        String actualDefaultBranch = versionControlService.getDefaultBranch(new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git"));
+        String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git"));
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
     }
 }
