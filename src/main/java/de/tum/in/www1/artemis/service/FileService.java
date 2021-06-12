@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -19,6 +20,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -798,5 +801,20 @@ public class FileService implements DisposableBean {
             log.warn("Could not write given object in file {}", path);
         }
         return path;
+    }
+
+    public byte[] mergePdfFiles(List<String> paths) throws IOException {
+        PDFMergerUtility pdfMerger = new PDFMergerUtility();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        for (String path : paths) {
+            File file = new File(path);
+            if (file.exists()) {
+                pdfMerger.addSource(new File(path));
+            }
+        }
+        pdfMerger.setDestinationStream(outputStream);
+        pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+        return outputStream.toByteArray();
     }
 }

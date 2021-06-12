@@ -8,12 +8,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -27,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -284,6 +287,42 @@ public class FileResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
         return buildFileResponse(Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
+    }
+
+    /**
+     * GET /files/course/icons/:lectureId/merge-pdf : Get the lecture attachment
+     *
+     * @param lectureId ID of the lecture, the attachment belongs to
+     * @param filename  the filename of the file
+     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
+        log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
+        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findByLectureId(lectureId);
+        if (lectureAttachments.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        List<String> attachmentLinks = lectureAttachments.stream()
+                .filter(unit -> unit.isVisibleToStudents() && unit.getAttachment().getAttachmentType().equals(AttachmentType.FILE)
+                        && StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".").equals("pdf"))
+                .map(unit -> Paths
+                        .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
+                        .toString())
+                .collect(Collectors.toList());
+        try {
+            var file = fileService.mergePdfFiles(attachmentLinks);
+            if (file == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file);
+        }
+        catch (IOException ex) {
+            log.error("Failed to download file: " + "on path: " + ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
