@@ -60,6 +60,7 @@ public class AutomaticTextFeedbackService {
                             // Filter all other blocks in the cluster for those with Feedback
                             .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
 
+                            // sort, kill duplicates
                             // Find the closest block
                             .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
 
