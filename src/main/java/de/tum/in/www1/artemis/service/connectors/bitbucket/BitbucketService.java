@@ -352,8 +352,8 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranch(VcsRepositoryUrl repositoryUrl) throws BitbucketException {
-        var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/branches/default";
 
         try {
