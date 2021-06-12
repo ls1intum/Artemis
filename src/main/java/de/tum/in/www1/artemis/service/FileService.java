@@ -348,6 +348,11 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("dune.file")) {
                 targetFilePath = targetFilePath.replace("dune.file", "dune");
             }
+            // special case for Xcode where directories get falsely scanned as files
+            if (targetFilePath.endsWith(".xcassets/") || targetFilePath.endsWith(".colorset/") || targetFilePath.endsWith(".appiconset/")
+                    || targetFilePath.endsWith(".xcworkspace/") || targetFilePath.endsWith(".xcodeproj/")) {
+                continue;
+            }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();

@@ -275,7 +275,6 @@ public class ProgrammingExerciseService {
             solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
             testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
 
-
             if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
                 // For Xcode we don't share source code, so we only copy files once
                 exercisePrefix = projectTypePrefix + "/exercise";
@@ -556,7 +555,7 @@ public class ProgrammingExerciseService {
         }
         else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageName());
-//            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
+            fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
         }
 
         Map<String, String> replacements = new HashMap<>();

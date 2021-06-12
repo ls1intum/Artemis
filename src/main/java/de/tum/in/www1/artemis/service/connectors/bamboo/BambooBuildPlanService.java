@@ -107,8 +107,9 @@ public class BambooBuildPlanService {
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
                 programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName)
-                        .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.hasSequentialTestRuns(),
-                                programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository()));
+                        .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
+                                programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(),
+                                programmingExercise.getCheckoutSolutionRepository()));
 
         bambooServer.publish(plan);
 
@@ -139,8 +140,8 @@ public class BambooBuildPlanService {
         return new Project().key(key).name(name);
     }
 
-    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, final boolean sequentialBuildRuns, Boolean staticCodeAnalysisEnabled,
-            boolean checkoutSolutionRepository) {
+    private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, String packageName, final boolean sequentialBuildRuns,
+            Boolean staticCodeAnalysisEnabled, boolean checkoutSolutionRepository) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask;
@@ -192,7 +193,7 @@ public class BambooBuildPlanService {
             }
             case C -> {
                 // Default tasks:
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0]));
                 // Final tasks:
@@ -211,8 +212,9 @@ public class BambooBuildPlanService {
             case SWIFT -> {
                 var isXcodeProject = ProjectType.XCODE.equals(projectType);
                 var subDirectory = isXcodeProject ? "/xcode" : "";
+                Map<String, String> replacements = Map.of("${packageName}", packageName);
                 final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false);
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
                 // SCA for Xcode is not supported yet
@@ -222,7 +224,7 @@ public class BambooBuildPlanService {
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
-                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, false, true);
+                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, false, true, null);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
                 if (isXcodeProject) {
@@ -246,7 +248,7 @@ public class BambooBuildPlanService {
     private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
             String resultDirectories) {
         final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories(resultDirectories);
-        var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false);
+        var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null);
         tasks.add(0, checkoutTask);
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
@@ -320,7 +322,7 @@ public class BambooBuildPlanService {
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, String subDirectory, final boolean sequentialBuildRuns,
-            final boolean getScaTasks) {
+            final boolean getScaTasks, Map<String, String> replacements) {
         final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + subDirectory
                 + (getScaTasks ? "/staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
         try {
@@ -336,7 +338,13 @@ public class BambooBuildPlanService {
                     descriptionElements.remove(0); // Remove the index prefix: 1 some description --> some description
                     final var scriptDescription = String.join(" ", descriptionElements);
                     try (final var inputStream = resource.getInputStream()) {
-                        tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream, Charset.defaultCharset())));
+                        var inlineBody = IOUtils.toString(inputStream, Charset.defaultCharset());
+                        if (replacements != null) {
+                            for (Map.Entry<String, String> replacement : replacements.entrySet()) {
+                                inlineBody = inlineBody.replace(replacement.getKey(), replacement.getValue());
+                            }
+                        }
+                        tasks.add(new ScriptTask().description(scriptDescription).inlineBody(inlineBody));
                     }
                 }
             }
