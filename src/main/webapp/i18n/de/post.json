@@ -16,6 +16,11 @@
                 "showApproved": "Zeige Posts mit bestätigten Antworten an",
                 "hideApproved": "Verstecke Posts mit bestätigten Antworten"
             }
+        },
+        "answerPost": {
+            "created": "Antwort erfolgreich erstellt",
+            "updated": "Antwort erfolgreich aktualisiert",
+            "deleted": "Antwort erfolgreich gelöscht"
         }
     }
 }

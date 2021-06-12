@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
@@ -90,7 +92,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
-    @PostMapping("/fileUpload")
+    @PostMapping("fileUpload")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
@@ -104,7 +106,7 @@ public class FileResource {
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/temp/{filename:.+}")
+    @GetMapping("files/temp/{filename:.+}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -119,7 +121,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
-    @PostMapping("/markdown-file-upload")
+    @PostMapping("markdown-file-upload")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
@@ -133,7 +135,7 @@ public class FileResource {
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/markdown/{filename:.+}")
+    @GetMapping("files/markdown/{filename:.+}")
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -182,7 +184,7 @@ public class FileResource {
      * @param filename   the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
+    @GetMapping("files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -196,7 +198,7 @@ public class FileResource {
      * @param filename   the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
+    @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -212,7 +214,7 @@ public class FileResource {
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
+    @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
@@ -238,7 +240,7 @@ public class FileResource {
      * @param filename the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("/files/course/icons/{courseId}/{filename:.+}")
+    @GetMapping("files/course/icons/{courseId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
@@ -255,11 +257,17 @@ public class FileResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getTemporaryFileAccessToken(@PathVariable String filename) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // TODO: we should check that the filename actually exists in the context in Artemis, ideally we also verify that the user has access to this file already here
         if (filename == null) {
             return ResponseEntity.badRequest().build();
         }
-        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, filename);
-        return ResponseEntity.ok(temporaryAccessToken);
+        try {
+            String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, filename);
+            return ResponseEntity.ok(temporaryAccessToken);
+        }
+        catch (IllegalAccessException e) {
+            return forbidden();
+        }
     }
 
     /**
@@ -319,7 +327,7 @@ public class FileResource {
      * @return true if temporaryAccessToken is valid for this file, false otherwise
      */
     private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {
-        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE_AUTHORITY, filename)) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE, filename)) {
             log.info("Attachment with invalid token was accessed");
             return false;
         }

@@ -48,6 +48,6 @@ export class OrganizationManagementComponent implements OnInit {
      * @param item current user
      */
     trackIdentity(index: number, item: Organization) {
-        return item.id;
+        return item.id ?? -1;
     }
 }
