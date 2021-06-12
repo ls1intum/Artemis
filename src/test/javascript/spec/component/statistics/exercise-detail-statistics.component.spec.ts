@@ -36,7 +36,7 @@ describe('ExerciseDetailStatisticsComponent', () => {
         scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
         numberOfExerciseScores: 10,
         numberOfParticipations: 10,
-        numberOfStudentsInCourse: 10,
+        numberOfStudentsOrTeamsInCourse: 10,
         participationsInPercent: 100,
         numberOfQuestions: 4,
         numberOfAnsweredQuestions: 2,
