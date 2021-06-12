@@ -286,9 +286,10 @@ public class ProgrammingExerciseIntegrationServiceTest {
         Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
-            RevCommit latestCommit = downloadedGit.log().setMaxCount(1).call().iterator().next();
-            assertThat(latestCommit.getAuthorIdent().getName()).isEqualTo("student");
-            assertThat(latestCommit.getFullMessage()).isEqualTo("All student changes in one commit");
+            List<RevCommit> commits = new ArrayList<>();
+            downloadedGit.log().call().iterator().forEachRemaining(commits::add);
+            assertThat(commits.stream().anyMatch(commit -> commit.getAuthorIdent().getName().equals("student"))).isTrue();
+            assertThat(commits.stream().anyMatch(commit -> commit.getFullMessage().equals("All student changes in one commit"))).isTrue();
         }
     }
 
