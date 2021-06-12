@@ -353,11 +353,11 @@ public class SubmissionService {
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
-        newResult = resultRepository.save(newResult);
-        newResult.setSubmission(submission);
-        submission.addResult(newResult);
+        var savedResult = resultRepository.save(newResult);
+        savedResult.setSubmission(submission);
+        submission.addResult(savedResult);
         submissionRepository.save(submission);
-        return newResult;
+        return savedResult;
     }
 
     /**
