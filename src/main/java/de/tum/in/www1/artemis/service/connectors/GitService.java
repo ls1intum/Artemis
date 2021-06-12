@@ -25,6 +25,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.*;
@@ -474,19 +475,27 @@ public class GitService {
 
             // Open the repository from the filesystem
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
-            final var gitPath = localPath.resolve(".git");
-            builder.setGitDir(gitPath.toFile()).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+            final Path gitPath = localPath.resolve(".git");
+            // TODO DEFAULTBRANCH: Use actual branch name which is set for the project!
+            builder.setGitDir(gitPath.toFile()).setInitialBranch("main").readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+
             // Create the JGit repository object
             Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
             // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
             // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
             // and https://git-scm.com/docs/git-gc for an explanation of the parameter
             repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+
+            // TODO DEFAULTBRANCH: Use actual branch name which is set for the project!
+            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+            refUpdate.setForceUpdate(true);
+            refUpdate.link("refs/heads/main");
+
             // Cache the JGit repository object for later use: avoids the expensive re-opening of local repositories
             cachedRepositories.put(localPath, repository);
             return repository;
         }
-        catch (IOException ex) {
+        catch (IOException | InvalidRefNameException ex) {
             log.warn("Cannot get existing checkout out repository by local path: " + ex.getMessage());
             return null;
         }
