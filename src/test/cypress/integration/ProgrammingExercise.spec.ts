@@ -155,7 +155,7 @@ function createProgrammingExercise() {
     cy.get(fieldTitle).type(programmingExerciseName);
     cy.get(shortName).type(programmingExerciseShortName);
     cy.get('#field_packageName').type('com.cypress.test');
-    cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').click();
+    cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should(beVisible).click();
     cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
 
     cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
@@ -165,7 +165,7 @@ function createProgrammingExercise() {
     cy.get('#field_points').type('100');
     cy.get('#field_allowOnlineEditor').check();
 
-    cy.get('[type="submit"]').eq(1).click();
+    cy.get('[type="submit"]').click();
     cy.wait('@createProgrammingExerciseQuery');
     // Creating a programming exercise takes a lot of time, so we increase the timeout here
     cy.url().should('include', exercisePath);
