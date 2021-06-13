@@ -117,7 +117,6 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         const url = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`];
         this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
-        return;
     }
 
     private onError() {
