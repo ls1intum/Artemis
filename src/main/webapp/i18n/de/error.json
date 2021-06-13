@@ -9,7 +9,7 @@
             "500": "Interner Serverfehler."
         },
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
-        "concurrencyFailure": "Ein anderer User hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
+        "concurrencyFailure": "Ein:e Nutzer:in hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnistext ist zu lange (max. 255 Zeichen)",
@@ -30,7 +30,7 @@
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
         "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Abgabefrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
-        "nosubmissions": "Es wurde kein existierender User angegeben oder es existieren keine Abgaben.",
+        "nosubmissions": "Nutzer:in exisitert nicht oder es gibt keine Abgaben.",
         "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben.",
         "invalidGradeStepFormat": "Eine oder mehrere Notenstufen folgen nicht dem richtigen Format. Klicke auf das \"?\" für mehr Informationen.",
         "invalidGradeStepAdjacency": "Die Notenstufen bilden keinen gültigen Notenschlüssel ab. Klicke auf das \"?\" für mehr Informationen.",

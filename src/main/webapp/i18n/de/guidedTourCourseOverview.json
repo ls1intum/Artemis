@@ -24,7 +24,7 @@
             },
             "accountMenuClick": {
                 "headline": "Persönliche Einstellungen",
-                "content": "Klicke auf deinen Usernamen um das Menü für deine persönlichen Einstellungen anzuzeigen."
+                "content": "Klicke auf deinen Login, um das Menü für deine persönlichen Einstellungen anzuzeigen."
             },
             "accountMenu": {
                 "headline": "Persönliche Einstellungen",

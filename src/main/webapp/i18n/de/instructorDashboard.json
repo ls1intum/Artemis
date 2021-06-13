@@ -2,7 +2,7 @@
     "instructorDashboard": {
         "exerciseResultSummery": "{{ exercisesLength }} veröffentlichte Übungen, {{ studentsLength }} Studierende mit Ergebnissen",
         "name": "Name",
-        "username": "Username",
+        "username": "Login",
         "title": "Kursbewertungen",
         "exerciseDashboard": "Übungsbewertungen",
         "participated": "Teilgenommen an Übungen",

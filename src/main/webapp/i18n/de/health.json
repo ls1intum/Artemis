@@ -24,7 +24,7 @@
             "readinessState": "Bereitschaft",
             "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
             "versionControlServer": "Versionskontrollserver",
-            "userManagement": "Userverwaltung",
+            "userManagement": "Verwaltung von Nutzer:innen",
             "hazelcast": "Hazelcast",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athene": "Athene",

@@ -4,8 +4,8 @@
             "pageTitle": "Teilnahmeergebnisse",
             "participantScoreDTO": {
                 "id": "Id",
-                "userId": "User Id",
-                "userName": "Username",
+                "userId": "Nutzer:in Id",
+                "userName": "Login",
                 "teamId": "Team Id",
                 "teamName": "Team Name",
                 "exerciseId": "Aufgaben Id",
@@ -18,7 +18,7 @@
                 "lastRatedPoints": "Letzten bewerteten Punkte"
             },
             "participantScoreAverageDTO": {
-                "userName": "Username",
+                "userName": "Login",
                 "teamName": "Team Name",
                 "averageScore": "Durchschnittliches Ergebnis",
                 "averageRatedScore": "Durchschnittliches bewertetes Ergebnis",
