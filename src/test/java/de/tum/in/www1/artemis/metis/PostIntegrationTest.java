@@ -135,7 +135,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testEditPost_asTutor() throws Exception {
         // update post of student1 (index 0)--> OK
-        Post postToUpdate = editExistingPost(0);
+        Post postToUpdate = editExistingPost(existingPosts.get(0));
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
@@ -145,13 +145,13 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testEditPost_asStudent() throws Exception {
         // update own post (index 0)--> OK
-        Post postToUpdate = editExistingPost(0);
+        Post postToUpdate = editExistingPost(existingPosts.get(0));
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToUpdate, Post.class, HttpStatus.OK);
         assertThat(updatedPost).isEqualTo(postToUpdate);
 
         // update post from another student (index 1)--> forbidden
-        Post postToNotUpdate = editExistingPost(1);
+        Post postToNotUpdate = editExistingPost(existingPosts.get(1));
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts", postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
@@ -338,8 +338,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         return post;
     }
 
-    private Post editExistingPost(Integer index) {
-        Post postToUpdate = existingPosts.get(index);
+    private Post editExistingPost(Post postToUpdate) {
         postToUpdate.setTitle("New Title");
         postToUpdate.setContent("New Test Post");
         postToUpdate.setVisibleForStudents(false);
