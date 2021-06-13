@@ -376,7 +376,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private getComplaint(): void {
-        console.log(this.submission);
         const resultWithComplaint = getFirstResultWithComplaint(this.submission);
         if (!resultWithComplaint) {
             return;
