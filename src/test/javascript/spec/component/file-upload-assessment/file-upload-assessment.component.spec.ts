@@ -38,7 +38,7 @@ import { By } from '@angular/platform-browser';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import {Complaint, ComplaintType} from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import * as sinon from 'sinon';
@@ -70,13 +70,14 @@ describe('FileUploadAssessmentComponent', () => {
     const params2 = { exerciseId: 20, courseId: 123, submissionId: 'new' };
 
     const resultWithComplaint = {
-        id: 55, hasComplaint: true, complaint: {id: 555, complaintText: 'complaint', complaintType: ComplaintType.COMPLAINT}
-    }
+        id: 55,
+        hasComplaint: true,
+        complaint: { id: 555, complaintText: 'complaint', complaintType: ComplaintType.COMPLAINT },
+    };
     const submissionWithResultsAndComplaint = {
-        id: 20, results: [resultWithComplaint]
+        id: 20,
+        results: [resultWithComplaint],
     } as FileUploadSubmission;
-
-
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [
@@ -581,7 +582,7 @@ describe('FileUploadAssessmentComponent', () => {
         it('should get Complaint', () => {
             comp.submission = submissionWithResultsAndComplaint;
             comp.result = resultWithComplaint;
-            let complaint = resultWithComplaint.complaint;
+            const complaint = resultWithComplaint.complaint;
             stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
             expect(comp.complaint).to.be.undefined;
             comp.getComplaint();

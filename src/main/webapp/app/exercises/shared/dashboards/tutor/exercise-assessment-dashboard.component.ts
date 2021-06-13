@@ -41,7 +41,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { OrionConnectorService } from "app/shared/orion/orion-connector.service";
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export interface ExampleSubmissionQueryParams {
@@ -397,14 +397,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                const sub = submissions.filter((submission) => {
-                    return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound]
-                }).map((submission) => {
-                    submission.participation!.submissions = [submission];
-                    submission.participation!.results = submission.results;
-                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    return submission;
-                });
+                const sub = submissions
+                    .filter((submission) => {
+                        return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound];
+                    })
+                    .map((submission) => {
+                        submission.participation!.submissions = [submission];
+                        submission.participation!.results = submission.results;
+                        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+                        return submission;
+                    });
 
                 this.submissionsByCorrectionRound!.set(correctionRound, sub);
             });
