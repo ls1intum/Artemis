@@ -354,7 +354,7 @@ public class BitbucketService extends AbstractVersionControlService {
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws BitbucketException {
         String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/branches/default";
+        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/default-branch";
 
         try {
             var response = restTemplate.exchange(getDefaultBranchUrl, HttpMethod.GET, null, BitbucketDefaultBranchDTO.class);
