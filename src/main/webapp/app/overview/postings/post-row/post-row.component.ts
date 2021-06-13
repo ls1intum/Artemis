@@ -35,7 +35,7 @@ export class PostRowComponent implements OnInit {
     @Output() interactPostRow = new EventEmitter<PostRowAction>();
     isExpanded = true;
     isAnswerMode: boolean;
-    showOtherAnswerPosts = false;
+    isLoading = false;
     answerPostContent?: string;
     sortedAnswerPosts: AnswerPost[];
     approvedAnswerPosts: AnswerPost[];
@@ -135,6 +135,7 @@ export class PostRowComponent implements OnInit {
      * Creates a new answerPost
      */
     addAnswerPost(): void {
+        this.isLoading = true;
         const answerPost = new AnswerPost();
         answerPost.content = this.answerPostContent;
         answerPost.post = this.post;
@@ -148,6 +149,7 @@ export class PostRowComponent implements OnInit {
             this.sortAnswerPosts();
             this.answerPostContent = undefined;
             this.isAnswerMode = false;
+            this.isLoading = false;
         });
     }
 

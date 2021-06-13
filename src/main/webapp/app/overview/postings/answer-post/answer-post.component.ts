@@ -27,6 +27,7 @@ export class AnswerPostComponent implements OnInit {
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswer = new EventEmitter<AnswerPostAction>();
     editText?: string;
+    isLoading = false;
     isEditMode: boolean;
     EditorMode = EditorMode;
     courseId: number;
@@ -70,9 +71,11 @@ export class AnswerPostComponent implements OnInit {
      * Updates the text of the selected answerPost
      */
     saveAnswerPost(): void {
+        this.isLoading = true;
         this.answerPost.content = this.editText;
         this.answerPostService.update(this.courseId, this.answerPost).subscribe(() => {
             this.isEditMode = false;
+            this.isLoading = false;
         });
     }
 

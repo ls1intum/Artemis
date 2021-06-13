@@ -8,6 +8,20 @@ $background-color: #353d47;
     margin-left: auto;
 }
 
+.labels {
+    color: $background-color;
+    &.answer-approved {
+        color: green;
+    }
+}
+
+.action-icon {
+    color: rgba(0, 0, 0, 0.4);
+    &.answer-approved {
+        color: green;
+    }
+}
+
 .expanded-posts {
     width: 30vw;
 
@@ -64,7 +78,6 @@ $background-color: #353d47;
 }
 
 .post-row {
-    background-color: rgba(0, 0, 0, 0.02);
     border-radius: 3px;
 }
 
@@ -73,7 +86,6 @@ $background-color: #353d47;
 }
 
 .posting-content {
-    background: rgba(0, 0, 0, 0.05);
     padding: 8px 15px;
     border-radius: 3px;
 
@@ -83,12 +95,13 @@ $background-color: #353d47;
 }
 
 .answer-post {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: rgba(0, 0, 0, 0.03);
     border-radius: 4px;
 
     &.answer-approved {
         color: green;
         background-color: #f2f9f2;
+        border-color: darkgreen;
 
         .posting-content {
             color: initial;
@@ -115,7 +128,7 @@ $background-color: #353d47;
     color: rgba(0, 0, 0, 0.4);
 
     &.vote-active {
-        color: initial;
+        color: $background-color;
     }
 }
 
