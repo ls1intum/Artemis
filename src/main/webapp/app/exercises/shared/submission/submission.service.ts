@@ -66,7 +66,6 @@ export class SubmissionService {
     protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
         if (res.body) {
             res.body.forEach((dto) => {
-                console.log('te');
                 dto.submission = this.convertSubmissionDateFromServer(dto.submission);
                 dto.complaint = this.convertDateFromServerComplaint(dto.complaint);
             });
