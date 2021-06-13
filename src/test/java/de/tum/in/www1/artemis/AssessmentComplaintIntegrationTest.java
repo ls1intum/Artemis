@@ -8,7 +8,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +31,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 
 public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -338,17 +338,16 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var submissionWithComplaintDTOs = request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK, SubmissionWithComplaintDTO.class, params);
+        final var submissionWithComplaintDTOs = request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
+                SubmissionWithComplaintDTO.class, params);
 
         submissionWithComplaintDTOs.forEach(dto -> {
             final var participation = (StudentParticipation) dto.complaint().getResult().getParticipation();
             assertThat(participation.getStudent()).as("No student information").isEmpty();
             assertThat(dto.complaint().getParticipant()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
-            assertThat(((StudentParticipation) dto.submission().getParticipation()).getParticipant())
-                .as("No student information in participation").isNull();
-            assertThat(dto.submission().getParticipation().getExercise())
-                .as("No additional exercise information").isNull();
+            assertThat(((StudentParticipation) dto.submission().getParticipation()).getParticipant()).as("No student information in participation").isNull();
+            assertThat(dto.submission().getParticipation().getExercise()).as("No additional exercise information").isNull();
 
         });
     }

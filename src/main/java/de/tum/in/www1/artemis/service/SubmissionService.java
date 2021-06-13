@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
@@ -10,8 +9,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +16,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -56,7 +55,8 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ComplaintRepository complaintRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -599,13 +599,12 @@ public class SubmissionService {
         List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
 
         // add each submission with its complaint to the DTO
-        submissions.stream().filter(submission -> submission.getResultWithComplaint() != null)
-            .forEach(submission -> {
-                // get the complaint which belongs to the submission
-                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
-                prepareComplaintAndSubmission(complaintOfSubmission, submission);
-                submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
-            });
+        submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
+            // get the complaint which belongs to the submission
+            Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+            prepareComplaintAndSubmission(complaintOfSubmission, submission);
+            submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+        });
 
         return submissionWithComplaintDTOs;
     }

@@ -911,7 +911,8 @@ public abstract class Exercise extends DomainObject {
     public Integer getNumberOfCorrectionRounds() {
         if (isExamExercise()) {
             return getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
-        } else {
+        }
+        else {
             return 1;
         }
     }

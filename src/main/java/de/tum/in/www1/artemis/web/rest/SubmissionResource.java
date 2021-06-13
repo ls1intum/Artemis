@@ -1,14 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -151,6 +150,7 @@ public class SubmissionResource {
 
         return ResponseEntity.ok(submissionWithComplaintDTOs);
     }
+
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
         User user = userRepository.getUserWithGroupsAndAuthorities();

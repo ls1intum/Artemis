@@ -64,11 +64,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
     @Query("""
-        SELECT DISTINCT s FROM Submission s
-        WHERE s.id IN :submissionIds
-    """)
+                SELECT DISTINCT s FROM Submission s
+                WHERE s.id IN :submissionIds
+            """)
     List<Submission> findBySubmissionIdsWithEagerResults(@Param("submissionIds") List<Long> submissionIds);
-
 
     /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
