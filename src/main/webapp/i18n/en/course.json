@@ -61,6 +61,7 @@
             "startDate": "Start",
             "endDate": "End",
             "semester": "Semester",
+            "maxPoints": "Maximum number of points for course",
             "gradingSystem": "Grade Key",
             "testCourse": {
                 "title": "Test Course",

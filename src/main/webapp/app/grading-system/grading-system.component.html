@@ -14,17 +14,20 @@
         </div>
         <div class="dropdown-container">
             <div class="form-group">
+                <ng-container *ngIf="course">
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.course.maxPoints">Maximum number of points for course</span>
+                    <input type="number" class="form-control" [(ngModel)]="course.maxPoints" min="1" (change)="onChangeMaxPoints(course.maxPoints)" />
+                </ng-container>
+                <ng-container *ngIf="exam">
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.examManagement.maxPoints">Maximum number of points for exam</span>
+                    <input type="number" class="form-control" [(ngModel)]="exam.maxPoints" min="1" (change)="onChangeMaxPoints(exam.maxPoints)" />
+                </ng-container>
+            </div>
+            <div class="form-group">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title">Grade Type</span>
                 <select class="form-control" [(ngModel)]="gradingScale.gradeType" (change)="deleteGradeNames()" title="grade type">
                     <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade">Grade</option>
                     <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus">Bonus</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <span class="colon-suffix no-flex-shrink">Bound Type</span>
-                <select class="form-control" [(ngModel)]="gradingScale.usesPoints">
-                    <option [ngValue]="false">Percentage</option>
-                    <option [ngValue]="true">Points</option>
                 </select>
             </div>
             <div class="form-group">
@@ -52,12 +55,20 @@
                 <tr>
                     <th>
                         <span>
-                            {{ gradingScale.usesPoints ? ('artemisApp.gradingSystem.minPoints' | artemisTranslate) : ('artemisApp.gradingSystem.min' | artemisTranslate) }}
+                            {{ 'artemisApp.gradingSystem.min' | artemisTranslate }}
                         </span>
                     </th>
                     <th>
                         <span>
-                            {{ gradingScale.usesPoints ? ('artemisApp.gradingSystem.maxPoints' | artemisTranslate) : ('artemisApp.gradingSystem.max' | artemisTranslate) }}
+                            {{ 'artemisApp.gradingSystem.minPoints' | artemisTranslate }}
+                        </span>
+                    </th>
+                    <th>
+                        <span> {{ 'artemisApp.gradingSystem.max' | artemisTranslate }} </span>
+                    </th>
+                    <th>
+                        <span>
+                            {{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }}
                         </span>
                     </th>
                     <th [colSpan]="2">
@@ -69,22 +80,34 @@
             </thead>
             <tbody>
                 <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index" class="grading-scale-table-row">
-                    <ng-container *ngIf="!gradingScale.usesPoints">
-                        <td>
-                            <input [(ngModel)]="gradeStep.lowerBoundPercentage" type="number" min="0" max="100" required />
-                        </td>
-                        <td>
-                            <input [(ngModel)]="gradeStep.upperBoundPercentage" type="number" min="0" max="100" required />
-                        </td>
-                    </ng-container>
-                    <ng-container *ngIf="gradingScale.usesPoints">
-                        <td>
-                            <input [(ngModel)]="gradeStep.lowerBoundPoints" type="number" min="0" max="999" required />
-                        </td>
-                        <td>
-                            <input [(ngModel)]="gradeStep.upperBoundPoints" type="number" min="0" max="999" required />
-                        </td>
-                    </ng-container>
+                    <td>
+                        <input [(ngModel)]="gradeStep.lowerBoundPercentage" type="number" min="0" max="100" required (change)="setPoints(gradeStep, true)" />
+                    </td>
+                    <td>
+                        <input
+                            [(ngModel)]="gradeStep.lowerBoundPoints"
+                            type="number"
+                            min="0"
+                            [max]="getMaxPoints() || 999"
+                            [required]="maxPointsValid()"
+                            [disabled]="!maxPointsValid()"
+                            (change)="setPercentage(gradeStep, true)"
+                        />
+                    </td>
+                    <td>
+                        <input [(ngModel)]="gradeStep.upperBoundPercentage" type="number" min="0" max="100" required (change)="setPoints(gradeStep, false)" />
+                    </td>
+                    <td>
+                        <input
+                            [(ngModel)]="gradeStep.upperBoundPoints"
+                            type="number"
+                            min="0"
+                            [max]="getMaxPoints() || 999"
+                            [required]="maxPointsValid()"
+                            [disabled]="!maxPointsValid()"
+                            (change)="setPercentage(gradeStep, false)"
+                        />
+                    </td>
                     <td *ngIf="isGradeType()">
                         <input [(ngModel)]="gradeStep.gradeName" type="text" required />
                     </td>
@@ -92,7 +115,7 @@
                         <input [(ngModel)]="gradeStep.gradeName" type="number" step="0.25" min="0" placeholder="0" required />
                     </td>
                     <td>
-                        <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger">
+                        <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger" style="float: right">
                             <fa-icon [icon]="'times'"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
                         </button>
                     </td>

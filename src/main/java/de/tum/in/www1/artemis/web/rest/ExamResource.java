@@ -84,10 +84,12 @@ public class ExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final GradingScaleRepository gradingScaleRepository;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository) {
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -101,6 +103,7 @@ public class ExamResource {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
+        this.gradingScaleRepository = gradingScaleRepository;
     }
 
     /**
@@ -198,6 +201,8 @@ public class ExamResource {
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
 
+        handleMaxPointUpdates(updatedExam.getId(), originalExam.getMaxPoints(), updatedExam.getMaxPoints());
+
         Exam result = examRepository.save(updatedExam);
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
@@ -212,6 +217,19 @@ public class ExamResource {
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
+
+    private void handleMaxPointUpdates(Long examId, int existingMaxPoints, int updatedMaxPoints) {
+        if (updatedMaxPoints < 0) {
+            throw new BadRequestAlertException("Max points must be greater than 0", ENTITY_NAME, "invalidMaxPoints", true);
+        }
+        else if (updatedMaxPoints == 0) {
+            return;
+        }
+        var gradingScale = this.gradingScaleRepository.findByExamId(examId);
+        if (gradingScale.isPresent() && existingMaxPoints != updatedMaxPoints) {
+            gradingScaleRepository.setPointsForGradingScale(gradingScale.get(), updatedMaxPoints);
+        }
     }
 
     /**

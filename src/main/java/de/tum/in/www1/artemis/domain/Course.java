@@ -127,6 +127,9 @@ public class Course extends DomainObject {
     @Column(name = "course_archive_path")
     private String courseArchivePath;
 
+    @Column(name = "max_points")
+    private Integer maxPoints;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -560,5 +563,13 @@ public class Course extends DomainObject {
 
     public void setCourseArchivePath(String courseArchiveUrl) {
         this.courseArchivePath = courseArchiveUrl;
+    }
+
+    public int getMaxPoints() {
+        return maxPoints != null ? maxPoints : 0;
+    }
+
+    public void setMaxPoints(Integer maxPoints) {
+        this.maxPoints = maxPoints;
     }
 }

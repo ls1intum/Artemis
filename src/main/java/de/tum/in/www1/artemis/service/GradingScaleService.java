@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -19,10 +18,7 @@ public class GradingScaleService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    private final GradeStepRepository gradeStepRepository;
-
-    public GradingScaleService(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository) {
-        this.gradeStepRepository = gradeStepRepository;
+    public GradingScaleService(GradingScaleRepository gradingScaleRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
     }
 

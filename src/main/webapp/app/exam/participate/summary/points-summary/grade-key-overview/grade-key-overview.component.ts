@@ -50,4 +50,13 @@ export class GradeKeyOverviewComponent implements OnInit {
     printPDF() {
         setTimeout(() => window.print());
     }
+
+    hasPointsSet(): boolean {
+        for (const gradeStep of this.gradeSteps) {
+            if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined) {
+                return false;
+            }
+        }
+        return this.gradeSteps.length !== 0;
+    }
 }

@@ -145,4 +145,12 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         return gradingScales.get(0);
     }
 
+    default GradingScale setPointsForGradingScale(GradingScale gradingScale, int maxPoints) {
+        for (GradeStep gradeStep : gradingScale.getGradeSteps()) {
+            gradeStep.setLowerBoundPoints((gradeStep.getLowerBoundPercentage() * maxPoints) / 100);
+            gradeStep.setUpperBoundPoints((gradeStep.getUpperBoundPercentage() * maxPoints) / 100);
+        }
+        return save(gradingScale);
+    }
+
 }

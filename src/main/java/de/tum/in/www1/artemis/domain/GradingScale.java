@@ -26,9 +26,6 @@ public class GradingScale extends DomainObject {
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
 
-    @Column(name = "uses_points")
-    private boolean usesPoints = false; // default
-
     @OneToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -48,14 +45,6 @@ public class GradingScale extends DomainObject {
 
     public void setGradeType(GradeType gradeType) {
         this.gradeType = gradeType;
-    }
-
-    public boolean getUsesPoints() {
-        return usesPoints;
-    }
-
-    public void setUsesPoints(boolean usesPoints) {
-        this.usesPoints = usesPoints;
     }
 
     public Course getCourse() {

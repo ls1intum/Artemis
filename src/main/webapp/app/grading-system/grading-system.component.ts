@@ -8,6 +8,10 @@ import { Observable, of, Subject } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 @Component({
     selector: 'jhi-grading-system',
@@ -29,7 +33,16 @@ export class GradingSystemComponent implements OnInit {
     isLoading = false;
     invalidGradeStepsMessage?: string;
 
-    constructor(private gradingSystemService: GradingSystemService, private route: ActivatedRoute, private translateService: TranslateService) {}
+    course?: Course;
+    exam?: Exam;
+
+    constructor(
+        private gradingSystemService: GradingSystemService,
+        private route: ActivatedRoute,
+        private translateService: TranslateService,
+        private courseService: CourseManagementService,
+        private examService: ExamManagementService,
+    ) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -41,8 +54,16 @@ export class GradingSystemComponent implements OnInit {
             }
             if (this.isExam) {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
+                this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
+                    this.exam = examResponse.body!;
+                    this.onChangeMaxPoints(this.exam?.maxPoints);
+                });
             } else {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
+                this.courseService.find(this.courseId!).subscribe((courseResponse) => {
+                    this.course = courseResponse.body!;
+                    this.onChangeMaxPoints(this.course?.maxPoints);
+                });
             }
         });
     }
@@ -106,6 +127,11 @@ export class GradingSystemComponent implements OnInit {
         this.gradingScale.gradeSteps.forEach((gradeStep) => {
             gradeStep.id = undefined;
         });
+        if (this.isExam) {
+            this.gradingScale.exam = this.exam;
+        } else {
+            this.gradingScale.course = this.course;
+        }
         if (this.existingGradingScale) {
             if (this.isExam) {
                 this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
@@ -154,9 +180,17 @@ export class GradingSystemComponent implements OnInit {
             this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.empty');
             return false;
         }
+        if (this.getMaxPoints() != undefined && this.getMaxPoints()! < 0) {
+            this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.negativeMaxPoints');
+            return false;
+        }
         // check if any of the fields are empty
         for (const gradeStep of this.gradingScale.gradeSteps) {
             if (gradeStep.gradeName === '' || gradeStep.gradeName === null || gradeStep.lowerBoundPercentage === null || gradeStep.upperBoundPercentage === null) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.emptyFields');
+                return false;
+            }
+            if (this.maxPointsValid() && (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined)) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.emptyFields');
                 return false;
             }
@@ -166,6 +200,14 @@ export class GradingSystemComponent implements OnInit {
             if (gradeStep.lowerBoundPercentage < 0 || gradeStep.upperBoundPercentage > 100 || gradeStep.lowerBoundPercentage >= gradeStep.upperBoundPercentage) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
                 return false;
+            }
+        }
+        if (this.maxPointsValid()) {
+            for (const gradeStep of this.gradingScale.gradeSteps) {
+                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.upperBoundPoints! > this.getMaxPoints()! || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
+                    this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPoints');
+                    return false;
+                }
             }
         }
         if (this.isGradeType()) {
@@ -244,6 +286,50 @@ export class GradingSystemComponent implements OnInit {
             newGradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(newGradingScale.gradeSteps);
             this.gradingScale = newGradingScale;
             this.existingGradingScale = true;
+        }
+    }
+
+    maxPointsValid(): boolean {
+        return this.getMaxPoints() != undefined && this.getMaxPoints()! > 0;
+    }
+
+    getMaxPoints() {
+        return this.isExam ? this.exam?.maxPoints : this.course?.maxPoints;
+    }
+
+    setPercentage(gradeStep: GradeStep, lowerBound: boolean) {
+        const maxPoints = this.getMaxPoints();
+        if (lowerBound) {
+            gradeStep.lowerBoundPercentage = (gradeStep.lowerBoundPoints! / maxPoints!) * 100;
+        } else {
+            gradeStep.upperBoundPercentage = (gradeStep.upperBoundPoints! / maxPoints!) * 100;
+        }
+    }
+
+    setPoints(gradeStep: GradeStep, lowerBound: boolean): void {
+        const maxPoints = this.getMaxPoints();
+        if (!maxPoints) {
+            return;
+        } else {
+            if (lowerBound) {
+                gradeStep.lowerBoundPoints = (maxPoints! * gradeStep.lowerBoundPercentage) / 100;
+            } else {
+                gradeStep.upperBoundPoints = (maxPoints! * gradeStep.upperBoundPercentage) / 100;
+            }
+        }
+    }
+
+    onChangeMaxPoints(maxPoints?: number): void {
+        if (maxPoints == undefined) {
+            for (const gradeStep of this.gradingScale.gradeSteps) {
+                gradeStep.lowerBoundPoints = undefined;
+                gradeStep.upperBoundPoints = undefined;
+            }
+        } else {
+            for (const gradeStep of this.gradingScale.gradeSteps) {
+                this.setPoints(gradeStep, true);
+                this.setPoints(gradeStep, false);
+            }
         }
     }
 
@@ -376,6 +462,8 @@ export class GradingSystemComponent implements OnInit {
             lowerBoundInclusive: this.lowerBoundInclusivity,
             upperBoundInclusive: true,
         };
+        this.setPoints(gradeStep, true);
+        this.setPoints(gradeStep, false);
         this.gradingScale.gradeSteps.push(gradeStep);
     }
 
