@@ -88,7 +88,7 @@ public class AssessmentService {
         // Save the complaint response
         ComplaintResponse complaintResponse = complaintResponseService.resolveComplaint(assessmentUpdate.getComplaintResponse());
 
-        // Crete a new result which is a copy of the original result.
+        // Create a new result which is a copy of the original result.
         Result newResult = submissionService.createResultAfterComplaintResponse(originalResult.getSubmission(), originalResult, assessmentUpdate.getFeedbacks());
         newResult.setAssessor(complaintResponse.getReviewer());
         newResult.setAssessmentType(originalResult.getAssessmentType());
