@@ -12,7 +12,7 @@ class ${packageName}UITests: XCTestCase {
         app.launch()
     }
 
-    func testExample() throws {
+    func testUI() throws {
         XCTAssertTrue(app.staticTexts["Hello, Artemis!"].exists, "The UI has the wrong text message.")
     }
 }
