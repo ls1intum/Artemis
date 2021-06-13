@@ -131,7 +131,7 @@ public class SubmissionResource {
 
     /**
      * Get /exercises/:exerciseId/submissions-with-complaints
-     * <p>
+     *
      * Get all submissions associated to an exercise which have complaints in,
      * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
      * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
