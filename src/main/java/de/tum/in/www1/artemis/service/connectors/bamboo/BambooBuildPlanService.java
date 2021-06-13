@@ -72,6 +72,9 @@ public class BambooBuildPlanService {
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String vcsApplicationLinkName;
 
+    @Value("${artemis.version-control.defaultBranch:master}")
+    private String defaultBranch;
+
     private final ResourceLoaderService resourceLoaderService;
 
     private final BambooServer bambooServer;
@@ -255,13 +258,13 @@ public class BambooBuildPlanService {
         }
 
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
-        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName));
-        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug));
+        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName, defaultBranch));
+        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug, defaultBranch));
         for (var repo : auxiliaryRepositories) {
-            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug()));
+            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug(), defaultBranch));
         }
         if (checkoutSolutionRepository) {
-            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug));
+            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug, defaultBranch));
         }
 
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
@@ -295,8 +298,9 @@ public class BambooBuildPlanService {
                         .recipientString(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH));
     }
 
-    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
-        return new BitbucketServerRepository().name(name).repositoryViewer(new BitbucketServerRepositoryViewer()).server(new ApplicationLink().name(vcsApplicationLinkName))
+    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String defaultBranch) {
+        return new BitbucketServerRepository().name(name).branch(defaultBranch).repositoryViewer(new BitbucketServerRepositoryViewer())
+                .server(new ApplicationLink().name(vcsApplicationLinkName))
                 // make sure to use lower case to avoid problems in change detection between
                 // Bamboo and Bitbucket
                 .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)

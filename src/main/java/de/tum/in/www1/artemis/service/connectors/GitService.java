@@ -80,6 +80,9 @@ public class GitService {
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
     private Optional<String> sshUrlTemplate;
 
+    @Value("${artemis.version-control.defaultBranch:master}")
+    private String defaultBranch;
+
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
 
@@ -473,10 +476,7 @@ public class GitService {
             if (cachedRepository != null) {
                 return cachedRepository;
             }
-
             // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
-
-            String defaultBranch = versionControlService.getDefaultBranchOfVCS();
 
             // Open the repository from the filesystem
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
