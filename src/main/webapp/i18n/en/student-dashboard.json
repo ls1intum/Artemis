@@ -153,38 +153,7 @@
                 "graded": "Graded",
                 "notGraded": "Not graded",
                 "rated": "Rated",
-                "practice": "Practice",
-                "faq": {
-                    "header": "Postings",
-                    "show": "Show postings",
-                    "hide": "Hide postings",
-                    "noPosts": "There are no postings",
-                    "addNewPost": "Add a new post",
-                    "newPostLabel": "New post",
-                    "newAnswerLabel": "New reply",
-                    "answerLabel": "Reply",
-                    "postLabel": "Post",
-                    "approvedLabel": "Approved by a tutor",
-                    "answerNow": "Reply now",
-                    "noAnswers": "There is no reply to this post yet.",
-                    "answerCount": "Show replies ({{count}})",
-                    "yourPost": "Your Question",
-                    "cancel": "Cancel",
-                    "addPost": "Add post",
-                    "savePost": "Save post",
-                    "addAnswer": "Add reply",
-                    "saveAnswer": "Save reply",
-                    "deletePost": "Do you want to delete your post?",
-                    "confirmDeletePost": "Please confirm that you want to delete your post!",
-                    "editPost": "Edit post",
-                    "deleteAnswer": "Do you want to delete your reply?",
-                    "confirmDeleteAnswer": "Please confirm that you want to delete your reply!",
-                    "editAnswer": "Edit reply",
-                    "approveAnswer": "Approve reply",
-                    "unapproveAnswer": "Unapprove reply",
-                    "hideAnswers": "Show less replies",
-                    "showAnswers": "Show more replies ({{count}})"
-                }
+                "practice": "Practice"
             }
         }
     }
