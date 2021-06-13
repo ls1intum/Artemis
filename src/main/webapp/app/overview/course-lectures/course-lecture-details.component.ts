@@ -74,10 +74,6 @@ export class CourseLectureDetailsComponent implements OnInit {
         return attachment.link.split('.').pop()!;
     }
 
-    downloadPdf() {
-        this.downloadAttachment(`/api/files/attachments/lecture/${this.lectureId}/merge-pdf`);
-    }
-
     downloadAttachment(downloadUrl?: string): void {
         if (!this.isDownloadingLink && downloadUrl) {
             this.isDownloadingLink = downloadUrl;
