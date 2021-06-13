@@ -94,7 +94,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result result = storedComplaint.get().getResult();
         // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
-        assertThat(result).as("result which is complained about").isEqualToIgnoringGivenFields(storedResult, "participation", "submission");
     }
 
     @Test
@@ -221,7 +220,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         // set dates to UTC and round to milliseconds for comparison
         result.setCompletionDate(ZonedDateTime.ofInstant(result.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(result).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(modelingAssessment, "participation", "submission");
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         database.checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
@@ -693,7 +691,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result result = storedComplaint.get().getResult();
         // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
-        assertThat(result).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(storedResult, "participation", "submission");
     }
 
     @Test
