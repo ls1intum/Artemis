@@ -100,8 +100,6 @@ public class GitService {
 
     private final ZipFileService zipFileService;
 
-    private final VersionControlService versionControlService;
-
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
@@ -110,14 +108,13 @@ public class GitService {
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
-    public GitService(FileService fileService, ZipFileService zipFileService, VersionControlService versionControlService) {
+    public GitService(FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
         this.fileService = fileService;
         this.zipFileService = zipFileService;
-        this.versionControlService = versionControlService;
     }
 
     /**
