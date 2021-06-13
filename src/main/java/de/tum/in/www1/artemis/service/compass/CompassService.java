@@ -99,20 +99,22 @@ public class CompassService {
             // 1x modelClusterRepository.findAllClustersWithEagerElementsByIds
             // 1x feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise with all references of all model elements.
             // The for loop can then search in the retrieved Lists without additional database queries
-
-            for (UMLElement element : elements) {
-                ModelElement modelElement = modelElementRepository.findByModelElementIdWithCluster(element.getJSONElementID());
+            List<ModelElement> modelElements = modelElementRepository.findByModelElementIdIn(elements.stream().map(UMLElement::getJSONElementID).collect(Collectors.toList()));
+            List<Long> clusterIds = modelElements.stream().map(ModelElement::getCluster).map(ModelCluster::getId).collect(Collectors.toList());
+            List<ModelCluster> modelClusters = modelClusterRepository.findAllByIdInWithEagerElements(clusterIds);
+            List<String> references = modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream())
+                    .map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId()).collect(Collectors.toList());
+            List<Feedback> feedbacks = feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, modelingExercise);
+            for (ModelElement modelElement : modelElements) {
                 if (modelElement != null) {
-                    Optional<ModelCluster> cluster = modelClusterRepository.findByIdWithEagerElements(modelElement.getCluster().getId());
-                    if (cluster.isPresent()) {
-                        Set<ModelElement> similarElements = cluster.get().getModelElements();
-                        List<String> references = similarElements.stream().map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId())
-                                .collect(Collectors.toList());
-                        List<Feedback> feedbacks = feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, modelingExercise);
-                        Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, feedbacks, result);
-                        if (suggestedFeedback != null) {
-                            feedbacksForSuggestion.add(suggestedFeedback);
-                        }
+                    ModelCluster cluster = modelClusters.get(modelClusters.indexOf(modelElement.getCluster()));
+                    Set<ModelElement> similarElements = cluster.getModelElements();
+                    List<String> similarReferences = similarElements.stream().map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId())
+                            .collect(Collectors.toList());
+                    List<Feedback> similarFeedbacks = feedbacks.stream().filter(feedback -> similarReferences.contains(feedback.getReference())).collect(Collectors.toList());
+                    Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, similarFeedbacks, result);
+                    if (suggestedFeedback != null) {
+                        feedbacksForSuggestion.add(suggestedFeedback);
                     }
                 }
             }

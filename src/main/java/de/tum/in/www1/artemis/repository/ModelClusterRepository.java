@@ -35,6 +35,14 @@ public interface ModelClusterRepository extends JpaRepository<ModelCluster, Long
     Optional<ModelCluster> findByIdWithEagerElements(@Param("clusterId") Long clusterId);
 
     @Query("""
+            SELECT DISTINCT cluster
+            FROM ModelCluster cluster
+            LEFT JOIN FETCH cluster.modelElements element
+            WHERE
+            cluster.id in :#{#clusterIds}""")
+    List<ModelCluster> findAllByIdInWithEagerElements(@Param("clusterIds") List<Long> clusterIds);
+
+    @Query("""
             SELECT DISTINCT feedback
             FROM Feedback feedback
             JOIN ModelElement element
