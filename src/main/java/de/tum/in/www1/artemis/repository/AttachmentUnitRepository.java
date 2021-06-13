@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.repository;
 
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
@@ -24,4 +27,8 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
             """)
     Set<AttachmentUnit> findByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
+    @NotNull
+    default AttachmentUnit findByIdElseThrow(Long attachmentUnitId) throws EntityNotFoundException {
+        return findById(attachmentUnitId).orElseThrow(() -> new EntityNotFoundException("AttachmentUnit", attachmentUnitId));
+    }
 }
