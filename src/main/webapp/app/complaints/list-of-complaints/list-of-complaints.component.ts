@@ -112,7 +112,7 @@ export class ListOfComplaintsComponent implements OnInit {
         if (!this.correctionRound) {
             this.correctionRound = 0;
         }
-        if (complaint.accepted !== undefined) {
+        if (complaint.accepted != undefined) {
             this.correctionRound += 1;
         }
         const url = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`];
