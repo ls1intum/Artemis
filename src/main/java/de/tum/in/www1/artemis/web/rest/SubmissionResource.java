@@ -151,9 +151,6 @@ public class SubmissionResource {
 
         return ResponseEntity.ok(submissionWithComplaintDTOs);
     }
-
-
-
     private void checkAccessPermissionAtInstructor(Submission submission) {
         Course course = findCourseFromSubmission(submission);
         User user = userRepository.getUserWithGroupsAndAuthorities();
