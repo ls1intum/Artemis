@@ -599,16 +599,14 @@ public class SubmissionService {
         List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
 
         // add each submission with its complaint to the DTO
-        submissions.forEach(submission -> {
-            Result resultWithComplaint = submission.getResultWithComplaint();
-            if (resultWithComplaint == null) {
-                return;
-            }
-            // get the complaint which belongs to the submission
-            Complaint complaintOfSubmission = complaintMap.get(resultWithComplaint.getId());
-            prepareComplaintAndSubmission(complaintOfSubmission, submission);
-            submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
-        });
+        submissions.stream().filter(submission -> submission.getResultWithComplaint() != null)
+            .forEach(submission -> {
+                // get the complaint which belongs to the submission
+                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+                prepareComplaintAndSubmission(complaintOfSubmission, submission);
+                submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+            });
+
         return submissionWithComplaintDTOs;
     }
 

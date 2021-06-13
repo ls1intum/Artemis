@@ -95,8 +95,6 @@ public class AssessmentService {
 
         resultRepository.save(newResult);
 
-        // resultService.addFeedbackToResult(newResult, assessmentUpdate.getFeedbacks(), true);
-
         if (exercise instanceof ProgrammingExercise) {
             double points = ((ProgrammingAssessmentService) this).calculateTotalScore(newResult);
             newResult.setScore(points, exercise.getMaxPoints());
