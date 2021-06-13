@@ -1110,7 +1110,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof ModelingSubmission) {
-            assertThat("Model: " + ((ModelingSubmission) submission).getModel() + "; Explanation: " + ((ModelingSubmission) submission).getExplanationText()).isEqualTo(versionedSubmission.get().getContent());
+            assertThat("Model: " + ((ModelingSubmission) submission).getModel() + "; Explanation: " + ((ModelingSubmission) submission).getExplanationText())
+                .isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof FileUploadSubmission) {
             assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
