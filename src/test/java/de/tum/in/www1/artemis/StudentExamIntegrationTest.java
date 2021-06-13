@@ -914,8 +914,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (exercise instanceof ModelingExercise) {
                     // check that the submission was saved and that a submitted version was created
                     String newModel = "This is a new model";
+                    String newExplanation = "This is an explanation";
                     var modelingSubmission = (ModelingSubmission) submission;
                     modelingSubmission.setModel(newModel);
+                    modelingSubmission.setExplanationText(newExplanation);
                     request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
                     var savedModelingSubmission = request.get(
                             "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
@@ -1108,7 +1110,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof ModelingSubmission) {
-            assertThat(((ModelingSubmission) submission).getModel()).isEqualTo(versionedSubmission.get().getContent());
+            assertThat("Model: " + ((ModelingSubmission) submission).getModel() + "; Explanation: " + ((ModelingSubmission) submission).getExplanationText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof FileUploadSubmission) {
             assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
