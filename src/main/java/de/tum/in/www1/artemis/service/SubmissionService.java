@@ -348,7 +348,7 @@ public class SubmissionService {
      * @param oldResult the result from which the content is copied from
      * @return the newResult
      */
-    private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult){
+    private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
         newResult.setResultString(oldResult.getResultString());
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
