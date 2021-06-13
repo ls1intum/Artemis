@@ -301,13 +301,17 @@ public class FileResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
-        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findByLectureId(lectureId);
+        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findByLectureIdAndAttachmentType(lectureId, AttachmentType.FILE);
         if (lectureAttachments.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
+        if (!validateTemporaryAccessToken(temporaryAccessToken, "merge-pdf")) {
+            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
+            String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
+        }
         List<String> attachmentLinks = lectureAttachments.stream()
-                .filter(unit -> unit.isVisibleToStudents() && unit.getAttachment().getAttachmentType().equals(AttachmentType.FILE)
-                        && StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".").equals("pdf"))
+                .filter(unit -> unit.isVisibleToStudents() && StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".").equals("pdf"))
                 .map(unit -> Paths
                         .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
                         .toString())
@@ -320,7 +324,7 @@ public class FileResource {
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file);
         }
         catch (IOException ex) {
-            log.error("Failed to download file: " + "on path: " + ex);
+            log.error("Failed to merge PDF files for a lecture with id: " + lectureId, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

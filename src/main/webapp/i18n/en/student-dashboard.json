@@ -125,7 +125,8 @@
                 "date": "Date",
                 "notReleased": "Not released",
                 "version": "Version",
-                "isDownloading": "Is downloading..."
+                "isDownloading": "Is downloading...",
+                "downloadPdf": "Download PDF"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
