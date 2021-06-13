@@ -10,6 +10,7 @@ export class ConfirmIconComponent implements OnInit {
     @Input() initialTooltip: string;
     @Input() confirmIcon = <IconProp>'check';
     @Input() confirmTooltip: string;
+    @Input() iconSize = 'md';
     @Output() confirmEvent = new EventEmitter();
     showConfirm = false;
 
