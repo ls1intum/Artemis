@@ -16,6 +16,11 @@
                 "showApproved": "Show posts with approved replies",
                 "hideApproved": "Hide posts with approved replies"
             }
+        },
+        "answerPost": {
+            "created": "New reply successfully created",
+            "updated": "Reply successfully updated",
+            "deleted": "Reply successfully deleted"
         }
     }
 }

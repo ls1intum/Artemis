@@ -116,10 +116,10 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     /**
      * Returns the unique identifier for items in the collection
      * @param index of a user in the collection
-     * @param item current user
+     * @param item current notification
      */
-    trackIdentity(index: number, item: User) {
-        return item.id;
+    trackIdentity(index: number, item: SystemNotification) {
+        return item.id ?? -1;
     }
 
     /**

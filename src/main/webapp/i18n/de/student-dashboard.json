@@ -154,8 +154,8 @@
                 "practice": "Übung",
                 "faq": {
                     "header": "Postings",
-                    "show": "Antworten anzeigen",
-                    "hide": "Antworten einklappen",
+                    "show": "Postings anzeigen",
+                    "hide": "Postings einklappen",
                     "noPosts": "Es gibt keine Postings.",
                     "addNewPost": "Einen neuen Post erstellen",
                     "newPostLabel": "Neuer Post",
