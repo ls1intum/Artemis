@@ -188,6 +188,6 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
     }
 
     private void assertValidToken(UserJWTController.JWTToken token) {
-        assertThat(this.tokenProvider.validateToken(token.getIdToken())).as("JWT Token is Valid").isTrue();
+        assertThat(this.tokenProvider.validateTokenForAuthority(token.getIdToken())).as("JWT Token is Valid").isTrue();
     }
 }

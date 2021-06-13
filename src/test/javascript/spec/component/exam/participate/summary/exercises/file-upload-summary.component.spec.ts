@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FileService } from 'app/shared/http/file.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';

@@ -2,7 +2,7 @@
     <button
         id="resolve_conflict_button"
         type="button"
-        class="btn btn-danger navbar-btn mr-3"
+        class="btn btn-danger navbar-btn me-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="disableActions"
         (click)="resetRepository()"
@@ -20,7 +20,7 @@
     <button
         id="refresh_button"
         type="button"
-        class="btn btn-primary navbar-btn mr-3"
+        class="btn btn-primary navbar-btn me-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
         (click)="onRefresh()"
@@ -38,7 +38,7 @@
     <button
         id="save_button"
         type="button"
-        class="guided-tour-save-button btn btn-primary navbar-btn mr-3"
+        class="guided-tour-save-button btn btn-primary navbar-btn me-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
             disableActions ||

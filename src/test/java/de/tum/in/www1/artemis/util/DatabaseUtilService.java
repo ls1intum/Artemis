@@ -218,6 +218,9 @@ public class DatabaseUtilService {
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -1945,6 +1948,18 @@ public class DatabaseUtilService {
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
+    }
+
+    public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
+        AuxiliaryRepository repository = new AuxiliaryRepository();
+        repository.setName("auxrepo");
+        repository.setDescription("Description");
+        repository.setCheckoutDirectory("assignment/src");
+        repository = auxiliaryRepositoryRepository.save(repository);
+        programmingExercise.setAuxiliaryRepositories(List.of(repository));
+        repository.setExercise(programmingExercise);
+        programmingExerciseRepository.save(programmingExercise);
+        return repository;
     }
 
     public Course addCourseWithModelingAndTextExercise() {

@@ -59,7 +59,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         private renderer: Renderer2,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
-        private javaBridge: OrionConnectorService,
+        private orionConnectorService: OrionConnectorService,
         private modalService: NgbModal,
         private profileService: ProfileService,
         private jhiAlertService: JhiAlertService,
@@ -158,7 +158,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                     modalRef.componentInstance.title = 'login.ide.title';
                     modalRef.result.then(
                         () => {
-                            this.javaBridge.login(this.username, this.password);
+                            this.orionConnectorService.login(this.username, this.password);
                         },
                         () => {},
                     );
@@ -194,12 +194,12 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         return this.accountService.isAuthenticated();
     }
 
-    inputChange($event: any) {
-        if ($event.target && $event.target.name === 'username') {
-            this.username = $event.target.value;
+    inputChange(event: any) {
+        if (event.target && event.target.name === 'username') {
+            this.username = event.target.value;
         }
-        if ($event.target && $event.target.name === 'password') {
-            this.password = $event.target.value;
+        if (event.target && event.target.name === 'password') {
+            this.password = event.target.value;
         }
     }
 }

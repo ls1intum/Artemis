@@ -75,7 +75,7 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
 Within the component html files, we encourage the use of [bootstrap css](https://getbootstrap.com/).
 
 Encouraged html styling:
-`<div class="d-flex ml-2">some content</div>`
+`<div class="d-flex ms-2">some content</div>`
 
 ## Testing
 

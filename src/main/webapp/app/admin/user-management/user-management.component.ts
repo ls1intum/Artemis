@@ -19,7 +19,7 @@ import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
     templateUrl: './user-management.component.html',
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-    search = new Subject<string>();
+    search = new Subject<void>();
     loadingSearchResult = false;
     currentAccount?: User;
     users: User[];
@@ -121,7 +121,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param item current user
      */
     trackIdentity(index: number, item: User) {
-        return item.id;
+        return item.id ?? -1;
     }
 
     /**

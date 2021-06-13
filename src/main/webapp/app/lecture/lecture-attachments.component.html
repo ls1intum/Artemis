@@ -70,9 +70,9 @@
                                     <td>
                                         {{ attachment.version }}
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         <div class="flex-btn-group-container">
-                                            <button type="submit" (click)="editAttachment(attachment)" class="btn btn-primary btn-sm mr-1">
+                                            <button type="submit" (click)="editAttachment(attachment)" class="btn btn-primary btn-sm me-1">
                                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </button>
@@ -116,9 +116,6 @@
                                         class="custom-file-input"
                                         (change)="setLectureAttachment($event)"
                                     />
-                                    <label class="custom-file-label overflow-ellipsis" for="lectureAttachmentInput{{ attachmentToBeCreated.name }}">{{
-                                        attachmentToBeCreated.link
-                                    }}</label>
                                 </div>
                             </div>
                             <ng-container *ngIf="erroredFile">
@@ -150,7 +147,7 @@
 
                 <div class="row">
                     <div class="col-12">
-                        <button id="upload-attachment" type="submit" [disabled]="isUploadingAttachment" (click)="uploadLectureAttachmentAndSave()" class="btn btn-primary mr-2">
+                        <button id="upload-attachment" type="submit" [disabled]="isUploadingAttachment" (click)="uploadLectureAttachmentAndSave()" class="btn btn-primary me-2">
                             <fa-icon [icon]="'paperclip'"></fa-icon>&nbsp;
                             <span *ngIf="isUploadingAttachment" jhiTranslate="artemisApp.lecture.attachments.uploading"></span>
                             <span *ngIf="!isUploadingAttachment" jhiTranslate="entity.action.saveAttachment"></span>

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -485,7 +487,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
         // using start date minus 5 minutes here because unlocking will take some time (it is invoked synchronously).
-        return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(5);
+        return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }
 
     private List<ProgrammingExerciseStudentParticipation> removeWritePermissionsFromAllStudentRepositories(Long programmingExerciseId,
