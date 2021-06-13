@@ -10,6 +10,7 @@ $background-color: #353d47;
 
 .labels {
     color: $background-color;
+
     &.answer-approved {
         color: green;
     }
