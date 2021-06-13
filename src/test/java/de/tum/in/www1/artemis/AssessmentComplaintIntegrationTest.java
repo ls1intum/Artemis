@@ -689,7 +689,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
-        Result result = storedComplaint.get().getResult();
         // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
     }
