@@ -36,6 +36,7 @@
                 "studentName": "Name",
                 "actions": "Aktionen",
                 "title": "Liste der Beschwerden",
+                "dateAndTime": "Datum und Uhrzeit",
                 "status": "Status",
                 "noReply": "Noch keine Antwort",
                 "accepted": "Angenommen",
