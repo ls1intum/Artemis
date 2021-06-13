@@ -179,7 +179,6 @@ public class ComplaintResource {
         }
         // hide participation + exercise + course which might include sensitive information
         complaint.getResult().setParticipation(null);
-        complaint.setResultBeforeComplaint(null);
         return ResponseEntity.ok(complaint);
     }
 
@@ -401,7 +400,6 @@ public class ComplaintResource {
 
     private void filterOutStudentFromComplaint(Complaint complaint) {
         complaint.setParticipant(null);
-        complaint.setResultBeforeComplaint(null);
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
             StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
@@ -457,8 +455,6 @@ public class ComplaintResource {
             submissionWithOnlyId.setId(originalSubmission.getId());
             complaint.getResult().setSubmission(submissionWithOnlyId);
         }
-
-        complaint.setResultBeforeComplaint(null);
     }
 
     private void filterOutUselessDataFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
@@ -489,7 +485,6 @@ public class ComplaintResource {
                 studentParticipation.setParticipant(null);
                 studentParticipation.setExercise(null);
                 complaint.setParticipant(null);
-                complaint.setResultBeforeComplaint(null);
 
                 responseComplaints.add(complaint);
             }

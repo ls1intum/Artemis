@@ -91,10 +91,10 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
-        Result resultBeforeComplaint = mapper.readValue(storedComplaint.get().getResultBeforeComplaint(), Result.class);
+        Result result = storedComplaint.get().getResult();
         // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
-        assertThat(resultBeforeComplaint).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(storedResult, "participation", "submission");
+        assertThat(result).as("result which is complained about").isEqualToIgnoringGivenFields(storedResult, "participation", "submission");
     }
 
     @Test
@@ -195,7 +195,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is not accepted").isFalse();
         Result storedResult = resultRepo.findWithEagerSubmissionAndFeedbackAndAssessorById(modelingAssessment.getId()).get();
-        database.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), storedResult.getFeedbacks(), FeedbackType.MANUAL);
+        Result updatedResult = storedResult.getSubmission().getLatestResult();
+        database.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult).as("only feedbacks are changed in the result").isEqualToIgnoringGivenFields(modelingAssessment, "feedbacks");
     }
 
@@ -216,11 +217,11 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
-        Result resultBeforeComplaint = mapper.readValue(storedComplaint.getResultBeforeComplaint(), Result.class);
+        Result result = storedComplaint.getResult();
         // set dates to UTC and round to milliseconds for comparison
-        resultBeforeComplaint.setCompletionDate(ZonedDateTime.ofInstant(resultBeforeComplaint.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        result.setCompletionDate(ZonedDateTime.ofInstant(result.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(resultBeforeComplaint).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(modelingAssessment, "participation", "submission");
+        assertThat(result).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(modelingAssessment, "participation", "submission");
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
         database.checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
@@ -260,7 +261,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getParticipation()).as("Complaint should not contain participation").isNull();
-        assertThat(received.getResultBeforeComplaint()).as("Complaint should not contain old result").isNull();
     }
 
     @Test
@@ -345,7 +345,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(participation.getStudent()).as("No student information").isEmpty();
             assertThat(dto.complaint().getParticipant()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
-            assertThat(dto.complaint().getResultBeforeComplaint()).as("No old result information").isNull();
             assertThat(((StudentParticipation) dto.submission().getParticipation()).getParticipant())
                 .as("No student information in participation").isNull();
             assertThat(dto.submission().getParticipation().getExercise())
@@ -386,7 +385,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         assertThat(complaints.size()).isEqualTo(1);
         complaints.forEach(compl -> {
             assertThat(compl.getResult()).isEqualTo(complaint.getResult());
-            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
             assertThat(compl.getParticipant()).as("No student information").isNull();
         });
     }
@@ -425,7 +423,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         Complaint receivedComplaint = receivedComplaintResponse.getComplaint();
         assertThat(receivedComplaint.getParticipant()).as("student is not set").isNull();
-        assertThat(receivedComplaint.getResultBeforeComplaint()).as("result before complaint is not set as it contains sensitive data").isNull();
         assertThat(receivedComplaint.getResult().getParticipation()).as("participation is not set").isNull();
         assertThat(receivedComplaint.getResult().getSubmission()).as("submission is not set").isNull();
     }
@@ -448,7 +445,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         Complaint receivedComplaint = receivedComplaintResponse.getComplaint();
         assertThat(receivedComplaint.getParticipant()).as("student is set").isNotNull();
-        assertThat(receivedComplaint.getResultBeforeComplaint()).as("result before complaint is not set as it contains sensitive data").isNull();
         assertThat(receivedComplaint.getResult().getParticipation()).as("participation is not set").isNull();
         assertThat(receivedComplaint.getResult().getSubmission()).as("submission is not set").isNull();
     }
@@ -556,7 +552,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     private void checkIfNoStudentInformationPresent(Complaint receivedComplaint) {
         assertThat(receivedComplaint.getParticipant()).as("Student should not be contained").isNull();
-        assertThat(receivedComplaint.getResultBeforeComplaint()).as("No old result info").isNull();
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
             assertThat(((StudentParticipation) receivedComplaint.getResult().getParticipation()).getStudent()).as("Result in complaint shouldn't contain student participation")
@@ -649,7 +644,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(participation.getStudent()).as("No student information").isEmpty();
             assertThat(compl.getParticipant()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
-            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
         });
     }
 
@@ -696,10 +690,10 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
-        Result resultBeforeComplaint = mapper.readValue(storedComplaint.get().getResultBeforeComplaint(), Result.class);
+        Result result = storedComplaint.get().getResult();
         // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
-        assertThat(resultBeforeComplaint).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(storedResult, "participation", "submission");
+        assertThat(result).as("result before complaint is correctly stored").isEqualToIgnoringGivenFields(storedResult, "participation", "submission");
     }
 
     @Test
