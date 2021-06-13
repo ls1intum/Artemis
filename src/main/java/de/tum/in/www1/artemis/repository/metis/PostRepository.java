@@ -23,8 +23,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findPostsByLecture_Id(Long lectureId);
 
-    List<Post> findPostsByCourseWideContextNotNull();
-
     @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
     List<Post> findPostsForCourse(@Param("courseId") Long courseId);
 
