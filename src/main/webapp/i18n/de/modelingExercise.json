@@ -38,7 +38,13 @@
             "clusters": "Clusters",
             "buildClusters": {
                 "action": "Build Clusters",
-                "error": "Building Clusters ist ausgefallen"
+                "error": "Building Clusters ist ausgefallen",
+                "success": "Building Clusters war erfolgreich"
+            },
+            "deleteClusters": {
+                "action": "Delete Clusters",
+                "error": "Clusters löschen ist ausgefallen",
+                "success": "Clusters löschen war erfolgreich"
             }
         }
     }

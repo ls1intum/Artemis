@@ -310,6 +310,24 @@ public class ModelingExerciseResource {
     }
 
     /**
+     * DELETE /modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
+     *
+     * @param exerciseId the id of the modelingExercise to delete clusters and elements
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/modeling-exercises/{exerciseId}/clusters")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteModelingExerciseClustersAndElements(@PathVariable Long exerciseId) {
+        log.info("REST request to delete ModelingExercise : {}", exerciseId);
+        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.ADMIN, modelingExercise, user);
+        modelingExerciseService.deleteClustersAndElements(modelingExercise);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+    }
+
+    /**
      * POST /modeling-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
      * (clustering task) for given exercise id As the clustering can be performed on a different
      * node, this will always return 200, despite an error could occur on the other node.

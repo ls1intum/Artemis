@@ -89,9 +89,9 @@ public class ModelingExerciseService {
 
         for (ModelCluster cluster : clustersToDelete) {
             modelElementRepository.deleteAll(cluster.getModelElements());
+            modelClusterRepository.deleteById(cluster.getId());
         }
 
-        modelClusterRepository.deleteAll(clustersToDelete);
     }
 
 }
