@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.*;
 
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.repository.ModelElementRepository;
 
 /**
  * A ModelingSubmission.
@@ -25,6 +30,10 @@ public class ModelingSubmission extends Submission {
     @Column(name = "explanation_text")
     @Lob
     private String explanationText;
+
+    @Transient
+    @JsonSerialize
+    private Set<ModelElementRepository.ModelElementCount> elementCounts = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -84,5 +93,17 @@ public class ModelingSubmission extends Submission {
         catch (JsonProcessingException ex) {
             return false;
         }
+    }
+
+    public Set<ModelElementRepository.ModelElementCount> getElements() {
+        return elementCounts;
+    }
+
+    public void addElement(ModelElementRepository.ModelElementCount element) {
+        this.elementCounts.add(element);
+    }
+
+    public void setElements(Set<ModelElementRepository.ModelElementCount> elementCounts) {
+        this.elementCounts = elementCounts;
     }
 }

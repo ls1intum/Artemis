@@ -156,6 +156,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
+        console.log('Submission', submission);
         if (this.resultId > 0) {
             this.result = getSubmissionResultById(submission, this.resultId);
             this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;

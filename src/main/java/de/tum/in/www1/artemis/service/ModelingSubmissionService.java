@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,15 +35,18 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ModelElementRepository modelElementRepository;
+
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
-            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ModelElementRepository modelElementRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 courseRepository, participationRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
+        this.modelElementRepository = modelElementRepository;
     }
 
     /**
@@ -147,6 +152,8 @@ public class ModelingSubmissionService extends SubmissionService {
         if (lockSubmission) {
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
                 modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
+                List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(modelingSubmission.getId());
+                modelingSubmission.setElements(new HashSet<>(elementCounts));
             }
             lockSubmission(modelingSubmission, correctionRound);
         }
@@ -187,7 +194,22 @@ public class ModelingSubmissionService extends SubmissionService {
             modelingSubmission.addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
         }
-
         return modelingSubmission;
+    }
+
+    /**
+     * Sets number of potential automatic Feedback's for each block belonging to the `Result`'s submission.
+     * This number determines how many other submissions would be affected if the user were to submit a certain block feedback.
+     * For each TextBlock of the submission, this method finds how many other TextBlocks exist in the same cluster.
+     * This number is represented with the `numberOfAffectedSubmissions` field which is set here for each
+     * TextBlock of this submission
+     *
+     * @param result Result for the Submission acting as a reference for the text submission to be searched.
+     */
+    public void setNumberOfAffectedSubmissionsPerElement(@NotNull Result result) {
+        final ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
+        final long submissionId = modelingSubmission.getId();
+        final var otherElementsInCluster = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submissionId);
+
     }
 }
