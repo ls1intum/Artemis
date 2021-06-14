@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,11 +19,22 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
+import de.tum.in.www1.artemis.repository.QuizQuestionRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.FileResource;
@@ -31,6 +46,9 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private AttachmentRepository attachmentRepo;
+
+    @Autowired
+    private AttachmentUnitRepository attachmentUnitRepository;
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
@@ -184,7 +202,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment_mimeType() throws Exception {
-        // add a new file type to allow to check the mime type detection in FileResource with an exotic extension
+        // add a new file type to allow to check the mime type detection in FileResource
+        // with an exotic extension
         fileResource.addAllowedFileExtension("exotic");
 
         String filename = "attachment.exotic";
@@ -283,4 +302,112 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // upload file
         request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
+    public void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
+        // get access token and then send request using the access token
+        String accessToken = request.get("/api/files/attachments/access-token/merge-pdf", HttpStatus.OK, String.class);
+        request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf?access_token=" + accessToken, HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
+    public void testGetLecturePdfAttachmentsMerged_InvalidToken() throws Exception {
+        Long lectureId = createLectureWithLectureUnits(HttpStatus.CREATED);
+
+        // send request using the access token with invalid token
+        request.get("/api/files/attachments/lecture/" + lectureId + "/merge-pdf?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
+    public void testGetLecturePdfAttachmentsMerged() throws Exception {
+        Long lectureId = createLectureWithLectureUnits(HttpStatus.CREATED);
+
+        // get access token and then send request using the access token
+        String accessToken = request.get("/api/files/attachments/access-token/merge-pdf", HttpStatus.OK, String.class);
+        byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lectureId + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
+
+        assertThat(receivedFile).isNotEmpty();
+        PDDocument mergedDoc = PDDocument.load(receivedFile);
+        assertEquals(5, mergedDoc.getNumberOfPages());
+    }
+
+    public Long createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+
+        lecture.setTitle("Test title");
+        lecture.setDescription("Test");
+        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
+        lectureRepo.save(lecture);
+
+        // create pdf file 1
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PDDocument doc1 = new PDDocument();
+        doc1.addPage(new PDPage());
+        doc1.addPage(new PDPage());
+        doc1.addPage(new PDPage());
+        doc1.save(outputStream);
+        doc1.close();
+
+        Long lectureId = lecture.getId();
+        MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
+        addLectureUnitToLecture(file1, lectureId, expectedStatus);
+
+        // create image file
+        MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
+        addLectureUnitToLecture(file2, lectureId, expectedStatus);
+
+        // create pdf file 2
+        outputStream = new ByteArrayOutputStream();
+        try (PDDocument doc2 = new PDDocument()) {
+            doc2.addPage(new PDPage());
+            doc2.addPage(new PDPage());
+            doc2.save(outputStream);
+        }
+        MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
+        addLectureUnitToLecture(file3, lectureId, expectedStatus);
+
+        return lectureId;
+    }
+
+    private void addLectureUnitToLecture(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
+        Lecture lecture = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).get();
+
+        Attachment attachment = new Attachment();
+        attachment.setName("Attachment");
+        attachment.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        attachment.setAttachmentType(AttachmentType.FILE);
+        attachment.setUploadDate(ZonedDateTime.now().minusHours(1));
+        attachment = attachmentRepo.save(attachment);
+
+        AttachmentUnit attachmentUnit = ModelFactory.generateAttachmentUnit(ZonedDateTime.now(), lecture);
+        attachmentUnit.setAttachment(attachment);
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+
+        // upload file
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
+        if (expectedStatus != HttpStatus.CREATED) {
+            return;
+        }
+
+        String responsePath = response.get("path").asText();
+        // move file from temp folder to correct folder
+        var targetFolder = Paths.get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
+
+        fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
+        var attachmentPath = targetFolder + "/" + file.getOriginalFilename();
+
+        attachment.setLink(attachmentPath);
+        attachment.setAttachmentUnit(attachmentUnit);
+        attachmentRepo.save(attachment);
+
+        attachmentUnit.setAttachment(attachment);
+        attachmentUnitRepository.save(attachmentUnit);
+
+        lecture.addLectureUnit(attachmentUnit);
+        lectureRepo.save(lecture);
+    }
+
 }

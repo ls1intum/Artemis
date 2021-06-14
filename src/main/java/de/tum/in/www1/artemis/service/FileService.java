@@ -2,16 +2,31 @@ package de.tum.in.www1.artemis.service;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -803,18 +818,27 @@ public class FileService implements DisposableBean {
         return path;
     }
 
-    public byte[] mergePdfFiles(List<String> paths) throws IOException {
+    public byte[] mergePdfFiles(List<String> paths) {
+        if (paths == null || paths.size() == 0) {
+            return new byte[0];
+        }
         PDFMergerUtility pdfMerger = new PDFMergerUtility();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        for (String path : paths) {
-            File file = new File(path);
-            if (file.exists()) {
-                pdfMerger.addSource(new File(path));
+        try {
+            for (String path : paths) {
+                File file = new File(path);
+                if (file.exists()) {
+                    pdfMerger.addSource(new File(path));
+                }
             }
+            pdfMerger.setDestinationStream(outputStream);
+            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
         }
-        pdfMerger.setDestinationStream(outputStream);
-        pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+        catch (IOException e) {
+            log.warn("Could not merge files");
+        }
+
         return outputStream.toByteArray();
     }
 }

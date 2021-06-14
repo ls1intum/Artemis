@@ -324,17 +324,12 @@ public class FileResource {
                         .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
                         .toString())
                 .collect(Collectors.toList());
-        try {
-            var file = fileService.mergePdfFiles(attachmentLinks);
-            if (file == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file);
+        var file = fileService.mergePdfFiles(attachmentLinks);
+        System.out.println(file.length);
+        if (file == null || file.length == 0) {
+            return ResponseEntity.notFound().build();
         }
-        catch (IOException ex) {
-            log.error("Failed to merge PDF files for a lecture with id: " + lectureId, ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file);
     }
 
     /**
