@@ -17,6 +17,8 @@
 import './commands';
 // https://github.com/4teamwork/cypress-drag-drop#options adds .drag and .move commands
 import '@4tw/cypress-drag-drop';
+// Imports utility functions
+import './utils';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

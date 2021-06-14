@@ -1,6 +1,5 @@
 /// <reference types="cypress" />
-
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../support/utils';
 
 // Environmental variables
 const adminUsername = Cypress.env('adminUsername');
@@ -13,7 +12,7 @@ if (Cypress.env('isCi')) {
 }
 
 // Common primitives
-const uid = uuidv4().replace(/-/g, '');
+const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
