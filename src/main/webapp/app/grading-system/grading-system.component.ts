@@ -521,9 +521,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep1: GradeStep = {
             gradeName: '5.0',
             lowerBoundPercentage: 0,
-            lowerBoundPoints: 0,
             upperBoundPercentage: 40,
-            upperBoundPoints: 40,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: false,
@@ -531,9 +529,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep2: GradeStep = {
             gradeName: '4.7',
             lowerBoundPercentage: 40,
-            lowerBoundPoints: 40,
             upperBoundPercentage: 45,
-            upperBoundPoints: 45,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: false,
@@ -541,9 +537,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep3: GradeStep = {
             gradeName: '4.3',
             lowerBoundPercentage: 45,
-            lowerBoundPoints: 45,
             upperBoundPercentage: 50,
-            upperBoundPoints: 50,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: false,
@@ -551,9 +545,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep4: GradeStep = {
             gradeName: '4.0',
             lowerBoundPercentage: 50,
-            lowerBoundPoints: 50,
             upperBoundPercentage: 55,
-            upperBoundPoints: 55,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -561,9 +553,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep5: GradeStep = {
             gradeName: '3.7',
             lowerBoundPercentage: 55,
-            lowerBoundPoints: 55,
             upperBoundPercentage: 60,
-            upperBoundPoints: 60,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -571,9 +561,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep6: GradeStep = {
             gradeName: '3.3',
             lowerBoundPercentage: 60,
-            lowerBoundPoints: 60,
             upperBoundPercentage: 65,
-            upperBoundPoints: 65,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -581,9 +569,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep7: GradeStep = {
             gradeName: '3.0',
             lowerBoundPercentage: 65,
-            lowerBoundPoints: 65,
             upperBoundPercentage: 70,
-            upperBoundPoints: 70,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -591,9 +577,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep8: GradeStep = {
             gradeName: '2.7',
             lowerBoundPercentage: 70,
-            lowerBoundPoints: 70,
             upperBoundPercentage: 75,
-            upperBoundPoints: 75,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -601,9 +585,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep9: GradeStep = {
             gradeName: '2.3',
             lowerBoundPercentage: 75,
-            lowerBoundPoints: 75,
             upperBoundPercentage: 80,
-            upperBoundPoints: 80,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -611,9 +593,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep10: GradeStep = {
             gradeName: '2.0',
             lowerBoundPercentage: 80,
-            lowerBoundPoints: 80,
             upperBoundPercentage: 85,
-            upperBoundPoints: 85,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -621,9 +601,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep11: GradeStep = {
             gradeName: '1.7',
             lowerBoundPercentage: 85,
-            lowerBoundPoints: 85,
             upperBoundPercentage: 90,
-            upperBoundPoints: 90,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -631,9 +609,7 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep12: GradeStep = {
             gradeName: '1.3',
             lowerBoundPercentage: 90,
-            lowerBoundPoints: 90,
             upperBoundPercentage: 95,
-            upperBoundPoints: 95,
             lowerBoundInclusive: true,
             upperBoundInclusive: false,
             isPassingGrade: true,
@@ -641,30 +617,33 @@ export class GradingSystemComponent implements OnInit {
         const gradeStep13: GradeStep = {
             gradeName: '1.0',
             lowerBoundPercentage: 95,
-            lowerBoundPoints: 95,
             upperBoundPercentage: 100,
-            upperBoundPoints: 100,
             lowerBoundInclusive: true,
             upperBoundInclusive: true,
             isPassingGrade: true,
         };
+        const gradeSteps = [
+            gradeStep1,
+            gradeStep2,
+            gradeStep3,
+            gradeStep4,
+            gradeStep5,
+            gradeStep6,
+            gradeStep7,
+            gradeStep8,
+            gradeStep9,
+            gradeStep10,
+            gradeStep11,
+            gradeStep12,
+            gradeStep13,
+        ];
+        for (const gradeStep of gradeSteps) {
+            this.setPoints(gradeStep, true);
+            this.setPoints(gradeStep, false);
+        }
         return {
             usesPoints: false,
-            gradeSteps: [
-                gradeStep1,
-                gradeStep2,
-                gradeStep3,
-                gradeStep4,
-                gradeStep5,
-                gradeStep6,
-                gradeStep7,
-                gradeStep8,
-                gradeStep9,
-                gradeStep10,
-                gradeStep11,
-                gradeStep12,
-                gradeStep13,
-            ],
+            gradeSteps,
             gradeType: GradeType.GRADE,
         };
     }
