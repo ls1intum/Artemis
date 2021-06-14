@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -262,8 +263,15 @@ public class ProgrammingExerciseIntegrationServiceTest {
         ObjectId head1 = localGit.getRepository().findRef("HEAD").getObjectId();
         ObjectId head2 = localGit2.getRepository().findRef("HEAD").getObjectId();
         // Return the corresponding head to mock the template
-        when(gitService.getLastCommitHash(repository1.getRemoteRepositoryUrl())).thenReturn(head1);
-        when(gitService.getLastCommitHash(repository2.getRemoteRepositoryUrl())).thenReturn(head2);
+        when(gitService.getLastCommitHash(any())).thenAnswer(args -> {
+            VcsRepositoryUrl url = args.getArgument(0);
+            if (url.equals(repository1.getRemoteRepositoryUrl()))
+                return head1;
+            if (url.equals(repository2.getRemoteRepositoryUrl()))
+                return head2;
+            return fail("Called with " + url);
+        });
+        doNothing().when(gitService).resetToOriginMaster(any());
 
         // Add commit to anonymize
         assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
