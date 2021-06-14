@@ -123,7 +123,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     maxRotation: 0,
                     minRotation: 0,
                 },
-                gridLines: {
+                grid: {
                     display: false,
                 },
             },

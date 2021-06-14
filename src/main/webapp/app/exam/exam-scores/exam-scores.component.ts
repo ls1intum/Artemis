@@ -195,9 +195,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.barChartOptions = {
             responsive: true,
             maintainAspectRatio: false,
-            legend: {
-                align: 'start',
-                position: 'bottom',
+            plugins: {
+                legend: {
+                    align: 'start',
+                    position: 'bottom',
+                },
             },
             scales: {
                 y: {
@@ -219,9 +221,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         text: this.translateService.instant('artemisApp.examScores.xAxes'),
                     },
                 },
-            },
-            hover: {
-                animationDuration: 0,
             },
             animation: {
                 duration: 1,
@@ -345,7 +344,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
 
         if (this.chart) {
-            this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
+            this.chart.options!.scales!.y!.max = this.calculateTickMax();
             this.barChartData[0].data = this.histogramData;
             this.chart.update(0);
         }

@@ -69,8 +69,22 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private createCharts() {
         const self = this;
         this.barChartOptions = {
-            legend: {
-                position: 'bottom',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label(tooltipItem: any) {
+                            if (!self.scoreDistribution) {
+                                return ' 0';
+                            }
+
+                            return ' ' + self.scoreDistribution[tooltipItem.index];
+                        },
+                    },
+                },
             },
             layout: {
                 padding: {
@@ -78,9 +92,6 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                 },
             },
             responsive: true,
-            hover: {
-                animationDuration: 0,
-            },
             animation: {
                 duration: 1,
                 onComplete() {
@@ -99,29 +110,15 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                 },
             },
             scales: {
-                yAxes: [
-                    {
-                        ticks: {
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
-                            stepSize: 20,
-                            callback(value: number) {
-                                return value + '%';
-                            },
+                y: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        callback(value: number) {
+                            return value + '%';
                         },
-                    },
-                ],
-            },
-            tooltips: {
-                enabled: true,
-                callbacks: {
-                    label(tooltipItem: any) {
-                        if (!self.scoreDistribution) {
-                            return ' 0';
-                        }
-
-                        return ' ' + self.scoreDistribution[tooltipItem.index];
                     },
                 },
             },

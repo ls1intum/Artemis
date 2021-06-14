@@ -24,7 +24,7 @@ export class ScoreChartPreset implements ChartPreset {
         this.chart = chart;
         chart.setType('bar');
         chart.setYAxe(0, { stacked: true }, false);
-        chart.setXAxe(0, { stacked: true, ticks: { min: 0, stepSize: 25, suggestedMax: 100, callback: (value: any) => value + '%' } }, false);
+        chart.setXAxe(0, { stacked: true, min: 0, suggestedMax: 100, ticks: { stepSize: 25, callback: (value: any) => value + '%' } }, false);
         chart.setLegend({
             position: 'bottom',
             labels: {

@@ -35,18 +35,22 @@ export function createOptions(dataSetProvider: DataSetProvider, max: number, ste
                 bottom: 30,
             },
         },
-        legend: {
-            display: false,
-        },
-        title: {
-            display: false,
-            text: '',
-            position: 'top',
-            fontSize: 16,
-            padding: 20,
-        },
-        tooltips: {
-            enabled: false,
+        plugins: {
+            legend: {
+                display: false,
+            },
+            title: {
+                display: false,
+                text: '',
+                position: 'top',
+                font: {
+                    size: 16,
+                },
+                padding: 20,
+            },
+            tooltip: {
+                enabled: false,
+            },
         },
         scales: {
             y: {
@@ -69,7 +73,6 @@ export function createOptions(dataSetProvider: DataSetProvider, max: number, ste
                 },
             },
         },
-        hover: { animationDuration: 0 },
         animation: createAnimation(dataSetProvider),
     };
 }

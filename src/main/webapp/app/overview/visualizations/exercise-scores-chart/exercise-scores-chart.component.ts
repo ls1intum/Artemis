@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
-import * as Chart from 'chart.js';
+import Chart from 'chart.js/auto';
 import { ChartDataset, ChartOptions } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
@@ -187,33 +187,35 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
                 }
             }
         },
-        tooltips: {
-            callbacks: {
-                label(tooltipItem: any, data: any) {
-                    let label = data.datasets![tooltipItem.datasetIndex!].label || '';
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label(context) {
+                        let label = context.dataset.label || '';
 
-                    if (label) {
-                        label += ': ';
-                    }
-                    label += Math.round((tooltipItem.yLabel as number) * 100) / 100;
-                    label += ' %';
-                    return label;
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += Math.round((context.parsed.y as number) * 100) / 100;
+                        label += ' %';
+                        return label;
+                    },
+                    footer(context) {
+                        const dataset = context[0].dataset.data;
+                        const exerciseType = (dataset as any).exerciseType;
+                        return [`Exercise Type: ${exerciseType}`];
+                    },
                 },
-                footer(tooltipItem: any, data: any) {
-                    const dataset = data.datasets![tooltipItem[0].datasetIndex!].data![tooltipItem[0].index!];
-                    const exerciseType = (dataset as any).exerciseType;
-                    return [`Exercise Type: ${exerciseType}`];
-                },
+            },
+            title: {
+                display: false,
+            },
+            legend: {
+                position: 'left',
             },
         },
         responsive: true,
         maintainAspectRatio: false,
-        title: {
-            display: false,
-        },
-        legend: {
-            position: 'left',
-        },
         scales: {
             y: {
                 title: {
@@ -242,8 +244,10 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
                     },
                 },
                 ticks: {
-                    autoskip: false,
-                    fontSize: 12,
+                    autoSkip: false,
+                    font: {
+                        size: 12,
+                    },
                     callback(exerciseTitle: string) {
                         if (exerciseTitle.length > 20) {
                             // shorten exercise title if too long (will be displayed in full in tooltip)

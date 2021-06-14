@@ -207,9 +207,6 @@ export class StatisticsGraphComponent implements OnChanges {
                 },
             },
             responsive: true,
-            hover: {
-                animationDuration: 0,
-            },
             animation: {
                 duration: 1,
                 onComplete() {

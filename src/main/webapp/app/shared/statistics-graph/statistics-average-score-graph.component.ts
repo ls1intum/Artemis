@@ -89,9 +89,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 },
             },
             responsive: true,
-            hover: {
-                animationDuration: 0,
-            },
             animation: {
                 duration: 1,
                 onComplete() {
@@ -116,8 +113,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                     max: 100,
                 },
                 x: {
-                    gridLines: {
-                        offsetGridLines: false,
+                    grid: {
+                        offset: false,
                     },
                     ticks: {
                         autoSkip: false,
