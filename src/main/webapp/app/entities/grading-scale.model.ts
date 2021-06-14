@@ -6,15 +6,13 @@ import { Exam } from 'app/entities/exam.model';
 export class GradingScale implements BaseEntity {
     public id?: number;
     public gradeType: GradeType = GradeType.NONE;
-    public usesPoints = false;
     public gradeSteps: GradeStep[];
     public course?: Course;
     public exam?: Exam;
 
-    constructor(gradeType: GradeType = GradeType.GRADE, gradeSteps: GradeStep[] = [], usesPoints = false) {
+    constructor(gradeType: GradeType = GradeType.GRADE, gradeSteps: GradeStep[] = []) {
         this.gradeType = gradeType;
         this.gradeSteps = gradeSteps;
-        this.usesPoints = usesPoints;
     }
 }
 

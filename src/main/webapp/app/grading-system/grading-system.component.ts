@@ -122,7 +122,6 @@ export class GradingSystemComponent implements OnInit {
         this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setInclusivity(this.gradingScale.gradeSteps);
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
-        this.gradingScale.gradeSteps = this.setBounds(this.gradingScale.gradeSteps);
         // new grade steps shouldn't have ids set
         this.gradingScale.gradeSteps.forEach((gradeStep) => {
             gradeStep.id = undefined;
@@ -145,22 +144,6 @@ export class GradingSystemComponent implements OnInit {
                 this.handleSaveObservable(this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale));
             }
         }
-    }
-
-    setBounds(gradeSteps: GradeStep[]): GradeStep[] {
-        if (gradeSteps.length === 0) {
-            return [];
-        }
-        if (this.gradingScale.usesPoints) {
-            const maxPoints = gradeSteps[gradeSteps.length - 1].upperBoundPoints;
-            if (maxPoints && maxPoints > 0) {
-                for (const gradeStep of gradeSteps) {
-                    gradeStep.lowerBoundPercentage = (gradeStep.lowerBoundPoints! / maxPoints) * 100;
-                    gradeStep.upperBoundPercentage = (gradeStep.upperBoundPoints! / maxPoints) * 100;
-                }
-            }
-        }
-        return gradeSteps;
     }
 
     /**
@@ -649,7 +632,6 @@ export class GradingSystemComponent implements OnInit {
             this.setPoints(gradeStep, false);
         }
         return {
-            usesPoints: false,
             gradeSteps,
             gradeType: GradeType.GRADE,
         };

@@ -51,6 +51,7 @@ public class GradingScaleService {
      * - the grade steps set should form a valid and congruent grading scale
      *
      * @param gradeSteps the grade steps to be checked
+     * @param maxPoints the max points of the course/exam
      */
     private void checkGradeStepValidity(Set<GradeStep> gradeSteps, int maxPoints) {
         if (gradeSteps != null && !gradeSteps.isEmpty()) {
@@ -73,6 +74,7 @@ public class GradingScaleService {
      * - the first and the last element should fulfill the boundary conditions (start with 0% and end with 100%)
      *
      * @param gradeSteps the grade steps to be checked
+     * @param maxPoints the max points of the course/exam
      * @return true if the grade steps map to a valid grading scale and false otherwise
      */
     private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps, int maxPoints) {

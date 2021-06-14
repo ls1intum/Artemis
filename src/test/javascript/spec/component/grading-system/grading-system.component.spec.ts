@@ -22,6 +22,8 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { Exam } from 'app/entities/exam.model';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,6 +62,11 @@ describe('Grading System Component', () => {
         isPassingGrade: true,
     };
     const gradeSteps = [gradeStep1, gradeStep2, gradeStep3];
+
+    const exam = new Exam();
+    exam.maxPoints = 100;
+    const course = new Course();
+    course.maxPoints = 100;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -238,7 +245,7 @@ describe('Grading System Component', () => {
         expect(comp.lowerBoundInclusivity).to.be.equal(true);
     });
 
-    it('should not delete non-exisitng grading scale', () => {
+    it('should not delete non-existing grading scale', () => {
         comp.existingGradingScale = false;
         const gradingSystemDeleteForCourseStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForCourse');
         const gradingSystemDeleteForExamStub = sinon.stub(gradingSystemService, 'deleteGradingScaleForExam');
@@ -367,12 +374,32 @@ describe('Grading System Component', () => {
         expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.empty');
     });
 
+    it('should validate invalid grading scale with negative max points', () => {
+        course.maxPoints = -10;
+        comp.course = course;
+        translateStub.returns('negative max points');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('negative max points');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.negativeMaxPoints');
+        course.maxPoints = 100;
+    });
+
     it('should validate invalid grading scale with empty grade step fields correctly', () => {
         comp.gradingScale.gradeSteps[0].gradeName = '';
         translateStub.returns('empty field');
 
         expect(comp.validGradeSteps()).to.be.false;
         expect(comp.invalidGradeStepsMessage).to.be.equal('empty field');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.emptyFields');
+    });
+
+    it('should validate invalid grading scale with empty grade step point fields correctly', () => {
+        comp.course = course;
+        translateStub.returns('empty field for points');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('empty field for points');
         expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.emptyFields');
     });
 
@@ -383,6 +410,27 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).to.be.false;
         expect(comp.invalidGradeStepsMessage).to.be.equal('invalid percentage');
         expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidMinMaxPercentages');
+    });
+
+    it('should validate invalid grading scale with invalid points', () => {
+        comp.course = course;
+        comp.gradingScale.gradeSteps[0].lowerBoundPoints = 0;
+        comp.gradingScale.gradeSteps[0].upperBoundPoints = 120;
+        comp.gradingScale.gradeSteps[1].lowerBoundPoints = 40;
+        comp.gradingScale.gradeSteps[1].upperBoundPoints = 80;
+        comp.gradingScale.gradeSteps[2].lowerBoundPoints = 80;
+        comp.gradingScale.gradeSteps[2].upperBoundPoints = 100;
+        translateStub.returns('invalid points');
+
+        expect(comp.validGradeSteps()).to.be.false;
+        expect(comp.invalidGradeStepsMessage).to.be.equal('invalid points');
+        expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidMinMaxPoints');
+    });
+
+    it('should validate invalid grading scale with set points when all should be undefined', () => {
+        comp.gradingScale.gradeSteps[0].upperBoundPoints = 70;
+
+        expect(comp.validGradeSteps()).to.be.false;
     });
 
     it('should validate invalid grading scale with non-unique grade names', () => {
@@ -460,5 +508,81 @@ describe('Grading System Component', () => {
         expect(comp.validGradeSteps()).to.be.false;
         expect(comp.invalidGradeStepsMessage).to.be.equal('invalid first grade step');
         expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
+    });
+
+    it('should get max points correctly', () => {
+        comp.isExam = true;
+        comp.exam = exam;
+
+        expect(comp.getMaxPoints()).to.equal(100);
+
+        comp.isExam = false;
+        comp.course = course;
+
+        expect(comp.getMaxPoints()).to.equal(100);
+    });
+
+    it('should detect that max points are valid', () => {
+        comp.course = course;
+
+        expect(comp.maxPointsValid()).to.be.true;
+    });
+
+    it('should set points correctly', () => {
+        gradeStep1.lowerBoundPoints = undefined;
+
+        comp.setPoints(gradeStep1, true);
+
+        expect(gradeStep1.lowerBoundPoints).to.be.undefined;
+
+        comp.course = course;
+
+        comp.setPoints(gradeStep1, true);
+
+        expect(gradeStep1.lowerBoundPoints).to.equal(0);
+
+        comp.setPoints(gradeStep1, false);
+
+        expect(gradeStep1.upperBoundPoints).to.equal(40);
+
+        gradeStep1.lowerBoundPoints = undefined;
+        gradeStep1.upperBoundPoints = undefined;
+    });
+
+    it('should set percentages correctly', () => {
+        comp.course = course;
+        gradeStep2.lowerBoundPoints = 40;
+        gradeStep2.upperBoundPoints = 80;
+
+        comp.setPercentage(gradeStep2, true);
+        comp.setPercentage(gradeStep2, false);
+
+        expect(gradeStep2.lowerBoundPercentage).to.equal(40);
+        expect(gradeStep2.upperBoundPercentage).to.equal(80);
+
+        gradeStep2.lowerBoundPoints = undefined;
+        gradeStep2.upperBoundPoints = undefined;
+    });
+
+    it('should set all grade step points correctly', () => {
+        comp.course = course;
+
+        comp.onChangeMaxPoints(100);
+
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).to.equal(0);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).to.equal(40);
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).to.equal(40);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).to.equal(80);
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).to.equal(80);
+        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).to.equal(100);
+
+        comp.onChangeMaxPoints(-10);
+
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).to.be.undefined;
+        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).to.be.undefined;
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).to.be.undefined;
+        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).to.be.undefined;
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).to.be.undefined;
+        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).to.be.undefined;
     });
 });
