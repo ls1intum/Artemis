@@ -103,7 +103,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     autoSaveTimer = 0;
     autoSaveInterval: number;
 
-    private synchronizationAlert$ = new Subject();
+    private synchronizationAlert = new Subject<void>();
 
     private programmingSubmissionSubscriptions: Subscription[] = [];
 
@@ -126,7 +126,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseExerciseService: CourseExerciseService,
     ) {
         // show only one synchronization error every 5s
-        this.errorSubscription = this.synchronizationAlert$.pipe(throttleTime(5000)).subscribe(() => this.alertService.error('artemisApp.examParticipation.saveSubmissionError'));
+        this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
+            this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
+        });
     }
 
     /**
@@ -198,9 +200,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any): void {
+    unloadNotification(event: any): void {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.canDeactivateWarning;
+            event.returnValue = this.canDeactivateWarning;
         }
     }
 
@@ -642,7 +644,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.loggedOut = true;
         } else {
             // show only one error for 5s - see constructor
-            this.synchronizationAlert$.next();
+            this.synchronizationAlert.next();
         }
     }
 

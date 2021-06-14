@@ -5,7 +5,7 @@
         <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
         <a
             *ngIf="course && course.isAtLeastEditor"
-            class="btn btn-primary float-right jh-create-entity create-file-upload-exercise"
+            class="btn btn-primary float-end jh-create-entity create-file-upload-exercise"
             [routerLink]="['/course-management', course.id, 'file-upload-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -54,12 +54,12 @@
                     <td>{{ exerciseService.isIncludedInScore(fileUploadExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ fileUploadExercise.presentationScoreEnabled }}</td>
                     <td>{{ fileUploadExercise.filePattern }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <a
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'scores']"
-                                class="btn btn-info btn-sm mr-1"
+                                class="btn btn-info btn-sm me-1"
                             >
                                 <fa-icon [icon]="'table'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
@@ -67,7 +67,7 @@
                             <a
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'participations']"
-                                class="btn btn-primary btn-sm mr-1"
+                                class="btn btn-primary btn-sm me-1"
                             >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
@@ -75,7 +75,7 @@
                             <a
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'submissions']"
-                                class="btn btn-success btn-sm mr-1"
+                                class="btn btn-success btn-sm me-1"
                             >
                                 <fa-icon [icon]="'book'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
@@ -83,7 +83,7 @@
                             <a
                                 *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'teams']"
-                                class="btn btn-primary btn-sm mr-1"
+                                class="btn btn-primary btn-sm me-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
@@ -91,7 +91,7 @@
                             <a
                                 *ngIf="fileUploadExercise.isAtLeastEditor"
                                 [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'edit']"
-                                class="btn btn-warning btn-sm mr-1"
+                                class="btn btn-warning btn-sm me-1"
                             >
                                 <fa-icon [icon]="'wrench'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>

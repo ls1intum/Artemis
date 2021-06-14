@@ -12,7 +12,7 @@ import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DndModule } from 'ng2-dnd';

@@ -13,12 +13,15 @@ jhi-secured-image {
     }
 }
 
+.course-info-bar {
+    margin: 0;
+}
+
 .tab-bar {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     min-height: 60px;
-    margin: 0 -1.25rem;
     $padding-y: 11px;
 
     padding-top: $padding-y;

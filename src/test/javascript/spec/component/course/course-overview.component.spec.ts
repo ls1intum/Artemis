@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { Subject } from 'rxjs';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -39,7 +39,7 @@ import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-ro
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -83,7 +83,7 @@ describe('CourseOverviewComponent', () => {
     params.next({ courseId: course1.id });
     route.setSubject(params);
 
-    beforeEach(async () => {
+    beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MomentModule],
             declarations: [
@@ -120,16 +120,15 @@ describe('CourseOverviewComponent', () => {
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 teamService = TestBed.inject(TeamService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
-                fixture.detectChanges();
             });
-    });
+    }));
 
     afterEach(() => {
         component.ngOnDestroy();
         sinon.restore();
     });
 
-    it('Should call all methods on init', fakeAsync(() => {
+    it('Should call all methods on init', async () => {
         const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = stub(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = stub(component, 'subscribeForQuizChanges');
@@ -138,16 +137,15 @@ describe('CourseOverviewComponent', () => {
         findOneForDashboardStub.returns(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.returns(course1);
 
-        component.ngOnInit();
-        tick(1000);
+        await component.ngOnInit();
 
         expect(getCourseStub).to.have.been.called;
         expect(adjustCourseDescriptionStub).to.have.been.called;
         expect(subscribeForQuizChangesStub).to.have.been.called;
         expect(subscribeToTeamAssignmentUpdatesStub).to.have.been.called;
-    }));
+    });
 
-    it('Should call load Course methods on init', fakeAsync(() => {
+    it('Should call load Course methods on init', async () => {
         const getCourseStub = stub(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = stub(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = stub(component, 'subscribeForQuizChanges');
@@ -155,14 +153,13 @@ describe('CourseOverviewComponent', () => {
         const findOneForDashboardStub = stub(courseService, 'findOneForDashboard');
         findOneForDashboardStub.returns(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
-        component.ngOnInit();
-        tick(600);
+        await component.ngOnInit();
 
         expect(getCourseStub).to.have.been.called;
         expect(adjustCourseDescriptionStub).to.have.been.called;
         expect(subscribeForQuizChangesStub).to.have.been.called;
         expect(subscribeToTeamAssignmentUpdatesStub).to.have.been.called;
-    }));
+    });
 
     it('should set Long Description', () => {
         component.longTextShown = false;

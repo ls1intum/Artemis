@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,6 +34,11 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "exercise", allowSetters = true)
+    @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
+    private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
 
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
@@ -197,6 +200,24 @@ public class ProgrammingExercise extends Exercise {
         return matcher.group(1);
     }
 
+    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
+        return this.auxiliaryRepositories;
+    }
+
+    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+        this.auxiliaryRepositories = auxiliaryRepositories;
+    }
+
+    @JsonIgnore
+    public List<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
+        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toList());
+    }
+
+    public void addAuxiliaryRepository(AuxiliaryRepository repository) {
+        this.getAuxiliaryRepositories().add(repository);
+        repository.setExercise(this);
+    }
+
     @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
     public String getTemplateBuildPlanId() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
@@ -270,14 +291,24 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Generates the repository name for a given repository type.
+     * Generates the full repository name for a given repository type.
      *
      * @param repositoryType The repository type
      * @return The repository name
      */
     public String generateRepositoryName(RepositoryType repositoryType) {
+        return generateRepositoryName(repositoryType.getName());
+    }
+
+    /**
+     * Generates the full repository name for a given repository name.
+     *
+     * @param repositoryName The simple name of the repository
+     * @return The full name of the repository
+     */
+    public String generateRepositoryName(String repositoryName) {
         generateAndSetProjectKey();
-        return this.projectKey.toLowerCase() + "-" + repositoryType.getName();
+        return this.projectKey.toLowerCase() + "-" + repositoryName;
     }
 
     /**
@@ -449,6 +480,7 @@ public class ProgrammingExercise extends Exercise {
             case TEMPLATE -> this.getVcsTemplateRepositoryUrl();
             case SOLUTION -> this.getVcsSolutionRepositoryUrl();
             case TESTS -> this.getVcsTestRepositoryUrl();
+            default -> throw new UnsupportedOperationException("Can retrieve URL for repositorytype " + repositoryType);
         };
     }
 
