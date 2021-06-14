@@ -463,7 +463,10 @@
                                 <td>{{ i + 1 }}</td>
                                 <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [result]="submissionWithComplaint.submission.latestResult" [participation]="submissionWithComplaint.complaint.result!.participation!"></jhi-result>
+                                    <jhi-result
+                                        [result]="submissionWithComplaint.submission.latestResult"
+                                        [participation]="submissionWithComplaint.complaint.result!.participation!"
+                                    ></jhi-result>
                                 </td>
                                 <td>
                                     {{ calculateComplaintStatus(submissionWithComplaint.complaint) }}
