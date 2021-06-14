@@ -24,6 +24,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -127,7 +128,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             flatMap((participation: ProgrammingExerciseStudentParticipation) =>
                 participation.results?.length
-                    ? this.loadResultDetails(participation.results[0]).pipe(
+                    ? this.loadResultDetails(participation, participation.results[0]).pipe(
                           map((feedbacks) => {
                               participation.results![0].feedbacks = feedbacks;
                               return participation;
@@ -143,8 +144,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
      * Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
-    loadResultDetails(result: Result): Observable<Feedback[]> {
-        return this.resultService.getFeedbackDetailsForResult(result.participation!.id!, result.id!).pipe(
+    loadResultDetails(participation: Participation, result: Result): Observable<Feedback[]> {
+        return this.resultService.getFeedbackDetailsForResult(participation.id!, result.id!).pipe(
             map((res) => {
                 return res.body || [];
             }),
