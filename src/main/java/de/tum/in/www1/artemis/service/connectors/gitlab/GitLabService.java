@@ -153,11 +153,6 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    @Override
-    public String getDefaultBranchOfVCS() throws GitLabException {
-        throw new UnsupportedOperationException("Work in progress");
-    }
-
     private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
         final var namespaces = repositoryUrl.getURL().toString().split("/");
         final var last = namespaces.length - 1;

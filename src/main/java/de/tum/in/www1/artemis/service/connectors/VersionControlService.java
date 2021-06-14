@@ -157,11 +157,15 @@ public interface VersionControlService {
     String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws VersionControlException;
 
     /**
-     * Get the default branch of the VCS
+     * Get the default branch of the repository
      *
+     * @param projectKey The project key to which the repository slug belongs
+     * @param repositorySlug The repository slug of the repository for which the default branch shall be retrieved
      * @return the name of the default branch, e.g. 'main'
      */
-    String getDefaultBranchOfVCS() throws VersionControlException;
+    default String getDefaultBranchOfRepository(String projectKey, String repositorySlug) throws VersionControlException {
+        return getDefaultBranchOfRepository(getCloneRepositoryUrl(projectKey, repositorySlug));
+    }
 
     /**
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).

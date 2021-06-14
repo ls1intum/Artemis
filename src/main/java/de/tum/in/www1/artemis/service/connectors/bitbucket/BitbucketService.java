@@ -53,6 +53,9 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
+    @Value("${artemis.version-control.defaultBranch:master}")
+    private String defaultBranch;
+
     private final PasswordService passwordService;
 
     private final UserRepository userRepository;
@@ -373,27 +376,6 @@ public class BitbucketService extends AbstractVersionControlService {
         }
     }
 
-    @Override
-    public String getDefaultBranchOfVCS() throws BitbucketException {
-        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/admin/default-branch";
-
-        try {
-            var response = restTemplate.exchange(getDefaultBranchUrl, HttpMethod.GET, null, BitbucketDefaultBranchDTO.class);
-            var body = response.getBody();
-
-            if (body == null) {
-                log.error("Unable to get default branch of the vcs");
-                throw new BitbucketException("Unable to get default branch of the vcs");
-            }
-
-            return body.getDisplayId();
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Unable to get default branch of the vcs", e);
-            throw new BitbucketException("Unable to get default branch of the vcs", e);
-        }
-    }
-
     /**
      * Set the default branch of the repository
      *
@@ -563,6 +545,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private void createRepository(String projectKey, String repoName) throws BitbucketException {
         final var body = new BitbucketRepositoryDTO(repoName.toLowerCase());
+        body.setDefaultBranch(defaultBranch);
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);
