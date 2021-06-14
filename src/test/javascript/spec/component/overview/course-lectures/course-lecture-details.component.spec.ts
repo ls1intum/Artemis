@@ -74,7 +74,7 @@ const mockActivatedRoute = new MockActivatedRoute({
         params: of({ courseId: '1' }),
     }),
 });
-fdescribe('CourseLectureDetails', () => {
+describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;

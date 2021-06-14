@@ -202,8 +202,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment_mimeType() throws Exception {
-        // add a new file type to allow to check the mime type detection in FileResource
-        // with an exotic extension
+        // add a new file type to allow to check the mime type detection in FileResource with an exotic extension
         fileResource.addAllowedFileExtension("exotic");
 
         String filename = "attachment.exotic";
