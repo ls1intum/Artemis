@@ -380,11 +380,11 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         attachment.setReleaseDate(ZonedDateTime.now().minusHours(1));
         attachment.setAttachmentType(AttachmentType.FILE);
         attachment.setUploadDate(ZonedDateTime.now().minusHours(1));
-        attachment = attachmentRepo.save(attachment);
+        attachmentRepo.save(attachment);
 
         AttachmentUnit attachmentUnit = ModelFactory.generateAttachmentUnit(ZonedDateTime.now(), lecture);
         attachmentUnit.setAttachment(attachment);
-        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentUnitRepository.save(attachmentUnit);
 
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
@@ -402,9 +402,6 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         attachment.setLink(attachmentPath);
         attachment.setAttachmentUnit(attachmentUnit);
         attachmentRepo.save(attachment);
-
-        attachmentUnit.setAttachment(attachment);
-        attachmentUnitRepository.save(attachmentUnit);
 
         lecture.addLectureUnit(attachmentUnit);
         lectureRepo.save(lecture);
