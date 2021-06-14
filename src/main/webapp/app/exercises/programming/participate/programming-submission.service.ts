@@ -681,7 +681,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission) => {
             this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).subscribe((response) => {
                 const reader = new FileReader();
-                reader.readAsDataURL(response.body!);
                 reader.onloadend = () => {
                     const result = reader.result as string;
                     // remove prefix
@@ -691,6 +690,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 reader.onerror = () => {
                     this.jhiAlertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');
                 };
+                reader.readAsDataURL(response.body!);
             });
         });
     }
