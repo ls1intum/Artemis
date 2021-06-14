@@ -253,16 +253,17 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     public void textExportSubmissionsByParticipationIds() throws Exception {
-        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), new VcsRepositoryUrl("url1"));
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), new VcsRepositoryUrl("url2"));
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
         // Mock and pretend first commit is template commit
         ObjectId head1 = localGit.getRepository().findRef("HEAD").getObjectId();
         ObjectId head2 = localGit2.getRepository().findRef("HEAD").getObjectId();
-        // Each head has to be returned twice, once for combineStudentCommits and once for anonymizeStudentCommits
-        when(gitService.getLastCommitHash(any())).thenReturn(head1, head1, head2, head2).thenCallRealMethod();
+        // Return the corresponding head to mock the template
+        when(gitService.getLastCommitHash(repository1.getRemoteRepositoryUrl())).thenReturn(head1);
+        when(gitService.getLastCommitHash(repository2.getRemoteRepositoryUrl())).thenReturn(head2);
 
         // Add commit to anonymize
         assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
