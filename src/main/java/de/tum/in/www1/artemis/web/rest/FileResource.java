@@ -298,12 +298,11 @@ public class FileResource {
     }
 
     /**
-     * GET /files/course/icons/:lectureId/merge-pdf : Get the lecture attachment
+     * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units PDF attachments merged
      *
-     * @param lectureId ID of the lecture, the attachment belongs to
-     * @param filename  the filename of the file
+     * @param lectureId ID of the lecture, the lecture units belongs to
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The merged pdf file, 403 if the logged in user is not allowed to access it, or 404 if the files to be merged doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
     @PreAuthorize("permitAll()")
@@ -325,7 +324,6 @@ public class FileResource {
                         .toString())
                 .collect(Collectors.toList());
         var file = fileService.mergePdfFiles(attachmentLinks);
-        System.out.println(file.length);
         if (file == null || file.length == 0) {
             return ResponseEntity.notFound().build();
         }
