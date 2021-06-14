@@ -253,8 +253,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
     }
 
     public void textExportSubmissionsByParticipationIds() throws Exception {
-        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), new VcsRepositoryUrl("url1"));
-        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), new VcsRepositoryUrl("url2"));
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), new VcsRepositoryUrl("www.test1.com"));
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), new VcsRepositoryUrl("www.test2.com"));
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
