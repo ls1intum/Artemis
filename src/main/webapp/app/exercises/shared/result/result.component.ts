@@ -422,7 +422,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Returnss true if the specified submission is a programming submissions that has a failed
+     * Returns true if the specified submission is a programming submissions that has a failed
      * build.
      * @param submission the submission
      */
