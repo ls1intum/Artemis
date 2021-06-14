@@ -151,12 +151,28 @@ public class GradeStep extends DomainObject {
      * - the grade name should be set and it shouldn't be empty
      * - both bounds should be between 0 and 100 (both inclusive)
      * - the lower bound should be less than or equal to the upper bound
+     * - if max points exist, the point values should be set, with similar logic as the percentages
      *
+     * @param maxPoints the max points for the course/exam
      * @return true if all conditions are true and false otherwise
      */
-    public boolean checkValidity() {
+    public boolean checkValidity(int maxPoints) {
+        boolean validPoints = true;
+        boolean validPercentageToPointsConversion = true;
+        // if max points exists
+        if (maxPoints > 0) {
+            // points are between 0 and max points and the lower bound is smaller than the upper bound
+            validPoints = lowerBoundPoints != null && lowerBoundPoints >= 0 && upperBoundPoints != null && upperBoundPoints <= maxPoints && lowerBoundPoints < upperBoundPoints;
+            double epsilon = 0.01d;
+            double convertedLowerBound = (lowerBoundPercentage * maxPoints) / 100;
+            double convertedUpperBound = (upperBoundPercentage * maxPoints) / 100;
+            // lower and upper bound points are proportionally converted based on the max points and the percentage values
+            validPercentageToPointsConversion = Precision.equals(convertedLowerBound, lowerBoundPoints, epsilon)
+                    && Precision.equals(convertedUpperBound, upperBoundPoints, epsilon);
+        }
         boolean validOrder = lowerBoundPercentage < upperBoundPercentage || lowerBoundPercentage == upperBoundPercentage && lowerBoundInclusive && upperBoundInclusive;
-        return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder && upperBoundPercentage <= 100;
+        return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder && upperBoundPercentage <= 100 && validPoints
+                && validPercentageToPointsConversion;
     }
 
     /**

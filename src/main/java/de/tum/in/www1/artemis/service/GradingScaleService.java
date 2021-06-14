@@ -25,7 +25,7 @@ public class GradingScaleService {
     /**
      * Saves a grading scale to the database if it is valid
      * - grading scale can't have both course and exam set
-     * - other checks performed in {@link GradingScaleService#checkGradeStepValidity(Set)}
+     * - other checks performed in {@link GradingScaleService#checkGradeStepValidity(Set, int)}
      *
      * @param gradingScale the grading scale to be saved
      * @return the saved grading scale
@@ -34,8 +34,10 @@ public class GradingScaleService {
         if (gradingScale.getCourse() != null && gradingScale.getExam() != null) {
             throw new BadRequestAlertException("Grading scales can't belong both to a course and an exam", "gradingScale", "gradingScaleBelongsToCourseAndExam");
         }
+        boolean isExam = gradingScale.getCourse() == null;
+        int maxPoints = isExam ? gradingScale.getExam().getMaxPoints() : gradingScale.getCourse().getMaxPoints();
         Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
-        checkGradeStepValidity(gradeSteps);
+        checkGradeStepValidity(gradeSteps, maxPoints);
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(gradingScale);
         }
@@ -50,12 +52,12 @@ public class GradingScaleService {
      *
      * @param gradeSteps the grade steps to be checked
      */
-    private void checkGradeStepValidity(Set<GradeStep> gradeSteps) {
+    private void checkGradeStepValidity(Set<GradeStep> gradeSteps, int maxPoints) {
         if (gradeSteps != null && !gradeSteps.isEmpty()) {
-            if (!gradeSteps.stream().allMatch(GradeStep::checkValidity)) {
+            if (!gradeSteps.stream().allMatch((gradeStep -> gradeStep.checkValidity(maxPoints)))) {
                 throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidGradeStepFormat");
             }
-            else if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
+            else if (!gradeStepSetMapsToValidGradingScale(gradeSteps, maxPoints)) {
                 throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidGradeStepAdjacency");
             }
         }
@@ -73,7 +75,7 @@ public class GradingScaleService {
      * @param gradeSteps the grade steps to be checked
      * @return true if the grade steps map to a valid grading scale and false otherwise
      */
-    private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps) {
+    private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps, int maxPoints) {
         // all grade steps should have distinct names
         if (gradeSteps.stream().map(GradeStep::getGradeName).distinct().count() != gradeSteps.size()) {
             return false;
@@ -87,6 +89,13 @@ public class GradingScaleService {
         // last step should end with and include 100
         boolean validLastElement = sortedGradeSteps.get(sortedGradeSteps.size() - 1).isUpperBoundInclusive()
                 && sortedGradeSteps.get(sortedGradeSteps.size() - 1).getUpperBoundPercentage() == 100;
+        // if max points are set
+        if (maxPoints > 0) {
+            // first step's points should start at 0
+            validFirstElement = validFirstElement && sortedGradeSteps.get(0).getLowerBoundPoints() == 0;
+            // last step's points should end at max points
+            validLastElement = validLastElement && sortedGradeSteps.get(sortedGradeSteps.size() - 1).getUpperBoundPoints() == maxPoints;
+        }
         return validAdjacency && validFirstElement && validLastElement;
     }
 }

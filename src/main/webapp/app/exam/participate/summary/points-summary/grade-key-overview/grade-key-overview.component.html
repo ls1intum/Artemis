@@ -18,7 +18,7 @@
                             }}{{ gradeStep.upperBoundInclusive ? ']' : ')' }}
                         </td>
                         <td *ngIf="hasPointsSet()">
-                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ gradeStep.lowerBoundPoints }} - {{ gradeStep.upperBoundPoints
+                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ round(gradeStep.lowerBoundPoints) }} - {{ round(gradeStep.upperBoundPoints)
                             }}{{ gradeStep.upperBoundInclusive ? ']' : ')' }}
                         </td>
                     </tr>

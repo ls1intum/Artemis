@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
@@ -21,6 +21,9 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-course-update',
@@ -47,6 +50,7 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
+    gradingScaleExists = false;
 
     constructor(
         private courseService: CourseManagementService,
@@ -57,6 +61,7 @@ export class CourseUpdateComponent implements OnInit {
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
+        private gradingSystemService: GradingSystemService,
     ) {}
 
     ngOnInit() {
@@ -74,6 +79,18 @@ export class CourseUpdateComponent implements OnInit {
                 this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             }
+            this.gradingSystemService
+                .findGradingScaleForCourse(course.id)
+                .pipe(
+                    catchError(() => {
+                        return of(new HttpResponse<GradingScale>({ status: 404 }));
+                    }),
+                )
+                .subscribe((gradingScaleResponse) => {
+                    if (gradingScaleResponse.status !== 404) {
+                        this.gradingScaleExists = true;
+                    }
+                });
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

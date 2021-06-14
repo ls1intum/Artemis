@@ -237,7 +237,10 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "studentReviewEnabled": "Klausureinsicht ist offen",
-            "maxPoints": "Anzahl an erreichbaren Punkten",
+            "maxPoints": {
+                "title": "Anzahl an erreichbaren Punkten",
+                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert, so dass die Punktwerte für die Notenstufen weiterhin den Prozentsätzen entsprechen, angepasst an den neuen maximalen Punktwert"
+            },
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",

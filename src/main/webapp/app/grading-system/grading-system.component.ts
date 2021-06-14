@@ -166,8 +166,10 @@ export class GradingSystemComponent implements OnInit {
     /**
      * Checks if the currently entered grade steps are valid based on multiple criteria:
      * - there must be at least one grade step
+     * - if max points are defined, they should be at least 0
      * - all fields must be filled out
      * - the percentage values must lie between 0 and 100 (both inclusive)
+     * - if max points are defined, all points values must be between 0 and the max points (both inclusive)
      * - all grade names must be unique
      * - the first passing must be set if the scale is of GRADE type
      * - the bonus points are at least 0 if the scale is of BONUS type
@@ -180,6 +182,7 @@ export class GradingSystemComponent implements OnInit {
             this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.empty');
             return false;
         }
+        // check if max points are at least 0, if they are defined
         if (this.getMaxPoints() != undefined && this.getMaxPoints()! < 0) {
             this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.negativeMaxPoints');
             return false;
@@ -202,6 +205,7 @@ export class GradingSystemComponent implements OnInit {
                 return false;
             }
         }
+        // check if any of the fields have invalid points
         if (this.maxPointsValid()) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 if (gradeStep.lowerBoundPoints! < 0 || gradeStep.upperBoundPoints! > this.getMaxPoints()! || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
@@ -289,14 +293,26 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Determines if the max points for the course/exam are valid
+     */
     maxPointsValid(): boolean {
         return this.getMaxPoints() != undefined && this.getMaxPoints()! > 0;
     }
 
+    /**
+     * Gets the max points for the course/exam
+     */
     getMaxPoints() {
         return this.isExam ? this.exam?.maxPoints : this.course?.maxPoints;
     }
 
+    /**
+     * Sets the percentage value of a grade step for one of its bounds
+     *
+     * @param gradeStep the grade step
+     * @param lowerBound the bound
+     */
     setPercentage(gradeStep: GradeStep, lowerBound: boolean) {
         const maxPoints = this.getMaxPoints();
         if (lowerBound) {
@@ -306,6 +322,13 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Sets the absolute points value of a grade step for one of its bounds.
+     * Sets the value only if the course/exam has max points set
+     *
+     * @param gradeStep the grade step
+     * @param lowerBound the bound
+     */
     setPoints(gradeStep: GradeStep, lowerBound: boolean): void {
         const maxPoints = this.getMaxPoints();
         if (!maxPoints) {
@@ -319,7 +342,13 @@ export class GradingSystemComponent implements OnInit {
         }
     }
 
+    /**
+     * Recalculates both point bounds of all grade steps in the grading scale based on the new max points value
+     *
+     * @param maxPoints
+     */
     onChangeMaxPoints(maxPoints?: number): void {
+        // if max points aren't defined, the grade step point bounds should also be undefined
         if (maxPoints == undefined) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 gradeStep.lowerBoundPoints = undefined;
