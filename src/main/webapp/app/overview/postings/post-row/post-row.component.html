@@ -1,5 +1,5 @@
 <!-- unexpanded answers -->
-<div class="row mb-2 clickable post-row" *ngIf="!isExpanded">
+<div class="row mb-2 post-row" *ngIf="!isExpanded">
     <div class="col-12">
         <jhi-post [post]="post" [user]="user" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" (interactPost)="interactPost($event)"></jhi-post>
     </div>
@@ -7,17 +7,15 @@
         <div class="row">
             <div class="col-auto answer-posts-line p-0"></div>
             <div class="col" *ngIf="post.answers && post.answers.length !== 0">
-                <div class="row clickable mb-1" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | artemisTranslate" (click)="isExpanded = true">
-                    <div class="col-auto ps-0">
-                        <span class="posting-subtitle">{{
+                <div class="row align-items-center justify-content-center mb-2" (click)="isExpanded = true">
+                    <div class="col line"></div>
+                    <div class="col-auto">
+                        <span class="posting-subtitle m-2">{{
                             'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | artemisTranslate: { count: post.answers ? post.answers.length : 0 }
                         }}</span>
-                    </div>
-                    <div class="col px-0 line"></div>
-                    <div class="col-auto">
                         <fa-icon class="clickable" [icon]="'angle-down'"></fa-icon>
                     </div>
-                    <div class="col ps-0 line"></div>
+                    <div class="col line"></div>
                 </div>
                 <!-- new answer -->
                 <div class="row my-2" *ngIf="!isAnswerMode">
@@ -71,20 +69,13 @@
             <div class="col-auto answer-posts-line p-0"></div>
             <div class="col">
                 <!-- hide answers -->
-                <div
-                    class="row clickable mb-1"
-                    *ngIf="isExpanded && post.answers && post.answers.length !== 0"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | artemisTranslate"
-                    (click)="isExpanded = false"
-                >
-                    <div class="col-auto ps-0">
-                        <span class="posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hide' | artemisTranslate }}</span>
-                    </div>
-                    <div class="col px-0 line"></div>
+                <div class="row align-items-center justify-content-center mb-2" *ngIf="isExpanded && post.answers && post.answers.length !== 0" (click)="isExpanded = false">
+                    <div class="col line"></div>
                     <div class="col-auto">
+                        <span class="posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | artemisTranslate }}</span>
                         <fa-icon class="clickable" [icon]="'angle-up'"></fa-icon>
                     </div>
-                    <div class="col ps-0 line"></div>
+                    <div class="col line"></div>
                 </div>
                 <div class="row m-0">
                     <div class="col-12 px-0">
