@@ -24,6 +24,7 @@ const beVisible = 'be.visible';
 // Selectors
 const fieldTitle = '#field_title';
 const shortName = '#field_shortName';
+const saveEntity = '#save-entity';
 const datepickerButtons = '.owl-dt-container-control-button';
 const exerciseRow = '.course-exercise-row';
 const modalDeleteButton = '.modal-footer > .btn-danger';
@@ -36,6 +37,7 @@ describe('Programming exercise', () => {
         cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
         cy.intercept('POST', '/api/courses').as('createCourseQuery');
         cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExerciseQuery');
+        cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
     });
 
     it('Creates a new course, participates in it and deletes it afterwards', function () {
@@ -125,7 +127,8 @@ function startParticipationInProgrammingExercise() {
     cy.url().should('include', exercisePath);
     cy.get(exerciseRow).contains(programmingExerciseName).should(beVisible);
     cy.get(exerciseRow).find('.start-exercise').click();
-    cy.get(exerciseRow).find('[buttonicon="folder-open"]', { timeout: 20000 }).click();
+    cy.wait('@participateInExerciseQuery');
+    cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
 }
 
 /**
@@ -164,7 +167,7 @@ function createProgrammingExercise() {
     cy.get('#field_points').type('100');
     cy.get('#field_allowOnlineEditor').check();
 
-    cy.get('[type="submit"]').click();
+    cy.get(saveEntity).click();
     cy.wait('@createProgrammingExerciseQuery');
     // Creating a programming exercise takes a lot of time, so we increase the timeout here
     cy.url().should('include', exercisePath);
@@ -183,7 +186,7 @@ function createTestCourse() {
     cy.get(shortName).type(courseShortName);
     cy.get('#field_testCourse').check();
     cy.get('#field_customizeGroupNamesEnabled').uncheck();
-    cy.get('#save-entity').click();
+    cy.get(saveEntity).click();
     cy.wait('@createCourseQuery');
 }
 
