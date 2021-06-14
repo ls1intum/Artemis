@@ -269,6 +269,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
         localGit.add().addFilepattern(".").call();
         localGit.commit().setMessage("commit").setAuthor("user1", "email1").call();
 
+        System.out.println("Commits before anonymization: ");
+        localGit.log().call().iterator().forEachRemaining(commit -> System.out.println(commit.getCommitTime() + "," + commit.getFullMessage() + "," + commit.getAuthorIdent().getName()));
+
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
@@ -286,6 +289,8 @@ public class ProgrammingExerciseIntegrationServiceTest {
         Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
+            System.out.println("Commits after anonymization: ");
+            downloadedGit.log().call().iterator().forEachRemaining(commit -> System.out.println(commit.getCommitTime() + "," + commit.getFullMessage() + "," + commit.getAuthorIdent().getName()));
             List<RevCommit> commits = new ArrayList<>();
             downloadedGit.log().call().iterator().forEachRemaining(commits::add);
             assertThat(commits.stream().anyMatch(commit -> commit.getAuthorIdent().getName().equals("student"))).isTrue();
