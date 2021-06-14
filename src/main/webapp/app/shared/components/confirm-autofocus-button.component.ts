@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisMarkdownModule } from "app/shared/markdown.module";
 
 @Component({
     templateUrl: './confirm-autofocus-modal.component.html',
@@ -11,7 +12,7 @@ export class ConfirmAutofocusModalComponent {
     translateText: boolean;
     textIsMarkdown: boolean;
 
-    constructor(public modal: NgbActiveModal) {}
+    constructor(public modal: NgbActiveModal, public markdownModule: ArtemisMarkdownModule) { }
 }
 
 @Component({
