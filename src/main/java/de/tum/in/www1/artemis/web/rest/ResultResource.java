@@ -26,8 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -152,17 +151,12 @@ public class ResultResource {
         try {
             planKey = continuousIntegrationService.get().getPlanKey(requestBody);
         }
-        catch (BitbucketException bitbucketException) {
+        catch (ContinuousIntegrationException cISException) {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {} :"
-                    + "BitBucket encountered an Exception while trying to retrieve the build plan ", bitbucketException, requestBody);
+                    + "Your CIS encountered an Exception while trying to retrieve the build plan ", cISException, requestBody);
             return badRequest();
         }
-        catch (JenkinsException jenkinsException) {
-            log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}:"
-                    + " The full name of the Jenkins build plan was malformed!", jenkinsException, requestBody);
-            return badRequest();
-        }
-        catch (Exception ex) {
+        catch (Exception ex) { // Jenkins might still throw a JSONProcsessingException, the method is declared with "throws Exception" so this needs to be here as of rn
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             return badRequest();
         }
