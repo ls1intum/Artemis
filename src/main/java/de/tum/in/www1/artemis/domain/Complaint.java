@@ -42,6 +42,7 @@ public class Complaint extends DomainObject {
     @Deprecated
     @Column(name = "result_before_complaint")
     @Lob
+    @JsonIgnore
     private String resultBeforeComplaint;
 
     @OneToOne(mappedBy = "complaint")
