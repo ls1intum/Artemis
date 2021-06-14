@@ -107,7 +107,9 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // clone the source repo to the target directory
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl);
+            gitService.stageAllChanges(targetRepo);
+            gitService.commitAndPush(targetRepo, "message", null);
+            // gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl);
         }
         catch (InterruptedException | GitAPIException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
