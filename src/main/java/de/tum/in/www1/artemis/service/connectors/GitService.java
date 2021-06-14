@@ -318,6 +318,8 @@ public class GitService {
         return repository;
     }
 
+    // test
+
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      * Saves the repo in the default path
