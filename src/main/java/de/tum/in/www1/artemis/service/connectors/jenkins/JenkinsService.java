@@ -66,8 +66,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        repositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(repositoryURL);
-        testRepositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(testRepositoryURL);
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
     }
 
@@ -105,8 +103,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) {
-        newRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUrl);
-        existingRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUrl);
         jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, ciRepoName, newRepoUrl, existingRepoUrl);
     }
 

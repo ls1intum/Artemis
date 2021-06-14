@@ -66,13 +66,15 @@ public class JenkinsBuildPlanService {
 
     private final JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
+    private final JenkinsInternalUrlService jenkinsInternalUrlService;
+
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
-            JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -80,6 +82,7 @@ public class JenkinsBuildPlanService {
         this.userRepository = userRepository;
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.jenkinsInternalUrlService = jenkinsInternalUrlService;
     }
 
     /**
@@ -90,6 +93,9 @@ public class JenkinsBuildPlanService {
      * @param testRepositoryURL the url of the tests vcs repository
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL) {
+        repositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(repositoryURL);
+        testRepositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(testRepositoryURL);
+
         var programmingLanguage = exercise.getProgrammingLanguage();
         var statisCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
@@ -148,6 +154,9 @@ public class JenkinsBuildPlanService {
      * @param existingRepoUrl the old repository url that will be replaced
      */
     public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String ciRepoName, String newRepoUrl, String existingRepoUrl) {
+        newRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUrl);
+        existingRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUrl);
+
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
         final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
