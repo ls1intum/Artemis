@@ -161,4 +161,19 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
         return save(gradingScale);
     }
 
+    /**
+     * Sets both point bounds of all grade steps in the grading scale to null.
+     * Called in case the max points value of a course/exam has been deleted
+     *
+     * @param gradingScale the grading scale for which we perform the update
+     * @return the updated grading scale
+     */
+    default GradingScale resetAllPoints(GradingScale gradingScale) {
+        for (GradeStep gradeStep : gradingScale.getGradeSteps()) {
+            gradeStep.setLowerBoundPoints(null);
+            gradeStep.setUpperBoundPoints(null);
+        }
+        return save(gradingScale);
+    }
+
 }

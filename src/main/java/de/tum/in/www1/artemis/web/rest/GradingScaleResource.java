@@ -183,7 +183,7 @@ public class GradingScaleResource {
             course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
             courseRepository.save(course);
         }
-        gradingScale.setCourse(oldGradingScale.getCourse());
+        gradingScale.setCourse(course);
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
@@ -209,7 +209,7 @@ public class GradingScaleResource {
             exam.setMaxPoints(gradingScale.getExam().getMaxPoints());
             examRepository.save(exam);
         }
-        gradingScale.setExam(oldGradingScale.getExam());
+        gradingScale.setExam(exam);
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }

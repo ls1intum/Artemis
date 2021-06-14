@@ -223,11 +223,11 @@ public class ExamResource {
         if (updatedMaxPoints < 0) {
             throw new BadRequestAlertException("Max points must be greater than 0", ENTITY_NAME, "invalidMaxPoints", true);
         }
-        else if (updatedMaxPoints == 0) {
-            return;
-        }
         var gradingScale = this.gradingScaleRepository.findByExamId(examId);
-        if (gradingScale.isPresent() && existingMaxPoints != updatedMaxPoints) {
+        if (gradingScale.isPresent() && updatedMaxPoints == 0) {
+            gradingScaleRepository.resetAllPoints(gradingScale.get());
+        }
+        else if (gradingScale.isPresent() && existingMaxPoints != updatedMaxPoints) {
             gradingScaleRepository.setPointsForGradingScale(gradingScale.get(), updatedMaxPoints);
         }
     }

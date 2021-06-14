@@ -213,6 +213,13 @@ export class GradingSystemComponent implements OnInit {
                     return false;
                 }
             }
+        } else {
+            // ensures that all updated have taken place before grade key can be saved, not really an error, therefore no message is necessary
+            for (const gradeStep of this.gradingScale.gradeSteps) {
+                if (gradeStep.lowerBoundPoints != undefined || gradeStep.upperBoundPoints != undefined) {
+                    return false;
+                }
+            }
         }
         if (this.isGradeType()) {
             // check if all grade names are unique if the grading scale is of type GRADE
@@ -349,7 +356,7 @@ export class GradingSystemComponent implements OnInit {
      */
     onChangeMaxPoints(maxPoints?: number): void {
         // if max points aren't defined, the grade step point bounds should also be undefined
-        if (maxPoints == undefined) {
+        if (maxPoints == undefined || maxPoints <= 0) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 gradeStep.lowerBoundPoints = undefined;
                 gradeStep.upperBoundPoints = undefined;

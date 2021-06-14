@@ -15,11 +15,11 @@
         <div class="dropdown-container">
             <div class="form-group">
                 <ng-container *ngIf="course">
-                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.course.maxPoints">Maximum number of points for course</span>
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.course.maxPoints.title">Maximum number of points for course</span>
                     <input type="number" class="form-control" [(ngModel)]="course.maxPoints" min="1" (change)="onChangeMaxPoints(course.maxPoints)" />
                 </ng-container>
                 <ng-container *ngIf="exam">
-                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.examManagement.maxPoints">Maximum number of points for exam</span>
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum number of points for exam</span>
                     <input type="number" class="form-control" [(ngModel)]="exam.maxPoints" min="1" (change)="onChangeMaxPoints(exam.maxPoints)" />
                 </ng-container>
             </div>
