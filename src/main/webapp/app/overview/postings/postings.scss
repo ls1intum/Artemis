@@ -1,6 +1,7 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
 $background-color: #353d47;
+$inactive-icon: rgba(0, 0, 0, 0.4);
 
 .postings-container {
     display: flex;
@@ -17,9 +18,25 @@ $background-color: #353d47;
 }
 
 .action-icon {
-    color: rgba(0, 0, 0, 0.4);
+    color: $inactive-icon;
+
     &.answer-approved {
         color: green;
+    }
+}
+
+.line {
+    width: auto;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.2);
+    content: ' ';
+}
+
+.vote {
+    color: $inactive-icon;
+
+    &.vote-active {
+        color: $background-color;
     }
 }
 
@@ -102,34 +119,10 @@ $background-color: #353d47;
     &.answer-approved {
         color: green;
         background-color: #f2f9f2;
-        border-color: darkgreen;
 
         .posting-content {
             color: initial;
         }
-    }
-}
-
-.line {
-    width: auto;
-    height: 2px;
-    background: rgba(0, 0, 0, 0.1);
-    content: ' ';
-}
-
-.answer-posts-line {
-    height: auto;
-    margin: 0 7px;
-    background: rgba(0, 0, 0, 0.1);
-    width: 2px;
-    content: ' ';
-}
-
-.vote {
-    color: rgba(0, 0, 0, 0.4);
-
-    &.vote-active {
-        color: $background-color;
     }
 }
 

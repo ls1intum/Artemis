@@ -7,7 +7,7 @@
                     <fa-icon [icon]="'comments'" class="labels"></fa-icon>
                     <fa-icon
                         size="xs"
-                        class="me-1 clickable action-icon"
+                        class="clickable action-icon"
                         [class.answer-approved]="answerPost.tutorApproved"
                         *ngIf="isAtLeastTutorInCourse"
                         [ngbTooltip]="(answerPost.tutorApproved ? 'artemisApp.metis.sidebar.unapproveAnswer' : 'artemisApp.metis.sidebar.approveAnswer') | artemisTranslate"
