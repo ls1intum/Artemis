@@ -15,6 +15,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -36,6 +37,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
 
+    saveCommand: SaveExerciseCommand<FileUploadExercise>;
+
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         private modalService: NgbModal,
@@ -46,6 +49,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private router: Router,
     ) {}
+
+    get editType(): EditType {
+        return this.fileUploadExercise.id === undefined ? EditType.CREATE : EditType.UPDATE;
+    }
 
     /**
      * Initializes information relevant to file upload exercise
@@ -71,6 +78,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                 );
             }
+
+            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType);
         });
     }
 
@@ -85,35 +94,14 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (this.fileUploadExercise.gradingInstructionFeedbackUsed) {
-            const ref = this.popupService.checkExerciseBeforeUpdate(this.fileUploadExercise, this.backupExercise);
-            if (!this.modalService.hasOpenModals()) {
-                this.saveExercise();
-            } else {
-                ref.then((reference) => {
-                    reference.componentInstance.confirmed.subscribe(() => {
-                        this.saveExercise();
-                    });
-                });
-            }
-        } else {
-            this.saveExercise();
-        }
-    }
-
-    /**
-     * Creates or updates file upload exercise
-     */
-    saveExercise() {
-        Exercise.sanitize(this.fileUploadExercise);
-
         this.isSaving = true;
-        if (this.fileUploadExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.fileUploadExerciseService.update(this.fileUploadExercise, this.fileUploadExercise.id));
-        } else {
-            this.subscribeToSaveResponse(this.fileUploadExerciseService.create(this.fileUploadExercise));
-        }
+
+        this.saveCommand.save(this.fileUploadExercise).subscribe(
+            () => this.onSaveSuccess(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+        );
     }
+
     /**
      * Validates if the date is correct
      */
@@ -126,13 +114,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.fileUploadExercise.categories = categories;
-    }
-
-    private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
-        );
     }
 
     private onSaveSuccess() {

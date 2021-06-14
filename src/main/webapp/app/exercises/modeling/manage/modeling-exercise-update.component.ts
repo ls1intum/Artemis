@@ -19,7 +19,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
-import { EditType } from 'app/exercises/shared/exercise/exercise-utils';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -49,6 +49,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     // TODO: Melih Oezbeyli(iozbeyli) Make it true after compass hazelcast problem is resolved
     semiAutomaticAssessmentAvailable = false;
+
+    saveCommand: SaveExerciseCommand<ModelingExercise>;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -87,6 +89,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             this.modelingExercise = modelingExercise;
             this.backupExercise = cloneDeep(this.modelingExercise);
             this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
+
+            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType);
         });
 
         this.activatedRoute.url
@@ -167,46 +171,12 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (this.modelingExercise.gradingInstructionFeedbackUsed) {
-            const ref = this.popupService.checkExerciseBeforeUpdate(this.modelingExercise, this.backupExercise);
-            if (!this.modalService.hasOpenModals()) {
-                this.saveExercise();
-            } else {
-                ref.then((reference) => {
-                    reference.componentInstance.confirmed.subscribe(() => {
-                        this.saveExercise();
-                    });
-                });
-            }
-            return;
-        }
-
-        this.saveExercise();
-    }
-
-    /**
-     * Sends a request to either update, create or import a modeling exercise
-     */
-    saveExercise(): void {
-        Exercise.sanitize(this.modelingExercise);
-
         this.isSaving = true;
 
-        switch (this.editType) {
-            case EditType.IMPORT:
-                this.subscribeToSaveResponse(this.modelingExerciseService.import(this.modelingExercise));
-                break;
-            case EditType.CREATE:
-                this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
-                break;
-            case EditType.UPDATE:
-                const requestOptions = {} as any;
-                if (this.notificationText) {
-                    requestOptions.notificationText = this.notificationText;
-                }
-                this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, requestOptions));
-                break;
-        }
+        this.saveCommand.save(this.modelingExercise, this.notificationText).subscribe(
+            (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
+            (res: HttpErrorResponse) => this.onSaveError(res),
+        );
     }
 
     /**
@@ -229,13 +199,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {
-        result.subscribe(
-            (exercise: HttpResponse<ModelingExercise>) => this.onSaveSuccess(exercise.body!.id!),
-            () => this.onSaveError(),
-        );
-    }
-
     private onSaveSuccess(exerciseId: number): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
@@ -252,7 +215,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    private onSaveError(): void {
+    private onSaveError(error: HttpErrorResponse): void {
+        this.jhiAlertService.error(error.message);
         this.isSaving = false;
     }
 

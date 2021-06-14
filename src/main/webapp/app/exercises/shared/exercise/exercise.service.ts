@@ -17,6 +17,12 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
+export interface ExerciseServicable<T> {
+    create(exercise: T): Observable<HttpResponse<T>>;
+    import?(exercise: T): Observable<HttpResponse<T>>;
+    update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';

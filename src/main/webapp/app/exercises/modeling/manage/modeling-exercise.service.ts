@@ -7,7 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { downloadStream } from 'app/shared/util/download.util';
@@ -16,7 +16,7 @@ export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
 @Injectable({ providedIn: 'root' })
-export class ModelingExerciseService {
+export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
     public resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {

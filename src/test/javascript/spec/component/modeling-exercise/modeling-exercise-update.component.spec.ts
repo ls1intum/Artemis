@@ -21,6 +21,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -55,52 +56,62 @@ describe('ModelingExercise Management Update Component', () => {
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new ModelingExercise(UMLDiagramType.ActivityDiagram, undefined, undefined);
-            entity.id = 123;
-            spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.modelingExercise = entity;
-            comp.modelingExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+        describe('new exercise', () => {
+            const course = { id: 1 } as Course;
+            let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.course = course;
 
-            // THEN
-            expect(service.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toEqual(false);
-        }));
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ modelingExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            });
 
-        it('Should call create service on save for new entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.modelingExercise = entity;
-            comp.modelingExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(1000); // simulate async
+            it('Should call create service on save for new entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
-        }));
+                const entity = { ...modelingExercise };
+                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
 
-        it('Should trim the exercise title before saving', fakeAsync(() => {
-            // GIVEN
-            const entity = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            entity.title = 'My Exercise   ';
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.modelingExercise = entity;
-            comp.modelingExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(1000); // simulate async
+                // WHEN
+                comp.save();
+                tick(1000); // simulate async
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(entity.title).toEqual('My Exercise');
-        }));
+                // THEN
+                expect(service.create).toHaveBeenCalledWith(entity);
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
+
+        describe('existing exercise', () => {
+            const course = { id: 1 } as Course;
+            let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            modelingExercise.course = course;
+            modelingExercise.id = 123;
+
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ modelingExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            });
+
+            it('Should call update service on save for existing entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
+
+                const entity = { ...modelingExercise };
+                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+
+                // WHEN
+                comp.save();
+                tick(); // simulate async
+
+                // THEN
+                expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {

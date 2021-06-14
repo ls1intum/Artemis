@@ -7,11 +7,58 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { hasResults } from 'app/overview/participation-utils';
+import { Observable, of, from } from 'rxjs';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { ExerciseService, ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
+import { map, mergeMap } from 'rxjs/operators';
 
 export enum EditType {
     IMPORT,
     CREATE,
     UPDATE,
+}
+
+export class SaveExerciseCommand<T extends Exercise> {
+    constructor(
+        private modalService: NgbModal,
+        private popupService: ExerciseUpdateWarningService,
+        private exerciseService: ExerciseServicable<T>,
+        private backupExercise: T,
+        private editType: EditType,
+    ) {}
+
+    save(exercise: T, notificationText?: string): Observable<T> {
+        let callBackend = (exercise: T) => {
+            switch (this.editType) {
+                case EditType.IMPORT:
+                    return this.exerciseService.import!(exercise);
+                case EditType.CREATE:
+                    return this.exerciseService.create(exercise);
+                case EditType.UPDATE:
+                    const requestOptions = {} as any;
+                    if (notificationText) {
+                        requestOptions.notificationText = notificationText;
+                    }
+                    return this.exerciseService.update(exercise, requestOptions);
+            }
+        };
+
+        let saveObservable = of(exercise);
+
+        if (exercise.gradingInstructionFeedbackUsed && this.modalService.hasOpenModals()) {
+            saveObservable = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise)).pipe(
+                mergeMap((ref) => ref.componentInstance.confirmed),
+                map(() => exercise),
+            );
+        }
+
+        return saveObservable.pipe(
+            map(Exercise.sanitize),
+            mergeMap(callBackend),
+            map((res) => res.body! as T),
+        );
+    }
 }
 
 export const hasExerciseChanged = (changes: SimpleChanges) => {
