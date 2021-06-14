@@ -10,7 +10,7 @@
             <hr />
             <div>
                 <jhi-alert></jhi-alert>
-                <jhi-alert-error></jhi-alert-error>
+                <jhi-alert-error *ngIf="!gradingScaleNotFound"></jhi-alert-error>
                 <div class="form-group" [hidden]="!course.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" formControlName="id" readonly />

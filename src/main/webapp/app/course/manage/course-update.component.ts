@@ -51,6 +51,7 @@ export class CourseUpdateComponent implements OnInit {
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     gradingScaleExists = false;
+    gradingScaleNotFound = false;
 
     constructor(
         private courseService: CourseManagementService,
@@ -89,6 +90,9 @@ export class CourseUpdateComponent implements OnInit {
                 .subscribe((gradingScaleResponse) => {
                     if (gradingScaleResponse.status !== 404) {
                         this.gradingScaleExists = true;
+                    } else {
+                        this.gradingScaleNotFound = true;
+                        setTimeout(() => (this.gradingScaleNotFound = false));
                     }
                 });
         });

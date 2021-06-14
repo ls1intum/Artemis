@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -32,9 +33,16 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
+    @Autowired
+    private ExamRepository examRepository;
+
     private GradingScale gradingScale;
 
     private Set<GradeStep> gradeSteps;
+
+    private Exam exam;
+
+    private Course course;
 
     /**
      * Initialize attributes
@@ -44,6 +52,8 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         gradingScale = new GradingScale();
         gradingScale.setId(1L);
         gradeSteps = new HashSet<>();
+        course = new Course();
+        exam = new Exam();
     }
 
     @AfterEach
@@ -125,6 +135,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         gradeStep.setUpperBoundPercentage(100);
         gradeStep.setGradingScale(gradingScale);
         gradingScale.setGradeSteps(Set.of(gradeStep));
+        gradingScale.setCourse(course);
 
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> {
             gradingScaleService.saveGradingScale(gradingScale);
@@ -148,6 +159,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         gradeStep.setUpperBoundPercentage(80);
         gradeStep.setGradingScale(gradingScale);
         gradingScale.setGradeSteps(Set.of(gradeStep));
+        gradingScale.setCourse(course);
 
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> {
             gradingScaleService.saveGradingScale(gradingScale);
@@ -166,6 +178,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     public void testSaveGradingScaleInvalidGradeStepSet() {
         gradeSteps = database.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
+        gradingScale.setExam(exam);
 
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> {
             gradingScaleService.saveGradingScale(gradingScale);
@@ -184,6 +197,11 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     public void testSaveGradingScaleValidGradeStepSet() {
         gradeSteps = database.generateGradeStepSet(gradingScale, true);
         gradingScale.setGradeSteps(gradeSteps);
+        course = database.addEmptyCourse();
+        exam = database.addExam(course);
+        exam.setMaxPoints(null);
+        gradingScale.setExam(exam);
+        examRepository.save(exam);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
 

@@ -22,6 +22,7 @@ export class ExamUpdateComponent implements OnInit {
     course: Course;
     isSaving: boolean;
     gradingScaleExists = false;
+    gradingScaleNotFound = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -49,6 +50,9 @@ export class ExamUpdateComponent implements OnInit {
                         .subscribe((gradingScaleResponse) => {
                             if (gradingScaleResponse.status !== 404) {
                                 this.gradingScaleExists = true;
+                            } else {
+                                this.gradingScaleNotFound = true;
+                                setTimeout(() => (this.gradingScaleNotFound = false));
                             }
                         });
                 },
