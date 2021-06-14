@@ -58,7 +58,7 @@ export class CourseLectureDetailsComponent implements OnInit {
                         // Check if PDF attachments exist in lecture units
                         this.hasPdfLectureUnit =
                             (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
-                                (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() == 'pdf',
+                                (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                             ).length > 0;
                     }
                     if (this.postings) {

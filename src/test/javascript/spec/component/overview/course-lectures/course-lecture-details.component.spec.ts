@@ -1,5 +1,5 @@
 import { Component, DebugElement, Input } from '@angular/core';
-import { ComponentFixture, fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -23,7 +23,6 @@ import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-u
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -69,11 +68,6 @@ class MockActivatedRoute {
     }
 }
 
-const mockActivatedRoute = new MockActivatedRoute({
-    parent: new MockActivatedRoute({
-        params: of({ courseId: '1' }),
-    }),
-});
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
