@@ -12,7 +12,7 @@ export class ConfirmAutofocusModalComponent {
     translateText: boolean;
     textIsMarkdown: boolean;
 
-    constructor(public modal: NgbActiveModal, public htmlForMarkdown: HtmlForMarkdownPipe) {}
+    constructor(public modal: NgbActiveModal, public md: HtmlForMarkdownPipe) {}
 }
 
 @Component({
