@@ -37,10 +37,9 @@ describe('ProgrammingSubmissionService', () => {
     let websocketService: JhiWebsocketService;
     let httpService: HttpClient;
     let participationWebsocketService: ParticipationWebsocketService;
-    let alertService: JhiAlertService;
     let participationService: ProgrammingExerciseParticipationService;
     let submissionService: ProgrammingSubmissionService;
-    let orionConnectorService = new MockOrionConnectorService();
+    const orionConnectorService = new MockOrionConnectorService();
     let repositoryExportService: ProgrammingAssessmentRepoExportService;
 
     let httpGetStub: SinonStub;
@@ -86,7 +85,6 @@ describe('ProgrammingSubmissionService', () => {
                 websocketService = TestBed.inject(JhiWebsocketService);
                 httpService = TestBed.inject(HttpClient);
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                alertService = TestBed.inject(JhiAlertService);
                 participationService = TestBed.inject(ProgrammingExerciseParticipationService);
                 repositoryExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
 
@@ -381,14 +379,15 @@ describe('ProgrammingSubmissionService', () => {
             exportSubmissionStub.returns(of(response));
 
             // mock FileReader
-            let mockReader = {
+            const mockReader = {
                 result: 'testBase64',
                 // required, used to instantly trigger the callback
+                // @ts-ignore
                 readAsDataURL(_: Blob) {
                     this.onloadend();
                 },
             };
-            let readerStub = stub(window, 'FileReader');
+            const readerStub = stub(window, 'FileReader');
             readerStub.returns(mockReader);
 
             submissionService.downloadSubmissionInOrion(25, 11, 0);

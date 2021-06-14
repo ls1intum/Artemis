@@ -34,8 +34,8 @@ describe('ProgrammingExercise Management Component', () => {
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
     let service: CourseExerciseService;
 
-    let orionConnectorService = new MockOrionConnectorService();
-    let router = new MockRouter();
+    const orionConnectorService = new MockOrionConnectorService();
+    const router = new MockRouter();
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
