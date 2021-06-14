@@ -42,6 +42,7 @@
                 </div>
                 <button
                     id="downloadButton"
+                    *ngIf="hasPdfLectureUnit"
                     class="col-auto btn btn-primary btn-sm rounded-pill"
                     (click)="downloadAttachment('/api/files/attachments/lecture/' + lectureId + '/merge-pdf')"
                 >
