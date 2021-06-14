@@ -11,11 +11,14 @@
                 <label jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <textarea class="form-control" rows="5" [(ngModel)]="feedback.detailText" [readOnly]="viewOnly"></textarea>
             </div>
-            <div class="form-group col-2" [style.max-width]="'100px'">
+            <div class="form-group col-1" [style.max-width]="'100px'">
                 <label jhiTranslate="artemisApp.exercise.score"></label>
                 <input class="form-control" type="number" step="0.5" [(ngModel)]="feedback.credits" [readOnly]="viewOnly || disableEditScore" />
             </div>
-            <div *ngIf="feedback.type === MANUAL" class="form-group col-2">
+            <div class="form-group col-1" *ngIf="feedback.gradingInstruction!">
+                <jhi-structured-grading-instruction-assessment-link [assessment]="feedback"></jhi-structured-grading-instruction-assessment-link>
+            </div>
+            <div *ngIf="feedback.type === MANUAL" class="form-group col-2" style="margin-top: 1.5rem">
                 <button type="submit" (click)="deleteFeedback()" class="btn btn-danger btn-sm me-1">
                     <fa-icon [icon]="'trash-alt'"></fa-icon> <span jhiTranslate="entity.action.delete">Delete</span>
                 </button>
