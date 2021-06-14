@@ -43,7 +43,7 @@
 
         <!-- Exam Point Statistics -->
         <table class="table table-bordered table-sm table-striped table-clear-width mb-3">
-            <thead *ngIf="hasSecondCorrectionAndStarted" class="thead-dark">
+            <thead *ngIf="hasSecondCorrectionAndStarted" class="table-dark">
                 <tr>
                     <th></th>
                     <th *ngIf="gradingScaleExists && !isBonus" colspan="3">
@@ -60,7 +60,7 @@
                     </th>
                 </tr>
             </thead>
-            <thead class="thead-dark">
+            <thead class="table-dark">
                 <tr>
                     <th></th>
                     <th *ngIf="gradingScaleExists && !isBonus">
@@ -289,7 +289,7 @@
             <!-- Exercise Statistics Table -->
             <div class="table-responsive">
                 <table class="table table-bordered table-sm body-striped">
-                    <thead class="thead-dark">
+                    <thead class="table-dark">
                         <tr>
                             <th>#</th>
                             <th>
@@ -370,7 +370,7 @@
         </h4>
         <div class="table-responsive">
             <table class="table table-sm table-striped table-bordered">
-                <thead class="thead-dark">
+                <thead class="table-dark">
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="sortRows.bind(this)">
                         <th>#</th>
                         <th jhiSortBy="name">
