@@ -75,7 +75,7 @@ public class Feedback extends DomainObject {
      */
     @Transient
     @JsonSerialize
-    private String suggestedFeedbackOriginBlockId;
+    private String suggestedFeedbackOriginReference;
 
     /**
      * Represents the submission of the previously assessed block, whose feedback we are reusing
@@ -253,17 +253,17 @@ public class Feedback extends DomainObject {
     }
 
     public String getSuggestedFeedbackOriginBlock() {
-        return suggestedFeedbackOriginBlockId;
+        return suggestedFeedbackOriginReference;
     }
 
     public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockId, TextSubmission submission) {
-        this.suggestedFeedbackOriginBlockId = suggestedFeedbackOriginBlockId;
+        this.suggestedFeedbackOriginReference = suggestedFeedbackOriginBlockId;
         this.suggestedFeedbackOriginSubmission = submission;
         return this;
     }
 
     public void setSuggestedFeedbackOriginBlock(String suggestedFeedbackOriginBlockId) {
-        this.suggestedFeedbackOriginBlockId = suggestedFeedbackOriginBlockId;
+        this.suggestedFeedbackOriginReference = suggestedFeedbackOriginBlockId;
     }
 
     public TextSubmission getSuggestedFeedbackOriginSubmission() {
