@@ -7,7 +7,7 @@
                     <tr>
                         <th>{{ isBonus ? ('artemisApp.exam.examSummary.bonus' | artemisTranslate) : ('artemisApp.exam.examSummary.grade' | artemisTranslate) }}</th>
                         <th>{{ 'artemisApp.exam.examSummary.interval' | artemisTranslate }}</th>
-                        <th *ngIf="hasPointsSet()">Interval (Points)</th>
+                        <th *ngIf="hasPointsSet()">{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
                     </tr>
                 </thead>
                 <tbody>

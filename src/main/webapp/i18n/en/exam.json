@@ -28,6 +28,7 @@
                 "grade": "Grade",
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
+                "intervalPoints": "Interval (Points)",
                 "gradeKeyButton": "View Grade Key"
             },
             "title": "Exam",
