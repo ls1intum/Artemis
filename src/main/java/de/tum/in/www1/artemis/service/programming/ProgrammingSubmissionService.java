@@ -136,7 +136,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
-        var defaultBranch = versionControlService.get().getDefaultBranchOfRepository(programmingExerciseParticipation.getVcsRepositoryUrl());
+        String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(programmingExerciseParticipation.getVcsRepositoryUrl());
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(defaultBranch)) {
             // if the commit was made in a branch different than the default, ignore this
             throw new IllegalStateException(
