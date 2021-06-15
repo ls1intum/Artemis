@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -61,6 +62,21 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
                         """)
     Page<ModelingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
+
+    /**
+     * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
+     * <ol>
+     * <li>Automatic assessment is enabled and the due date is in the future</li>
+     * </ol>
+     *
+     * @param now the current time
+     * @return List of the exercises that should be scheduled
+     */
+    @Query("""
+            select distinct exercise from ModelingExercise exercise
+            where (exercise.assessmentType = 'SEMI_AUTOMATIC' and exercise.dueDate > :#{#now})
+            """)
+    List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
