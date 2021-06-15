@@ -16,20 +16,20 @@
             "title": "Artemis unterstützt folgende Features für Klausuren",
             "detail": {
                 "supportedExerciseTypes": "Alle Aufgabentypen sind auch in der Klausur verfügbar",
-                "randomSelectionOfVariants": "Mehrere Varianten von Aufgaben können erstellt und den Studenten zufällig zugewiesen werden",
+                "randomSelectionOfVariants": "Mehrere Varianten von Aufgaben können erstellt und den Studierenden zufällig zugewiesen werden",
                 "fullFeatureOverview": {
                     "description": "Gesamter Überblick über alle Features:",
-                    "studentLink": "Überblick für Studenten",
-                    "instructorLink": "Überblick für Dozenten"
+                    "studentLink": "Überblick für Studierende",
+                    "instructorLink": "Überblick für Lehrende"
                 },
                 "instructions": {
                     "description": "Anleitung für das Klausurfeature:",
-                    "studentLink": "Anleitung für Studenten",
-                    "instructorLink": "Anleitung für Dozenten"
+                    "studentLink": "Anleitung für Studierende",
+                    "instructorLink": "Anleitung für Lehrende"
                 }
             }
         },
         "getInTouch": "Kontakt",
-        "contributors": "Andere Beiträger"
+        "contributors": "Mitwirkende"
     }
 }

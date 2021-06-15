@@ -80,6 +80,7 @@
         "zone.js": "0.11.4"
     },
     "devDependencies": {
+        "@4tw/cypress-drag-drop": "1.6.0",
         "@angular/cdk": "12.0.4",
         "@angular/cli": "12.0.4",
         "@angular/compiler-cli": "12.0.4",
@@ -116,6 +117,7 @@
         "chai-as-promised": "7.1.1",
         "chai-string": "1.5.0",
         "codelyzer": "6.0.2",
+        "cypress": "7.3.0",
         "copy-webpack-plugin": "9.0.0",
         "cross-env": "7.0.3",
         "css-loader": "5.2.6",
@@ -163,6 +165,7 @@
         "tslint-no-unused-expression-chai": "0.1.4",
         "typescript": "4.2.4",
         "url-loader": "4.1.1",
+        "uuid": "8.3.2",
         "weak-napi": "2.0.2",
         "webpack": "5.38.1",
         "webpack-bundle-analyzer": "4.4.2",
@@ -207,6 +210,8 @@
         "webpack:build": "yarn run cleanup && yarn run webpack:build:main",
         "webpack:prod:main": "yarn run webpack-ts --config webpack/webpack.prod.ts --progress",
         "webpack:prod": "yarn run cleanup && yarn run webpack:prod:main && yarn run clean-www",
+        "cypress:open": "yarn run cypress open ",
+        "cypress:run": "yarn run cypress run --headless --browser chrome",
         "webpack-dev-server": "node node_modules/webpack-dev-server/bin/webpack-dev-server.js",
         "webpack": "node --report-on-fatalerror node_modules/webpack/bin/webpack.js",
         "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=4096 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack"
