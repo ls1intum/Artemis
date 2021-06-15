@@ -170,14 +170,14 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should show link icon when feedback is associated with grading instruction', () => {
         component.feedback.gradingInstruction = new GradingInstruction();
         fixture.detectChanges();
-        let linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeTruthy();
     });
 
     it('should not show link icon when feedback is not associated with grading instruction', () => {
         component.feedback.gradingInstruction = undefined;
         fixture.detectChanges();
-        let linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeFalsy();
     });
 });
