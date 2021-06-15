@@ -152,7 +152,7 @@ describe('ProgrammingExercise Management Component', () => {
             router.navigateSpy.throws(error);
             comp.openOrionEditor(programmingExercise);
 
-            chai.expect(router.navigateSpy).to.have.been.calledOnceWithExactly(['code-editor', 'ide', 456, 'admin', undefined]);
+            chai.expect(router.navigateSpy).to.have.been.calledWithExactly(['code-editor', 'ide', 456, 'admin', undefined]);
         });
     });
 });
