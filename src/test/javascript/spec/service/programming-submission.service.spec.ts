@@ -383,7 +383,7 @@ describe('ProgrammingSubmissionService', () => {
                 result: 'testBase64',
                 // required, used to instantly trigger the callback
                 // @ts-ignore
-                readAsDataURL(_: Blob) {
+                readAsDataURL() {
                     this.onloadend();
                 },
             };
