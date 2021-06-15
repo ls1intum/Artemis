@@ -294,6 +294,24 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotExportSingleParticipationInterruptException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationInterruptException();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationGitApiException();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testExportCourseCannotSingleParticipationGitException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationGitException();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
         programmingExerciseTestService.testDownloadCourseArchiveAsInstructor();
     }

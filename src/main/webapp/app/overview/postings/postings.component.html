@@ -1,5 +1,5 @@
 <!-- uncollapsed posts -->
-<div *ngIf="!collapsed; else collapsedPosts" class="posts-container expanded-posts">
+<div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-posts">
     <div class="draggable-left"><fa-icon [icon]="'grip-lines-vertical'"></fa-icon></div>
     <div class="card">
         <!-- header -->
@@ -72,7 +72,11 @@
 </div>
 <!-- collapsed posts -->
 <ng-template #collapsedPosts>
-    <div class="posts-container collapsed-posts text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | artemisTranslate">
+    <div
+        class="postings-container collapsed-postings text-white"
+        (click)="collapsed = false"
+        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | artemisTranslate"
+    >
         <fa-icon [icon]="'chevron-left'"></fa-icon>
         <span jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</span>
         <fa-icon [icon]="'chevron-left'"></fa-icon>

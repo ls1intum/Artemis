@@ -296,7 +296,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(result.getMaxPointsOfExercise()).isEqualTo(10);
         assertThat(result.getNumberOfExerciseScores()).isEqualTo(2);
         assertThat(result.getNumberOfParticipations()).isEqualTo(2);
-        assertThat(result.getNumberOfStudentsInCourse()).isEqualTo(12);
+        assertThat(result.getNumberOfStudentsOrTeamsInCourse()).isEqualTo(12);
         assertThat(result.getNumberOfQuestions()).isEqualTo(1);
         assertThat(result.getNumberOfAnsweredQuestions()).isEqualTo(1);
         var expectedScoresResult = new int[10];

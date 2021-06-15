@@ -587,10 +587,10 @@ public class GitService {
      * @throws GitAPIException if the reset failed.
      */
     public void reset(Repository repo, String ref) throws GitAPIException {
-        Git git = new Git(repo);
-        setRemoteUrl(repo);
-        git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
-        git.close();
+        try (Git git = new Git(repo)) {
+            setRemoteUrl(repo);
+            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
+        }
     }
 
     /**
@@ -600,11 +600,11 @@ public class GitService {
      * @throws GitAPIException if the fetch failed.
      */
     public void fetchAll(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        log.debug("Fetch {}", repo.getLocalPath());
-        setRemoteUrl(repo);
-        git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setTransportConfigCallback(sshCallback).call();
-        git.close();
+        try (Git git = new Git(repo)) {
+            log.debug("Fetch {}", repo.getLocalPath());
+            setRemoteUrl(repo);
+            git.fetch().setForceUpdate(true).setRemoveDeletedRefs(true).setTransportConfigCallback(sshCallback).call();
+        }
     }
 
     /**
@@ -706,7 +706,7 @@ public class GitService {
             reset(repo, "origin/" + originHead);
         }
         catch (GitAPIException | JGitInternalException ex) {
-            log.error("Cannot hard reset the repo {} to origin/HEAD due to the following exception: {}", repo.getLocalPath(), ex.getMessage());
+            log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUrl(), ex);
         }
     }
 
@@ -1111,7 +1111,7 @@ public class GitService {
             studentTeamOrDefault = participation.getTeam().get().getName();
         }
 
-        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle());
+        String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
             zipRepoName += "-student-submission.git.zip";
         }
