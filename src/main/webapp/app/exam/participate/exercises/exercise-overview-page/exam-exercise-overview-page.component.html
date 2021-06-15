@@ -1,7 +1,48 @@
-<div>Exam Exercises:</div>
-
-<div *ngFor="let exercise of exercises">
-    <div>
-        {{ exercise.title }}
-    </div>
+<div class="container d-flex flex-column align-items-center justify-content-center">
+    <h2 style="text-align: center; font-weight: normal; margin-bottom: 30px">
+        <span>
+            {{ 'artemisApp.examParticipation.examExercises' | artemisTranslate }}
+        </span>
+        <br />
+    </h2>
+    <table class="table table-striped table-bordered" style="background-color: white">
+        <thead>
+            <tr style="background-color: white">
+                <th style="max-width: 30px">
+                    <span>#</span>
+                </th>
+                <th style="max-width: 30px">
+                    <span>
+                        {{ 'artemisApp.examParticipation.exerciseType' | artemisTranslate }}
+                    </span>
+                </th>
+                <th>
+                    <span>
+                        {{ 'artemisApp.examParticipation.exerciseName' | artemisTranslate }}
+                    </span>
+                </th>
+                <th>
+                    <span>
+                        {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}
+                    </span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let exercise of exercises; let i = index">
+                <td style="max-width: 30px">
+                    {{ i + 1 }}
+                </td>
+                <td style="max-width: 30px">
+                    <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+                </td>
+                <td style="max-width: 100px; font-weight: bold">
+                    <div>{{ exercise.title }}</div>
+                </td>
+                <td style="max-width: 30px">
+                    <div>{{ exercise.maxPoints }}</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
