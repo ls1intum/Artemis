@@ -42,6 +42,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
+        console.log('called updateViewFromSubmission Text', this.studentSubmission);
         this.updateViewFromSubmission();
     }
 
