@@ -228,7 +228,7 @@ public class ExamResource {
             gradingScaleRepository.resetAllPoints(gradingScale.get());
         }
         else if (gradingScale.isPresent() && existingMaxPoints != updatedMaxPoints) {
-            gradingScaleRepository.setPointsForGradingScale(gradingScale.get(), updatedMaxPoints);
+            gradingScaleRepository.calculatePoints(gradingScale.get(), updatedMaxPoints);
         }
     }
 

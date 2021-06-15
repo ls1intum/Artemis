@@ -101,6 +101,16 @@ describe('Exam Update Component', function () {
                         );
                     },
                 }),
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForExam: () => {
+                        return of(
+                            new HttpResponse({
+                                body: new GradingScale(),
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
                 MockProvider(ExamManagementService, {
                     create: () => {
                         return of(
@@ -114,16 +124,6 @@ describe('Exam Update Component', function () {
                         return of(
                             new HttpResponse({
                                 body: {},
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(GradingSystemService, {
-                    findGradingScaleForExam: () => {
-                        return of(
-                            new HttpResponse({
-                                body: new GradingScale(),
                                 status: 200,
                             }),
                         );

@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
@@ -22,8 +22,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
-import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-course-update',
@@ -80,21 +78,14 @@ export class CourseUpdateComponent implements OnInit {
                 this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             }
-            this.gradingSystemService
-                .findGradingScaleForCourse(course.id)
-                .pipe(
-                    catchError(() => {
-                        return of(new HttpResponse<GradingScale>({ status: 404 }));
-                    }),
-                )
-                .subscribe((gradingScaleResponse) => {
-                    if (gradingScaleResponse.status !== 404) {
-                        this.gradingScaleExists = true;
-                    } else {
-                        this.gradingScaleNotFound = true;
-                        setTimeout(() => (this.gradingScaleNotFound = false));
-                    }
-                });
+            this.gradingSystemService.findGradingScaleForCourse(course.id).subscribe((gradingScaleResponse) => {
+                if (gradingScaleResponse.status !== 404) {
+                    this.gradingScaleExists = true;
+                } else {
+                    this.gradingScaleNotFound = true;
+                    setTimeout(() => (this.gradingScaleNotFound = false), 4000);
+                }
+            });
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

@@ -153,7 +153,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @param maxPoints the max points based on which the point values need to be adjusted
      * @return the updated grading scale
      */
-    default GradingScale setPointsForGradingScale(GradingScale gradingScale, int maxPoints) {
+    default GradingScale calculatePoints(GradingScale gradingScale, int maxPoints) {
         for (GradeStep gradeStep : gradingScale.getGradeSteps()) {
             gradeStep.setLowerBoundPoints((gradeStep.getLowerBoundPercentage() * maxPoints) / 100);
             gradeStep.setUpperBoundPoints((gradeStep.getUpperBoundPercentage() * maxPoints) / 100);

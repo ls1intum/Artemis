@@ -2,16 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
 import { navigateBack } from 'app/utils/navigation.utils';
-import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -40,21 +38,14 @@ export class ExamUpdateComponent implements OnInit {
                 (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
-                    this.gradingSystemService
-                        .findGradingScaleForExam(this.course.id!, this.exam.id!)
-                        .pipe(
-                            catchError(() => {
-                                return of(new HttpResponse<GradingScale>({ status: 404 }));
-                            }),
-                        )
-                        .subscribe((gradingScaleResponse) => {
-                            if (gradingScaleResponse.status !== 404) {
-                                this.gradingScaleExists = true;
-                            } else {
-                                this.gradingScaleNotFound = true;
-                                setTimeout(() => (this.gradingScaleNotFound = false));
-                            }
-                        });
+                    this.gradingSystemService.findGradingScaleForExam(this.course.id!, this.exam.id!).subscribe((gradingScaleResponse) => {
+                        if (gradingScaleResponse.status !== 404) {
+                            this.gradingScaleExists = true;
+                        } else {
+                            this.gradingScaleNotFound = true;
+                            setTimeout(() => (this.gradingScaleNotFound = false), 5000);
+                        }
+                    });
                 },
                 (err: HttpErrorResponse) => this.onError(err),
             );
