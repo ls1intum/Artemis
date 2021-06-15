@@ -4,11 +4,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,9 +48,6 @@ public class ModelingExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
-
     private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final UserRepository userRepository;
@@ -85,16 +80,12 @@ public class ModelingExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final FileService fileService;
-
-    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
-
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService) {
+            InstanceMessageSendService instanceMessageSendService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -111,7 +102,6 @@ public class ModelingExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.fileService = fileService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -393,7 +383,7 @@ public class ModelingExerciseResource {
      */
     @PostMapping("/modeling-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws FileNotFoundException {
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
 
@@ -402,27 +392,15 @@ public class ModelingExerciseResource {
             return forbidden();
         }
 
-        try {
-            Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
-            Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
-            // Assume user finished download after the given delay
-            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
-
-            if (zipFile.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
-                        .body(null);
-            }
-
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
-            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
-                    .body(resource);
-
+        Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+        if (zipFile.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
+                    .body(null);
         }
-        catch (IOException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
 
     /**

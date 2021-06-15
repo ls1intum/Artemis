@@ -1,15 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.FILE_ENDING_PATTERN;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,9 +42,6 @@ public class FileUploadExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
-
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
     private final ExerciseService exerciseService;
@@ -68,14 +64,10 @@ public class FileUploadExerciseResource {
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
-    private final FileService fileService;
-
-    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
-
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
-            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, FeedbackRepository feedbackRepository, FileService fileService) {
+            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, FeedbackRepository feedbackRepository) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -87,7 +79,6 @@ public class FileUploadExerciseResource {
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
         this.feedbackRepository = feedbackRepository;
-        this.fileService = fileService;
     }
 
     /**
@@ -168,12 +159,11 @@ public class FileUploadExerciseResource {
      * @param exerciseId the id of exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
      *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) throws URISyntaxException {
+            @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
 
         // TODO: The route has an exerciseId but we don't do anything useful with it. Change route and client requests?
@@ -320,7 +310,7 @@ public class FileUploadExerciseResource {
      */
     @PostMapping("/file-upload-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws FileNotFoundException {
 
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
         if (optionalFileUploadExercise.isEmpty()) {
@@ -339,27 +329,14 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
 
-        try {
-            Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
-            Optional<File> zipFile = fileUploadSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(),
-                    new ArrayList<>());
-            // Assume user finished download after the given delay
-            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
-
-            if (zipFile.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
-                        .body(null);
-            }
-
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
-            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
-                    .body(resource);
-
+        Optional<File> zipFile = fileUploadSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
+        if (zipFile.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
+                    .body(null);
         }
-        catch (IOException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
 }

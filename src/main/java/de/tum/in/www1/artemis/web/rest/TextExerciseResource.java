@@ -4,11 +4,13 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,9 +53,6 @@ public class TextExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
-
     private final FeedbackRepository feedbackRepository;
 
     private final TextBlockRepository textBlockRepository;
@@ -94,17 +93,13 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final FileService fileService;
-
-    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
-
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
             ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository, FileService fileService) {
+            CourseRepository courseRepository) {
         this.feedbackRepository = feedbackRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
@@ -125,7 +120,6 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
-        this.fileService = fileService;
     }
 
     /**
@@ -364,10 +358,9 @@ public class TextExerciseResource {
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
-        if (!(participation.getExercise() instanceof TextExercise)) {
+        if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
         }
-        TextExercise textExercise = (TextExercise) participation.getExercise();
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
         if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
@@ -517,7 +510,7 @@ public class TextExerciseResource {
      */
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws FileNotFoundException {
 
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
@@ -529,27 +522,16 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        try {
-            Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
-            Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
-            // Assume user finished download after the given delay
-            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
+        Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions);
 
-            if (zipFile.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
-                        .body(null);
-            }
-
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
-            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
-                    .body(resource);
-
+        if (zipFile.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
+                    .body(null);
         }
-        catch (IOException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
 
     /**
