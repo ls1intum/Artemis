@@ -55,38 +55,37 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        // fixture.debugElement.query(By.css('fa-icon.back-button'));
-        let button = compiled.querySelector('.close fa-icon[icon="times"]');
-        let confirm = compiled.querySelector('.close jhi-confirm-icon');
+        let button = compiled.querySelector('.close-button fa-icon[icon="times"]');
+        let confirm = compiled.querySelector('.close-button jhi-confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
 
         component.feedback.credits = 1;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('.close-button fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close-button jhi-confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = 'Lorem Ipsum';
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('.close-button fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close-button jhi-confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.credits = 0;
         fixture.detectChanges();
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('.close-button fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close-button jhi-confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = '';
         fixture.detectChanges();
 
-        button = compiled.querySelector('.close fa-icon[icon="times"]');
-        confirm = compiled.querySelector('.close jhi-confirm-icon');
+        button = compiled.querySelector('.close-button fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close-button jhi-confirm-icon');
         expect(button).toBeTruthy();
         expect(confirm).toBeFalsy();
     });
