@@ -15,9 +15,9 @@
             "openModelingEditor": "Modellierungseditor öffnen",
             "importIntoIntelliJ": "In IntelliJ öffnen",
             "cloneRepository": "Repository klonen",
-            "clonePersonalRepository": "Klonen dein persönliches Repository für diese Übung:",
+            "clonePersonalRepository": "Klone dein persönliches Repository für diese Übung:",
             "repositoryPassword": "Dein Passwort lautet:",
-            "hoverToShow": "(hover um es anzuzeigen)",
+            "hoverToShow": "(hover, um es anzuzeigen)",
             "cloneSourceTree": "In SourceTree klonen",
             "sourceTreeDescription": "<a href='http://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> ist ein kostenloser GIT-Client für Mac und Windows.",
             "goToBuildPlan": "Zum Build-Plan gehen",
@@ -26,7 +26,7 @@
             "copiedUrl": "URL kopiert",
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
-            "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem Account hinzufügen."
+            "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem Konto hinzufügen."
         }
     }
 }
