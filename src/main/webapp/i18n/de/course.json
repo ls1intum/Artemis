@@ -93,7 +93,7 @@
             "student": "Studierende:r",
             "tutor": "Tutor:in",
             "editor": "Editor:in",
-            "instructor": "Lehrperson",
+            "instructor": "Lehrkraft",
             "form": {
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
@@ -101,7 +101,7 @@
                 }
             },
             "courseDashboard": "Kurs-Dashboard",
-            "instructorDashboard": "Kursdashboard für Lehrende",
+            "instructorDashboard": "Dashboard für Lehrende",
             "presentationScoreEnabled": {
                 "title": "Präsentationsbewertung aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen Studierende halten müssen, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."

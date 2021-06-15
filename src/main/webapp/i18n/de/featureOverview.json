@@ -54,7 +54,7 @@
                 "reviewIndividualExams": {
                     "title": "Individuelle Klausuren Überprüfen",
                     "shortDescription": "Überprüfe die Klausuren der einzelnen Studierenden mit ihren Abgaben und Ergebnissen.",
-                    "descriptionTextOne": "Während der Bewertungsprozess für Tutor:innen anonym ist, kannst du als Lehrperson auf die Klausuren der einzelnen Studierenden und deren Zusammenfassung zugreifen und diese einsehen. Die Zusammenfassung einer Klausur enthält alle Lösungen des jeweiligen Studierenden zu den Aufgaben sowie die erreichten Punkte. Du kannst auch ihren Code einsehen, indem du den Link zu ihrer Repository benutzt. Dieses wird auch auf der Zusammenfassung inklusive dem letzten Commit-Hash angezeigt."
+                    "descriptionTextOne": "Während der Bewertungsprozess für Tutor:innen anonym ist, kannst du als Lehrkraft auf die Klausuren der einzelnen Studierenden und deren Zusammenfassung zugreifen und diese einsehen. Die Zusammenfassung einer Klausur enthält alle Lösungen des jeweiligen Studierenden zu den Aufgaben sowie die erreichten Punkte. Du kannst auch ihren Code einsehen, indem du den Link zu ihrer Repository benutzt. Dieses wird auch auf der Zusammenfassung inklusive dem letzten Commit-Hash angezeigt."
                 },
                 "assessmentMonitoring": {
                     "title": "Überwachung der Bewertung",

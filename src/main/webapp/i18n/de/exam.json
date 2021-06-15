@@ -14,7 +14,7 @@
                 "noCommitHash": "Es hat kein Commit stattgefunden",
                 "studentSubmissionTo": "{{studentName}}s Abgabe für {{examTitle}}",
                 "viewResult": " Ergebnis ansehen",
-                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrperson.",
+                "missingResultNotice": "Es gibt derzeit kein Ergebnis für diese Quiz Aufgabe, obwohl die Ergebnisse schon veröffentlicht wurden. Bitte informiere die entsprechende Lehrkraft.",
                 "points": {
                     "exercise": "Aufgabe",
                     "overview": "Übersicht",
@@ -47,7 +47,7 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "duration": "Dauer",
-            "nrOfStudents": "Anzahl an Registrierungen",
+            "nrOfStudents": "Anzahl registrierunger Studierender",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
             "exercise": "Aufgabe {{nr}}",
@@ -71,7 +71,7 @@
                 "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
             },
             "error": {
-                "cannotRegisterInstructor": "Du kannst keine Lehr- oder Administrationspersonen zu Klausuren anmelden."
+                "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden."
             }
         },
         "examScores": {
@@ -127,7 +127,7 @@
             "finishExam": "Beenden",
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
-            "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an die entsprechende Lehrperson.",
+            "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
