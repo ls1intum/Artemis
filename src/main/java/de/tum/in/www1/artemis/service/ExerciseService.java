@@ -804,8 +804,7 @@ public class ExerciseService {
      * then, sets the corresponding exercise field
      *
      * @param gradingCriteria grading criteria list of exercise
-     * @param exercise exercise to update
-     *
+     * @param exercise exercise to update     *
      */
     public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
         List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
@@ -821,8 +820,7 @@ public class ExerciseService {
      * 2. After updating feedback, result needs to be re-calculated
      *
      * @param exercise exercise to re-evaluate
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
-     *
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not     *
      */
     public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
 
@@ -832,7 +830,7 @@ public class ExerciseService {
 
         // collect all structured grading instructions into the list
         List<GradingInstruction> gradingInstructions = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
-                .collect(Collectors.toList());
+                .toList();
 
         // update the related fields for feedback
         for (GradingInstruction instruction : gradingInstructions) {
@@ -893,15 +891,15 @@ public class ExerciseService {
         List<Feedback> feedbackToBeDeleted = new ArrayList<>();
         // check if the user decided to remove the feedback after deleting the associated grading instructions
         if (deleteFeedbackAfterGradingInstructionUpdate) {
-            List<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).collect(Collectors.toList());
+            List<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).toList();
             // retrieve the grading instructions from database for backup
             List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
-                    .map(GradingInstruction::getId).collect(Collectors.toList());
+                    .map(GradingInstruction::getId).toList();
 
             // collect deleted grading instruction ids into the list
             List<Long> gradingInstructionIdsToBeDeleted = backupInstructionIds.stream().filter(backupinstructionId -> !updatedInstructionIds.contains(backupinstructionId))
-                    .collect(Collectors.toList());
+                    .toList();
 
             // determine the feedback to be deleted
             feedbackToBeDeleted = feedbackRepository.findFeedbackByGradingInstructionIds(gradingInstructionIdsToBeDeleted);
