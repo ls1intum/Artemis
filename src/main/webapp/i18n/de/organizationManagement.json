@@ -30,7 +30,7 @@
             "select": "Auswählen",
             "title": "Organisationen"
         },
-        "patternChangeWarning": "Beim Ändern des Email-Musters, wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
+        "patternChangeWarning": "Beim Ändern des Email-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
     },
     "artemisApp": {
         "organization": {
