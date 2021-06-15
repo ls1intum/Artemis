@@ -156,11 +156,6 @@ public class ResultResource {
                     + "Your CIS encountered an Exception while trying to retrieve the build plan ", cISException, requestBody);
             return badRequest();
         }
-        catch (Exception ex) { // Jenkins might still throw a JSONProcsessingException, the method is declared with "throws Exception" so this needs to be here as of rn
-            log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
-            return badRequest();
-        }
-
         log.info("Artemis received a new result for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
