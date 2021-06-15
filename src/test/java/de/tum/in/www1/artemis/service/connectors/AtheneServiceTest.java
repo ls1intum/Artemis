@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -154,18 +155,12 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @param textSubmissions How many blocks should be generated
      * @return A list containing the generated TextBlocks
      */
-    private List<Segment> generateTextBlocks(List<TextSubmission> textSubmissions) {
-        List<Segment> blocks = new ArrayList<>();
-        for (var textSubmission : textSubmissions) {
+    private List<Segment> generateSegments(List<TextSubmission> textSubmissions) {
+        return textSubmissions.stream().map(textSubmission -> {
             final String idString = textSubmission.getId() + ";0-30;" + textSubmission.getText().substring(0, 30);
-            Segment newSegment = Segment.newBuilder().setId(sha1Hex(idString)).setSubmissionId(textSubmission.getId().intValue()).setStartIndex(0).setEndIndex(30)
+            return Segment.newBuilder().setId(sha1Hex(idString)).setSubmissionId(textSubmission.getId().intValue()).setStartIndex(0).setEndIndex(30)
                     .setText(textSubmission.getText().substring(0, 30)).build();
-
-            final String idString = newBlock.getSubmissionId() + ";" + newBlock.getStartIndex() + "-" + newBlock.getEndIndex() + ";" + newBlock.getText();
-            blocks.add(newBlock);
-        }
-
-        return blocks;
+        }).collect(toList());
     }
 
     /**
