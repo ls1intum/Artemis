@@ -73,9 +73,13 @@ export class AnswerPostComponent implements OnInit {
     saveAnswerPost(): void {
         this.isLoading = true;
         this.answerPost.content = this.editText;
-        this.answerPostService.update(this.courseId, this.answerPost).subscribe(() => {
-            this.isEditMode = false;
-            this.isLoading = false;
+        this.answerPostService.update(this.courseId, this.answerPost).subscribe({
+            next: () => {
+                this.isEditMode = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
         });
     }
 

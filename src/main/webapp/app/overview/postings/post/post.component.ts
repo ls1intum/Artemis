@@ -64,9 +64,13 @@ export class PostComponent implements OnInit {
     savePost(): void {
         this.isLoading = true;
         this.post.content = this.editText;
-        this.postService.update(this.courseId, this.post).subscribe(() => {
-            this.isEditMode = false;
-            this.isLoading = false;
+        this.postService.update(this.courseId, this.post).subscribe({
+            next: () => {
+                this.isEditMode = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
         });
     }
 

@@ -128,11 +128,15 @@ export class PostingsComponent implements OnInit, AfterViewInit {
             delete post.lecture.lectureUnits;
         }
         post.creationDate = moment();
-        this.postService.create(this.courseId, post).subscribe((postResponse: HttpResponse<Post>) => {
-            this.posts.push(postResponse.body!);
-            this.postContent = undefined;
-            this.isEditMode = false;
-            this.isLoading = false;
+        this.postService.create(this.courseId, post).subscribe({
+            next: (postResponse: HttpResponse<Post>) => {
+                this.posts.push(postResponse.body!);
+                this.postContent = undefined;
+                this.isEditMode = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
         });
     }
 

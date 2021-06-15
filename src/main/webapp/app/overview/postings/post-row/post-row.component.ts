@@ -141,15 +141,19 @@ export class PostRowComponent implements OnInit {
         answerPost.post = this.post;
         answerPost.tutorApproved = false;
         answerPost.creationDate = moment();
-        this.answerPostService.create(this.courseId, answerPost).subscribe((PostResponse: HttpResponse<AnswerPost>) => {
-            if (!this.post.answers) {
-                this.post.answers = [];
-            }
-            this.post.answers.push(PostResponse.body!);
-            this.sortAnswerPosts();
-            this.answerPostContent = undefined;
-            this.isAnswerMode = false;
-            this.isLoading = false;
+        this.answerPostService.create(this.courseId, answerPost).subscribe({
+            next: (postResponse: HttpResponse<AnswerPost>) => {
+                if (!this.post.answers) {
+                    this.post.answers = [];
+                }
+                this.post.answers.push(postResponse.body!);
+                this.sortAnswerPosts();
+                this.answerPostContent = undefined;
+                this.isAnswerMode = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
         });
     }
 
