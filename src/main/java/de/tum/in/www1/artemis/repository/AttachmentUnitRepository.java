@@ -25,10 +25,20 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
             WHERE attachmentUnit.lecture.id = :#{#lectureId}
             AND attachmentUnit.attachment.attachmentType = :#{#attachmentType}
             """)
-    Set<AttachmentUnit> findByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
+    Set<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
+
+    default Set<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType)
+            throws EntityNotFoundException {
+        Set<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
+        if (attachmentUnits.isEmpty()) {
+            throw new EntityNotFoundException("AttachmentUnit");
+        }
+        return attachmentUnits;
+    }
 
     @NotNull
     default AttachmentUnit findByIdElseThrow(Long attachmentUnitId) throws EntityNotFoundException {
         return findById(attachmentUnitId).orElseThrow(() -> new EntityNotFoundException("AttachmentUnit", attachmentUnitId));
     }
+
 }

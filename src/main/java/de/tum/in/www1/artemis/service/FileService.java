@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -824,9 +825,9 @@ public class FileService implements DisposableBean {
      * @param paths list of paths to merge
      * @return byte array of the merged file
      */
-    public byte[] mergePdfFiles(List<String> paths) {
-        if (paths == null || paths.size() == 0) {
-            return new byte[0];
+    public Optional<byte[]> mergePdfFiles(List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return Optional.empty();
         }
         PDFMergerUtility pdfMerger = new PDFMergerUtility();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -843,8 +844,9 @@ public class FileService implements DisposableBean {
         }
         catch (IOException e) {
             log.warn("Could not merge files");
+            return Optional.empty();
         }
 
-        return outputStream.toByteArray();
+        return Optional.of(outputStream.toByteArray());
     }
 }

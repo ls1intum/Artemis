@@ -4,12 +4,20 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
+import java.net.FileNameMap;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -21,11 +29,20 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -35,7 +52,10 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
+import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -298,36 +318,41 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units PDF attachments merged
+     * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
+     * PDF attachments merged
      *
-     * @param lectureId ID of the lecture, the lecture units belongs to
-     * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The merged pdf file, 403 if the logged in user is not allowed to access it, or 404 if the files to be merged doesn't exist
+     * @param lectureId            ID of the lecture, the lecture units belongs to
+     * @param temporaryAccessToken The access token is required to authenticate the
+     *                             user that accesses it
+     * @return The merged PDF file, 403 if the logged in user is not allowed to
+     *         access it, or 404 if the files to be merged do not exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
-        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findByLectureIdAndAttachmentType(lectureId, AttachmentType.FILE);
-        if (lectureAttachments.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
         if (!validateTemporaryAccessToken(temporaryAccessToken, "merge-pdf")) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
+
+        Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
+
         List<String> attachmentLinks = lectureAttachments.stream()
-                .filter(unit -> unit.isVisibleToStudents() && StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".").equals("pdf"))
+                .filter(unit -> unit.isVisibleToStudents() && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .map(unit -> Paths
                         .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
                         .toString())
                 .collect(Collectors.toList());
-        var file = fileService.mergePdfFiles(attachmentLinks);
-        if (file == null || file.length == 0) {
-            return ResponseEntity.notFound().build();
+
+        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks);
+        if (file.isEmpty()) {
+            log.error("Failed to merge PDF lecture units for lecture with id : " + lectureId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
+
     }
 
     /**

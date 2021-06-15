@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -24,7 +25,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
@@ -307,7 +307,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
         // get access token and then send request using the access token
         String accessToken = request.get("/api/files/attachments/access-token/merge-pdf", HttpStatus.OK, String.class);
-        request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf?access_token=" + accessToken, HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf?access_token=" + accessToken, HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
@@ -352,11 +352,11 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Long lectureId = lecture.getId();
         MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-        addLectureUnitToLecture(file1, lectureId, expectedStatus);
+        AttachmentUnit unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        addLectureUnitToLecture(file2, lectureId, expectedStatus);
+        AttachmentUnit unit2 = uploadAttachmentUnit(file2, lectureId, expectedStatus);
 
         // create pdf file 2
         outputStream = new ByteArrayOutputStream();
@@ -366,29 +366,22 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             doc2.save(outputStream);
         }
         MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-        addLectureUnitToLecture(file3, lectureId, expectedStatus);
+        AttachmentUnit unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
+
+        database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
 
         return lectureId;
     }
 
-    private void addLectureUnitToLecture(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
+    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).get();
 
-        Attachment attachment = new Attachment();
-        attachment.setName("Attachment");
-        attachment.setReleaseDate(ZonedDateTime.now().minusHours(1));
-        attachment.setAttachmentType(AttachmentType.FILE);
-        attachment.setUploadDate(ZonedDateTime.now().minusHours(1));
-        attachmentRepo.save(attachment);
-
-        AttachmentUnit attachmentUnit = ModelFactory.generateAttachmentUnit(ZonedDateTime.now(), lecture);
-        attachmentUnit.setAttachment(attachment);
-        attachmentUnitRepository.save(attachmentUnit);
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
 
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
         if (expectedStatus != HttpStatus.CREATED) {
-            return;
+            return null;
         }
 
         String responsePath = response.get("path").asText();
@@ -397,13 +390,10 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
         var attachmentPath = targetFolder + "/" + file.getOriginalFilename();
+        attachmentUnit.getAttachment().setLink(attachmentPath);
+        attachmentRepo.save(attachmentUnit.getAttachment());
 
-        attachment.setLink(attachmentPath);
-        attachment.setAttachmentUnit(attachmentUnit);
-        attachmentRepo.save(attachment);
-
-        lecture.addLectureUnit(attachmentUnit);
-        lectureRepo.save(lecture);
+        return attachmentUnit;
     }
 
 }

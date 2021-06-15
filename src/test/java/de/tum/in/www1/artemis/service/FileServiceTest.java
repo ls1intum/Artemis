@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -149,15 +150,15 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    public void testMergePdf_nullInput() {
-        byte[] result = fileService.mergePdfFiles(null);
-        assertThat(result).hasSize(0);
+    public void testMergePdf_nullInput_shouldReturnEmptyOptional() {
+        Optional<byte[]> result = fileService.mergePdfFiles(null);
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
-    public void testMergePdf_emptyList() {
-        byte[] result = fileService.mergePdfFiles(new ArrayList<String>());
-        assertThat(result).hasSize(0);
+    public void testMergePdf_emptyList_shouldReturnEmptyOptional() {
+        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<String>());
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
@@ -184,10 +185,10 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         paths.add("./exportTest/testfile1.pdf");
         paths.add("./exportTest/testfile2.pdf");
 
-        byte[] mergedFile = fileService.mergePdfFiles(paths);
-
-        assertThat(mergedFile).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(mergedFile);
+        Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths);
+        assertThat(mergedFile.isPresent()).isTrue();
+        assertThat(mergedFile.get()).isNotEmpty();
+        PDDocument mergedDoc = PDDocument.load(mergedFile.get());
         assertEquals(5, mergedDoc.getNumberOfPages());
 
     }

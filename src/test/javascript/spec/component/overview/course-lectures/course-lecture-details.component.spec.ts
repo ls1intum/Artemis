@@ -58,16 +58,6 @@ class CourseExerciseRowStubComponent {
     @Input() isPresentationMode = false;
 }
 
-class MockActivatedRoute {
-    parent: any;
-    params: any;
-
-    constructor(options: { parent?: any; params?: any }) {
-        this.parent = options.parent;
-        this.params = options.params;
-    }
-}
-
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
@@ -93,39 +83,8 @@ describe('CourseLectureDetails', () => {
         lecture.title = 'Test lecture';
         lecture.course = course;
 
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = moment({ years: 2020, months: 3, date: 5 });
-        attachment.uploadDate = moment({ years: 2020, months: 3, date: 5 });
-        attachment.name = 'test';
-        attachment.link = '/path/to/file/test.pdf';
-
-        lectureUnit1 = new AttachmentUnit();
-        lectureUnit1.id = 1;
-        lectureUnit1.name = 'Unit 1';
-        lectureUnit1.releaseDate = releaseDate;
-        lectureUnit1.lecture = lecture;
-        lectureUnit1.attachment = attachment;
-        attachment.attachmentUnit = lectureUnit1;
-
-        const attachment2 = new Attachment();
-        attachment2.id = 1;
-        attachment2.version = 1;
-        attachment2.attachmentType = AttachmentType.FILE;
-        attachment2.releaseDate = moment({ years: 2020, months: 3, date: 5 });
-        attachment2.uploadDate = moment({ years: 2020, months: 3, date: 5 });
-        attachment2.name = 'test';
-        attachment2.link = '/path/to/file/test.pdf';
-
-        lectureUnit2 = new AttachmentUnit();
-        lectureUnit2.id = 2;
-        lectureUnit2.name = 'Unit 2';
-        lectureUnit2.releaseDate = releaseDate;
-        lectureUnit2.lecture = lecture;
-        lectureUnit2.attachment = attachment2;
-        attachment2.attachmentUnit = lectureUnit2;
+        lectureUnit1 = getAttachmentUnit(lecture, 1, releaseDate);
+        lectureUnit2 = getAttachmentUnit(lecture, 2, releaseDate);
 
         lectureUnit3 = new TextUnit();
         lectureUnit3.id = 3;
@@ -252,3 +211,23 @@ describe('CourseLectureDetails', () => {
         expect(downloadAttachmentStub).to.have.been.calledOnce;
     }));
 });
+
+const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: moment.Moment) => {
+    const attachment = new Attachment();
+    attachment.id = id;
+    attachment.version = 1;
+    attachment.attachmentType = AttachmentType.FILE;
+    attachment.releaseDate = moment({ years: 2020, months: 3, date: 5 });
+    attachment.uploadDate = moment({ years: 2020, months: 3, date: 5 });
+    attachment.name = 'test';
+    attachment.link = '/path/to/file/test.pdf';
+
+    const attachmentUnit = new AttachmentUnit();
+    attachmentUnit.id = id;
+    attachmentUnit.name = 'Unit 1';
+    attachmentUnit.releaseDate = releaseDate;
+    attachmentUnit.lecture = lecture;
+    attachmentUnit.attachment = attachment;
+    attachment.attachmentUnit = attachmentUnit;
+    return attachmentUnit;
+};
