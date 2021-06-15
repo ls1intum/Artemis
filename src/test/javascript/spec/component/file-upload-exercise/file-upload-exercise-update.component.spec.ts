@@ -44,7 +44,7 @@ describe('FileUploadExercise Management Update Component', () => {
     describe('save', () => {
         describe('new exercise', () => {
             const course = { id: 1 } as Course;
-            let fileUploadExercise = new FileUploadExercise(course, undefined);
+            const fileUploadExercise = new FileUploadExercise(course, undefined);
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -55,7 +55,7 @@ describe('FileUploadExercise Management Update Component', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                let entity = { ...fileUploadExercise };
+                const entity = { ...fileUploadExercise };
                 spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
@@ -70,7 +70,7 @@ describe('FileUploadExercise Management Update Component', () => {
 
         describe('existing exercise', () => {
             const course = { id: 1 } as Course;
-            let fileUploadExercise = new FileUploadExercise(course, undefined);
+            const fileUploadExercise = new FileUploadExercise(course, undefined);
             fileUploadExercise.id = 123;
 
             beforeEach(() => {

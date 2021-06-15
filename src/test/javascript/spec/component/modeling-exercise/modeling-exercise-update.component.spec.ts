@@ -21,7 +21,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -58,7 +57,7 @@ describe('ModelingExercise Management Update Component', () => {
     describe('save', () => {
         describe('new exercise', () => {
             const course = { id: 1 } as Course;
-            let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             modelingExercise.course = course;
 
             beforeEach(() => {
@@ -86,7 +85,7 @@ describe('ModelingExercise Management Update Component', () => {
 
         describe('existing exercise', () => {
             const course = { id: 1 } as Course;
-            let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             modelingExercise.course = course;
             modelingExercise.id = 123;
 

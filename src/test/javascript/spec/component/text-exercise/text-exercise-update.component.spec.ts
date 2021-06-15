@@ -16,7 +16,6 @@ import { of } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -45,7 +44,7 @@ describe('TextExercise Management Update Component', () => {
     describe('save', () => {
         describe('existing exercise', () => {
             const course = { id: 1 } as Course;
-            let textExercise = new TextExercise(course, undefined);
+            const textExercise = new TextExercise(course, undefined);
             textExercise.id = 123;
 
             beforeEach(() => {
@@ -58,7 +57,7 @@ describe('TextExercise Management Update Component', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                let entity = { ...textExercise };
+                const entity = { ...textExercise };
                 spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN
@@ -73,7 +72,7 @@ describe('TextExercise Management Update Component', () => {
 
         describe('new exercise', () => {
             const course = { id: 1 } as Course;
-            let textExercise = new TextExercise(course, undefined);
+            const textExercise = new TextExercise(course, undefined);
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -100,7 +99,7 @@ describe('TextExercise Management Update Component', () => {
 
         describe('imported exercise', () => {
             const course = { id: 1 } as Course;
-            let textExercise = new TextExercise(course, undefined);
+            const textExercise = new TextExercise(course, undefined);
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);

@@ -10,7 +10,7 @@ import { hasResults } from 'app/overview/participation-utils';
 import { Observable, of, from } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
-import { ExerciseService, ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
 import { map, mergeMap } from 'rxjs/operators';
 
 export enum EditType {
@@ -29,18 +29,18 @@ export class SaveExerciseCommand<T extends Exercise> {
     ) {}
 
     save(exercise: T, notificationText?: string): Observable<T> {
-        let callBackend = (exercise: T) => {
+        const callBackend = (ex: T) => {
             switch (this.editType) {
                 case EditType.IMPORT:
-                    return this.exerciseService.import!(exercise);
+                    return this.exerciseService.import!(ex);
                 case EditType.CREATE:
-                    return this.exerciseService.create(exercise);
+                    return this.exerciseService.create(ex);
                 case EditType.UPDATE:
                     const requestOptions = {} as any;
                     if (notificationText) {
                         requestOptions.notificationText = notificationText;
                     }
-                    return this.exerciseService.update(exercise, requestOptions);
+                    return this.exerciseService.update(ex, requestOptions);
             }
         };
 
