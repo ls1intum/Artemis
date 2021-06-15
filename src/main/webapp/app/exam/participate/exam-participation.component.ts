@@ -43,8 +43,8 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
     styleUrls: ['./exam-participation.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChildren(ExamPageComponent)
-    currentPageComponents: QueryList<ExamPageComponent>;
+    @ViewChildren(ExamSubmissionComponent)
+    currentPageComponents: QueryList<ExamSubmissionComponent>;
 
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -57,7 +57,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     testRunId: number;
     testRunStartTime?: Moment;
 
-    // determines if component was once drawn visited beginning with the exam overview
+    // determines if component was once drawn visited
     pageComponentVisited: boolean[];
 
     // needed, because studentExam is downloaded only when exam is started
@@ -176,6 +176,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 .subscribe((localExam: StudentExam) => {
                                     this.studentExam = localExam;
                                     this.loadingExam = false;
+                                    console.log('starting from failed save');
                                     this.examStarted(this.studentExam);
                                 });
                         } else {
@@ -267,6 +268,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 });
             });
+            console.log('studentExam: ', this.studentExam);
             const initialExercise = this.studentExam.exercises![0];
             console.log('exercise, ', initialExercise, this.studentExam);
             this.initializeOverviewPage();
@@ -496,9 +498,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to initialize
      */
     private initializeExercise(exercise: Exercise) {
-        console.log('lel', exercise);
         this.activeExamPage.isOverviewPage = false;
         this.activeExamPage.exercise = exercise;
+        console.log('call initializeExercise:', exercise, this.activeExamPage);
+
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
             // TODO: after client is online again, subscribe is not executed, might be a problem of the Observable in createParticipationForExercise
@@ -583,6 +586,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 // this will lead to a save below, because isSynced will be set to false
                 activeSubmission.isSynced = false;
             }
+            console.log('call updateSubmissionFromView wuhuuuuuu was geht dann daasdf');
             (activeComponent as ExamSubmissionComponent).updateSubmissionFromView();
         }
 
@@ -641,9 +645,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
-        this.currentPageComponents
-            .filter((component) => (component as ExamSubmissionComponent) && (component as ExamSubmissionComponent).hasUnsavedChanges())
-            .forEach((component) => (component as ExamSubmissionComponent).updateSubmissionFromView());
+        this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {

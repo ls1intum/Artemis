@@ -137,6 +137,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                 this.studentExam = studentExam;
                 this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
                 if (this.hasStarted()) {
+                    console.log('start exam from exam cover', studentExam);
                     this.onExamStarted.emit(studentExam);
                 } else {
                     this.waitingForExamStart = true;
