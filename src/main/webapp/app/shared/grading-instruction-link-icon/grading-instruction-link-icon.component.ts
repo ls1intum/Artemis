@@ -4,10 +4,10 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
-    selector: 'jhi-structured-grading-instruction-assessment-link',
-    templateUrl: './structured-grading-instruction-assessment-link.component.html',
+    selector: 'jhi-grading-instruction-link-icon',
+    templateUrl: './grading-instruction-link-icon.component.html',
 })
-export class StructuredGradingInstructionAssessmentLinkComponent implements OnInit {
+export class GradingInstructionLinkIconComponent implements OnInit {
     @Input() linkIcon = <IconProp>'link';
     @Input() assessment: Feedback;
     instruction: GradingInstruction | undefined;

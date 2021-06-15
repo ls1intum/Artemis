@@ -34,6 +34,7 @@ import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 describe('TextFeedbackConflictsComponent', () => {
     let component: TextFeedbackConflictsComponent;
@@ -161,6 +162,7 @@ describe('TextFeedbackConflictsComponent', () => {
                 RouterModule,
                 RouterTestingModule,
                 TextSharedModule,
+                ArtemisGradingInstructionLinkIconModule,
             ],
             declarations: [
                 TextFeedbackConflictsComponent,

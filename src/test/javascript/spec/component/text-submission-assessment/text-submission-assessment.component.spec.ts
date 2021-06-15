@@ -36,6 +36,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -129,6 +130,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 ArtemisConfirmIconModule,
                 TextSharedModule,
                 RouterTestingModule,
+                ArtemisGradingInstructionLinkIconModule,
             ],
             declarations: [
                 TextSubmissionAssessmentComponent,
