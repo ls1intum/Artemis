@@ -290,7 +290,7 @@
             }
         },
         "error": {
-            "noparticipations": "Nutzer:in exisitert nicht oder es gibt keine Abgaben."
+            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
         }
     }
 }
