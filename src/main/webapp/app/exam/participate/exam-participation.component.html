@@ -70,7 +70,7 @@
             <ng-container *ngIf="(generateParticipationStatus | async) === 'generating'">
                 <div class="d-flex justify-content-center align-items-center">
                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
-                    <div class="spinner-border ml-2" role="status">
+                    <div class="spinner-border ms-2" role="status">
                         <span class="sr-only">Loading...</span>
                     </div>
                 </div>
@@ -78,7 +78,7 @@
             <ng-container *ngIf="(generateParticipationStatus | async) === 'failed'">
                 <div class="d-flex justify-content-center align-items-center">
                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
-                    <button class="btn btn-sm btn-primary px-3 ml-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
+                    <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
                         {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
                     </button>
                 </div>

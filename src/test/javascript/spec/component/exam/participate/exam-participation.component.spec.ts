@@ -31,7 +31,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { AlertComponent } from 'app/shared/alert/alert.component.ts';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';

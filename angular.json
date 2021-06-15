@@ -16,6 +16,7 @@
                   "main": "src/main/webapp/app/app.main.ts",
                   "polyfills": "src/main/webapp/app/polyfills.ts",
                   "tsConfig": "tsconfig.json",
+                  "inlineStyleLanguage": "scss",
                   "assets": [
                       "./src/main/resources/public/images/favicon.ico",
                       "./src/main/webapp/content"
@@ -53,22 +54,16 @@
     "@schematics/angular:component": {
       "inlineStyle": true,
       "inlineTemplate": false,
-      "spec": false,
-      "prefix": "jhi",
-      "styleExt": "scss"
+      "prefix": "jhi"
     },
     "@schematics/angular:directive": {
-      "spec": false,
       "prefix": "jhi"
     },
     "@schematics/angular:guard": {
-      "spec": false
     },
     "@schematics/angular:pipe": {
-      "spec": false
     },
     "@schematics/angular:service": {
-      "spec": false
     }
   }
 }

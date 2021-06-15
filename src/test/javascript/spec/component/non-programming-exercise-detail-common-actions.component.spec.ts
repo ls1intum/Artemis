@@ -21,7 +21,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import * as sinon from 'sinon';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';

@@ -5,7 +5,7 @@
                 <span jhiTranslate="artemisApp.studentExams.title">Student exams</span>
             </h2>
         </div>
-        <div class="ml-auto">
+        <div class="ms-auto">
             <div class="d-flex mb-1">
                 <button
                     id="generateStudentExamsButton"
@@ -20,7 +20,7 @@
                 </button>
                 <button
                     id="generateMissingStudentExamsButton"
-                    class="btn btn-primary ml-1"
+                    class="btn btn-primary ms-1"
                     style="height: 40px"
                     (click)="generateMissingStudentExams()"
                     *ngIf="course?.isAtLeastInstructor"
@@ -31,7 +31,7 @@
                 </button>
                 <button
                     id="startExercisesButton"
-                    class="btn btn-primary ml-1"
+                    class="btn btn-primary ms-1"
                     style="height: 40px"
                     (click)="startExercises()"
                     *ngIf="course?.isAtLeastInstructor"
@@ -42,7 +42,7 @@
                 </button>
                 <button
                     id="handleUnlockAllRepositoriesButton"
-                    class="btn btn-danger ml-1"
+                    class="btn btn-danger ms-1"
                     style="height: 40px"
                     (click)="handleUnlockAllRepositories()"
                     *ngIf="course?.isAtLeastInstructor"
@@ -54,7 +54,7 @@
                 </button>
                 <button
                     id="lockAllRepositoriesButton"
-                    class="btn btn-danger ml-1"
+                    class="btn btn-danger ms-1"
                     style="height: 40px"
                     (click)="handleLockAllRepositories()"
                     *ngIf="course?.isAtLeastInstructor"
@@ -66,7 +66,7 @@
                 </button>
                 <button
                     id="evaluateQuizExercisesButton"
-                    class="btn btn-primary ml-1"
+                    class="btn btn-primary ms-1"
                     style="height: 40px"
                     (click)="evaluateQuizExercises()"
                     *ngIf="course?.isAtLeastInstructor"
@@ -76,7 +76,7 @@
                     <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
                 </button>
                 <button
-                    class="btn btn-primary ml-1"
+                    class="btn btn-primary ms-1"
                     id="assessUnsubmittedExamModelingAndTextParticipationsButton"
                     style="height: 40px"
                     (click)="assessUnsubmittedExamModelingAndTextParticipations()"
@@ -207,9 +207,9 @@
 
                 <ngx-datatable-column prop="" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-right">
+                        <div class="w-100 text-end">
                             <div class="btn-group" *ngIf="course?.isAtLeastTutor">
-                                <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]">
+                                <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="['/course-management', courseId, 'exams', examId, 'student-exams', value?.id]">
                                     <span jhiTranslate="artemisApp.studentExams.view">View</span>
                                 </a>
                             </div>

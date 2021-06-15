@@ -12,6 +12,11 @@ export class TableEditableFieldComponent {
     @ViewChild('editingInput', { static: false }) editingInput: ElementRef;
 
     @Input() id: string;
+    @Input() pattern: RegExp;
+    @Input() isRequired: boolean;
+    @Input() translationRequiredMessage: string;
+    @Input() translationInvalidMessage: string;
+
     @Input() set value(value: any) {
         this.inputValue = value;
     }

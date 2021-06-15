@@ -1,19 +1,11 @@
 <div>
-    <span class="badge badge-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
+    <span class="badge bg-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
         <fa-icon [icon]="'robot'"></fa-icon>
         <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
     </span>
 
     <span
-        class="badge badge-warning"
-        *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
-        (click)="onConflictsClicked.emit(feedback.id)"
-    >
-        <fa-icon [icon]="'balance-scale-right'"></fa-icon>
-        <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
-    </span>
-    <span
-        class="badge badge-warning"
+        class="badge bg-warning"
         *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
         (click)="onConflictsClicked.emit(feedback.id)"
     >
@@ -21,13 +13,29 @@
         <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
     </span>
 
-    <span class="badge badge-warning" title="{{ conflictType }}" *ngIf="conflictType && conflictMode">
+    <span class="badge bg-warning" title="{{ conflictType }}" *ngIf="conflictType && conflictMode">
         <fa-icon [icon]="'balance-scale-right'"></fa-icon>
         <span [jhiTranslate]="'artemisApp.textAssessment.conflict.type.' + conflictType"></span>
     </span>
 
-    <div class="form-row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
-        <div class="form-group col-10">
+    <div class="close-button" *ngIf="!readOnly">
+        <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
+        <ng-template #closeButton>
+            <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
+        </ng-template>
+        <ng-template #trashButton>
+            <jhi-confirm-icon
+                initialIcon="times"
+                confirmIcon="trash"
+                [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+                [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
+                (confirmEvent)="dismiss()"
+            ></jhi-confirm-icon>
+        </ng-template>
+    </div>
+
+    <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
+        <div class="form-group col-md-10">
             <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
             <textarea
                 class="form-control"
@@ -49,7 +57,7 @@
                 >
             </div>
         </div>
-        <div class="form-group col-2 text-right">
+        <div class="form-group col-md-2 text-end">
             <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
             <input
                 class="form-control"
@@ -64,22 +72,6 @@
                 [readOnly]="disableEditScore || (readOnly && !isConflictingFeedbackEditable)"
             />
         </div>
-    </div>
-
-    <div class="close" *ngIf="!readOnly">
-        <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
-        <ng-template #closeButton>
-            <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
-        </ng-template>
-        <ng-template #trashButton>
-            <jhi-confirm-icon
-                initialIcon="times"
-                confirmIcon="trash"
-                [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
-                (confirmEvent)="dismiss()"
-            ></jhi-confirm-icon>
-        </ng-template>
     </div>
 
     <!-- correction round label-->

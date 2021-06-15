@@ -175,6 +175,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
+        for (var auxiliaryRepository : exercise.getAuxiliaryRepositories()) {
+            final var auxiliaryRepoName = exercise.generateRepositoryName(auxiliaryRepository.getName());
+            bitbucketRequestMockProvider.mockCreateRepository(exercise, auxiliaryRepoName);
+        }
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
         mockBambooBuildPlanCreation(exercise, failToCreateCiProject);
 
@@ -234,6 +238,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, templateRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testsRepoName);
+        for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
+            final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
+            bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, auxRepoName);
+        }
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
@@ -258,6 +266,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName(), planExistsInCi, shouldPlanEnableFail);
         mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
         mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
+            final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
+            mockUpdatePlanRepository(exerciseToBeImported, TEMPLATE.getName(), repository.getName(), auxRepoName, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), repository.getName(), auxRepoName, List.of());
+        }
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
         mockUpdatePlanRepository(exerciseToBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
         bambooRequestMockProvider.mockTriggerBuild(exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName());
