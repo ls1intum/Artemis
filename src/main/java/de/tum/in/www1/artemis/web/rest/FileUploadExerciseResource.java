@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /** REST controller for managing FileUploadExercise. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
@@ -370,7 +370,7 @@ public class FileUploadExerciseResource {
      * Server Error) if the fileUploadExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/file-upload-exercises/{exerciseId}/re-evaluate")
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
@@ -390,5 +390,19 @@ public class FileUploadExerciseResource {
         exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String FILE_UPLOAD_EXERCISES = "/file-upload-exercises";
+
+        public static final String FILE_UPLOAD_EXERCISE = FILE_UPLOAD_EXERCISES + "/{exerciseId}";
+
+        public static final String REEVALUATE_EXERCISE = FILE_UPLOAD_EXERCISE + "/re-evaluate";
+
+        private Endpoints() {
+        }
     }
 }

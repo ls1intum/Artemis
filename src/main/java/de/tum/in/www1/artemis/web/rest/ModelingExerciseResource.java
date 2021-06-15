@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(ModelingExerciseResource.Endpoints.ROOT)
 public class ModelingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
@@ -484,7 +484,7 @@ public class ModelingExerciseResource {
      * Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/modeling-exercises/{exerciseId}/re-evaluate")
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
@@ -502,5 +502,19 @@ public class ModelingExerciseResource {
         exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateModelingExercise(modelingExercise, null);
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String MODELING_EXERCISES = "/modeling-exercises";
+
+        public static final String MODELING_EXERCISE = MODELING_EXERCISES + "/{exerciseId}";
+
+        public static final String REEVALUATE_EXERCISE = MODELING_EXERCISE + "/re-evaluate";
+
+        private Endpoints() {
+        }
     }
 }

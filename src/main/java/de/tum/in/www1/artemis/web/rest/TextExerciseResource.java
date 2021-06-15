@@ -42,7 +42,7 @@ import jplag.ExitException;
  * REST controller for managing TextExercise.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(TextExerciseResource.Endpoints.ROOT)
 public class TextExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
@@ -614,7 +614,7 @@ public class TextExerciseResource {
      * (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/text-exercises/{exerciseId}/re-evaluate")
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
@@ -634,6 +634,20 @@ public class TextExerciseResource {
         exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateTextExercise(textExercise, null);
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String TEXT_EXERCISES = "/text-exercises";
+
+        public static final String TEXT_EXERCISE = TEXT_EXERCISES + "/{exerciseId}";
+
+        public static final String REEVALUATE_EXERCISE = TEXT_EXERCISE + "/re-evaluate";
+
+        private Endpoints() {
+        }
     }
 
 }
