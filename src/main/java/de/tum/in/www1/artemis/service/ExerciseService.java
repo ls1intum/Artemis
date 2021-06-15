@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -54,6 +55,8 @@ public class ExerciseService {
     private final AuthorizationCheckService authCheckService;
 
     private final ProgrammingExerciseService programmingExerciseService;
+
+    private final ModelingExerciseService modelingExerciseService;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -106,20 +109,21 @@ public class ExerciseService {
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
-            AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService,
-            QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
-            AuditEventRepository auditEventRepository, TeamRepository teamRepository, StudentExamRepository studentExamRepository, ExamRepository examRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, PlagiarismResultRepository plagiarismResultRepository,
-            GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, ProgrammingAssessmentService programmingAssessmentService) {
+            AuthorizationCheckService authCheckService, ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService,
+            QuizExerciseService quizExerciseService, QuizScheduleService quizScheduleService, TutorParticipationRepository tutorParticipationRepository,
+            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, TeamRepository teamRepository,
+            StudentExamRepository studentExamRepository, ExamRepository examRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
+            SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository,
+            ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
+            PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, ProgrammingAssessmentService programmingAssessmentService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
+        this.modelingExerciseService = modelingExerciseService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.auditEventRepository = auditEventRepository;
@@ -390,6 +394,14 @@ public class ExerciseService {
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        log.info("Checking if exercise is modeling exercise", exercise.getId());
+        if (exercise instanceof ModelingExercise) {
+            log.info("Deleting clusters and elements", exercise.getId());
+
+            modelingExerciseService.deleteClustersAndElements((ModelingExercise) exercise);
+        }
+
         participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);

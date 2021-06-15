@@ -19,9 +19,9 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.0.0"
+    id "com.google.cloud.tools.jib" version "3.1.1"
     id "com.github.node-gradle.node" version "3.1.0"
-    id "com.diffplug.spotless" version "5.12.5"
+    id "com.diffplug.spotless" version "5.13.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
 }
@@ -88,7 +88,7 @@ test {
         events "FAILED", "SKIPPED"
     }
     testLogging.showStandardStreams = true
-    reports.html.enabled = false
+    reports.html.required = false
     jvmArgs "--illegal-access=warn"
 }
 
@@ -98,7 +98,7 @@ task testReport(type: TestReport) {
 }
 
 jacoco {
-    toolVersion = "0.8.6"
+    toolVersion = "0.8.7"
 }
 
 private excludedClassFilesForReport(classDirectories) {
@@ -159,6 +159,8 @@ dependencies {
     implementation "org.gitlab4j:gitlab4j-api:4.16.0"
 
     implementation files("libs/jplag-3.0.0.jar")
+    implementation files("libs/athene-protobuf-client-0.0.1.jar")
+
 
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
@@ -201,7 +203,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache:${hibernate_version}"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
     implementation "org.hibernate.validator:hibernate-validator:7.0.1.Final"
-    implementation "org.liquibase:liquibase-core:4.3.5"
+    implementation "org.liquibase:liquibase-core:4.4.0"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -225,7 +227,7 @@ dependencies {
 
     implementation "io.netty:netty-all:4.1.65.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.0.7"
-    implementation "org.springframework:spring-messaging:5.3.7"
+    implementation "org.springframework:spring-messaging:5.3.8"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -248,6 +250,8 @@ dependencies {
     implementation "com.ibm.icu:icu4j:69.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "org.apache.maven:maven-model:3.8.1"
+    implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.17.2'
+
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -315,7 +319,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "7.0.2"
+    gradleVersion = "7.1-rc-2"
 }
 
 task stage(dependsOn: "bootWar") {

@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -80,6 +81,8 @@ public class ModelingExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     private final FileService fileService;
 
     private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
@@ -88,7 +91,8 @@ public class ModelingExerciseResource {
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FileService fileService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository,
+            InstanceMessageSendService instanceMessageSendService, FileService fileService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -103,6 +107,7 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
     }
 
@@ -131,6 +136,9 @@ public class ModelingExerciseResource {
         exerciseService.validateScoreSettings(modelingExercise);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
+        modelingExerciseService.scheduleOperations(result.getId());
+
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -187,6 +195,8 @@ public class ModelingExerciseResource {
             updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
+        modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
+
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(modelingExercise, notificationText);
         }
@@ -230,12 +240,12 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        if (compassService.isSupported(modelingExercise)) {
-            return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
-        }
-        else {
-            return notFound();
-        }
+        // if (compassService.isSupported(modelingExercise)) {
+        // return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
+        // }
+        // else {
+        return notFound();
+        // }
     }
 
     /**
@@ -248,7 +258,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> printCompassStatisticForExercise(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        compassService.printStatistic(modelingExercise.getId());
+        // compassService.printStatistic(modelingExercise.getId());
         return ResponseEntity.ok().build();
     }
 
@@ -283,12 +293,49 @@ public class ModelingExerciseResource {
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        modelingExerciseService.cancelScheduledOperations(exerciseId);
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+    }
+
+    /**
+     * DELETE /modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
+     *
+     * @param exerciseId the id of the modelingExercise to delete clusters and elements
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/modeling-exercises/{exerciseId}/clusters")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteModelingExerciseClustersAndElements(@PathVariable Long exerciseId) {
+        log.info("REST request to delete ModelingExercise : {}", exerciseId);
+        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.ADMIN, modelingExercise, user);
+        modelingExerciseService.deleteClustersAndElements(modelingExercise);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+    }
+
+    /**
+     * POST /modeling-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
+     * (clustering task) for given exercise id As the clustering can be performed on a different
+     * node, this will always return 200, despite an error could occur on the other node.
+     *
+     * @param exerciseId id of the exercised that for which the automatic assessment should be
+     *                   triggered
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/modeling-exercises/{exerciseId}/trigger-automatic-assessment")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
+        instanceMessageSendService.sendModelingExerciseInstantClustering(exerciseId);
+        return ResponseEntity.ok().build();
     }
 
     /**

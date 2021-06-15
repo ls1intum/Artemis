@@ -108,6 +108,22 @@ export class ModelingExerciseService {
     }
 
     /**
+     * Build the clusters to use in Compass
+     * @param modelingExerciseId id of the exercise to build the clusters for
+     */
+    buildClusters(modelingExerciseId: number): Observable<{}> {
+        return this.http.post(`${this.resourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
+    }
+
+    /**
+     * Delete the clusters used in Compass
+     * @param modelingExerciseId id of the exercise to delete the clusters of
+     */
+    deleteClusters(modelingExerciseId: number): Observable<{}> {
+        return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
+    }
+
+    /**
      * Re-evaluates and updates an modeling exercise.
      *
      * @param modelingExercise that should be updated of type {ModelingExercise}

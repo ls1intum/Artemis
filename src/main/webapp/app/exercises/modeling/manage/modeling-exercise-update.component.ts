@@ -46,8 +46,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
-    // TODO: Melih Oezbeyli(iozbeyli) Make it true after compass hazelcast problem is resolved
-    semiAutomaticAssessmentAvailable = false;
+    semiAutomaticAssessmentAvailable = true;
 
     constructor(
         private jhiAlertService: JhiAlertService,
