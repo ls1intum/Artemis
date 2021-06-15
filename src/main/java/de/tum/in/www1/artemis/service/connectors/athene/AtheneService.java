@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.*;
 
@@ -15,12 +16,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.ase.athene.protobuf.Cluster;
+import de.tum.in.ase.athene.protobuf.DistanceMatrixEntry;
+import de.tum.in.ase.athene.protobuf.Segment;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exception.NetworkingError;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
-import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 @Service
 @Profile("athene")
@@ -98,6 +104,7 @@ public class AtheneService {
 
     /**
      * Register an Athene task for an exercise as running
+     *
      * @param exerciseId the exerciseId which the Athene task is running for
      */
     public void startTask(Long exerciseId) {
@@ -106,6 +113,7 @@ public class AtheneService {
 
     /**
      * Delete an Athene task for an exercise from the running tasks
+     *
      * @param exerciseId the exerciseId which the Athene task finished for
      */
     public void finishTask(Long exerciseId) {
@@ -114,6 +122,7 @@ public class AtheneService {
 
     /**
      * Check whether an Athene task is running for the given exerciseId
+     *
      * @param exerciseId the exerciseId to check for a running Athene task
      * @return true, if a task for the given exerciseId is running
      */
@@ -123,6 +132,7 @@ public class AtheneService {
 
     /**
      * Calls the remote Athene service to submit a Job for calculating automatic feedback
+     *
      * @param exercise the exercise the automatic assessments should be calculated for
      */
     public void submitJob(TextExercise exercise) {
@@ -133,7 +143,8 @@ public class AtheneService {
      * Calls the remote Athene service to submit a Job for calculating automatic feedback
      * Falls back to naive splitting for less than 10 submissions
      * Note: See `TextSubmissionService:getTextSubmissionsByExerciseId` for selection of Submissions.
-     * @param exercise the exercise the automatic assessments should be calculated for
+     *
+     * @param exercise   the exercise the automatic assessments should be calculated for
      * @param maxRetries number of retries before the request will be canceled
      */
     public void submitJob(TextExercise exercise, int maxRetries) {
@@ -165,21 +176,24 @@ public class AtheneService {
 
     /**
      * Processes results coming back from the Athene system via callbackUrl (see AtheneResource)
-     * @param clusters the Map of calculated clusters to save to the database
-     * @param blocks the list of calculated textBlocks to save to the database
+     *
+     * @param clusters   the list of calculated clusters to save to the database
+     * @param segments   the list of calculated textBlocks to save to the database
      * @param exerciseId the exercise the automatic feedback suggestions were calculated for
      */
-    public void processResult(Map<Integer, TextCluster> clusters, List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
+    public void processResult(List<Cluster> clusters, List<Segment> segments, Long exerciseId) {
         log.debug("Start processing incoming Athene results for exercise with id {}", exerciseId);
 
-        // Parse textBlocks (blocks will come as AtheneDTO.TextBlock with their submissionId and need to be parsed)
-        List<TextBlock> textBlocks = parseTextBlocks(blocks, exerciseId);
+        // Parse textBlocks (blocks will come as protobuf Segment with their submissionId and need to be parsed)
+        List<TextBlock> textBlocks = parseTextBlocks(segments, exerciseId);
+        // Parse textClusters (clusters will come as protobuf Cluster and need to be parsed)
+        List<TextCluster> textClusters = parseTextClusters(clusters);
 
         // Save textBlocks in Database
         final Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
 
         // Save clusters in Database
-        processClusters(clusters, textBlockMap, exerciseId);
+        processClusters(textClusters, textBlockMap, exerciseId);
 
         // Notify atheneService of finished task
         finishTask(exerciseId);
@@ -188,31 +202,36 @@ public class AtheneService {
     }
 
     /**
-     * Parse text blocks of type AtheneDTO.TextBlock to TextBlocks linked to their submission
+     * Parse text blocks of type Athene-Protobuf-Segment to TextBlock linked to their submission
      *
-     * @param blocks The list of AtheneDTO-blocks to parse
-     * @param exerciseId The exerciseId of the exercise the blocks belong to
+     * @param segments   the list of text blocks of type Athene-Protobuf-Segment to parse
+     * @param exerciseId the exerciseId of the exercise the blocks belong to
      * @return list of TextBlocks
      */
-    public List<TextBlock> parseTextBlocks(List<AtheneDTO.TextBlockDTO> blocks, Long exerciseId) {
+    public List<TextBlock> parseTextBlocks(List<Segment> segments, Long exerciseId) {
         // Create submissionsMap for lookup
         List<TextSubmission> submissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
         Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Map textBlocks to submissions
         List<TextBlock> textBlocks = new LinkedList<>();
-        for (AtheneDTO.TextBlockDTO textBlockDTO : blocks) {
-            // Convert DTO-TextBlock (including the submissionId) to TextBlock Entity
+        for (Segment segment : segments) {
+            // Convert Protobuf-TextBlock (including the submissionId) to TextBlock Entity
             TextBlock newBlock = new TextBlock();
-            newBlock.setId(textBlockDTO.getId());
-            newBlock.setText(textBlockDTO.getText());
-            newBlock.setStartIndex(textBlockDTO.getStartIndex());
-            newBlock.setEndIndex(textBlockDTO.getEndIndex());
+            newBlock.setId(segment.getId());
+            newBlock.setText(segment.getText());
+            newBlock.setStartIndex(segment.getStartIndex());
+            newBlock.setEndIndex(segment.getEndIndex());
             newBlock.automatic();
 
             // take the corresponding TextSubmission and add the text blocks.
             // The addBlocks method also sets the submission in the textBlock
-            submissionsMap.get(textBlockDTO.getSubmissionId()).addBlock(newBlock);
+            long submissionId = segment.getSubmissionId();
+            var textSubmission = submissionsMap.get(submissionId);
+            if (textSubmission == null) {
+                continue;
+            }
+            textSubmission.addBlock(newBlock);
             textBlocks.add(newBlock);
         }
 
@@ -220,16 +239,38 @@ public class AtheneService {
     }
 
     /**
+     * Parse text clusters of type Athene-Protobuf-Cluster to TextCluster
+     *
+     * @param clusters   the list of text clusters of type Athene-Protobuf-Cluster to parse
+     * @return list of TextClusters
+     */
+    public List<TextCluster> parseTextClusters(List<Cluster> clusters) {
+        List<TextCluster> textClusters = new LinkedList<>();
+        for (Cluster cluster : clusters) {
+            TextCluster textCluster = new TextCluster();
+            List<TextBlock> blocks = cluster.getSegmentsList().stream().map(s -> new TextBlock().id(s.getId())).collect(toList());
+            textCluster.setBlocks(blocks);
+
+            double[][] distanceMatrix = new double[blocks.size()][blocks.size()];
+            for (DistanceMatrixEntry entry : cluster.getDistanceMatrixList()) {
+                distanceMatrix[entry.getX()][entry.getY()] = entry.getValue();
+            }
+            textCluster.setDistanceMatrix(distanceMatrix);
+            textClusters.add(textCluster);
+        }
+        return textClusters;
+    }
+
+    /**
      * Process clusters, link them with text blocks and vice versa, and save all in the database
      *
-     * @param clusterMap The map of clusters to process
+     * @param textClusters The list of textClusters to process
      * @param textBlockMap The map of textBlocks belonging to the clusters
-     * @param exerciseId The exerciseId of the exercise the blocks belong to
+     * @param exerciseId   The exerciseId of the exercise the blocks belong to
      */
-    public void processClusters(Map<Integer, TextCluster> clusterMap, Map<String, TextBlock> textBlockMap, Long exerciseId) {
-        // Remove Cluster with Key "-1" as it is only contains the blocks belonging to no cluster.
-        clusterMap.remove(-1);
-        final List<TextCluster> savedClusters = textClusterRepository.saveAll(clusterMap.values());
+    public void processClusters(List<TextCluster> textClusters, Map<String, TextBlock> textBlockMap, Long exerciseId) {
+
+        final List<TextCluster> savedClusters = textClusterRepository.saveAll(textClusters);
 
         // Find exercise, which the clusters belong to
         Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
