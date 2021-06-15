@@ -47,7 +47,7 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "duration": "Dauer",
-            "nrOfStudents": "Anzahl registrierunger Studierender",
+            "nrOfStudents": "Anzahl registierter Studierender",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
             "exercise": "Aufgabe {{nr}}",
