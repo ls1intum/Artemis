@@ -37,7 +37,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { getFirstResultWithComplaint } from 'app/entities/submission.model';
+import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 
@@ -63,6 +63,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     public exercise?: Exercise;
     public resultWithComplaint?: Result;
+    public latestRatedResult?: Result;
     public complaint?: Complaint;
     public showMoreResults = false;
     public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
@@ -157,6 +158,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
+            this.getLatestRatedResult();
         });
     }
 
@@ -355,11 +357,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
      * For other exercise types it returns a rated result.
      */
-    get latestRatedResult() {
+    getLatestRatedResult() {
         if (!this.studentParticipation || !this.hasResults) {
             return undefined;
         }
-        const resultWithComplaint = getFirstResultWithComplaint(this.studentParticipation?.submissions?.pop());
+        const resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
         if (resultWithComplaint) {
             this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
                 (res) => {
@@ -373,6 +375,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 },
             );
         }
+        this.resultWithComplaint = resultWithComplaint;
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
@@ -384,7 +387,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (latestResult) {
                 latestResult.participation = this.studentParticipation;
             }
-            return latestResult;
+            this.latestRatedResult = latestResult;
         }
     }
 
