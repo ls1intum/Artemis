@@ -42,6 +42,24 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
+    public void sendModelingExerciseSchedule(Long exerciseId) {
+        log.info("Sending schedule for modeling exercise {} to broker.", exerciseId);
+        sendMessageDelayed("modeling-exercise-schedule", exerciseId);
+    }
+
+    @Override
+    public void sendModelingExerciseScheduleCancel(Long exerciseId) {
+        log.info("Sending schedule cancel for modeling exercise {} to broker.", exerciseId);
+        sendMessageDelayed("modeling-exercise-schedule-cancel", exerciseId);
+    }
+
+    @Override
+    public void sendModelingExerciseInstantClustering(Long exerciseId) {
+        log.info("Sending schedule instant clustering for modeling exercise {} to broker.", exerciseId);
+        sendMessageDelayed("modeling-exercise-schedule-instant-clustering", exerciseId);
+    }
+
+    @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         log.info("Sending schedule for text exercise {} to broker.", exerciseId);
         sendMessageDelayed("text-exercise-schedule", exerciseId);
@@ -69,6 +87,18 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     public void sendLockAllRepositories(Long exerciseId) {
         log.info("Sending lock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed("programming-exercise-lock-repositories", exerciseId);
+    }
+
+    @Override
+    public void sendRemoveNonActivatedUserSchedule(Long userId) {
+        log.info("Sending remove non-activated user {} to broker.", userId);
+        sendMessageDelayed("user-management-remove-non-activated-user", userId);
+    }
+
+    @Override
+    public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
+        log.info("Sending cancel removal of non-activated user {} to broker.", userId);
+        sendMessageDelayed("user-management-cancel-remove-non-activated-user", userId);
     }
 
     private void sendMessageDelayed(String destination, Long exerciseId) {

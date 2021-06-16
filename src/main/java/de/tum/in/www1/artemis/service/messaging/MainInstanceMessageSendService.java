@@ -30,6 +30,24 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
+    public void sendModelingExerciseSchedule(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processScheduleModelingExercise(exerciseId);
+    }
+
+    @Override
+    public void sendModelingExerciseScheduleCancel(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processScheduleModelingExerciseCancel(exerciseId);
+    }
+
+    @Override
+    public void sendModelingExerciseInstantClustering(Long exerciseId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processModelingExerciseInstantClustering(exerciseId);
+    }
+
+    @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processScheduleTextExercise(exerciseId);
@@ -57,5 +75,17 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     public void sendLockAllRepositories(Long exerciseId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processLockAllRepositories(exerciseId);
+    }
+
+    @Override
+    public void sendRemoveNonActivatedUserSchedule(Long userId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processRemoveNonActivatedUser(userId);
+    }
+
+    @Override
+    public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processCancelRemoveNonActivatedUser(userId);
     }
 }

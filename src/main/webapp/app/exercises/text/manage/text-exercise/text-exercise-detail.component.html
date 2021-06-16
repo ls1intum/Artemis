@@ -5,17 +5,33 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-left">
+            <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
                     *ngIf="textExercise.course"
                     [isExamExercise]="isExamExercise"
                     [courseId]="textExercise.course.id!"
                     [exercise]="textExercise"
                 ></jhi-non-programming-exercise-detail-common-actions>
-
-                <a *ngIf="textExercise.isAtLeastEditor" class="btn btn-primary btn-sm mr-1" id="check-plagiarism-download" routerLink="plagiarism">
+                <!-- Statistics -->
+                <a
+                    *ngIf="textExercise.isAtLeastTutor && textExercise.course"
+                    [routerLink]="['/course-management', textExercise.course!.id!, 'text-exercises', textExercise.id!, 'exercise-statistics']"
+                    class="btn btn-info btn-sm me-1"
+                >
+                    <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+                </a>
+                <!-- Check Plagiarism -->
+                <a *ngIf="textExercise.isAtLeastEditor" class="btn btn-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
+            </div>
+            <div *ngIf="textExercise.releaseDate != undefined && moment(textExercise.releaseDate).isBefore(moment())" class="mt-3">
+                <jhi-exercise-detail-statistics [exercise]="textExercise" [doughnutStats]="doughnutStats" [exerciseType]="ExerciseType.TEXT"></jhi-exercise-detail-statistics>
+                <hr />
+                <div>
+                    <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+                </div>
+                <hr />
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>

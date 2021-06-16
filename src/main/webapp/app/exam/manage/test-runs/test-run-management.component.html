@@ -4,12 +4,12 @@
         <div class="mb-3">
             <h2><span jhiTranslate="artemisApp.examManagement.testRun.title">Test Run Management</span>{{ exam?.title }}</h2>
         </div>
-        <div class="ml-auto">
+        <div class="ms-auto">
             <div class="d-flex mb-1">
                 <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises">
                     <button
                         id="createTestRunButton"
-                        class="btn btn-primary btn-sm mr-1 mb-1"
+                        class="btn btn-primary btn-sm me-1 mb-1"
                         style="height: 40px"
                         (click)="openCreateTestRunModal()"
                         *ngIf="course?.isAtLeastInstructor"
@@ -22,7 +22,7 @@
 
                 <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed">
                     <a
-                        class="btn btn-primary btn-sm mr-1 mb-1"
+                        class="btn btn-primary btn-sm me-1 mb-1"
                         style="height: 40px; display: inline-flex; align-items: center"
                         [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', 'assess']"
                         *ngIf="course?.isAtLeastInstructor"
@@ -85,28 +85,28 @@
                     <td>{{ (testRun.submitted ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                     <td>{{ testRun.submissionDate | artemisDate }}</td>
                     <td [width]="350">
-                        <div class="w-100 text-right">
+                        <div class="w-100 text-end">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
                                 <ng-container *ngIf="testRun.user && testRun.user.id == instructor.id; else notOwnerOfTestRun">
                                     <ng-container *ngIf="!testRun.submitted; else submitted">
-                                        <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
+                                        <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                             <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
                                             <span *ngIf="testRun.started" jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly">Continue</span>
                                         </a>
                                     </ng-container>
                                     <ng-template #submitted>
-                                        <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                        <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
                                             <span jhiTranslate="artemisApp.exam.summary">Summary</span>
                                         </a>
                                     </ng-template>
                                 </ng-container>
                                 <ng-template #notOwnerOfTestRun>
-                                    <a class="btn btn-primary btn-sm mr-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
+                                    <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
                                         <span jhiTranslate="artemisApp.exam.summary">Summary</span>
                                     </a>
                                 </ng-template>
                                 <a
-                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    class="btn btn-primary btn-sm me-1 mb-1"
                                     [routerLink]="['/course-management', course.id, 'exams', exam.id, 'test-runs', this.testRun.id]"
                                     [class.disabled]="testRun.started"
                                 >
@@ -120,7 +120,7 @@
                                     deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
                                     (delete)="deleteTestRun(testRun.id)"
                                     [dialogError]="dialogError$"
-                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    class="btn btn-primary btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'times'"></fa-icon>
                                 </button>

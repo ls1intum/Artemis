@@ -21,9 +21,14 @@
                     "yourPoints": "Your points",
                     "maxPoints": "Points",
                     "bonus": "Bonus points",
-                    "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
+                    "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
+                    "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
-                }
+                },
+				"grade": "Grade",
+                "bonus": "Bonus points for the final exam",
+                "interval": "Interval (%)",
+                "gradeKeyButton": "View Grade Key"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -52,6 +57,7 @@
             "notConfirmed": "Please tick the checkbox to continue.",
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
+            "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
             "validation": {
                 "startAndEndMustBeSet": "The start and end date must be set for the exam",
                 "atLeastOneExercisePerExerciseGroup": "All exercise groups must have at least one exercise.",
@@ -62,7 +68,8 @@
                 "numberOfExercisesMustBeSet": "The number of exercises must be set for the exam.",
                 "numberOfExercisesInExamNotSet": "The number of exercises in the exam is not set.",
                 "tooFewExerciseGroups": "The number of exercise groups is too small.",
-                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large."
+                "tooManyMandatoryExerciseGroups": "The number of mandatory exercise groups is too large.",
+                "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
                 "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."

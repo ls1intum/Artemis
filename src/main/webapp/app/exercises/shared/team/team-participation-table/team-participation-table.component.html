@@ -26,14 +26,14 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="releaseDate" [minWidth]="170" [width]="170" [maxWidth]="190" [frozenLeft]="true">
+            <ngx-datatable-column prop="releaseDate" [minWidth]="160" [width]="160" [maxWidth]="160" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('releaseDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate"> Release Date </span>
                         <fa-icon [icon]="controls.iconForSortPropField('releaseDate')"></fa-icon>
                     </span>
                 </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
+                <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
                     {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>
@@ -45,32 +45,30 @@
                         <fa-icon [icon]="controls.iconForSortPropField('dueDate')"></fa-icon>
                     </span>
                 </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
+                <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
                     {{ value ? (moment(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column *ngIf="isAdmin" prop="team" [minWidth]="140" [width]="140" [maxWidth]="140" [cellClass]="cellClassLeftSpace" [headerClass]="cellClassLeftSpace">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.id')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.team"> Team </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('team.id')"></fa-icon>
-                    </span>
-                </ng-template>
+            <ngx-datatable-column [minWidth]="120" [width]="120" [maxWidth]="120" [frozenLeft]="true">
                 <ng-template ngx-datatable-cell-template let-value="row">
-                    <a *ngIf="exercise.id !== value.id; else teamId" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]">
-                        {{ value.team.id }}
+                    <a *ngIf="exercise.id !== value.id; else teamId" (click)="onActivate()" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]">
+                        {{ 'entity.action.view' | artemisTranslate }}
                     </a>
                     <ng-template #teamId>
-                        <span class="current-team">{{ value.team.id }}</span>
+                        <span class="current-team">
+                            {{ 'entity.action.view' | artemisTranslate }}
+                        </span>
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column *ngIf="isAdmin" prop="participation" [minWidth]="90" [width]="90" [maxWidth]="90">
+            <ngx-datatable-column *ngIf="isAdmin" prop="participation" [minWidth]="150" [width]="150" [maxWidth]="150">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id"> ID </span>
+                        <span class="datatable-header-cell-label bold sortable">
+                            {{ 'artemisApp.team.detail.participationsTable.columns.participationId.label' | artemisTranslate }}
+                        </span>
                         <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
                     </span>
                 </ng-template>
@@ -91,14 +89,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column
-                prop="participation.initializationDate"
-                [minWidth]="isAdmin ? 150 : 200"
-                [width]="isAdmin ? 150 : 200"
-                [maxWidth]="isAdmin ? 150 : 200"
-                [cellClass]="isAdmin ? '' : cellClassLeftSpace"
-                [headerClass]="isAdmin ? '' : cellClassLeftSpace"
-            >
+            <ngx-datatable-column prop="participation.initializationDate" [minWidth]="190" [width]="190" [maxWidth]="190">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate"> Initialization Date </span>
@@ -110,49 +101,7 @@
                         {{ value.participation.initializationDate | artemisDate }}
                     </ng-container>
                     <ng-template #initializationDateUnavailable>
-                        {{ 'artemisApp.exercise.dateNotSet' | artemisTranslate }}
-                    </ng-template>
-                </ng-template>
-            </ngx-datatable-column>
-
-            <ngx-datatable-column prop="participation.submissionCount" [minWidth]="110" [width]="110" [maxWidth]="170">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.submissionCount"> Submissions </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('submissionCount')"></fa-icon>
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="row">
-                    <div class="w-100 text-center">
-                        <ng-container *ngIf="value.participation; else submissionCountUnavailable">
-                            <a
-                                *ngIf="exercise.isAtLeastInstructor; else displayTextOnly"
-                                [routerLink]="['/course-management', course.id, exercise.type + '-exercises', value.id, 'participations', value.participation.id, 'submissions']"
-                            >
-                                {{ value.participation.submissionCount }}
-                            </a>
-                            <ng-template #displayTextOnly>
-                                {{ value.participation.submissionCount }}
-                            </ng-template>
-                        </ng-container>
-                        <ng-template #submissionCountUnavailable> 0 </ng-template>
-                    </div>
-                </ng-template>
-            </ngx-datatable-column>
-
-            <ngx-datatable-column prop="participation.initializationState" [minWidth]="100" [width]="150">
-                <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationState')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState"> Initialization State </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('participation.initializationState')"></fa-icon>
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="row">
-                    <ng-container *ngIf="value.participation; else initializationState">
-                        {{ 'artemisApp.InitializationState.' + value.participation.initializationState | artemisTranslate }}
-                    </ng-container>
-                    <ng-template #initializationState>
-                        {{ 'artemisApp.InitializationState.UNINITIALIZED' | artemisTranslate }}
+                        {{ 'artemisApp.participation.initializationNotYetStarted' | artemisTranslate }}
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>
@@ -160,21 +109,26 @@
             <ngx-datatable-column *ngIf="isTeamOwner || exercise.isAtLeastInstructor" [minWidth]="200" [width]="200">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper">
-                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.detail.participationsTable.columns.assessment"> Assessment </span>
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.detail.participationsTable.columns.assessment.label"> Assessment </span>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <div class="d-flex justify-content-start align-items-center">
-                        <ng-container>
+                        <div
+                            ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.columns.assessment.tooltip' | artemisTranslate }}"
+                            [disableTooltip]="!isAssessmentButtonDisabled(value, value.submission)"
+                            placement="left"
+                            container="body"
+                        >
                             <button
-                                [disabled]="assessmentButtonDisabled(value, value.submission)"
+                                [disabled]="isAssessmentButtonDisabled(value, value.submission)"
                                 (click)="openAssessmentEditor(value, value.submission)"
                                 class="btn btn-warning btn-sm"
                             >
                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                 <span [jhiTranslate]="'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment'"></span>
                             </button>
-                        </ng-container>
+                        </div>
                         <fa-icon
                             class="mx-3"
                             *ngIf="value.submission?.result?.hasComplaint"

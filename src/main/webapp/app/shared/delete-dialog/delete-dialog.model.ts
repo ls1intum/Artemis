@@ -10,6 +10,7 @@ export enum ActionType {
     Cleanup = 'cleanup',
     Remove = 'remove',
     Unlink = 'unlink',
+    NoButtonTextDelete = 'noButtonTextDelete',
 }
 
 /**

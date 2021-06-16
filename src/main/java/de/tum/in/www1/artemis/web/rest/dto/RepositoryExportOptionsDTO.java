@@ -20,6 +20,8 @@ public class RepositoryExportOptionsDTO {
 
     private boolean combineStudentCommits;
 
+    private boolean anonymizeStudentCommits;
+
     private boolean normalizeCodeStyle;
 
     private boolean hideStudentNameInZippedFolder;
@@ -62,6 +64,14 @@ public class RepositoryExportOptionsDTO {
 
     public void setCombineStudentCommits(boolean combineStudentCommits) {
         this.combineStudentCommits = combineStudentCommits;
+    }
+
+    public boolean isAnonymizeStudentCommits() {
+        return anonymizeStudentCommits;
+    }
+
+    public void setAnonymizeStudentCommits(boolean anonymizeStudentCommits) {
+        this.anonymizeStudentCommits = anonymizeStudentCommits;
     }
 
     public boolean isNormalizeCodeStyle() {

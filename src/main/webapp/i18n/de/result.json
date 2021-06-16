@@ -7,13 +7,18 @@
                 "createOrEditLabel": "Result erstellen oder bearbeiten"
             },
             "created": "Result erstellt mit ID {{ param }}",
-            "updated": "Result aktualisiert mit ID {{ param }}",
-            "deleted": "Result gelöscht mit ID {{ param }}",
+            "updated": "Bewertung aktualisiert mit ID {{ param }}",
+            "deleted": "Bewertung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Result {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Bewertung {{ id }} wirklich dauerhaft gelöscht werden?",
+                "question2": "Soll die Bewertung wirklich gelöscht werden? Es kann nicht rückgängig gemacht werden!",
+                "buttonText": "Löschen",
+                "error": {
+                    "hasComplaint": "Eine Bewertung kann nicht gelöscht werden wenn es zu ihr eine Beschwerde gibt!"
+                }
             },
             "detail": {
-                "title": "Result"
+                "title": "Bewertung"
             },
             "noResult": "Kein gewertetes Ergebnis",
             "resultString": "Ergebnistext",
@@ -37,10 +42,10 @@
             "manualResult": "Manuelles Ergebnis",
             "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl zwischen 0 und 100 sein.",
             "resultStringRequired": "Ein Ergebnistext ist erforderlich.",
-            "studentLogin": "Studenten-Login",
-            "studentLoginRequired": "Studenten-Login ist erforderlich.",
+            "studentLogin": "Studierenden-Login",
+            "studentLoginRequired": "Studierenden-Login ist erforderlich.",
             "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
-            "studentOverride": "Die Einreichungsfrist dieser Aufgabe ist noch nicht erreicht. Der Student könnte das manuelle Ergebnis noch mit einer neuen Lösung überschreiben.",
+            "studentOverride": "Die Einreichungsfrist dieser Aufgabe ist noch nicht erreicht. Studierende können das manuelle Ergebnis noch mit einer neuen Lösung überschreiben.",
             "addFeedback": "Neues Feedback hinzufügen",
             "deleteFeedback": "Letztes Feedback löschen",
             "feedbackTextRequired": "Feedbacktext ist erforderlich.",

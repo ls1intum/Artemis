@@ -1,19 +1,19 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.xml.transform.TransformerException;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
+import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Service
@@ -69,9 +70,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
 
-    // Pattern of the DateTime that is included in the logs received from Jenkins
-    private final DateTimeFormatter logDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
-
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, FeedbackRepository feedbackRepository,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
@@ -90,6 +88,16 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         repositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(repositoryURL);
         testRepositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(testRepositoryURL);
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
+    }
+
+    /**
+     * Auxiliary repositories are not supported for Gitlab/Jenkins configurations.
+     *
+     * @param exercise for which the build plans should be recreated
+     */
+    @Override
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+        // Auxiliary repositories are currently not supported for Gitlab/Jenkins configurations.
     }
 
     @Override
@@ -123,6 +131,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) {
+        newRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUrl);
+        existingRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUrl);
 
         // remove potential username from repo URL. Jenkins uses the Artemis Admin user and will fail if other usernames are in the URL
         final var repoUrl = newRepoUrl.replaceAll("(https?://)(.*@)(.*)", "$1$3");
@@ -136,20 +146,19 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             replaceRemoteURLs(jobXmlDocument, repoUrl, ciRepoName);
         }
 
-        final var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_XML);
-        final var entity = new HttpEntity<>(jenkinsJobService.writeXmlToString(jobXmlDocument), headers);
-
-        URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
-
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
-            final var response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                throw new JenkinsException(errorMessage + "; statusCode=" + response.getStatusCode() + "; headers=" + response.getHeaders() + "; body=" + response.getBody());
-            }
+            URI uri = Endpoint.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
+
+            final var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_XML);
+
+            String jobXmlString = XmlFileUtils.writeToString(jobXmlDocument);
+            final var entity = new HttpEntity<>(jobXmlString, headers);
+
+            restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
         }
-        catch (HttpClientErrorException e) {
+        catch (RestClientException | TransformerException e) {
             log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
         }
@@ -302,9 +311,21 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
         latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
 
+        // Parse, filter, and save the build logs if they exist
+        if (buildResult.getLogs() != null) {
+            ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+            List<BuildLogEntry> buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
+            buildLogEntries = filterUnnecessaryLogs(buildLogEntries, programmingLanguage);
+            buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, latestSubmission);
+
+            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+            latestSubmission.setBuildLogEntries(buildLogEntries);
+        }
+
         // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
         newResult.setSubmission(latestSubmission);
         newResult.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), latestSubmission);
+
         return newResult;
     }
 
@@ -402,50 +423,25 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         try {
             final var build = jenkinsJobService.getJobInFolder(projectKey, buildPlanId).getLastBuild();
-            final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
+            List<BuildLogEntry> buildLogEntries;
 
-            List<BuildLogEntry> buildLog;
-            try {
-                buildLog = parsePipelineLogs(logHtml);
+            // Attempt to parse pipeline logs
+            final String pipelineLogs = build.details().getConsoleOutputText();
+            if (pipelineLogs != null && pipelineLogs.contains("[Pipeline] Start of Pipeline")) {
+                buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(List.of(pipelineLogs.split("\n")));
             }
-            catch (IllegalArgumentException e) {
-                buildLog = parseLogsLegacy(logHtml);
-            }
-
-            // Jenkins logs all steps of the build pipeline. We remove those as they are irrelevant to the students
-            List<BuildLogEntry> prunedBuildLogs = new ArrayList<>();
-            for (BuildLogEntry entry : buildLog) {
-                String logString = entry.getLog();
-                if (logString.contains("Compilation failure")) {
-                    break;
-                }
-
-                // filter unnecessary logs and illegal reflection logs
-                if (buildLogService.isUnnecessaryBuildLogForProgrammingLanguage(logString, programmingLanguage) || buildLogService.isIllegalReflectionLog(logString)) {
-                    continue;
-                }
-
-                // Jenkins outputs each executed shell command with '+ <shell command>'
-                if (logString.startsWith("+")) {
-                    continue;
-                }
-
-                // Remove the path from the log entries
-                final String shortenedLogString = ASSIGNMENT_PATH.matcher(logString).replaceAll("");
-
-                // Avoid duplicate log entries
-                if (buildLogService.checkIfBuildLogIsNotADuplicate(programmingLanguage, prunedBuildLogs, shortenedLogString)) {
-                    entry.setLog(shortenedLogString);
-                    prunedBuildLogs.add(entry);
-                }
+            else {
+                // Fallback to legacy logs
+                final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
+                buildLogEntries = JenkinsBuildLogParseUtils.parseLogsLegacy(logHtml);
             }
 
-            // Save build logs
-            var savedBuildLogs = buildLogService.saveBuildLogs(prunedBuildLogs, programmingSubmission);
-            programmingSubmission.setBuildLogEntries(savedBuildLogs);
+            // Filter and save build logs
+            buildLogEntries = filterUnnecessaryLogs(buildLogEntries, programmingLanguage);
+            buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
+            programmingSubmission.setBuildLogEntries(buildLogEntries);
             programmingSubmissionRepository.save(programmingSubmission);
-
-            return prunedBuildLogs;
+            return buildLogEntries;
         }
         catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -453,89 +449,30 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
     }
 
-    private List<BuildLogEntry> parsePipelineLogs(Element logHtml) throws IllegalArgumentException {
-        final var buildLog = new LinkedList<BuildLogEntry>();
-        if (logHtml.childNodes().stream().noneMatch(child -> child.attr("class").contains("pipeline"))) {
-            throw new IllegalArgumentException("Log is not pipeline log");
-        }
-        for (Element elem : logHtml.children()) {
-            // Only pipeline-node-ID elements contain actual log entries
-            if (elem.attributes().get("class").contains("pipeline-node")) {
-                // At least one child must have a timestamp class
-                if (elem.childNodes().stream().anyMatch(child -> child.attr("class").contains("timestamp"))) {
-                    Iterator<Node> nodeIterator = elem.childNodes().iterator();
+    /**
+     * Removes the build logs that are not relevant to the student.
+     *
+     * @param buildLogEntries unfiltered build logs
+     * @param programmingLanguage the programming language of the build
+     * @return filtered build logs
+     */
+    private List<BuildLogEntry> filterUnnecessaryLogs(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        // There are color codes in the logs that need to be filtered out.
+        // This is needed for old programming exercises
+        // For example:[[1;34mINFO[m] is changed to [INFO]
+        Stream<BuildLogEntry> filteredBuildLogs = buildLogEntries.stream().peek(buildLog -> {
+            String log = buildLog.getLog();
+            log = log.replace("\u001B[1;34m", "");
+            log = log.replace("\u001B[m", "");
+            log = log.replace("\u001B[1;31m", "");
+            buildLog.setLog(log);
+        });
 
-                    while (nodeIterator.hasNext()) {
-                        Node node = nodeIterator.next();
-                        String log;
-                        if (node.attributes().get("class").contains("timestamp")) {
-                            final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                            final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
-                            var contentCandidate = nodeIterator.next();
+        // Jenkins outputs each executed shell command with '+ <shell command>'
+        filteredBuildLogs = filteredBuildLogs.filter(buildLog -> !buildLog.getLog().startsWith("+"));
 
-                            // Skip invisible entries (they contain only the timestamp, but we already got that above)
-                            if (contentCandidate.attr("style").contains("display: none")) {
-                                contentCandidate = nodeIterator.next();
-                            }
-                            log = reduceToText(contentCandidate);
-
-                            // There are color codes in the logs that need to be filtered out.
-                            // This is needed for old programming exercises
-                            // For example:[[1;34mINFO[m] is changed to [INFO]
-                            log = log.replace("\u001B[1;34m", "");
-                            log = log.replace("\u001B[m", "");
-                            log = log.replace("\u001B[1;31m", "");
-                            buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log).trim()));
-                        }
-                        else {
-                            // Log is from the same line as the last
-                            // Look for next text node in children
-                            log = reduceToText(node);
-                            final var lastLog = buildLog.getLast();
-                            lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log).trim());
-                        }
-                    }
-                }
-            }
-        }
-        return buildLog;
-
-    }
-
-    private List<BuildLogEntry> parseLogsLegacy(Element logHtml) {
-        final var buildLog = new LinkedList<BuildLogEntry>();
-        final var iterator = logHtml.childNodes().iterator();
-        while (iterator.hasNext()) {
-            final var node = iterator.next();
-            final String log;
-            // For timestamps, parse the <b> tag containing the time as hh:mm:ss
-            if (node.attributes().get("class").contains("timestamp")) {
-                final var timeAsString = ((TextNode) node.childNode(0).childNode(0)).getWholeText();
-                final var time = ZonedDateTime.parse(timeAsString, logDateTimeFormatter);
-                log = reduceToText(iterator.next());
-                buildLog.add(new BuildLogEntry(time, stripLogEndOfLine(log)));
-            }
-            else {
-                // Log is from the same line as the last
-                // Look for next text node in children
-                log = reduceToText(node);
-                final var lastLog = buildLog.getLast();
-                lastLog.setLog(lastLog.getLog() + stripLogEndOfLine(log));
-            }
-        }
-        return buildLog;
-    }
-
-    private String stripLogEndOfLine(String log) {
-        return log.replaceAll("[\\r\\n]", "");
-    }
-
-    private String reduceToText(Node node) {
-        if (node instanceof TextNode) {
-            return ((TextNode) node).getWholeText();
-        }
-
-        return reduceToText(node.childNode(node.childNodeSize() - 1));
+        // Filter out the remainder of unnecessary logs
+        return removeUnnecessaryLogsForProgrammingLanguage(filteredBuildLogs.collect(Collectors.toList()), programmingLanguage);
     }
 
     @Override

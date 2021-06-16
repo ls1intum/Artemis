@@ -45,7 +45,7 @@
                 "updateAfterComplaintFailed": "Updating the assessment failed."
             },
             "dashboard": {
-                "warning": "Warning: the submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",
+                "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading...",
                 "columns": {

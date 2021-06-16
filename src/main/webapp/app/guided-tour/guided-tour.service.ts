@@ -5,7 +5,7 @@ import { cloneDeep } from 'lodash';
 import { JhiAlertService } from 'ng-jhipster';
 import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
 import { filter, flatMap, map, switchMap } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
@@ -296,7 +296,7 @@ export class GuidedTourService {
         this.currentDotSubject.next(this.currentTourStepIndex);
         this.nextDotSubject.next(this.currentTourStepIndex - 1);
 
-        if (currentStep.closeAction) {
+        if (currentStep?.closeAction) {
             currentStep.closeAction();
         }
 
@@ -338,7 +338,7 @@ export class GuidedTourService {
         this.nextDotSubject.next(this.currentTourStepIndex + 1);
         this.isBackPageNavigation.next(false);
 
-        if (currentStep.closeAction) {
+        if (currentStep?.closeAction) {
             currentStep.closeAction();
         }
         if (nextStep) {
@@ -877,14 +877,12 @@ export class GuidedTourService {
             return false;
         }
         const currentTourStep = this.currentTour.steps[this.currentTourStepIndex];
-        const selector = currentTourStep.highlightSelector;
-        if (selector) {
-            const selectedElement = document.querySelector(selector);
-            if (!selectedElement) {
-                return false;
-            }
+        if (!currentTourStep) {
+            this.resetTour();
+            return false;
         }
-        return true;
+
+        return !!currentTourStep.highlightSelector && !!document.querySelector(currentTourStep.highlightSelector);
     }
 
     /**
@@ -967,7 +965,10 @@ export class GuidedTourService {
      * @param step passed on tour step of a guided tour
      * @return guided tour step with defined orientation
      */
-    private setTourOrientation(step: TourStep): TourStep {
+    private setTourOrientation(step: TourStep): TourStep | undefined {
+        if (!step) {
+            return undefined;
+        }
         const convertedStep = cloneDeep(step);
         if (convertedStep.orientation && !(typeof convertedStep.orientation === 'string') && (convertedStep.orientation as OrientationConfiguration[]).length) {
             (convertedStep.orientation as OrientationConfiguration[]).sort((a: OrientationConfiguration, b: OrientationConfiguration) => {

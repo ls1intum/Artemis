@@ -1,0 +1,19 @@
+<div class="row mb-5">
+    <div class="col-md-2 d-flex">
+        <div class="row flex-grow-1">
+            <h3 class="col-md-8 d-flex">{{ 'statistics.score_distribution' | artemisTranslate }}</h3>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <canvas
+            baseChart
+            height="250"
+            width="1500"
+            [datasets]="chartData"
+            [labels]="barChartLabels"
+            [options]="barChartOptions"
+            [legend]="chartLegend"
+            [chartType]="barChartType"
+        ></canvas>
+    </div>
+</div>

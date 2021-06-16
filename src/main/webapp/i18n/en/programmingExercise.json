@@ -17,7 +17,7 @@
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
-                "baseReposBuildPlans": "Additionally delete template, solution and test repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
+                "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
             "cleanup": {
                 "successMessage": "Cleanup was successful. All build plans have been deleted. Students may resume participating.",
@@ -37,6 +37,9 @@
             "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url",
             "solutionRepositoryUrl": "Solution Repository Url",
+            "auxiliaryRepositories": "Auxiliary Repositories",
+            "noCheckoutDirectorySet": "No checkout directory was set.",
+            "noCheckoutDirectorySetTooltip": "Since no checkout directory was specified, the repository was not automatically added to a build plan.",
             "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id",
             "repositories": "Repositories",
@@ -74,6 +77,7 @@
             },
             "recreateBuildPlans": {
                 "title": "Recreate Build Plans",
+                "warning": "Build plans will be recreated. All previous changes will be overwritten!",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
             "updateTemplate": {
@@ -199,6 +203,7 @@
                 "addTeamName": "Add team name to project (allows importing multiple projects into Eclipse at the same time)",
                 "addTeamOrStudentName": "Add team/student name to project (allows importing multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
+                "anonymizeStudentCommits": "Anonymize all of the student's commits",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
@@ -251,6 +256,7 @@
                 "templateRepoTooltip": "The repository which contains the template of the exercise",
                 "solutionRepoTooltip": "The repository which contains the solution to the exercise",
                 "testRepoTooltip": "The repository which contains all tests",
+                "auxiliaryRepoTooltip": "{{description}}",
                 "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
                 "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed"
             },
@@ -271,7 +277,17 @@
             "unlockAllRepositoriesModalText": "All repositories will be unlocked immediately! Students can push changes again, even if the exercise is already over!\n\nThis operation is performed automatically once students start to work on the exercise. Therefore, use this option only if the automatic unlocking was not performed correctly or if the repositories were locked by mistake!",
             "lockAllRepositoriesModalText": "All repositories will be locked immediately! Students will not be able to push even if the assignment is still running!\n\nThe operation will be performed automatically on the exercise due date if 'Run Tests after Due Date' or 'Manual Review' is enabled. Therefore, use this option only if automatic locking was not performed correctly or if the repositories were unlocked by mistake!",
             "unlockAllRepositoriesSuccess": "The repositories are now being unlocked. Please be patient for a while. You will soon be notified whether the operation was successful.",
-            "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon be notified whether the operation was successful."
+            "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon be notified whether the operation was successful.",
+            "auxiliaryRepository": {
+                "addAuxiliaryRepository": "Add Auxiliary Repository",
+                "repositoryName": "Repository Name",
+                "checkoutDirectory": "Checkout Directory",
+                "repositoryNameRequired": "The repository name is required.",
+                "invalidRepositoryName": "A repository with that name already exists in this exercise!",
+                "invalidDirectoryName": "An existing repository is already checked out into that directory!",
+                "noModificationPossibleWarning": "It will not be possible to modify these details (repository name, checkout directory, description) after generating the auxiliary repository!",
+                "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!"
+            }
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

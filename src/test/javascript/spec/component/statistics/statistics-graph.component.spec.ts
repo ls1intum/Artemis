@@ -7,14 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { MockPipe } from 'ng-mocks';
 import { ChartsModule } from 'ng2-charts';
 import { MomentModule } from 'ngx-moment';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs/internal/observable/of';
+import { of } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -97,7 +97,7 @@ describe('StatisticsGraphComponent', () => {
         component.graphType = Graphs.SUBMISSIONS;
         component.currentSpan = SpanType.WEEK;
         component.statisticsView = StatisticsView.COURSE;
-        component.courseId = 1;
+        component.entityId = 1;
         const changes = { currentSpan: { currentValue: SpanType.DAY } as SimpleChange };
         const graphData = [];
         for (let i = 0; i < 24; i++) {

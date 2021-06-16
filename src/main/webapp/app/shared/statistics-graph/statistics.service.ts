@@ -2,8 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Graphs, SpanType } from 'app/entities/statistics.model';
+import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsDTO } from 'app/course/manage/course-management-statistics-dto';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { map } from 'rxjs/operators';
+import { round } from 'app/shared/util/utils';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -23,15 +26,16 @@ export class StatisticsService {
     }
 
     /**
-     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the courseId
+     * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days, the given period and the id of the entity (e.g. course, exercise)
      */
-    getChartDataForCourse(span: SpanType, periodIndex: number, graphType: Graphs, courseId: number): Observable<number[]> {
+    getChartDataForContent(span: SpanType, periodIndex: number, graphType: Graphs, view: StatisticsView, entityId: number): Observable<number[]> {
         const params = new HttpParams()
             .set('span', '' + span)
             .set('periodIndex', '' + periodIndex)
             .set('graphType', '' + graphType)
-            .set('courseId', '' + courseId);
-        return this.http.get<number[]>(`${this.resourceUrl}data-for-course`, { params });
+            .set('view', '' + view)
+            .set('entityId', '' + entityId);
+        return this.http.get<number[]>(`${this.resourceUrl}data-for-content`, { params });
     }
 
     /**
@@ -40,5 +44,22 @@ export class StatisticsService {
     getCourseStatistics(courseId: number): Observable<CourseManagementStatisticsDTO> {
         const params = new HttpParams().set('courseId', '' + courseId);
         return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params });
+    }
+
+    /**
+     * Sends a GET request to retrieve data needed for the exercise statistics
+     */
+    getExerciseStatistics(exerciseId: number): Observable<ExerciseManagementStatisticsDto> {
+        const params = new HttpParams().set('exerciseId', '' + exerciseId);
+        return this.http
+            .get<ExerciseManagementStatisticsDto>(`${this.resourceUrl}exercise-statistics`, { params })
+            .pipe(map((res: ExerciseManagementStatisticsDto) => StatisticsService.calculatePercentagesForExerciseStatistics(res)));
+    }
+
+    private static calculatePercentagesForExerciseStatistics(stats: ExerciseManagementStatisticsDto): ExerciseManagementStatisticsDto {
+        stats.participationsInPercent = stats.numberOfStudentsOrTeamsInCourse > 0 ? round((stats.numberOfParticipations / stats.numberOfStudentsOrTeamsInCourse) * 100, 1) : 0;
+        stats.questionsAnsweredInPercent = stats.numberOfQuestions > 0 ? round((stats.numberOfAnsweredQuestions / stats.numberOfQuestions) * 100, 1) : 0;
+        stats.absoluteAveragePoints = round((stats.averageScoreOfExercise * stats.maxPointsOfExercise) / 100, 1);
+        return stats;
     }
 }
