@@ -124,7 +124,7 @@ describe('CourseLectureDetails', () => {
             ],
             providers: [
                 MockProvider(LectureService, {
-                    find: (_) => {
+                    find: () => {
                         let headers = new HttpHeaders();
                         headers = headers.set('Content-Type', 'application/json; charset=utf-8');
                         return of(new HttpResponse({ body: lecture, headers, status: 200 }));

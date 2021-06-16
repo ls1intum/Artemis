@@ -27,6 +27,14 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
             """)
     Set<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
+    /**
+     * Find all attachment units by lecture id and attachment type or throw if ist is empty.
+     *
+     * @param lectureId the id of the lecture
+     * @param attachmentType the attachment type
+     * @return the list of all attachment units with the given lecture id and attachment type
+     * @throws EntityNotFoundException if no results are found
+     */
     default Set<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType)
             throws EntityNotFoundException {
         Set<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);

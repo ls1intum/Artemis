@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
-import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
@@ -46,9 +45,6 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private AttachmentRepository attachmentRepo;
-
-    @Autowired
-    private AttachmentUnitRepository attachmentUnitRepository;
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
