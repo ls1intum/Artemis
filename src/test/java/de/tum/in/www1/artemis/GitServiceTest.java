@@ -1,22 +1,29 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
 public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -92,6 +99,28 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
         var repo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
         assertThat(gitService.getOriginHead(repo)).isEqualTo(defaultBranch);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("getBranchCombinationsToTest")
+    public void getExistingCheckedOutRepositoryByLocalPathSetsBranchCorrectly(String defaultBranchVCS, String defaultBranchArtemis) throws IOException {
+        gitUtilService.initRepo(defaultBranchVCS);
+
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+
+        Repository repo = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl(), defaultBranchArtemis);
+
+        assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_REMOTE_SECTION)).isEqualTo("origin");
+        assertThat(repo.getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranchArtemis, ConfigConstants.CONFIG_MERGE_SECTION))
+                .isEqualTo("refs/heads/" + defaultBranchArtemis);
+
+        gitService.deleteLocalRepository(localRepo);
+    }
+
+    private static Stream<Arguments> getBranchCombinationsToTest() {
+        List<String> branchNames = List.of("master", "main", "someOtherName");
+
+        return branchNames.stream().flatMap(firstParameter -> branchNames.stream().map(secondParameter -> arguments(firstParameter, secondParameter)));
     }
 
     @Test

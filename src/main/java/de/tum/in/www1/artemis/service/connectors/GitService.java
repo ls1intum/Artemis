@@ -484,6 +484,7 @@ public class GitService {
             // Check if the repository is already cached in the server's session.
             Repository cachedRepository = cachedRepositories.get(localPath);
             if (cachedRepository != null) {
+                log.error(cachedRepositories.toString());
                 return cachedRepository;
             }
             // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!
