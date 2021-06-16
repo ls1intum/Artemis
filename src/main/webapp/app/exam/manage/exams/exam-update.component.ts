@@ -19,8 +19,8 @@ export class ExamUpdateComponent implements OnInit {
     exam: Exam;
     course: Course;
     isSaving: boolean;
-    gradingScaleExists = false;
-    gradingScaleNotFound = false;
+    gradingScaleExistsForExam = false;
+    gradingScaleNotFoundForExam = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -38,14 +38,19 @@ export class ExamUpdateComponent implements OnInit {
                 (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
-                    this.gradingSystemService.findGradingScaleForExam(this.course.id!, this.exam.id!).subscribe((gradingScaleResponse) => {
-                        if (gradingScaleResponse.status !== 404) {
-                            this.gradingScaleExists = true;
-                        } else {
-                            this.gradingScaleNotFound = true;
-                            setTimeout(() => (this.gradingScaleNotFound = false), 5000);
-                        }
-                    });
+                    this.gradingSystemService.findGradingScaleForExam(this.course.id!, this.exam.id!).subscribe(
+                        (gradingScaleResponse) => {
+                            if (gradingScaleResponse.body) {
+                                this.gradingScaleExistsForExam = true;
+                            }
+                        },
+                        (errorResponse) => {
+                            if (errorResponse.status === 404) {
+                                this.gradingScaleNotFoundForExam = true;
+                                setTimeout(() => (this.gradingScaleNotFoundForExam = false));
+                            }
+                        },
+                    );
                 },
                 (err: HttpErrorResponse) => this.onError(err),
             );

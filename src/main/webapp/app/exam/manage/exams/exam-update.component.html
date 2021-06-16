@@ -10,7 +10,7 @@
             </ng-template>
 
             <div>
-                <jhi-alert-error *ngIf="!gradingScaleNotFound"></jhi-alert-error>
+                <jhi-alert-error *ngIf="!gradingScaleNotFoundForExam"></jhi-alert-error>
                 <div class="form-group" *ngIf="exam.course">
                     <label class="form-control-label" for="course" jhiTranslate="artemisApp.examManagement.courseTitle">Course Title</label>
                     <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />
@@ -125,7 +125,7 @@
                 <div class="col-sm-6">
                     <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
                     <fa-icon
-                        *ngIf="gradingScaleExists"
+                        *ngIf="gradingScaleExistsForExam"
                         [icon]="'exclamation-triangle'"
                         class="text-warning"
                         placement="top"

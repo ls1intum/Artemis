@@ -48,8 +48,8 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
-    gradingScaleExists = false;
-    gradingScaleNotFound = false;
+    gradingScaleExistsForCourse = false;
+    gradingScaleNotFoundForCourse = false;
 
     constructor(
         private courseService: CourseManagementService,
@@ -73,19 +73,24 @@ export class CourseUpdateComponent implements OnInit {
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations = organizations;
                 });
+                this.gradingSystemService.findGradingScaleForCourse(course.id).subscribe(
+                    (gradingScaleResponse) => {
+                        if (gradingScaleResponse.body) {
+                            this.gradingScaleExistsForCourse = true;
+                        }
+                    },
+                    (errorResponse) => {
+                        if (errorResponse.status === 404) {
+                            this.gradingScaleNotFoundForCourse = true;
+                            setTimeout(() => (this.gradingScaleNotFoundForCourse = false));
+                        }
+                    },
+                );
 
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             }
-            this.gradingSystemService.findGradingScaleForCourse(course.id).subscribe((gradingScaleResponse) => {
-                if (gradingScaleResponse.status !== 404) {
-                    this.gradingScaleExists = true;
-                } else {
-                    this.gradingScaleNotFound = true;
-                    setTimeout(() => (this.gradingScaleNotFound = false), 4000);
-                }
-            });
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
