@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -12,11 +14,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class LoginVM {
 
     @NotNull
-    @Size(min = 1, max = 50)
+    @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     private String username;
 
     @NotNull
-    @Size(min = 4, max = 100)
+    @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH)
     private String password;
 
     private Boolean rememberMe;
