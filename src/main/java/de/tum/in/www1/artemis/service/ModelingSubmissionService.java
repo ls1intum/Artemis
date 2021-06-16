@@ -152,8 +152,7 @@ public class ModelingSubmissionService extends SubmissionService {
         if (lockSubmission) {
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
                 modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
-                List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(modelingSubmission.getId());
-                modelingSubmission.setElements(new HashSet<>(elementCounts));
+                setNumberOfAffectedSubmissionsPerElement(modelingSubmission);
             }
             lockSubmission(modelingSubmission, correctionRound);
         }
@@ -204,12 +203,10 @@ public class ModelingSubmissionService extends SubmissionService {
      * This number is represented with the `numberOfAffectedSubmissions` field which is set here for each
      * TextBlock of this submission
      *
-     * @param result Result for the Submission acting as a reference for the text submission to be searched.
+     * @param submission Result for the Submission acting as a reference for the text submission to be searched.
      */
-    public void setNumberOfAffectedSubmissionsPerElement(@NotNull Result result) {
-        final ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
-        final long submissionId = modelingSubmission.getId();
-        final var otherElementsInCluster = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submissionId);
-
+    public void setNumberOfAffectedSubmissionsPerElement(@NotNull ModelingSubmission submission) {
+        List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submission.getId());
+        submission.setElements(new HashSet<>(elementCounts));
     }
 }

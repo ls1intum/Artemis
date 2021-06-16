@@ -1,11 +1,13 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
-import interact from 'interactjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import * as $ from 'jquery';
+import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import interact from 'interactjs';
+import * as $ from 'jquery';
+import { JhiAlertService } from 'ng-jhipster';
+import { mode } from 'simple-statistics';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -26,6 +28,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() explanation: string;
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
+    @Input() elementCounts?: OtherModelElementCount[];
 
     feedbacks: Feedback[];
     @Input() set resultFeedbacks(feedback: Feedback[]) {
@@ -134,6 +137,21 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
         this.handleFeedback();
 
+        const model: UMLModel = { ...this.model } as UMLModel;
+        if (this.elementCounts) {
+            const newAssessments: Assessment[] = [];
+            const elementsWithExistingAssessment = model.assessments.map((assessment) => assessment.modelElementId);
+            this.elementCounts.forEach((elementCount) => {
+                if (!elementsWithExistingAssessment.includes(elementCount.elementId)) {
+                    const note = this.calculateNote(elementCount.elementId);
+                    if (note) {
+                        this.model.assessments.push({ note, modelElementId: elementCount.elementId } as Assessment);
+                    }
+                }
+            });
+            this.model.assessments.forEach((assessment) => (assessment.note = this.calculateNote(assessment.modelElementId)));
+        }
+        console.log('model', model, this.model);
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly,
@@ -285,6 +303,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             feedback: feedback.text || undefined,
             label: this.calculateLabel(feedback),
             labelColor: this.calculateLabelColor(feedback),
+            note: this.calculateNote(feedback.referenceId),
         }));
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
@@ -305,5 +324,16 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
         }
         return '';
+    }
+
+    private calculateNote(referenceId: any) {
+        console.log('caca');
+        if (this.elementCounts) {
+            const element = this.elementCounts.find((count) => count.elementId === referenceId);
+            if (element) {
+                return `This assessment will be suggested for ${element.numberOfOtherElements} other submissions.`;
+            }
+        }
+        return undefined;
     }
 }
