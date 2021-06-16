@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -11,8 +12,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.in.ase.athene.protobuf.Cluster;
+import de.tum.in.ase.athene.protobuf.DistanceMatrixEntry;
+import de.tum.in.ase.athene.protobuf.Segment;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
@@ -20,7 +23,6 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.AtheneDTO;
 
 public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -76,6 +78,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         var textSubmissions = ModelFactory.generateTextSubmissions(size);
         for (var i = 0; i < size; i++) {
             var textSubmission = textSubmissions.get(i);
+            textSubmission.setId((long) (i + 1));
             var student = database.getUserByLogin("student" + (i + 1));
             var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise1, student);
             participation = participationRepository.save(participation);
@@ -111,15 +114,16 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     /**
-     * Tests parseTextBlock of atheneService
+     * Tests parseTextBlocks of atheneService
      */
     @Test
     public void parseTextBlocks() {
+
         int size = 10;
         var textSubmissions = generateTextSubmissions(size);
 
-        List<AtheneDTO.TextBlockDTO> blocks = generateTextBlocks(textSubmissions);
-        List<TextBlock> textBlocks = atheneService.parseTextBlocks(blocks, exercise1.getId());
+        List<Segment> segments = generateSegments(textSubmissions);
+        List<TextBlock> textBlocks = atheneService.parseTextBlocks(segments, exercise1.getId());
         for (TextBlock textBlock : textBlocks) {
             assertThat(textBlock.getId()).isNotNull();
             assertThat(textBlock.getText()).isNotNull();
@@ -130,63 +134,81 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     /**
-     * Tests processResult of atheneService
+     * Tests parseTextClusters of atheneService
      */
+
     @Test
-    public void processResult() {
-        // Inject running task into atheneService
-        List<Long> runningAtheneTasks = new ArrayList<>();
-        runningAtheneTasks.add(exercise1.getId());
-        ReflectionTestUtils.setField(atheneService, "runningAtheneTasks", runningAtheneTasks);
-        // Verify injection
-        assertThat(atheneService.isTaskRunning(exercise1.getId())).isTrue();
-
-        int size = 10;
-        var textSubmissions = generateTextSubmissions(size);
-
-        // generate required parameters
-        List<AtheneDTO.TextBlockDTO> blocks = generateTextBlocks(textSubmissions);
-        Map<Integer, TextCluster> clusters = generateClusters();
-
-        // Call test method
-        atheneService.processResult(clusters, blocks, exercise1.getId());
-        assertThat(!atheneService.isTaskRunning(exercise1.getId())).isTrue();
-
-        assertThat(textBlockRepository.findAll()).hasSize(size);
-        assertThat(textClusterRepository.findAll()).hasSize(clusters.size());
+    public void parseTextClusters() {
+        List<Cluster> clusters = generateClusters();
+        List<TextCluster> textClusters = atheneService.parseTextClusters(clusters);
+        for (TextCluster textCluster : textClusters) {
+            assertThat(textCluster.getBlocks()).isNotNull();
+            assertThat(textCluster.getBlocks()).isNotEmpty();
+            assertThat(textCluster.getDistanceMatrix()).isNotNull();
+        }
+        assertThat(textClusters, hasSize(clusters.size()));
     }
 
     /**
      * Generates example AtheneDTO TextBlocks
+     *
      * @param textSubmissions How many blocks should be generated
      * @return A list containing the generated TextBlocks
      */
-    private List<AtheneDTO.TextBlockDTO> generateTextBlocks(List<TextSubmission> textSubmissions) {
-        List<AtheneDTO.TextBlockDTO> blocks = new ArrayList<>();
-        for (var textSubmission : textSubmissions) {
-            AtheneDTO.TextBlockDTO newBlock = new AtheneDTO.TextBlockDTO();
-            newBlock.setSubmissionId(textSubmission.getId());
-            newBlock.setStartIndex(0);
-            newBlock.setEndIndex(30);
-            newBlock.setText(textSubmission.getText().substring(0, 30));
-            // Calculate realistic hash (also see TextBlock.computeId())
-            final String idString = newBlock.getSubmissionId() + ";" + newBlock.getStartIndex() + "-" + newBlock.getEndIndex() + ";" + newBlock.getText();
-            newBlock.setId(sha1Hex(idString));
-            blocks.add(newBlock);
-        }
-
-        return blocks;
+    private List<Segment> generateSegments(List<TextSubmission> textSubmissions) {
+        return textSubmissions.stream().map(textSubmission -> {
+            final String idString = textSubmission.getId() + ";0-30;" + textSubmission.getText().substring(0, 30);
+            return Segment.newBuilder().setId(sha1Hex(idString)).setSubmissionId(textSubmission.getId().intValue()).setStartIndex(0).setEndIndex(30)
+                    .setText(textSubmission.getText().substring(0, 30)).build();
+        }).collect(toList());
     }
 
     /**
-     * Generates example TextClusters
-     * @return A Map with the generated TextClusters
+     * Generates example protobuf Clusters
+     *
+     * @return A List with the generated Clusters
      */
-    private Map<Integer, TextCluster> generateClusters() {
-        Map<Integer, TextCluster> clusters = new HashMap<>();
-        TextCluster textCluster = new TextCluster();
-        clusters.put(0, textCluster);
+    private List<Cluster> generateClusters() {
+        int size = 10;
+        List<Cluster> clusters = new ArrayList<>();
+        // Generate 10 clusters
+        for (int i = 0; i < 10; i++) {
+            List<Segment> segments = new ArrayList<>();
+            // First generate 5 segments for each cluster
+            for (int j = 0; j < 5; j++) {
+                Segment segment = Segment.newBuilder().setId(String.valueOf(j + 1)).build();
+                segments.add(segment);
+            }
+            // Create a cluster
+            Cluster cluster = Cluster.newBuilder().addAllSegments(segments).addAllDistanceMatrix(generateDistanceMatrix(5)).build();
+            clusters.add(cluster);
+        }
         return clusters;
+    }
+
+    /**
+     * Generates example protobuf DistanceMatrix with DistanceMatrixEntries
+     *
+     * @param size The size of the matrix (size x size)
+     * @return generated DistanceMatrix (List of DistanceMatrixEntries)
+     */
+    private List<DistanceMatrixEntry> generateDistanceMatrix(int size) {
+        List<DistanceMatrixEntry> distanceMatrix = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j <= i; j++) {
+                if (i == j) {
+                    DistanceMatrixEntry diagonalEntry = DistanceMatrixEntry.newBuilder().setX(i).setY(j).setValue(0).build();
+                    distanceMatrix.add(diagonalEntry);
+                }
+                else {
+                    DistanceMatrixEntry entry = DistanceMatrixEntry.newBuilder().setX(i).setY(j).setValue(i + 5).build();
+                    DistanceMatrixEntry symmetricalEntry = DistanceMatrixEntry.newBuilder().setX(j).setY(i).setValue(i + 5).build();
+                    distanceMatrix.add(entry);
+                    distanceMatrix.add(symmetricalEntry);
+                }
+            }
+        }
+        return distanceMatrix;
     }
 
 }
