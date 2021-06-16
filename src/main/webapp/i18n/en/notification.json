@@ -11,8 +11,8 @@
             "by": "by",
             "allLoaded": "No further notifications available.",
             "target": {
-                "newAnswer": "View answer",
-                "newQuestion": "View question",
+                "newAnswer": "View reply",
+                "newQuestion": "View post",
                 "exerciseCreated": "View exercise",
                 "exerciseUpdated": "View exercise",
                 "attachmentUpdated": "View lecture"

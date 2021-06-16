@@ -235,7 +235,7 @@
             "manageHints": "Manage Hints",
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
-            "questionsAndAnswers": "Q&A",
+            "discussion": "Discussions",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted"
         },
