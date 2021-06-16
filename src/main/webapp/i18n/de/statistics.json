@@ -36,8 +36,8 @@
         "active_tutorsTitle": "# Tutor:innen",
         "created_resultsTitle": "# Bewertungen",
         "created_feedbacksTitle": "# Feedbacks",
-        "questions_askedTitle": "# Fragen",
-        "questions_answeredTitle": "# Antworten",
+        "posts": "# Diskussionsbeiträge",
+        "answered_posts": "# Beantwortete Beiträge",
         "score_distributionTitle": "% Studierende"
     },
     "calendar_week": "KW",
