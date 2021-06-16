@@ -9,11 +9,11 @@
         },
         "resize": {
             "headline": "Zu kleine Bildschirmgröße",
-            "content": "Bitte vergrößere deine Bildschirmgröße um mit der Tour fortzufahren oder schließe die Tour."
+            "content": "Bitte vergrößere deine Bildschirmgröße, um mit der Tour fortzufahren, oder schließe die Tour."
         },
         "cancel": {
             "headline": "Tutorial abgebrochen",
-            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial fortsetzen</tt> im Account-Menü."
+            "content": "Du hast das Tutorial abgebrochen. Wenn du das Tutorial zu einem anderen Zeitpunkt fortsetzen möchtest, dann klicke auf <tt>Tutorial fortsetzen</tt> im Konto-Menü."
         },
         "completed": {
             "headline": "Herzlichen Glückwunsch 🎉",
@@ -21,16 +21,16 @@
             "hint": "Bitte beachte, dass die gelöste Aufgabe - wenn vorhanden - im Rahmen des Tutorials immer zurückgesetzt wird. Du wirst auf die Übersichtsseite weitergeleitet und kannst die Aufgabe nochmal neu starten."
         },
         "clickHint": {
-            "text": "Klicke auf das Element um die Tour fortzusetzen."
+            "text": "Klicke auf das Element, um die Tour fortzusetzen."
         },
         "typeHint": {
-            "text": "Füge eine neue Zeile ein um mit dem nächsten Schritt fortzufahren."
+            "text": "Füge eine neue Zeile ein, um mit dem nächsten Schritt fortzufahren."
         },
         "waitHint": {
             "text": "Bitte warte bis der nächste Schritt fertig geladen ist."
         },
         "modelingHint": {
-            "text": "Füge das UML-Element hinzu oder editiere es um die Tour fortzusetzen."
+            "text": "Füge das UML-Element hinzu oder editiere es, um die Tour fortzusetzen."
         },
         "videoHint": {
             "text": "Während du dir das Video anschaust, kannst du die dargestellten Schritte nebenbei auf deinem Computer auch ausführen."
