@@ -199,7 +199,6 @@ describe('FileUploadAssessmentComponent', () => {
             const complaint = new Complaint();
             complaint.id = 0;
             complaint.complaintText = 'complaint';
-            complaint.resultBeforeComplaint = 'result';
             stub(fileUploadSubmissionService, 'get').returns(of({ body: submission } as EntityResponseType));
             stub(complaintService, 'findByResultId').returns(of({ body: complaint } as EntityResponseType));
             comp.submission = submission;
