@@ -6,6 +6,7 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { round } from 'app/shared/util/utils';
+import Chart from 'chart.js/auto';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
@@ -95,13 +96,14 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
             animation: {
                 duration: 1,
                 onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
+                    const chartInstance = <HTMLCanvasElement>document.createElement('average-score-graph');
+                    const ctx = chartInstance.getContext('2d')!;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
+                    const scoreChart = new Chart(ctx);
 
                     this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
+                        const meta = scoreChart.getDatasetMeta(j);
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
                             ctx.fillText(String(data), bar._model.x, bar._model.y - 5);

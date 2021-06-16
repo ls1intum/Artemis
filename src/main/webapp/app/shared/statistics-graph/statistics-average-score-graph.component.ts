@@ -2,10 +2,11 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import Chart from 'chart.js/auto';
 
 @Component({
     selector: 'jhi-statistics-average-score-graph',
@@ -91,14 +92,17 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             responsive: true,
             animation: {
                 duration: 1,
-                onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
+                onComplete(chartElement: ChartElement) {
+                    // const chartInstance = <HTMLCanvasElement> document.createElement('average-score-graph');
+                    // const ctx = chartInstance.getContext('2d')!;
+                    const chartInstance = chartElement.chart;
+                    const ctx = chartInstance.ctx!;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
+                    const averageChart = new Chart(ctx);
 
                     this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
+                        const meta = averageChart.getDatasetMeta(j);
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
                             ctx.fillText(String(data), bar._model.x, bar._model.y - 5);

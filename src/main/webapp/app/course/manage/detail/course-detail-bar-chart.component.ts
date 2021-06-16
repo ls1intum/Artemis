@@ -4,7 +4,7 @@ import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { CourseManagementService } from '../course-management.service';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-course-detail-bar-chart',
@@ -129,20 +129,6 @@ export class CourseDetailBarChartComponent implements OnChanges {
             },
             animation: {
                 duration: 1,
-                onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = !!self.absoluteData ? self.absoluteData[index] : 0;
-                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
             },
             scales: {
                 y: {

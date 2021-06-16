@@ -11,6 +11,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { BaseChartDirective, Color } from 'ng2-charts';
+// import Chart from 'chart.js/auto';
 
 /**
  * this interface is adapted from chart.js
@@ -84,8 +85,9 @@ export function createAnimation(dataSetProvider: DataSetProvider) {
         onComplete: (chartElement: ChartElement) => {
             const chartInstance = chartElement.chart;
             const ctx = chartInstance.ctx!;
+            // const chart = new Chart(ctx);
 
-            ctx.font = Chart.helpers.fontString(Chart.defaults.font.size, Chart.defaults.font.style, Chart.defaults.font.family);
+            // ctx.font = Chart.defaults.helpers.fontString(Chart.defaults.font.size, Chart.defaults.font.style, Chart.defaults.font.family);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             const participants = dataSetProvider.getParticipants();

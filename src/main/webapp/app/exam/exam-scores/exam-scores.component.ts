@@ -22,7 +22,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
 import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import * as Sentry from '@sentry/browser';
@@ -224,19 +224,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             },
             animation: {
                 duration: 1,
-                onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-
+                onComplete(chartElement: ChartElement) {
+                    const chartInstance = <HTMLCanvasElement>document.createElement('average-score-graph');
+                    const ctx = chartInstance.getContext('2d')!;
                     ctx.font = Chart.helpers.fontString(Chart.defaults.font.size, Chart.defaults.font.style, Chart.defaults.font.family);
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'bottom';
+                    const chart = new Chart(ctx);
 
                     this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
+                        const meta = chart.getDatasetMeta(j);
                         meta.data.forEach(function (bar: any, index: number) {
                             const data = dataset.data[index];
-                            ctx.fillText(data, bar._model.x, bar._model.y - 20);
+                            ctx.fillText(String(data), bar._model.x, bar._model.y - 20);
                             ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2, 2)}%)`, bar._model.x, bar._model.y - 5);
                         });
                     });
