@@ -31,9 +31,33 @@ export class AnswerPostComponent implements OnInit {
     EditorMode = EditorMode;
     courseId: number;
 
-    // Only allow certain html tags and no attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p'];
-    allowedHtmlAttributes: string[] = ['href'];
+    // Only allow certain html tags and attributes
+    allowedHtmlTags: string[] = [
+        'a',
+        'b',
+        'strong',
+        'i',
+        'em',
+        'mark',
+        'small',
+        'del',
+        'ins',
+        'sub',
+        'sup',
+        'p',
+        'ins',
+        'blockquote',
+        'pre',
+        'code',
+        'ol',
+        'ul',
+        'li',
+        'h1',
+        'h2',
+        'h3',
+        'span',
+    ];
+    allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
     constructor(private answerPostService: AnswerPostService, private route: ActivatedRoute) {}
 
