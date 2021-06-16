@@ -136,7 +136,7 @@
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
-                    "title": "Dozentenaktionen:",
+                    "title": "Aktionen für Lehrende:",
                     "scores": "Bewertungen",
                     "submissions": "Einreichungen",
                     "statistics": "Statistiken"
@@ -162,7 +162,7 @@
                     "newAnswerLabel": "Neuer Post",
                     "answerLabel": "Antwort",
                     "postLabel": "Post",
-                    "approvedLabel": "Vom Tutor bestätigt",
+                    "approvedLabel": "Von Tutor:in bestätigt",
                     "answerNow": "Jetzt beantworten",
                     "noAnswers": "Auf diesen Post wurde noch nicht reagiert",
                     "answerCount": "Zeige Antworten ({{count}})",

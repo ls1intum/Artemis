@@ -18,7 +18,7 @@
         <span [jhiTranslate]="'artemisApp.textAssessment.conflict.type.' + conflictType"></span>
     </span>
 
-    <div class="close-button" *ngIf="!readOnly">
+    <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
         <ng-template #closeButton>
             <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>

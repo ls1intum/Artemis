@@ -55,7 +55,6 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        // fixture.debugElement.query(By.css('fa-icon.back-button'));
         let button = compiled.querySelector('.close fa-icon[icon="times"]');
         let confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
