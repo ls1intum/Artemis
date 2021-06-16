@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public abstract class SubmissionExportService {
@@ -45,6 +46,20 @@ public abstract class SubmissionExportService {
         this.exerciseRepository = exerciseRepository;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
+    }
+
+    /**
+     * Exports student submission of an exercise to a zip file located in the submission exports folder.
+     * The zip file is deleted automatically after 30 minutes. The function throws a bad request if the
+     * export process fails.
+     *
+     * @param exerciseId the id   of the exercise to be exported
+     * @param submissionExportOptions the options for the export
+     * @return the zippped file with the exported submissions
+     */
+    public File exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
+        return exportStudentSubmissions(exerciseId, submissionExportOptions)
+                .orElseThrow(() -> new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "nosubmissions"));
     }
 
     /**
