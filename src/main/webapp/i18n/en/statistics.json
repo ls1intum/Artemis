@@ -36,8 +36,8 @@
         "active_tutorsTitle": "# of tutors",
         "created_resultsTitle": "# of results",
         "created_feedbacksTitle": "# of feedbacks",
-        "questions_askedTitle": "# of questions",
-        "questions_answeredTitle": "# of answers",
+        "postsTitle": "# of created posts",
+        "answered_postsTitle": "# of replied posts",
         "score_distributionTitle": "% of students"
     },
     "calendar_week": "CW",
@@ -74,6 +74,6 @@
         "title": "Exercise statistics",
         "averageScore": "Average Score",
         "participationRate": "Participation rate",
-        "questionsAnswered": "Questions answered"
+        "answered_posts": "Replied Posts"
     }
 }
