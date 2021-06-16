@@ -1,4 +1,4 @@
-import { Component, DebugElement, Input } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -29,7 +29,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -45,18 +44,11 @@ import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-de
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
-
-@Component({ selector: 'jhi-course-exercise-row', template: '' })
-class CourseExerciseRowStubComponent {
-    @Input() exercise: Exercise;
-    @Input() course: Course;
-    @Input() extendedLink = false;
-    @Input() hasGuidedTour: boolean;
-    @Input() isPresentationMode = false;
-}
 
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -107,7 +99,6 @@ describe('CourseLectureDetails', () => {
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,
-                CourseExerciseRowStubComponent,
                 NgbTooltip,
                 NgbCollapse,
                 NgbPopover,
@@ -116,6 +107,7 @@ describe('CourseLectureDetails', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
+                MockComponent(CourseExerciseRowComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(FaIconComponent),
@@ -131,19 +123,7 @@ describe('CourseLectureDetails', () => {
                     },
                 }),
                 MockProvider(JhiAlertService),
-                {
-                    provide: FileService,
-                    useValue: {
-                        downloadFileWithAccessToken() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: new Window(),
-                                    }),
-                            };
-                        },
-                    },
-                },
+                { provide: FileService, useClass: MockFileService },
                 { provide: Router, useValue: mockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
