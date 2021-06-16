@@ -2,9 +2,9 @@
     <div class="card-header d-flex justify-content-center text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
-            <span class="ml-2" jhiTranslate="artemisApp.editor.instructions">Instructions</span>
+            <span class="ms-2" jhiTranslate="artemisApp.editor.instructions">Instructions</span>
         </h3>
-        <fa-icon class="ml-auto" [icon]="'chevron-right'"></fa-icon>
+        <fa-icon class="ms-auto" [icon]="'chevron-right'"></fa-icon>
     </div>
     <ng-content></ng-content>
     <!-- Required for resizing; don't remove empty span -->

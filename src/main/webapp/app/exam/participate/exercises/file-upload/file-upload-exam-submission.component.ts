@@ -17,7 +17,6 @@ import { Result } from 'app/entities/result.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
-import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -32,8 +31,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     studentSubmission: FileUploadSubmission;
     @Input()
     exercise: FileUploadExercise;
-
-    private synchronizationAlert$ = new Subject();
 
     submittedFileName: string;
     submittedFileExtension: string;
@@ -71,11 +68,11 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     /**
      * Sets file submission for exercise
      * Here the file selected with the -browse- button is handeled.
-     * @param $event {object} Event object which contains the uploaded file
+     * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise($event: any): void {
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setFileSubmissionForExercise(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.exercise.filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {

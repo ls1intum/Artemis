@@ -10,27 +10,27 @@
             <div class="d-flex align-items-center">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.BUILD_FAILED)" [value]="FilterProp.BUILD_FAILED" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showBuildFailed' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showBuildFailed' | artemisTranslate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.UNSUCCESSFUL)" [value]="FilterProp.UNSUCCESSFUL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showUnsuccessful' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showUnsuccessful' | artemisTranslate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.SUCCESSFUL)" [value]="FilterProp.SUCCESSFUL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showSuccessful' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showSuccessful' | artemisTranslate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="newManualResultAllowed">
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center" *ngIf="newManualResultAllowed">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.MANUAL)" [value]="FilterProp.MANUAL" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showManual' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showManual' | artemisTranslate }}</span>
                 </label>
-                <label class="radio-inline ml-2 mb-0 d-flex align-items-center" *ngIf="newManualResultAllowed">
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center" *ngIf="newManualResultAllowed">
                     <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateResultFilter(FilterProp.AUTOMATIC)" [value]="FilterProp.AUTOMATIC" />
-                    <span class="ml-1">{{ 'artemisApp.exercise.showAutomatic' | artemisTranslate }}</span>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showAutomatic' | artemisTranslate }}</span>
                 </label>
             </div>
         </div>
@@ -39,7 +39,7 @@
                 <a
                     *ngIf="!exercise.exerciseGroup"
                     [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'participations']"
-                    class="btn btn-primary btn-sm mr-1"
+                    class="btn btn-primary btn-sm me-1"
                 >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
@@ -57,13 +57,13 @@
                         exercise.id,
                         'participations'
                     ]"
-                    class="btn btn-primary btn-sm mr-1"
+                    class="btn btn-primary btn-sm me-1"
                 >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
 
-                <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm mr-1" (click)="exportNames()">
+                <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm me-1" (click)="exportNames()">
                     <fa-icon [icon]="'download'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportNames">Export Names</span>
                 </button>
@@ -71,7 +71,7 @@
                 <jhi-programming-assessment-repo-export
                     *ngIf="exercise.type === ExerciseType.PROGRAMMING"
                     [exerciseId]="exercise.id!"
-                    class="mr-1"
+                    class="me-1"
                 ></jhi-programming-assessment-repo-export>
                 <jhi-exercise-submission-export
                     *ngIf="
@@ -80,7 +80,7 @@
                     "
                     [exerciseId]="exercise.id!"
                     [exerciseType]="exercise.type"
-                    class="mr-1"
+                    class="me-1"
                 ></jhi-exercise-submission-export>
                 <button class="btn btn-primary btn-sm" (click)="refresh()">
                     <fa-icon [icon]="'sync'"></fa-icon>
@@ -253,27 +253,27 @@
                     [width]="470"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm mr-1" href="{{ getRepositoryLink(value) }}">
-                            <fa-icon [icon]="'code-branch'" class="mr-1"></fa-icon>
+                        <a *ngIf="getRepositoryLink(value)" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
+                            <fa-icon [icon]="'code-branch'" class="me-1"></fa-icon>
                             Repository
                         </a>
-                        <button *ngIf="buildPlanId(value)" class="btn btn-primary btn-sm mr-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
-                            <fa-icon class="mr-1" [icon]="['far', 'file-code']"></fa-icon>
+                        <button *ngIf="buildPlanId(value)" class="btn btn-primary btn-sm me-1" jhiBuildPlanButton [projectKey]="projectKey()" [buildPlanId]="buildPlanId(value)!">
+                            <fa-icon class="me-1" [icon]="['far', 'file-code']"></fa-icon>
                             Build plan
                         </button>
                         <a
                             [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
-                            class="btn btn-info btn-sm mr-1"
+                            class="btn btn-info btn-sm me-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
                             [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
-                            <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon class="me-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </a>
                         <a
                             *ngIf="exercise.course && newManualResultAllowed"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
@@ -298,7 +298,7 @@
                                 value.submission.id,
                                 'assessment'
                             ]"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.programmingSubmission.view' | artemisTranslate }}
@@ -317,7 +317,7 @@
                         <a
                             *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
@@ -341,7 +341,7 @@
                                 value.submission.id,
                                 'assessment'
                             ]"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | artemisTranslate }}
@@ -355,7 +355,7 @@
                             *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
@@ -380,7 +380,7 @@
                                 'assessment'
                             ]"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.modelingSubmission.view' | artemisTranslate }}
@@ -393,7 +393,7 @@
                         <a
                             *ngIf="exercise.course"
                             [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | artemisTranslate }}
@@ -417,7 +417,7 @@
                                 value.submission.id,
                                 'assessment'
                             ]"
-                            class="btn btn-primary btn-sm mr-1"
+                            class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | artemisTranslate }}

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.security.Principal;
 import java.util.*;
@@ -16,7 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -178,13 +182,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param submissionId the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
      * @param resultId the resultId for which we want do get the submission
+     * @param withoutResults No result will be created or loaded and the exercise won't be locked when this is set so plagiarism detection doesn't lock results
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
     @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
+            @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
         var modelingSubmission = modelingSubmissionRepository.findOne(submissionId);
@@ -198,20 +204,23 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             return forbidden();
         }
 
-        // load submission with results either by resultId or by correctionRound
-        if (resultId != null) {
-            // load the submission with additional needed properties
-            modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
-            // check if result exists
-            Result result = modelingSubmission.getManualResultsById(resultId);
-            if (result == null) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
+        if (!withoutResults) {
+            // load submission with results either by resultId or by correctionRound
+            if (resultId != null) {
+                // load the submission with additional needed properties
+                modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
+                // check if result exists
+                Result result = modelingSubmission.getManualResultsById(resultId);
+                if (result == null) {
+                    return ResponseEntity.badRequest()
+                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID."))
+                            .body(null);
+                }
             }
-        }
-        else {
-            // load and potentially lock the submission with additional needed properties by correctionRound
-            modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+            else {
+                // load and potentially lock the submission with additional needed properties by correctionRound
+                modelingSubmission = modelingSubmissionService.lockAndGetModelingSubmission(submissionId, modelingExercise, correctionRound);
+            }
         }
 
         // Make sure the exercise is connected to the participation in the json response
@@ -220,7 +229,11 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // prepare modelingSubmission for response
         modelingSubmissionService.hideDetails(modelingSubmission, user);
-        modelingSubmission.removeNotNeededResults(correctionRound, resultId);
+        // Don't remove results when they were not requested in the first place
+        if (!withoutResults) {
+            modelingSubmission.removeNotNeededResults(correctionRound, resultId);
+        }
+
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -287,35 +300,20 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
+        // the
+        // corresponding submission yet.
+        var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
 
-        if (compassService.isSupported(modelingExercise)) {
-            // ask Compass for optimal submission to assess if diagram type is supported
-            final List<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
-
-            if (optimalModelSubmissions.isEmpty()) {
-                return ResponseEntity.ok(new Long[] {}); // empty
-            }
-
-            // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
-            Collections.shuffle(optimalModelSubmissions);
-            return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
+        if (submissionsWithoutResult.isEmpty()) {
+            return ResponseEntity.ok(new Long[] {}); // empty
         }
-        else {
-            // otherwise get a random (non-optimal) submission that is not assessed
-            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
-            // the
-            // corresponding submission yet.
-            var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
-            var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                    .collect(Collectors.toList());
 
-            if (submissionsWithoutResult.isEmpty()) {
-                return ResponseEntity.ok(new Long[] {}); // empty
-            }
+        Random random = new Random();
+        return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())).getId() });
 
-            Random random = new Random();
-            return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())).getId() });
-        }
     }
 
     /**
@@ -330,9 +328,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        if (compassService.isSupported(modelingExercise)) {
-            compassService.resetModelsWaitingForAssessment(exerciseId);
-        }
         return ResponseEntity.noContent().build();
     }
 

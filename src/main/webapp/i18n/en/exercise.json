@@ -6,6 +6,7 @@
                 "createLabel": "Create a new Exercise",
                 "createOrEditLabel": "Create or edit an Exercise"
             },
+            "details": "Exercise details",
             "addCriterion": "Add a Grading Criterion",
             "resultCount": "{{resultsLength}} results",
             "resultsPerPage": "{{number}} results per page",
@@ -66,7 +67,8 @@
             "pointsError": "Must be a number between 1 and 9999.",
             "bonusPoints": "Bonus points",
             "bonusPointsError": "Must be a number between 0 and 9999.",
-            "includedInOverallScoreLabel": "Should this exercise be included in the course / exam score calculation?",
+            "includedInOverallScoreCourseLabel": "Should this exercise be included in the course score calculation?",
+            "includedInOverallScoreExamLabel": "Should this exercise be included in the exam score calculation?",
             "includedInOverallScore": "Included in Score",
             "includedCompletely": "Included",
             "includedCompletelyTooltip": "All points and bonus points earned in this exercise count towards your course/exam score!",
@@ -187,7 +189,8 @@
                     "results": "The existing results must be recalculated!",
                     "confirmtext": "Do you really want to perform these changes?"
                 }
-            }
+            },
+            "isUsedForTutorial": "Tutor needs to review"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

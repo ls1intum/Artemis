@@ -43,17 +43,17 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy {
 
         switch (this.includedInOverallScore) {
             case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                this.badgeClass = 'badge-warning';
+                this.badgeClass = 'bg-warning';
                 this.translatedEnum = this.translateService.instant('artemisApp.exercise.includedAsBonus');
                 this.translatedTooltip = this.translateService.instant('artemisApp.exercise.includedAsBonusTooltip');
                 break;
             case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                this.badgeClass = 'badge-success';
+                this.badgeClass = 'bg-success';
                 this.translatedEnum = this.translateService.instant('artemisApp.exercise.includedCompletely');
                 this.translatedTooltip = this.translateService.instant('artemisApp.exercise.includedCompletelyTooltip');
                 break;
             case IncludedInOverallScore.NOT_INCLUDED:
-                this.badgeClass = 'badge-danger';
+                this.badgeClass = 'bg-danger';
                 this.translatedEnum = this.translateService.instant('artemisApp.exercise.notIncluded');
                 this.translatedTooltip = this.translateService.instant('artemisApp.exercise.notIncludedTooltip');
                 break;

@@ -34,6 +34,17 @@
             "usedForTutorial": "Used for Tutorial",
             "apollonConversion": {
                 "error": "Apollon conversion is not available"
+            },
+            "clusters": "Clusters",
+            "buildClusters": {
+                "action": "Build Clusters",
+                "error": "Building Clusters failed",
+                "success": "Building Clusters were successful"
+            },
+            "deleteClusters": {
+                "action": "Delete Clusters",
+                "error": "Deleting Clusters failed",
+                "success": "Deleting Clusters were successful"
             }
         }
     }

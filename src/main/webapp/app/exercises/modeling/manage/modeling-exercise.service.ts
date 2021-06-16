@@ -48,6 +48,7 @@ export class ModelingExerciseService {
         return this.http.get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
             map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
         );
     }
 
@@ -104,5 +105,21 @@ export class ModelingExerciseService {
                 observe: 'response',
             })
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
+    }
+
+    /**
+     * Build the clusters to use in Compass
+     * @param modelingExerciseId id of the exercise to build the clusters for
+     */
+    buildClusters(modelingExerciseId: number): Observable<{}> {
+        return this.http.post(`${this.resourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
+    }
+
+    /**
+     * Delete the clusters used in Compass
+     * @param modelingExerciseId id of the exercise to delete the clusters of
+     */
+    deleteClusters(modelingExerciseId: number): Observable<{}> {
+        return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
     }
 }

@@ -40,6 +40,7 @@
         "no-duplicate-variable": true,
         "no-empty": false,
         "no-eval": true,
+        "no-conditional-assignment": true,
         "no-inferrable-types": [true],
         "no-shadowed-variable": true,
         "no-string-literal": false,

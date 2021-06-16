@@ -88,7 +88,7 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
 
         List<LectureUnit> lectureUnits = List.of(this.textUnit, this.textUnit2);
 
-        this.lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
+        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
 
         for (LectureUnit lectureUnit : lectureUnits) {
             this.lecture1.addLectureUnit(lectureUnit);

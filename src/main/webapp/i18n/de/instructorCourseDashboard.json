@@ -1,14 +1,14 @@
 {
     "artemisApp": {
         "instructorCourseDashboard": {
-            "title": "Dozenten-Kurs-Dashboard",
-            "pageHeader": "Dozenten-Kurs-Dashboard für",
+            "title": "Kurs-Dashboard für Lehrende",
+            "pageHeader": "Kurs-Dashboard für Lehrende von",
             "informationAboutCourse": "Informationen zum Kurs",
             "noDescription": "Keine Beschreibung vorhanden",
-            "students": "Studenten",
+            "students": "Studierende",
             "submissions": "Einreichungen",
             "yourAssessmentLocks": "Gesperrte Bewertungen",
-            "tutors": "Tutoren",
+            "tutors": "Tutor:innen",
             "assessments": "Assessments",
             "open": "nicht bewertete Einreichungen",
             "openComplaint": "nicht geprüfte Beschwerden",
@@ -25,7 +25,7 @@
             "rating": "Ratings",
             "questionsAndAnswers": "Fragen",
             "tutorLeaderboard": {
-                "courseTitle": "Tutor-Bestenliste",
+                "courseTitle": "Tutor:innen-Bestenliste",
                 "id": "ID",
                 "name": "Name",
                 "numberOfAssessments": "Assessments",

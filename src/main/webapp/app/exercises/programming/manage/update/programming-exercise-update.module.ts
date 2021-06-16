@@ -12,6 +12,10 @@ import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/cate
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
+import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ArtemisTableModule } from 'app/shared/table/table.module';
+import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 
 @NgModule({
     imports: [
@@ -26,8 +30,15 @@ import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/program
         ArtemisCategorySelectorModule,
         StructuredGradingCriterionModule,
         ArtemisProgrammingExerciseLifecycleModule,
+        NgxDatatableModule,
+        ArtemisTableModule,
     ],
-    declarations: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
+    declarations: [
+        ProgrammingExerciseUpdateComponent,
+        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
+        AddAuxiliaryRepositoryButtonComponent,
+        RemoveAuxiliaryRepositoryButtonComponent,
+    ],
     exports: [ProgrammingExerciseUpdateComponent, ProgrammingExercisePlansAndRepositoriesPreviewComponent],
 })
 export class ArtemisProgrammingExerciseUpdateModule {}

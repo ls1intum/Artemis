@@ -15,7 +15,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { round } from 'app/shared/util/utils';
 import * as chai from 'chai';
 import * as moment from 'moment';
@@ -254,6 +254,7 @@ describe('CourseScoresComponent', () => {
                     findGradingScaleForCourse: () => {
                         return of(
                             new HttpResponse({
+                                body: new GradingScale(),
                                 status: 200,
                             }),
                         );
@@ -294,6 +295,7 @@ describe('CourseScoresComponent', () => {
     it('should log error on sentry when missing participant score calculation', () => {
         spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
         spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
         findCourseScoresSpy.returns(of(new HttpResponse({ body: [] })));
         const errorSpy = sinon.spy(component, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -303,6 +305,7 @@ describe('CourseScoresComponent', () => {
     it('should log error on sentry when wrong points score calculation', () => {
         spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
         spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 99;
@@ -322,6 +325,7 @@ describe('CourseScoresComponent', () => {
     it('should log error on sentry when wrong score calculation', () => {
         spyOn(courseService, 'findWithExercises').and.returnValue(of(new HttpResponse({ body: course })));
         spyOn(courseService, 'findAllParticipationsWithResults').and.returnValue(of(participations));
+        spyOn(gradingSystemService, 'findGradingScaleForCourse').and.returnValue(of(new HttpResponse({ status: 404 })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 40;

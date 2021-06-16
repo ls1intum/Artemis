@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { JhiEventManager } from 'ng-jhipster';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -10,7 +10,7 @@ import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import * as moment from 'moment';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -19,6 +19,14 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { Result } from 'app/entities/result.model';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -26,8 +34,16 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 })
 export class ParticipationSubmissionComponent implements OnInit {
     readonly ParticipationType = ParticipationType;
+    readonly buttonSizeSmall = ButtonSize.SMALL;
+    readonly actionTypeEmpty = ActionType.NoButtonTextDelete;
+
+    // These two variables are used to emit errors to the delete dialog
+    protected dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
     @Input() participationId: number;
-    public exerciseStatusBadge = 'badge-success';
+
+    public exerciseStatusBadge = 'bg-success';
 
     isTmpOrSolutionProgrParticipation = false;
     exercise?: Exercise;
@@ -40,9 +56,14 @@ export class ParticipationSubmissionComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private submissionService: SubmissionService,
+        private translateService: TranslateService,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
+        private modelingAssessmentsService: ModelingAssessmentService,
+        private textAssessmentService: TextAssessmentService,
+        private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         private eventManager: JhiEventManager,
         private translate: TranslateService,
         private profileService: ProfileService,
@@ -72,7 +93,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Find programming exercise of template and solution programming participation
                 this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
                     const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
                     const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
                     // Check if requested participationId belongs to the template or solution participation
@@ -92,7 +113,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 // Get exercise for release and due dates
                 this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
-                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                    this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
                 });
                 this.fetchParticipationAndSubmissionsForStudent();
             }
@@ -131,6 +152,12 @@ export class ParticipationSubmissionComponent implements OnInit {
                 if (submissions) {
                     this.submissions = submissions;
                     this.isLoading = false;
+                    // set the submission to every result so it can be accessed via the result
+                    submissions.forEach((submission: Submission) => {
+                        if (submission.results) {
+                            submission.results.forEach((result: Result) => (result.submission = submission));
+                        }
+                    });
                 }
             });
     }
@@ -168,5 +195,66 @@ export class ParticipationSubmissionComponent implements OnInit {
                 .replace('{commitHash}', submission.commitHash ?? '');
         }
         return '';
+    }
+
+    /**
+     * Delete a submission from the server
+     * @param submissionId - Id of submission that is deleted.
+     */
+    deleteSubmission(submissionId: number) {
+        this.submissionService.delete(submissionId).subscribe(
+            () => {
+                this.eventManager.broadcast({
+                    name: 'submissionsModification',
+                    content: 'Deleted a submission',
+                });
+                this.dialogErrorSource.next('');
+            },
+            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        );
+    }
+
+    deleteResult(submission: Submission, result: Result) {
+        if (this.exercise && submission.id && result.id) {
+            switch (this.exercise.type) {
+                case ExerciseType.TEXT:
+                    this.textAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    );
+                    break;
+                case ExerciseType.MODELING:
+                    this.modelingAssessmentsService.deleteAssessment(submission.id, result.id).subscribe(
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    );
+                    break;
+                case ExerciseType.FILE_UPLOAD:
+                    this.fileUploadAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    );
+                    break;
+                case ExerciseType.PROGRAMMING:
+                    this.programmingAssessmentService.deleteAssessment(submission.id, result.id).subscribe(
+                        () => this.updateResults(submission, result),
+                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    );
+                    break;
+            }
+        }
+    }
+
+    private updateResults(submission: Submission, result: Result) {
+        submission.results = submission.results?.filter((remainingResult) => remainingResult.id !== result.id);
+        this.dialogErrorSource.next('');
+    }
+
+    private handleErrorResponse(error: HttpErrorResponse) {
+        if (error.error?.message === 'error.hasComplaint') {
+            this.dialogErrorSource.next(this.translateService.instant('artemisApp.result.delete.error.hasComplaint'));
+        } else {
+            this.dialogErrorSource.next(error.message);
+        }
     }
 }

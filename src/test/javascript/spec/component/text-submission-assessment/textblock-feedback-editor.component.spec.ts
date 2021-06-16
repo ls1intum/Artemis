@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -55,7 +55,6 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        // fixture.debugElement.query(By.css('fa-icon.back-button'));
         let button = compiled.querySelector('.close fa-icon[icon="times"]');
         let confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
@@ -94,7 +93,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should put the badge and the text correctly for feedback conflicts', () => {
         component.feedback.conflictingTextAssessments = [new FeedbackConflict()];
         fixture.detectChanges();
-        const badge = compiled.querySelector('.badge-warning fa-icon[ng-reflect-icon="balance-scale-right"]');
+        const badge = compiled.querySelector('.bg-warning fa-icon[ng-reflect-icon="balance-scale-right"]');
         expect(badge).toBeTruthy();
         const text = compiled.querySelector('[jhiTranslate$=conflictingAssessments]');
         expect(text).toBeTruthy();
@@ -139,5 +138,30 @@ describe('TextblockFeedbackEditorComponent', () => {
         textarea.dispatchEvent(event);
         fixture.detectChanges();
         expect(component.escKeyup).toHaveBeenCalled();
+    });
+
+    it('should show feedback impact warning when numberOfAffectedSubmissions > 0', () => {
+        // additionally component needs to have some credits, have no conflicts and be a Manual type feedback
+        component.feedback.credits = 1;
+        component.conflictMode = false;
+        textBlock.numberOfAffectedSubmissions = 5;
+        component.feedback.type = FeedbackType.MANUAL;
+        fixture.detectChanges();
+
+        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="exclamation-triangle"]');
+        expect(warningIcon).toBeTruthy();
+        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
+        expect(text).toBeTruthy();
+    });
+
+    it('should not show warning when numberOfAffectedSubmissions = 0', () => {
+        textBlock.numberOfAffectedSubmissions = 0;
+        fixture.detectChanges();
+
+        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="exclamation-triangle"]');
+        expect(warningIcon).toBeFalsy();
+
+        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
+        expect(text).toBeFalsy();
     });
 });

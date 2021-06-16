@@ -354,10 +354,10 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 this.exercise.exerciseGroup?.id,
                 'modeling-exercises',
                 this.exerciseId,
-                'edit',
+                'example-submissions',
             ]);
         } else {
-            await this.router.navigate(['/course-management', courseId, 'modeling-exercises', this.exerciseId, 'edit']);
+            await this.router.navigate(['/course-management', courseId, 'modeling-exercises', this.exerciseId, 'example-submissions']);
         }
     }
 

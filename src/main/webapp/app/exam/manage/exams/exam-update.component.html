@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            <div class="form-row">
+            <div class="row">
                 <div class="col-sm-4 form-group">
                     <label class="form-check-label" for="examiner" jhiTranslate="artemisApp.examManagement.examiner">Examiner</label>
                     <input class="form-control" type="text" name="examiner" id="examiner" [(ngModel)]="exam.examiner" />
@@ -40,7 +40,7 @@
                 </div>
             </div>
 
-            <div class="form-row mb-3">
+            <div class="row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
@@ -70,7 +70,7 @@
                 </div>
             </div>
 
-            <div class="form-row mb-3">
+            <div class="row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
@@ -100,7 +100,7 @@
                 </div>
             </div>
 
-            <div class="form-row mb-3">
+            <div class="row mb-3">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>
                     <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
@@ -121,10 +121,10 @@
                 </div>
             </div>
 
-            <div class="form-row mb-3">
+            <div class="row mb-3">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints">Maximum Number of Points in Exam</label>
-                    <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="0" [(ngModel)]="exam.maxPoints" />
+                    <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.maxPoints" />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
