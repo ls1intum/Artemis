@@ -460,6 +460,19 @@ public class GitService {
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl) {
+        return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUrl, defaultBranch);
+    }
+
+    /**
+     * Get an existing git repository that is checked out on the server. Returns immediately null if the localPath does not exist. Will first try to retrieve a cached repository
+     * from cachedRepositories. Side effect: This method caches retrieved repositories in a HashMap, so continuous retrievals can be avoided (reduces load).
+     *
+     * @param localPath           to git repo on server.
+     * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
+     * @param defaultBranch the name of the branch that should be used as defalut branch
+     * @return the git repository in the localPath or **null** if it does not exist on the server.
+     */
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch) {
         try {
             // Check if there is a folder with the provided path of the git repository.
             if (!Files.exists(localPath)) {
