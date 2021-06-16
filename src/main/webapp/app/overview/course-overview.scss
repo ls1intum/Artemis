@@ -26,9 +26,20 @@ Course Info Bar
 .tab-bar-course-overview {
     // ensure enough vertical space below for absolutely positioned exercise controls
     // when tab bar is shown on course overview page
-    @media (max-width: 750px) {
+    @media (max-width: 1200px) {
         min-height: 100px;
         padding-bottom: 40px;
+    }
+
+    @media (max-width: 600px) {
+        min-height: 140px;
+        padding-bottom: 80px;
+    }
+}
+
+.exercise-controls {
+    @media (max-width: 600px) {
+        margin-top: -40px;
     }
 }
 

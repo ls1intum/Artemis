@@ -18,17 +18,24 @@
                     <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
                     {{ round(result.score) }}%,
                 </span>
-                <span *ngIf="hasFeedback">
+                <span *ngIf="resultIsPreliminary(result)">
                     <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
                         {{ resultString }}
                     </span>
                 </span>
-                <span *ngIf="!hasFeedback && onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
-                    {{ resultString }}
-                </span>
-                <span *ngIf="!hasFeedback && !onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
-                    {{ result.resultString }}
-                </span>
+                <ng-container *ngIf="!resultIsPreliminary(result)">
+                    <span *ngIf="hasFeedback">
+                        <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
+                            {{ resultString }}
+                        </span>
+                    </span>
+                    <span *ngIf="!hasFeedback && onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
+                        {{ resultString }}
+                    </span>
+                    <span *ngIf="!hasFeedback && !onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
+                        {{ result.resultString }}
+                    </span>
+                </ng-container>
                 <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
                 <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
             </span>
