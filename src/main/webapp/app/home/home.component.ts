@@ -14,6 +14,7 @@ import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-home',
@@ -21,6 +22,8 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
     styleUrls: ['home.scss'],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
+    USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
+    PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     authenticationError = false;
     authenticationAttempts = 0;
     account: User;

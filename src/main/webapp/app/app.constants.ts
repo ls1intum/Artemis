@@ -10,6 +10,12 @@ export const BUILD_TIMESTAMP = process.env.BUILD_TIMESTAMP;
 export const MIN_SCORE_GREEN = 80;
 export const MIN_SCORE_ORANGE = 40;
 
+// NOTE: those four constants have to be the same as in Constant.java
+export const USERNAME_MIN_LENGTH = 4;
+export const USERNAME_MAX_LENGTH = 50;
+export const PASSWORD_MIN_LENGTH = 4;
+export const PASSWORD_MAX_LENGTH = 50;
+
 export const EXAM_START_WAIT_TIME_MINUTES = 5;
 
 export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
