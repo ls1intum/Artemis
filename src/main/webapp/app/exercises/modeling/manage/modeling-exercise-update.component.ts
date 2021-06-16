@@ -254,7 +254,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     diagramTypeChanged() {
         const semiAutomaticSupportPossible =
             this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram;
-        if (this.isExamMode || !semiAutomaticSupportPossible) {
+        if (this.isExamMode) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }
