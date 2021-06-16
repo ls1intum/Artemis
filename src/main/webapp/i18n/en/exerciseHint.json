@@ -7,9 +7,9 @@
                 "createOrEditLabel": "Create or edit an Exercise Hint",
                 "notFound": "No Exercise Hint found"
             },
-            "created": "A new Exercise Hint is created with identifier {{ param }}",
-            "updated": "An Exercise Hint is updated with identifier {{ param }}",
-            "deleted": "An Exercise Hint is deleted with identifier {{ param }}",
+            "created": "Created new Exercise Hint with identifier {{ param }}",
+            "updated": "Updated Exercise Hint with identifier {{ param }}",
+            "deleted": "Deleted Exercise Hint with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Exercise Hint \"{{ title }}\"?"
             },
