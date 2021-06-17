@@ -348,6 +348,22 @@ public class GitService {
         return getOrCheckoutRepository(repoUrl, localPath, pullOnGet);
     }
 
+    /**
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     *
+     * @param repoUrl    The remote repository.
+     * @param pullOnGet  Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param defaultBranch  The default branch of the target repository.
+     * @return the repository if it could be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the same repository is attempted to be cloned multiple times.
+     */
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl repoUrl, boolean pullOnGet, String defaultBranch) throws InterruptedException, GitAPIException, GitException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUrl);
+        return getOrCheckoutRepository(repoUrl, repoUrl, localPath, pullOnGet, defaultBranch);
+    }
+
     public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUrl repoUrl, VcsRepositoryUrl targetUrl, boolean pullOnGet)
             throws InterruptedException, GitAPIException, GitException, InvalidPathException {
         Path localPath = getDefaultLocalPathOfRepo(targetUrl);
@@ -374,9 +390,28 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet)
             throws InterruptedException, GitAPIException, GitException, InvalidPathException {
+        return getOrCheckoutRepository(sourceRepoUrl, targetRepoUrl, localPath, pullOnGet, defaultBranch);
+    }
+
+    /**
+     * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
+     *
+     * @param sourceRepoUrl The source remote repository.
+     * @param targetRepoUrl The target remote repository.
+     * @param localPath     The local path to clone the repository to.
+     * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param defaultBranch The default branch of the target repository
+     * @return the repository if it could be checked out.
+     * @throws InterruptedException if the repository could not be checked out.
+     * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the same repository is attempted to be cloned multiple times.
+     * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
+     */
+    public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet, String defaultBranch)
+            throws InterruptedException, GitAPIException, GitException, InvalidPathException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
-        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl);
+        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl, defaultBranch);
 
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
         // the exception will then delete the folder, so that the next attempt would be successful.
@@ -420,8 +455,21 @@ public class GitService {
                 // make sure that cloneInProgress is released
                 cloneInProgressOperations.remove(localPath);
             }
-            return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl);
+            return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl, defaultBranch);
         }
+    }
+
+    /**
+     * Checks whether the repository is cached.
+     * This method does only support repositories that use the repoClonePath which is set in the application-artemis.yml file!
+     *
+     * @param repositoryUrl
+     * @return returns true if the repository is already cached
+     */
+    public boolean isRepositoryCached(VcsRepositoryUrl repositoryUrl) {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUrl);
+        // Check if the repository is already cached in the server's session.
+        return cachedRepositories.containsKey(localPath);
     }
 
     /**
@@ -484,7 +532,6 @@ public class GitService {
             // Check if the repository is already cached in the server's session.
             Repository cachedRepository = cachedRepositories.get(localPath);
             if (cachedRepository != null) {
-                log.error(cachedRepositories.toString());
                 return cachedRepository;
             }
             // Else try to retrieve the git repository from our server. It could e.g. be the case that the folder is there, but there is no .git folder in it!

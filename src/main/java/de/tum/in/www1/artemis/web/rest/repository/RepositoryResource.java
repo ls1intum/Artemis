@@ -272,7 +272,16 @@ public abstract class RepositoryResource {
         var repositoryUrl = getRepositoryUrl(domainId);
 
         try {
-            boolean isClean = repositoryService.isClean(repositoryUrl);
+            boolean isClean;
+            // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
+            // Retrieving the default branch is not necessary if the repository is already cached.
+            if (gitService.isRepositoryCached(repositoryUrl)) {
+                isClean = repositoryService.isClean(repositoryUrl);
+            }
+            else {
+                String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(repositoryUrl);
+                isClean = repositoryService.isClean(repositoryUrl, defaultBranch);
+            }
             repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
