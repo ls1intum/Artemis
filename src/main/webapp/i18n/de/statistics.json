@@ -22,8 +22,8 @@
         "active_tutors": "Aktive Tutor:innen",
         "created_results": "Erstellte Resultate",
         "created_feedbacks": "Erstellte Feedbacks",
-        "questions_asked": "Gestellte Fragen",
-        "questions_answered": "Beantwortete Fragen",
+        "posts": "Beiträge",
+        "answered_posts": "Beantwortete Beiträge",
         "score_distribution": "Bewertungsverteilung",
         "submissionsTitle": "# Abgaben",
         "active_usersTitle": "# Nutzer:innen",
@@ -36,8 +36,8 @@
         "active_tutorsTitle": "# Tutor:innen",
         "created_resultsTitle": "# Bewertungen",
         "created_feedbacksTitle": "# Feedbacks",
-        "posts": "# Diskussionsbeiträge",
-        "answered_posts": "# Beantwortete Beiträge",
+        "postsTitle": "# Beiträge",
+        "answered_postsTitle": "# Beantwortete Beiträge",
         "score_distributionTitle": "% Studierende"
     },
     "calendar_week": "KW",
@@ -74,6 +74,6 @@
         "title": "Aufgabenstatistiken",
         "averageScore": "Duschnittspunktzahl",
         "participationRate": "Teilnahmen",
-        "questionsAnswered": "Beantwortete Fragen"
+        "answered_posts": "Beantwortete Beiträge"
     }
 }
