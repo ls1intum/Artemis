@@ -28,7 +28,7 @@
                 "editAnswer": "Edit reply",
                 "approveAnswer": "Approve reply",
                 "unapproveAnswer": "Unapprove reply",
-                "hideAnswers": "Show less replies",
+                "hideAnswers": "Show fewer replies",
                 "showAnswers": "Show more replies ({{count}})"
             },
             "overview": {
