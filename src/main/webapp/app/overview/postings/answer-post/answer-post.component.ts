@@ -1,10 +1,9 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 
 export interface AnswerPostAction {
     name: AnswerPostActionName;
@@ -27,40 +26,14 @@ export class AnswerPostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswer = new EventEmitter<AnswerPostAction>();
-    editText?: string;
+    text?: string;
     isLoading = false;
     isEditMode: boolean;
     EditorMode = EditorMode;
     courseId: number;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = [
-        'a',
-        'b',
-        'strong',
-        'i',
-        'em',
-        'mark',
-        'small',
-        'del',
-        'ins',
-        'sub',
-        'sup',
-        'p',
-        'ins',
-        'blockquote',
-        'pre',
-        'code',
-        'ol',
-        'ul',
-        'li',
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'h5',
-        'span',
-    ];
+    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'ins', 'blockquote', 'pre', 'code', 'span'];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
     constructor(private answerPostService: AnswerPostService, private route: ActivatedRoute) {}
@@ -69,7 +42,7 @@ export class AnswerPostComponent implements OnInit {
      * Sets the text of the answerPost as the editor text
      */
     ngOnInit(): void {
-        this.editText = this.answerPost.content;
+        this.text = this.answerPost.content;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
     }
 
@@ -99,7 +72,7 @@ export class AnswerPostComponent implements OnInit {
      */
     saveAnswerPost(): void {
         this.isLoading = true;
-        this.answerPost.content = this.editText;
+        this.answerPost.content = this.text;
         this.answerPostService.update(this.courseId, this.answerPost).subscribe({
             next: () => {
                 this.isEditMode = false;
@@ -129,6 +102,6 @@ export class AnswerPostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.editText = this.answerPost.content;
+        this.text = this.answerPost.content;
     }
 }

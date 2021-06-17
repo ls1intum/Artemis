@@ -105,9 +105,9 @@ describe('PostComponent', () => {
     it('should toggle edit mode and reset editor Text', () => {
         component.post = post;
         component.isEditMode = true;
-        component.editText = 'test';
+        component.text = 'test';
         component.toggleEditMode();
-        expect(component.editText).to.deep.equal('post');
+        expect(component.text).to.deep.equal('post');
         expect(component.isEditMode).to.be.false;
         component.toggleEditMode();
         expect(component.isEditMode).to.be.true;
@@ -116,7 +116,7 @@ describe('PostComponent', () => {
     it('should update content', () => {
         component.post = post;
         component.isEditMode = true;
-        component.editText = 'test';
+        component.text = 'test';
         component.savePost();
         expect(component.post.content).to.deep.equal('test');
     });
