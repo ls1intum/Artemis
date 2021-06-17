@@ -333,7 +333,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(value = "student1")
-    public void getDataForFileUpload_wrongExcerciseType() throws Exception {
+    public void getDataForFileUpload_wrongExerciseType() throws Exception {
         Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         Participation modelingExerciseParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
