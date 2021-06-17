@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -413,6 +410,42 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void getSubmissionByID_asTA() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
+
+        long submissionID = fileUploadSubmission.getId();
+        FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
+
+        assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionByID_asTA_withResult() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        Result result = new Result();
+        fileUploadSubmission.addResult(result);
+        fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
+
+        assertThat(fileUploadSubmission.getLatestResult()).as("submission has latest result").isEqualTo(result);
+
+        long submissionID = fileUploadSubmission.getId();
+        FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
+
+        assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionByID_asTA_withResultAndAssessor() throws Exception {
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        Result result = new Result();
+        User assessor = database.getUserByLogin("tutor1");
+        result.setAssessor(assessor);
+        fileUploadSubmission.addResult(result);
+
+        fileUploadSubmission = database.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, "student1");
+
+        assertThat(fileUploadSubmission.getLatestResult()).as("submission has latest result").isEqualTo(result);
+        assertThat(fileUploadSubmission.getLatestResult().getAssessor()).as("latest result assessor").isEqualTo(assessor);
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
