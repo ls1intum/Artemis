@@ -1,0 +1,58 @@
+{
+    "artemisApp": {
+        "metis": {
+            "sidebar": {
+                "header": "Discussion",
+                "show": "Show discussion",
+                "hide": "Hide discussion",
+                "noPosts": "There are no discussions",
+                "addNewPost": "Add a new post",
+                "newPostLabel": "New post",
+                "newAnswerLabel": "New reply",
+                "answerLabel": "Reply",
+                "postLabel": "Post",
+                "approvedLabel": "Approved by a tutor",
+                "answerNow": "Reply now",
+                "answerCount": "Show replies ({{count}})",
+                "yourPost": "Your Question",
+                "cancel": "Cancel",
+                "addPost": "Add post",
+                "savePost": "Save post",
+                "addAnswer": "Add reply",
+                "saveAnswer": "Save reply",
+                "deletePost": "Do you want to delete your post?",
+                "confirmDeletePost": "Please confirm that you want to delete your post!",
+                "editPost": "Edit post",
+                "deleteAnswer": "Do you want to delete your reply?",
+                "confirmDeleteAnswer": "Please confirm that you want to delete your reply!",
+                "editAnswer": "Edit reply",
+                "approveAnswer": "Approve reply",
+                "unapproveAnswer": "Unapprove reply",
+                "hideAnswers": "Show fewer replies",
+                "showAnswers": "Show more replies ({{count}})"
+            },
+            "overview": {
+                "title": "Posts",
+                "noPosts": "There are no posts for this course",
+                "showApproved": "Show posts with approved replies",
+                "hideApproved": "Hide posts with approved replies"
+            },
+            "post": {
+                "created": "New post successfully created",
+                "updated": "Post successfully updated",
+                "deleted": "Post successfully deleted",
+                "text": "Post text",
+                "creationDate": "Asked on",
+                "votes": "Votes",
+                "answers": "Replies",
+                "approvedAnswerPosts": "Approved replies",
+                "exerciseOrLecture": "Exercise / Lecture"
+            },
+            "answerPost": {
+                "created": "New reply successfully created",
+                "updated": "Reply successfully updated",
+                "deleted": "Reply successfully deleted"
+            }
+        }
+    }
+}
