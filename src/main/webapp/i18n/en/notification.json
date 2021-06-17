@@ -11,8 +11,8 @@
             "by": "by",
             "allLoaded": "No further notifications available.",
             "target": {
-                "newAnswer": "View answer",
-                "newQuestion": "View question",
+                "newAnswer": "View reply",
+                "newQuestion": "View post",
                 "exerciseCreated": "View exercise",
                 "exerciseUpdated": "View exercise",
                 "attachmentUpdated": "View lecture"
@@ -33,9 +33,9 @@
             "delete": {
                 "question": "Are you sure you want to delete the system notification <strong>{{ title }}</strong>?"
             },
-            "created": "A new system notification is created with identifier {{ param }}",
-            "updated": "A system notification is updated with identifier {{ param }}",
-            "deleted": "A system notification is deleted with identifier {{ param }}"
+            "created": "Created new system notification with identifier {{ param }}",
+            "updated": "Updated system notification with identifier {{ param }}",
+            "deleted": "Deleted system notification with identifier {{ param }}"
         }
     }
 }

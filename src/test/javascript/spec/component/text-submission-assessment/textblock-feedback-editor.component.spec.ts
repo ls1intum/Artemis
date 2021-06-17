@@ -55,7 +55,6 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        // fixture.debugElement.query(By.css('fa-icon.back-button'));
         let button = compiled.querySelector('.close fa-icon[icon="times"]');
         let confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
@@ -94,7 +93,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should put the badge and the text correctly for feedback conflicts', () => {
         component.feedback.conflictingTextAssessments = [new FeedbackConflict()];
         fixture.detectChanges();
-        const badge = compiled.querySelector('.badge-warning fa-icon[ng-reflect-icon="balance-scale-right"]');
+        const badge = compiled.querySelector('.bg-warning fa-icon[ng-reflect-icon="balance-scale-right"]');
         expect(badge).toBeTruthy();
         const text = compiled.querySelector('[jhiTranslate$=conflictingAssessments]');
         expect(text).toBeTruthy();

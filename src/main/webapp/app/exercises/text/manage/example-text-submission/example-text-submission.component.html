@@ -2,14 +2,13 @@
     <div class="row justify-content-between">
         <div class="col-6">
             <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="back()" class="guided-tour-back back-button mr-2"></fa-icon>
                 <span *ngIf="isNewSubmission">{{ 'artemisApp.exampleSubmission.createNew' | artemisTranslate }} </span
                 >{{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
             </h2>
         </div>
 
-        <div class="col-4 text-right" *ngIf="isAtLeastEditor && !readOnly && !toComplete && exercise">
+        <div class="col-4 text-end" *ngIf="isAtLeastEditor && !readOnly && !toComplete && exercise">
             <div class="row">
                 <div class="form-check col-12 align-baseline">
                     <input
@@ -44,7 +43,7 @@
                     <button
                         *ngSwitchCase="AssessButtonStates.ASSESS"
                         (click)="startAssessment()"
-                        class="btn btn-primary col-auto ml-auto mr-3"
+                        class="btn btn-primary col-auto ms-auto me-3"
                         id="createNewAssessment"
                         [disabled]="unsavedChanges"
                     >
@@ -55,13 +54,13 @@
                         *ngSwitchCase="AssessButtonStates.CREATE"
                         (click)="saveAssessments()"
                         [disabled]="!assessmentsAreValid"
-                        class="btn btn-primary col-auto ml-auto mr-3"
+                        class="btn btn-primary col-auto ms-auto me-3"
                         id="saveNewAssessment"
                     >
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                     </button>
-                    <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ml-auto mr-3">
+                    <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
                         <fa-icon [icon]="'save'"></fa-icon>
                         {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                     </button>
@@ -123,13 +122,13 @@
     <!--endregion-->
 </jhi-resizeable-container>
 
-<div class="col-12 text-right" *ngIf="toComplete">
+<div class="col-12 text-end" *ngIf="toComplete">
     <button class="btn btn-primary col-3 guided-tour-check-assessment" (click)="checkAssessment()" [disabled]="!assessmentsAreValid" id="checkAssessment">
         {{ 'artemisApp.exampleSubmission.submitAssessment' | artemisTranslate }}
     </button>
 </div>
 
-<div class="col-12 text-right" *ngIf="readOnly">
+<div class="col-12 text-end" *ngIf="readOnly">
     <button (click)="readAndUnderstood()" class="btn btn-success col-3 guided-tour-read">
         <fa-icon [icon]="'save'"></fa-icon>
         {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}

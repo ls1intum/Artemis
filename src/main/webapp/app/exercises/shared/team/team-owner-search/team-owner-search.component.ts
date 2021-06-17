@@ -15,8 +15,8 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 })
 export class TeamOwnerSearchComponent implements OnInit {
     @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;
-    focus$ = new Subject<string>();
-    click$ = new Subject<string>();
+    focus = new Subject<string>();
+    click = new Subject<string>();
 
     @Input() inputDisabled: boolean;
 
@@ -74,8 +74,8 @@ export class TeamOwnerSearchComponent implements OnInit {
     }
 
     onSearch = (text$: Observable<string>) => {
-        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.ngbTypeahead.isPopupOpen()));
-        const inputFocus$ = this.focus$;
+        const clicksWithClosedPopup$ = this.click.pipe(filter(() => !this.ngbTypeahead.isPopupOpen()));
+        const inputFocus$ = this.focus;
 
         return merge(text$, inputFocus$, clicksWithClosedPopup$).pipe(
             tap(() => {

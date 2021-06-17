@@ -65,14 +65,14 @@ describe('IdeBuildAndTestService', () => {
         });
 
         serviceUnderTest = TestBed.inject(OrionBuildAndTestService);
-        const javaBridge = TestBed.inject(OrionConnectorService);
+        const orionConnectorService = TestBed.inject(OrionConnectorService);
         const buildLogService = TestBed.inject(BuildLogService);
         const participationService = TestBed.inject(ParticipationWebsocketService);
 
-        onBuildFinishedSpy = spy(javaBridge, 'onBuildFinished');
-        onBuildStartedSpy = spy(javaBridge, 'onBuildStarted');
-        onTestResultSpy = spy(javaBridge, 'onTestResult');
-        onBuildFailedSpy = spy(javaBridge, 'onBuildFailed');
+        onBuildFinishedSpy = spy(orionConnectorService, 'onBuildFinished');
+        onBuildStartedSpy = spy(orionConnectorService, 'onBuildStarted');
+        onTestResultSpy = spy(orionConnectorService, 'onTestResult');
+        onBuildFailedSpy = spy(orionConnectorService, 'onBuildFailed');
         buildLogsStub = stub(buildLogService, 'getBuildLogs');
         participationSubscriptionStub = stub(participationService, 'subscribeForLatestResultOfParticipation');
     });

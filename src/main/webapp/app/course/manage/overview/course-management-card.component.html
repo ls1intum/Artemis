@@ -21,7 +21,7 @@
             </div>
         </div>
 
-        <div *ngIf="courseWithUsers && course.isAtLeastInstructor" class="float-right card-groups">
+        <div *ngIf="courseWithUsers && course.isAtLeastInstructor" class="float-end card-groups">
             <div>
                 <div>
                     <a
@@ -176,6 +176,7 @@
             <div class="col-4 section-card statistics-card align-center">
                 <div class="section-content align-center">
                     <jhi-course-management-overview-statistics
+                        class="statistics-card"
                         [initialStats]="courseStatistics?.activeStudents"
                         [amountOfStudentsInCourse]="!!courseWithUsers && courseWithUsers.numberOfStudents ? courseWithUsers.numberOfStudents : 0"
                     >
@@ -190,7 +191,7 @@
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'exercises']"
             [class.guided-tour]="isGuidedTour"
-            class="btn btn-primary mr-1 mb-1"
+            class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
         >
             <fa-icon [icon]="'list-alt'"></fa-icon>
@@ -199,7 +200,7 @@
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'exams']"
-            class="btn btn-primary mr-1 mb-1"
+            class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'entity.action.exams' | artemisTranslate"
         >
             <fa-icon [icon]="'graduation-cap'"></fa-icon>
@@ -208,7 +209,7 @@
         <a
             *ngIf="course.isAtLeastEditor"
             [routerLink]="['/course-management', course.id, 'lectures']"
-            class="btn btn-primary mr-1 mb-1"
+            class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
         >
             <fa-icon [icon]="'file-pdf'"></fa-icon>
@@ -217,7 +218,7 @@
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'goal-management']"
-            class="btn btn-primary mr-1 mb-1"
+            class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
         >
             <fa-icon [icon]="'flag'"></fa-icon>
@@ -226,7 +227,7 @@
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
-            class="btn btn-info mr-1 mb-1"
+            class="btn btn-info me-1 mb-1"
             [class]="isGuidedTour ? 'guided-tour-assessment-dashboard-btn' : ''"
             [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
             [class.guided-tour]="isGuidedTour"
@@ -237,7 +238,7 @@
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
-            class="btn btn-info mr-1 mb-1"
+            class="btn btn-info me-1 mb-1"
             [ngbTooltip]="'artemisApp.course.instructorDashboard' | artemisTranslate"
         >
             <fa-icon [icon]="'chess-king'"></fa-icon>
@@ -246,7 +247,7 @@
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'scores']"
-            class="btn btn-info mr-1 mb-1"
+            class="btn btn-info me-1 mb-1"
             [ngbTooltip]="'entity.action.scores' | artemisTranslate"
         >
             <fa-icon [icon]="'table'"></fa-icon>
@@ -255,7 +256,7 @@
         <a
             *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'course-statistics']"
-            class="btn btn-info mr-1 mb-1"
+            class="btn btn-info me-1 mb-1"
             [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
         >
             <fa-icon [icon]="'chart-bar'"></fa-icon>

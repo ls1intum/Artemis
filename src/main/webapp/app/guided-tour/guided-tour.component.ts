@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewChildren, ViewEncapsulation, Renderer2, QueryList } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
-import { take, tap } from 'rxjs/internal/operators';
+import { take, tap } from 'rxjs/operators';
 import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -27,7 +27,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     public orientation: Orientation;
     public transformX: number;
     /**
-     * The current tour step should be of type the TourStep subclasses or null but have to be declared as any in this case
+     * The current tour step should be of type the TourStep subclasses or undefined but have to be declared as any in this case
      * since the build would fail with Property 'x' does not exist on type 'y' when accessing properties of subclasses in the html template
      * that are not available for all subclasses
      */

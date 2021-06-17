@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -121,8 +123,13 @@ public class UserCreationService {
         // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
-        Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
-        newUser.setOrganizations(matchingOrganizations);
+        try {
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+            newUser.setOrganizations(matchingOrganizations);
+        }
+        catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
+            log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
+        }
         saveUser(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
@@ -160,8 +167,13 @@ public class UserCreationService {
         if (!useExternalUserManagement) {
             addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
         }
-        Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
-        user.setOrganizations(matchingOrganizations);
+        try {
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+            user.setOrganizations(matchingOrganizations);
+        }
+        catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
+            log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
+        }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());

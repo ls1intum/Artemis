@@ -16,9 +16,25 @@
     opacity: 1;
 }
 
+.col-12 {
+    width: 100% !important;
+}
+
+@media screen and (min-width: 992px) {
+    .col-lg-6 {
+        width: 50% !important;
+    }
+}
+
+@media screen and (min-width: 1200px) {
+    .col-xl-4 {
+        width: 33.33% !important;
+    }
+}
+
 @media screen and (min-width: 1900px) {
     .col-xl-4 {
         flex: 0 0 25;
-        max-width: 25%;
+        width: 25% !important;
     }
 }

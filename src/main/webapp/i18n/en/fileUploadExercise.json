@@ -6,20 +6,20 @@
                 "createLabel": "Create a new File Upload Exercise",
                 "editLabel": "Edit a File Upload Exercise"
             },
-            "created": "A new File Upload Exercise is created with identifier {{ param }}",
-            "updated": "A File Upload Exercise is updated with identifier {{ param }}",
-            "deleted": "A File Upload Exercise is deleted with identifier {{ param }}",
+            "created": "Created new File Upload Exercise with identifier {{ param }}",
+            "updated": "Updated File Upload Exercise with identifier {{ param }}",
+            "deleted": "Deleted File Upload Exercise with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete File Upload Exercise {{ title }}?",
-                "typeNameToConfirm": "Please type in the name of the Exercise to confirm."
+                "typeNameToConfirm": "Please type in the name of the exercise to confirm."
             },
             "detail": {
                 "title": "File Upload Exercise"
             },
             "filePattern": "File Pattern",
-            "filePatternInfo": "Here you can specify a coma separated list of allowed file extensions without dots (e.g. 'png, pdf').",
-            "submitSuccessful": "Your answer was submitted successfully! You can still submit again or wait for your feedback.",
-            "submitDeadlineMissed": "Your answer was submitted successfully! You can still submit again or  wait for your feedback. As you missed the deadline the score will not be counted.",
+            "filePatternInfo": "Here you can specify a comma-separated list of allowed file extensions, without periods (e.g. 'png, pdf').",
+            "submitSuccessful": "Your answer was submitted successfully! You may submit again or wait for your feedback.",
+            "submitDeadlineMissed": "Your answer was submitted successfully! You may submit again or wait for your feedback. As you missed the deadline, your score will not be counted.",
             "error": "An error occurred. Please try again later.",
             "assessedSubmission": "Your Assessment",
             "supportedFileExtensions": "Supported file extensions: "

@@ -3,6 +3,7 @@ export class ExamScoreDTO {
     public title: string;
     public maxPoints: number;
     public averagePointsAchieved: number;
+    public hasSecondCorrectionAndStarted: boolean;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
 
@@ -36,6 +37,7 @@ export class StudentResult {
     public registrationNumber: string;
     public overallPointsAchieved?: number;
     public overallScoreAchieved?: number;
+    public overallPointsAchievedInFirstCorrection?: number;
     public overallGrade?: string;
     public hasPassed?: boolean;
     public submitted: boolean;
@@ -80,6 +82,29 @@ export class AggregatedExamResult {
     public noOfExamsFilteredForPassed = 0;
     public noOfExamsFiltered = 0;
     public noOfRegisteredUsers = 0;
+
+    // same for first correction round
+    public meanPointsPassedInFirstCorrection?: number;
+    public meanPointsRelativePassedInFirstCorrection?: number;
+    public meanPointsInFirstCorrection: number;
+    public meanPointsRelativeInFirstCorrection: number;
+    public meanPointsTotalInFirstCorrection: number;
+    public meanPointsRelativeTotalInFirstCorrection: number;
+    public meanGradePassedInFirstCorrection?: string;
+    public meanGradeInFirstCorrection?: string;
+    public meanGradeTotalInFirstCorrection?: string;
+    public medianPassedInFirstCorrection?: number;
+    public medianRelativePassedInFirstCorrection?: number;
+    public medianInFirstCorrection: number;
+    public medianRelativeInFirstCorrection: number;
+    public medianTotalInFirstCorrection: number;
+    public medianRelativeTotalInFirstCorrection: number;
+    public medianGradePassedInFirstCorrection?: string;
+    public medianGradeInFirstCorrection?: string;
+    public medianGradeTotalInFirstCorrection?: string;
+    public standardDeviationPassedInFirstCorrection?: number;
+    public standardDeviationInFirstCorrection: number;
+    public standardDeviationTotalInFirstCorrection: number;
 
     constructor() {}
 }
