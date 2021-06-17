@@ -53,7 +53,7 @@
                 "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
                 "impactWarningTooltip": "Die Anzahl, wie oft Ihr Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen."
             },
-            "assessmentInstruction": "Bitte halte deine Maus über und klicke auf den Textblock, den du bewerten möchten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
+            "assessmentInstruction": "Bitte hovern Sie mit der Maus über den zu bewertenden Textblock und klicken Sie diesen an um ihn zu bewerten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
             "conflict": {
                 "assessor": "Bewertet von: Dir",
                 "otherAssessor": "Bewertet von: {{otherUser}}",
