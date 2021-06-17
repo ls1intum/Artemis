@@ -31,7 +31,6 @@ export class PostingsComponent implements OnInit, AfterViewInit {
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
     EditorMode = EditorMode;
-    domainCommands = [new KatexCommand()];
     courseId: number;
 
     constructor(private route: ActivatedRoute, private accountService: AccountService, private postService: PostService, private exerciseService: ExerciseService) {}

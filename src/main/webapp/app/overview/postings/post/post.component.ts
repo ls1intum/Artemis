@@ -43,8 +43,8 @@ export class PostComponent implements OnInit {
         'small',
         'del',
         'ins',
+        'math',
         'sub',
-        'sup',
         'p',
         'ins',
         'blockquote',
@@ -56,6 +56,8 @@ export class PostComponent implements OnInit {
         'h1',
         'h2',
         'h3',
+        'h4',
+        'h5',
         'span',
     ];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];

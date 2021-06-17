@@ -4,6 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 
 export interface AnswerPostAction {
     name: AnswerPostActionName;
@@ -55,6 +56,8 @@ export class AnswerPostComponent implements OnInit {
         'h1',
         'h2',
         'h3',
+        'h4',
+        'h5',
         'span',
     ];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
