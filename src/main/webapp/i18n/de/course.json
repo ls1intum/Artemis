@@ -62,7 +62,7 @@
             "endDate": "Ende",
             "semester": "Semester",
             "maxPoints": {
-                "title": "Maximale Punkte für den Kurs",
+                "title": "Maximale Punktzahl für den Kurs",
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für den Kurs aktualisiert, so dass die Punktwerte für die Notenstufen weiterhin den Prozentsätzen entsprechen, angepasst an den neuen maximalen Punktwert"
             },
             "gradingSystem": "Notenschlüssel",
