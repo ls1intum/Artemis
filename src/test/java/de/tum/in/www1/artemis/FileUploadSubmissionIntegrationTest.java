@@ -1,19 +1,9 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -22,6 +12,21 @@ import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -187,6 +192,18 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
                 HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(submission1);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getSubmissionWithoutAssessmentWithoutSubmission() throws Exception {
+        database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+        assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.NOT_FOUND,
+            FileUploadSubmission.class);
+
+        assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
     }
 
     @Test
