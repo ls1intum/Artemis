@@ -9,6 +9,8 @@ import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { PostingsButtonComponent } from 'app/overview/postings/postings-button/postings-button.component';
+import { MockDirective } from 'ng-mocks';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -44,7 +46,7 @@ describe('AnswerPostComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [AnswerPostComponent],
+            declarations: [AnswerPostComponent, MockDirective(PostingsButtonComponent)],
             providers: [{ provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects }],
         })
             .overrideTemplate(AnswerPostComponent, '')

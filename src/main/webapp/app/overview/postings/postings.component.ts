@@ -25,6 +25,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
 
     posts: Post[];
     isEditMode: boolean;
+    isLoading = false;
     collapsed = false;
     postContent?: string;
     selectedPost?: Post;
@@ -114,6 +115,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
      * create a new post
      */
     addPost(): void {
+        this.isLoading = true;
         const post = new Post();
         post.content = this.postContent;
         post.visibleForStudents = true;
@@ -125,10 +127,15 @@ export class PostingsComponent implements OnInit, AfterViewInit {
             delete post.lecture.lectureUnits;
         }
         post.creationDate = moment();
-        this.postService.create(this.courseId, post).subscribe((postResponse: HttpResponse<Post>) => {
-            this.posts.push(postResponse.body!);
-            this.postContent = undefined;
-            this.isEditMode = false;
+        this.postService.create(this.courseId, post).subscribe({
+            next: (postResponse: HttpResponse<Post>) => {
+                this.posts.push(postResponse.body!);
+                this.postContent = undefined;
+                this.isEditMode = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
         });
     }
 
