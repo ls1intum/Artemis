@@ -242,8 +242,8 @@
                 <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
             </div>
         </div>
-        <div class="col d-flex justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
+        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+            <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
 </div>
