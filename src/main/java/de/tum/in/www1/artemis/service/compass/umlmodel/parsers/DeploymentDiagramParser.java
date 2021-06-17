@@ -10,12 +10,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
-import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
-import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLArtifact;
-import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLDeploymentDiagram;
-import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.UMLNode;
+import de.tum.in.www1.artemis.service.compass.umlmodel.deployment.*;
 
 public class DeploymentDiagramParser {
 
@@ -33,8 +29,8 @@ public class DeploymentDiagramParser {
 
         // TODO: try to further reduce code duplication from buildComponentDiagramFromJSON
 
-        Map<String, UMLComponent> umlComponentMap = new HashMap<>();
-        Map<String, UMLComponentInterface> umlComponentInterfaceMap = new HashMap<>();
+        Map<String, UMLDeploymentComponent> umlComponentMap = new HashMap<>();
+        Map<String, UMLDeploymentInterface> umlComponentInterfaceMap = new HashMap<>();
         Map<String, UMLNode> umlNodeMap = new HashMap<>();
         Map<String, UMLArtifact> umlArtifactMap = new HashMap<>();
         Map<String, UMLElement> allUmlElementsMap = new HashMap<>();
@@ -48,16 +44,16 @@ public class DeploymentDiagramParser {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             UMLElement umlElement = null;
             String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
-            if (UMLComponent.UML_COMPONENT_TYPE.equals(elementType)) {
-                UMLComponent umlComponent = ComponentDiagramParser.parseComponent(jsonObject);
+            if (UMLDeploymentComponent.UML_COMPONENT_TYPE.equals(elementType)) {
+                UMLDeploymentComponent umlComponent = parseComponent(jsonObject);
                 umlComponentMap.put(umlComponent.getJSONElementID(), umlComponent);
                 umlElement = umlComponent;
             }
             // NOTE: there is a difference in the json between ComponentInterface and DeploymentInterface
-            else if (UMLComponentInterface.UML_DEPLOYMENT_INTERFACE_TYPE.equals(elementType)) {
-                UMLComponentInterface umlComponentInterface = ComponentDiagramParser.parseComponentInterface(jsonObject);
-                umlComponentInterfaceMap.put(umlComponentInterface.getJSONElementID(), umlComponentInterface);
-                umlElement = umlComponentInterface;
+            else if (UMLDeploymentInterface.UML_DEPLOYMENT_INTERFACE_TYPE.equals(elementType)) {
+                UMLDeploymentInterface umlDeploymentInterface = parseComponentInterface(jsonObject);
+                umlComponentInterfaceMap.put(umlDeploymentInterface.getJSONElementID(), umlDeploymentInterface);
+                umlElement = umlDeploymentInterface;
             }
             else if (UMLNode.UML_NODE_TYPE.equals(elementType)) {
                 UMLNode umlNode = parseNode(jsonObject);
@@ -97,6 +93,16 @@ public class DeploymentDiagramParser {
     private static UMLArtifact parseArtifact(JsonObject artifactJson) {
         String artifactName = artifactJson.get(ELEMENT_NAME).getAsString();
         return new UMLArtifact(artifactName, artifactJson.get(ELEMENT_ID).getAsString());
+    }
+
+    protected static UMLDeploymentInterface parseComponentInterface(JsonObject componentInterfaceJson) {
+        String componentInterfaceName = componentInterfaceJson.get(ELEMENT_NAME).getAsString();
+        return new UMLDeploymentInterface(componentInterfaceName, componentInterfaceJson.get(ELEMENT_ID).getAsString());
+    }
+
+    protected static UMLDeploymentComponent parseComponent(JsonObject componentJson) {
+        String componentName = componentJson.get(ELEMENT_NAME).getAsString();
+        return new UMLDeploymentComponent(componentName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
 }
