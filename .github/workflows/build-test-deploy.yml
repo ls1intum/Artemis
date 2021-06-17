@@ -2,6 +2,15 @@ name: Build, Test, and Deploy
 
 on:
   pull_request:
+    paths-ignore:
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'SECURITY.md'
+    - 'docs/**'
+    - '.github/**'
+    - '!.github/workflows/build-test-deploy.yml'
   push:
     branches:
     - develop
@@ -235,11 +244,11 @@ jobs:
             labels: ['lock:${{ matrix.environment }}']
           })
           const issues = await github.paginate(opts)
-          if (issues.length == 1 && issues[0].number != ${{ github.event.pull_request.number }}) {
+          if (issues.length == 1 && github.event.pull_request && issues[0].number != ${{ github.event.pull_request.number }}) {
             core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
           } else if (issues.length > 1) {
             core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
-          } else if (github.event_name == "pull_request") {
+          } else if (github.event.pull_request) {
             await github.issues.addLabels({
               issue_number: ${{ github.event.pull_request.number }},
               owner: context.repo.owner,
@@ -279,7 +288,7 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
           mkdir -p ~/.ssh
-          for host in ${{ env.DEPLOYMENT_HOSTS }}; do
+          for host in ${{ secrets.DEPLOYMENT_HOSTS }}; do
             ssh-keyscan ${host} >> ~/.ssh/known_hosts
           end
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
@@ -295,8 +304,8 @@ jobs:
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
-        for host in ${{ env.DEPLOYMENT_HOSTS }}; do
-          ./artemis-server-cli deploy ${{ env.DEPLOYMENT_USER }}@${host} -w ./${{steps.artifact-name.outputs.war-file}} -y
+        for host in ${{ secrets.DEPLOYMENT_HOSTS }}; do
+          ./artemis-server-cli deploy ${{ secrets.DEPLOYMENT_USER }}@${host} -w ./${{steps.artifact-name.outputs.war-file}} -y
         end
 
     # Always disconnect from VPN
