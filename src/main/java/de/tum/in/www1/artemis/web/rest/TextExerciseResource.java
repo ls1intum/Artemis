@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
@@ -509,7 +508,7 @@ public class TextExerciseResource {
      */
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws FileNotFoundException {
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
 
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 

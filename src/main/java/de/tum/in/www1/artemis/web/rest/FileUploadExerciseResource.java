@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -308,13 +307,13 @@ public class FileUploadExerciseResource {
      */
     @PostMapping("/file-upload-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) throws FileNotFoundException {
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
 
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, fileUploadExercise, null);
 
-        // ta's are not allowed to download all participations
+        // TAs are not allowed to download all participations
         if (submissionExportOptions.isExportAllParticipants()) {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, fileUploadExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
