@@ -25,7 +25,7 @@
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
-				"grade": "Grade",
+                "grade": "Grade",
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
