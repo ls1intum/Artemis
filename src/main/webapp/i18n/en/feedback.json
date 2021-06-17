@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Feedback",
                 "createOrEditLabel": "Create or edit a Feedback"
             },
-            "created": "A new Feedback is created with identifier {{ param }}",
-            "updated": "A Feedback is updated with identifier {{ param }}",
-            "deleted": "A Feedback is deleted with identifier {{ param }}",
+            "created": "Created new Feedback with identifier {{ param }}",
+            "updated": "Updated Feedback with identifier {{ param }}",
+            "deleted": "Deleted Feedback with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Feedback {{ id }}?"
             },
