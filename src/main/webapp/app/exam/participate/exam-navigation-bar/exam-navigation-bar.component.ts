@@ -43,7 +43,6 @@ export class ExamNavigationBarComponent implements OnInit {
                 this.itemsVisiblePerSide = 0;
             }
         });
-        console.log(this.exerciseIndex, this.overviewPageOpen);
     }
 
     triggerExamAboutToEnd() {

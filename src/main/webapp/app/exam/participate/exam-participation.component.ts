@@ -178,7 +178,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 .subscribe((localExam: StudentExam) => {
                                     this.studentExam = localExam;
                                     this.loadingExam = false;
-                                    console.log('starting from failed save');
                                     this.examStarted(this.studentExam);
                                 });
                         } else {
@@ -270,14 +269,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 });
             });
-            console.log('studentExam: ', this.studentExam);
             const initialExercise = this.studentExam.exercises![0];
-            console.log('exercise, ', initialExercise, this.studentExam);
             this.initializeOverviewPage();
         }
         this.examStartConfirmed = true;
         this.startAutoSaveTimer();
-        console.log('exercise index: ', this.exerciseIndex, this.activePageIndex);
     }
 
     /**
@@ -502,7 +498,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private initializeExercise(exercise: Exercise) {
         this.activeExamPage.isOverviewPage = false;
         this.activeExamPage.exercise = exercise;
-        console.log('call initializeExercise:', exercise, this.activeExamPage);
 
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
@@ -588,7 +583,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 // this will lead to a save below, because isSynced will be set to false
                 activeSubmission.isSynced = false;
             }
-            console.log('call updateSubmissionFromView wuhuuuuuu was geht dann daasdf');
             (activeComponent as ExamSubmissionComponent).updateSubmissionFromView();
         }
 

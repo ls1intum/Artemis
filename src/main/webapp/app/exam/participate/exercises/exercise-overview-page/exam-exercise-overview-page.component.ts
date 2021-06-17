@@ -8,16 +8,12 @@ import { ChangeDetectorRef } from '@angular/core';
     templateUrl: './exam-exercise-overview-page.component.html',
     styleUrls: ['./exam-exercise-overview-page.scss'],
 })
-export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit {
+export class ExamExerciseOverviewPageComponent extends ExamPageComponent {
     @Input() exercises: Exercise[];
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
     constructor(protected changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
-    }
-
-    ngOnInit(): void {
-        console.log('right component testing', this.exercises);
     }
 }
