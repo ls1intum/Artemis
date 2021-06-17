@@ -224,23 +224,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             },
             animation: {
                 duration: 1,
-                onComplete(chartElement: ChartElement) {
-                    const chartInstance = <HTMLCanvasElement>document.createElement('average-score-graph');
-                    const ctx = chartInstance.getContext('2d')!;
-                    ctx.font = Chart.helpers.fontString(Chart.defaults.font.size, Chart.defaults.font.style, Chart.defaults.font.family);
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-                    const chart = new Chart(ctx);
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chart.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = dataset.data[index];
-                            ctx.fillText(String(data), bar._model.x, bar._model.y - 20);
-                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered, 2, 2)}%)`, bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
             },
         };
 

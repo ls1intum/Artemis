@@ -82,26 +82,6 @@ export function createOptions(dataSetProvider: DataSetProvider, max: number, ste
 export function createAnimation(dataSetProvider: DataSetProvider) {
     return {
         duration: 500,
-        onComplete: (chartElement: ChartElement) => {
-            const chartInstance = chartElement.chart;
-            const ctx = chartInstance.ctx!;
-            // const chart = new Chart(ctx);
-
-            // ctx.font = Chart.defaults.helpers.fontString(Chart.defaults.font.size, Chart.defaults.font.style, Chart.defaults.font.family);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            const participants = dataSetProvider.getParticipants();
-
-            dataSetProvider.getDataSets().forEach((dataset: DataSet, datasetIndex: number) => {
-                const meta = chartInstance.getDatasetMeta(datasetIndex);
-                meta.data.forEach((bar: any, dataIndex: number) => {
-                    const data = (Math.round(dataset.data[dataIndex] * 100) / 100).toString();
-                    const dataPercentage = Math.round((dataset.data[dataIndex] / participants) * 1000) / 10 || 0;
-                    ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                    ctx.fillText(`(${dataPercentage}%)`, bar._model.x, bar._model.y - 5);
-                });
-            });
-        },
     };
 }
 

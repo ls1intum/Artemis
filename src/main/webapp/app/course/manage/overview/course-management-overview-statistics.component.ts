@@ -60,20 +60,6 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
             },
             animation: {
                 duration: 1,
-                onComplete(chartElement: ChartElement) {
-                    const chartInstance = chartElement.chart;
-                    const ctx = chartInstance.ctx!;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = !!self.initialStats ? self.initialStats[index] : 0;
-                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
             },
             scales: {
                 y: {

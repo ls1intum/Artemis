@@ -92,23 +92,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             responsive: true,
             animation: {
                 duration: 1,
-                onComplete(chartElement: ChartElement) {
-                    // const chartInstance = <HTMLCanvasElement> document.createElement('average-score-graph');
-                    // const ctx = chartInstance.getContext('2d')!;
-                    const chartInstance = chartElement.chart;
-                    const ctx = chartInstance.ctx!;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-                    const averageChart = new Chart(ctx);
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = averageChart.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = dataset.data[index];
-                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
             },
             scales: {
                 y: {

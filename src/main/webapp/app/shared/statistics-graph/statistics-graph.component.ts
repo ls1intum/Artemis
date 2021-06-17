@@ -209,20 +209,6 @@ export class StatisticsGraphComponent implements OnChanges {
             responsive: true,
             animation: {
                 duration: 1,
-                onComplete(chartElement: ChartElement) {
-                    const chartInstance = chartElement.chart;
-                    const ctx = chartInstance.ctx!;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = dataset.data[index];
-                            ctx.fillText(String(data), bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
             },
             scales: {
                 y: {
