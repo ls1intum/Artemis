@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Team",
                 "createOrEditLabel": "Create or edit a Team"
             },
-            "created": "A new team is created with identifier {{ param }}",
-            "updated": "The Team of {{ param }} was updated",
-            "deleted": "The Team of {{ param }} was deleted",
+            "created": "Created new Team with identifier {{ param }}",
+            "updated": "Updated Team {{ param }}",
+            "deleted": "Updated Team {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete the team <strong>{{ title }}</strong> and its participation in the exercise? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the short name of the team to confirm."
@@ -22,7 +22,7 @@
                 },
                 "noOwner": "No tutor",
                 "participationsTable": {
-                    "title": "Participations in \"{{ courseTitle }}\" for",
+                    "title": "Participation in \"{{ courseTitle }}\" of",
                     "columns": {
                         "assessment": {
                             "label": "Assessment",
@@ -161,12 +161,12 @@
                     "purgeExisting": {
                         "label": "Purge existing",
                         "badge": "dangerous",
-                        "explanation": "Before importing all of the teams from the source exercise above, all existing teams of this exercise will be deleted with their participations."
+                        "explanation": "Before importing all of the teams from the source exercise above, all existing teams and their participation in this exercise will be deleted."
                     },
                     "createOnly": {
                         "label": "Create only",
                         "badge": "safe",
-                        "explanation": "Only conflict-free source teams (shown above in green) will be imported. Existing teams of this exercise will not be touched."
+                        "explanation": "Only conflict-free source teams (shown above in green) will be imported. Existing teams in this exercise will not be touched."
                     }
                 }
             },
@@ -180,7 +180,7 @@
                 "studentsInMultipleTeams": "There are students that are in more than one team."
             },
             "purgeConfirmationDialog": {
-                "question": "Are you sure you want to delete all teams of exercise <strong>{{ title }}</strong> and their participations in the exercise? This action can NOT be undone!",
+                "question": "Are you sure you want to delete all teams and participation in the exercise <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the title of the exercise to confirm."
             },
             "importError": "Import failed. Please try again or contact an administrator for assistance.",
