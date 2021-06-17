@@ -933,10 +933,10 @@ public abstract class Exercise extends DomainObject {
             return;
         }
         // at least one is set, so we have to check the two possible errors
-        boolean validDates = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && validateAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
+        boolean validDates = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
 
         if (!validDates) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
         }
     }
 
@@ -944,7 +944,7 @@ public abstract class Exercise extends DomainObject {
      * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
      * @return true if there is no assessmentDueDateError
      */
-    private boolean validateAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+    private boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         if (assessmentDueDate == null) {
             return true;
         }
