@@ -11,7 +11,7 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
 })
 export class CustomPatternValidatorDirective implements Validator {
     validate(control: AbstractControl): { [key: string]: any } | null {
-        if (control === undefined || control === null) {
+        if (control == undefined) {
             return null;
         }
         try {
