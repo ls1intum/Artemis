@@ -913,8 +913,10 @@ ngb-tooltip-window {
     width: 66.66% !important;
 }
 
-.col-md-8 {
-    width: 66.66% !important;
+@include media-breakpoint-up(md) {
+    .col-md-8 {
+        width: 66.66% !important;
+    }
 }
 
 .col-lg-8 {
@@ -993,8 +995,10 @@ ngb-tooltip-window {
     width: 33.33% !important;
 }
 
-.col-md-4 {
-    width: 33.33% !important;
+@include media-breakpoint-up(md) {
+    .col-md-4 {
+        width: 33.33% !important;
+    }
 }
 
 .col-lg-4 {
