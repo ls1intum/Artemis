@@ -4,6 +4,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
+    styleUrls: ['./assessment-dashboard-information.component.scss'],
 })
 export class AssessmentDashboardInformationComponent {
     @Input() isExamMode: boolean;

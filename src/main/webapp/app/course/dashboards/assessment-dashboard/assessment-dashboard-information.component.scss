@@ -1,0 +1,9 @@
+@include media-breakpoint-down(md) {
+    .col-md-8 {
+        width: auto !important;
+    }
+
+    .col-md-4 {
+        width: auto !important;
+    }
+}
