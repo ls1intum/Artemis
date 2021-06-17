@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Short Answer Question",
                 "createOrEditLabel": "Create or edit a Short Answer Question"
             },
-            "created": "A new Short Answer Question is created with identifier {{ param }}",
-            "updated": "A Short Answer Question is updated with identifier {{ param }}",
-            "deleted": "A Short Answer Question is deleted with identifier {{ param }}",
+            "created": "Created new Short Answer Question with identifier {{ param }}",
+            "updated": "Updated Short Answer Question with identifier {{ param }}",
+            "deleted": "Deleted Short Answer Question with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Short Answer Question {{ id }}?"
             },

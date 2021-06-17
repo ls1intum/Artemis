@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Drag And Drop Question Statistic",
                 "createOrEditLabel": "Create or edit a Drag And Drop Question Statistic"
             },
-            "created": "A new Drag And Drop Question Statistic is created with identifier {{ param }}",
-            "updated": "A Drag And Drop Question Statistic is updated with identifier {{ param }}",
-            "deleted": "A Drag And Drop Question Statistic is deleted with identifier {{ param }}",
+            "created": "Created new Drag And Drop Question Statistic with identifier {{ param }}",
+            "updated": "Updated Drag And Drop Question Statistic with identifier {{ param }}",
+            "deleted": "Deleted Drag And Drop Question Statistic with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Drag And Drop Question Statistic {{ id }}?"
             },

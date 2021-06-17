@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Statistic Counter",
                 "createOrEditLabel": "Create or edit a Statistic Counter"
             },
-            "created": "A new Statistic Counter is created with identifier {{ param }}",
-            "updated": "A Statistic Counter is updated with identifier {{ param }}",
-            "deleted": "A Statistic Counter is deleted with identifier {{ param }}",
+            "created": "Created new Statistic Counter with identifier {{ param }}",
+            "updated": "Updated Statistic Counter with identifier {{ param }}",
+            "deleted": "Deleted Statistic Counter with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Statistic Counter {{ id }}?"
             },
@@ -16,7 +16,7 @@
                 "title": "Statistic Counter"
             },
             "ratedCounter": "Rated Counter",
-            "unRatedCounter": "Un Rated Counter"
+            "unRatedCounter": "Un-Rated Counter"
         }
     }
 }
