@@ -1,3 +1,5 @@
+@import '../../../../content/scss/bootstrap-variables';
+
 @include media-breakpoint-down(md) {
     .col-md-8 {
         width: auto !important;
