@@ -269,8 +269,10 @@ jobs:
       run: sudo apt-get install vpnc
     # Fill config from Secret (https://www.lrz.de/services/netz/mobil/vpnpda/)
     - name: Configure LRZ VPN
+      env:
+          LRZ_VPN_CONFIG: ${{ secrets.LRZ_VPN_CONFIG }}
       run: |
-        echo "${{ secrets.LRZ_VPN_CONFIG }}" > lrz.conf
+        echo $LRZ_VPN_CONFIG > lrz.conf
         sudo mkdir -p /etc/vpnc
         sudo mv lrz.conf /etc/vpnc/
         sudo chmod 600 /etc/vpnc/lrz.conf
@@ -286,13 +288,15 @@ jobs:
     - name: Setup SSH Keys and known_hosts
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_HOSTS: ${{ secrets.DEPLOYMENT_HOSTS }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       run: |
           mkdir -p ~/.ssh
-          for host in ${{ secrets.DEPLOYMENT_HOSTS }}; do
-            ssh-keyscan ${host} >> ~/.ssh/known_hosts
-          end
+          for host in $DEPLOYMENT_HOSTS; do
+            ssh-keyscan $host >> ~/.ssh/known_hosts
+          done
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          ssh-add - <<< $SSH_PRIVATE_KEY
 
     # Downlaod artemis-server-cli from GH without cloning the Repo
     - name: Fetch Artemis CLI
@@ -303,10 +307,13 @@ jobs:
     - name: Deploy Artemis WAR artifact
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_HOSTS: ${{ secrets.DEPLOYMENT_HOSTS }}
+          DEPLOYMENT_USER: ${{ secrets.DEPLOYMENT_USER }}
+          WAR_FILE: ./${{steps.artifact-name.outputs.war-file}}
       run: |
-        for host in ${{ secrets.DEPLOYMENT_HOSTS }}; do
-          ./artemis-server-cli deploy ${{ secrets.DEPLOYMENT_USER }}@${host} -w ./${{steps.artifact-name.outputs.war-file}} -y
-        end
+        for host in $DEPLOYMENT_HOSTS; do
+          ./artemis-server-cli deploy $DEPLOYMENT_USER@$host -w $WAR_FILE -y
+        done
 
     # Always disconnect from VPN
     - name: Disconncet VPN
