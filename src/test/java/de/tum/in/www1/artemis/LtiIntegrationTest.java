@@ -1,21 +1,26 @@
 package de.tum.in.www1.artemis;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -91,8 +96,12 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
-        assertTrue(header.toString().contains("?login&jwt="));
-        assertTrue(header.toString().contains("/courses/" + courseId + "/exercises/" + exerciseId));
+        var uriComponents = UriComponentsBuilder.fromUri(header).build();
+        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
+        assertThat(parameters.getFirst("jwt")).isNotBlank();
+        assertThat(parameters.getFirst("login")).isNotNull();
+        assertThat(parameters.getFirst("welcome")).isNull();
+        assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
         this.checkExceptions();
     }
@@ -113,10 +122,39 @@ public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
-        assertTrue(header.toString().contains("?welcome&jwt="));
-        assertTrue(header.toString().contains("/courses/" + courseId + "/exercises/" + exerciseId));
+        var uriComponents = UriComponentsBuilder.fromUri(header).build();
+        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
+        assertThat(parameters.getFirst("jwt")).isNotBlank();
+        assertThat(parameters.getFirst("welcome")).isNotNull();
+        assertThat(parameters.getFirst("login")).isNull();
+        assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
         this.checkExceptions();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    void launchAsExistingStudent() throws Exception {
+
+        var nowIn20Minutes = ZonedDateTime.now().plus(20, ChronoUnit.MINUTES);
+
+        // Mock that student1 already exists since 20 min
+        doReturn(nowIn20Minutes).when(timeService).now();
+
+        Long exerciseId = programmingExercise.getId();
+        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
+
+        var uriComponents = UriComponentsBuilder.fromUri(header).build();
+        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
+        assertThat(parameters.getFirst("jwt")).isNotBlank();
+        assertThat(parameters.getFirst("welcome")).isNull();
+        assertThat(parameters.getFirst("login")).isNull();
+        assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
+
+        this.checkExceptions();
+
+        Mockito.reset(timeService);
     }
 
     private void checkExceptions() throws Exception {
