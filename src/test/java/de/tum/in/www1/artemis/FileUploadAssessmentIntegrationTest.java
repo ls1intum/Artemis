@@ -42,6 +42,9 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     private ExerciseRepository exerciseRepository;
 
     @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -605,4 +608,69 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(assessedSubmissionList.size()).isEqualTo(0);
     }
 
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("file-upload", 1);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.get(0);
+        assertThat(submission.getResults().size()).isEqualTo(3);
+        Result firstResult = submission.getResults().get(0);
+        Result lastResult = submission.getLatestResult();
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/delete/" + firstResult.getId(),
+                HttpStatus.OK);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult_invalidResultSubmissionCombination() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("file-upload", 2);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission1 = submissions.get(0);
+        Submission submission2 = submissions.get(1);
+
+        assertThat(submission1.getResults().size()).isEqualTo(3);
+        Result resultOfOtherSubmission = submission2.getLatestResult();
+        Result lastResult = submission1.getLatestResult();
+        request.delete(
+                "/api/participations/" + submission1.getParticipation().getId() + "/file-upload-submissions/" + submission1.getId() + "/delete/" + resultOfOtherSubmission.getId(),
+                HttpStatus.BAD_REQUEST);
+        submission1 = submissionRepository.findOneWithEagerResultAndFeedback(submission1.getId());
+        assertThat(submission1.getResults().size()).isEqualTo(3);
+        assertThat(submission1.getResults().get(2)).isEqualTo(lastResult);
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult_failAsResultHasAComplaint() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("file-upload", 1);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+
+        Submission submission = submissions.get(0);
+        database.addComplaintToSubmission(submission, "student1");
+        assertThat(submission.getResults().size()).isEqualTo(2);
+        Result lastResult = submission.getLatestResult();
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/delete/" + lastResult.getId(),
+                HttpStatus.BAD_REQUEST);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+    }
 }

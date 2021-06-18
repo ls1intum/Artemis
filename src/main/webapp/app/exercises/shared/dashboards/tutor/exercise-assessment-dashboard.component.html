@@ -30,35 +30,35 @@
                 <jhi-second-correction-enable-button
                     (ngModelChange)="toggleSecondCorrection()"
                     [secondCorrectionEnabled]="secondCorrectionEnabled"
-                    [toggelingSecondCorrectionButton]="toggelingSecondCorrectionButton"
+                    [toggelingSecondCorrectionButton]="togglingSecondCorrectionButton"
                 ></jhi-second-correction-enable-button>
-                <a class="btn btn-primary btn-sm ml-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                <a class="btn btn-primary btn-sm ms-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                     <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                 </a>
             </ng-container>
         </div>
 
-        <div class="col-5">
+        <div class="col-sm-5">
             <jhi-side-panel *ngIf="!isExamMode" [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate">
                 <div class="row mb-1 small" *ngIf="numberOfSubmissions.late > 0">
                     <div class="col-8"></div>
                     <div class="col-4">
                         {{ 'artemisApp.exerciseAssessmentDashboard.stats.intime' | artemisTranslate }}
-                        <span class="ml-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
+                        <span class="ms-1 result--late text-nowrap">| {{ 'artemisApp.exerciseAssessmentDashboard.stats.late' | artemisTranslate }} </span>
                     </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ numberOfSubmissions.inTime }}
-                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-1 result--late text-nowrap">| {{ numberOfSubmissions.late }}</span>
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ms-1 result--late text-nowrap">| {{ numberOfSubmissions.late }}</span>
                     </div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfAssessedSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ totalNumberOfAssessments.inTime }} ({{ totalAssessmentPercentage.inTime }}%)
-                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ms-2 result--late text-nowrap"
                             >| {{ totalNumberOfAssessments.late }} ({{ totalAssessmentPercentage.late }}%)</span
                         >
                     </div>
@@ -67,7 +67,7 @@
                     <div class="col-8">{{ 'artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions' | artemisTranslate }}</div>
                     <div class="col-4">
                         {{ numberOfSubmissions.inTime - totalNumberOfAssessments.inTime }} ({{ 100 - totalAssessmentPercentage.inTime }}%)
-                        <span *ngIf="numberOfSubmissions.late > 0" class="ml-2 result--late text-nowrap"
+                        <span *ngIf="numberOfSubmissions.late > 0" class="ms-2 result--late text-nowrap"
                             >| {{ numberOfSubmissions.late - totalNumberOfAssessments.late }} ({{ 100 - totalAssessmentPercentage.late }}%)</span
                         >
                     </div>
@@ -164,7 +164,10 @@
     </div>
 
     <div class="d-flex" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED || isTestRun">
-        <div class="guided-tour-exercise-dashboard-table flex-grow-1">
+        <div
+            *ngIf="!isOrionAndProgramming || (orionState.opened === exercise.id && orionState.view === ExerciseView.TUTOR); else orionStartButton"
+            class="guided-tour-exercise-dashboard-table flex-grow-1"
+        >
             <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS && !isTestRun" class="alert alert-warning row" role="alert">
                 <span
                     jhiTranslate="artemisApp.exerciseAssessmentDashboard.totalExampleSubmissions"
@@ -300,10 +303,12 @@
                                             >{{ round(submission.results![correctionRound]!.score) }} %</span
                                         >
                                     </td>
-                                    <jhi-language-table-cell *ngIf="exercise.type === ExerciseType.TEXT" [submission]="submission"></jhi-language-table-cell>
+                                    <td *ngIf="exercise.type === ExerciseType.TEXT">
+                                        <jhi-language-table-cell [submission]="submission"></jhi-language-table-cell>
+                                    </td>
                                     <td>
                                         <ng-container *ngIf="(isTestRun && complaints.length === 0) || !isTestRun">
-                                            <ng-container>
+                                            <ng-container *ngIf="!isOrionAndProgramming; else orionOpenButton">
                                                 <button
                                                     *ngIf="submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'; else continueButton"
                                                     (click)="openAssessmentEditor(submission, correctionRound)"
@@ -324,6 +329,20 @@
                                                     </button>
                                                 </ng-template>
                                             </ng-container>
+                                            <ng-template #orionOpenButton>
+                                                <jhi-ide-button
+                                                    class="btn btn-sm"
+                                                    [buttonLoading]="orionState.cloning"
+                                                    buttonLabel="{{
+                                                        (submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'
+                                                            ? 'artemisApp.exerciseAssessmentDashboard.orion.continueAssessment'
+                                                            : 'artemisApp.exerciseAssessmentDashboard.orion.openAssessment'
+                                                        ) | artemisTranslate
+                                                    }}"
+                                                    (clickHandler)="downloadSubmissionInOrion(submission, correctionRound)"
+                                                >
+                                                </jhi-ide-button>
+                                            </ng-template>
                                         </ng-container>
                                     </td>
                                 </tr>
@@ -343,13 +362,13 @@
                                         <td></td>
                                         <td>{{ 'artemisApp.exerciseAssessmentDashboard.new' | artemisTranslate }}</td>
                                         <td></td>
-                                        <jhi-language-table-cell
-                                            *ngIf="exercise.type === ExerciseType.TEXT"
-                                            [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"
-                                        ></jhi-language-table-cell>
+                                        <td *ngIf="exercise.type === ExerciseType.TEXT">
+                                            <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"></jhi-language-table-cell>
+                                        </td>
 
                                         <td>
                                             <button
+                                                *ngIf="!isOrionAndProgramming; else orionNewButton"
                                                 class="btn btn-success btn-sm guided-tour-new-assessment-btn"
                                                 (click)="openAssessmentEditor('new', correctionRound)"
                                                 [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
@@ -360,6 +379,15 @@
                                                 <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                                 {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
                                             </button>
+                                            <ng-template #orionNewButton>
+                                                <jhi-ide-button
+                                                    class="btn btn-sm"
+                                                    [buttonLoading]="orionState.cloning"
+                                                    buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startAssessment' | artemisTranslate }}"
+                                                    (clickHandler)="downloadSubmissionInOrion('new', correctionRound)"
+                                                >
+                                                </jhi-ide-button>
+                                            </ng-template>
                                         </td>
                                     </tr>
                                 </ng-container>
@@ -420,7 +448,7 @@
                 </h4>
                 <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"></fa-icon>
                 <div class="table-responsive">
-                    <table class="table table-striped exercise-table" *ngIf="complaints && complaints!.length > 0; else noComplaints">
+                    <table class="table table-striped exercise-table" *ngIf="submissionsWithComplaints && submissionsWithComplaints!.length > 0; else noComplaints">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -431,27 +459,30 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngFor="let complaint of complaints; let i = index">
+                            <tr *ngFor="let submissionWithComplaint of submissionsWithComplaints; let i = index">
                                 <td>{{ i + 1 }}</td>
-                                <td>{{ complaint.submittedTime | artemisDate }}</td>
+                                <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
                                 <td>
-                                    <jhi-result [result]="complaint.result" [participation]="complaint.result!.participation!"></jhi-result>
+                                    <jhi-result
+                                        [result]="submissionWithComplaint.submission.latestResult"
+                                        [participation]="submissionWithComplaint.complaint.result!.participation!"
+                                    ></jhi-result>
                                 </td>
                                 <td>
-                                    {{ calculateComplaintStatus(complaint) }}
+                                    {{ calculateComplaintStatus(submissionWithComplaint.complaint) }}
                                 </td>
                                 <td>
                                     <button
-                                        *ngIf="complaint.accepted === undefined; else continueButton"
-                                        [disabled]="isComplaintLocked(complaint)"
+                                        *ngIf="submissionWithComplaint.complaint.accepted === undefined; else continueButton"
+                                        [disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
                                         class="btn btn-success btn-sm"
-                                        (click)="viewComplaint(complaint)"
+                                        (click)="viewComplaint(submissionWithComplaint.complaint)"
                                     >
                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                         {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                     </button>
                                     <ng-template #continueButton>
-                                        <button class="btn btn-primary btn-sm" (click)="viewComplaint(complaint)">
+                                        <button class="btn btn-primary btn-sm" (click)="viewComplaint(submissionWithComplaint.complaint)">
                                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                             {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                         </button>
@@ -541,4 +572,13 @@
     <h2 *ngIf="!isExamMode">{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | artemisTranslate }}</h2>
 
     <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="statsForDashboard.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
+
+    <ng-template #orionStartButton>
+        <jhi-ide-button
+            [buttonLoading]="orionState.cloning"
+            buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startYourParticipation' | artemisTranslate }}"
+            (clickHandler)="openAssessmentInOrion()"
+        >
+        </jhi-ide-button>
+    </ng-template>
 </div>

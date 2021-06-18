@@ -18,7 +18,7 @@
         },
         "ide": {
             "confirmation": "Do you want to store your credentials in IntelliJ?\nThis will make importing your exercises a lot easier!",
-            "title": "Login to IntelliJ"
+            "title": "Log in to IntelliJ"
         }
     },
     "logout": {

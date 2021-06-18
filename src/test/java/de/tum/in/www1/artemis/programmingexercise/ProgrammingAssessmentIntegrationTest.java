@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
+import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -43,6 +45,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private ProgrammingAssessmentService programmingAssessmentService;
@@ -882,17 +887,51 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         params.add("submit", "true");
         Result overwrittenResult = request.putWithResponseBodyAndParams("/api/participations/" + programmingSubmission.getParticipation().getId() + "/manual-results",
                 resultAfterComplaint, Result.class, HttpStatus.OK, params);
+        initialResult = resultRepository.findById(initialResult.getId()).orElseThrow();
 
-        assertThat(initialResult.getScore()).isEqualTo(50D); // first result was instantiated with a score of 50%
-        assertThat(resultAfterComplaintScore).isEqualTo(100D); // score after complaint evaluation got changed to 100%
+        assertThat(overwrittenResult).isEqualTo(resultAfterComplaint); // check if the Id is identical
+        assertThat(initialResult.getScore()).isEqualTo(50D); // first result has a score of 50%
+        assertThat(resultAfterComplaintScore).isEqualTo(100D); // score after complaint evaluation got changed to 100% (which is in a new result now)
         assertThat(overwrittenResult.getScore()).isEqualTo(10D); // the instructor overwrote the score to 10%
-        assertThat(overwrittenResult.hasComplaint()).isEqualTo(true); // Very important: It must not be overwritten whether the result actually had a complaint
+        assertThat(overwrittenResult.hasComplaint()).isEqualTo(false); // The result has no complaint, as it is the answer for one
+        assertThat(initialResult.hasComplaint()).isEqualTo(true); // Very important: It must not be overwritten whether the result actually had a complaint
 
         // Also check that its correctly saved in the database
         ProgrammingSubmission savedSubmission = programmingSubmissionRepository.findWithEagerResultsById(programmingSubmission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10D);
-        assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
+        assertThat(savedSubmission.getFirstManualResult().hasComplaint()).isEqualTo(true);
+        assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(false);
 
+    }
+
+    @Test
+    @WithMockUser(value = "admin", roles = "ADMIN")
+    public void testdeleteResult() throws Exception {
+        Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+
+        database.addAutomaticAssessmentToExercise(exercise);
+        database.addAutomaticAssessmentToExercise(exercise);
+        database.addAutomaticAssessmentToExercise(exercise);
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+
+        var submissions = database.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.get(0);
+        assertThat(submission.getResults().size()).isEqualTo(5);
+        Result firstResult = submission.getResults().get(0);
+        Result midResult = submission.getResults().get(2);
+        Result firstSemiAutomaticResult = submission.getResults().get(3);
+
+        Result lastResult = submission.getLatestResult();
+        // we will only delete the middle automatic result at index 2
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/delete/" + midResult.getId(),
+                HttpStatus.OK);
+        submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
+        assertThat(submission.getResults().size()).isEqualTo(4);
+        assertThat(submission.getResults().get(0)).isEqualTo(firstResult);
+        assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);
+        assertThat(submission.getResults().get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
     }
 }

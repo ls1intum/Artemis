@@ -136,7 +136,7 @@
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
-                    "title": "Dozentenaktionen:",
+                    "title": "Aktionen für Lehrende:",
                     "scores": "Bewertungen",
                     "submissions": "Einreichungen",
                     "statistics": "Statistiken"
@@ -151,38 +151,7 @@
                 "graded": "Bewertet",
                 "notGraded": "Nicht bewertet",
                 "rated": "Bewertet",
-                "practice": "Übung",
-                "faq": {
-                    "header": "Fragen und Antworten",
-                    "show": "Antworten anzeigen",
-                    "hide": "Antworten einklappen",
-                    "noQuestions": "Es wurden noch keine Fragen gestellt.",
-                    "addNewQuestion": "Eine neue Frage stellen",
-                    "newQuestionLabel": "Neue Frage",
-                    "newAnswerLabel": "Neue Frage",
-                    "answerLabel": "Antwort",
-                    "questionLabel": "Frage",
-                    "approvedLabel": "Von einem Tutor bestätigt",
-                    "answerNow": "Jetzt beantworten",
-                    "noAnswers": "Diese Frage wurde noch nicht beantwortet.",
-                    "answerCount": "Zeige Antworten ({{count}})",
-                    "yourQuestion": "Deine Frage",
-                    "cancel": "Abbrechen",
-                    "addQuestion": "Frage hinzufügen",
-                    "saveQuestion": "Frage speichern",
-                    "addAnswer": "Antwort hinzufügen",
-                    "saveAnswer": "Antwort speichern",
-                    "deleteQuestion": "Möchtest du deine Frage löschen?",
-                    "confirmDeleteQuestion": "Bitte bestätige, dass du deine Frage löschen möchtest!",
-                    "editQuestion": "Frage bearbeiten",
-                    "deleteAnswer": "Möchtest du deine Antwort löschen?",
-                    "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
-                    "editAnswer": "Antwort bearbeiten",
-                    "approveAnswer": "Antwort bestätigen",
-                    "unapproveAnswer": "Antwort nicht bestätigen",
-                    "hideAnswers": "Weniger Antworten anzeigen",
-                    "showAnswers": "Weitere Antworten anzeigen ({{count}})"
-                }
+                "practice": "Übung"
             }
         }
     }

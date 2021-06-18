@@ -20,8 +20,7 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
+import de.tum.in.www1.artemis.exception.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -31,6 +30,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -77,10 +77,12 @@ public class UserService {
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, InstanceMessageSendService instanceMessageSendService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -93,6 +95,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.studentScoreRepository = studentScoreRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -146,11 +149,23 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneByActivationKey(key).map(user -> {
-            // activate given user for the registration key.
-            userCreationService.activateUser(user);
+        return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
+            activateUser(user);
             return user;
         });
+    }
+
+    /**
+     * Activates the user and cancels the automatic cleanup of the account.
+     *
+     * @param user the non-activated user
+     */
+    public void activateUser(User user) {
+        // Cancel automatic removal of the user since it's activated.
+        instanceMessageSendService.sendCancelRemoveNonActivatedUserSchedule(user.getId());
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.activateUser(user.getLogin()));
+        // activate given user for the registration key.
+        userCreationService.activateUser(user);
     }
 
     /**
@@ -207,18 +222,7 @@ public class UserService {
      * @return newly registered user or throw registration exception
      */
     public User registerUser(UserDTO userDTO, String password) {
-        userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
-            boolean removed = removeNonActivatedUser(existingUser);
-            if (!removed) {
-                throw new UsernameAlreadyUsedException();
-            }
-        });
-        userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
-            boolean removed = removeNonActivatedUser(existingUser);
-            if (!removed) {
-                throw new EmailAlreadyUsedException();
-            }
-        });
+        // Prepare the new user object.
         final var newUser = new User();
         String encryptedPassword = passwordService.encodePassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
@@ -236,29 +240,84 @@ public class UserService {
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
-        saveUser(newUser);
+
+        // Find user that has the same login
+        Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
+        if (optionalExistingUser.isPresent()) {
+            User existingUser = optionalExistingUser.get();
+            return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
+        }
+
+        // Find user that has the same email
+        optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
+        if (optionalExistingUser.isPresent()) {
+            User existingUser = optionalExistingUser.get();
+
+            // An account with the same login is already activated.
+            if (existingUser.getActivated()) {
+                throw new EmailAlreadyUsedException();
+            }
+
+            // The email is different which means that the user wants to re-register the same
+            // account with a different email. Block this.
+            throw new AccountRegistrationBlockedException(newUser.getEmail());
+        }
+
         // we need to save first so that the user can be found in the database in the subsequent method
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(newUser));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser));
+        User savedNonActivatedUser = saveUser(newUser);
+
+        // Create an account on the VCS. If it fails, abort registration.
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
+            try {
+                vcsUserManagementService.createVcsUser(savedNonActivatedUser);
+                vcsUserManagementService.deactivateUser(savedNonActivatedUser.getLogin());
+            }
+            catch (VersionControlException e) {
+                log.error("An error occurred while registering GitLab user " + savedNonActivatedUser.getLogin() + ":", e);
+                deleteUser(savedNonActivatedUser);
+                throw e;
+            }
+        });
+
+        // Automatically remove the user if it wasn't activated after a certain amount of time.
+        instanceMessageSendService.sendRemoveNonActivatedUserSchedule(savedNonActivatedUser.getId());
+
         log.debug("Created Information for User: {}", newUser);
         return newUser;
     }
 
     /**
-     * Remove non activated user
+     * Handles the case where a user registers a new account but a user with the same login already
+     * exists in Artemis.
      *
-     * @param existingUser user object of an existing user
-     * @return true if removal has been executed successfully otherwise false
+     * @param newUser the new user
+     * @param existingUser the existing user
+     * @return the existing non-activated user in Artemis.
      */
-    private boolean removeNonActivatedUser(User existingUser) {
+    private User handleRegisterUserWithSameLoginAsExistingUser(User newUser, User existingUser) {
+        // An account with the same login is already activated.
         if (existingUser.getActivated()) {
-            return false;
+            throw new UsernameAlreadyUsedException();
         }
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.deleteVcsUser(existingUser.getLogin()));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.deleteUser(existingUser));
 
-        deleteUser(existingUser);
-        return true;
+        // The user has the same login and email, but the account is not activated.
+        // Return the existing non-activated user so that Artemis can re-send the
+        // activation link.
+        if (existingUser.getEmail().equals(newUser.getEmail())) {
+            // Update the existing user and VCS
+            newUser.setId(existingUser.getId());
+            User updatedExistingUser = userRepository.save(newUser);
+            optionalVcsUserManagementService
+                    .ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(existingUser.getLogin(), updatedExistingUser, Set.of(), Set.of(), true));
+
+            // Post-pone the cleaning up of the account
+            instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
+            return updatedExistingUser;
+        }
+
+        // The email is different which means that the user wants to re-register the same
+        // account with a different email. Block this.
+        throw new AccountRegistrationBlockedException(existingUser.getEmail());
     }
 
     /**
@@ -354,7 +413,7 @@ public class UserService {
         // 4) All complaints and complaints responses associated to the user
         // 5) All student exams associated to the user
         // 6) All LTIid and LTIOutcomeUrls associated to the user
-        // 7) All StudentQuestion and StudentQuestionAnswer
+        // 7) All Post and AnswerPost
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation

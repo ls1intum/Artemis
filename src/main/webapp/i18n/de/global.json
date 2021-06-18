@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Artemis",
-        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
+        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Bedienbarkeit zu verbessern.",
         "generic": {
             "yes": "Ja",
             "no": "Nein",
@@ -83,11 +83,11 @@
             "admin": {
                 "main": "Server-Administration",
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
-                "userManagement": "Benutzerverwaltung",
+                "userManagement": "Verwaltung von Nutzer:innen",
                 "organizationManagement": "Organisationsverwaltung",
                 "systemNotifications": "Systemmitteilungen",
                 "featureToggles": "Feature Toggles",
-                "statistics": "Benutzerstatistiken",
+                "statistics": "Statistiken der Nutzer:innen",
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
@@ -104,12 +104,12 @@
             "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
-            "username": "Benutzername",
+            "username": "Login",
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "username.placeholder": "Benutzername",
+            "username.placeholder": "Login",
             "currentpassword": "Aktuelles Passwort",
             "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
@@ -127,7 +127,7 @@
                 "authenticated": {
                     "prefix": "Wenn du dich ",
                     "link": "melde",
-                    "suffix": " möchtest, versuche es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                    "suffix": " möchtest, versuche es mit <br>- Administration (Name=\"admin\" und Passwort=\"admin\")<br>- Login (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
                     "noaccount": "Du hast noch keinen Zugang?",
@@ -178,6 +178,7 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "noButtonTextDelete": "",
             "unlink": "Trennen",
             "confirm": "Bestätigen",
             "download": "Herunterladen",
@@ -188,6 +189,7 @@
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
+            "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",
             "open": "Öffnen",
             "save": "Speichern",
@@ -219,7 +221,7 @@
             "saveAttachment": "Anhang speichern",
             "addAttachment": "Anhang hinzufügen",
             "assessmentDashboard": "Bewertungs-Dashboard",
-            "instructorDashboard": "Dozenten-Dashboard",
+            "instructorDashboard": "Dashboard für Lehrende",
             "exerciseDashboard": "Aufgaben-Dashboard",
             "newResult": "Neues Ergebnis",
             "updateResult": "Ergebnis bearbeiten",
@@ -231,9 +233,10 @@
             "exams": "Klausuren",
             "manageHints": "Verwalte Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
-            "questionsAndAnswers": "Q&A",
-            "toggleToUnsubmitted": "Setze Studentenklauszur auf nicht abgegeben",
-            "toggleToSubmitted": "Setze Studentenklauszur auf abgegeben"
+            "addAuxiliaryRepository": "Hilfsrepository anlegen",
+            "discussion": "Diskussion",
+            "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
+            "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben"
         },
         "detail": {
             "field": "Feld",
@@ -247,6 +250,9 @@
         },
         "reset": {
             "title": "Zurücksetzen bestätigen"
+        },
+        "noButtonTextDelete": {
+            "title": "Löschen bestätigen"
         },
         "cleanup": {
             "title": "Aufräumen bestätigen"
@@ -279,7 +285,7 @@
         "url.not.found": "Nicht gefunden",
         "NotNull": "Feld {{fieldName}} kann nicht leer sein!",
         "Size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Voraussetzungen!",
-        "userexists": "Benutzername bereits vergeben!",
+        "userexists": "Login bereits vergeben!",
         "emailexists": "E-Mail wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "invalid.template.build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
@@ -287,6 +293,10 @@
         "invalid.solution.build.plan.id": "Die Lösungs-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
         "invalid.template.repository.url": "Die Vorlagen-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
         "invalid.solution.repository.url": "Die Lösungs-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+        "invalid.auxiliary.repository.id": "Die ID eines Hilfs-Repositories scheint gesetzt zu sein. Stelle bitte sicher, dass die ID nicht gesetzt ist.",
+        "invalid.auxiliary.repository.name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
+        "invalid.auxiliary.repository.checkout.directory": "Das Checkout-Verzeichnis von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jedes Checkout-Verzeichnis gültig ist und es keine Duplikate gibt.",
+        "invalid.auxiliary.repository.description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang!",
         "idnull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
     },

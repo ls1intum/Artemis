@@ -57,6 +57,26 @@ export function newModelingExercise(artemis, exerciseGroup, courseId) {
     return JSON.parse(res[0].body);
 }
 
+export function updateModelingExerciseDueDate(artemis, exercise) {
+    const currentDate = new Date();
+
+    const updateExercise = Object.assign({}, exercise);
+    updateExercise.dueDate = new Date(currentDate.getTime() + 10000); // Visible in 1 minutes
+
+    const res = artemis.put(MODELING_EXERCISES, updateExercise);
+    console.log(res);
+    if (res[0].status !== 200) {
+        console.log('ERROR when updating the modeling exercise. Response headers:');
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('FAILTEST: Could not create modeling exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
+    }
+    console.log('SUCCESS: Generated new modeling exercise');
+
+    return JSON.parse(res[0].body);
+}
+
 export function assessModelingSubmission(artemis, submissionId, resultId) {
     const assessment = [
         {

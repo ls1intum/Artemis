@@ -199,7 +199,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
-        this.assessmentsService.saveExampleAssessment(this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
+        this.assessmentsService.saveExampleAssessment(this.exerciseId, this.exampleSubmission.id!, this.assessments, this.textBlocksWithFeedback).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
@@ -228,14 +228,23 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             if (this.readOnly || this.toComplete) {
                 await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
-                await this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, 'text-exercises', this.exerciseId, 'edit']);
+                await this.router.navigate([
+                    '/course-management',
+                    courseId,
+                    'exams',
+                    examId,
+                    'exercise-groups',
+                    exerciseGroupId,
+                    'text-exercises',
+                    this.exerciseId,
+                    'example-submissions',
+                ]);
             }
         } else {
             if (this.readOnly || this.toComplete) {
                 this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
-                await this.router.navigate(['/course-management', courseId, 'text-exercises']);
-                this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'edit']);
+                this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
             }
         }
     }
@@ -309,7 +318,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     editSubmission(): void {
-        this.assessmentsService.deleteExampleFeedback(this.exampleSubmission?.id!).subscribe();
+        this.assessmentsService.deleteExampleFeedback(this.exercise!.id!, this.exampleSubmission?.id!).subscribe();
         delete this.submission?.blocks;
         delete this.result?.feedbacks;
         this.textBlockRefs = [];

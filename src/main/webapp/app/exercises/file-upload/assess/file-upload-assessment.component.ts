@@ -7,7 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 import { now } from 'moment';
 import { Location } from '@angular/common';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -26,12 +26,12 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
-    providers: [FileUploadAssessmentsService],
+    providers: [FileUploadAssessmentService],
     templateUrl: './file-upload-assessment.component.html',
     styles: [],
     encapsulation: ViewEncapsulation.None,
@@ -78,7 +78,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         private router: Router,
         private route: ActivatedRoute,
         private resultService: ResultService,
-        private fileUploadAssessmentsService: FileUploadAssessmentsService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
         private accountService: AccountService,
         private location: Location,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -198,9 +198,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         } else {
             this.result = getLatestSubmissionResult(this.submission);
         }
-        if (this.result?.hasComplaint) {
-            this.getComplaint();
-        }
+        this.getComplaint();
+
         if (this.result) {
             this.submission.participation!.results = [this.result];
             this.result!.participation = this.submission.participation;
@@ -280,7 +279,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     onSaveAssessment() {
         this.isLoading = true;
-        this.fileUploadAssessmentsService
+        this.fileUploadAssessmentService
             .saveAssessment(this.assessments, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
@@ -303,7 +302,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
         this.isLoading = true;
-        this.fileUploadAssessmentsService
+        this.fileUploadAssessmentService
             .saveAssessment(this.assessments, this.submission.id!, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
@@ -324,7 +323,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
             this.isLoading = true;
-            this.fileUploadAssessmentsService
+            this.fileUploadAssessmentService
                 .cancelAssessment(this.submission.id!)
                 .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(() => {
@@ -342,7 +341,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     getComplaint(): void {
-        this.complaintService.findByResultId(this.result!.id!).subscribe(
+        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
+        if (!resultWithComplaint) {
+            return;
+        }
+        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
@@ -447,7 +450,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
         this.isLoading = true;
-        this.fileUploadAssessmentsService
+        this.fileUploadAssessmentService
             .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(

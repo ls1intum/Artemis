@@ -2,25 +2,25 @@
     <div class="col-12 col-lg-8">
         <div class="mt-3 position-relative" *ngIf="course">
             <div class="exercise-controls" *ngIf="course!.exercises && course!.exercises.length > 0">
-                <div class="d-flex align-items-center mr-2">
-                    <label class="d-flex align-items-center mb-0 mr-2" *ngIf="course.isAtLeastTutor">
+                <div class="d-flex align-items-center me-2">
+                    <label class="d-flex align-items-center mb-0 me-2" *ngIf="course.isAtLeastTutor">
                         <input (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
-                        <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
+                        <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
                     </label>
                     <div class="flex-column">
-                        <label class="d-flex align-items-center mb-0 mr-2">
+                        <label class="d-flex align-items-center mb-0 me-2">
                             <input (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
-                            <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
+                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
                         </label>
-                        <label class="d-flex align-items-center mb-0 mr-2">
+                        <label class="d-flex align-items-center mb-0 me-2">
                             <input (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
-                            <span class="ml-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
+                            <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
                         </label>
                     </div>
                     <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
                         <button id="flip" (click)="flipOrder()" class="btn btn-primary">
                             <fa-icon [icon]="sortingOrder === ASC ? 'sort-numeric-up' : 'sort-numeric-down'"></fa-icon>
-                            <span class="d-none d-md-inline ml-1">{{
+                            <span class="d-none d-md-inline ms-1">{{
                                 'artemisApp.courseOverview.exerciseList.' + (sortingOrder === ASC ? 'oldFirst' : 'newFirst') | artemisTranslate
                             }}</span>
                         </button>
@@ -68,7 +68,7 @@
                     [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey] ? weeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
                     (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
                 >
-                    <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
+                    <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
                     <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
                         <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'long-date' }}</strong> -
                         <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>
@@ -77,7 +77,7 @@
                         {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
                     </span>
                     <span
-                        class="ml-2"
+                        class="ms-2"
                         jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseGroupHeader"
                         [translateValues]="{ total: weeklyExercisesGrouped[weekKey].exercises.length }"
                     >
@@ -108,19 +108,19 @@
         <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | artemisTranslate">
             <div class="row mb-1">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.totalExercises' | artemisTranslate }}</div>
-                <div class="col-4">{{ numberOfExercises }}</div>
+                <div class="col-4" style="text-align: end">{{ numberOfExercises }}</div>
             </div>
             <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | artemisTranslate }}</div>
-                <div class="col-4">{{ exerciseCount.value }}</div>
+                <div class="col-4" style="text-align: end">{{ exerciseCount.value }}</div>
             </div>
             <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
-                <div class="col-4">{{ course?.startDate | artemisDate }}</div>
+                <div class="col-4" style="text-align: end">{{ course?.startDate | artemisDate }}</div>
             </div>
             <div class="row" *ngIf="course?.endDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
-                <div class="col-4">{{ course?.endDate | artemisDate }}</div>
+                <div class="col-4" style="text-align: end">{{ course?.endDate | artemisDate }}</div>
             </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">

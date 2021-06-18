@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -40,7 +40,7 @@ export class AssessmentLocksComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private modelingAssessmentService: ModelingAssessmentService,
         private textAssessmentService: TextAssessmentService,
-        private fileUploadAssessmentsService: FileUploadAssessmentsService,
+        private fileUploadAssessmentService: FileUploadAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         translateService: TranslateService,
         private location: Location,
@@ -93,11 +93,11 @@ export class AssessmentLocksComponent implements OnInit {
                     break;
                 case SubmissionExerciseType.TEXT:
                     if (canceledSubmission.participation?.exercise?.id) {
-                        this.textAssessmentService.cancelAssessment(canceledSubmission.participation.exercise.id, canceledSubmission.id!).subscribe();
+                        this.textAssessmentService.cancelAssessment(canceledSubmission.participation.id!, canceledSubmission.id!).subscribe();
                     }
                     break;
                 case SubmissionExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentsService.cancelAssessment(canceledSubmission.id!).subscribe();
+                    this.fileUploadAssessmentService.cancelAssessment(canceledSubmission.id!).subscribe();
                     break;
                 case SubmissionExerciseType.PROGRAMMING:
                     this.programmingAssessmentService.cancelAssessment(canceledSubmission.id!).subscribe();

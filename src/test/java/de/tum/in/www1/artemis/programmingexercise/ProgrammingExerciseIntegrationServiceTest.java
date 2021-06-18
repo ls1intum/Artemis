@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +19,7 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
 import javax.validation.constraints.NotNull;
@@ -25,7 +28,9 @@ import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -56,6 +61,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
@@ -68,10 +74,12 @@ public class ProgrammingExerciseIntegrationServiceTest {
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
-    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    @Autowired
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
 
-    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    @Autowired
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UrlService urlService;
 
     @Autowired
@@ -90,12 +98,16 @@ public class ProgrammingExerciseIntegrationServiceTest {
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
     private DatabaseUtilService database;
 
     @Autowired
     private RequestUtilService request;
 
-    @Autowired  // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    @Autowired
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
 
     private Course course;
@@ -131,7 +143,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService; // this can be used like a SpyBean
 
-        database.addUsers(3, 2, 0, 2);
+        database.addUsers(3, 2, 2, 2);
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
@@ -170,7 +182,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         localGit.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
-        // we use the temp repository as remote origing for all repositories that are created during the
+        // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
         doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
     }
@@ -247,13 +259,64 @@ public class ProgrammingExerciseIntegrationServiceTest {
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
                 String.join(",", participationIds));
+        // all options false by default, only test if export works at all
+        var exportOptions = new RepositoryExportOptionsDTO();
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+
+        // Make sure both repositories are present
+        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))).isTrue();
+        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()))).isTrue();
+    }
+
+    public void testExportSubmissionAnonymizationCombining() throws Exception {
+        // provide repositories
+        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Mock and pretend first commit is template commit
+        ObjectId head = localGit.getRepository().findRef("HEAD").getObjectId();
+        when(gitService.getLastCommitHash(any())).thenReturn(head);
+        doNothing().when(gitService).resetToOriginMaster(any());
+
+        // Add commit to anonymize
+        assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
+        localGit.add().addFilepattern(".").call();
+        localGit.commit().setMessage("commit").setAuthor("user1", "email1").call();
+
+        // Rest call
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
+                String.valueOf(participation1.getId()));
+        var exportOptions = getOptions();
+        exportOptions.setAddParticipantName(false);
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
-        // TODO: unzip the files and add some checks
+
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
+        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        List<Path> entries = Files.walk(extractedZipDir).collect(Collectors.toList());
+
+        // Checks
+        assertThat(entries.stream().anyMatch(entry -> entry.endsWith("Test.java"))).isTrue();
+        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
+        assertThat(extractedRepo1).isPresent();
+        try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
+            RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
+            assertThat(commit.getAuthorIdent().getName().equals("student")).isTrue();
+            assertThat(commit.getFullMessage().equals("All student changes in one commit")).isTrue();
+        }
     }
 
     public void textExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
@@ -286,6 +349,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         final var repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setFilterLateSubmissions(true);
         repositoryExportOptions.setCombineStudentCommits(true);
+        repositoryExportOptions.setAnonymizeStudentCommits(true);
         repositoryExportOptions.setAddParticipantName(true);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         return repositoryExportOptions;
@@ -1372,5 +1436,260 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         TextPlagiarismResult result = request.get("/api/programming-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
         assertThat(result).isNull();
+    }
+
+    public void testValidateValidAuxiliaryRepository() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
+        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+    }
+
+    public void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
+
+    }
+
+    public void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withoutName(), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(""), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_NAME_LENGTH)), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
+        for (RepositoryType repositoryType : RepositoryType.values()) {
+            testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(repositoryType.getName()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("..."), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
+        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
+        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH)),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
+        testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().withoutCheckoutDirectory().get(),
+                AuxiliaryRepositoryBuilder.defaults().get()), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withDescription(generateStringWithMoreThanNCharacters(500)), HttpStatus.BAD_REQUEST);
+    }
+
+    public void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
+        AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
+        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+    }
+
+    public void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
+        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.NOT_FOUND, List.class);
+    }
+
+    public void testGetAuxiliaryRepositoriesOk() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        programmingExercise.addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().get()));
+        programmingExercise
+                .addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get()));
+        programmingExerciseRepository.save(programmingExercise);
+        var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
+        assertThat(returnedAuxiliaryRepositories).hasSize(2);
+    }
+
+    public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
+        programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
+        assertThat(returnedAuxiliaryRepositories).hasSize(0);
+    }
+
+    public void testGetAuxiliaryRepositoriesForbidden() throws Exception {
+        request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
+    }
+
+    public void testRecreateBuildPlansForbidden() throws Exception {
+        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    public void testRecreateBuildPlansExerciseNotFound() throws Exception {
+        request.put(defaultRecreateBuildPlanEndpoint(-1L), programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    public void testRecreateBuildPlansExerciseSuccess() throws Exception {
+        addAuxiliaryRepositoryToExercise();
+        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
+        String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
+        String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
+    }
+
+    public void testExportAuxiliaryRepositoryForbidden() throws Exception {
+        AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
+    }
+
+    public void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.NOT_FOUND, File.class);
+    }
+
+    public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), -1L), HttpStatus.NOT_FOUND, File.class);
+    }
+
+    private String generateStringWithMoreThanNCharacters(int n) {
+        return IntStream.range(0, n + 1).mapToObj(unused -> "a").reduce("", String::concat);
+    }
+
+    private AuxiliaryRepository addAuxiliaryRepositoryToExercise() {
+        AuxiliaryRepository repository = AuxiliaryRepositoryBuilder.defaults().get();
+        auxiliaryRepositoryRepository.save(repository);
+        programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        programmingExercise.addAuxiliaryRepository(repository);
+        programmingExerciseRepository.save(programmingExercise);
+        return repository;
+    }
+
+    private String defaultAuxiliaryRepositoryEndpoint() {
+        return ROOT + SETUP;
+    }
+
+    private String defaultRecreateBuildPlanEndpoint() {
+        return defaultRecreateBuildPlanEndpoint(programmingExercise.getId());
+    }
+
+    private String defaultGetAuxReposEndpoint() {
+        return defaultGetAuxReposEndpoint(programmingExercise.getId());
+    }
+
+    private String defaultExportInstructorAuxiliaryRepository(AuxiliaryRepository repository) {
+        return defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), repository.getId());
+    }
+
+    private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
+        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", "" + exerciseId);
+    }
+
+    private String defaultGetAuxReposEndpoint(Long exerciseId) {
+        return ROOT + AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId);
+    }
+
+    private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
+        return ROOT + EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY.replace("{exerciseId}", "" + exerciseId).replace("{repositoryId}", "" + repositoryId);
+    }
+
+    private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
+        testAuxRepo(List.of(body.get()), expectedStatus);
+    }
+
+    private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
+        String uniqueExerciseTitle = "Title" + System.nanoTime() + "" + new Random().nextInt(100);
+        programmingExercise.setAuxiliaryRepositories(body);
+        programmingExercise.setId(null);
+        programmingExercise.setSolutionParticipation(null);
+        programmingExercise.setTemplateParticipation(null);
+        programmingExercise.setShortName(uniqueExerciseTitle);
+        programmingExercise.setTitle(uniqueExerciseTitle);
+        if (expectedStatus == HttpStatus.CREATED) {
+            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+            mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
+        }
+        request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
+    }
+
+    private static class AuxiliaryRepositoryBuilder {
+
+        private final AuxiliaryRepository repository;
+
+        private AuxiliaryRepositoryBuilder() {
+            this.repository = new AuxiliaryRepository();
+        }
+
+        static AuxiliaryRepositoryBuilder of() {
+            return new AuxiliaryRepositoryBuilder();
+        }
+
+        static AuxiliaryRepositoryBuilder defaults() {
+            return of().withoutId().withName("defaultname").withCheckoutDirectory("directory").withDescription("DefaultDescription");
+        }
+
+        public AuxiliaryRepositoryBuilder withName(String name) {
+            repository.setName(name);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withoutName() {
+            repository.setName(null);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withDifferentName() {
+            repository.setName("differentname");
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withDescription(String description) {
+            repository.setDescription(description);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withoutDescription() {
+            repository.setDescription(null);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withCheckoutDirectory(String checkoutDirectory) {
+            repository.setCheckoutDirectory(checkoutDirectory);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withoutCheckoutDirectory() {
+            repository.setCheckoutDirectory(null);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withDifferentCheckoutDirectory() {
+            repository.setCheckoutDirectory("differentcheckoutdirectory");
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withId(Long id) {
+            repository.setId(id);
+            return this;
+        }
+
+        public AuxiliaryRepositoryBuilder withoutId() {
+            repository.setId(null);
+            return this;
+        }
+
+        public AuxiliaryRepository get() {
+            return repository;
+        }
     }
 }

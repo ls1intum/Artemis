@@ -41,7 +41,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import * as chai from 'chai';
@@ -55,6 +55,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -133,6 +134,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
+                MockProvider(ComplaintService),
             ],
         })
             .compileComponents()
@@ -219,7 +221,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.studentParticipation?.exercise?.id).to.equal(exerciseDetail.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal(changedResult);
         expect(comp.hasMoreResults).to.be.false;
-        expect(comp.exerciseRatedBadge(result)).to.equal('badge-info');
+        expect(comp.exerciseRatedBadge(result)).to.equal('bg-info');
 
         // has correct router link
         expect(comp.exerciseRouterLink).to.equal(`/course-management/1/text-exercises/42/submissions`);

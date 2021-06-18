@@ -30,17 +30,20 @@ public class StatisticsService {
 
     private final CourseRepository courseRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final UserRepository userRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final TeamRepository teamRepository;
 
     public StatisticsService(StatisticsRepository statisticsRepository, ParticipantScoreRepository participantScoreRepository, CourseRepository courseRepository,
-            UserRepository userRepository, ParticipationRepository participationRepository) {
+            ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.statisticsRepository = statisticsRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.courseRepository = courseRepository;
+        this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
-        this.participationRepository = participationRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -161,12 +164,25 @@ public class StatisticsService {
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
         var course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         var exerciseManagementStatisticsDTO = new ExerciseManagementStatisticsDTO();
-        // number of students
-        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
-        exerciseManagementStatisticsDTO.setNumberOfStudentsInCourse(Objects.requireNonNullElse(numberOfStudents, 0L));
-        // number of participations
-        long numberOfParticipations = participationRepository.getNumberOfParticipationsForExercise(exercise.getId());
-        exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipations);
+
+        // number of students or teams and number of participations of students or teams
+        long numberOfParticipationsOfStudentsOrTeams;
+        long numberOfStudentsOrTeams;
+        if (exercise.isTeamMode()) {
+            Long teamParticipations = exerciseRepository.getTeamParticipationCountById(exercise.getId());
+            numberOfParticipationsOfStudentsOrTeams = teamParticipations == null ? 0L : teamParticipations;
+
+            numberOfStudentsOrTeams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
+        }
+        else {
+            Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
+            numberOfParticipationsOfStudentsOrTeams = studentParticipations == null ? 0L : studentParticipations;
+
+            numberOfStudentsOrTeams = userRepository.countUserInGroup(course.getStudentGroupName());
+        }
+        exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipationsOfStudentsOrTeams);
+        exerciseManagementStatisticsDTO.setNumberOfStudentsOrTeamsInCourse(Objects.requireNonNullElse(numberOfStudentsOrTeams, 0L));
+
         // questions stats
         long questionsAsked = statisticsRepository.getNumberOfQuestionsAskedForExercise(exercise.getId());
         exerciseManagementStatisticsDTO.setNumberOfQuestions(questionsAsked);

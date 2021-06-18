@@ -11,7 +11,8 @@
             "VHDL": "VHDL",
             "ASSEMBLER": "Assembler",
             "SWIFT": "Swift",
-            "OCAML": "OCaml"
+            "OCAML": "OCaml",
+            "EMPTY": "Empty"
         }
     }
 }
