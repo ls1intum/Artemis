@@ -227,7 +227,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
         assertThat(version.get().getContent()).as("submission version has correct content")
-            .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
+                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
         assertThat(version.get().getCreatedDate()).isNotNull();
         assertThat(version.get().getLastModifiedDate()).isNotNull();
 
@@ -244,7 +244,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student2");
         assertThat(version.get().getContent()).as("submission version has correct content")
-            .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
+                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
 
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
         database.changeUser("student2");
