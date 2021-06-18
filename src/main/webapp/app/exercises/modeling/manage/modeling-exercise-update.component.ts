@@ -177,22 +177,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         );
     }
 
-    /**
-     * Deletes the example submission
-     * @param id of the submission that will be deleted
-     * @param index in the example submissions array
-     */
-    deleteExampleSubmission(id: number, index: number): void {
-        this.exampleSubmissionService.delete(id).subscribe(
-            () => {
-                this.modelingExercise.exampleSubmissions!.splice(index, 1);
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
-            },
-        );
-    }
-
     previousState() {
         navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
     }

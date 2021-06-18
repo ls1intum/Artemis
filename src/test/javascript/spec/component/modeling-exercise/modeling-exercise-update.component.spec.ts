@@ -20,7 +20,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -276,18 +275,4 @@ describe('ModelingExercise Management Update Component', () => {
         comp.getCheckedFlag(false);
         expect(comp.checkedFlag).toBe(false);
     });
-
-    it('should delete example submission', fakeAsync(() => {
-        comp.modelingExercise = new ModelingExercise(UMLDiagramType.Flowchart, undefined, undefined);
-        const exampleSubmission1 = new ExampleSubmission();
-        exampleSubmission1.id = 1;
-        const exampleSubmission2 = new ExampleSubmission();
-        exampleSubmission2.id = 2;
-        comp.modelingExercise.exampleSubmissions = [exampleSubmission1, exampleSubmission2];
-        spyOn(exampleSubmissionService, 'delete').and.returnValue(of(new HttpResponse({})));
-        comp.deleteExampleSubmission(2, 1);
-        tick();
-        expect(exampleSubmissionService.delete).toHaveBeenCalledWith(2);
-        expect(comp.modelingExercise.exampleSubmissions).toEqual([exampleSubmission1]);
-    }));
 });

@@ -173,22 +173,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         );
     }
 
-    /**
-     * Deletes example submission
-     * @param id of the submission that will be deleted
-     * @param index in the example submissions array
-     */
-    deleteExampleSubmission(id: number, index: number) {
-        this.exampleSubmissionService.delete(id).subscribe(
-            () => {
-                this.textExercise.exampleSubmissions!.splice(index, 1);
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
-            },
-        );
-    }
-
     private onSaveSuccess(exerciseId: number) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
