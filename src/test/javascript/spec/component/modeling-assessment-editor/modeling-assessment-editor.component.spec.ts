@@ -214,7 +214,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.complaint = new Complaint();
             component.complaint.id = 0;
             component.complaint.complaintText = 'complaint';
-            component.complaint.resultBeforeComplaint = 'result';
             component.ngOnInit();
             tick(500);
             course.isAtLeastInstructor = false;
@@ -233,7 +232,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.complaint = new Complaint();
         component.complaint.id = 0;
         component.complaint.complaintText = 'complaint';
-        component.complaint.resultBeforeComplaint = 'result';
         component.isAssessor = true;
         expect(component.readOnly).to.be.true;
     }));
