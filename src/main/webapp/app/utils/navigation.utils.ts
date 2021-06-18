@@ -9,6 +9,34 @@ export const navigateBack = (router: Router, fallbackUrl: string[]): void => {
     }
 };
 
+export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
+    setTimeout(() => {
+        // If an exercise group is set -> we are in exam mode
+        if (exercise.exerciseGroup) {
+            router.navigate([
+                'course-management',
+                exercise.exerciseGroup!.exam!.course!.id!.toString(),
+                'exams',
+                exercise.exerciseGroup!.exam!.id!.toString(),
+                'exercise-groups',
+                exercise.exerciseGroup!.id!,
+                exercise.type! + '-exercises',
+                exercise.id,
+                'example-submissions',
+            ]);
+            return;
+        }
+
+        router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
+    }, 1000);
+};
+
+/**
+ * Revert to the previous state, equivalent with pressing the back button on your browser
+ * Returns to the detail page if there is no previous state and we edited an existing exercise
+ * Returns to the overview page if there is no previous state and we created a new exercise
+ * Returns to the exercise group page if we are in exam mode
+ */
 export const navigateBackFromExerciseUpdate = (router: Router, exercise: Exercise): void => {
     if (window.history.length > 1) {
         window.history.back();
