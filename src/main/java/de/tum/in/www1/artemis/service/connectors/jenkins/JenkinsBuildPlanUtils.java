@@ -54,6 +54,8 @@ public class JenkinsBuildPlanUtils {
      * Will be removed in the future
      *
      * @param jobXmlDocument The Jenkins job config xml
+     * @param repoUrl the repository url to add
+     * @param repoNameInCI The repository name in the document
      */
     @Deprecated
     public static void replaceRemoteURLs(Document jobXmlDocument, String repoUrl, String repoNameInCI) throws IllegalArgumentException {
