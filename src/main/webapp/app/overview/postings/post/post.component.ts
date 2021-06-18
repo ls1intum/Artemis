@@ -27,7 +27,7 @@ export class PostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactPost = new EventEmitter<PostAction>();
-    text?: string;
+    content?: string;
     isEditMode: boolean;
     isLoading = false;
     EditorMode = EditorMode;
@@ -45,7 +45,7 @@ export class PostComponent implements OnInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.text = this.post.content;
+        this.content = this.post.content;
     }
 
     /**
@@ -63,7 +63,7 @@ export class PostComponent implements OnInit {
      */
     savePost(): void {
         this.isLoading = true;
-        this.post.content = this.text;
+        this.post.content = this.content;
         this.postService.update(this.courseId, this.post).subscribe({
             next: () => {
                 this.isEditMode = false;
@@ -80,7 +80,7 @@ export class PostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.text = this.post.content;
+        this.content = this.post.content;
     }
 
     /**

@@ -26,7 +26,7 @@ export class AnswerPostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswer = new EventEmitter<AnswerPostAction>();
-    text?: string;
+    content?: string;
     isLoading = false;
     isEditMode: boolean;
     EditorMode = EditorMode;
@@ -42,7 +42,7 @@ export class AnswerPostComponent implements OnInit {
      * Sets the text of the answerPost as the editor text
      */
     ngOnInit(): void {
-        this.text = this.answerPost.content;
+        this.content = this.answerPost.content;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
     }
 
@@ -72,7 +72,7 @@ export class AnswerPostComponent implements OnInit {
      */
     saveAnswerPost(): void {
         this.isLoading = true;
-        this.answerPost.content = this.text;
+        this.answerPost.content = this.content;
         this.answerPostService.update(this.courseId, this.answerPost).subscribe({
             next: () => {
                 this.isEditMode = false;
@@ -102,6 +102,6 @@ export class AnswerPostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.text = this.answerPost.content;
+        this.content = this.answerPost.content;
     }
 }

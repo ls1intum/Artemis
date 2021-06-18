@@ -27,7 +27,7 @@
             <!-- new post editor -->
             <div *ngIf="isEditMode">
                 <div class="row ps-2">
-                    <jhi-postings-markdown-editor [(text)]="postContent"></jhi-postings-markdown-editor>
+                    <jhi-postings-markdown-editor [(content)]="postContent"></jhi-postings-markdown-editor>
                     <div class="col-12 d-flex">
                         <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isEditMode = false">
                             {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}

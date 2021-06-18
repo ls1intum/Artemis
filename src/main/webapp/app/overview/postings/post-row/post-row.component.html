@@ -21,7 +21,7 @@
                     </div>
                 </div>
                 <ng-container *ngIf="isAnswerMode">
-                    <jhi-postings-markdown-editor [(text)]="answerPostContent"></jhi-postings-markdown-editor>
+                    <jhi-postings-markdown-editor [(content)]="answerPostContent"></jhi-postings-markdown-editor>
                     <div class="col-12 d-flex">
                         <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isAnswerMode = false">
                             {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
@@ -84,7 +84,7 @@
                         <div class="col line my-1"></div>
                         <ng-container *ngIf="isExpanded && isAnswerMode">
                             <div class="row mb-2">
-                                <jhi-postings-markdown-editor [(text)]="answerPostContent"></jhi-postings-markdown-editor>
+                                <jhi-postings-markdown-editor [(content)]="answerPostContent"></jhi-postings-markdown-editor>
                             </div>
                             <div class="col-12 d-flex">
                                 <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isAnswerMode = false">

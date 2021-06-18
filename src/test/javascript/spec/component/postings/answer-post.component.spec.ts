@@ -84,9 +84,9 @@ describe('AnswerPostComponent', () => {
     it('should toggle edit mode and reset editor Text', () => {
         component.answerPost = approvedAnswerPost;
         component.isEditMode = true;
-        component.text = 'test';
+        component.content = 'test';
         component.toggleEditMode();
-        expect(component.text).to.deep.equal('approved');
+        expect(component.content).to.deep.equal('approved');
         expect(component.isEditMode).to.be.false;
         component.toggleEditMode();
         expect(component.isEditMode).to.be.true;
@@ -95,7 +95,7 @@ describe('AnswerPostComponent', () => {
     it('should update answerText', () => {
         component.answerPost = approvedAnswerPost;
         component.isEditMode = true;
-        component.text = 'test';
+        component.content = 'test';
         component.saveAnswerPost();
         expect(component.answerPost.content).to.deep.equal('test');
     });
