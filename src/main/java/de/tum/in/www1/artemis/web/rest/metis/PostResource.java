@@ -35,7 +35,7 @@ public class PostResource {
 
     private final Logger log = LoggerFactory.getLogger(PostResource.class);
 
-    private static final String ENTITY_NAME = "post";
+    private static final String ENTITY_NAME = "metis.post";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
