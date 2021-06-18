@@ -1,6 +1,6 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
-[![Build, Test, and Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build-test-deploy.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build-test-deploy.yml)
+[![Build, Test, and Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml)
 [![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.ase.in.tum.de)
 [![Dependency Status](https://img.shields.io/david/ls1intum/Artemis)](package.json)
 [![Dev Dependency Status](https://img.shields.io/david/dev/ls1intum/Artemis)](package.json)
