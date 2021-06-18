@@ -49,8 +49,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
@@ -61,6 +64,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
+    Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(Long exerciseId);
 
     /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
@@ -210,9 +216,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH p.exerciseHints
             LEFT JOIN FETCH p.templateParticipation
             LEFT JOIN FETCH p.solutionParticipation
+            LEFT JOIN FETCH p.auxiliaryRepositories
             WHERE p.id = :#{#exerciseId}
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(@Param("exerciseId") Long exerciseId);
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") Long exerciseId);
 
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
@@ -478,6 +485,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
+     * Find a programming exercise with auxiliary repositories by its id and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        return findWithAuxiliaryRepositoriesById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
      * Find a programming exercise by its id, including template and solution but without results.
      *
      * @param programmingExerciseId of the programming exercise.
@@ -504,7 +522,21 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded studentParticipations and submissions
+     * Find a programming exercise by its id, including auxiliary repositories, template and solution participation and
+     * their latest results.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation and auxiliary repositories
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id

@@ -8,7 +8,7 @@
             [showInOrionWindow]="false"
             *ngIf="course && course.isAtLeastEditor"
             id="jh-import-entity"
-            class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
+            class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             (click)="openImportModal()"
         >
@@ -20,7 +20,7 @@
             [showInOrionWindow]="false"
             *ngIf="course && course.isAtLeastEditor"
             id="jh-create-entity"
-            class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
+            class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
             [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
             [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
         >
@@ -78,7 +78,7 @@
                     <td>
                         <a [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.title }}</a>
                         <jhi-programming-exercise-grading-dirty-warning
-                            class="ml-2"
+                            class="ms-2"
                             [programmingExerciseId]="programmingExercise.id!"
                             [hasUpdatedGradingConfigInitialValue]="!!programmingExercise.testCasesChanged"
                         ></jhi-programming-exercise-grading-dirty-warning>
@@ -89,7 +89,7 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxPoints }}</td>
                     <td>{{ programmingExercise.bonusPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(programmingExercise) }}</td>
-                    <td *ngIf="!isOrion" class="d-flex flex-column">
+                    <td *ngIf="!isOrion">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
@@ -190,7 +190,7 @@
                     <td jhiOrionFilter [showInOrionWindow]="true" class="align-middle">
                         <jhi-ide-button
                             *ngIf="
-                                orionState.inInstructorView &&
+                                orionState.view === ExerciseView.INSTRUCTOR &&
                                     orionState.opened === programmingExercise.id &&
                                     programmingExercise.isAtLeastEditor &&
                                     programmingExercise.templateParticipation;
@@ -198,7 +198,7 @@
                             "
                             buttonLabel="{{ 'artemisApp.programmingExercise.intellij.openEditor' | artemisTranslate }}"
                             [smallButton]="false"
-                            (click)="openOrionEditor(programmingExercise)"
+                            (clickHandler)="openOrionEditor(programmingExercise)"
                         >
                         </jhi-ide-button>
                         <ng-template #importAsInstructor>
@@ -207,18 +207,18 @@
                                 [buttonLabel]="'entity.action.editInIntelliJ' | artemisTranslate"
                                 [buttonLoading]="orionState.cloning"
                                 [smallButton]="false"
-                                (click)="editInIDE(programmingExercise)"
+                                (clickHandler)="editInIDE(programmingExercise)"
                             >
                             </jhi-ide-button>
                         </ng-template>
                     </td>
-                    <td jhiOrionFilter [showInOrionWindow]="false" class="text-right">
+                    <td jhiOrionFilter [showInOrionWindow]="false" class="text-end">
                         <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <a
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'submissions']"
-                                    class="btn btn-success btn-sm mr-1 mb-1"
+                                    class="btn btn-success btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'book'"></fa-icon>
                                     <span class="d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
@@ -226,7 +226,7 @@
                                 <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'scores']"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    class="btn btn-info btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -237,17 +237,17 @@
                                 <a
                                     *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'teams']"
-                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    class="btn btn-primary btn-sm me-1 mb-1"
                                 >
                                     <fa-icon [icon]="'users'"></fa-icon>
                                     <span class="d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <a
                                     *ngIf="programmingExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'participations']"
-                                    class="btn btn-primary btn-sm mr-1 mb-1"
+                                    class="btn btn-primary btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -259,7 +259,7 @@
                                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
-                                    class="btn btn-info btn-sm mr-1 mb-1"
+                                    class="btn btn-info btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -268,7 +268,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     [attr.disabled]="false"
@@ -283,7 +283,7 @@
                                         'code-editor',
                                         programmingExercise.templateParticipation.id
                                     ]"
-                                    class="btn btn-warning btn-sm mr-1 mb-1"
+                                    class="btn btn-warning btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -294,7 +294,7 @@
                                 <a
                                     *ngIf="programmingExercise.isAtLeastEditor"
                                     [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'edit']"
-                                    class="btn btn-warning btn-sm mr-1 mb-1"
+                                    class="btn btn-warning btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
                                 >
                                     <div>
@@ -303,7 +303,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical mr-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1">
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
@@ -342,11 +342,11 @@
             </tbody>
         </table>
         <div *ngIf="selectedProgrammingExercises.length > 0">
-            <button type="submit" (click)="openEditSelectedModal()" class="btn btn-warning btn-sm mr-1">
+            <button type="submit" (click)="openEditSelectedModal()" class="btn btn-warning btn-sm me-1">
                 <fa-icon [icon]="'wrench'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
             </button>
-            <button type="submit" *ngIf="course.isAtLeastInstructor" (click)="openRepoExportModal()" class="btn btn-info btn-sm mr-1">
+            <button type="submit" *ngIf="course.isAtLeastInstructor" (click)="openRepoExportModal()" class="btn btn-info btn-sm me-1">
                 <fa-icon [icon]="'download'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportSubmissions.title">Download Repos</span>
             </button>

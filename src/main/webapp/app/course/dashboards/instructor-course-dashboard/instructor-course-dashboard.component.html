@@ -54,7 +54,7 @@
                             </li>
                             <li>
                                 <a *ngIf="course.postsEnabled" [routerLink]="['/course-management', course.id, 'posts']">
-                                    <b>{{ 'artemisApp.instructorCourseDashboard.questionsAndAnswers' | artemisTranslate }}</b>
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.discussion' | artemisTranslate }}</b>
                                 </a>
                             </li>
                         </ul>
@@ -162,10 +162,10 @@
                         </td>
                         <td>
                             <div class="btn-group">
-                                <a class="btn btn-primary btn-sm mr-1" routerLink="/course-management/{{ course.id }}/instructor-dashboard/{{ exercise.id }}">
+                                <a class="btn btn-primary btn-sm me-1" routerLink="/course-management/{{ course.id }}/instructor-dashboard/{{ exercise.id }}">
                                     {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | artemisTranslate }}
                                 </a>
-                                <a class="btn btn-primary btn-sm mr-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                                <a class="btn btn-primary btn-sm me-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
                                 </a>
                             </div>

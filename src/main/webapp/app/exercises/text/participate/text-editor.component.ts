@@ -24,7 +24,7 @@ import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
@@ -37,12 +37,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
+    resultWithComplaint?: Result;
     submission: TextSubmission;
     isSaving: boolean;
     private textEditorInput = new Subject<string>();
-    textEditorInputStream$ = this.textEditorInput.asObservable();
+    textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
-    submissionStream$ = this.buildSubmissionStream$();
+    submissionObservable = this.buildSubmissionObservable();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
     isAllowedToSubmitAfterDeadline: boolean;
@@ -107,6 +108,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.result = this.submission.latestResult!;
                 this.result.participation = participation;
             }
+            // if one of the submissions results has a complaint, we get it
+            this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
 
             if (this.submission && this.submission.text) {
                 this.answer = this.submission.text;
@@ -185,9 +188,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
+    unloadNotification(event: any) {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
+            event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 
@@ -247,13 +250,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * 1. text editor input after a debounce time of 2 seconds
      * 2. manually triggered change on submission (e.g. when submit was clicked)
      */
-    private buildSubmissionStream$() {
-        const textEditorStream$ = this.textEditorInput
+    private buildSubmissionObservable() {
+        const textEditorStream = this.textEditorInput
             .asObservable()
             .pipe(debounceTime(2000), distinctUntilChanged())
             .pipe(map((answer: string) => this.submissionForAnswer(answer)));
-        const submissionChangeStream$ = this.submissionChange.asObservable();
-        return merge(textEditorStream$, submissionChangeStream$);
+        const submissionChangeStream = this.submissionChange.asObservable();
+        return merge(textEditorStream, submissionChangeStream);
     }
 
     private submissionForAnswer(answer: string): TextSubmission {

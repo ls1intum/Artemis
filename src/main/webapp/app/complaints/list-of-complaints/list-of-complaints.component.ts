@@ -6,7 +6,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -15,8 +14,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-    // TODO this selector is used twice which is not good!!!
-    selector: 'jhi-complaint-form',
+    selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
     providers: [],
 })
@@ -114,19 +112,11 @@ export class ListOfComplaintsComponent implements OnInit {
         if (!this.correctionRound) {
             this.correctionRound = 0;
         }
-
-        switch (exercise.type) {
-            case ExerciseType.TEXT:
-            case ExerciseType.MODELING:
-            case ExerciseType.FILE_UPLOAD:
-                const url = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`];
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
-                return;
-            case ExerciseType.PROGRAMMING:
-                const urlProgramming = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/code-editor/${studentParticipation.id}/assessment`];
-                this.router.navigate(urlProgramming, { queryParams: { 'correction-round': this.correctionRound } });
-                return;
+        if (complaint.accepted != undefined) {
+            this.correctionRound += 1;
         }
+        const url = [`/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`];
+        this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
 
     private onError() {

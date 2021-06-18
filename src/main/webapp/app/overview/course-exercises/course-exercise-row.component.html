@@ -21,9 +21,15 @@
             <div class="col-sm col">
                 <h4>{{ exercise.title }}</h4>
             </div>
-            <jhi-submission-result-status *ngIf="!isPresentationMode" [exercise]="exercise" [short]="true" [triggerLastGraded]="false"></jhi-submission-result-status>
+            <jhi-submission-result-status
+                *ngIf="!isPresentationMode"
+                [exercise]="exercise"
+                [short]="true"
+                [triggerLastGraded]="false"
+                style="width: unset"
+            ></jhi-submission-result-status>
         </div>
-        <div class="row">
+        <div class="row" style="justify-content: space-between">
             <jhi-exercise-details-student-actions
                 jhiOrionFilter
                 [showInOrionWindow]="false"
@@ -41,15 +47,15 @@
                     <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
                 </h4>
                 <h4 *ngIf="!isPresentationMode">
-                    <span class="badge badge-success mr-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{
+                    <span class="badge bg-success me-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{
                         'artemisApp.courseOverview.exerciseList.live' | artemisTranslate
                     }}</span>
                 </h4>
                 <h4 *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                    <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h4>
                 <h4>
-                    <jhi-difficulty-badge class="mr-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                    <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 </h4>
                 <h4 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>

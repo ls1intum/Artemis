@@ -2,22 +2,22 @@
     <div class="col-md-8 offset-md-2 text-center">
         <h3>{{ quizExercise.title }}</h3>
 
-        <button *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm float-right" (click)="recalculate()">
+        <button *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm float-end" (click)="recalculate()">
             <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
         </button>
 
         <div class="text-center">
-            <p class="text-left" style="font-size: large">
+            <p class="text-start" style="font-size: large">
                 <span jhiTranslate="showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
             </p>
             <div class="row">
-                <div class="col-md-7 text-left">
+                <div class="col-md-7 text-start">
                     <p style="font-size: large">
                         <span *ngIf="rated" jhiTranslate="showStatistic.quizPointStatistic.titleRated"></span>
                         <span *ngIf="!rated" jhiTranslate="showStatistic.quizPointStatistic.titleUnrated"></span>
                     </p>
                 </div>
-                <div class="col-md-5 text-right">
+                <div class="col-md-5 text-end">
                     <p style="font-size: large">
                         <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
                     </p>

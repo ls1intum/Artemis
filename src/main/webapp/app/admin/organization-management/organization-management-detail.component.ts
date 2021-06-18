@@ -68,7 +68,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
      * @param item current user
      */
     trackIdentity(index: number, item: User) {
-        return item.id;
+        return item.id ?? -1;
     }
 
     /**

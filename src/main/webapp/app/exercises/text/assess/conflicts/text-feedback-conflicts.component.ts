@@ -18,6 +18,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 
 import interact from 'interactjs';
 import * as moment from 'moment';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts',
@@ -102,10 +103,12 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         await super.ngOnInit();
         if (!this.leftSubmission) {
             const submissionId = Number(this.activatedRoute.snapshot.paramMap.get('submissionId'));
-            const participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).toPromise();
-            this.leftSubmission = participation.submissions![0];
+            const participationId = Number(this.activatedRoute.snapshot.paramMap.get('participationId'));
+            const participation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
+
+            this.leftSubmission = participation!.submissions![0];
             setLatestSubmissionResult(this.leftSubmission, getLatestSubmissionResult(this.leftSubmission));
-            this.exercise = participation.exercise as TextExercise;
+            this.exercise = participation!.exercise as TextExercise;
         }
         this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
     }
@@ -188,7 +191,12 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         this.overrideBusy = true;
         this.assessmentsService
-            .submit(this.exercise!.id!, this.leftSubmission!.latestResult!.id!, this.leftSubmission!.latestResult!.feedbacks!, this.textBlocksWithFeedbackForLeftSubmission)
+            .submit(
+                this.leftSubmission!.latestResult!.participation?.id!,
+                this.leftSubmission!.latestResult!.id!,
+                this.leftSubmission!.latestResult!.feedbacks!,
+                this.textBlocksWithFeedbackForLeftSubmission,
+            )
             .subscribe(
                 (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
                 (error: HttpErrorResponse) => this.handleError(error),

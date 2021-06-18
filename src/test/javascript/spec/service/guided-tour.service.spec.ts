@@ -241,7 +241,7 @@ describe('GuidedTourService', () => {
             });
 
             it('should start and skip the tour', () => {
-                const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.close'));
+                const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.btn-close'));
                 expect(skipButton).to.exist;
                 skipButton.nativeElement.click();
                 guidedTourComponentFixture.detectChanges();
@@ -288,7 +288,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.resetTour();
             }
 
-            function currentCourseAndExerciseNull(): void {
+            function currentCourseAndExerciseUndefined(): void {
                 expect(guidedTourService.currentTour).to.be.undefined;
                 expect(guidedTourService['currentCourse']).to.be.undefined;
                 expect(guidedTourService['currentExercise']).to.be.undefined;
@@ -325,26 +325,26 @@ describe('GuidedTourService', () => {
                 const courses = [course2];
                 // disable tour for not matching titles
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
-                currentCourseAndExerciseNull();
+                currentCourseAndExerciseUndefined();
             });
 
             it('should start the tour for the matching exercise short name', () => {
                 // disable tour for exercises without courses
                 guidedTourService.currentTour = undefined;
                 guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise, true);
-                currentCourseAndExerciseNull();
+                currentCourseAndExerciseUndefined();
                 resetCurrentTour();
 
                 // disable tour for not matching course and exercise identifiers
                 exercise2.course = course2;
                 guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise, true);
-                currentCourseAndExerciseNull();
+                currentCourseAndExerciseUndefined();
                 resetCurrentTour();
 
                 // disable tour for not matching course identifier
                 exercise3.course = course2;
                 guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise, true);
-                currentCourseAndExerciseNull();
+                currentCourseAndExerciseUndefined();
                 resetCurrentTour();
 
                 // enable tour for matching course and exercise identifiers

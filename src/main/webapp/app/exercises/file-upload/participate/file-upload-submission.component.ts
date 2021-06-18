@@ -21,7 +21,7 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise-util
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/entities/submission.model';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { Feedback } from 'app/entities/feedback.model';
 
@@ -37,6 +37,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     fileUploadExercise: FileUploadExercise;
     participation: StudentParticipation;
     result: Result;
+    resultWithComplaint?: Result;
     submissionFile?: File;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
@@ -90,6 +91,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
                 this.submission = submission;
                 this.result = tmpResult!;
+                this.resultWithComplaint = getFirstResultWithComplaint(submission);
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
                 this.examMode = !!this.fileUploadExercise.exerciseGroup;
                 this.fileUploadExercise.studentParticipations = [this.participation];
@@ -170,11 +172,11 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
     /**
      * Sets file submission for exercise
-     * @param $event {object} Event object which contains the uploaded file
+     * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise($event: any): void {
-        if ($event.target.files.length) {
-            const fileList: FileList = $event.target.files;
+    setFileSubmissionForExercise(event: any): void {
+        if (event.target.files.length) {
+            const fileList: FileList = event.target.files;
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.fileUploadExercise.filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
