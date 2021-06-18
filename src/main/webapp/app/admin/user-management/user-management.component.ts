@@ -121,7 +121,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param item current user
      */
     trackIdentity(index: number, item: User) {
-        return item.id;
+        return item.id ?? -1;
     }
 
     /**

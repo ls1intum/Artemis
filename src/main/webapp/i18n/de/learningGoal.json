@@ -16,7 +16,7 @@
                 "titleRequiredValidationError": "Ein Lernziel braucht einen Titel",
                 "titleMaxLengthValidationError": "Der Titel eines Lernziels ist auf maximal 255 Symbole beschränkt",
                 "titleUniqueValidationError": "Es gibt bereits ein Lernziel mit diesem Titel in dem Kurs",
-                "descriptionPlaceholder": "Beschreibe das Lernziel. Was sollen die Studenten lernen?",
+                "descriptionPlaceholder": "Beschreibe das Lernziel. Was sollen die Studierendenen lernen?",
                 "descriptionMaxLengthValidationError": "Die Beschreibung eines Lernziels ist auf maximal 10 000 Symbole beschränkt",
                 "connectWithLectureUnits": "Verbinde das Lernziel mit Vorlesungseinheiten",
                 "selectLecture": "Wähle eine Vorlesung aus",
@@ -28,9 +28,9 @@
                     "releaseDate": "Veröffentlichungsdatum",
                     "lecture": "Vorlesung",
                     "scoreAchievedByStudent": "Deine Bewertung",
-                    "averageScoreAchievedByStudent": "Durchschnittliche Bewertung eines Teilnehmers",
+                    "averageScoreAchievedByStudent": "Durchschnittliche Bewertung für Teilnehmende",
                     "totalPointsAchievable": "Erreichbare Punkte",
-                    "noOfParticipants": "Anzahl der Teilnehmer",
+                    "noOfParticipants": "Anzahl der Teilnehmenden",
                     "participationRate": "Teilnahmerate"
                 }
             },
