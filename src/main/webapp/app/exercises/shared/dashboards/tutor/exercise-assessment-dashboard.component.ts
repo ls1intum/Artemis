@@ -13,7 +13,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
@@ -34,14 +34,15 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -64,7 +65,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exam?: Exam;
     examId: number;
     exerciseGroupId: number;
-    // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
     isTestRun = false;
     isAtLeastInstructor = false;
@@ -98,6 +98,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exampleSolutionModel: UMLModel;
     complaints: Complaint[] = [];
     moreFeedbackRequests: Complaint[] = [];
+    submissionsWithComplaints: SubmissionWithComplaintDTO[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
     secondCorrectionEnabled = false;
@@ -263,10 +264,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         );
 
         if (!this.isTestRun) {
-            this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                    this.submissionsWithComplaints = res.body || [];
+                },
                 (error: HttpErrorResponse) => this.onError(error.message),
             );
+
             this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
                 (error: HttpErrorResponse) => this.onError(error.message),
@@ -393,12 +397,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                const sub = submissions.map((submission) => {
-                    submission.participation!.submissions = [submission];
-                    submission.participation!.results = submission.results;
-                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    return submission;
-                });
+                const sub = submissions
+                    .filter((submission) => {
+                        return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound];
+                    })
+                    .map((submission) => {
+                        submission.participation!.submissions = [submission];
+                        submission.participation!.results = submission.results;
+                        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+                        return submission;
+                    });
 
                 this.submissionsByCorrectionRound!.set(correctionRound, sub);
             });
@@ -639,7 +647,17 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     viewComplaint(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
-        this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+        if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
+            this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+        }
+        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
+        if (submissionToView) {
+            if (!submissionToView.results) {
+                submissionToView.results = [];
+            }
+            submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
+            this.openAssessmentEditor(submissionToView, submissionToView.results!.length - 1);
+        }
     }
 
     toggleSecondCorrection() {
