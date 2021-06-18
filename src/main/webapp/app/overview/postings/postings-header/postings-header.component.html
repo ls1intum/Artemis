@@ -1,0 +1,37 @@
+<div class="row ps-2 mt-1 pe-1 justify-content-between">
+    <div class="row ps-2 mt-1">
+        <div class="col-auto px-0">
+            <fa-icon [icon]="getIcon()" class="labels"></fa-icon>
+        </div>
+        <fa-icon
+            size="xs"
+            class="clickable action-icon"
+            [class.answer-approved]="posting.tutorApproved"
+            *ngIf="isAnswerPost && isAtLeastTutorInCourse"
+            [ngbTooltip]="(posting.tutorApproved ? 'artemisApp.metis.sidebar.unapproveAnswer' : 'artemisApp.metis.sidebar.approveAnswer') | artemisTranslate"
+            container="body"
+            [icon]="'check'"
+            (click)="toggleAnswerPostTutorApproved()"
+        ></fa-icon>
+        <div class="col-auto mb-1">
+            <span class="text-black-50 posting-subtitle">{{ posting.author!.name }} • {{ posting.creationDate | artemisDate: 'short' }}</span>
+        </div>
+    </div>
+    <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting">
+        <fa-icon
+            size="xs"
+            class="me-0.5 clickable action-icon"
+            [ngbTooltip]="'artemisApp.metis.sidebar.editPost' | artemisTranslate"
+            container="body"
+            [icon]="'pencil-alt'"
+            (click)="toggleEditMode()"
+        ></fa-icon>
+        <jhi-confirm-icon
+            iconSize="xs"
+            (confirmEvent)="deletePosting()"
+            [ngClass]="'me-1 clickable action-icon'"
+            [initialTooltip]="getDeleteTooltip() | artemisTranslate"
+            [confirmTooltip]="getDeleteConfirmationText() | artemisTranslate"
+        ></jhi-confirm-icon>
+    </div>
+</div>

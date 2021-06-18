@@ -2,17 +2,17 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
-import { PostService } from 'app/overview/postings/post/post.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { PostingService } from 'app/overview/postings/posting.service';
 
 const expect = chai.expect;
 
 describe('Post Service', () => {
     let injector: TestBed;
-    let service: PostService;
+    let service: PostingService;
     let httpMock: HttpTestingController;
     let elemDefault: Post;
     let elem2: Post;
@@ -26,7 +26,7 @@ describe('Post Service', () => {
             imports: [HttpClientTestingModule],
         });
         injector = getTestBed();
-        service = injector.get(PostService);
+        service = injector.get(PostingService);
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new Post();

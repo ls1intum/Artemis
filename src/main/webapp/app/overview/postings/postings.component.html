@@ -27,19 +27,24 @@
             <!-- new post editor -->
             <div *ngIf="isEditMode">
                 <div class="row ps-2">
-                    <jhi-postings-markdown-editor [(text)]="postContent"></jhi-postings-markdown-editor>
-                    <div class="col-12 d-flex">
-                        <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isEditMode = false">
-                            {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
-                        </button>
-                        <button
-                            jhi-postings-button
-                            class="btn btn-sm btn-outline-secondary"
-                            (click)="addPost()"
-                            [disabled]="!postContent || postContent.length === 0"
-                            [buttonLoading]="isLoading"
-                            [buttonLabel]="'artemisApp.metis.sidebar.addPost' | artemisTranslate"
-                        ></button>
+                    <jhi-postings-markdown-editor [(content)]="postContent"></jhi-postings-markdown-editor>
+                    <div class="row mt-2 d-flex align-items-sm-center">
+                        <div class="col">
+                            <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isEditMode = false">
+                                {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
+                            </button>
+                            <button
+                                class="btn btn-sm btn-outline-secondary"
+                                jhi-postings-button
+                                [buttonLoading]="isLoading"
+                                [disabled]="!postContent || postContent.length === 0 || postContent.length > maxPostContentLength"
+                                [buttonLabel]="'artemisApp.metis.sidebar.savePost' | artemisTranslate"
+                                (click)="addPost()"
+                            ></button>
+                        </div>
+                        <div class="col text-end">
+                            <p class="small my-0 ms-2">{{ postContent?.length }} / {{ maxPostContentLength }}</p>
+                        </div>
                     </div>
                 </div>
             </div>

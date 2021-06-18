@@ -2,9 +2,8 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/overview/postings/post/post.service';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { PostVotesAction, PostVotesActionName } from 'app/overview/postings/post-votes/post-votes.component';
+import { PostingService } from 'app/overview/postings/posting.service';
 
 export interface PostAction {
     name: PostActionName;
@@ -27,17 +26,17 @@ export class PostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactPost = new EventEmitter<PostAction>();
-    text?: string;
+    postEditContent?: string;
+    maxPostContentLength = 1000;
     isEditMode: boolean;
     isLoading = false;
-    EditorMode = EditorMode;
     courseId: number;
 
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'ins', 'blockquote', 'pre', 'code', 'span'];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
-    constructor(private postService: PostService, private route: ActivatedRoute) {}
+    constructor(private postingService: PostingService, private route: ActivatedRoute) {}
 
     /**
      * checks if the user is the author of the post
@@ -45,7 +44,7 @@ export class PostComponent implements OnInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.text = this.post.content;
+        this.postEditContent = this.post.content;
     }
 
     /**
@@ -63,8 +62,8 @@ export class PostComponent implements OnInit {
      */
     savePost(): void {
         this.isLoading = true;
-        this.post.content = this.text;
-        this.postService.update(this.courseId, this.post).subscribe({
+        this.post.content = this.postEditContent;
+        this.postingService.update(this.courseId, this.post).subscribe({
             next: () => {
                 this.isEditMode = false;
             },
@@ -80,7 +79,7 @@ export class PostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.text = this.post.content;
+        this.postEditContent = this.post.content;
     }
 
     /**
@@ -100,7 +99,7 @@ export class PostComponent implements OnInit {
      * @param {number} voteChange
      */
     updateVotes(voteChange: number): void {
-        this.postService.updateVotes(this.courseId, this.post.id!, voteChange).subscribe((res) => {
+        this.postingService.updateVotes(this.courseId, this.post.id!, voteChange).subscribe((res) => {
             this.post = res.body!;
             this.interactPost.emit({
                 name: PostActionName.VOTE_CHANGE,

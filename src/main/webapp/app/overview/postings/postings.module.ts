@@ -12,6 +12,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { PostingsButtonComponent } from 'app/overview/postings/postings-button/postings-button.component';
 import { PostingsMarkdownEditorComponent } from 'app/overview/postings/postings-markdown-editor/postings-markdown-editor.component';
+import { PostingsHeaderComponent } from 'app/overview/postings/postings-header/postings-header.component';
 
 const routes: Routes = [
     {
@@ -23,7 +24,16 @@ const routes: Routes = [
 
 @NgModule({
     imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSidePanelModule, ArtemisConfirmIconModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule],
-    declarations: [PostingsComponent, PostRowComponent, PostComponent, AnswerPostComponent, PostVotesComponent, PostingsButtonComponent, PostingsMarkdownEditorComponent],
-    exports: [PostingsComponent, PostingsButtonComponent, PostingsMarkdownEditorComponent],
+    declarations: [
+        PostingsComponent,
+        PostRowComponent,
+        PostComponent,
+        AnswerPostComponent,
+        PostVotesComponent,
+        PostingsButtonComponent,
+        PostingsMarkdownEditorComponent,
+        PostingsHeaderComponent,
+    ],
+    exports: [PostingsComponent, PostingsButtonComponent, PostingsMarkdownEditorComponent, PostingsHeaderComponent],
 })
 export class ArtemisPostingsModule {}

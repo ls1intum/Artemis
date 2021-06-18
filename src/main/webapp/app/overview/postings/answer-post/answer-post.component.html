@@ -2,43 +2,8 @@
     <div class="col-12">
         <!-- answer-post not in edit mode -->
         <ng-container *ngIf="!isEditMode">
-            <div class="row justify-content-between">
-                <div class="col-auto px-0">
-                    <fa-icon [icon]="'comments'" class="labels"></fa-icon>
-                    <fa-icon
-                        size="xs"
-                        class="clickable action-icon"
-                        [class.answer-approved]="answerPost.tutorApproved"
-                        *ngIf="isAtLeastTutorInCourse"
-                        [ngbTooltip]="(answerPost.tutorApproved ? 'artemisApp.metis.sidebar.unapproveAnswer' : 'artemisApp.metis.sidebar.approveAnswer') | artemisTranslate"
-                        container="body"
-                        [icon]="'check'"
-                        (click)="toggleAnswerPostTutorApproved()"
-                    ></fa-icon>
-                </div>
-                <div class="col-auto">
-                    <span class="text-black-50 posting-subtitle"> {{ answerPost.author!.name }} • {{ answerPost.creationDate | artemisDate: 'short' }} </span>
-                </div>
-                <div class="col-auto px-0">
-                    <fa-icon
-                        size="xs"
-                        class="me-0.5 clickable action-icon"
-                        [ngbTooltip]="'artemisApp.metis.sidebar.editAnswer' | artemisTranslate"
-                        *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)"
-                        container="body"
-                        [icon]="'pencil-alt'"
-                        (click)="toggleEditMode()"
-                    ></fa-icon>
-                    <jhi-confirm-icon
-                        iconSize="xs"
-                        (confirmEvent)="deleteAnswerPost()"
-                        [ngClass]="'me-0.5 clickable action-icon'"
-                        *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)"
-                        [initialTooltip]="'artemisApp.metis.sidebar.deleteAnswer' | artemisTranslate"
-                        [confirmTooltip]="'artemisApp.metis.sidebar.confirmDeleteAnswer' | artemisTranslate"
-                    ></jhi-confirm-icon>
-                </div>
-            </div>
+            <jhi-postings-header (editModeChange)="toggleEditMode()"></jhi-postings-header>
+
             <div class="row">
                 <div
                     class="col mt-1 posting-content markdown-preview"
@@ -60,7 +25,7 @@
                         </div>
                     </div>
                 </div>
-                <jhi-postings-markdown-editor [(text)]="text"></jhi-postings-markdown-editor>
+                <jhi-postings-markdown-editor [(content)]="answerPostEditContent"></jhi-postings-markdown-editor>
                 <div class="col-12 mt-1 d-flex">
                     <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
                         {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
@@ -68,7 +33,7 @@
                     <button
                         jhi-postings-button
                         [buttonLoading]="isLoading"
-                        [disabled]="!text || text.length === 0"
+                        [disabled]="!answerPostEditContent || answerPostEditContent.length === 0"
                         [buttonLabel]="'artemisApp.metis.sidebar.saveAnswer' | artemisTranslate"
                         class="btn btn-sm btn-outline-secondary"
                         (click)="saveAnswerPost()"

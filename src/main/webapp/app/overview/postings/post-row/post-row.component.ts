@@ -5,12 +5,10 @@ import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostService } from 'app/overview/postings/post/post.service';
-import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { AnswerPostActionName, AnswerPostAction } from 'app/overview/postings/answer-post/answer-post.component';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { PostActionName, PostAction } from 'app/overview/postings/post/post.component';
+import { AnswerPostAction, AnswerPostActionName } from 'app/overview/postings/answer-post/answer-post.component';
+import { PostAction, PostActionName } from 'app/overview/postings/post/post.component';
+import { PostingService } from 'app/overview/postings/posting.service';
 
 export interface PostRowAction {
     name: PostRowActionName;
@@ -39,10 +37,9 @@ export class PostRowComponent implements OnInit {
     answerPostContent?: string;
     sortedAnswerPosts: AnswerPost[];
     approvedAnswerPosts: AnswerPost[];
-    EditorMode = EditorMode;
     courseId: number;
 
-    constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService, private route: ActivatedRoute) {}
+    constructor(private postingService: PostingService, private localStorage: LocalStorageService, private route: ActivatedRoute) {}
 
     /**
      * sort answers when component is initialized
@@ -122,7 +119,7 @@ export class PostRowComponent implements OnInit {
      * deletes the post
      */
     deletePost(): void {
-        this.postService.delete(this.courseId, this.post.id!).subscribe(() => {
+        this.postingService.delete(this.courseId, this.post.id!).subscribe(() => {
             this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
             this.interactPostRow.emit({
                 name: PostRowActionName.DELETE,
@@ -141,7 +138,7 @@ export class PostRowComponent implements OnInit {
         answerPost.post = this.post;
         answerPost.tutorApproved = false;
         answerPost.creationDate = moment();
-        this.answerPostService.create(this.courseId, answerPost).subscribe({
+        this.postingService.create(this.courseId, answerPost).subscribe({
             next: (postResponse: HttpResponse<AnswerPost>) => {
                 if (!this.post.answers) {
                     this.post.answers = [];

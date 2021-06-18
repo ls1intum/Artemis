@@ -13,8 +13,8 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
     styleUrls: ['../postings.scss'],
 })
 export class PostingsMarkdownEditorComponent implements OnInit {
-    @Input() text: String;
-    @Output() textChange: EventEmitter<String> = new EventEmitter<string>();
+    @Input() content?: string;
+    @Output() contentChange: EventEmitter<string> = new EventEmitter<string>();
     defaultCommands: Command[];
 
     constructor() {}
@@ -24,7 +24,7 @@ export class PostingsMarkdownEditorComponent implements OnInit {
     }
 
     markdownChange(value: string) {
-        this.text = value;
-        this.textChange.emit(value);
+        this.content = value;
+        this.contentChange.emit(value);
     }
 }

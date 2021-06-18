@@ -6,13 +6,12 @@ import { PostRowActionName, PostRowAction } from 'app/overview/postings/post-row
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/overview/postings/post/post.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import interact from 'interactjs';
 import { ActivatedRoute } from '@angular/router';
+import { PostingService } from 'app/overview/postings/posting.service';
 
 @Component({
     selector: 'jhi-postings',
@@ -28,13 +27,14 @@ export class PostingsComponent implements OnInit, AfterViewInit {
     isLoading = false;
     collapsed = false;
     postContent?: string;
+    maxPostContentLength = 1000;
     selectedPost?: Post;
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
     EditorMode = EditorMode;
     courseId: number;
 
-    constructor(private route: ActivatedRoute, private accountService: AccountService, private postService: PostService, private exerciseService: ExerciseService) {}
+    constructor(private route: ActivatedRoute, private accountService: AccountService, private exerciseService: ExerciseService, private postingService: PostingService) {}
 
     /**
      * get the current user and check if he/she is at least a tutor for this course
@@ -127,7 +127,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
             delete post.lecture.lectureUnits;
         }
         post.creationDate = moment();
-        this.postService.create(this.courseId, post).subscribe({
+        this.postingService.create(this.courseId, post).subscribe({
             next: (postResponse: HttpResponse<Post>) => {
                 this.posts.push(postResponse.body!);
                 this.postContent = undefined;

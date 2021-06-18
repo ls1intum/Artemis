@@ -2,8 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { PostingService } from 'app/overview/postings/posting.service';
 
 export interface AnswerPostAction {
     name: AnswerPostActionName;
@@ -26,23 +25,22 @@ export class AnswerPostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswer = new EventEmitter<AnswerPostAction>();
-    text?: string;
+    answerPostEditContent?: string;
     isLoading = false;
     isEditMode: boolean;
-    EditorMode = EditorMode;
     courseId: number;
 
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'ins', 'blockquote', 'pre', 'code', 'span'];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
-    constructor(private answerPostService: AnswerPostService, private route: ActivatedRoute) {}
+    constructor(private postingService: PostingService, private route: ActivatedRoute) {}
 
     /**
      * Sets the text of the answerPost as the editor text
      */
     ngOnInit(): void {
-        this.text = this.answerPost.content;
+        this.answerPostEditContent = this.answerPost.content;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
     }
 
@@ -59,7 +57,7 @@ export class AnswerPostComponent implements OnInit {
      * Deletes this answerPost
      */
     deleteAnswerPost(): void {
-        this.answerPostService.delete(this.courseId, this.answerPost.id!).subscribe(() => {
+        this.postingService.delete(this.courseId, this.answerPost.id!).subscribe(() => {
             this.interactAnswer.emit({
                 name: AnswerPostActionName.DELETE,
                 answerPost: this.answerPost,
@@ -72,8 +70,8 @@ export class AnswerPostComponent implements OnInit {
      */
     saveAnswerPost(): void {
         this.isLoading = true;
-        this.answerPost.content = this.text;
-        this.answerPostService.update(this.courseId, this.answerPost).subscribe({
+        this.answerPost.content = this.answerPostEditContent;
+        this.postingService.update(this.courseId, this.answerPost).subscribe({
             next: () => {
                 this.isEditMode = false;
             },
@@ -88,7 +86,7 @@ export class AnswerPostComponent implements OnInit {
      */
     toggleAnswerPostTutorApproved(): void {
         this.answerPost.tutorApproved = !this.answerPost.tutorApproved;
-        this.answerPostService.update(this.courseId, this.answerPost).subscribe(() => {
+        this.postingService.update(this.courseId, this.answerPost).subscribe(() => {
             this.interactAnswer.emit({
                 name: AnswerPostActionName.APPROVE,
                 answerPost: this.answerPost,
@@ -102,6 +100,6 @@ export class AnswerPostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.text = this.answerPost.content;
+        this.answerPostEditContent = this.answerPost.content;
     }
 }
