@@ -99,7 +99,7 @@ jobs:
     - name: Check "lock:${{ matrix.environment }}" label
       uses: actions/github-script@v4.0.2
       with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const opts = github.issues.listForRepo.endpoint.merge({
             owner: context.repo.owner,
@@ -133,7 +133,7 @@ jobs:
     # Fill config from Secret (https://www.lrz.de/services/netz/mobil/vpnpda/)
     - name: Configure LRZ VPN
       env:
-          LRZ_VPN_CONFIG: ${{ secrets.LRZ_VPN_CONFIG }}
+          LRZ_VPN_CONFIG: "${{ secrets.LRZ_VPN_CONFIG }}"
       run: |
         echo $LRZ_VPN_CONFIG > lrz.conf
         sudo mkdir -p /etc/vpnc
@@ -151,8 +151,8 @@ jobs:
     - name: Setup SSH Keys and known_hosts
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          DEPLOYMENT_HOSTS: ${{ secrets.DEPLOYMENT_HOSTS }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
+          SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
       run: |
           mkdir -p ~/.ssh
           for host in $DEPLOYMENT_HOSTS; do
@@ -170,7 +170,7 @@ jobs:
     - name: Deploy Artemis WAR artifact
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          DEPLOYMENT_HOSTS: ${{ secrets.DEPLOYMENT_HOSTS }}
+          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
           DEPLOYMENT_USER: ${{ secrets.DEPLOYMENT_USER }}
           WAR_FILE: ./${{steps.artifact-name.outputs.war-file}}
       run: |
