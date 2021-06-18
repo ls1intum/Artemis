@@ -1,5 +1,3 @@
-import { Submission } from 'app/entities/submission.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { ChangeDetectorRef } from '@angular/core';
 
 export abstract class ExamPageComponent {
