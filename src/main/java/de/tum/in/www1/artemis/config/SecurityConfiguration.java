@@ -156,7 +156,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .featurePolicy("geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen *; payment 'none'")
         .and()
             .frameOptions()
-            .deny()
+            .sameOrigin()
         .and()
             .headers()
             .httpStrictTransportSecurity()
