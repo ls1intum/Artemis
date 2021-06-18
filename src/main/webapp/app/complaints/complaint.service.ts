@@ -90,16 +90,6 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Find complaints for tutor for specified exercise (complaintType == 'COMPLAINT').
-     * @param exerciseId
-     */
-    getComplaintsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
-        return this.http
-            .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/complaints-for-assessment-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
-    }
-
-    /**
      * Find complaints for instructor for specified test run exercise (complaintType == 'COMPLAINT').
      * @param exerciseId
      */
@@ -209,7 +199,6 @@ export class ComplaintService implements IComplaintService {
                 }
             });
         }
-
         return res;
     }
 }

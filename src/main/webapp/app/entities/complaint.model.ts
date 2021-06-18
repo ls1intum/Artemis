@@ -16,7 +16,6 @@ export class Complaint implements BaseEntity {
     public complaintText?: string;
     public accepted?: boolean;
     public submittedTime?: Moment;
-    public resultBeforeComplaint?: string;
     public result?: Result;
     public student?: User;
     public team?: Team;

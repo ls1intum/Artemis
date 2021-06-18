@@ -8,6 +8,12 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { hasResults } from 'app/overview/participation-utils';
 
+export enum EditType {
+    IMPORT,
+    CREATE,
+    UPDATE,
+}
+
 export const hasExerciseChanged = (changes: SimpleChanges) => {
     return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);
 };

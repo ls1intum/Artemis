@@ -9,6 +9,7 @@ import {
     startExercise,
     startTutorParticipation,
     submitRandomModelingAnswerExam,
+    updateModelingExerciseDueDate,
 } from './requests/modeling.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
@@ -46,7 +47,9 @@ export function setup() {
     let artemis;
     let exercise;
     const iterations = parseInt(__ENV.ITERATIONS);
-
+    // Create course
+    const instructorUsername = baseUsername.replace('USERID', '1');
+    const instructorPassword = basePassword.replace('USERID', '1');
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new exercise as no parameters are given');
 
@@ -59,10 +62,6 @@ export function setup() {
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
         console.log('Create users with ids starting from ' + (userOffset + iterations) + ' and up to ' + (userOffset + iterations + iterations));
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset + iterations, true);
-
-        // Create course
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
 
         console.log('Assigning ' + instructorUsername + 'to course ' + course.id + ' as the instructor');
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
@@ -114,6 +113,13 @@ export function setup() {
     }
 
     sleep(2);
+
+    // Login to Artemis
+    artemis = login(instructorUsername, instructorPassword);
+
+    updateModelingExerciseDueDate(artemis, exercise);
+
+    sleep(30);
 
     console.log('Using existing course ' + courseId + ' and exercise ' + exerciseId);
     return { exerciseId, courseId };

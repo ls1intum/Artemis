@@ -13,7 +13,7 @@
 - [ ] Client: I added `authorities` to all new routes and check the course groups for displaying navigation elements (links, buttons)
 - [ ] Client: I documented the TypeScript code using JSDoc style.
 - [ ] Client: I added multiple screenshots/screencasts of my UI changes
-- [ ] Client: I translated all the newly inserted strings into German and English
+- [ ] Client: I translated all the newly inserted strings into English and German using neutral, gender-inclusive language
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->
