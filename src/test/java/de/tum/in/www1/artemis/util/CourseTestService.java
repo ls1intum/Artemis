@@ -1774,9 +1774,10 @@ public class CourseTestService {
         assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
         assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(1);
 
-        // Assessments
-        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(66.7);
-        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(2);
+        // Assessments - 133 because each we have only 2 submissions which have assessments, but as they have complaints which got accepted
+        // they now have 2 results each.
+        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(133.3);
+        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(4);
         assertThat(courseDTO.getCurrentMaxAssessments()).isEqualTo(3);
 
         // Complaints
