@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityNode;
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class UMLModelParserTest {
 
