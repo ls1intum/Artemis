@@ -16,7 +16,7 @@
   }, {
     "name" : "setDates",
     "modifiers" : [ "public" ],
-    "parameters" : [ "List<Date>" ],
+    "parameters" : [ "List" ],
     "returnType" : "void"
   }, {
     "name" : "setSortAlgorithm",
@@ -69,7 +69,7 @@
   "methods" : [ {
     "name" : "performSort",
     "modifiers" : [ "public", "abstract" ],
-    "parameters" : [ "List<Date>" ],
+    "parameters" : [ "List" ],
     "returnType" : "void"
   } ]
 }, {
