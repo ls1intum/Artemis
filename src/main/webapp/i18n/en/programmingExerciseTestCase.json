@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Programming Exercise Test Case",
                 "createOrEditLabel": "Create or edit a Programming Exercise Test Case"
             },
-            "created": "A new Programming Exercise Test Case is created with identifier {{ param }}",
-            "updated": "A Programming Exercise Test Case is updated with identifier {{ param }}",
-            "deleted": "A Programming Exercise Test Case is deleted with identifier {{ param }}",
+            "created": "Created new Programming Exercise Test Case with identifier {{ param }}",
+            "updated": "Updated Programming Exercise Test Case with identifier {{ param }}",
+            "deleted": "Deleted Programming Exercise Test Case with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Programming Exercise Test Case {{ id }}?"
             },
