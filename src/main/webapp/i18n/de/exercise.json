@@ -45,7 +45,7 @@
             "problemStatement": "Aufgabenstellung",
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
-            "gradingInstruction": "Benotungshinweise: ",
+            "gradingInstruction": "Benotungshinweis: ",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
             "addGradingCriterion": "Benotungskriterium hinzufügen",
             "deleteGradingCriterion": "Benotungskriterium löschen",
