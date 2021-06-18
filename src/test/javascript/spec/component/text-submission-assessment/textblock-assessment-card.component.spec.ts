@@ -6,12 +6,13 @@ import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/text
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateModule } from '@ngx-translate/core';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { ChangeDetectorRef } from '@angular/core';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextblockAssessmentCardComponent;
@@ -21,6 +22,7 @@ describe('TextblockAssessmentCardComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule, ArtemisGradingInstructionLinkIconModule],
             declarations: [TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            providers: [MockProvider(ChangeDetectorRef)],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {

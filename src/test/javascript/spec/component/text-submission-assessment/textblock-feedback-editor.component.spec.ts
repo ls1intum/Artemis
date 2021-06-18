@@ -6,12 +6,13 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { ChangeDetectorRef } from '@angular/core';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -24,6 +25,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule, ArtemisGradingInstructionLinkIconModule],
             declarations: [TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            providers: [MockProvider(ChangeDetectorRef)],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
