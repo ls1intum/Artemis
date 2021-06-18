@@ -234,3 +234,9 @@ canvas#complete-chart {
 .btn-success:hover {
     color: #fff;
 }
+
+@media (max-width: 768px) {
+    .col-12 {
+        width: 100% !important;
+    }
+}
