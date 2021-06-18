@@ -41,7 +41,7 @@ export class TestCaseDistributionChartComponent implements OnChanges {
     pointsChartDatasets: ChartDataSets[] = [];
 
     ngOnChanges(): void {
-        if(this.testCases == undefined) {
+        if (this.testCases == undefined) {
             this.testCases = [];
         }
         this.testCases = this.testCases.filter((testCase) => testCase.visibility !== Visibility.Never);
