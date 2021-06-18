@@ -172,16 +172,6 @@ describe('Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).to.be.equal(true);
     });
 
-    it('should check grade type correctly', () => {
-        comp.gradingScale.gradeType = GradeType.GRADE;
-
-        expect(comp.isGradeType()).to.be.equal(true);
-
-        comp.gradingScale.gradeType = GradeType.BONUS;
-
-        expect(comp.isGradeType()).to.be.equal(false);
-    });
-
     it('should delete grade names correctly', () => {
         comp.deleteGradeNames();
 
@@ -282,6 +272,7 @@ describe('Grading System Component', () => {
     it('should not update grading scale', () => {
         comp.existingGradingScale = false;
         comp.isExam = false;
+        comp.course = course;
         const gradingSystemServiceStub = sinon.stub(gradingSystemService, 'createGradingScaleForCourse').returns(of(new HttpResponse<GradingScale>({ body: undefined })));
 
         comp.save();
@@ -292,6 +283,7 @@ describe('Grading System Component', () => {
 
     it('should create grading scale correctly for course', () => {
         comp.existingGradingScale = false;
+        comp.course = course;
         const createdGradingScaleForCourse = comp.gradingScale;
         createdGradingScaleForCourse.gradeType = GradeType.BONUS;
         const gradingSystemCreateForCourseStub = sinon
@@ -308,6 +300,7 @@ describe('Grading System Component', () => {
     it('should create grading scale correctly for exam', () => {
         comp.existingGradingScale = false;
         comp.isExam = true;
+        comp.exam = exam;
         const createdGradingScaleForExam = comp.gradingScale;
         createdGradingScaleForExam.gradeType = GradeType.BONUS;
         const gradingSystemCreateForExamStub = sinon
@@ -323,6 +316,7 @@ describe('Grading System Component', () => {
 
     it('should update grading scale correctly for course', () => {
         comp.existingGradingScale = true;
+        comp.course = course;
         const updateGradingScaleFoCourse = comp.gradingScale;
         updateGradingScaleFoCourse.gradeType = GradeType.BONUS;
         const gradingSystemUpdateForCourseStub = sinon
@@ -339,6 +333,7 @@ describe('Grading System Component', () => {
     it('should update grading scale correctly for exam', () => {
         comp.existingGradingScale = true;
         comp.isExam = true;
+        comp.exam = exam;
         const updatedGradingScaleForExam = comp.gradingScale;
         updatedGradingScaleForExam.gradeType = GradeType.BONUS;
         const gradingSystemUpdateForExamStub = sinon
@@ -375,8 +370,8 @@ describe('Grading System Component', () => {
     });
 
     it('should validate invalid grading scale with negative max points', () => {
-        course.maxPoints = -10;
         comp.course = course;
+        comp.maxPoints = -10;
         translateStub.returns('negative max points');
 
         expect(comp.validGradeSteps()).to.be.false;
@@ -396,6 +391,7 @@ describe('Grading System Component', () => {
 
     it('should validate invalid grading scale with empty grade step point fields correctly', () => {
         comp.course = course;
+        comp.maxPoints = 100;
         translateStub.returns('empty field for points');
 
         expect(comp.validGradeSteps()).to.be.false;
@@ -413,7 +409,7 @@ describe('Grading System Component', () => {
     });
 
     it('should validate invalid grading scale with invalid points', () => {
-        comp.course = course;
+        comp.maxPoints = 100;
         comp.gradingScale.gradeSteps[0].lowerBoundPoints = 0;
         comp.gradingScale.gradeSteps[0].upperBoundPoints = 120;
         comp.gradingScale.gradeSteps[1].lowerBoundPoints = 40;
@@ -510,20 +506,8 @@ describe('Grading System Component', () => {
         expect(translateStub).to.have.been.calledOnceWithExactly('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
     });
 
-    it('should get max points correctly', () => {
-        comp.isExam = true;
-        comp.exam = exam;
-
-        expect(comp.getMaxPoints()).to.equal(100);
-
-        comp.isExam = false;
-        comp.course = course;
-
-        expect(comp.getMaxPoints()).to.equal(100);
-    });
-
     it('should detect that max points are valid', () => {
-        comp.course = course;
+        comp.maxPoints = 100;
 
         expect(comp.maxPointsValid()).to.be.true;
     });
@@ -535,7 +519,7 @@ describe('Grading System Component', () => {
 
         expect(gradeStep1.lowerBoundPoints).to.be.undefined;
 
-        comp.course = course;
+        comp.maxPoints = 100;
 
         comp.setPoints(gradeStep1, true);
 
@@ -550,7 +534,7 @@ describe('Grading System Component', () => {
     });
 
     it('should set percentages correctly', () => {
-        comp.course = course;
+        comp.maxPoints = 100;
         gradeStep2.lowerBoundPoints = 40;
         gradeStep2.upperBoundPoints = 80;
 
@@ -565,7 +549,7 @@ describe('Grading System Component', () => {
     });
 
     it('should set all grade step points correctly', () => {
-        comp.course = course;
+        comp.maxPoints = 100;
 
         comp.onChangeMaxPoints(100);
 

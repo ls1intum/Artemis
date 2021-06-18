@@ -201,30 +201,6 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     /**
-     * Test saving a valid grading scale with points values set for grade steps
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveGradingScaleValidGradeStepSetWithPointsSet() {
-        course = database.addEmptyCourse();
-        exam = database.addExam(course);
-        exam.setMaxPoints(100);
-        gradingScale.setExam(exam);
-        gradeSteps = database.generateGradeStepSet(gradingScale, true);
-        for (var gradeStep : gradeSteps) {
-            gradeStep.setLowerBoundPoints(gradeStep.getLowerBoundPercentage());
-            gradeStep.setUpperBoundPoints(gradeStep.getUpperBoundPercentage());
-        }
-        gradingScale.setGradeSteps(gradeSteps);
-        examRepository.save(exam);
-
-        GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
-
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("exam", "course", "gradeSteps", "id").isEqualTo(gradingScale);
-        assertThat(savedGradingScale.getGradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(gradingScale.getGradeSteps());
-    }
-
-    /**
      * Test fetching a grading scale for course if more than one has been saved to the database
      */
     @Test
@@ -262,43 +238,4 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(gradingScaleRepository.findByExamIdOrElseThrow(exam.getId())).isEqualTo(gradingScale1);
     }
-
-    /**
-     * Test setting point values for a grading scale based on the max points
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSetPointsForGradingScale() {
-        gradeSteps = database.generateGradeStepSet(gradingScale, true);
-        gradingScale.setGradeSteps(gradeSteps);
-
-        var updatedGradingScale = gradingScaleRepository.calculatePoints(gradingScale, 100);
-
-        assertThat(updatedGradingScale.getGradeSteps()).hasSize(3);
-        for (var gradeStep : updatedGradingScale.getGradeSteps()) {
-            assertThat(gradeStep.getLowerBoundPoints()).isNotNull();
-            assertThat(gradeStep.getUpperBoundPoints()).isNotNull();
-            assertThat(gradeStep.getLowerBoundPoints()).isEqualTo(gradeStep.getLowerBoundPercentage());
-            assertThat(gradeStep.getUpperBoundPoints()).isEqualTo(gradeStep.getUpperBoundPercentage());
-        }
-    }
-
-    /**
-     * Test resetting points values for a grading scale
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testResetAllPointsForGradingScale() {
-        gradeSteps = database.generateGradeStepSet(gradingScale, true);
-        gradingScale.setGradeSteps(gradeSteps);
-
-        var updatedGradingScale = gradingScaleRepository.resetAllPoints(gradingScale);
-
-        assertThat(updatedGradingScale.getGradeSteps()).hasSize(3);
-        for (var gradeStep : updatedGradingScale.getGradeSteps()) {
-            assertThat(gradeStep.getLowerBoundPoints()).isNull();
-            assertThat(gradeStep.getUpperBoundPoints()).isNull();
-        }
-    }
-
 }
