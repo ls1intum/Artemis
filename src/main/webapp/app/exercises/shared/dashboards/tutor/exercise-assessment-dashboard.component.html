@@ -339,7 +339,7 @@
                                                             : 'artemisApp.exerciseAssessmentDashboard.orion.openAssessment'
                                                         ) | artemisTranslate
                                                     }}"
-                                                    (click)="downloadSubmissionInOrion(submission, correctionRound)"
+                                                    (clickHandler)="downloadSubmissionInOrion(submission, correctionRound)"
                                                 >
                                                 </jhi-ide-button>
                                             </ng-template>
@@ -384,7 +384,7 @@
                                                     class="btn btn-sm"
                                                     [buttonLoading]="orionState.cloning"
                                                     buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startAssessment' | artemisTranslate }}"
-                                                    (click)="downloadSubmissionInOrion('new', correctionRound)"
+                                                    (clickHandler)="downloadSubmissionInOrion('new', correctionRound)"
                                                 >
                                                 </jhi-ide-button>
                                             </ng-template>
@@ -574,7 +574,7 @@
         <jhi-ide-button
             [buttonLoading]="orionState.cloning"
             buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startYourParticipation' | artemisTranslate }}"
-            (click)="openAssessmentInOrion()"
+            (clickHandler)="openAssessmentInOrion()"
         >
         </jhi-ide-button>
     </ng-template>

@@ -123,6 +123,7 @@ describe('Exam Management Service Tests', () => {
             averagePointsAchieved: 1,
             exerciseGroups: [],
             maxPoints: 1,
+            hasSecondCorrectionAndStarted: false,
             studentResults: [],
         };
         const expectedExamScore = { ...mockExamScore };
