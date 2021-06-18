@@ -14,11 +14,12 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { navigateBackFromExerciseUpdate, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { EditType } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -61,6 +62,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
     ) {}
+
+    get editType(): EditType {
+        if (this.isImport) {
+            return EditType.IMPORT;
+        }
+
+        return this.modelingExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
 
     /**
      * Initializes all relevant data for creating or editing modeling exercise
@@ -173,9 +182,10 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                     });
                 });
             }
-        } else {
-            this.saveExercise();
+            return;
         }
+
+        this.saveExercise();
     }
 
     /**
@@ -185,17 +195,21 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         Exercise.sanitize(this.modelingExercise);
 
         this.isSaving = true;
-        if (this.isImport) {
-            this.subscribeToSaveResponse(this.modelingExerciseService.import(this.modelingExercise));
-        } else if (this.modelingExercise.id !== undefined) {
-            const requestOptions = {} as any;
 
-            if (this.notificationText) {
-                requestOptions.notificationText = this.notificationText;
-            }
-            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, requestOptions));
-        } else {
-            this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
+        switch (this.editType) {
+            case EditType.IMPORT:
+                this.subscribeToSaveResponse(this.modelingExerciseService.import(this.modelingExercise));
+                break;
+            case EditType.CREATE:
+                this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
+                break;
+            case EditType.UPDATE:
+                const requestOptions = {} as any;
+                if (this.notificationText) {
+                    requestOptions.notificationText = this.notificationText;
+                }
+                this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, requestOptions));
+                break;
         }
     }
 
@@ -215,27 +229,31 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         );
     }
 
-    /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise groups page if we are in exam mode
-     */
     previousState() {
         navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {
         result.subscribe(
-            () => this.onSaveSuccess(),
+            (exercise: HttpResponse<ModelingExercise>) => this.onSaveSuccess(exercise.body!.id!),
             () => this.onSaveError(),
         );
     }
 
-    private onSaveSuccess(): void {
+    private onSaveSuccess(exerciseId: number): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
-        this.previousState();
+
+        switch (this.editType) {
+            case EditType.CREATE:
+            case EditType.IMPORT:
+                // Passing exerciseId since it is required for navigation to the example submission dashboard.
+                navigateToExampleSubmissions(this.router, { ...this.modelingExercise, id: exerciseId });
+                break;
+            case EditType.UPDATE:
+                this.previousState();
+                break;
+        }
     }
 
     private onSaveError(): void {

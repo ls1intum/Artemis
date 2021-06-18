@@ -55,7 +55,6 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        // fixture.debugElement.query(By.css('fa-icon.back-button'));
         let button = compiled.querySelector('.close fa-icon[icon="times"]');
         let confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
@@ -149,9 +148,9 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.feedback.type = FeedbackType.MANUAL;
         fixture.detectChanges();
 
-        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="exclamation-triangle"]');
+        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="info-circle"]');
         expect(warningIcon).toBeTruthy();
-        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
+        const text = compiled.querySelector('[jhiTranslate$=impactWarning]');
         expect(text).toBeTruthy();
     });
 

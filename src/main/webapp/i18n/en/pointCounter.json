@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Point Counter",
                 "createOrEditLabel": "Create or edit a Point Counter"
             },
-            "created": "A new Point Counter is created with identifier {{ param }}",
-            "updated": "A Point Counter is updated with identifier {{ param }}",
-            "deleted": "A Point Counter is deleted with identifier {{ param }}",
+            "created": "Created new Point Counter with identifier {{ param }}",
+            "updated": "Updated Point Counter with identifier {{ param }}",
+            "deleted": "Deleted Point Counter with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Point Counter {{ id }}?"
             },

@@ -21,7 +21,7 @@
             }
         },
         "textUnit": {
-            "created": "A new text unit created",
+            "created": "New text unit created",
             "updated": "Text unit updated",
             "tooltip": "This is a text unit.",
             "isolated": "View Isolated",
@@ -78,7 +78,7 @@
             }
         },
         "attachmentUnit": {
-            "created": "A new attachment unit created",
+            "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
             "createAttachmentUnit": {
