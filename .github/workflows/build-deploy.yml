@@ -94,7 +94,6 @@ jobs:
     environment:
       url: ${{ matrix.url }}
       name: ${{ matrix.environment }}
-    concurrency: deployment_environment_${{ matrix.environment }}
     steps:
     - name: Check "lock:${{ matrix.environment }}" label
       uses: actions/github-script@v4.0.2
@@ -132,10 +131,8 @@ jobs:
       run: sudo apt-get install vpnc
     # Fill config from Secret (https://www.lrz.de/services/netz/mobil/vpnpda/)
     - name: Configure LRZ VPN
-      env:
-          LRZ_VPN_CONFIG: "${{ secrets.LRZ_VPN_CONFIG }}"
       run: |
-        echo $LRZ_VPN_CONFIG > lrz.conf
+        echo "${{ secrets.LRZ_VPN_CONFIG }}" > lrz.conf
         sudo mkdir -p /etc/vpnc
         sudo mv lrz.conf /etc/vpnc/
         sudo chmod 600 /etc/vpnc/lrz.conf
