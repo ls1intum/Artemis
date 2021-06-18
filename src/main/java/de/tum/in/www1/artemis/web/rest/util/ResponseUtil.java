@@ -30,6 +30,10 @@ public final class ResponseUtil implements io.github.jhipster.web.util.ResponseU
         return ResponseEntity.status(HttpStatus.FORBIDDEN).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
     }
 
+    public static <X> ResponseEntity<X> locked(String entityName, String errorKey, String message) {
+        return ResponseEntity.status(HttpStatus.LOCKED).headers(HeaderUtil.createFailureAlert(applicationName, true, entityName, errorKey, message)).build();
+    }
+
     public static <X> ResponseEntity<X> badRequest() {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }

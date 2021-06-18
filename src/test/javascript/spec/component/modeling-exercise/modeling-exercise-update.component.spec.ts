@@ -79,7 +79,7 @@ describe('ModelingExercise Management Update Component', () => {
             comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
-            tick(); // simulate async
+            tick(1000); // simulate async
 
             // THEN
             expect(service.create).toHaveBeenCalledWith(entity);
@@ -95,7 +95,7 @@ describe('ModelingExercise Management Update Component', () => {
             comp.modelingExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
-            tick(); // simulate async
+            tick(1000); // simulate async
 
             // THEN
             expect(service.create).toHaveBeenCalledWith(entity);
