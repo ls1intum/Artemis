@@ -339,11 +339,8 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         exerciseService.validateGeneralSettings(programmingExercise);
-        validateProgrammingSettings(programmingExercise);    
-
-
+        validateProgrammingSettings(programmingExercise);
         validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories(), programmingExercise);
-
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
