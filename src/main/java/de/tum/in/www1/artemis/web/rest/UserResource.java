@@ -101,7 +101,7 @@ public class UserResource {
         if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
             throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
         }
-        else if (password.length() > PASSWORD_MAX_LENGTH) {
+        else if (password != null && password.length() > PASSWORD_MAX_LENGTH) {
             throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
         }
     }
