@@ -15,7 +15,8 @@ import { PostVotesComponent } from 'app/overview/postings/post-votes/post-votes.
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PostingsButtonComponent } from 'app/overview/postings/postings-button/postings-button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -73,6 +74,7 @@ describe('PostComponent', () => {
                 MockDirective(ConfirmIconComponent),
                 MockDirective(PostVotesComponent),
                 MockDirective(NgbTooltip),
+                MockDirective(PostingsButtonComponent),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
                 // Don't mock this since we want to test this pipe, too

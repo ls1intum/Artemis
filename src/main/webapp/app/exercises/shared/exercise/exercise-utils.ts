@@ -61,6 +61,12 @@ export class SaveExerciseCommand<T extends Exercise> {
     }
 }
 
+export enum EditType {
+    IMPORT,
+    CREATE,
+    UPDATE,
+}
+
 export const hasExerciseChanged = (changes: SimpleChanges) => {
     return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);
 };

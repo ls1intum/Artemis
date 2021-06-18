@@ -2,11 +2,17 @@ package de.tum.in.www1.artemis.service.util;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,5 +68,19 @@ public class XmlFileUtils {
             log.error(errorMessage, e);
             throw new IllegalStateException(errorMessage, e);
         }
+    }
+
+    /**
+     * Converts the xml document to a string.
+     * @param document the xml document
+     * @return string representation of the xml document
+     * @throws TransformerException in case of errors
+     */
+    public static String writeToString(Document document) throws TransformerException {
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        StringWriter stringWriter = new StringWriter();
+        transformer.transform(new DOMSource(document), new StreamResult(stringWriter));
+        return stringWriter.toString();
     }
 }

@@ -13,7 +13,7 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import * as chai from 'chai';
 import { cloneDeep } from 'lodash';
@@ -24,6 +24,7 @@ import { empty, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -126,6 +127,7 @@ describe('ExamScoresComponent', () => {
         registrationNumber: '111',
         overallPointsAchieved: 100,
         overallScoreAchieved: 100,
+        overallPointsAchievedInFirstCorrection: 90,
         submitted: true,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult1ForGroup1 },
     } as StudentResult;
@@ -138,6 +140,7 @@ describe('ExamScoresComponent', () => {
         registrationNumber: '222',
         overallPointsAchieved: 20,
         overallScoreAchieved: 20,
+        overallPointsAchievedInFirstCorrection: 20,
         submitted: true,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult2ForGroup1 },
     } as StudentResult;
@@ -150,6 +153,7 @@ describe('ExamScoresComponent', () => {
         registrationNumber: '333',
         overallPointsAchieved: 50,
         overallScoreAchieved: 50,
+        overallPointsAchievedInFirstCorrection: 40,
         submitted: false,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult3ForGroup1 },
     } as StudentResult;
@@ -176,6 +180,7 @@ describe('ExamScoresComponent', () => {
         title: 'exam1',
         maxPoints: 100,
         averagePointsAchieved: 60,
+        hasSecondCorrectionAndStarted: true,
         exerciseGroups: [exGroup1],
         studentResults: [studentResult1, studentResult2, studentResult3],
     } as ExamScoreDTO;
@@ -196,6 +201,7 @@ describe('ExamScoresComponent', () => {
                 MockDirective(JhiSortByDirective),
                 MockDirective(JhiSortDirective),
                 MockDirective(DeleteButtonDirective),
+                MockComponent(ExamScoresAverageScoresGraphComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
@@ -208,9 +214,16 @@ describe('ExamScoresComponent', () => {
                     findGradingScaleForExam: () => {
                         return of(
                             new HttpResponse({
+                                body: new GradingScale(),
                                 status: 200,
                             }),
                         );
+                    },
+                    findMatchingGradeStep: () => {
+                        return gradeStep1;
+                    },
+                    sortGradeSteps: () => {
+                        return [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
                     },
                 }),
                 MockProvider(JhiLanguageHelper, { language: empty() }),
@@ -300,6 +313,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should have correct entries', () => {
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ status: 404 })));
         fixture.detectChanges();
 
         expectCorrectExamScoreDto(comp, examScoreDTO);
@@ -345,6 +359,7 @@ describe('ExamScoresComponent', () => {
 
     it('histogram should skip not submitted exams', () => {
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTO })));
+        spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ status: 404 })));
         fixture.detectChanges();
         comp.toggleFilterForSubmittedExam();
 
@@ -467,6 +482,7 @@ describe('ExamScoresComponent', () => {
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
         spyOn(examService, 'getExamScores').and.returnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
         spyOn(gradingSystemService, 'findGradingScaleForExam').and.returnValue(of(new HttpResponse({ body: gradingScale })));
+        spyOn(gradingSystemService, 'findMatchingGradeStep').and.returnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
         expect(comp.gradingScaleExists).to.be.true;

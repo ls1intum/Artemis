@@ -27,15 +27,15 @@
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                 [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge></span>
     </div>
-    <div editorTitleActions class="d-flex align-items-center ml-2">
+    <div editorTitleActions class="d-flex align-items-center ms-2">
         <jhi-programming-exercise-instructor-exercise-status
-            class="mr-2"
+            class="me-2"
             [exercise]="exercise"
             [templateParticipation]="exercise?.templateParticipation!"
             [solutionParticipation]="exercise?.solutionParticipation!"
         ></jhi-programming-exercise-instructor-exercise-status>
         <!-- repository select -->
-        <div ngbDropdown class="d-inline-block mr-2">
+        <div ngbDropdown class="d-inline-block me-2">
             <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                 <button
@@ -88,10 +88,10 @@
                 *ngIf="!exercise.studentParticipations || !exercise.studentParticipations.length"
                 (click)="createAssignmentParticipation()"
                 [disabled]="loadingState !== LOADING_STATE.CLEAR"
-                class="btn btn-primary mr-2"
+                class="btn btn-primary me-2"
             >
-                <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'plus'" class="text-white mr-2"></fa-icon>
-                <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'circle-notch'" [spin]="true" class="text-white mr-2"></fa-icon>
+                <fa-icon *ngIf="loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'plus'" class="text-white me-2"></fa-icon>
+                <fa-icon *ngIf="loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO" [icon]="'circle-notch'" [spin]="true" class="text-white me-2"></fa-icon>
                 <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
             </button>
             <button
@@ -103,19 +103,19 @@
                 <fa-icon
                     *ngIf="loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO"
                     [icon]="'times'"
-                    class="text-white mr-2"
+                    class="text-white me-2"
                 ></fa-icon>
                 <fa-icon
                     *ngIf="loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
                     [icon]="'circle-notch'"
                     [spin]="true"
-                    class="text-white mr-2"
+                    class="text-white me-2"
                 ></fa-icon>
                 <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo">Delete assignment participation</span>
             </button>
         </div>
     </div>
-    <div editorToolbar class="ml-auto d-flex align-items-center">
+    <div editorToolbar class="ms-auto d-flex align-items-center">
         <jhi-updating-result
             *ngIf="selectedParticipation && selectedRepository !== REPOSITORY.TEST"
             [exercise]="exercise"
@@ -125,10 +125,10 @@
             [showGradedBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
             [short]="true"
             [personalParticipation]="false"
-            class="mr-2"
+            class="me-2"
         ></jhi-updating-result>
         <jhi-programming-exercise-student-trigger-build-button
-            class="mr-3"
+            class="me-3"
             *ngIf="selectedRepository !== REPOSITORY.TEST"
             [exercise]="exercise"
             [participation]="selectedParticipation!"
@@ -138,7 +138,7 @@
             *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT"
             [exerciseId]="exercise.id!"
             [exerciseHints]="exercise.exerciseHints"
-            class="mr-2"
+            class="me-2"
         >
         </jhi-exercise-hint-student>
     </div>

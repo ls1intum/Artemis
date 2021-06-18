@@ -86,8 +86,8 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}?withStudents=false&withExerciseGroups=false` });
         expect(req.request.url).to.equal(`${service.resourceUrl}/${course.id!}/exams/${mockExam.id}`);
-        expect(req.request.params.get('withStudents')).to.be.false;
-        expect(req.request.params.get('withExerciseGroups')).to.be.false;
+        expect(req.request.params.get('withStudents')).to.equal('false');
+        expect(req.request.params.get('withExerciseGroups')).to.equal('false');
 
         // CLEANUP
         req.flush(mockExam);
@@ -110,7 +110,15 @@ describe('Exam Management Service Tests', () => {
     it('should get exam scores', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockExamScore: ExamScoreDTO = { examId: mockExam.id!, title: '', averagePointsAchieved: 1, exerciseGroups: [], maxPoints: 1, studentResults: [] };
+        const mockExamScore: ExamScoreDTO = {
+            examId: mockExam.id!,
+            title: '',
+            averagePointsAchieved: 1,
+            exerciseGroups: [],
+            maxPoints: 1,
+            hasSecondCorrectionAndStarted: false,
+            studentResults: [],
+        };
         const expectedExamScore = { ...mockExamScore };
 
         // WHEN

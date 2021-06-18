@@ -11,7 +11,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
@@ -49,6 +49,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     participation: StudentParticipation;
     modelingExercise: ModelingExercise;
     result?: Result;
+    resultWithComplaint?: Result;
 
     selectedEntities: string[];
     selectedRelationships: string[];
@@ -80,7 +81,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // submission sync with team members
     teamSyncInterval: number;
     private submissionChange = new Subject<ModelingSubmission>();
-    submissionStream$ = this.submissionChange.asObservable();
+    submissionObservable = this.submissionChange.asObservable();
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -165,6 +166,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) {
             this.result = getLatestSubmissionResult(this.submission);
         }
+        this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
         if (this.submission.submitted && this.result && this.result.completionDate) {
             this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                 this.assessmentResult = assessmentResult;
@@ -524,9 +526,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any): void {
+    unloadNotification(event: any): void {
         if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
+            event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
 
