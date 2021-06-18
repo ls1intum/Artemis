@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -90,7 +93,7 @@ public class UserResource {
      * <p>
      * Creates a new user if the login and email are not already used, and sends an mail with an activation link. The user needs to be activated on creation.
      *
-     * @param managedUserVM the user to create
+     * @param managedUserVM the user to create. If the password is null, a random one will be generated
      * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
      * @throws URISyntaxException       if the Location URI syntax is incorrect
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
@@ -98,7 +101,18 @@ public class UserResource {
     @PostMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
-        SecurityUtils.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
+
+        var username = managedUserVM.getLogin();
+        var password = managedUserVM.getPassword();
+
+        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
+            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
+        }
+
+        // Note: the password can be null, then a random one will be generated. If the password is not null, its length has to be at least PASSWORD_MIN_LENGTH
+        if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
+            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
 
         log.debug("REST request to save User : {}", managedUserVM);
 
