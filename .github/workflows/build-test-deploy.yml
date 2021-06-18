@@ -244,13 +244,13 @@ jobs:
             labels: ['lock:${{ matrix.environment }}']
           })
           const issues = await github.paginate(opts)
-          if (issues.length == 1 && github.event.pull_request && issues[0].number != ${{ github.event.pull_request.number }}) {
+          if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
             core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
           } else if (issues.length > 1) {
             core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
-          } else if (github.event.pull_request) {
+          } else if (context.issue && context.issue.number) {
             await github.issues.addLabels({
-              issue_number: ${{ github.event.pull_request.number }},
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               labels: ['lock:${{ matrix.environment }}']
