@@ -181,7 +181,7 @@ describe('ExampleTextSubmissionComponent', () => {
         fixture.debugElement.query(By.css('#saveNewAssessment')).nativeElement.click();
 
         // THEN
-        expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
+        expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
     });
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
@@ -217,7 +217,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(comp.state.constructor.name).toEqual('EditState');
-        expect(assessmentsService.deleteExampleFeedback).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(assessmentsService.deleteExampleFeedback).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
         expect(comp.submission?.blocks).toBeUndefined();
         expect(comp.result?.feedbacks).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
