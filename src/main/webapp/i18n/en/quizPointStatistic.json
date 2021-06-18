@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Quiz Point Statistic",
                 "createOrEditLabel": "Create or edit a Quiz Point Statistic"
             },
-            "created": "A new Quiz Point Statistic is created with identifier {{ param }}",
-            "updated": "A Quiz Point Statistic is updated with identifier {{ param }}",
-            "deleted": "A Quiz Point Statistic is deleted with identifier {{ param }}",
+            "created": "Created new Quiz Point Statistic with identifier {{ param }}",
+            "updated": "Updated Quiz Point Statistic with identifier {{ param }}",
+            "deleted": "Deleted Quiz Point Statistic with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Quiz Point Statistic {{ id }}?"
             },

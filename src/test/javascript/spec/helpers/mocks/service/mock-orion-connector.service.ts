@@ -21,4 +21,6 @@ export class MockOrionConnectorService implements ArtemisOrionConnector {
     onBuildFailed = (buildErrors: Array<Annotation>) => {};
     selectRepository = (repository: REPOSITORY) => {};
     startedBuildInOrion = (courseId: number, exerciseId: number) => {};
+    assessExercise = (exercise: ProgrammingExercise) => {};
+    downloadSubmission = (submissionId: number, correctionRound: number, base64data: String) => {};
 }
