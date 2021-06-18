@@ -80,7 +80,7 @@ public class GitService {
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
     private Optional<String> sshUrlTemplate;
 
-    @Value("${artemis.version-control.defaultBranch:master}")
+    @Value("${artemis.version-control.default-branch:master}")
     private String defaultBranch;
 
     @Value("${artemis.repo-clone-path}")

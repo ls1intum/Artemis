@@ -53,7 +53,7 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
-    @Value("${artemis.version-control.defaultBranch:master}")
+    @Value("${artemis.version-control.default-branch:master}")
     private String defaultBranch;
 
     private final PasswordService passwordService;
