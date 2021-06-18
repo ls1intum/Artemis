@@ -207,7 +207,7 @@ describe('AssessmentDashboardInformationComponent', () => {
             expect(comp.finishedExercises.length).to.equal(1);
         });
     });
-    describe('toggle second correctoinRound', () => {
+    describe('toggle second correctionRound', () => {
         it('should toggle correctionRound for exercises', () => {
             comp.exercises = exercises;
             toggleSecondCorrectionStub.returns(of(true));

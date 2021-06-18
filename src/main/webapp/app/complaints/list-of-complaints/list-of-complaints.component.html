@@ -63,6 +63,10 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
                     </th>
+                    <th jhiSortBy="submittedTime">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.dateAndTime' | artemisTranslate }}</a>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
                     <th jhiSortBy="accepted">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | artemisTranslate }}</a>
                         <fa-icon [icon]="'sort'"></fa-icon>
@@ -102,6 +106,10 @@
 
                     <td *ngIf="hasStudentInformation">
                         <span>{{ complaint.student?.name }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.submittedTime | artemisDate }}</span>
                     </td>
 
                     <td>

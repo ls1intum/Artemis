@@ -5,6 +5,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -74,15 +76,23 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
         return findByParticipation_ExerciseIdAndSubmittedIsTrue(exerciseId);
     }
 
-    default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultId(long resultId) {
+    @NotNull
+    default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {
         return findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId)
                 .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
+    }
+
+    @NotNull
+    default TextSubmission findByIdWithEagerParticipationExerciseResultAssessorElseThrow(long submissionId) {
+        return findByIdWithEagerParticipationExerciseResultAssessor(submissionId)
+                .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given submission.", "textSubmission", "textSubmissionNotFound"));
     }
 
     default List<TextSubmission> getTextSubmissionsWithTextBlocksByExerciseIdAndLanguage(long exerciseId, Language language) {
         return findByParticipation_ExerciseIdAndSubmittedIsTrueAndLanguage(exerciseId, language);
     }
 
+    @NotNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorElseThrow(long submissionId) {
         return findByIdWithEagerParticipationExerciseResultAssessor(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
     }

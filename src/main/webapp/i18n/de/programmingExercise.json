@@ -15,23 +15,23 @@
             "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
             "delete": {
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden?",
-                "studentRepos": "Alle Studenten-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Übung zuerst zu archivieren!",
-                "studentReposBuildPlans": "Alle Studenten-Repositories und Studenten-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Übung zuerst zu archivieren!",
+                "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen, die Übung zuerst zu archivieren!",
+                "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "baseReposBuildPlans": "Alle Template-, Lösungs- und Test-Repositories sowie Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden!). Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
             },
             "cleanup": {
-                "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studenten können ihre Teilnahme wieder aufnehmen.",
+                "successMessage": "Die Bereinigung war erfolgreich. Alle Build-Pläne wurden gelöscht. Die Studierenden können ihre Teilnahme wieder aufnehmen.",
                 "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
             },
             "reset": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studenten-Repositories und Studenten-Build-Pläne gelöscht werden."
+                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studierenden-Repositories und Studierenden-Build-Pläne gelöscht werden."
             },
             "detail": {
                 "title": "Programmieraufgabe",
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
             },
-            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studenten sein.",
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlagen-Repository-Url",
@@ -56,16 +56,16 @@
             },
             "offlineIde": "Offline-IDE",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
-            "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studenten angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studenten vorzunehmen.",
+            "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {
                 "title": "Sequentielle Testläufe",
-                "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests durchzuführen. Statische Code-Analyse wird nicht unterstützt. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test-Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
+                "description": "Aktiviere diese Checkbox, um zuerst Struktur- und erst im Anschluss Verhaltenstests durchzuführen. Statische Code-Analyse wird nicht unterstützt. Dieses Feature hilft Studierenden dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test-Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
             },
             "checkoutSolutionRepository": {
                 "title": "Checke Repository der Lösung aus",
-                "description": "Aktiviere diese Checkbox um das Repository der Lösung in ein Verzeichnis 'solution' auszuchecken. Dies ist nützlich, um die Abgabe des Studenten mit der Musterlösung zu vergleichen."
+                "description": "Aktiviere diese Checkbox, um das Repository der Lösung in ein Verzeichnis 'solution' auszuchecken. Dies ist nützlich, um die Abgabe von Studierenden mit der Musterlösung zu vergleichen."
             },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code-Analyse",
@@ -164,56 +164,56 @@
                     "preview": "Vorschau",
                     "testCaseWeights": {
                         "title": "Gewichtungs-Verteilung",
-                        "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis eines Studenten. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                        "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis einer/s Studierenden. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
                     },
                     "testCasePoints": {
                         "title": "Punkte-Verteilung",
-                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studenten. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
                     },
                     "categoryDistribution": {
                         "title": "Kategorie-Verteilung",
-                        "description": "Die Verteilung der Kategorien in Bezug auf 'Penalty', 'Issues' und 'Punkte'.<br/>Der <b>Penalty</b> Balken zeigt die Verteilung von Penalties in den Kategorien.<br/>Der <b>Issues</b> Balken zeigt wie viele Issues in der entsprechenden Kategorie erkannt wurden.<br/>Der <b>Punkte</b> Balken gibt an wie viele Punkte tatsächlich von den Ergebnissen abgezogen wurden durch eine Kategorie, was sich auch den vorherigen Balken ergibt.<br/>Bewege die Maus über einen farbigen Abschnitt um mehr Details zu sehen."
+                        "description": "Die Verteilung der Kategorien in Bezug auf 'Penalty', 'Issues' und 'Punkte'.<br/>Der <b>Penalty</b> Balken zeigt die Verteilung von Penalties in den Kategorien.<br/>Der <b>Issues</b> Balken zeigt wie viele Issues in der entsprechenden Kategorie erkannt wurden.<br/>Der <b>Punkte</b> Balken gibt an wie viele Punkte tatsächlich von den Ergebnissen abgezogen wurden durch eine Kategorie, was sich auch den vorherigen Balken ergibt.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
                     }
                 },
                 "help": {
-                    "state": "Gibt an ob Issues in dieser Kategorie den Studenten angezeigt und bewertet werden sollen.",
+                    "state": "Gibt an, ob Issues in dieser Kategorie den Studierenden angezeigt und bewertet werden sollen.",
                     "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
-                    "maxPenalty": "Der maximale Punktabzug über alle Issues eines Studenten in dieser Kategorie.",
-                    "detectedIssues": "Zeigt die Anzahl an Studenten je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
-                    "weight": "Die Gewichtung eines Testfalls bestimmt die Punkte, die ein Student für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
+                    "maxPenalty": "Der maximale Punktabzug über alle Issues einer/s Studierenden in dieser Kategorie.",
+                    "detectedIssues": "Zeigt die Anzahl an Studierenden je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
+                    "weight": "Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
                     "bonusMultiplier": "Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
                     "bonusPoints": "Bonuspunkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen."
                 },
                 "updatedGradingConfigShort": "Veränderte Bewertung",
-                "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studenten mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
-                "updatedGradingConfigTooltip": "Du hast die Bewertung verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studenten. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studenten zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studenten mit der veränderten Bewertung erneut bewerten.",
+                "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studierenden mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studierenden zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",
+                "updatedGradingConfigTooltip": "Du hast die Bewertung verändert, allerdings hat diese Aktion keine Auswirkungen auf die bereits vorhandenen Ergebnisse der Studierenden. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studierenden zu inkonsistenten Ergebnissen kommen. Über den Button 'Alle erneut ausführen' kannst du die Einreichungen aller Studierenden mit der veränderten Bewertung erneut bewerten.",
                 "noUpdatedGradingConfig": "Keine veränderte Bewertung",
                 "notReleased": "Nicht veröffentlicht",
-                "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studenten. Daher kann die Bewertung geändert werden, ohne dass die Studentenabgaben erneut ausgeführt werden müssen."
+                "notReleasedTooltip": "Die Programmierübung ist nicht veröffentlicht oder ist veröffentlicht und besitzt noch keine Ergebnisse von Studierenden. Daher kann die Bewertung geändert werden, ohne dass die Abgaben von Studierenden erneut ausgeführt werden müssen."
             },
             "export": {
                 "downloadRepo": "Repo Herunterladen",
                 "downloadExercise": "Programmierübung herunterladen",
-                "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
+                "downloadAllStudents": "Oder lade die Repositories aller Studierenden herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
-                "addStudentName": "Namen der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "addStudentName": "Namen der Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "addTeamOrStudentName": "Namen der Teams/Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "combineStudentCommits": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
-                "anonymizeStudentCommits": "Alle Änderungen des Studenten anonymisieren",
+                "addTeamOrStudentName": "Namen der Teams/Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "combineStudentCommits": "Alle Änderungen von Studierenden in einem Commit zusammenfassen (um das Review zu vereinfachen)",
+                "anonymizeStudentCommits": "Alle Änderungen von Studierenden anonymisieren",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen."
             },
-            "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
+            "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button, um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
             "resubmitSingle": "Neues Ergebnis für Teilnahme erzeugen",
-            "resubmitConfirmManualResultOverride": "Das letzte Ergebnis des Studenten ist ein manuelles Ergebnis, das heißt es wurde von einem Tutor bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für den Studenten angezeigt.",
-            "resubmitAllConfirmAfterDeadline": "Die Einreichungsfrist ist verstrichen, manche der Studententeilnahmen besitzen möglicherweise manuelle Ergebnisse, die von Tutoren erstellt wurden. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
-            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte kontaktiere deinen Tutor.",
+            "resubmitConfirmManualResultOverride": "Das letzte Ergebnis ist ein manuelles Ergebnis, das heißt es wurde von Tutor:innen bewertet. Falls du einen neuen Build für diese Abgabe auslöst, wird anstelle des manuellen Ergebnissen das neu generierte, automatische Ergebnis primär für die Studierenden angezeigt.",
+            "resubmitAllConfirmAfterDeadline": "Die Einreichungsfrist ist verstrichen, möglicherweise haben Tutor:innen manche Teilnahmen manuell bewertet. Neu erzeugte automatische Ergebnisse würden diese manuellen Ergebnisse als aktuelles Ergebnis ersetzen.",
+            "resubmitUnsuccessful": "Die letzte Abgabe konnte nicht erneut bewertet werden. Bitte kontaktiere eine/n Tutor:in.",
             "resubmitAll": "Alle erneut ausführen",
             "resubmitAllTooltip": "Führe die letzte Abgabe aller Teilnahmen erneut aus. Das Ergebnis wird als bewertet gekennzeichnet.",
             "resubmitAllDialog": "ACHTUNG: Die erneute Abgabe aller Teilnahmen ist eine sehr aufwändige Operation. Diese Aktion wird für jede Teilnahme dieser Übung einen CI Build starten. Das bedeutet, dass alle Ergebnisse der Studierenden anhand ihres letzten Commits neu berechnet und mit dem neu erzeugten Ergebnis überschreiben werden!",
@@ -225,19 +225,19 @@
             "resultETATooltip": "Zeigt an, wie lange eine laufende Abgabe auf ihr Ergebnis warten muss. Ist abhängig von der Auslastung des Build-Systems.",
             "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
             "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
-            "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studenten sichtbar sind",
+            "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind",
             "timeline": {
                 "manualReview": "Manuelles Review",
                 "automaticTests": "Automatische Tests",
                 "afterDueDate": "Testlauf nach der Einreichungsfrist",
                 "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
                 "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden",
-                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmers löst alle in dem Test-Repository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen)",
+                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmenden löst alle in dem Test-Repository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen)",
                 "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Test-Repository gespeicherten Tests.",
-                "manualReviewTooltip": "Nachdem alle automatischen Tests durchgelaufen sind, müssen die Tutoren noch einmal alle Abgaben manuell bewerten",
-                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studenten können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
-                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studenten gesperrt werden",
-                "afterDueDateTooltip": "Aktiviere diese Option um alle Studentenabgaben nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Studentenabgaben ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
+                "manualReviewTooltip": "Nachdem alle automatischen Tests durchgelaufen sind, müssen die Tutor:innen noch einmal alle Abgaben manuell bewerten",
+                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
+                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden",
+                "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
@@ -274,8 +274,8 @@
             },
             "unlockAllRepositories": "Alle Repositories entsperren",
             "lockAllRepositories": "Alle Repositories sperren",
-            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studenten können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutze diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
-            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studenten werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
+            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studierende können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutze diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
+            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studierende werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
             "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "auxiliaryRepository": {
@@ -290,7 +290,7 @@
             }
         },
         "error": {
-            "noparticipations": "Kein existierender User wurde angegeben oder es existieren keine Abgaben."
+            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
         }
     }
 }

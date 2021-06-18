@@ -36,7 +36,7 @@
             "submissions": "Einreichungen",
             "student": "Student",
             "team": "Team",
-            "students": "Studenten",
+            "students": "Studierende",
             "templateParticipation": "Template-Teilname",
             "solutionParticipation": "Lösungsteilname",
             "noParticipation": "Die Teilnahme konnte nicht gefunden werden!",
@@ -48,7 +48,7 @@
                 "submissionDate": "Abgabedatum",
                 "resultCount": "Anzahl Ergebnisse",
                 "results": "Ergebnisse",
-                "assessor": "Bewerter",
+                "assessor": "Bewertet von",
                 "submissionsForParticipation": "Abgaben von {{ participant }} für die Übung {{ exercise }}",
                 "action": "Aktion",
                 "delete": "Soll diese Abgabe wirklich gelöscht werden?"

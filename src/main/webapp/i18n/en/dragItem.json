@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Drag Item",
                 "createOrEditLabel": "Create or edit a Drag Item"
             },
-            "created": "A new Drag Item is created with identifier {{ param }}",
-            "updated": "A Drag Item is updated with identifier {{ param }}",
-            "deleted": "A Drag Item is deleted with identifier {{ param }}",
+            "created": "Created new Drag Item with identifier {{ param }}",
+            "updated": "Updated Drag Item with identifier {{ param }}",
+            "deleted": "Deleted Drag Item with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Drag Item {{ id }}?"
             },

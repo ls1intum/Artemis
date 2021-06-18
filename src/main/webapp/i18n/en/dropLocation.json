@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Drop Location",
                 "createOrEditLabel": "Create or edit a Drop Location"
             },
-            "created": "A new Drop Location is created with identifier {{ param }}",
-            "updated": "A Drop Location is updated with identifier {{ param }}",
-            "deleted": "A Drop Location is deleted with identifier {{ param }}",
+            "created": "Created new Drop Location with identifier {{ param }}",
+            "updated": "Updated Drop Location with identifier {{ param }}",
+            "deleted": "Deleted Drop Location with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Drop Location {{ id }}?"
             },
