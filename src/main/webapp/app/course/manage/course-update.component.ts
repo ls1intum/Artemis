@@ -21,7 +21,6 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -48,8 +47,6 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
-    gradingScaleExistsForCourse = false;
-    gradingScaleNotFoundForCourse = false;
 
     constructor(
         private courseService: CourseManagementService,
@@ -60,7 +57,6 @@ export class CourseUpdateComponent implements OnInit {
         private profileService: ProfileService,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
-        private gradingSystemService: GradingSystemService,
     ) {}
 
     ngOnInit() {
@@ -73,19 +69,6 @@ export class CourseUpdateComponent implements OnInit {
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations = organizations;
                 });
-                this.gradingSystemService.findGradingScaleForCourse(course.id).subscribe(
-                    (gradingScaleResponse) => {
-                        if (gradingScaleResponse.body) {
-                            this.gradingScaleExistsForCourse = true;
-                        }
-                    },
-                    (errorResponse) => {
-                        if (errorResponse.status === 404) {
-                            this.gradingScaleNotFoundForCourse = true;
-                            setTimeout(() => (this.gradingScaleNotFoundForCourse = false));
-                        }
-                    },
-                );
 
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;

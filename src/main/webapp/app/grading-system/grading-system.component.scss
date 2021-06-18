@@ -7,6 +7,7 @@
 
 .dropdown-container .form-group {
     width: 23%;
+    min-width: 20%;
 
     .form-control {
         margin-top: 0.25em;
@@ -15,4 +16,8 @@
 
 .grading-scale-table-row td {
     width: 17%;
+
+    input {
+        min-width: 50%;
+    }
 }

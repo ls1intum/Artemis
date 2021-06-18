@@ -9,7 +9,6 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
 import { navigateBack } from 'app/utils/navigation.utils';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -19,8 +18,6 @@ export class ExamUpdateComponent implements OnInit {
     exam: Exam;
     course: Course;
     isSaving: boolean;
-    gradingScaleExistsForExam = false;
-    gradingScaleNotFoundForExam = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -28,7 +25,6 @@ export class ExamUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private courseManagementService: CourseManagementService,
         private router: Router,
-        private gradingSystemService: GradingSystemService,
     ) {}
 
     ngOnInit(): void {
@@ -38,19 +34,6 @@ export class ExamUpdateComponent implements OnInit {
                 (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
-                    this.gradingSystemService.findGradingScaleForExam(this.course.id!, this.exam.id!).subscribe(
-                        (gradingScaleResponse) => {
-                            if (gradingScaleResponse.body) {
-                                this.gradingScaleExistsForExam = true;
-                            }
-                        },
-                        (errorResponse) => {
-                            if (errorResponse.status === 404) {
-                                this.gradingScaleNotFoundForExam = true;
-                                setTimeout(() => (this.gradingScaleNotFoundForExam = false));
-                            }
-                        },
-                    );
                 },
                 (err: HttpErrorResponse) => this.onError(err),
             );

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -115,7 +116,7 @@ public class GradingScaleResource {
             return badRequest(ENTITY_NAME, "gradingScaleHasId", "A grading scale can't contain a predefined id");
         }
 
-        if (gradingScale.getCourse().getMaxPoints() != course.getMaxPoints()) {
+        if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
             course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
             courseRepository.save(course);
         }
@@ -179,7 +180,7 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
-        if (gradingScale.getCourse().getMaxPoints() != course.getMaxPoints()) {
+        if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
             course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
             courseRepository.save(course);
         }

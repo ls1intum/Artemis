@@ -123,8 +123,6 @@ public class CourseResource {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    private final GradingScaleRepository gradingScaleRepository;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -132,7 +130,7 @@ public class CourseResource {
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            ParticipantScoreRepository participantScoreRepository, GradingScaleRepository gradingScaleRepository) {
+            ParticipantScoreRepository participantScoreRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -156,7 +154,6 @@ public class CourseResource {
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.gradingScaleRepository = gradingScaleRepository;
     }
 
     /**
@@ -311,8 +308,6 @@ public class CourseResource {
         validateOnlineCourseAndRegistrationEnabled(updatedCourse);
         validateShortName(updatedCourse);
 
-        handleMaxPointUpdates(updatedCourse.getId(), existingCourse.getMaxPoints(), updatedCourse.getMaxPoints());
-
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
         // users no longer have TA, editor or instructor rights in the related exercise repositories.
@@ -325,19 +320,6 @@ public class CourseResource {
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
-    }
-
-    private void handleMaxPointUpdates(Long courseId, int existingMaxPoints, int updatedMaxPoints) {
-        if (updatedMaxPoints < 0) {
-            throw new BadRequestAlertException("Max points must be greater than 0", ENTITY_NAME, "invalidMaxPoints", true);
-        }
-        var gradingScale = this.gradingScaleRepository.findByCourseId(courseId);
-        if (gradingScale.isPresent() && updatedMaxPoints == 0) {
-            gradingScaleRepository.resetAllPoints(gradingScale.get());
-        }
-        else if (gradingScale.isPresent() && existingMaxPoints != updatedMaxPoints) {
-            gradingScaleRepository.calculatePoints(gradingScale.get(), updatedMaxPoints);
-        }
     }
 
     private void checkIfGroupsExists(String group) {

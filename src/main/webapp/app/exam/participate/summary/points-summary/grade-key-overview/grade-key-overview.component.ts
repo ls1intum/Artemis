@@ -35,6 +35,9 @@ export class GradeKeyOverviewComponent implements OnInit {
                         this.examTitle = gradeSteps.body.examTitle;
                         this.isBonus = gradeSteps.body.gradeType === GradeType.BONUS;
                         this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.body.gradeSteps);
+                        if (gradeSteps.body.maxPoints !== undefined) {
+                            this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.body.maxPoints!);
+                        }
                     }
                 });
         });

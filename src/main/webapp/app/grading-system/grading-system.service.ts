@@ -164,4 +164,11 @@ export class GradingSystemService {
         });
         return maxGradeStep?.gradeName || '';
     }
+
+    setGradePoints(gradeSteps: GradeStep[], maxPoints: number) {
+        for (const gradeStep of gradeSteps) {
+            gradeStep.lowerBoundPoints = (maxPoints * gradeStep.lowerBoundPercentage) / 100;
+            gradeStep.upperBoundPoints = (maxPoints * gradeStep.upperBoundPercentage) / 100;
+        }
+    }
 }

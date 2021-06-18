@@ -10,7 +10,7 @@
             <hr />
             <div>
                 <jhi-alert></jhi-alert>
-                <jhi-alert-error *ngIf="!gradingScaleNotFoundForCourse"></jhi-alert-error>
+                <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!course.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" formControlName="id" readonly />
@@ -132,7 +132,6 @@
                 <div class="form-group">
                     <label class="form-control-label" for="field_maxPoints" jhiTranslate="artemisApp.course.maxPoints.title"> Maximum number of points for course </label>
                     <fa-icon
-                        *ngIf="gradingScaleExistsForCourse"
                         [icon]="'exclamation-triangle'"
                         class="text-warning"
                         placement="top"

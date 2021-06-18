@@ -23,4 +23,5 @@ export class GradeStepsDTO {
     public examTitle: string;
     public gradeType: GradeType;
     public gradeSteps: GradeStep[];
+    public maxPoints?: number;
 }

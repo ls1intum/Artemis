@@ -565,8 +565,8 @@ public class Course extends DomainObject {
         this.courseArchivePath = courseArchiveUrl;
     }
 
-    public int getMaxPoints() {
-        return maxPoints != null ? maxPoints : 0;
+    public Integer getMaxPoints() {
+        return maxPoints;
     }
 
     public void setMaxPoints(Integer maxPoints) {

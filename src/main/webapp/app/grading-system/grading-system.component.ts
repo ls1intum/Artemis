@@ -19,6 +19,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
     styleUrls: ['./grading-system.component.scss'],
 })
 export class GradingSystemComponent implements OnInit {
+    GradeType = GradeType;
     ButtonSize = ButtonSize;
     gradingScale = new GradingScale();
     lowerBoundInclusivity = true;
@@ -35,6 +36,7 @@ export class GradingSystemComponent implements OnInit {
 
     course?: Course;
     exam?: Exam;
+    maxPoints?: number;
 
     constructor(
         private gradingSystemService: GradingSystemService,
@@ -56,12 +58,14 @@ export class GradingSystemComponent implements OnInit {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
                 this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
                     this.exam = examResponse.body!;
+                    this.maxPoints = this.exam?.maxPoints;
                     this.onChangeMaxPoints(this.exam?.maxPoints);
                 });
             } else {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
                 this.courseService.find(this.courseId!).subscribe((courseResponse) => {
                     this.course = courseResponse.body!;
+                    this.maxPoints = this.course?.maxPoints;
                     this.onChangeMaxPoints(this.course?.maxPoints);
                 });
             }
@@ -128,8 +132,10 @@ export class GradingSystemComponent implements OnInit {
         });
         if (this.isExam) {
             this.gradingScale.exam = this.exam;
+            this.gradingScale.exam!.maxPoints = this.maxPoints;
         } else {
             this.gradingScale.course = this.course;
+            this.gradingScale.course!.maxPoints = this.maxPoints;
         }
         if (this.existingGradingScale) {
             if (this.isExam) {
@@ -166,7 +172,7 @@ export class GradingSystemComponent implements OnInit {
             return false;
         }
         // check if max points are at least 0, if they are defined
-        if (this.getMaxPoints() != undefined && this.getMaxPoints()! < 0) {
+        if (this.maxPoints != undefined && this.maxPoints! < 0) {
             this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.negativeMaxPoints');
             return false;
         }
@@ -191,7 +197,7 @@ export class GradingSystemComponent implements OnInit {
         // check if any of the fields have invalid points
         if (this.maxPointsValid()) {
             for (const gradeStep of this.gradingScale.gradeSteps) {
-                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.upperBoundPoints! > this.getMaxPoints()! || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
+                if (gradeStep.lowerBoundPoints! < 0 || gradeStep.upperBoundPoints! > this.maxPoints! || gradeStep.lowerBoundPoints! >= gradeStep.upperBoundPoints!) {
                     this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidMinMaxPoints');
                     return false;
                 }
@@ -204,7 +210,7 @@ export class GradingSystemComponent implements OnInit {
                 }
             }
         }
-        if (this.isGradeType()) {
+        if (this.gradingScale.gradeType === GradeType.GRADE) {
             // check if all grade names are unique if the grading scale is of type GRADE
             if (!this.gradingScale.gradeSteps.map((gradeStep) => gradeStep.gradeName).every((gradeName, index, gradeNames) => gradeNames.indexOf(gradeName) === index)) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.nonUniqueGradeNames');
@@ -220,7 +226,7 @@ export class GradingSystemComponent implements OnInit {
         let sortedGradeSteps: GradeStep[] = [];
         this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
         sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
-        if (!this.isGradeType()) {
+        if (this.gradingScale.gradeType === GradeType.BONUS) {
             // check if when the grade type is BONUS the bonus points are at least 0
             for (const gradeStep of sortedGradeSteps) {
                 if (isNaN(Number(gradeStep.gradeName)) || Number(gradeStep.gradeName) < 0) {
@@ -278,7 +284,6 @@ export class GradingSystemComponent implements OnInit {
     private handleSaveResponse(newGradingScale?: GradingScale): void {
         if (newGradingScale) {
             newGradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(newGradingScale.gradeSteps);
-            this.gradingScale = newGradingScale;
             this.existingGradingScale = true;
         }
     }
@@ -287,14 +292,7 @@ export class GradingSystemComponent implements OnInit {
      * Determines if the max points for the course/exam are valid
      */
     maxPointsValid(): boolean {
-        return this.getMaxPoints() != undefined && this.getMaxPoints()! > 0;
-    }
-
-    /**
-     * Gets the max points for the course/exam
-     */
-    getMaxPoints() {
-        return this.isExam ? this.exam?.maxPoints : this.course?.maxPoints;
+        return this.maxPoints != undefined && this.maxPoints! > 0;
     }
 
     /**
@@ -304,11 +302,10 @@ export class GradingSystemComponent implements OnInit {
      * @param lowerBound the bound
      */
     setPercentage(gradeStep: GradeStep, lowerBound: boolean) {
-        const maxPoints = this.getMaxPoints();
         if (lowerBound) {
-            gradeStep.lowerBoundPercentage = (gradeStep.lowerBoundPoints! / maxPoints!) * 100;
+            gradeStep.lowerBoundPercentage = (gradeStep.lowerBoundPoints! / this.maxPoints!) * 100;
         } else {
-            gradeStep.upperBoundPercentage = (gradeStep.upperBoundPoints! / maxPoints!) * 100;
+            gradeStep.upperBoundPercentage = (gradeStep.upperBoundPoints! / this.maxPoints!) * 100;
         }
     }
 
@@ -320,14 +317,13 @@ export class GradingSystemComponent implements OnInit {
      * @param lowerBound the bound
      */
     setPoints(gradeStep: GradeStep, lowerBound: boolean): void {
-        const maxPoints = this.getMaxPoints();
-        if (!maxPoints) {
+        if (!this.maxPoints) {
             return;
         } else {
             if (lowerBound) {
-                gradeStep.lowerBoundPoints = (maxPoints! * gradeStep.lowerBoundPercentage) / 100;
+                gradeStep.lowerBoundPoints = (this.maxPoints! * gradeStep.lowerBoundPercentage) / 100;
             } else {
-                gradeStep.upperBoundPoints = (maxPoints! * gradeStep.upperBoundPercentage) / 100;
+                gradeStep.upperBoundPoints = (this.maxPoints! * gradeStep.upperBoundPercentage) / 100;
             }
         }
     }
@@ -452,13 +448,6 @@ export class GradingSystemComponent implements OnInit {
         } else {
             return [];
         }
-    }
-
-    /**
-     * Checks if grading scale has GradeType.GRADE
-     */
-    isGradeType(): boolean {
-        return this.gradingScale.gradeType === GradeType.GRADE;
     }
 
     /**
