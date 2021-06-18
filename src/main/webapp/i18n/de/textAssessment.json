@@ -48,10 +48,10 @@
             "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
             "feedbackEditor": {
                 "dismissFeedback": "Soll das Feedback gelöscht werden?",
-                "dismissFeedbackConfirmation": "Bitte bestätigen Sie, dass das Feedback gelöscht werden soll!",
-                "feedbackCommentPlaceholder": "Geben Sie Ihre Anmerkung bitte hier ein ...",
+                "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
+                "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein ...",
                 "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
-                "impactWarningTooltip": "Die Anzahl, wie oft Ihr Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen."
+                "impactWarningTooltip": "Die Anzahl, wie oft deine Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen."
             },
             "assessmentInstruction": "Bitte hovern Sie mit der Maus über den zu bewertenden Textblock und klicken Sie diesen an um ihn zu bewerten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
             "conflict": {
