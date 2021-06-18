@@ -149,9 +149,9 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.feedback.type = FeedbackType.MANUAL;
         fixture.detectChanges();
 
-        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="exclamation-triangle"]');
+        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="info-circle"]');
         expect(warningIcon).toBeTruthy();
-        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
+        const text = compiled.querySelector('[jhiTranslate$=impactWarning]');
         expect(text).toBeTruthy();
     });
 

@@ -212,7 +212,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.validateFeedback();
         component.save();
         expect(textAssessmentService.save).toHaveBeenCalledWith(
-            exercise.id!,
+            result?.participation?.id,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
@@ -273,7 +273,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.validateFeedback();
         component.submit();
         expect(textAssessmentService.submit).toHaveBeenCalledWith(
-            exercise.id!,
+            participation.id!,
             result!.id!,
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],

@@ -249,7 +249,7 @@ describe('TextFeedbackConflictsComponent', () => {
         );
         component.overrideLeftSubmission();
         expect(textAssessmentService.submit).toHaveBeenCalledWith(
-            exercise.id!,
+            participation.id!,
             textSubmission.latestResult!.id!,
             [component.leftTextBlockRefs[0].feedback!],
             [component.leftTextBlockRefs[0].block!],
@@ -326,7 +326,7 @@ describe('TextFeedbackConflictsComponent', () => {
             ),
         );
         component.discardConflict();
-        expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise.id!, feedbackConflict.id!);
+        expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise!.id!, feedbackConflict.id!);
     });
 
     it('should switch submissions when it changed in the header', () => {
