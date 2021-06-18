@@ -1,0 +1,7 @@
+@import '../../../../../content/scss/bootstrap-variables';
+
+@include media-breakpoint-down(sm) {
+    .col-sm-5 {
+        width: 100% !important;
+    }
+}
