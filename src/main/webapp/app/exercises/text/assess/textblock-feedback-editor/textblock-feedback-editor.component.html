@@ -83,17 +83,13 @@
     <ng-template #toggleMore let-modal>
         <div class="modal-header">
             <h4 class="modal-title">
-                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
-                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+                <span>This submission was used to generate this automatic feedbacks</span>
             </h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
             <div class="feedback-text mt-1">
-                <b
-                    ><fa-icon *ngIf="block.circleIcon" [icon]="['far', block.circleIcon]"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span
-                    >:</b
-                >
+                <b><fa-icon [icon]="['far', 'check-circle']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
                 test
             </div>
         </div>
