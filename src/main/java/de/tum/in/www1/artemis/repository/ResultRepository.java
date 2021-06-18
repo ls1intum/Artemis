@@ -523,6 +523,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
             result.setRated(true);
         }
+        else if (result.isExampleResult() != null && result.isExampleResult()) {
+            result.setRated(true);
+        }
         else {
             result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
         }
@@ -623,5 +626,23 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", +resultId));
+    }
+
+    /**
+     * Given the example submission list, it returns the results of the linked submission, if any
+     *
+     * @param exampleSubmissions list of the example submission we want to retrieve
+     * @return list of result for example submissions
+     */
+    default List<Result> getResultForExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+        List<Result> results = new ArrayList<>();
+        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
+            Submission submission = exampleSubmission.getSubmission();
+            if (!submission.isEmpty()) {
+                Result result = findOneWithEagerSubmissionAndFeedback(submission.getLatestResult().getId());
+                results.add(result);
+            }
+        }
+        return results;
     }
 }

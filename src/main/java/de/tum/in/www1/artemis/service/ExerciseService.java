@@ -848,6 +848,11 @@ public class ExerciseService {
 
         List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
 
+        // add example submission results that belong exercise
+        if (!exercise.getExampleSubmissions().isEmpty()) {
+            results.addAll(resultRepository.getResultForExampleSubmissions(exercise.getExampleSubmissions()));
+        }
+
         // re-calculate the results after updating the feedback
         for (Result result : results) {
             if (!feedbackToBeDeleted.isEmpty()) {
