@@ -21,6 +21,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-a
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import {
+    getFirstResultWithComplaint,
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
     getSubmissionResultById,
@@ -228,7 +229,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'save');
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
+        const participationid = this.result!.participation!.id;
+        this.assessmentsService.save(participationid!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -251,7 +253,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.assessmentsService.trackAssessment(this.submission, 'submit');
 
         this.submitBusy = true;
-        this.assessmentsService.submit(this.exercise!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
+        this.assessmentsService.submit(this.participation!.id!, this.result!.id!, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -275,7 +277,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService.cancelAssessment(this.exercise!.id!, this.submission!.id!).subscribe(() => this.navigateBack());
+            this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission!.id!).subscribe(() => this.navigateBack());
         }
     }
 
@@ -332,18 +334,20 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
 
-        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
-            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
-            (httpErrorResponse: HttpErrorResponse) => {
-                this.jhiAlertService.clear();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.jhiAlertService.error(error.message, error.params);
-                } else {
-                    this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
-                }
-            },
-        );
+        this.assessmentsService
+            .updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!, this.participation?.id!)
+            .subscribe(
+                (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
+                (httpErrorResponse: HttpErrorResponse) => {
+                    this.jhiAlertService.clear();
+                    const error = httpErrorResponse.error;
+                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                        this.jhiAlertService.error(error.message, error.params);
+                    } else {
+                        this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                    }
+                },
+            );
     }
 
     navigateBack() {
@@ -375,12 +379,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private getComplaint(): void {
-        if (!this.result?.hasComplaint) {
+        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
+        if (!resultWithComplaint) {
             return;
         }
 
         this.isLoading = true;
-        this.complaintService.findByResultId(this.result!.id!).subscribe(
+        this.complaintService.findByResultId(resultWithComplaint.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
