@@ -24,6 +24,11 @@ public final class SecurityUtils {
     private SecurityUtils() {
     }
 
+    /**
+     * check that the username and password are not null and have the correct length
+     * @param username the username which should be validated
+     * @param password the password which should be validated
+     */
     public static void checkUsernameAndPasswordValidity(String username, String password) {
         if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");

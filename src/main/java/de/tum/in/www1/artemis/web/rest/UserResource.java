@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -88,6 +87,19 @@ public class UserResource {
         this.authorityRepository = authorityRepository;
     }
 
+    private static void checkUsernameAndPasswordValidity(String username, String password) {
+
+        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
+            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
+        }
+
+        // Note: the password can be null, then a random one will be generated (Create) or it won't be changed (Update).
+        // If the password is not null, its length has to be at least PASSWORD_MIN_LENGTH
+        if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
+            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
+    }
+
     /**
      * POST /users : Creates a new user.
      * <p>
@@ -102,17 +114,7 @@ public class UserResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
-        var username = managedUserVM.getLogin();
-        var password = managedUserVM.getPassword();
-
-        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
-            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
-        }
-
-        // Note: the password can be null, then a random one will be generated. If the password is not null, its length has to be at least PASSWORD_MIN_LENGTH
-        if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
-            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
-        }
+        checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         log.debug("REST request to save User : {}", managedUserVM);
 
@@ -150,7 +152,7 @@ public class UserResource {
     @PutMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        SecurityUtils.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
+        checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
         var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());

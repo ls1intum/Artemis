@@ -25,6 +25,11 @@ public class ManagedUserVM extends UserDTO {
         super(user);
     }
 
+    public ManagedUserVM(User user, String password) {
+        this(user);
+        setPassword(password);
+    }
+
     public String getPassword() {
         return password;
     }
