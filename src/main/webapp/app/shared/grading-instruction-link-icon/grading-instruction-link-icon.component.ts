@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
@@ -13,6 +14,8 @@ export class GradingInstructionLinkIconComponent implements OnInit {
     instruction: GradingInstruction | undefined;
     confirmIcon = <IconProp>'trash';
     showConfirm = false;
+
+    constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngOnInit(): void {
         this.instruction = this.assessment.gradingInstruction;
@@ -31,7 +34,7 @@ export class GradingInstructionLinkIconComponent implements OnInit {
      * @param {GradingInstruction} instruction - the instruction object which is associated with feedback
      */
     setTooltip(instruction: GradingInstruction) {
-        return 'Grading Instruction: ' + instruction.instructionDescription;
+        return this.artemisTranslatePipe.transform('artemisApp.exercise.gradingInstruction') + instruction.instructionDescription;
     }
 
     /**
