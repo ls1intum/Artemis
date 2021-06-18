@@ -80,6 +80,26 @@
     Text = {{ feedback.suggestedFeedbackOriginSubmission?.text }}:
     <br />
     Submission Id = {{ feedback.suggestedFeedbackOriginSubmission?.id }}
+    <ng-template #toggleMore let-modal>
+        <div class="modal-header">
+            <h4 class="modal-title">
+                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
+                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+            </h4>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body">
+            <div class="feedback-text mt-1">
+                <b
+                    ><fa-icon *ngIf="block.circleIcon" [icon]="['far', block.circleIcon]"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span
+                    >:</b
+                >
+                test
+            </div>
+        </div>
+    </ng-template>
+
+    <button (click)="openConfirmationModal(toggleMore)">test</button>
     <br />
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>

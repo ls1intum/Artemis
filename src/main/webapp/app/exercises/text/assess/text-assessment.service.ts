@@ -126,6 +126,7 @@ export class TextAssessmentService {
                 } else {
                     result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
                 }
+                console.log(' RESULT ---->', response);
                 TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
                 (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
             }),

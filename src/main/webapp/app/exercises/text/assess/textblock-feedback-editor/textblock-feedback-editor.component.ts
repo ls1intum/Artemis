@@ -4,6 +4,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -53,7 +54,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.isSelectedConflict;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, protected modalService: NgbModal) {}
 
     /**
      * Life cycle hook to indicate component initialization is done
@@ -141,5 +142,16 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             this.disableEditScore = false;
         }
         this.didChange();
+    }
+
+    openConfirmationModal(content: any) {
+        this.modalService.open(content).result.then(
+            (result: string) => {
+                if (result === 'confirm') {
+                    console.warn('Confirm?');
+                }
+            },
+            () => {},
+        );
     }
 }
