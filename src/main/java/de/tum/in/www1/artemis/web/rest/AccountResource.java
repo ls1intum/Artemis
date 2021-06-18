@@ -98,7 +98,6 @@ public class AccountResource {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        SecurityUtils.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -106,6 +105,8 @@ public class AccountResource {
         if (isPasswordLengthInvalid(managedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
+
+        SecurityUtils.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         if (allowedEmailPattern.isPresent()) {
             Matcher emailMatcher = allowedEmailPattern.get().matcher(managedUserVM.getEmail());
