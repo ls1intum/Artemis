@@ -63,6 +63,7 @@ import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tuto
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { MockOrionConnectorService } from '../../helpers/mocks/service/mock-orion-connector.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -170,6 +171,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         numberOfAssessmentsOfCorrectionRounds,
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
+
+    const submissionWithComplaintDTO = {
+        submission: {
+            id: 23,
+            results: [result1],
+        },
+        complaint: {
+            result: result1,
+        },
+    } as SubmissionWithComplaintDTO;
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
     const router = new MockRouter();
     const navigateSpy = sinon.spy(router, 'navigate');
@@ -260,6 +271,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 modelingSubmissionStubWithAssessment.returns(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
                 modelingSubmissionStubWithoutAssessment.returns(of(modelingSubmission));
+                comp.submissionsWithComplaints = [submissionWithComplaintDTO];
             });
     });
 
