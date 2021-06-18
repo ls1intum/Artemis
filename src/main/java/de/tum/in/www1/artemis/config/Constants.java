@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
+    // NOTE: those 4 values have to be the same as in app.constants.ts
     public static final int USERNAME_MIN_LENGTH = 4;
 
     public static final int USERNAME_MAX_LENGTH = 50;

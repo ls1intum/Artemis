@@ -12,7 +12,7 @@ export const SERVER_API_URL = '';
 export const MIN_SCORE_GREEN = 80;
 export const MIN_SCORE_ORANGE = 40;
 
-// TODO: those values have to be the same as in Constant.java
+// NOTE: those values have to be the same as in Constant.java
 export const USERNAME_MIN_LENGTH = 4;
 export const USERNAME_MAX_LENGTH = 50;
 export const PASSWORD_MIN_LENGTH = 4;

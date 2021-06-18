@@ -33,8 +33,14 @@ public final class SecurityUtils {
         if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
         }
+        else if (username.length() > USERNAME_MAX_LENGTH) {
+            throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
+        }
         if (!StringUtils.hasLength(password) || password.length() < PASSWORD_MIN_LENGTH) {
             throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
+        else if (password.length() > PASSWORD_MAX_LENGTH) {
+            throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
         }
     }
 

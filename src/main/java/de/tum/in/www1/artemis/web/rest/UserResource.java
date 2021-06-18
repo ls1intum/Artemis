@@ -92,11 +92,17 @@ public class UserResource {
         if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
         }
+        else if (username.length() > USERNAME_MAX_LENGTH) {
+            throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
+        }
 
         // Note: the password can be null, then a random one will be generated (Create) or it won't be changed (Update).
         // If the password is not null, its length has to be at least PASSWORD_MIN_LENGTH
         if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
             throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
+        else if (password.length() > PASSWORD_MAX_LENGTH) {
+            throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
         }
     }
 
