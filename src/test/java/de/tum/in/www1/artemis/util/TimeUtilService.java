@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TimeService {
+public class TimeUtilService {
 
     public long nanoSecondsToSeconds(long nanoSeconds) {
         return TimeUnit.SECONDS.convert(Duration.ofSeconds(nanoSeconds));

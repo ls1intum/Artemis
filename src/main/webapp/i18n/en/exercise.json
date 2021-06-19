@@ -45,6 +45,7 @@
             "problemStatement": "Problem Statement",
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
+            "gradingInstruction": "Grading Instruction: ",
             "structuredGradingInstructions": "Structured Grading Instructions",
             "addGradingCriterion": "Add Grading Criterion",
             "deleteGradingCriterion": "Delete This Criterion",
