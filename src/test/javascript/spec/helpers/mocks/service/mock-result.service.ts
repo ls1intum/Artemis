@@ -7,7 +7,6 @@ export class MockResultService implements IResultService {
     create = (result: Result) => of();
     delete = (participationId: number, resultId: number) => empty();
     find = (id: number) => empty();
-    findBySubmissionId = (participationId: number, submissionId: number) => empty();
     getFeedbackDetailsForResult = (participationId: number, resultId: number) => empty();
     getResultsForExercise = (courseId: number, exerciseId: number, req?: any) => empty();
     update = (result: Result) => of();

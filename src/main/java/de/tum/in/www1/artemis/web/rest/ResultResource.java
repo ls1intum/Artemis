@@ -398,26 +398,6 @@ public class ResultResource {
     }
 
     /**
-     * GET /participations/:participationId/results/from-submission/:submissionId : get the result for a submission id
-     *
-     * @param participationId the id of the participation to the submission
-     * @param submissionId the id of the submission
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping("participations/{participationId}/results/from-submission/{submissionId}")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> getResultForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId) {
-        log.debug("REST request to get Result for submission : {}", submissionId);
-        Result result = resultRepository.findDistinctBySubmissionIdElseThrow(submissionId);
-        if (!result.getParticipation().getId().equals(participationId)) {
-            badRequest("participationId", "400",
-                    "participationId of the path doesnt match the participationId of the participation corresponding to the result to submission " + submissionId + " !");
-        }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getParticipation().getExercise(), null);
-        return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    /**
      * POST participations/:participationId/submissions/:submissionId/example-result : Creates a new example result for the provided example submission ID.
      *
      * @param participationId participation to the submission

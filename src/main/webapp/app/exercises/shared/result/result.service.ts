@@ -20,7 +20,6 @@ export type EntityArrayResponseType = HttpResponse<Result[]>;
 
 export interface IResultService {
     find: (id: number) => Observable<EntityResponseType>;
-    findBySubmissionId: (participationId: number, submissionId: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
     getLatestResultWithFeedbacks: (participationId: number) => Observable<HttpResponse<Result>>;
     getFeedbackDetailsForResult: (participationId: number, resultId: number) => Observable<HttpResponse<Feedback[]>>;
@@ -38,12 +37,6 @@ export class ResultService implements IResultService {
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
-    findBySubmissionId(participationId: number, submissionId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Result>(`${this.participationResourceUrl}/${participationId}/results/from-submissions/${submissionId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {

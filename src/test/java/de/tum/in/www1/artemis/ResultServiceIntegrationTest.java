@@ -583,21 +583,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getResultForSubmission() throws Exception {
-        var now = ZonedDateTime.now();
-        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
-        course.addExercises(textExercise);
-        textExerciseRepository.save(textExercise);
-        TextSubmission textSubmission = new TextSubmission();
-        textSubmission = (TextSubmission) database.addSubmission(textExercise, textSubmission, "student1");
-        textSubmission = (TextSubmission) database.addResultToSubmission(textSubmission, null);
-        Result returnedResult = request.get("/api/participations/" + textSubmission.getParticipation().getId() + "/results/from-submission/" + textSubmission.getId(),
-                HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isEqualTo(textSubmission.getLatestResult());
-    }
-
-    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createExampleResult() throws Exception {
         var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
