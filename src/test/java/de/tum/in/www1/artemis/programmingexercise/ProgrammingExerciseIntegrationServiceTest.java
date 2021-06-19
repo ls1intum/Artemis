@@ -288,7 +288,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         // Mock and pretend first commit is template commit
         ObjectId head = localGit.getRepository().findRef("HEAD").getObjectId();
         when(gitService.getLastCommitHash(any())).thenReturn(head);
-        doNothing().when(gitService).resetToOriginMaster(any());
+        doNothing().when(gitService).resetToOriginHead(any());
 
         // Add commit to anonymize
         assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
