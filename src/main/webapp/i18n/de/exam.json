@@ -28,6 +28,7 @@
                 "grade": "Note",
                 "bonus": "Bonuspunkte für die Klausur",
                 "interval": "Intervall (%)",
+                "intervalPoints": "Intervall (Punkte)",
                 "gradeKeyButton": "Notenschlüssel ansehen"
             },
             "title": "Klausur",
@@ -241,7 +242,10 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "studentReviewEnabled": "Klausureinsicht ist offen",
-            "maxPoints": "Anzahl an erreichbaren Punkten",
+            "maxPoints": {
+                "title": "Erreichbare Punktzahl",
+                "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
+            },
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",

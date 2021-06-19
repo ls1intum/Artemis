@@ -38,6 +38,7 @@ export class Course implements BaseEntity {
     public posts?: Post[];
     public requestMoreFeedbackEnabled?: boolean;
     public maxRequestMoreFeedbackTimeDays?: number;
+    public maxPoints?: number;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;

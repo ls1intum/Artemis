@@ -129,3 +129,21 @@ export function getFirstResult(submission: Submission | undefined): Result | und
         }
     }
 }
+
+export function getFirstResultWithComplaintFromResults(results: Result[] | undefined): Result | undefined {
+    if (results) {
+        const resultsWithComplaint = results.filter((result) => result.hasComplaint);
+        if (resultsWithComplaint.length > 0) {
+            return resultsWithComplaint[0];
+        }
+    }
+}
+
+export function getFirstResultWithComplaint(submission: Submission | undefined): Result | undefined {
+    if (submission?.results) {
+        const resultsWithComplaint = submission.results.filter((result) => result.hasComplaint);
+        if (resultsWithComplaint.length > 0) {
+            return resultsWithComplaint[0];
+        }
+    }
+}

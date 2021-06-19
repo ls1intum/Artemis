@@ -190,4 +190,21 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.FORBIDDEN, httpHeaders,
                 expectedResponseHeaders);
     }
+
+    @Test
+    @WithAnonymousUser
+    public void testEmptyPasswordAttempt() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword("");
+        loginVM.setRememberMe(true);
+
+        jiraRequestMockProvider.verifyNoGetOrCreateUserJira(USERNAME);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.FORBIDDEN, httpHeaders);
+        assertThat(jwtToken).as("JWT token is not present").isNull();
+    }
 }
