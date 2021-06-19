@@ -1,5 +1,5 @@
 ***********
-Guidelines for inclusive, diversity-sensitive, and appreciative language
+Inclusive, Diversity-Sensitive, and Appreciative Language
 ***********
 
 Motivation
@@ -8,19 +8,18 @@ Motivation
 Inclusive, diversity-sensitive language is important because language influences our thoughts and assessments of reality
 and actively contributes to equality.
 It is our responsibility to design software that is aware of diverse users, contributors, and developers.
-We therefore aim for inclusive, diversity-sensitive, and appreciative language used for code, documentation, and user interaction.
+We therefore provide guidelines for inclusive, diversity-sensitive, and appreciative language used for code, documentation, and user interaction.
 
 .. note::
     This page is not meant to be an exhaustive reference.
     It rather describes some general guidelines and illustrates some best practices to follow.
-
 
 English language 
 ==================================
 
 English language is used for code, documentation, user interaction.
 
-**Best practices**
+**Best practice**
 
 * **Avoid using terms that have social history**:  Terms that can have historical significance or impact in regards to race, ethnicity, national origin, gender, age, mental and physical ability, sexual orientation, socioeconomic status, religion, and educational background.
 * **Avoid using idioms and jargons**:  These can exclude people who don’t have particular specialized knowledge, and many idioms don’t translate from country to country.  Additionally, these sometimes have origins in negative stereotypes.
@@ -45,7 +44,6 @@ English language is used for code, documentation, user interaction.
 - Middleman → middle person, mediator, liaison
 - Gendered pronouns (he/him/his, she/her/hers) → they, them, theirs
 
-
 German language
 ===================================
 
@@ -56,27 +54,27 @@ German language is mainly used for user interaction.
 * **Nutze neutrale Formulierungen**: Wenn möglich ist es empfehlenswert, neutrale Formulierungen zu finden. Neben passiven Formen, wie z.B. Studierende, können auch aktive mit „Mensch“ bzw. „Person“ etc. verwendet werden. Das spart „der/die“ und inkludiert alle Menschen unabhängig davon, welche Eigenschaften/Kategorien diese Personen sonst noch mitbringen.
 * **Beschreibe Handlungen (aktiv oder passiv)**: 
   
-  * Automatisch generierte Ergebnisse werden am Ende des Bearbeitungszeitraums erstellt. Statt „Die Studenten/Studentinnen erhalten am Ende des Bearbeitungszeitraums ein automisch generiertes Ergebnis.“)
-  * Die Anmeldung für die Klausur ist bis zum 15.12.2020 auf möglich. Statt „Jeder muss sich bis zum 15.12.2020 auf für die Klausur anmelden.“
+  * „Automatisch generierte Ergebnisse werden am Ende des Bearbeitungszeitraums erstellt“. Statt „Die Studenten/Studentinnen erhalten am Ende des Bearbeitungszeitraums ein automisch generiertes Ergebnis.“)
+  * „Die Anmeldung für die Klausur ist bis zum 15.12.2020 möglich". Statt „Jeder muss sich bis zum 15.12.2020 auf für die Klausur anmelden.“
   
-* **Spreche Personen direkt an**:
+* **Sprich Personen direkt an**:
   
-  * Bitte melde Dich bis zum 15.12.20 für die Lehrveranstaltung an. Statt „Jeder muss sich bis zum 15.12.2020 für den Workshop anmelden.“
+  * „Bitte melde Dich bis zum 15.12.20 für die Lehrveranstaltung an“. Statt „Jeder muss sich bis zum 15.12.2020 für die Lehrveranstaltung anmelden.“
 
 * **Rücke die Organisation in den Vordergrund**:
 
-  * das Lehrstuhlpersonal, Beschäftigte des Lehrstuhl, statt „die Lehrstuhlmitarbeiter/ die Lehrstuhlmitarbeiterinnen“
-  * das Organisationsteam, statt „die Organisatoren, die Organisatorinnen“
+  * „das Lehrstuhlpersonal“, „Beschäftigte des Lehrstuhl“, statt „die Lehrstuhlmitarbeiter/ die Lehrstuhlmitarbeiterinnen“
+  * „das Organisationsteam“, statt „die Organisatoren, die Organisatorinnen“
 
 * **Verwende die neutrale Pluralform**:
   
-  * die Studierenden, statt „die Studenten/ die Studentinnen“)
-  * die Lehrenden, statt „die Dozenten/ die Dozentinnen“)
+  * „die Studierenden“, statt „die Studenten/ die Studentinnen“
+  * „die Lehrenden“, statt „die Dozenten/ die Dozentinnen“
   
-* **Verwende die neutrale Pronomina**:
+* **Verwende die neutralen Pronomina**:
   
-  * niemand, statt „keiner“
-  * alle die, statt "jeder"
+  * „niemand“, statt „keiner“
+  * „alle die“, statt "jeder"
 
 **Examples** - Terms replaced in the Artemis user interface
 
@@ -89,7 +87,6 @@ German language is mainly used for user interaction.
 - Tutor / Tuturen → Tutor:innen (Pluarl), Tutor:in (Singular)
 - Prüfer → Bewertet von
 - Editoren → Editor:innen
-
 
 Sources and further material
 ============================================
