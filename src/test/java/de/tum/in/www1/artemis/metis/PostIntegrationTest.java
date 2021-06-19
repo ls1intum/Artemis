@@ -4,9 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -331,10 +329,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setContent("Content Post");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
-        String tag = "Tag";
-        Set<String> tags = new HashSet<>();
-        tags.add(tag);
-        post.setTags(tags);
+        post.addTag("Tag");
         return post;
     }
 
@@ -344,13 +339,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setVisibleForStudents(false);
         Reaction newReaction = new Reaction();
         newReaction.setEmojiId("apple");
-        List<Reaction> reactionsToUpdate = postToUpdate.getReactions();
-        reactionsToUpdate.add(newReaction);
-        postToUpdate.setReactions(reactionsToUpdate);
-        String newTag = "New Tag";
-        Set<String> tagsToUpdate = postToUpdate.getTags();
-        tagsToUpdate.add(newTag);
-        postToUpdate.setTags(tagsToUpdate);
+        postToUpdate.addReaction(newReaction);
+        postToUpdate.addTag("New Tag");
         return postToUpdate;
     }
 

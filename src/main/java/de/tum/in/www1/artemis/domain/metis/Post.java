@@ -98,12 +98,25 @@ public class Post extends Posting {
         this.votes = votes;
     }
 
+    @Override
     public List<Reaction> getReactions() {
         return reactions;
     }
 
+    @Override
     public void setReactions(List<Reaction> reactions) {
         this.reactions = reactions;
+    }
+
+    @Override
+    public void addReaction(Reaction reaction) {
+        this.reactions.add(reaction);
+    }
+
+    @Override
+    public void removeReaction(Reaction reaction) {
+        this.reactions.remove(reaction);
+
     }
 
     public Set<AnswerPost> getAnswers() {
@@ -114,12 +127,28 @@ public class Post extends Posting {
         this.answers = answerPosts;
     }
 
+    public void addAnswerPost(AnswerPost answerPost) {
+        this.answers.add(answerPost);
+    }
+
+    public void removeAnswerPost(AnswerPost answerPost) {
+        this.answers.remove(answerPost);
+    }
+
     public Set<String> getTags() {
         return tags;
     }
 
     public void setTags(Set<String> tags) {
         this.tags = tags;
+    }
+
+    public void addTag(String tag) {
+        this.tags.add(tag);
+    }
+
+    public void removeTag(String tag) {
+        this.tags.remove(tag);
     }
 
     public Exercise getExercise() {

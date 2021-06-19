@@ -87,9 +87,7 @@ public class PostResource {
         }
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        if (!post.getCourse().getId().equals(courseId)) {
-            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body that should be added");
-        }
+
         // set author to current user
         post.setAuthor(user);
         Post savedPost = postRepository.save(post);
@@ -237,7 +235,7 @@ public class PostResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/posts/:id : delete the "id" post.
+     * DELETE /courses/{courseId}/posts/:id : delete the post with {id}.
      *
      * @param courseId course the post belongs to
      * @param postId the id of the post to delete

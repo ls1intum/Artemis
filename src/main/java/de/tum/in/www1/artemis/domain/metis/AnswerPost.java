@@ -41,12 +41,25 @@ public class AnswerPost extends Posting {
         this.tutorApproved = tutorApproved;
     }
 
+    @Override
     public List<Reaction> getReactions() {
         return reactions;
     }
 
+    @Override
     public void setReactions(List<Reaction> reactions) {
         this.reactions = reactions;
+    }
+
+    @Override
+    public void addReaction(Reaction reaction) {
+        this.reactions.add(reaction);
+    }
+
+    @Override
+    public void removeReaction(Reaction reaction) {
+        this.reactions.remove(reaction);
+
     }
 
     public Post getPost() {
