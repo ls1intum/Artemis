@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
-import javax.ws.rs.BadRequestException;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -941,7 +940,7 @@ public abstract class Exercise extends DomainObject {
      * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
      * @throws BadRequestException if the dates are not valid
      */
-    public void validateDates() throws BadRequestException {
+    public void validateDates() {
         // All fields are optional, so there is no error if none of them is set
         if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
             return;
