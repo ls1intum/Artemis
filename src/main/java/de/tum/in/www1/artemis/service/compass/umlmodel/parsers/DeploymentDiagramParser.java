@@ -84,22 +84,46 @@ public class DeploymentDiagramParser {
                 umlComponentRelationshipList, new ArrayList<>(umlNodeMap.values()), new ArrayList<>(umlArtifactMap.values()));
     }
 
+    /**
+     * Parses the given JSON representation of a UML node to a UMLNode Java object.
+     *
+     * @param nodeJson the JSON object containing the node
+     * @return the UMLNode object parsed from the JSON object
+     */
     private static UMLNode parseNode(JsonObject nodeJson) {
         String nodeName = nodeJson.get(ELEMENT_NAME).getAsString();
         String stereotypeName = nodeJson.get(STEREOTYPE_NAME).getAsString();
         return new UMLNode(nodeName, stereotypeName, nodeJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML artifact to a UMLArtifact Java object.
+     *
+     * @param artifactJson the JSON object containing the artifact
+     * @return the UMLArtifact object parsed from the JSON object
+     */
     private static UMLArtifact parseArtifact(JsonObject artifactJson) {
         String artifactName = artifactJson.get(ELEMENT_NAME).getAsString();
         return new UMLArtifact(artifactName, artifactJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML deployment interface to a UMLDeploymentInterface Java object.
+     *
+     * @param componentInterfaceJson the JSON object containing the deployment interface
+     * @return the UMLDeploymentInterface object parsed from the JSON object
+     */
     protected static UMLDeploymentInterface parseComponentInterface(JsonObject componentInterfaceJson) {
         String componentInterfaceName = componentInterfaceJson.get(ELEMENT_NAME).getAsString();
         return new UMLDeploymentInterface(componentInterfaceName, componentInterfaceJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML component to a UMLDeploymentComponent Java object.
+     *
+     * @param componentJson the JSON object containing the component
+     * @return the UMLDeploymentComponent object parsed from the JSON object
+     */
     protected static UMLDeploymentComponent parseComponent(JsonObject componentJson) {
         String componentName = componentJson.get(ELEMENT_NAME).getAsString();
         return new UMLDeploymentComponent(componentName, componentJson.get(ELEMENT_ID).getAsString());

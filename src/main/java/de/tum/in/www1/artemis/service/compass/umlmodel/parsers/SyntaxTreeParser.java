@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
 
 import java.io.IOException;
 import java.util.*;
@@ -65,11 +64,23 @@ public class SyntaxTreeParser {
         return new SyntaxTree(modelSubmissionId, List.copyOf(nonterminalMap.values()), List.copyOf(terminalMap.values()), syntaxTreeLinkList);
     }
 
+    /**
+     * Parses the given JSON representation of a UML terminal to a SyntaxTreeTerminal Java object.
+     *
+     * @param componentJson the JSON object containing the terminal
+     * @return the SyntaxTreeTerminal object parsed from the JSON object
+     */
     private static SyntaxTreeTerminal parseTerminal(JsonObject componentJson) {
         String name = componentJson.get(ELEMENT_NAME).getAsString();
         return new SyntaxTreeTerminal(name, componentJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML nonterminal to a SyntaxTreeNonterminal Java object.
+     *
+     * @param componentJson the JSON object containing the nonterminal
+     * @return the SyntaxTreeNonterminal object parsed from the JSON object
+     */
     private static SyntaxTreeNonterminal parseNonterminal(JsonObject componentJson) {
         String name = componentJson.get(ELEMENT_NAME).getAsString();
         return new SyntaxTreeNonterminal(name, componentJson.get(ELEMENT_ID).getAsString());

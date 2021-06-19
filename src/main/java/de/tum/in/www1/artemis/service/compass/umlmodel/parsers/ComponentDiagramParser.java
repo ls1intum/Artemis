@@ -73,6 +73,13 @@ public class ComponentDiagramParser {
                 umlComponentRelationshipList);
     }
 
+    /**
+     * Parses the given JSON representation of a UML component interface to a UMLComponentInterface Java object.
+     *
+     * @param relationshipJson the JSON object containing the component interface
+     * @param allUmlElementsMap the JSON object containing the component interface
+     * @return the UMLComponentInterface object parsed from the JSON object
+     */
     protected static Optional<UMLComponentRelationship> parseComponentRelationship(JsonObject relationshipJson, Map<String, UMLElement> allUmlElementsMap) throws IOException {
 
         String relationshipType = relationshipJson.get(RELATIONSHIP_TYPE).getAsString();
@@ -95,16 +102,35 @@ public class ComponentDiagramParser {
         }
     }
 
+    /**
+     * Parses the given JSON representation of a UML component interface to a UMLComponentInterface Java object.
+     *
+     * @param componentInterfaceJson the JSON object containing the component interface
+     * @return the UMLComponentInterface object parsed from the JSON object
+     */
     protected static UMLComponentInterface parseComponentInterface(JsonObject componentInterfaceJson) {
         String componentInterfaceName = componentInterfaceJson.get(ELEMENT_NAME).getAsString();
         return new UMLComponentInterface(componentInterfaceName, componentInterfaceJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML component to a UMLComponent Java object.
+     *
+     * @param componentJson the JSON object containing the component
+     * @return the UMLComponent object parsed from the JSON object
+     */
     protected static UMLComponent parseComponent(JsonObject componentJson) {
         String componentName = componentJson.get(ELEMENT_NAME).getAsString();
         return new UMLComponent(componentName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Finds the owner element of relationship and sets parent of relationship to that element
+     *
+     * @param allUmlElementsMap map of uml elements and ids to find owner element
+     * @param ownerRelationships map of uml elements and ids of their owners
+     * @return the UMLComponent object parsed from the JSON object
+     */
     protected static void resolveParentComponent(Map<String, UMLElement> allUmlElementsMap, Map<UMLElement, String> ownerRelationships) {
         for (var ownerEntry : ownerRelationships.entrySet()) {
             String ownerId = ownerEntry.getValue();
@@ -114,6 +140,14 @@ public class ComponentDiagramParser {
         }
     }
 
+    /**
+     * Gets the owner id from element's json object and puts it into a relationship map
+     *
+     * @param ownerRelationships map of uml relationship elements and their ids
+     * @param jsonObject json representation of element
+     * @param umlElement uml element
+     * @return the UMLComponent object parsed from the JSON object
+     */
     protected static void findOwner(Map<UMLElement, String> ownerRelationships, JsonObject jsonObject, UMLElement umlElement) {
         if (jsonObject.has(ELEMENT_OWNER) && !jsonObject.get(ELEMENT_OWNER).isJsonNull()) {
             String ownerId = jsonObject.get(ELEMENT_OWNER).getAsString();

@@ -42,6 +42,12 @@ public class ObjectDiagramParser {
         return new UMLObjectDiagram(modelSubmissionId, new ArrayList<>(umlObjectMap.values()), umlObjectLinkList);
     }
 
+    /**
+     * Parses the given JSON representation of a UML object list to a UMLObject Java map.
+     *
+     * @param modelElements a JSON array containing all the model elements of the corresponding UML object diagram as JSON objects
+     * @return the UMLObject map parsed from the JSON array
+     */
     @NotNull
     public static Map<String, UMLObject> parseUMLObjects(JsonArray modelElements) {
         Map<String, UMLObject> umlObjectMap = new HashMap<>();
@@ -61,7 +67,7 @@ public class ObjectDiagramParser {
      * Parses the given JSON representation of a UML object to a UMLObject Java object.
      *
      * @param objectJson the JSON object containing the UML object
-     * @param modelElements a JSON array containing all the model elements of the corresponding UML class diagram as JSON objects
+     * @param modelElements a JSON array containing all the model elements of the corresponding UML object diagram as JSON objects
      * @return the UMLObject object parsed from the JSON object
      */
     private static UMLObject parseObject(JsonObject objectJson, JsonArray modelElements) {
@@ -94,16 +100,30 @@ public class ObjectDiagramParser {
         }
     }
 
+    /**
+     * Parses the given JSON representation of a UML elements to a UMLObjectAttribute list Java object.
+     *
+     * @param objectJson the JSON object containing the UML object
+     * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
+     * @return the list of UMLObjectAttribute parsed from the JSON object map
+     */
     @NotNull
-    protected static List<UMLObjectAttribute> parseUmlAttributes(JsonObject classJson, Map<String, JsonObject> jsonElementMap) {
+    protected static List<UMLObjectAttribute> parseUmlAttributes(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLObjectAttribute> umlAttributesList = new ArrayList<>();
-        for (JsonElement attributeId : classJson.getAsJsonArray(ELEMENT_ATTRIBUTES)) {
+        for (JsonElement attributeId : objectJson.getAsJsonArray(ELEMENT_ATTRIBUTES)) {
             UMLObjectAttribute newAttr = parseAttribute(jsonElementMap.get(attributeId.getAsString()));
             umlAttributesList.add(newAttr);
         }
         return umlAttributesList;
     }
 
+    /**
+     * Parses the given JSON representation of a UML elements to a UMLObjectMethod list Java object.
+     *
+     * @param objectJson the JSON object containing the UML object
+     * @param jsonElementMap a map containing all the model elements and their ids of the corresponding UML object diagram as JSON objects
+     * @return the list of UMLObjectMethod parsed from the JSON object map
+     */
     @NotNull
     protected static List<UMLObjectMethod> parseUmlMethods(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLObjectMethod> umlMethodList = new ArrayList<>();
@@ -115,10 +135,10 @@ public class ObjectDiagramParser {
     }
 
     /**
-     * Parses the given JSON representation of a UML attribute to a UMLAttribute Java object.
+     * Parses the given JSON representation of a UML attribute to a UMLObjectAttribute Java object.
      *
      * @param attributeJson the JSON object containing the attribute
-     * @return the UMLAttribute object parsed from the JSON object
+     * @return the UMLObjectAttribute object parsed from the JSON object
      */
     private static UMLObjectAttribute parseAttribute(JsonObject attributeJson) {
         String[] attributeNameArray = attributeJson.get(ELEMENT_NAME).getAsString().replaceAll("\\s+", "").split(":");
@@ -133,10 +153,10 @@ public class ObjectDiagramParser {
     }
 
     /**
-     * Parses the given JSON representation of a UML method to a UMLMethod Java object.
+     * Parses the given JSON representation of a UML method to a UMLObjectMethod Java object.
      *
      * @param methodJson the JSON object containing the method
-     * @return the UMLMethod object parsed from the JSON object
+     * @return the UMLObjectMethod object parsed from the JSON object
      */
     private static UMLObjectMethod parseMethod(JsonObject methodJson) {
         String completeMethodName = methodJson.get(ELEMENT_NAME).getAsString();

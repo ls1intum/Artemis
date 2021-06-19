@@ -64,6 +64,12 @@ public class PetriNetParser {
         return new PetriNet(modelSubmissionId, List.copyOf(places.values()), List.copyOf(transitions.values()), arcs);
     }
 
+    /**
+     * Parses the given JSON representation of a UML petri net place to a PetriNetPlace Java object.
+     *
+     * @param componentJson the JSON object containing the petri net place
+     * @return the PetriNetPlace object parsed from the JSON object
+     */
     private static PetriNetPlace parsePetriNetPlace(JsonObject componentJson) {
         String name = componentJson.get(ELEMENT_NAME).getAsString();
         String amountOfTokens = componentJson.get("amountOfTokens").getAsString();
@@ -71,6 +77,12 @@ public class PetriNetParser {
         return new PetriNetPlace(name, amountOfTokens, capacity, componentJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML petri net transition to a PetriNetTransition Java object.
+     *
+     * @param componentJson the JSON object containing the petri net transition
+     * @return the PetriNetTransition object parsed from the JSON object
+     */
     private static PetriNetTransition parsePetriNetTransition(JsonObject componentJson) {
         String name = componentJson.get(ELEMENT_NAME).getAsString();
         return new PetriNetTransition(name, componentJson.get(ELEMENT_ID).getAsString());

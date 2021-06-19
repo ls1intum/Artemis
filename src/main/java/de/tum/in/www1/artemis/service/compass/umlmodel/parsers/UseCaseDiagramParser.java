@@ -84,6 +84,14 @@ public class UseCaseDiagramParser {
                 new ArrayList<>(umlUseCaseMap.values()), umlUseCaseAssociationList);
     }
 
+    /**
+     * Parses the given JSON representation of a UML relationship to a UMLUseCaseAssociation Java object.
+     *
+     * @param relationshipJson the JSON object containing the relationship
+     * @param allUmlElementsMap a map containing all objects of the corresponding use case diagram, necessary for assigning source and target element of the relationships
+     * @return the UMLUseCaseAssociation object parsed from the JSON object
+     * @throws IOException when no object could be found in the allUmlElementsMap for the source and target ID in the JSON object
+     */
     private static Optional<UMLUseCaseAssociation> parseUseCaseAssociation(JsonObject relationshipJson, Map<String, UMLElement> allUmlElementsMap) throws IOException {
 
         String relationshipType = relationshipJson.get(RELATIONSHIP_TYPE).getAsString();
@@ -111,16 +119,34 @@ public class UseCaseDiagramParser {
         }
     }
 
+    /**
+     * Parses the given JSON representation of a UML system boundary to a UMLSystemBoundary Java object.
+     *
+     * @param componentJson the JSON object containing the system boundary
+     * @return the UMLSystemBoundary object parsed from the JSON object
+     */
     private static UMLSystemBoundary parseSystemBoundary(JsonObject componentJson) {
         String systemBoundaryName = componentJson.get(ELEMENT_NAME).getAsString();
         return new UMLSystemBoundary(systemBoundaryName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML actor to a UMLActor Java object.
+     *
+     * @param componentJson the JSON object containing the actor
+     * @return the UMLActor object parsed from the JSON object
+     */
     private static UMLActor parseActor(JsonObject componentJson) {
         String actorName = componentJson.get(ELEMENT_NAME).getAsString();
         return new UMLActor(actorName, componentJson.get(ELEMENT_ID).getAsString());
     }
 
+    /**
+     * Parses the given JSON representation of a UML use case to a UMLUseCase Java object.
+     *
+     * @param componentJson the JSON object containing the use case
+     * @return the UMLUseCase object parsed from the JSON object
+     */
     private static UMLUseCase parseUseCase(JsonObject componentJson) {
         String useCaseName = componentJson.get(ELEMENT_NAME).getAsString();
         return new UMLUseCase(useCaseName, componentJson.get(ELEMENT_ID).getAsString());

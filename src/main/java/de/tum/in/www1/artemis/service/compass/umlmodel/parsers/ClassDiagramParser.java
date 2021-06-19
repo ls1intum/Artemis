@@ -160,6 +160,13 @@ public class ClassDiagramParser {
         }
     }
 
+    /**
+     * Finds the ids of attributes in JSON representation of model and matches them to elements in map and returns the list of UMLAttribute Java objects
+     *
+     * @param classJson the json representation of model
+     * @param jsonElementMap map of element ids and elements in the model
+     * @return the list of UMLAttribute java objects
+     */
     @NotNull
     protected static List<UMLAttribute> parseUmlAttributes(JsonObject classJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLAttribute> umlAttributesList = new ArrayList<>();
@@ -170,6 +177,13 @@ public class ClassDiagramParser {
         return umlAttributesList;
     }
 
+    /**
+     * Finds the ids of methods in JSON representation of model and matches them to elements in map and returns the list of UMLMethod Java objects
+     *
+     * @param objectJson the json representation of model
+     * @param jsonElementMap map of element ids and elements in the model
+     * @return the list of UMLMethod Java objects
+     */
     @NotNull
     protected static List<UMLMethod> parseUmlMethods(JsonObject objectJson, Map<String, JsonObject> jsonElementMap) {
         List<UMLMethod> umlMethodList = new ArrayList<>();

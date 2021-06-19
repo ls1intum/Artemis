@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
-import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.ELEMENT_ID;
 
 import java.io.IOException;
 import java.util.ArrayList;
