@@ -100,4 +100,28 @@ describe('GradeKeyOverviewComponent', () => {
         tick();
         expect(windowSpy).toHaveBeenCalled();
     }));
+
+    it('should properly determine that points are not set', () => {
+        comp.gradeSteps = gradeStepsDto.gradeSteps;
+
+        expect(comp.hasPointsSet()).toEqual(false);
+    });
+
+    it('should properly determine that points are set', () => {
+        const gradeStepWithPoints1 = Object.assign({}, gradeStep1);
+        gradeStepWithPoints1.lowerBoundPoints = 0;
+        gradeStepWithPoints1.upperBoundPoints = 50;
+        const gradeStepWithPoints2 = Object.assign({}, gradeStep2);
+        gradeStepWithPoints2.lowerBoundPoints = 50;
+        gradeStepWithPoints2.upperBoundPoints = 100;
+        comp.gradeSteps = [gradeStepWithPoints1, gradeStepWithPoints2];
+
+        expect(comp.hasPointsSet()).toEqual(true);
+    });
+
+    it('should round correctly', () => {
+        expect(comp.round(undefined)).toBeUndefined();
+        expect(comp.round(5)).toEqual(5);
+        expect(comp.round(3.33333333333333333)).toEqual(3.33);
+    });
 });

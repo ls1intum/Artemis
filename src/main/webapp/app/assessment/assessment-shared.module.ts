@@ -21,6 +21,7 @@ import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 
@@ -33,6 +34,7 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisMarkdownModule,
+        ArtemisGradingInstructionLinkIconModule,
     ],
     declarations: [
         AssessmentHeaderComponent,

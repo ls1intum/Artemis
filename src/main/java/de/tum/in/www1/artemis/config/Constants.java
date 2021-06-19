@@ -7,6 +7,15 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
+    // NOTE: those 4 values have to be the same as in app.constants.ts
+    public static final int USERNAME_MIN_LENGTH = 4;
+
+    public static final int USERNAME_MAX_LENGTH = 50;
+
+    public static final int PASSWORD_MIN_LENGTH = 4;
+
+    public static final int PASSWORD_MAX_LENGTH = 50;
+
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 1440; // 24h
 
     public static int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
