@@ -103,7 +103,8 @@ public class FileUploadExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
         }
 
-        exerciseService.validateScoreSettings(fileUploadExercise);
+        // validates general settings: points, dates
+        exerciseService.validateGeneralSettings(fileUploadExercise);
 
         // Validate the new file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
@@ -178,7 +179,8 @@ public class FileUploadExerciseResource {
 
         // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
-        exerciseService.validateScoreSettings(fileUploadExercise);
+        // validates general settings: points, dates
+        exerciseService.validateGeneralSettings(fileUploadExercise);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);

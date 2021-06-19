@@ -772,6 +772,11 @@ public class ExerciseService {
         }
     }
 
+    public void validateGeneralSettings(Exercise exercise) {
+        validateScoreSettings(exercise);
+        exercise.validateDates();
+    }
+
     /**
      * Validates score settings
      * 1. The maxScore needs to be greater than 0

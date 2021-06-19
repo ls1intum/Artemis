@@ -107,8 +107,8 @@
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam">
-                        Number of correction rounds in Exam</label
-                    >
+                        Number of correction rounds in Exam
+                    </label>
                     <input
                         id="numberOfCorrectionRoundsInExam"
                         name="numberOfCorrectionRoundsInExam"
@@ -123,7 +123,13 @@
 
             <div class="row mb-3">
                 <div class="col-sm-6">
-                    <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints">Maximum Number of Points in Exam</label>
+                    <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
+                    <fa-icon
+                        [icon]="'exclamation-triangle'"
+                        class="text-warning"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"
+                    ></fa-icon>
                     <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.maxPoints" />
                 </div>
                 <div class="col-sm-6">
