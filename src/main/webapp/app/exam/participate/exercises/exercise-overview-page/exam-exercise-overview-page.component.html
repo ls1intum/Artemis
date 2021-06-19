@@ -21,11 +21,6 @@
                         {{ 'artemisApp.examParticipation.exerciseName' | artemisTranslate }}
                     </span>
                 </th>
-                <th>
-                    <span>
-                        {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}
-                    </span>
-                </th>
             </tr>
         </thead>
         <tbody>
@@ -37,10 +32,9 @@
                     <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
                 </td>
                 <td style="max-width: 100px; font-weight: bold">
-                    <div>{{ exercise.title }}</div>
-                </td>
-                <td style="max-width: 30px">
-                    <div>{{ exercise.maxPoints }}</div>
+                    <button class="btn btn-secondary w-100" (click)="openExercise(exercise)">
+                        {{ exercise.title }}
+                    </button>
                 </td>
             </tr>
         </tbody>
