@@ -16,15 +16,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 
 public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ReactionRepository reactionRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -56,7 +66,8 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateReactionPost() throws Exception {
+    public void testCreateOwnPostReaction() throws Exception {
+        // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
 
@@ -67,13 +78,160 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateReactionAnswerPost() throws Exception {
+    public void testCreateOwnAnswerPostReaction() throws Exception {
+        // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
         assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPost_Id(answerPostReactedOn.getId()).size());
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testCreatePostReactions() throws Exception {
+        // student 1 is the author of the post and student 2 reacts on this post
+        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
+
+        Reaction createdFirstReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
+                HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnAnswerPost, createdFirstReaction);
+        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPost_Id(answerPostReactedOn.getId()).size());
+
+        // student 2 reacts again on this answer post
+        reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
+        // change the emojiId to react differently
+        reactionToSaveOnAnswerPost.setEmojiId("cry");
+
+        Reaction createdSecondReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
+                HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnAnswerPost, createdSecondReaction);
+        assertThat(answerPostReactedOn.getReactions().size() + 2).isEqualTo(reactionRepository.findReactionsByAnswerPost_Id(answerPostReactedOn.getId()).size());
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testCreateAnswerPostReactions() throws Exception {
+        // student 1 is the author of the answer post and student 2 reacts on this answer post
+        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
+
+        Reaction createdFirstReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
+                HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnAnswerPost, createdFirstReaction);
+        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPost_Id(answerPostReactedOn.getId()).size());
+
+        // student 2 reacts again on this answer post
+        reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
+        // change the emojiId to react differently
+        reactionToSaveOnAnswerPost.setEmojiId("cry");
+
+        Reaction createdSecondReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
+                HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnAnswerPost, createdSecondReaction);
+        assertThat(answerPostReactedOn.getReactions().size() + 2).isEqualTo(reactionRepository.findReactionsByAnswerPost_Id(answerPostReactedOn.getId()).size());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreatePostWithWrongCourseIdReaction() throws Exception {
+        Course dummyCourse = database.createCourse();
+        Post postToReactOn = existingPostsWithAnswers.get(0);
+        Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
+
+        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + dummyCourse.getId() + "/postings/reactions", reactionToSaveOnPost, Reaction.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(createdReaction).isNull();
+        assertThat(postToReactOn.getReactions().size()).isEqualTo(postRepository.findById(postToReactOn.getId()).get().getReactions().size());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateExistingReaction() throws Exception {
+        // student 1 is the author of the answer post and reacts on this answer post
+        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
+
+        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", createdReaction, Reaction.class, HttpStatus.BAD_REQUEST);
+        checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
+        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPost_Id(answerPostReactedOn.getId()).size());
+    }
+
+    // DELETE
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDeleteOwnPostReaction() throws Exception {
+        // student 1 is the author of the post and reacts on this post
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
+
+        Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
+
+        // student 1 deletes their reaction on this post
+        request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
+
+        assertThat(postReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPost_Id(postReactedOn.getId()).size());
+        assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDeleteOwnAnswerPostReaction() throws Exception {
+        // student 1 is the author of the post and reacts on this post
+        AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
+        Reaction reactionToSaveOnPost = createReactionOnAnswerPost(answerPostReactedOn);
+
+        Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
+
+        // student 1 deletes their reaction on this post
+        request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
+
+        assertThat(answerPostReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPost_Id(answerPostReactedOn.getId()).size());
+        assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDeletePostReactionOfOthers() throws Exception {
+        // student 1 is the author of the post and student 2 reacts on this post
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn, "student2");
+
+        // student 1 wants to delete the reaction of student 2
+        request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionSaveOnPost.getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(postReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByPost_Id(postReactedOn.getId()).size());
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testDeletePostReactionWithWrongCourseId() throws Exception {
+        Course dummyCourse = database.createCourse();
+        Post postToReactOn = existingPostsWithAnswers.get(0);
+        Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
+
+        request.delete("/api/courses/" + dummyCourse.getCourseIcon() + "/postings/reactions/" + reactionToSaveOnPost.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(postToReactOn.getReactions().size()).isEqualTo(postRepository.findById(postToReactOn.getId()).get().getReactions().size());
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testDeletePostReaction() throws Exception {
+        // student 1 is the author of the post and student 2 reacts on this post
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
+
+        Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
+
+        // student 2 deletes their reaction on this post
+        request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
+
+        assertThat(postReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPost_Id(postReactedOn.getId()).size());
+        assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 
     // HELPER METHODS
@@ -84,6 +242,18 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         reaction.setPost(postReactedOn);
         return reaction;
+    }
+
+    private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn, String username) {
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId("smiley");
+        reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
+        reaction.setPost(postReactedOn);
+        Reaction savedReaction = reactionRepository.save(reaction);
+        User user = this.userRepository.getUserWithGroupsAndAuthorities(username);
+        savedReaction.setUser(user);
+        reactionRepository.save(savedReaction);
+        return savedReaction;
     }
 
     private Reaction createReactionOnAnswerPost(AnswerPost answerPostReactedOn) {
