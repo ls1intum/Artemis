@@ -13,7 +13,7 @@
 - [ ] Client: I added `authorities` to all new routes and check the course groups for displaying navigation elements (links, buttons)
 - [ ] Client: I documented the TypeScript code using JSDoc style.
 - [ ] Client: I added multiple screenshots/screencasts of my UI changes
-- [ ] Client: I translated all the newly inserted strings into English and German
+- [ ] Client: I translated all newly inserted strings into English and German.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://artemis-platform.readthedocs.io/en/latest/dev/guidelines/language-guidelines.html))
 
 ### Motivation and Context
