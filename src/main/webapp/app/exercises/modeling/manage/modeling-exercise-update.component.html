@@ -180,6 +180,7 @@
             <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="modelingExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group">
+            <span jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</span>
             <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="exampleSolution" [withExplanation]="false"></jhi-modeling-editor>
         </div>
         <div *ngIf="!isImport" class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
