@@ -19,7 +19,7 @@ English language
 
 The English language is used for code, documentation, user interaction.
 
-**Best practice**
+**Best practices**
 
 * **Avoid using terms that have social history**:  Terms that can have historical significance or impact in regards to race, ethnicity, national origin, gender, age, mental and physical ability, sexual orientation, socioeconomic status, religion, and educational background.
 * **Avoid using idioms and jargons**:  These can exclude people who don’t have particular specialized knowledge, and many idioms don’t translate from country to country.  Additionally, these sometimes have origins in negative stereotypes.
