@@ -631,9 +631,6 @@ public class GitService {
             git.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
             log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURL().toString());
 
-            log.error("UNIQUE MESSAGE1");
-            log.error(targetRepo.getConfig().toText());
-
             if (!defaultBranch.equals(oldBranch)) {
                 targetRepo.getConfig().unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, oldBranch);
                 git.branchRename().setNewName(defaultBranch).setOldName(oldBranch).call();

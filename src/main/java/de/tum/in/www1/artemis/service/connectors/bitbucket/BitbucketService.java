@@ -550,8 +550,6 @@ public class BitbucketService extends AbstractVersionControlService {
 
         try {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos", HttpMethod.POST, entity, Void.class);
-            log.error("UNIQUE MESSAGE0");
-            log.error(getDefaultBranchOfRepository(projectKey, repoName));
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
