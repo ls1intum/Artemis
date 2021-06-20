@@ -625,6 +625,41 @@ public class GitService {
         }
     }
 
+    public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl, String oldBranch) throws GitAPIException {
+        try (Git git = new Git(targetRepo)) {
+            // overwrite the old remote uri with the target uri
+            git.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
+            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURL().toString());
+
+            log.error("UNIQUE MESSAGE1");
+            log.error(targetRepo.getConfig().toText());
+
+            if (!defaultBranch.equals(oldBranch)) {
+                git.branchRename().setNewName(defaultBranch).setOldName(oldBranch).call();
+
+                targetRepo.getConfig().setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, "origin");
+                targetRepo.getConfig().setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+
+                RefUpdate refUpdate = targetRepo.getRefDatabase().newUpdate(Constants.HEAD, false);
+                refUpdate.setForceUpdate(true);
+                refUpdate.link("refs/heads/" + defaultBranch);
+                // RefUpdate refUpdate1 = targetRepo.getRefDatabase().newUpdate(Constants.FETCH_HEAD, false);
+                // refUpdate1.setForceUpdate(true);
+                git.checkout().setName(defaultBranch).call();
+                git.fetch().call();
+            }
+
+            log.error("UNIQUE MESSAGE2");
+            log.error(targetRepo.getConfig().toText());
+
+            // push the source content to the new remote
+            git.push().setTransportConfigCallback(sshCallback).call();
+        }
+        catch (URISyntaxException | IOException e) {
+            log.error("Error while pushing to remote target: ", e);
+        }
+    }
+
     /**
      * Stage all files in the repo including new files.
      *
