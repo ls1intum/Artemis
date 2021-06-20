@@ -15,7 +15,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Path localPath;
 
-    private VcsRepositoryUrl remoteRepositoryUrl;
+    private final VcsRepositoryUrl remoteRepositoryUrl;
 
     private Map<File, FileType> filesAndFolders;
 

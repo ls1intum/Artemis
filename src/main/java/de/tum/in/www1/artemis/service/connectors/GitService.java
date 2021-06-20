@@ -402,12 +402,12 @@ public class GitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                Git result = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
-                result.close();
+                Git git = Git.cloneRepository().setTransportConfigCallback(sshCallback).setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
+                git.close();
             }
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
-                // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
+                // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
                 FileUtils.deleteQuietly(localPath.toFile());
                 throw new GitException(e);
             }
@@ -480,7 +480,11 @@ public class GitService {
             // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
             // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
             // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-            repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+            StoredConfig gitRepoConfig = repository.getConfig();
+            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            // disable symlinks to avoid security issues such as remote code execution
+            gitRepoConfig.save();
             // Cache the JGit repository object for later use: avoids the expensive re-opening of local repositories
             cachedRepositories.put(localPath, repository);
             return repository;
@@ -878,6 +882,26 @@ public class GitService {
 
             while (itr.hasNext()) {
                 File nextFile = new File(itr.next(), repo);
+                Path nextPath = nextFile.toPath();
+
+                // filter out symlinks
+                // cannot use Files.isSymbolicLink(nextFile) as this will not detect children of symlink dirs
+                try {
+                    // A symbolic link would resolve a different path here
+                    Path realPath = nextPath.toRealPath();
+                    // cannot use realPath.equals(nextPath) as it will resolve symlinks
+                    if (!realPath.toString().equals(nextPath.toString())) {
+                        log.warn("Found a symlink {} in the git repository {}. Do not allow access!", realPath, repo);
+                        // file is a symlink or a child of a symlink, do not allow access
+                        continue;
+                    }
+                }
+                catch (IOException e) {
+                    log.warn("Something's wrong with the file {} in the git repository {}. Do not allow access!", nextPath, repo);
+                    // something's wrong with this file, do not allow access
+                    continue;
+                }
+
                 // Files starting with a '.' are not marked as hidden in Windows. WE must exclude these
                 if (nextFile.getName().charAt(0) != '.') {
                     files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
