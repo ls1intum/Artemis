@@ -498,6 +498,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private initializeExercise(exercise: Exercise) {
         this.activeExamPage.isOverviewPage = false;
         this.activeExamPage.exercise = exercise;
+        // set current exercise Index
+        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
 
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
