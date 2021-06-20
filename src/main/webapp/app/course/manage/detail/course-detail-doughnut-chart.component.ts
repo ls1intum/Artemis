@@ -28,16 +28,20 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     doughnutChartType: ChartType = 'doughnut';
     doughnutChartColors: any[] = ['limegreen', 'red'];
     doughnutChartLabels: string[] = ['Done', 'Not Done'];
-    totalScoreOptions: object = {
-        cutoutPercentage: 75,
-        scaleShowVerticalLines: false,
+    totalScoreOptions: any = {
+        cutout: '75%',
         responsive: false,
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
-            callbacks: {
-                label(tooltipItem: any, data: any) {
-                    const value = data['datasets'][0]['data'][tooltipItem['index']];
-                    return '' + (value === -1 ? 0 : value);
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 1)',
+                callbacks: {
+                    label(context: any) {
+                        const value = context['dataset']['data'][context['dataIndex']];
+                        return '' + (value === -1 ? 0 : value);
+                    },
                 },
             },
         },
