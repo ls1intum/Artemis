@@ -39,8 +39,10 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
                 backgroundColor: 'rgba(0, 0, 0, 1)',
                 callbacks: {
                     label(context: any) {
-                        const value = context['dataset']['data'][context['dataIndex']];
-                        return '' + (value === -1 ? 0 : value);
+                        if (context && context['dataset'] && context['dataset'] && context['dataset']['data']) {
+                            const value = context['dataset']['data'][context['dataIndex']];
+                            return '' + (value === -1 ? 0 : value);
+                        }
                     },
                 },
             },

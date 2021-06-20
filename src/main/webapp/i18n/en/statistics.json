@@ -72,8 +72,8 @@
     },
     "exercise-statistics": {
         "title": "Exercise statistics",
-        "averageScore": "Average Score",
+        "averageScore": "Average score",
         "participationRate": "Participation rate",
-        "answered_posts": "Replied Posts"
+        "answered_posts": "Replied posts"
     }
 }

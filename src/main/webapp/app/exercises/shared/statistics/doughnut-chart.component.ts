@@ -32,18 +32,21 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     doughnutChartColors: any[] = ['limegreen', 'red'];
     doughnutChartLabels: string[] = ['Done', 'Not Done'];
     totalScoreOptions: object = {
-        cutoutPercentage: 75,
-        scaleShowVerticalLines: false,
+        cutout: '75%',
         responsive: false,
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
-            callbacks: {
-                label(tooltipItem: any, data: any) {
-                    if (data && data['datasets'] && data['datasets'][0] && data['datasets'][0]['data']) {
-                        const value = data['datasets'][0]['data'][tooltipItem['index']];
-                        return '' + (value === -1 ? 0 : value);
-                    }
-                    return '';
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 1)',
+                callbacks: {
+                    label(context: any) {
+                        if (context && context['dataset'] && context['dataset'] && context['dataset']['data']) {
+                            const value = context['dataset']['data'][context['dataIndex']];
+                            return '' + (value === -1 ? 0 : value);
+                        }
+                    },
                 },
             },
         },
