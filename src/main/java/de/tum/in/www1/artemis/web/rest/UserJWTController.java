@@ -60,8 +60,8 @@ public class UserJWTController {
     @PostMapping("/authenticate")
     public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent) {
 
-        final var username = loginVM.getUsername();
-        final var password = loginVM.getPassword();
+        var username = loginVM.getUsername();
+        var password = loginVM.getPassword();
         SecurityUtils.checkUsernameAndPasswordValidity(username, password);
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
