@@ -91,7 +91,7 @@ German language is mainly used for user interaction.
 Sources and further material
 ============================================
 
-Following sources were used when creating these guidelines.
+The following sources were used when creating these guidelines.
 They provide detailed information on this topic and therefore can and should serve as further orientation.
 
 * `Inclusive Language in Technology, Academy Software Foundation <https://www.aswf.io/blog/inclusive-language/>`_
