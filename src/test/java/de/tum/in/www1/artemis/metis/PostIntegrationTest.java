@@ -17,7 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 
 public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -337,9 +336,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setTitle("New Title");
         postToUpdate.setContent("New Test Post");
         postToUpdate.setVisibleForStudents(false);
-        Reaction newReaction = new Reaction();
-        newReaction.setEmojiId("apple");
-        postToUpdate.addReaction(newReaction);
         postToUpdate.addTag("New Tag");
         return postToUpdate;
     }

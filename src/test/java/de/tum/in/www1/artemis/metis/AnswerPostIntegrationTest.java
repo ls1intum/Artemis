@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
 public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -171,7 +170,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testEditAnswerPost_asTutor() throws Exception {
         // update post of student1 (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingPostsWithAnswers.get(0));
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class, HttpStatus.OK);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
@@ -181,7 +180,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student1", roles = "USER")
     public void testEditAnswerPost_asStudent1() throws Exception {
         // update own post (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingPostsWithAnswers.get(0));
+        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToUpdate, AnswerPost.class, HttpStatus.OK);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
@@ -191,7 +190,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student2", roles = "USER")
     public void testEditAnswerPost_asStudent2() throws Exception {
         // update post from another student (index 1)--> forbidden
-        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingPostsWithAnswers.get(0));
+        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
 
         AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostNotToUpdate, AnswerPost.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedAnswerPost).isNull();
@@ -294,13 +293,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         return answerPost;
     }
 
-    private AnswerPost editExistingAnswerPost(Post postToUpdate) {
-        AnswerPost answerPostToUpdate = postToUpdate.getAnswers().stream().findFirst().orElse(null);
+    private AnswerPost editExistingAnswerPost(AnswerPost answerPostToUpdate) {
         answerPostToUpdate.setContent("New Test Answer Post");
-        Reaction newReaction = new Reaction();
-        newReaction.setEmojiId("apple");
-        newReaction.setPost(postToUpdate);
-        postToUpdate.addReaction(newReaction);
         return answerPostToUpdate;
     }
 
