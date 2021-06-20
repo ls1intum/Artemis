@@ -47,7 +47,7 @@ The English language is used for code, documentation, user interaction.
 German language
 ===================================
 
-German language is mainly used for user interaction.
+The German language is mainly used for user interaction.
 
 **Best practice** (written in German for demonstration purposes)
 
