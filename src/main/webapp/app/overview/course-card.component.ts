@@ -40,13 +40,16 @@ export class CourseCardComponent implements OnChanges {
             backgroundColor: this.doughnutChartColors,
         },
     ];
-    totalScoreOptions: object = {
-        animation: false,
-        cutoutPercentage: 75,
-        scaleShowVerticalLines: false,
+    totalScoreOptions: any = {
+        cutout: '75%',
         responsive: false,
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 1)',
+            },
         },
     };
 
