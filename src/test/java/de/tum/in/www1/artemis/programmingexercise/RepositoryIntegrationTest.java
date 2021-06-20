@@ -144,16 +144,24 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(eq(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl()), eq(true), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl()), eq(true), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl()), eq(false), any());
 
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), true);
-
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), false);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
+
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.mockDefaultBranch("master", "folders");
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
