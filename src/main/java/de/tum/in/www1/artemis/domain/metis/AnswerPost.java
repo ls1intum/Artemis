@@ -26,7 +26,7 @@ public class AnswerPost extends Posting {
     private Boolean tutorApproved;
 
     // To be used with introduction of Metis
-    @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Reaction> reactions = new ArrayList<>();
 
     @ManyToOne
