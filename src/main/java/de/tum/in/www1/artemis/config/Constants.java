@@ -205,8 +205,6 @@ public final class Constants {
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
-    public static final String HEAD = "HEAD";
-
     private Constants() {
     }
 }
