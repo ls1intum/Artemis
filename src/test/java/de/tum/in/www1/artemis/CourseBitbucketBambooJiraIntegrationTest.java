@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    CourseTestService courseTestService;
+    private CourseTestService courseTestService;
 
     @BeforeEach
     public void setup() {
@@ -115,6 +115,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseWithoutId() throws Exception {
         courseTestService.testUpdateCourseWithoutId();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
+        courseTestService.testUpdateCourseWithoutIdAsInstructor();
     }
 
     @Test
