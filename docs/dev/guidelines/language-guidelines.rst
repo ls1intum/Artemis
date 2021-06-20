@@ -63,7 +63,7 @@ German language is mainly used for user interaction.
 
 * **Rücke die Organisation in den Vordergrund**:
 
-  * „das Lehrstuhlpersonal“, „Beschäftigte des Lehrstuhl“, statt „die Lehrstuhlmitarbeiter/ die Lehrstuhlmitarbeiterinnen“
+  * „das Lehrstuhlpersonal“, „Beschäftigte des Lehrstuhls“, statt „die Lehrstuhlmitarbeiter/ die Lehrstuhlmitarbeiterinnen“
   * „das Organisationsteam“, statt „die Organisatoren, die Organisatorinnen“
 
 * **Verwende die neutrale Pluralform**:
