@@ -5,9 +5,9 @@
             "createLabel": "Create a new user",
             "createOrEditLabel": "Create or edit a user"
         },
-        "created": "A new user is created with identifier {{ param }}",
-        "updated": "An user is updated with identifier {{ param }}",
-        "deleted": "An user is deleted with identifier {{ param }}",
+        "created": "Created new user with identifier {{ param }}",
+        "updated": "Updated User with identifier {{ param }}",
+        "deleted": "Deleted User with identifier {{ param }}",
         "delete": {
             "question": "Are you sure you want to delete user <strong>{{ title }}</strong>?"
         },
@@ -20,7 +20,7 @@
         "name": "Name",
         "randomPassword": "Random password",
         "keepPassword": "Keep old password",
-        "passwordConstraints": "The password has to contain 8-100 characters!",
+        "passwordConstraints": "The password must contain 8-100 characters!",
         "groups": "Groups",
         "addGroup": "+ Group",
         "enterGroup": "Enter a group",
@@ -37,6 +37,6 @@
         "searchForUser": "Search for User: ",
         "search": "Search",
         "loading": "Loading...",
-        "searchError": "Search term must be empty or at least 3 character."
+        "searchError": "Search term must be empty or contain at least 3 characters."
     }
 }

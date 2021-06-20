@@ -83,7 +83,7 @@ describe('DoughnutChartComponent', () => {
         it('should set title for question chart', () => {
             component.contentType = DoughnutChartType.QUESTIONS;
             component.ngOnInit();
-            expect(component.doughnutChartTitle).to.deep.equal('questionsAnswered');
+            expect(component.doughnutChartTitle).to.deep.equal('answered_posts');
             expect(component.titleLink).to.deep.equal([`/courses/${component.courseId}/exercises/${component.exerciseId}`]);
         });
     });

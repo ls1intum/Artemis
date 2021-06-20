@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-confirm-icon',
@@ -10,6 +10,7 @@ export class ConfirmIconComponent implements OnInit {
     @Input() initialTooltip: string;
     @Input() confirmIcon = <IconProp>'check';
     @Input() confirmTooltip: string;
+    @Input() iconSize = <SizeProp>'md';
     @Output() confirmEvent = new EventEmitter();
     showConfirm = false;
 

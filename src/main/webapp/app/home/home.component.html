@@ -75,7 +75,14 @@
                         <div class="btn-toolbar">
                             <button
                                 type="submit"
-                                [disabled]="isSubmittingLogin || (!userAcceptTerms && needsToAcceptTerms) || !password || password.length < 4 || !username || username.length < 4"
+                                [disabled]="
+                                    isSubmittingLogin ||
+                                    (!userAcceptTerms && needsToAcceptTerms) ||
+                                    !password ||
+                                    password.length < PASSWORD_MIN_LENGTH ||
+                                    !username ||
+                                    username.length < USERNAME_MIN_LENGTH
+                                "
                                 class="btn btn-primary btn-space"
                             >
                                 <span *ngIf="isSubmittingLogin" class="me-1"><fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon></span>
