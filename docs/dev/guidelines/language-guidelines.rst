@@ -49,7 +49,7 @@ German language
 
 The German language is mainly used for user interaction.
 
-**Best practice** (written in German for demonstration purposes)
+**Best practices** (written in German for demonstration purposes)
 
 * **Nutze neutrale Formulierungen**: Wenn möglich ist es empfehlenswert, neutrale Formulierungen zu finden. Neben passiven Formen, wie z.B. Studierende, können auch aktive mit „Mensch“ bzw. „Person“ etc. verwendet werden. Das spart „der/die“ und inkludiert alle Menschen unabhängig davon, welche Eigenschaften/Kategorien diese Personen sonst noch mitbringen.
 * **Beschreibe Handlungen (aktiv oder passiv)**: 
