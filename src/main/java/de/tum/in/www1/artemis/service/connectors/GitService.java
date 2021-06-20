@@ -635,27 +635,14 @@ public class GitService {
             log.error(targetRepo.getConfig().toText());
 
             if (!defaultBranch.equals(oldBranch)) {
+                targetRepo.getConfig().unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, oldBranch);
                 git.branchRename().setNewName(defaultBranch).setOldName(oldBranch).call();
-
-                targetRepo.getConfig().setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, "origin");
-                targetRepo.getConfig().setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
-
-                RefUpdate refUpdate = targetRepo.getRefDatabase().newUpdate(Constants.HEAD, false);
-                refUpdate.setForceUpdate(true);
-                refUpdate.link("refs/heads/" + defaultBranch);
-                // RefUpdate refUpdate1 = targetRepo.getRefDatabase().newUpdate(Constants.FETCH_HEAD, false);
-                // refUpdate1.setForceUpdate(true);
-                git.checkout().setName(defaultBranch).call();
-                git.fetch().call();
             }
-
-            log.error("UNIQUE MESSAGE2");
-            log.error(targetRepo.getConfig().toText());
 
             // push the source content to the new remote
             git.push().setTransportConfigCallback(sshCallback).call();
         }
-        catch (URISyntaxException | IOException e) {
+        catch (URISyntaxException e) {
             log.error("Error while pushing to remote target: ", e);
         }
     }

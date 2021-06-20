@@ -112,8 +112,6 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
-        var defaultBranch = getDefaultBranchOfRepository(exercise.getVcsTemplateRepositoryUrl());
-        setDefaultBranch(repositoryUrl, defaultBranch);
         protectBranches(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl));
     }
 
@@ -382,7 +380,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param repositoryUrl The repository url to set the default branch for.
      * @param branchName The name of the branch to set as default, e.g. 'main'
      */
-    public void setDefaultBranch(VcsRepositoryUrl repositoryUrl, String branchName) throws BitbucketException {
+    public void setDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl, String branchName) throws BitbucketException {
         var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/branches/default";
