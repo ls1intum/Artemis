@@ -299,6 +299,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         answerPostToUpdate.setContent("New Test Answer Post");
         Reaction newReaction = new Reaction();
         newReaction.setEmojiId("apple");
+        newReaction.setPost(postToUpdate);
         postToUpdate.addReaction(newReaction);
         return answerPostToUpdate;
     }
