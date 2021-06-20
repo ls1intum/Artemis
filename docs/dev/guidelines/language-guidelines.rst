@@ -17,7 +17,7 @@ We therefore provide guidelines for inclusive, diversity-sensitive, and apprecia
 English language 
 ==================================
 
-English language is used for code, documentation, user interaction.
+The English language is used for code, documentation, user interaction.
 
 **Best practice**
 
