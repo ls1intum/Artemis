@@ -14,7 +14,7 @@
 - [ ] Client: I documented the TypeScript code using JSDoc style.
 - [ ] Client: I added multiple screenshots/screencasts of my UI changes
 - [ ] Client: I translated all newly inserted strings into English and German.
-- [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://artemis-platform.readthedocs.io/en/latest/dev/guidelines/language-guidelines.html))
+- [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://artemis-platform.readthedocs.io/en/latest/dev/guidelines/language-guidelines.html)).
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->
