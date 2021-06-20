@@ -23,7 +23,7 @@ The English language is used for code, documentation, user interaction.
 
 * **Avoid using terms that have social history**:  Terms that can have historical significance or impact in regards to race, ethnicity, national origin, gender, age, mental and physical ability, sexual orientation, socioeconomic status, religion, and educational background.
 * **Avoid using idioms and jargons**:  These can exclude people who don’t have particular specialized knowledge, and many idioms don’t translate from country to country.  Additionally, these sometimes have origins in negative stereotypes.
-* **Write inclusive examples**:  Try to avoid using examples in documentation that are culturally-specific to a particular country, and be sure to use diverse names.
+* **Write inclusive examples**:  Try to avoid using examples in the documentation that are culturally specific to a particular country, and be sure to use diverse names.
 
 **Examples** - Common terms and recommendations for replacements:
 
