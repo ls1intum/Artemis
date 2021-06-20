@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -52,11 +53,10 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
-import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
-import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -78,11 +78,15 @@ public class FileResource {
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
+    private final CourseRepository courseRepository;
+
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final TokenProvider tokenProvider;
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    private final AuthorizationCheckService authCheckService;
 
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
@@ -97,7 +101,7 @@ public class FileResource {
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
-            AttachmentUnitRepository attachmentUnitRepository) {
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -105,6 +109,8 @@ public class FileResource {
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
+        this.authCheckService = authCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -294,6 +300,27 @@ public class FileResource {
     }
 
     /**
+     * GET /files/attachments/access-token/{courseId} : Generates an access token that is valid for 30 seconds and given course
+     *
+     * @param courseId the course id the access token is for
+     * @return The generated access token, 403 if the user has no access to the course
+     */
+    @GetMapping("files/attachments/course/{courseId}/access-token")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getTemporaryFileAccessTokenForCourse(@PathVariable Long courseId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
+
+        try {
+            String temporaryAccessToken = tokenProvider.createFileTokenForCourseWithCustomDuration(authentication, 30, courseId);
+            return ResponseEntity.ok(temporaryAccessToken);
+        }
+        catch (IllegalAccessException e) {
+            return forbidden();
+        }
+    }
+
+    /**
      * GET /files/course/icons/:lectureId/:filename : Get the lecture attachment
      *
      * @param lectureId ID of the lecture, the attachment belongs to
@@ -331,7 +358,8 @@ public class FileResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
-        if (!validateTemporaryAccessToken(temporaryAccessToken, "merge-pdf")) {
+
+        if (!validateTemporaryAccessTokenForCourse(temporaryAccessToken, lectureRepository.findByIdElseThrow(lectureId).getCourse())) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
@@ -389,6 +417,21 @@ public class FileResource {
      */
     private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {
         if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE, filename)) {
+            log.info("Attachment with invalid token was accessed");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Validates temporary access token for course files access
+     *
+     * @param temporaryAccessToken token to be validated
+     * @param course               the course
+     * @return true if temporaryAccessToken is valid for this course, false otherwise
+     */
+    private boolean validateTemporaryAccessTokenForCourse(String temporaryAccessToken, Course course) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndCourse(temporaryAccessToken, course.getId())) {
             log.info("Attachment with invalid token was accessed");
             return false;
         }

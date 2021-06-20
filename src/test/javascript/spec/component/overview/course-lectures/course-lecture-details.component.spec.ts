@@ -149,6 +149,7 @@ describe('CourseLectureDetails', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
+
         expect(courseLecturesDetailsComponent).to.be.ok;
     });
 
@@ -183,7 +184,7 @@ describe('CourseLectureDetails', () => {
     it('should download PDF file', fakeAsync(() => {
         fixture.detectChanges();
 
-        const downloadAttachmentStub = sinon.stub(courseLecturesDetailsComponent, 'downloadAttachment');
+        const downloadAttachmentStub = sinon.stub(courseLecturesDetailsComponent, 'downloadMergedFiles');
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).to.be.ok;
 

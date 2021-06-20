@@ -300,36 +300,45 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
-    public void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
-        // get access token and then send request using the access token
-        String accessToken = request.get("/api/files/attachments/access-token/merge-pdf", HttpStatus.OK, String.class);
-        request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf?access_token=" + accessToken, HttpStatus.NOT_FOUND, String.class);
-    }
-
-    @Test
-    @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
     public void testGetLecturePdfAttachmentsMerged_InvalidToken() throws Exception {
-        Long lectureId = createLectureWithLectureUnits(HttpStatus.CREATED);
+        Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
 
         // send request using the access token with invalid token
-        request.get("/api/files/attachments/lecture/" + lectureId + "/merge-pdf?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
-    public void testGetLecturePdfAttachmentsMerged() throws Exception {
-        Long lectureId = createLectureWithLectureUnits(HttpStatus.CREATED);
+    public void testGetLecturePdfAttachmentsMerged_InvalidCourseId() throws Exception {
+        // get access token and then send request using the access token
+        request.get("/api/files/attachments/course/" + 199999999 + "/access-token", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
 
         // get access token and then send request using the access token
-        String accessToken = request.get("/api/files/attachments/access-token/merge-pdf", HttpStatus.OK, String.class);
-        byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lectureId + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
+        String accessToken = request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.OK, String.class);
+        request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetLecturePdfAttachmentsMerged() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
+
+        // get access token and then send request using the access token
+        String accessToken = request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.OK, String.class);
+        byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
         PDDocument mergedDoc = PDDocument.load(receivedFile);
         assertEquals(5, mergedDoc.getNumberOfPages());
     }
 
-    public Long createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
+    public Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
 
         lecture.setTitle("Test title");
@@ -366,7 +375,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
 
-        return lectureId;
+        return lecture;
     }
 
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {

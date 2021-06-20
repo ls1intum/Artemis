@@ -90,6 +90,12 @@ export class CourseLectureDetailsComponent implements OnInit {
         }
     }
 
+    downloadMergedFiles(): void {
+        if (this.lecture?.course?.id && this.lectureId) {
+            this.fileService.downloadMergedFileWithAccessToken(this.lecture?.course?.id, this.lectureId);
+        }
+    }
+
     /**
      * This function gets called if the router outlet gets activated. This is
      * used only for the PostingsComponent
