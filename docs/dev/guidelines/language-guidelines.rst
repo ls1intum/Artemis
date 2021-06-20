@@ -84,7 +84,7 @@ German language is mainly used for user interaction.
 - Benutzerkonto → Konto
 - Benutzer → Benutzer:in / Konto
 - Benutzername → Login
-- Tutor / Tuturen → Tutor:innen (Plural), Tutor:in (Singular)
+- Tutor / Tutoren → Tutor:innen (Plural), Tutor:in (Singular)
 - Prüfer → Bewertet von
 - Editoren → Editor:innen
 
