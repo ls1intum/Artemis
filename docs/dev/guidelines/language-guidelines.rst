@@ -55,7 +55,7 @@ German language is mainly used for user interaction.
 * **Beschreibe Handlungen (aktiv oder passiv)**: 
   
   * „Automatisch generierte Ergebnisse werden am Ende des Bearbeitungszeitraums erstellt“. Statt „Die Studenten/Studentinnen erhalten am Ende des Bearbeitungszeitraums ein automisch generiertes Ergebnis.“)
-  * „Die Anmeldung für die Klausur ist bis zum 15.12.2020 möglich". Statt „Jeder muss sich bis zum 15.12.2020 auf für die Klausur anmelden.“
+  * „Die Anmeldung für die Klausur ist bis zum 15.12.2020 möglich". Statt „Jeder muss sich bis zum 15.12.2020 für die Klausur anmelden.“
   
 * **Sprich Personen direkt an**:
   
