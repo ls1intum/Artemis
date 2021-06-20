@@ -19,7 +19,7 @@ import {
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
-import { ChartType } from 'chart.js';
+import { ChartOptions, ChartType } from 'chart.js';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -110,9 +110,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         },
     ];
 
-    public barChartOptions: any = {
+    public barChartOptions: ChartOptions = {
         indexAxis: 'y',
-        scaleShowVerticalLines: false,
         maintainAspectRatio: false,
         responsive: true,
         scales: {
@@ -131,15 +130,19 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 stacked: true,
             },
         },
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
-            width: 120,
-            callbacks: {
-                label: (tooltipItem: any, data: any) => {
-                    return data.datasets[tooltipItem.datasetIndex].tooltips[tooltipItem.index];
-                },
-                afterLabel: (tooltipItem: any, data: any) => {
-                    return data.datasets[tooltipItem.datasetIndex].footer[tooltipItem.index];
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 1)',
+                callbacks: {
+                    label: (context: any) => {
+                        return context.dataset.tooltips[context.dataIndex];
+                    },
+                    afterLabel: (context: any) => {
+                        return context.dataset.footer[context.dataIndex];
+                    },
                 },
             },
         },
@@ -148,11 +151,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     public doughnutChartType: ChartType = 'doughnut';
     public totalScoreOptions: object = {
-        cutoutPercentage: 75,
-        scaleShowVerticalLines: false,
+        cutout: '75%',
         responsive: false,
-        tooltips: {
-            backgroundColor: 'rgba(0, 0, 0, 1)',
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 1)',
+                callbacks: {
+                    label(context: any) {
+                        if (context && context['dataset'] && context['dataset'] && context['dataset']['data']) {
+                            const value = context['dataset']['data'][context['dataIndex']];
+                            return '' + (value === -1 ? 0 : value);
+                        }
+                    },
+                },
+            },
         },
     };
 
