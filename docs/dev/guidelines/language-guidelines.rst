@@ -36,7 +36,7 @@ The English language is used for code, documentation, user interaction.
 - Native feature → core feature, built-in feature
 - Culture fit → values fit
 
-**Gendered language**: Language that either assumes the gender of the users and developers, or that makes assumptions of a gender.
+**Gendered language**: Language that either assumes the gender of the users and developers, or that makes assumptions of gender.
 
 - Man hours → labor hours, work hours
 - Manpower → labor, workforce
