@@ -35,6 +35,9 @@ export class GradeKeyOverviewComponent implements OnInit {
                         this.examTitle = gradeSteps.body.examTitle;
                         this.isBonus = gradeSteps.body.gradeType === GradeType.BONUS;
                         this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.body.gradeSteps);
+                        if (gradeSteps.body.maxPoints !== undefined) {
+                            this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.body.maxPoints!);
+                        }
                     }
                 });
         });
@@ -43,11 +46,41 @@ export class GradeKeyOverviewComponent implements OnInit {
         });
     }
 
+    /**
+     * Navigates to the exam summary page
+     */
     previousState() {
         this.router.navigate(['courses', this.courseId!.toString(), 'exams', this.examId!.toString()]);
     }
 
+    /**
+     * Exports page as PDF
+     */
     printPDF() {
         setTimeout(() => window.print());
+    }
+
+    /**
+     * Determines whether all grade steps have their lower and upper bounds set in absolute points
+     */
+    hasPointsSet(): boolean {
+        for (const gradeStep of this.gradeSteps) {
+            if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined) {
+                return false;
+            }
+        }
+        return this.gradeSteps.length !== 0;
+    }
+
+    /**
+     * Rounds a number to two decimal places
+     *
+     * @param num the number to be rounded
+     */
+    round(num?: number) {
+        if (num == undefined) {
+            return;
+        }
+        return Math.round(num * 100) / 100;
     }
 }

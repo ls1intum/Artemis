@@ -35,7 +35,7 @@ export class PostRowComponent implements OnInit {
     @Output() interactPostRow = new EventEmitter<PostRowAction>();
     isExpanded = true;
     isAnswerMode: boolean;
-    showOtherAnswerPosts = false;
+    isLoading = false;
     answerPostContent?: string;
     sortedAnswerPosts: AnswerPost[];
     approvedAnswerPosts: AnswerPost[];
@@ -135,19 +135,25 @@ export class PostRowComponent implements OnInit {
      * Creates a new answerPost
      */
     addAnswerPost(): void {
+        this.isLoading = true;
         const answerPost = new AnswerPost();
         answerPost.content = this.answerPostContent;
         answerPost.post = this.post;
         answerPost.tutorApproved = false;
         answerPost.creationDate = moment();
-        this.answerPostService.create(this.courseId, answerPost).subscribe((PostResponse: HttpResponse<AnswerPost>) => {
-            if (!this.post.answers) {
-                this.post.answers = [];
-            }
-            this.post.answers.push(PostResponse.body!);
-            this.sortAnswerPosts();
-            this.answerPostContent = undefined;
-            this.isAnswerMode = false;
+        this.answerPostService.create(this.courseId, answerPost).subscribe({
+            next: (postResponse: HttpResponse<AnswerPost>) => {
+                if (!this.post.answers) {
+                    this.post.answers = [];
+                }
+                this.post.answers.push(postResponse.body!);
+                this.sortAnswerPosts();
+                this.answerPostContent = undefined;
+                this.isAnswerMode = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
         });
     }
 
