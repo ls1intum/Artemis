@@ -59,7 +59,7 @@ German language is mainly used for user interaction.
   
 * **Sprich Personen direkt an**:
   
-  * „Bitte melde Dich bis zum 15.12.20 für die Lehrveranstaltung an“. Statt „Jeder muss sich bis zum 15.12.2020 für die Lehrveranstaltung anmelden.“
+  * „Bitte melde dich bis zum 15.12.20 für die Lehrveranstaltung an“. Statt „Jeder muss sich bis zum 15.12.2020 für die Lehrveranstaltung anmelden.“
 
 * **Rücke die Organisation in den Vordergrund**:
 
