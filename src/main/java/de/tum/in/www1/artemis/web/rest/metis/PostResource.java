@@ -15,14 +15,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -179,7 +177,6 @@ public class PostResource {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the exercise that should be returned");
         }
         List<Post> posts = postRepository.findPostsByExercise_Id(exerciseId);
-        hideSensitiveInformation(posts);
         return new ResponseEntity<>(posts, null, HttpStatus.OK);
     }
 
@@ -200,7 +197,6 @@ public class PostResource {
         if (lecture.getCourse().getId().equals(courseId)) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
             List<Post> posts = postRepository.findPostsByLecture_Id(lectureId);
-            hideSensitiveInformation(posts);
             return new ResponseEntity<>(posts, null, HttpStatus.OK);
         }
         else {
@@ -221,17 +217,6 @@ public class PostResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<Post> posts = postRepository.findPostsForCourse(courseId);
         return new ResponseEntity<>(posts, null, HttpStatus.OK);
-    }
-
-    private void hideSensitiveInformation(List<Post> posts) {
-        for (Post post : posts) {
-            post.setExercise(null);
-            post.setLecture(null);
-            post.setAuthor(post.getAuthor().copyBasicUser());
-            for (AnswerPost answer : post.getAnswers()) {
-                answer.setAuthor(answer.getAuthor().copyBasicUser());
-            }
-        }
     }
 
     /**
@@ -288,15 +273,8 @@ public class PostResource {
      */
     private void mayUpdatePostVotesElseThrow(Post post, User user) {
         Course course = post.getCourse();
-        Exercise exercise = post.getExercise();
         if (course != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        }
-        else if (exercise != null) {
-            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        }
-        else {
-            throw new AccessForbiddenException("Post", post.getId());
         }
     }
 }
