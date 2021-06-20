@@ -6,9 +6,9 @@
                 "createLabel": "Create Lecture",
                 "createOrEditLabel": "Create or Edit Lecture"
             },
-            "created": "A new lecture is created with identifier {{ param }}",
-            "updated": "A lecture is updated with identifier {{ param }}",
-            "deleted": "A lecture is deleted with identifier {{ param }}",
+            "created": "Created new lecture with identifier {{ param }}",
+            "updated": "Updated lecture with identifier {{ param }}",
+            "deleted": "Deleted lecture with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the lecture <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the lecture to confirm."
@@ -43,9 +43,9 @@
         },
         "attachment": {
             "deleteQuestion": "Do you really want to delete the attachment?",
-            "created": "A new attachment is created with identifier {{ param }}",
-            "updated": "A attachment is updated with identifier {{ param }}",
-            "deleted": "A attachment is deleted with identifier {{ param }}"
+            "created": "Created new attachment with identifier {{ param }}",
+            "updated": "Updated attachment with identifier {{ param }}",
+            "deleted": "Deleted attachment with identifier {{ param }}"
         }
     }
 }
