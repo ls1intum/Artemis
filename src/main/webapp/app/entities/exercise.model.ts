@@ -145,35 +145,36 @@ export abstract class Exercise implements BaseEntity {
     }
 }
 
+export const icons = {
+    [ExerciseType.PROGRAMMING]: 'keyboard' as IconProp,
+    [ExerciseType.MODELING]: 'project-diagram' as IconProp,
+    [ExerciseType.QUIZ]: 'check-double' as IconProp,
+    [ExerciseType.TEXT]: 'font' as IconProp,
+    [ExerciseType.FILE_UPLOAD]: 'file-upload' as IconProp,
+};
+
 export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
         return 'question' as IconProp;
     }
 
-    const icons = {
-        [ExerciseType.PROGRAMMING]: 'keyboard',
-        [ExerciseType.MODELING]: 'project-diagram',
-        [ExerciseType.QUIZ]: 'check-double',
-        [ExerciseType.TEXT]: 'font',
-        [ExerciseType.FILE_UPLOAD]: 'file-upload',
-    };
-
-    return icons[exerciseType] as IconProp;
+    return icons[exerciseType];
 }
+
+export const iconTooltips = {
+    [ExerciseType.PROGRAMMING]: 'artemisApp.exercise.isProgramming',
+    [ExerciseType.MODELING]: 'artemisApp.exercise.isModeling',
+    [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
+    [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
+    [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
+};
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {
     if (!exerciseType) {
         return '';
     }
-    const tooltips = {
-        [ExerciseType.PROGRAMMING]: 'artemisApp.exercise.isProgramming',
-        [ExerciseType.MODELING]: 'artemisApp.exercise.isModeling',
-        [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
-        [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
-        [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
-    };
 
-    return tooltips[exerciseType];
+    return iconTooltips[exerciseType];
 }
 
 /**
