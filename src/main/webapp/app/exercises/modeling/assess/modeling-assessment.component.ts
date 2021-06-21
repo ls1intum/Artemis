@@ -64,6 +64,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.highlightedElements) {
             this.updateHighlightedElements(this.highlightedElements);
         }
+        if (this.elementCounts) {
+            this.updateElementCounts(this.elementCounts);
+        }
         this.applyStateConfiguration();
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
@@ -137,21 +140,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
         this.handleFeedback();
 
-        const model: UMLModel = { ...this.model } as UMLModel;
-        if (this.elementCounts) {
-            const newAssessments: Assessment[] = [];
-            const elementsWithExistingAssessment = model.assessments.map((assessment) => assessment.modelElementId);
-            this.elementCounts.forEach((elementCount) => {
-                if (!elementsWithExistingAssessment.includes(elementCount.elementId)) {
-                    const note = this.calculateNote(elementCount.elementId);
-                    if (note) {
-                        this.model.assessments.push({ note, modelElementId: elementCount.elementId } as Assessment);
-                    }
-                }
-            });
-            this.model.assessments.forEach((assessment) => (assessment.note = this.calculateNote(assessment.modelElementId)));
-        }
-        console.log('model', model, this.model);
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly,
@@ -280,6 +268,32 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
+    /**
+     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
+     *
+     * @param newElements a map of elementIds -> highlight color
+     */
+    private updateElementCounts(newElementCounts: OtherModelElementCount[]) {
+        if (!newElementCounts) {
+            return;
+        }
+
+        const elementCountMap = new Map<String, Number>();
+
+        newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
+
+        if (this.apollonEditor != undefined) {
+            const model: UMLModel = this.apollonEditor!.model;
+            for (const element of model.elements) {
+                element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
+            }
+            for (const relationship of model.relationships) {
+                relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
+            }
+            this.apollonEditor!.model = model;
+        }
+    }
+
     private scrollIntoView(elementId: string) {
         const element = this.editorContainer.nativeElement as HTMLElement;
         const matchingElement = $(element).find(`#${elementId}`).get(0);
@@ -303,7 +317,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             feedback: feedback.text || undefined,
             label: this.calculateLabel(feedback),
             labelColor: this.calculateLabelColor(feedback),
-            note: this.calculateNote(feedback.referenceId),
         }));
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
@@ -326,14 +339,13 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         return '';
     }
 
-    private calculateNote(referenceId: any) {
-        console.log('caca');
-        if (this.elementCounts) {
-            const element = this.elementCounts.find((count) => count.elementId === referenceId);
-            if (element) {
-                return `This assessment will be suggested for ${element.numberOfOtherElements} other submissions.`;
-            }
+    private calculateNote(count: Number | undefined) {
+        if (count) {
+            return this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackImpactWarning', count);
+
+            // return `This assessment will be suggested for ${count} other submissions.`;
         }
+
         return undefined;
     }
 }
