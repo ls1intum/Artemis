@@ -76,7 +76,6 @@ public class UMLModelParser {
      * @param elements a JSON array of elements from which the map should be created
      * @return a map that maps elementId -> element
      */
-    // TODO: why is this done more than once?
     public static Map<String, JsonObject> generateJsonElementMap(JsonArray elements) {
         Map<String, JsonObject> jsonElementMap = new HashMap<>();
         elements.forEach(element -> jsonElementMap.put(element.getAsJsonObject().get("id").getAsString(), element.getAsJsonObject()));

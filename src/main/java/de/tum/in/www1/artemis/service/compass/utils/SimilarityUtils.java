@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class SimilarityFunctions {
+public class SimilarityUtils {
 
     /**
      * Checks if both parent elements have similarity id
@@ -30,5 +30,4 @@ public class SimilarityFunctions {
         }
         return Objects.equals(parent1, parent2);
     }
-
 }

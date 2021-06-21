@@ -4,7 +4,7 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-import de.tum.in.www1.artemis.service.compass.utils.SimilarityFunctions;
+import de.tum.in.www1.artemis.service.compass.utils.SimilarityUtils;
 
 public class UMLComponentInterface extends UMLElement {
 
@@ -34,7 +34,7 @@ public class UMLComponentInterface extends UMLElement {
         UMLComponentInterface referenceComponentInterface = (UMLComponentInterface) reference;
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceComponentInterface.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
-        if (SimilarityFunctions.parentsSimilarOrEqual(getParentElement(), referenceComponentInterface.getParentElement())) {
+        if (SimilarityUtils.parentsSimilarOrEqual(getParentElement(), referenceComponentInterface.getParentElement())) {
             similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
         }
 

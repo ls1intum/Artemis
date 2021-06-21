@@ -200,7 +200,7 @@ public class ClassDiagramParser {
      * @param attributeJson the JSON object containing the attribute
      * @return the UMLAttribute object parsed from the JSON object
      */
-    private static UMLAttribute parseAttribute(JsonObject attributeJson) {
+    protected static UMLAttribute parseAttribute(JsonObject attributeJson) {
         String[] attributeNameArray = attributeJson.get(ELEMENT_NAME).getAsString().replaceAll("\\s+", "").split(":");
         String attributeName = attributeNameArray[0];
         String attributeType = "";
@@ -218,7 +218,7 @@ public class ClassDiagramParser {
      * @param methodJson the JSON object containing the method
      * @return the UMLMethod object parsed from the JSON object
      */
-    private static UMLMethod parseMethod(JsonObject methodJson) {
+    protected static UMLMethod parseMethod(JsonObject methodJson) {
         String completeMethodName = methodJson.get(ELEMENT_NAME).getAsString();
         String[] methodEntryArray = completeMethodName.replaceAll("\\s+", "").split(":");
         String[] methodParts = methodEntryArray[0].split("[()]");

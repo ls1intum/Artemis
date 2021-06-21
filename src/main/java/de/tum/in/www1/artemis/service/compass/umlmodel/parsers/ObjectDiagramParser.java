@@ -141,15 +141,8 @@ public class ObjectDiagramParser {
      * @return the UMLObjectAttribute object parsed from the JSON object
      */
     private static UMLObjectAttribute parseAttribute(JsonObject attributeJson) {
-        String[] attributeNameArray = attributeJson.get(ELEMENT_NAME).getAsString().replaceAll("\\s+", "").split(":");
-        String attributeName = attributeNameArray[0];
-        String attributeType = "";
-
-        if (attributeNameArray.length == 2) {
-            attributeType = attributeNameArray[1];
-        }
-
-        return new UMLObjectAttribute(attributeName, attributeType, attributeJson.get(ELEMENT_ID).getAsString());
+        UMLAttribute attribute = ClassDiagramParser.parseAttribute(attributeJson);
+        return new UMLObjectAttribute(attribute.getName(), attribute.getAttributeType(), attribute.getJSONElementID());
     }
 
     /**
@@ -158,26 +151,8 @@ public class ObjectDiagramParser {
      * @param methodJson the JSON object containing the method
      * @return the UMLObjectMethod object parsed from the JSON object
      */
-    private static UMLObjectMethod parseMethod(JsonObject methodJson) {
-        String completeMethodName = methodJson.get(ELEMENT_NAME).getAsString();
-        String[] methodEntryArray = completeMethodName.replaceAll("\\s+", "").split(":");
-        String[] methodParts = methodEntryArray[0].split("[()]");
-
-        String methodName = "";
-        if (methodParts.length > 0) {
-            methodName = methodParts[0];
-        }
-
-        String[] methodParams = {};
-        if (methodParts.length == 2) {
-            methodParams = methodParts[1].split(",");
-        }
-
-        String methodReturnType = "";
-        if (methodEntryArray.length == 2) {
-            methodReturnType = methodEntryArray[1];
-        }
-
-        return new UMLObjectMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), methodJson.get(ELEMENT_ID).getAsString());
+    protected static UMLObjectMethod parseMethod(JsonObject methodJson) {
+        UMLMethod method = ClassDiagramParser.parseMethod(methodJson);
+        return new UMLObjectMethod(method.getCompleteName(), method.getName(), method.getReturnType(), method.getParameters(), method.getJSONElementID());
     }
 }

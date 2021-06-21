@@ -26,9 +26,6 @@ public class DeploymentDiagramParser {
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
     protected static UMLDeploymentDiagram buildDeploymentDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
-
-        // TODO: try to further reduce code duplication from buildComponentDiagramFromJSON
-
         Map<String, UMLDeploymentComponent> umlComponentMap = new HashMap<>();
         Map<String, UMLDeploymentInterface> umlComponentInterfaceMap = new HashMap<>();
         Map<String, UMLNode> umlNodeMap = new HashMap<>();
