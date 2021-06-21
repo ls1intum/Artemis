@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -62,13 +61,13 @@ public class GradeStepResource {
      */
     @GetMapping("/courses/{courseId}/grading-scale/grade-steps")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<GradeStep>> getAllGradeStepsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all grade steps for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScale.getId());
-        return ResponseEntity.ok(gradeSteps);
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, course.getMaxPoints(), course.getTitle());
+        return ResponseEntity.ok(gradeStepsDTO);
     }
 
     /**
@@ -91,20 +90,20 @@ public class GradeStepResource {
         if (!isInstructor && !exam.resultsPublished()) {
             return forbidden();
         }
-        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints());
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints(), exam.getTitle());
         return ResponseEntity.ok(gradeStepsDTO);
     }
 
-    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale, int maxPoints) {
+    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale, Integer maxPoints, String title) {
         GradeStep[] gradeSteps = new GradeStep[gradingScale.getGradeSteps().size()];
         gradingScale.getGradeSteps().toArray(gradeSteps);
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        if (maxPoints > 0) {
-            return new GradeStepsDTO(gradingScale.getExam().getTitle(), gradingScale.getGradeType(), gradeSteps, maxPoints);
+        if (maxPoints != null && maxPoints > 0) {
+            return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints);
         }
-        return new GradeStepsDTO(gradingScale.getExam().getTitle(), gradingScale.getGradeType(), gradeSteps);
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps);
     }
 
     /**

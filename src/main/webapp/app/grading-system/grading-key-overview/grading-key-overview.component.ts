@@ -1,24 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 
 @Component({
     selector: 'jhi-grade-key-overview',
-    templateUrl: './grade-key-overview.component.html',
-    styleUrls: ['./grade-key-overview.scss'],
+    templateUrl: './grading-key-overview.component.html',
+    styleUrls: ['./grading-key-overview.scss'],
 })
-export class GradeKeyOverviewComponent implements OnInit {
+export class GradingKeyOverviewComponent implements OnInit {
     constructor(private route: ActivatedRoute, private router: Router, private gradingSystemService: GradingSystemService) {}
+
+    isExam = false;
 
     courseId?: number;
     examId?: number;
 
-    examTitle?: string;
+    title?: string;
     gradeSteps: GradeStep[] = [];
     studentGrade?: string;
     isBonus = false;
@@ -26,20 +25,20 @@ export class GradeKeyOverviewComponent implements OnInit {
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
-            this.examId = Number(params['examId']);
-            this.gradingSystemService
-                .findGradeStepsForExam(this.courseId, this.examId)
-                .pipe(catchError(() => of(new HttpResponse<GradeStepsDTO>({ body: { examTitle: '', gradeType: GradeType.GRADE, gradeSteps: [] }, status: 404 }))))
-                .subscribe((gradeSteps) => {
-                    if (gradeSteps.body) {
-                        this.examTitle = gradeSteps.body.examTitle;
-                        this.isBonus = gradeSteps.body.gradeType === GradeType.BONUS;
-                        this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.body.gradeSteps);
-                        if (gradeSteps.body.maxPoints !== undefined) {
-                            this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.body.maxPoints!);
-                        }
+            if (params['examId']) {
+                this.examId = Number(params['examId']);
+                this.isExam = true;
+            }
+            this.gradingSystemService.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
+                if (gradeSteps) {
+                    this.title = gradeSteps.title;
+                    this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
+                    this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
+                    if (gradeSteps.maxPoints !== undefined) {
+                        this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
                     }
-                });
+                }
+            });
         });
         this.route.queryParams.subscribe((queryParams) => {
             this.studentGrade = queryParams['grade'];
@@ -50,7 +49,11 @@ export class GradeKeyOverviewComponent implements OnInit {
      * Navigates to the exam summary page
      */
     previousState() {
-        this.router.navigate(['courses', this.courseId!.toString(), 'exams', this.examId!.toString()]);
+        if (this.isExam) {
+            this.router.navigate(['courses', this.courseId!.toString(), 'exams', this.examId!.toString()]);
+        } else {
+            this.router.navigate(['courses', this.courseId!.toString(), 'statistics']);
+        }
     }
 
     /**

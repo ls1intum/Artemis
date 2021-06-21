@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
+import { catchError, map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 
@@ -99,8 +100,47 @@ export class GradingSystemService {
      * @param courseId the course to which the exam belongs
      * @param examId the exam for which the grade steps are retrieved
      */
+    findGradeStepsForCourse(courseId: number): Observable<HttpResponse<GradeStepsDTO>> {
+        return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/grading-scale/grade-steps`, { observe: 'response' });
+    }
+
+    /**
+     * Finds all grade steps for exam
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the grade steps are retrieved
+     */
     findGradeStepsForExam(courseId: number, examId: number): Observable<HttpResponse<GradeStepsDTO>> {
         return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/grade-steps`, { observe: 'response' });
+    }
+
+    findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
+        let gradeStepsObservabe: Observable<HttpResponse<GradeStepsDTO>>;
+        if (examId != undefined) {
+            gradeStepsObservabe = this.findGradeStepsForExam(courseId, examId);
+        } else {
+            gradeStepsObservabe = this.findGradeStepsForCourse(courseId);
+        }
+        return gradeStepsObservabe.pipe(
+            catchError(() => {
+                return of(undefined);
+            }),
+            map((gradeStepsDTO) => {
+                if (gradeStepsDTO && gradeStepsDTO.body) {
+                    return gradeStepsDTO.body;
+                }
+            }),
+        );
+    }
+
+    /**
+     * Finds a grade step for course that matches the given percentage
+     *
+     * @param courseId the course to which the exam belongs
+     * @param percentage the percentage which will be matched
+     */
+    public matchPercentageToGradeStepForCourse(courseId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
+        return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
     }
 
     /**
@@ -112,6 +152,28 @@ export class GradingSystemService {
      */
     public matchPercentageToGradeStepForExam(courseId: number, examId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
         return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
+    }
+
+    public matchPercentageToGradeStep(percentage: number, courseId: number, examId?: number): Observable<GradeDTO | undefined> {
+        let responseObservable: Observable<HttpResponse<GradeDTO>>;
+        if (examId != undefined) {
+            responseObservable = this.matchPercentageToGradeStepForExam(courseId, examId, percentage);
+        } else {
+            responseObservable = this.matchPercentageToGradeStepForCourse(courseId, percentage);
+        }
+        return responseObservable.pipe(
+            catchError((error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    return of(undefined);
+                }
+                return throwError(error);
+            }),
+            map((response) => {
+                if (response && response.body) {
+                    return response.body;
+                }
+            }),
+        );
     }
 
     /**

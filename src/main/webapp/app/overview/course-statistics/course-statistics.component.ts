@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { pipe, Subscription, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 import { Course } from 'app/entities/course.model';
@@ -20,6 +20,11 @@ import {
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
 import { ChartType } from 'chart.js';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { catchError } from 'rxjs/operators';
+import { GradeDTO } from 'app/entities/grade-step.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -35,7 +40,7 @@ export interface CourseStatisticsDataSet {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview.scss', 'course-statistics.component.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
@@ -159,11 +164,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         },
     };
 
+    gradingScaleExists = false;
+    isBonus = false;
+    gradeDTO?: GradeDTO;
+
     constructor(
         private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
+        private gradingSystemService: GradingSystemService,
     ) {}
 
     ngOnInit() {
@@ -205,12 +215,24 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             };
             this.groupExercisesByType();
         });
+
+        this.calculateCourseGrade();
     }
 
     ngOnDestroy() {
         this.translateSubscription.unsubscribe();
         this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
+    }
+
+    calculateCourseGrade() {
+        this.gradingSystemService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
+            if (gradeDTO) {
+                this.gradingScaleExists = true;
+                this.gradeDTO = gradeDTO;
+                this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+            }
+        });
     }
 
     private onCourseLoad() {
@@ -559,4 +581,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
         return scores.get(scoreType)!;
     }
+}
+function of(undefined: undefined): any {
+    throw new Error('Function not implemented.');
 }
