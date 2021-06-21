@@ -109,21 +109,6 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void isRepositoryCached() {
-        gitUtilService.initRepo("master");
-
-        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
-
-        doReturn(localRepo.getLocalPath()).when(gitService).getLocalPathOfRepo(any(), any());
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isFalse();
-
-        gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.getLocalPath(), localRepo.getRemoteRepositoryUrl(), "master");
-
-        assertThat(gitService.isRepositoryCached(localRepo.getRemoteRepositoryUrl())).isTrue();
-    }
-
-    @Test
     public void getExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
         gitUtilService.initRepo();
 
