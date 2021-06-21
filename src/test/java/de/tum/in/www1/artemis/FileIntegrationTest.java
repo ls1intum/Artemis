@@ -299,18 +299,15 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetLecturePdfAttachmentsMerged_InvalidToken() throws Exception {
         Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
-
-        // send request using the access token with invalid token
         request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
-    @WithMockUser(value = "instuctor1", roles = "INSTRUCTOR")
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetLecturePdfAttachmentsMerged_InvalidCourseId() throws Exception {
-        // get access token and then send request using the access token
         request.get("/api/files/attachments/course/" + 199999999 + "/access-token", HttpStatus.NOT_FOUND, String.class);
     }
 
@@ -322,6 +319,13 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // get access token and then send request using the access token
         String accessToken = request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.OK, String.class);
         request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testGetLecturePdfAttachmentsMerged_StudentNotRegisteredInCourse() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+        request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
