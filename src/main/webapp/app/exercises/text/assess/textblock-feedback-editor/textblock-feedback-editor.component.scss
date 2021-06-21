@@ -34,8 +34,12 @@ label {
     top: -25px;
 }
 
-.close-button {
+.close {
     display: inline;
     margin-top: -0.5vh;
     float: right;
+}
+
+.impactWarningLabel {
+    font-size: small;
 }

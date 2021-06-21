@@ -188,7 +188,7 @@ public class UserTestService {
         student.setId(oldId + 1);
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
 
-        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
@@ -201,7 +201,7 @@ public class UserTestService {
         student.setEmail("newEmail@testing.user");
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
 
-        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
@@ -233,7 +233,7 @@ public class UserTestService {
         var updatedUser = student;
         updatedUser.setGroups(Set.of("tutor"));
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), updatedUser, student.getGroups());
-        request.put("/api/users", new ManagedUserVM(updatedUser), HttpStatus.OK);
+        request.put("/api/users", new ManagedUserVM(updatedUser, updatedUser.getPassword()), HttpStatus.OK);
 
         var updatedUserOrEmpty = userRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
         assertThat(updatedUserOrEmpty).isPresent();

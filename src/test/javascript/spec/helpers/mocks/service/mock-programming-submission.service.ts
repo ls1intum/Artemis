@@ -13,4 +13,5 @@ export class MockProgrammingSubmissionService implements IProgrammingSubmissionS
     getResultEtaInMs: () => Observable<number>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
+    downloadSubmissionInOrion: (exerciseId: number, submissionId: number, correctionRound: number) => void;
 }

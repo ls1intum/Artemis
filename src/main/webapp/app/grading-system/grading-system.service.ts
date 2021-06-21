@@ -132,9 +132,9 @@ export class GradingSystemService {
      * @param percentage the percentage to be matched
      */
     matchGradePercentage(gradeStep: GradeStep, percentage: number): boolean {
-        if (percentage === gradeStep.lowerBoundPercentage) {
+        if (Math.abs(percentage - gradeStep.lowerBoundPercentage) < Number.EPSILON) {
             return gradeStep.lowerBoundInclusive;
-        } else if (percentage === gradeStep.upperBoundPercentage) {
+        } else if (Math.abs(percentage - gradeStep.upperBoundPercentage) < Number.EPSILON) {
             return gradeStep.upperBoundInclusive;
         } else {
             return percentage > gradeStep.lowerBoundPercentage && percentage < gradeStep.upperBoundPercentage;
@@ -163,5 +163,12 @@ export class GradingSystemService {
             return gradeStep.upperBoundInclusive && gradeStep.upperBoundPercentage === 100;
         });
         return maxGradeStep?.gradeName || '';
+    }
+
+    setGradePoints(gradeSteps: GradeStep[], maxPoints: number) {
+        for (const gradeStep of gradeSteps) {
+            gradeStep.lowerBoundPoints = (maxPoints * gradeStep.lowerBoundPercentage) / 100;
+            gradeStep.upperBoundPoints = (maxPoints * gradeStep.upperBoundPercentage) / 100;
+        }
     }
 }

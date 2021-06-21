@@ -84,21 +84,25 @@ public class GradeStepResource {
         log.debug("REST request to get all grade steps for exam: {}", examId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
+        Exam exam = examRepository.findByIdElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
-        if (!isInstructor && !gradingScale.getExam().resultsPublished()) {
+        if (!isInstructor && !exam.resultsPublished()) {
             return forbidden();
         }
-        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale);
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints());
         return ResponseEntity.ok(gradeStepsDTO);
     }
 
-    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale) {
+    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale, int maxPoints) {
         GradeStep[] gradeSteps = new GradeStep[gradingScale.getGradeSteps().size()];
         gradingScale.getGradeSteps().toArray(gradeSteps);
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
+        }
+        if (maxPoints > 0) {
+            return new GradeStepsDTO(gradingScale.getExam().getTitle(), gradingScale.getGradeType(), gradeSteps, maxPoints);
         }
         return new GradeStepsDTO(gradingScale.getExam().getTitle(), gradingScale.getGradeType(), gradeSteps);
     }

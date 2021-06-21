@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.xml.transform.TransformerException;
 
+import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -201,6 +202,29 @@ public class JenkinsJobService {
         }
         catch (TransformerException e) {
             throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Deletes the job from Jenkins. Doesn't do anything if the job
+     * doesn't exist.
+     *
+     * @param jobName the name of the job to delete.
+     */
+    public void deleteJob(String jobName) {
+        try {
+            jenkinsServer.deleteJob(jobName, useCrumb);
+        }
+        catch (HttpResponseException e) {
+            // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
+            if (e.getStatusCode() != org.apache.http.HttpStatus.SC_NOT_FOUND) {
+                log.error(e.getMessage(), e);
+                throw new JenkinsException("Error while trying to delete job in Jenkins for " + jobName, e);
+            }
+        }
+        catch (IOException e) {
+            log.error(e.getMessage(), e);
+            throw new JenkinsException("Error while trying to delete job in Jenkins for " + jobName, e);
         }
     }
 }
