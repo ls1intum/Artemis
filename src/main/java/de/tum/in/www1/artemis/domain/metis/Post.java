@@ -113,12 +113,6 @@ public class Post extends Posting {
         this.reactions.add(reaction);
     }
 
-    @Override
-    public void removeReaction(Reaction reaction) {
-        this.reactions.remove(reaction);
-
-    }
-
     public Set<AnswerPost> getAnswers() {
         return answers;
     }
@@ -131,10 +125,6 @@ public class Post extends Posting {
         this.answers.add(answerPost);
     }
 
-    public void removeAnswerPost(AnswerPost answerPost) {
-        this.answers.remove(answerPost);
-    }
-
     public Set<String> getTags() {
         return tags;
     }
@@ -145,10 +135,6 @@ public class Post extends Posting {
 
     public void addTag(String tag) {
         this.tags.add(tag);
-    }
-
-    public void removeTag(String tag) {
-        this.tags.remove(tag);
     }
 
     public Exercise getExercise() {

@@ -83,6 +83,4 @@ public abstract class Posting extends DomainObject {
     public abstract void setReactions(List<Reaction> reactions);
 
     public abstract void addReaction(Reaction reaction);
-
-    public abstract void removeReaction(Reaction reaction);
 }
