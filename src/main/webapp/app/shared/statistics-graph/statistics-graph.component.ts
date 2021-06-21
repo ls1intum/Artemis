@@ -1,11 +1,19 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
+import { Chart, ChartDataset, ChartOptions, ChartType, registerables } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+/*
+    We also register the ChartDataLabels plugin globally but set display to false. This way by setting display to true
+    in specific chart options enables the datalabels plugin
+ */
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({
     selector: 'jhi-statistics-graph',
@@ -25,7 +33,6 @@ export class StatisticsGraphComponent implements OnChanges {
     LEFT = false;
     RIGHT = true;
     SpanType = SpanType;
-    Graphs = Graphs;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
@@ -207,8 +214,16 @@ export class StatisticsGraphComponent implements OnChanges {
                 },
             },
             responsive: true,
-            animation: {
-                duration: 1,
+            plugins: {
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 0,
+                },
+                legend: {
+                    display: false,
+                },
             },
             scales: {
                 y: {

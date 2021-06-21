@@ -82,7 +82,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                                 return ' 0';
                             }
 
-                            return ' ' + self.scoreDistribution[tooltipItem.index];
+                            return ' ' + self.scoreDistribution[tooltipItem.dataIndex];
                         },
                     },
                 },

@@ -4,7 +4,6 @@ import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { CourseManagementService } from '../course-management.service';
-import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-course-detail-bar-chart',
@@ -144,14 +143,25 @@ export class CourseDetailBarChartComponent implements OnChanges {
                     },
                 },
             },
-            tooltips: {
-                enabled: true,
-                callbacks: {
-                    label(tooltipItem: any) {
-                        if (!self.initialStats) {
-                            return ' 0';
-                        }
-                        return ' ' + self.absoluteData[tooltipItem.index];
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 0,
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label(tooltipItem: any) {
+                            if (!self.initialStats) {
+                                return ' 0';
+                            }
+                            return ' ' + self.absoluteData[tooltipItem.dataIndex];
+                        },
                     },
                 },
             },

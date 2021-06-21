@@ -22,7 +22,6 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
 import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import * as Sentry from '@sentry/browser';
@@ -197,7 +196,22 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.barChartOptions = {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 30,
+                },
+            },
             plugins: {
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 0,
+                    textAlign: 'center',
+                    formatter(value: any) {
+                        return `${value}\n${component.roundAndPerformLocalConversion((value * 100) / component.noOfExamsFiltered, 2, 2)}%`;
+                    },
+                },
                 legend: {
                     align: 'start',
                     position: 'bottom',

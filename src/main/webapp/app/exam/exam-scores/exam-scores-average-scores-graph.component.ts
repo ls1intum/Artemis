@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ChartDataSets, ChartOptions, ChartType } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -21,13 +21,13 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
-    barChartType: ChartType = 'horizontalBar';
+    barChartType: ChartType = 'bar';
     averagePointsTooltip: string;
     chartLegend = false;
 
     // Data
     barChartLabels: Label[] = [];
-    chartData: ChartDataSets[] = [];
+    chartData: ChartDataset[] = [];
     absolutePoints: (number | undefined)[] = [];
 
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
@@ -73,67 +73,67 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private createCharts() {
         const self = this;
         this.barChartOptions = {
+            indexAxis: 'y',
             layout: {
                 padding: {
                     left: 130,
                 },
             },
-            title: {
-                display: true,
-                text: self.averageScores.title,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                title: {
+                    display: true,
+                    text: self.averageScores.title,
+                },
+                tooltip: {
+                    mode: 'index',
+                    enabled: true,
+                    callbacks: {
+                        label(tooltipItem: any) {
+                            if (!self.absolutePoints && !self.chartData[0].data) {
+                                return ' -';
+                            }
+                            return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.dataIndex], 2, 2)} (${round(
+                                self.chartData[0].data![tooltipItem.dataIndex],
+                                2,
+                            )}%)`;
+                        },
+                    },
+                },
             },
             responsive: true,
-            hover: {
-                animationDuration: 0,
-            },
             animation: {
                 duration: 1,
             },
             scales: {
-                xAxes: [
-                    {
-                        gridLines: {
-                            display: true,
-                        },
-                        ticks: {
-                            display: true,
-                            beginAtZero: true,
-                            min: 0,
-                            max: 100,
-                            stepSize: 10,
-                            callback(value: number) {
-                                return value + '%';
-                            },
+                x: {
+                    grid: {
+                        display: true,
+                    },
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        display: true,
+                        stepSize: 10,
+                        callback(value: number) {
+                            return value + '%';
                         },
                     },
-                ],
-                yAxes: [
-                    {
-                        gridLines: {
-                            display: true,
-                        },
-                        ticks: {
-                            callback(title: string) {
-                                return title.length > 20 ? title.substr(0, 20) + '...' : title;
-                            },
-                            mirror: true,
-                            padding: 130,
-                        },
+                },
+                y: {
+                    grid: {
+                        display: true,
                     },
-                ],
-            },
-            tooltips: {
-                mode: 'index',
-                enabled: true,
-                callbacks: {
-                    label(tooltipItem: any) {
-                        if (!self.absolutePoints && !self.chartData[0].data) {
-                            return ' -';
-                        }
-                        return `${self.averagePointsTooltip}: ${self.roundAndPerformLocalConversion(self.absolutePoints[tooltipItem.index], 2, 2)} (${round(
-                            self.chartData[0].data![tooltipItem.index],
-                            2,
-                        )}%)`;
+                    ticks: {
+                        mirror: true,
+                        padding: -130,
+                        callback(index: number) {
+                            const label = self.barChartLabels[index] + '';
+                            return label.length > 20 ? label.substr(0, 20) + '...' : label;
+                        },
                     },
                 },
             },

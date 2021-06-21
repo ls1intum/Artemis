@@ -1,10 +1,9 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
-import { ChartDataset, ChartType } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy } from '@angular/core';
-import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
@@ -25,7 +24,7 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
     chartName: string;
 
     // Histogram-related properties
-    barChartOptions: any = {};
+    barChartOptions: ChartOptions = {};
     barChartType: ChartType = 'line';
     amountOfStudents: string;
     barChartLegend = false;
@@ -55,9 +54,6 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
                 },
             },
             responsive: true,
-            hover: {
-                animationDuration: 0,
-            },
             animation: {
                 duration: 1,
             },
@@ -76,15 +72,26 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
                     },
                 },
             },
-            tooltips: {
-                enabled: true,
-                callbacks: {
-                    label(tooltipItem: any) {
-                        if (!self.initialStats) {
-                            return ' 0';
-                        }
+            plugins: {
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 0,
+                },
+                legend: {
+                    display: false,
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label(tooltipItem: any) {
+                            if (!self.initialStats) {
+                                return ' 0';
+                            }
 
-                        return ' ' + self.initialStats[tooltipItem.index];
+                            return ' ' + self.initialStats[tooltipItem.dataIndex];
+                        },
                     },
                 },
             },
