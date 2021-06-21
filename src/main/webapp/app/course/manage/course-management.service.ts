@@ -110,6 +110,7 @@ export class CourseManagementService {
     findWithExercises(courseId: number): Observable<EntityResponseType> {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.checkAccessRightsCourse(res)),
             tap((res: EntityResponseType) => this.convertExerciseCategoriesFromServer(res)),
         );
     }
