@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ReflogEntry;
@@ -27,6 +28,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import de.tum.in.www1.artemis.domain.File;
+import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
@@ -65,6 +68,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Test
     public void checkoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException {
+        gitUtilService.initRepo(defaultBranch);
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
         gitUtilService.updateFile(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1, newFileContent);
@@ -108,10 +112,30 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         assertThat(gitService.getOriginHead(repo)).isEqualTo(defaultBranch);
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "master", "main", "someOtherName" })
+    public void pushSourceToTargetRepo(String defaultBranch) throws GitAPIException, IOException {
+        gitUtilService.initRepo(defaultBranch);
+
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
+        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
+
+        Git git = new Git(localRepo);
+        assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
+
+        gitService.pushSourceToTargetRepo(localRepo, repoUrl, defaultBranch);
+
+        assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
+
+        if (!this.defaultBranch.equals(defaultBranch)) {
+            assertThat(localRepo.getConfig().toText()).doesNotContain(defaultBranch);
+        }
+
+        gitUtilService.deleteRepos();
+    }
+
     @Test
     public void getExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
-        gitUtilService.initRepo();
-
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         doReturn(localRepo.getLocalPath()).when(gitService).getLocalPathOfRepo(any(), any());
@@ -150,6 +174,44 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         List<String> branchNames = List.of("master", "main", "someOtherName");
 
         return branchNames.stream().flatMap(firstParameter -> branchNames.stream().map(secondParameter -> arguments(firstParameter, secondParameter)));
+    }
+
+    @Test
+    public void listFilesAndFolders() {
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+
+        var map = gitService.listFilesAndFolders(localRepo);
+
+        assertThat(map.size()).isEqualTo(4);
+        assertThat(map).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE);
+        assertThat(map).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE);
+        assertThat(map).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE);
+        assertThat(map).containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
+    }
+
+    @Test
+    public void listFiles() {
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+
+        var fileList = gitService.listFiles(localRepo);
+
+        assertThat(fileList.size()).isEqualTo(3);
+        assertThat(fileList).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
+        assertThat(fileList).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo));
+        assertThat(fileList).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo));
+        assertThat(fileList).doesNotContain(new File(localRepo.getLocalPath().toFile(), localRepo));
+    }
+
+    @Test
+    public void getFileByName() {
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+
+        var presentFile = gitService.getFileByName(localRepo, gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1).getName());
+        assertThat(presentFile).isPresent();
+        assertThat(presentFile).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
+
+        var nonPresentFile = gitService.getFileByName(localRepo, "NameThatWillNeverBePResent");
+        assertThat(nonPresentFile).isNotPresent();
     }
 
     @Test

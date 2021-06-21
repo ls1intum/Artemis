@@ -62,18 +62,13 @@ public class GitUtilService {
         try {
             deleteRepos();
 
-            remoteGit = Git.init().setDirectory(remotePath.toFile()).call();
+            remoteGit = Git.init().setInitialBranch(defaultBranch).setDirectory(remotePath.toFile()).call();
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE3.toString()).toFile().createNewFile();
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
-
-            if (!"master".equals(defaultBranch)) {
-                // set HEAD in remote repository
-                remoteGit.checkout().setCreateBranch(true).setName(defaultBranch).call();
-            }
 
             // clone remote repository
             localGit = Git.cloneRepository().setURI(remotePath.toString()).setDirectory(localPath.toFile()).call();
@@ -164,9 +159,14 @@ public class GitUtilService {
         }
     }
 
+    public File getFile(REPOS repo, FILES fileToRead) {
+        Path path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+        return path.toFile();
+    }
+
     public String getFileContent(REPOS repo, FILES fileToRead) {
         try {
-            var path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+            Path path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
             byte[] encoded = Files.readAllBytes(path);
             return new String(encoded, Charset.defaultCharset());
         }
