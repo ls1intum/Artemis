@@ -445,7 +445,7 @@ public class FileResource {
                 headers.setContentDisposition(contentDisposition);
             }
             else {
-                ContentDisposition contentDisposition = ContentDisposition.builder("filename").filename(filename).build();
+                ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
                 headers.setContentDisposition(contentDisposition);
             }
 
