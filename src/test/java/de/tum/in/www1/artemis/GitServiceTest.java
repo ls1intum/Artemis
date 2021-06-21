@@ -114,7 +114,29 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void pushSourceToTargetRepo(String defaultBranch) throws GitAPIException, IOException {
+    public void pushSourceToTargetRepoWithoutBranch(String defaultBranch) throws GitAPIException, IOException {
+        gitUtilService.initRepo(defaultBranch);
+
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
+        var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
+
+        Git git = new Git(localRepo);
+        assertThat(git.getRepository().getBranch()).isEqualTo(defaultBranch);
+
+        gitService.pushSourceToTargetRepo(localRepo, repoUrl);
+
+        assertThat(git.getRepository().getBranch()).isEqualTo(this.defaultBranch);
+
+        if (!this.defaultBranch.equals(defaultBranch)) {
+            assertThat(localRepo.getConfig().toText()).doesNotContain(defaultBranch);
+        }
+
+        gitUtilService.deleteRepos();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "master", "main", "someOtherName" })
+    public void pushSourceToTargetRepoWithBranch(String defaultBranch) throws GitAPIException, IOException {
         gitUtilService.initRepo(defaultBranch);
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
