@@ -14,8 +14,8 @@ We therefore provide guidelines for inclusive, diversity-sensitive, and apprecia
     This page is not meant to be an exhaustive reference.
     It rather describes some general guidelines and illustrates some best practices to follow.
 
-English language 
-==================================
+English language
+================
 
 The English language is used for code, documentation, user interaction.
 
@@ -45,20 +45,20 @@ The English language is used for code, documentation, user interaction.
 - Gendered pronouns (he/him/his, she/her/hers) → they, them, theirs
 
 German language
-===================================
+===============
 
 The German language is mainly used for user interaction.
 
 **Best practices** (written in German for demonstration purposes)
 
 * **Nutze neutrale Formulierungen**: Wenn möglich ist es empfehlenswert, neutrale Formulierungen zu finden. Neben passiven Formen, wie z.B. Studierende, können auch aktive mit „Mensch“ bzw. „Person“ etc. verwendet werden. Das spart „der/die“ und inkludiert alle Menschen unabhängig davon, welche Eigenschaften/Kategorien diese Personen sonst noch mitbringen.
-* **Beschreibe Handlungen (aktiv oder passiv)**: 
-  
+* **Beschreibe Handlungen (aktiv oder passiv)**:
+
   * „Automatisch generierte Ergebnisse werden am Ende des Bearbeitungszeitraums erstellt“. Statt „Die Studenten/Studentinnen erhalten am Ende des Bearbeitungszeitraums ein automisch generiertes Ergebnis.“)
   * „Die Anmeldung für die Klausur ist bis zum 15.12.2020 möglich". Statt „Jeder muss sich bis zum 15.12.2020 für die Klausur anmelden.“
-  
+
 * **Sprich Personen direkt an**:
-  
+
   * „Bitte melde dich bis zum 15.12.20 für die Lehrveranstaltung an“. Statt „Jeder muss sich bis zum 15.12.2020 für die Lehrveranstaltung anmelden.“
 
 * **Rücke die Organisation in den Vordergrund**:
@@ -67,12 +67,12 @@ The German language is mainly used for user interaction.
   * „das Organisationsteam“, statt „die Organisatoren, die Organisatorinnen“
 
 * **Verwende die neutrale Pluralform**:
-  
+
   * „die Studierenden“, statt „die Studenten/ die Studentinnen“
   * „die Lehrenden“, statt „die Dozenten/ die Dozentinnen“
-  
+
 * **Verwende die neutralen Pronomina**:
-  
+
   * „niemand“, statt „keiner“
   * „alle die“, statt "jeder"
 
@@ -89,13 +89,13 @@ The German language is mainly used for user interaction.
 - Editoren → Editor:innen
 
 Sources and further material
-============================================
+============================
 
 The following sources were used when creating these guidelines.
 They provide detailed information on this topic and therefore can and should serve as further orientation.
 
 * `Inclusive Language in Technology, Academy Software Foundation <https://www.aswf.io/blog/inclusive-language/>`_
 * `Google Developer Documentation Style Guide <https://developers.google.com/style/inclusive-documentation/>`_
-* `Geschlechtergerechter Sprachgebrauch, Duden <https://www.duden.de/sprachwissen/sprachratgeber/Geschlechtergerechter-Sprachgebrauch/>`_ 
-* `Gendergerechte Sprache und bildliche Darstellung, Stabsstelle Chancengleichheit, Technische Universität München <https://www.chancengleichheit.tum.de/links-downloads/gendergerechte-sprache-und-bildliche-darstellung/>`_ 
-* `Ein Leitfaden für inklusive, vielfaltssensible und wertschätzende Sprache, Fakultät für Maschinenwesen, Technische Universität München <https://www.mw.tum.de/fuer-mw-personal/chancengleichheit-und-vielfalt/sprachleitfaden/>`_ 
+* `Geschlechtergerechter Sprachgebrauch, Duden <https://www.duden.de/sprachwissen/sprachratgeber/Geschlechtergerechter-Sprachgebrauch/>`_
+* `Gendergerechte Sprache und bildliche Darstellung, Stabsstelle Chancengleichheit, Technische Universität München <https://www.chancengleichheit.tum.de/links-downloads/gendergerechte-sprache-und-bildliche-darstellung/>`_
+* `Ein Leitfaden für inklusive, vielfaltssensible und wertschätzende Sprache, Fakultät für Maschinenwesen, Technische Universität München <https://www.mw.tum.de/fuer-mw-personal/chancengleichheit-und-vielfalt/sprachleitfaden/>`_
