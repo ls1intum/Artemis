@@ -7,7 +7,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import interact from 'interactjs';
 import * as $ from 'jquery';
 import { JhiAlertService } from 'ng-jhipster';
-import { mode } from 'simple-statistics';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -341,9 +340,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     private calculateNote(count: Number | undefined) {
         if (count) {
-            return this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackImpactWarning', count);
-
-            // return `This assessment will be suggested for ${count} other submissions.`;
+            return this.artemisTranslatePipe.transform('modelingAssessment.impactWarning', { affectedSubmissionsCount: count });
         }
 
         return undefined;
