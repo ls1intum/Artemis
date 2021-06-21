@@ -309,6 +309,12 @@ public class BitbucketRequestMockProvider {
         mockPutDefaultBranch(projectKey);
     }
 
+    public void mockDefaultBranch(String defaultBranch, VcsRepositoryUrl repoURL) throws BitbucketException, IOException {
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repoURL);
+        mockGetDefaultBranch(defaultBranch, projectKey);
+        mockPutDefaultBranch(projectKey);
+    }
+
     private void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
         var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
         mockResponse.setDisplayId(defaultBranch);
