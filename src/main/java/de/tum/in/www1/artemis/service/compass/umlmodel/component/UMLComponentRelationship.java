@@ -44,8 +44,8 @@ public class UMLComponentRelationship extends UMLElement {
         sourceTargetSimilarity += referenceRelationship.getTarget().similarity(target) * CompassConfiguration.COMPONENT_RELATION_ELEMENT_WEIGHT;
 
         double targetSourceSimilarity = 0;
-        sourceTargetSimilarity += referenceRelationship.getSource().similarity(target) * CompassConfiguration.COMPONENT_RELATION_ELEMENT_WEIGHT;
-        sourceTargetSimilarity += referenceRelationship.getTarget().similarity(source) * CompassConfiguration.COMPONENT_RELATION_ELEMENT_WEIGHT;
+        targetSourceSimilarity += referenceRelationship.getSource().similarity(target) * CompassConfiguration.COMPONENT_RELATION_ELEMENT_WEIGHT;
+        targetSourceSimilarity += referenceRelationship.getTarget().similarity(source) * CompassConfiguration.COMPONENT_RELATION_ELEMENT_WEIGHT;
 
         if (type == UMLComponentRelationshipType.DEPLOYMENT_ASSOCIATION || type == UMLComponentRelationshipType.DEPLOYMENT_INTERFACE_PROVIDED
                 || type == UMLComponentRelationshipType.COMPONENT_INTERFACE_PROVIDED) {
