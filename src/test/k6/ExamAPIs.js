@@ -6,7 +6,6 @@ import { createQuizExercise, submitRandomAnswerRESTExam } from './requests/quiz.
 import {
     newExam,
     newExerciseGroup,
-    newTextExercise,
     addUserToStudentsInExam,
     generateExams,
     startExercises,
@@ -16,7 +15,7 @@ import {
     evaluateQuizzes,
     submitExam,
 } from './requests/exam.js';
-import { submitRandomTextAnswerExam } from './requests/text.js';
+import { submitRandomTextAnswerExam, newTextExercise } from './requests/text.js';
 import { newModelingExercise, submitRandomModelingAnswerExam } from './requests/modeling.js';
 import { createProgrammingExercise, ParticipationSimulation, simulateSubmission, TestResult } from './requests/programmingExercise.js';
 import { someSuccessfulErrorContentJava, allSuccessfulContentJava, buildErrorContentJava } from './resource/constants_java.js';
