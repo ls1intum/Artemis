@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +16,6 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
 @RequestMapping(PlantUmlResource.Endpoints.ROOT)
 @PreAuthorize("hasRole('USER')")
 public class PlantUmlResource {
-
-    private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private final PlantUmlService plantUmlService;
 
@@ -38,9 +34,7 @@ public class PlantUmlResource {
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml) throws IOException {
         final var png = plantUmlService.generatePng(plantuml);
         final var responseHeaders = new HttpHeaders();
-
         responseHeaders.setContentType(MediaType.IMAGE_PNG);
-
         return new ResponseEntity<>(png, responseHeaders, HttpStatus.OK);
     }
 
@@ -54,7 +48,6 @@ public class PlantUmlResource {
     @GetMapping(Endpoints.GENERATE_SVG)
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml) throws IOException {
         final var svg = plantUmlService.generateSvg(plantuml);
-
         return new ResponseEntity<>(svg, HttpStatus.OK);
     }
 

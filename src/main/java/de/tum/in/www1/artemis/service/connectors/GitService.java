@@ -885,20 +885,8 @@ public class GitService {
                 Path nextPath = nextFile.toPath();
 
                 // filter out symlinks
-                // cannot use Files.isSymbolicLink(nextFile) as this will not detect children of symlink dirs
-                try {
-                    // A symbolic link would resolve a different path here
-                    Path realPath = nextPath.toRealPath();
-                    // cannot use realPath.equals(nextPath) as it will resolve symlinks
-                    if (!realPath.toString().equals(nextPath.toString())) {
-                        log.warn("Found a symlink {} in the git repository {}. Do not allow access!", realPath, repo);
-                        // file is a symlink or a child of a symlink, do not allow access
-                        continue;
-                    }
-                }
-                catch (IOException e) {
-                    log.warn("Something's wrong with the file {} in the git repository {}. Do not allow access!", nextPath, repo);
-                    // something's wrong with this file, do not allow access
+                if (Files.isSymbolicLink(nextPath)) {
+                    log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
                     continue;
                 }
 
