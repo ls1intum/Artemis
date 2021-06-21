@@ -32,36 +32,47 @@ Server and Gitlab as **Version Control** Server, you have to configure
 the file ``application-prod.yml`` (Production Server) or
 ``application-artemis.yml`` (Local Development) accordingly. Please note
 that all values in ``<..>`` have to be configured properly. These values
-will be explained below in the corresponding sections.
+will be explained below in the corresponding sections. If you want to set up a local environment, copy the values
+below into your ``application-artemis.yml`` or ``application-local.yml`` file (the latter is recommended), and follow the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
 
 .. code:: yaml
 
    artemis:
-       repo-clone-path: ./repos/
-       repo-download-clone-path: ./repos-download/
-       encryption-password: artemis-encrypt     # arbitrary password for encrypting database values
-       user-management:
-           use-external: false
-           internal-admin:
-                username: artemis_admin
-                password: artemis_admin
-       version-control:
-           url: <https://gitlab-url>
-           user: <gitlab-admin-user>
-           password: <gitlab-admin-password>
-           token: <token>
-           ci-token: <ci-token>
-           ssh-private-key-folder-path: <ssh-private-key-folder-path>
-           ssh-private-key-password: <ssh-private-key-password>
-       continuous-integration:
-           user: <jenkins-admin-user>
-           password: <jenkins-admin-password>
-           url: <https://jenkins-url>
-           empty-commit-necessary: false
-           secret-push-token: <secret push token>
-           vcs-credentials: <vcs-credentials>
-           artemis-authentication-token-key: <artemis-authentication-token-key>
-           artemis-authentication-token-value: <artemis-authentication-token-value>
+    course-archives-path: ./exports/courses
+    repo-clone-path: ./repos
+    repo-download-clone-path: ./repos-download
+    encryption-password: artemis_admin
+    user-management:
+        use-external: false
+        internal-admin:
+            username: artemis_admin
+            password: artemis_admin
+        accept-terms: false
+        login:
+            account-name: TUM
+    version-control:
+        url: http://localhost:8081
+        user: root
+        password: <your.gitlab.admin.password> # created in Gitlab Server Quickstart step 2
+        token: <your.gitlab.token> # generated in Gitlab Server Quickstart steps 4 and 5
+        ci-token: <your.ci.token> # generated in Jenkins Server Quickstart step 8
+    continuous-integration:
+        user: artemis_admin
+        password: artemis_admin
+        url: http://localhost:8082
+        empty-commit-necessary: true
+        secret-push-token: <your.secret.push.token> # generated in Jenkins Server Quickstart step 8
+        vcs-credentials: artemis_gitlab_admin_credentials
+        artemis-authentication-token-key: artemis_notification_plugin_token
+        artemis-authentication-token-value: artemis_admin
+        build-timeout: 30
+    git:
+        name: Artemis
+        email: artemis.in@tum.de
+    jenkins:
+        internal-urls:
+            ci-url: http://jenkins:8080
+            vcs-url: http://gitlab:80
 
 In addition, you have to start Artemis with the profiles ``gitlab`` and
 ``jenkins`` so that the correct adapters will be used, e.g.:
@@ -161,7 +172,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
 6. You're done! Follow the `Automated Jenkins Server Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
-    There you can skip steps 4 and 5.
+    There you can skip steps 4, 5, and 10.
 
 Manual Gitlab Server Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
