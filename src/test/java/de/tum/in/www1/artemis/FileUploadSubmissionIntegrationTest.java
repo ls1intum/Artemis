@@ -196,8 +196,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
         assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
 
-        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.NOT_FOUND,
-            FileUploadSubmission.class);
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment",
+                HttpStatus.NOT_FOUND, FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
     }

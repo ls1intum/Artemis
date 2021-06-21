@@ -97,8 +97,8 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
                 .findAny().orElse(null);
 
-        examFileUploadExercise = (FileUploadExercise) exam.getExerciseGroups().get(2).getExercises().stream().filter(exercise -> exercise instanceof FileUploadExercise)
-            .findAny().orElse(null);
+        examFileUploadExercise = (FileUploadExercise) exam.getExerciseGroups().get(2).getExercises().stream().filter(exercise -> exercise instanceof FileUploadExercise).findAny()
+                 .orElse(null);
 
     }
 
@@ -138,14 +138,15 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         examRepository.save(exam);
 
-        if(submission1 != null && submission2 != null) {
+        if (submission1 != null && submission2 != null) {
             submission1.submitted(true);
             submission2.submitted(true);
 
             if (exercise instanceof ProgrammingExercise) {
                 database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission1, "student1");
                 database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission2, "student1");
-            } else {
+            }
+            else {
                 database.addSubmission(exercise, submission1, "student1");
                 database.addSubmission(exercise, submission2, "student2");
             }
