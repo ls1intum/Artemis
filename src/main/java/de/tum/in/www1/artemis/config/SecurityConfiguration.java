@@ -123,8 +123,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/api-docs/**")
             .antMatchers("/api.html")
-            .antMatchers("/test/**")
-            .antMatchers("/swagger-ui/**");
+            .antMatchers("/test/**");
         web.ignoring()
             .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring()
@@ -157,7 +156,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .featurePolicy("geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; fullscreen *; payment 'none'")
         .and()
             .frameOptions()
-            .sameOrigin()
+            .disable()
         .and()
             .headers()
             .httpStrictTransportSecurity()
