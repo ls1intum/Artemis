@@ -17,13 +17,13 @@ We therefore provide guidelines for inclusive, diversity-sensitive, and apprecia
 English language 
 ==================================
 
-English language is used for code, documentation, user interaction.
+The English language is used for code, documentation, user interaction.
 
-**Best practice**
+**Best practices**
 
 * **Avoid using terms that have social history**:  Terms that can have historical significance or impact in regards to race, ethnicity, national origin, gender, age, mental and physical ability, sexual orientation, socioeconomic status, religion, and educational background.
 * **Avoid using idioms and jargons**:  These can exclude people who don’t have particular specialized knowledge, and many idioms don’t translate from country to country.  Additionally, these sometimes have origins in negative stereotypes.
-* **Write inclusive examples**:  Try to avoid using examples in documentation that are culturally-specific to a particular country, and be sure to use diverse names.
+* **Write inclusive examples**:  Try to avoid using examples in the documentation that are culturally specific to a particular country, and be sure to use diverse names.
 
 **Examples** - Common terms and recommendations for replacements:
 
@@ -36,7 +36,7 @@ English language is used for code, documentation, user interaction.
 - Native feature → core feature, built-in feature
 - Culture fit → values fit
 
-**Gendered language**: Language that either assumes the gender of the users and developers, or that makes assumptions of a gender.
+**Gendered language**: Language that either assumes the gender of the users and developers, or that makes assumptions of gender.
 
 - Man hours → labor hours, work hours
 - Manpower → labor, workforce
@@ -47,23 +47,23 @@ English language is used for code, documentation, user interaction.
 German language
 ===================================
 
-German language is mainly used for user interaction.
+The German language is mainly used for user interaction.
 
-**Best practice** (written in German for demonstration purposes)
+**Best practices** (written in German for demonstration purposes)
 
 * **Nutze neutrale Formulierungen**: Wenn möglich ist es empfehlenswert, neutrale Formulierungen zu finden. Neben passiven Formen, wie z.B. Studierende, können auch aktive mit „Mensch“ bzw. „Person“ etc. verwendet werden. Das spart „der/die“ und inkludiert alle Menschen unabhängig davon, welche Eigenschaften/Kategorien diese Personen sonst noch mitbringen.
 * **Beschreibe Handlungen (aktiv oder passiv)**: 
   
   * „Automatisch generierte Ergebnisse werden am Ende des Bearbeitungszeitraums erstellt“. Statt „Die Studenten/Studentinnen erhalten am Ende des Bearbeitungszeitraums ein automisch generiertes Ergebnis.“)
-  * „Die Anmeldung für die Klausur ist bis zum 15.12.2020 möglich". Statt „Jeder muss sich bis zum 15.12.2020 auf für die Klausur anmelden.“
+  * „Die Anmeldung für die Klausur ist bis zum 15.12.2020 möglich". Statt „Jeder muss sich bis zum 15.12.2020 für die Klausur anmelden.“
   
 * **Sprich Personen direkt an**:
   
-  * „Bitte melde Dich bis zum 15.12.20 für die Lehrveranstaltung an“. Statt „Jeder muss sich bis zum 15.12.2020 für die Lehrveranstaltung anmelden.“
+  * „Bitte melde dich bis zum 15.12.20 für die Lehrveranstaltung an“. Statt „Jeder muss sich bis zum 15.12.2020 für die Lehrveranstaltung anmelden.“
 
 * **Rücke die Organisation in den Vordergrund**:
 
-  * „das Lehrstuhlpersonal“, „Beschäftigte des Lehrstuhl“, statt „die Lehrstuhlmitarbeiter/ die Lehrstuhlmitarbeiterinnen“
+  * „das Lehrstuhlpersonal“, „Beschäftigte des Lehrstuhls“, statt „die Lehrstuhlmitarbeiter/ die Lehrstuhlmitarbeiterinnen“
   * „das Organisationsteam“, statt „die Organisatoren, die Organisatorinnen“
 
 * **Verwende die neutrale Pluralform**:
@@ -84,14 +84,14 @@ German language is mainly used for user interaction.
 - Benutzerkonto → Konto
 - Benutzer → Benutzer:in / Konto
 - Benutzername → Login
-- Tutor / Tuturen → Tutor:innen (Pluarl), Tutor:in (Singular)
+- Tutor / Tutoren → Tutor:innen (Plural), Tutor:in (Singular)
 - Prüfer → Bewertet von
 - Editoren → Editor:innen
 
 Sources and further material
 ============================================
 
-Following sources were used when creating these guidelines.
+The following sources were used when creating these guidelines.
 They provide detailed information on this topic and therefore can and should serve as further orientation.
 
 * `Inclusive Language in Technology, Academy Software Foundation <https://www.aswf.io/blog/inclusive-language/>`_
