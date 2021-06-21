@@ -46,6 +46,7 @@ import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { By } from '@angular/platform-browser';
+import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -65,6 +66,7 @@ describe('ExamParticipationComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
+                MockComponent(ExamExerciseOverviewPageComponent),
                 ExamParticipationComponent,
                 TranslatePipeMock,
                 MockDirective(JhiTranslateDirective),
@@ -145,29 +147,29 @@ describe('ExamParticipationComponent', () => {
 
     describe('isProgrammingExercise', () => {
         it('should return true if active exercise is a programming exercise', () => {
-            comp.activeExamPage = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExercise()).to.equal(true);
         });
         it('should return false if active exercise is not a programming exercise', () => {
-            comp.activeExamPage = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+            comp.activeExamPage.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             expect(comp.isProgrammingExercise()).to.equal(false);
         });
     });
 
     describe('isProgrammingExerciseWithCodeEditor', () => {
         it('should return true if programming exercise is with code editor', () => {
-            comp.activeExamPage = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExerciseWithCodeEditor()).to.equal(false);
-            (comp.activeExamPage as ProgrammingExercise).allowOnlineEditor = true;
+            (comp.activeExamPage.exercise as ProgrammingExercise).allowOnlineEditor = true;
             expect(comp.isProgrammingExerciseWithCodeEditor()).to.equal(true);
         });
     });
 
     describe('isProgrammingExerciseWithOfflineIDE', () => {
         it('should return true if active exercise is with offline ide', () => {
-            comp.activeExamPage = new ProgrammingExercise(new Course(), undefined);
+            comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
             expect(comp.isProgrammingExerciseWithOfflineIDE()).to.equal(true);
-            (comp.activeExamPage as ProgrammingExercise).allowOfflineIde = false;
+            (comp.activeExamPage.exercise as ProgrammingExercise).allowOfflineIde = false;
             expect(comp.isProgrammingExerciseWithOfflineIDE()).to.equal(false);
         });
     });
@@ -277,9 +279,9 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.isSynced).to.equal(true);
         expect(secondSubmission.submitted).to.equal(false);
 
-        // Initialize exercise
-        expect(comp.activeExamPage).to.deep.equal(firstExercise);
-        expect(createParticipationForExerciseStub).to.have.been.calledWith(firstExercise);
+        // Initialize Exam Overview Page
+        expect(comp.activeExamPage.exercise).to.deep.equal(undefined);
+        expect(comp.activeExamPage.isOverviewPage).to.equal(true);
     };
 
     it('should initialize exercises when exam starts', () => {
@@ -551,12 +553,19 @@ describe('ExamParticipationComponent', () => {
     });
 
     it('should trigger save and initialize exercise when exercise changed', () => {
-        const exercise = new ProgrammingExercise(new Course(), undefined);
+        comp.exerciseIndex = 0;
+        const exercise1 = new TextExercise(new Course(), undefined);
+        exercise1.id = 15;
+        const exercise2 = new ProgrammingExercise(new Course(), undefined);
+        exercise2.id = 42;
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [exercise1, exercise2];
         const triggerStub = stub(comp, 'triggerSave');
-        const exerciseChange = { exercise, forceSave: true };
+        const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
         const createParticipationForExerciseStub = stub(comp, 'createParticipationForExercise').returns(of(new StudentParticipation()));
         comp.onPageChange(exerciseChange);
         expect(triggerStub).to.have.been.calledWith(true);
-        expect(createParticipationForExerciseStub).to.have.been.calledWith(exercise);
+        expect(comp.exerciseIndex).to.be.equal(1);
+        expect(createParticipationForExerciseStub).to.have.been.calledWith(exercise2);
     });
 });
