@@ -97,4 +97,5 @@ They provide detailed information on this topic and therefore can and should ser
 * `Inclusive Language in Technology, Academy Software Foundation <https://www.aswf.io/blog/inclusive-language/>`_
 * `Google Developer Documentation Style Guide <https://developers.google.com/style/inclusive-documentation/>`_
 * `Geschlechtergerechter Sprachgebrauch, Duden <https://www.duden.de/sprachwissen/sprachratgeber/Geschlechtergerechter-Sprachgebrauch/>`_ 
-* `Ein Leitfaden für inklusive, vielfaltssensible und wertschätzende Sprache, Fakultät für Maschinenwesen Technische Universität München <https://www.mw.tum.de/fuer-mw-personal/chancengleichheit-und-vielfalt/sprachleitfaden/>`_ 
+* `Gendergerechte Sprache und bildliche Darstellung, Stabsstelle Chancengleichheit, Technische Universität München <https://www.chancengleichheit.tum.de/links-downloads/gendergerechte-sprache-und-bildliche-darstellung/>`_ 
+* `Ein Leitfaden für inklusive, vielfaltssensible und wertschätzende Sprache, Fakultät für Maschinenwesen, Technische Universität München <https://www.mw.tum.de/fuer-mw-personal/chancengleichheit-und-vielfalt/sprachleitfaden/>`_ 
