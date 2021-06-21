@@ -98,7 +98,7 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
                 .findAny().orElse(null);
 
         examFileUploadExercise = (FileUploadExercise) exam.getExerciseGroups().get(2).getExercises().stream().filter(exercise -> exercise instanceof FileUploadExercise).findAny()
-                 .orElse(null);
+                .orElse(null);
 
     }
 
