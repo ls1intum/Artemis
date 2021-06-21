@@ -24,8 +24,8 @@ public class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
     @Test
     void similarityDeploymentDiagram_DifferentModels() {
         compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), 0.0, 35.55);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.22);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.99);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.15);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 11.50);
     }
 
     @Test

@@ -60,7 +60,7 @@ public class CommunicationDiagramParser {
 
         for (JsonElement messageJson : relationshipJson.getAsJsonArray(RELATIONSHIP_MESSAGES)) {
             JsonObject messageJsonObject = (JsonObject) messageJson;
-            Direction direction = messageJsonObject.get("direction").getAsString().equals("target") ? Direction.TARGET : Direction.SOURCE;
+            Direction direction = "target".equals(messageJsonObject.get("direction").getAsString()) ? Direction.TARGET : Direction.SOURCE;
             UMLMessage message = new UMLMessage(messageJsonObject.get("name").getAsString(), direction);
             messages.add(message);
         }
