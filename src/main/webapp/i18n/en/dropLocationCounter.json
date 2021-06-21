@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Drop Location Counter",
                 "createOrEditLabel": "Create or edit a Drop Location Counter"
             },
-            "created": "A new Drop Location Counter is created with identifier {{ param }}",
-            "updated": "A Drop Location Counter is updated with identifier {{ param }}",
-            "deleted": "A Drop Location Counter is deleted with identifier {{ param }}",
+            "created": "Created new Drop Location Counter with identifier {{ param }}",
+            "updated": "Updated Drop Location Counter with identifier {{ param }}",
+            "deleted": "Deleted Drop Location Counter with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Drop Location Counter {{ id }}?"
             },

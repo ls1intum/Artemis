@@ -10,28 +10,28 @@
                 "generateLabel": "Generate new Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
             },
-            "created": "A new Programming Exercise was created with title {{ param }}",
-            "updated": "A Programming Exercise was updated with title {{ param }}",
-            "deleted": "A Programming Exercise was deleted with title {{ param }}",
+            "created": "Created new Programming Exercise with title {{ param }}",
+            "updated": "Updated Programming Exercise with title {{ param }}",
+            "deleted": "Deleted Programming Exercise with title {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
-                "baseReposBuildPlans": "Additionally delete template, solution, test and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you backup these build plans and repos first!"
+                "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
             "cleanup": {
-                "successMessage": "Cleanup was successful. All build plans have been deleted. Students can resume their participation.",
-                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished."
+                "successMessage": "Cleanup was successful. All build plans have been deleted. Students may resume participating.",
+                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participation has been marked as Finished."
             },
             "reset": {
-                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participations, existing results, student repositories and student build plans will be deleted."
+                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, existing results, student repositories and student build plans will be deleted."
             },
             "detail": {
                 "title": "Programming Exercise",
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
-            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it would be published immediately and visible to the students.",
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
@@ -61,11 +61,11 @@
             "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
             "sequentialTestRuns": {
                 "title": "Sequential Test Runs",
-                "description": "Activate to first run structural and then behavior test. Does not support static code analysis. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
+                "description": "Activate to run structural tests first, and then behavior tests afterwards. Does not support static code analysis. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
             },
             "checkoutSolutionRepository": {
                 "title": "Check out repository of sample solution",
-                "description": "Activate this option to checkout the solution repository into the 'solution' path. This is useful to compare the student's submission with the sample solution."
+                "description": "Activate this option to checkout the solution repository into the 'solution' path. This is useful for comparing the student's submission with the sample solution."
             },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",
@@ -90,11 +90,11 @@
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
-            "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
+            "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommits": "Combine Template Commits",
             "checkPlagiarism": "Check Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
-            "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
+            "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
             "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
             "editable": {
@@ -117,13 +117,13 @@
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "There are {{number}} test cases that were found in the problem statement markdown, but are not valid test cases in the test repository of this exercise:",
-                "missingTestCases": "There are {{number}} test cases that are valid test cases in your test repository but were not found in the markdown of the problem statement:",
+                "missingTestCases": "There are {{number}} valid test cases in your test repository that were not found in the markdown of the problem statement:",
                 "issues": "Test case issues.",
                 "ok": "Test cases ok.",
                 "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
             },
             "hintsAnalysis": {
-                "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but can't be found in the database or are not assigned to this programming exercise:",
+                "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but couldn't be found in the database or are not assigned to this programming exercise:",
                 "issues": "Hints issues.",
                 "ok": "Hints ok.",
                 "invalidHint": "The hint with id '{{id}}' could not be found in the database for this programming exercise."
@@ -164,33 +164,33 @@
                     "preview": "Preview",
                     "testCaseWeights": {
                         "title": "Weight Distribution",
-                        "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test-case.<br/>Hover over a colored block to see more details."
+                        "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test case.<br/>Hover over a colored block to see more details."
                     },
                     "testCasePoints": {
                         "title": "Total Points",
-                        "description": "The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of <b>all</b> students. This chart only shows the positive points achieved by passing test-cases and hides potential negative points of code quality penalties.<br/>Hover over a colored block to see more details."
+                        "description": "The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of <b>all</b> students. This chart only shows the positive points achieved by passing test cases and hides potential negative points of code quality penalties.<br/>Hover over a colored block to see more details."
                     },
                     "categoryDistribution": {
                         "title": "Category Distribution",
-                        "description": "The distribution of categories across the metrices 'Penalty', 'Issues' and 'Points'. This shows how much each category accounts for in each of the three metrics.<br/>The <b>Penalty</b> bar shows the distribution of penalties across the categories.<br/>The <b>Issues</b> bar shows how much issues are detected in each respective category.<br/>The <b>Points</b> bar indicates how much points are actually deducted from the student scores based of the category, which results from the first two bars. Hover over a colored block to see the category details."
+                        "description": "The distribution of categories across the metrics 'Penalty', 'Issues' and 'Points'. This shows how much each category accounts for in each of the three metrics.<br/>The <b>Penalty</b> bar shows the distribution of penalties across the categories.<br/>The <b>Issues</b> bar shows how many issues were detected in each respective category.<br/>The <b>Points</b> bar indicates how many points were actually deducted in each respective category, based on the information in the first two bars. Hover over a colored block to see the category details."
                     }
                 },
                 "help": {
                     "state": "Determines whether issues in this category should be shown to the students and used for grading.",
                     "penalty": "Penalty points given on each detected issue of this category.",
-                    "maxPenalty": "Maximum applied penalty across all issues of this category for one student.",
-                    "detectedIssues": "Shows the number of students for each amount of detected issues in a category, starting at 1 issue. The bars turn red when surpassing the threshold defined by the maxPenalty of the respective category.",
-                    "weight": "The weight of a test-case determine the points a student receives for passing the test-case. The points of a test-case are proportional to its weight and calculated as a fraction of the total exercise points.",
-                    "bonusMultiplier": "This multiplies the points given for passing a test-case without affecting the fractions of other test-cases. Multipliers greater than 1 can produce student scores greater than 100%.",
-                    "bonusPoints": "Bonus points added on top of the regular points for passing a test-case. Setting bonus points can produce student scores greater than 100%.",
-                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after it has passed. Tests with visibility ‘Never’ do not influence the student score."
+                    "maxPenalty": "Maximum applied penalty for one student across all issues of this category.",
+                    "detectedIssues": "Shows the number of students grouped by amount of detected issues in a category, starting at 1 issue. The bars turn red when surpassing the threshold defined by the maxPenalty of the respective category.",
+                    "weight": "The weighting of a test case determines the points a student receives for passing the test case. The number of points a test case awards is proportional to its weight and calculated as a fraction of the total exercise points.",
+                    "bonusMultiplier": "This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
+                    "bonusPoints": "Bonus points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
+                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score."
                 },
                 "updatedGradingConfigShort": "Updated grading",
-                "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might therefore be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
-                "updatedGradingConfigTooltip": "You have updated the grading configuration, this does not have direct implications on the student results though. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions after the grading updates, the results across your students might be inconsistent. With the button 'Trigger all' you can trigger the submissions of all students with the updated grading configuration.",
+                "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
+                "updatedGradingConfigTooltip": "You have updated the grading configuration, but this will have no effect on existing results. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions after the grading updates, the results across your students might be inconsistent. With the button 'Trigger all' you can trigger the submissions of all students with the updated grading configuration.",
                 "noUpdatedGradingConfig": "No updated grading",
                 "notReleased": "Not released",
-                "notReleasedTooltip": "The programming exercise is not yet released or is relased but does not yet have student results. Therefore you can change the grading without having to trigger existing student submissions with the updated settings."
+                "notReleasedTooltip": "The programming exercise is not yet released or is released but does not yet have any student results. You may change the grading configuration without having to trigger existing student submissions with the updated settings."
             },
             "export": {
                 "downloadRepo": "Download Repo",
@@ -198,73 +198,73 @@
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",
-                "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
-                "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
-                "addTeamName": "Add team name to project (allows to import multiple projects into Eclipse at the same time)",
-                "addTeamOrStudentName": "Add team/student name to project (allows to import multiple projects into Eclipse at the same time)",
+                "filterLateSubmissionsDate": "Date to filter late submissions (defaults to exercise due date if not set)",
+                "addStudentName": "Add student name to project (allows importing multiple projects into Eclipse at the same time)",
+                "addTeamName": "Add team name to project (allows importing multiple projects into Eclipse at the same time)",
+                "addTeamOrStudentName": "Add team/student name to project (allows importing multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "anonymizeStudentCommits": "Anonymize all of the student's commits",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
             },
-            "resubmitOnFailedSubmission": "The result for the last submission of this participation could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
-            "resubmit": "Resubmit the last submission. This will execute a build run on the participation's repository without making a commit.",
-            "resubmitSingle": "Trigger build for participation",
-            "resubmitConfirmManualResultOverride": "The last result of this participation is manual, which means the submission was assessed by a teaching assistant. If you trigger the build for this submission again, the manual result will no longer be the latest result that is shown primarily to the student.",
-            "resubmitAllConfirmAfterDeadline": "The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results would replace the manual results as the latest result for the participation. ",
-            "resubmitUnsuccessful": "Resubmitting the last submission failed. Please contact your teaching assistant.",
+            "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
+            "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
+            "resubmitSingle": "Trigger new build for this participant",
+            "resubmitConfirmManualResultOverride": "The latest result for this participant is manual, which means the submission was assessed by a tutor. If you trigger the build for this submission again, the newly generated automatic result will be shown to the student instead.",
+            "resubmitAllConfirmAfterDeadline": "The deadline has passed, some of the student submissions may already have been assessed by tutors. Newly generated automatic results would replace these manual assessments as the latest results.",
+            "resubmitUnsuccessful": "Resubmitting the last submission failed. Please contact your tutor.",
             "resubmitAll": "Trigger all",
-            "resubmitAllTooltip": "Trigger the last submission of all participations again. The results will be rated.",
-            "resubmitAllDialog": "WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",
+            "resubmitAllTooltip": "Trigger all participants' last submission again. The results will be marked as graded.",
+            "resubmitAllDialog": "WARNING: Triggering all participants' submissions again is a very expensive operation. This action will start a CI build for every participant in this exercise. This means that all results of the students will be calculated again and overridden with a newly generated result based on their last commit!",
             "resubmitFailed": "Trigger failed",
-            "resubmitFailedTooltip": "Trigger the last submission of all failed participations again. Failed submissions don't have a result for their latest submission. This can e.g. happen due to communication errors between the CI system and Artemis. The created results will be rated.",
+            "resubmitFailedTooltip": "Trigger failed submissions for all participants again. Failed submissions don't have a result for their latest submission. This can happen due to communication errors between the CI system and Artemis. The created results will be marked as graded.",
             "buildingSubmissions": "Building submissions: {{number}}",
             "failedSubmissions": "Failed submissions: {{number}}",
             "resultETA": "Result ETA: {{eta}}",
-            "resultETATooltip": "Shows how long an average submission has to wait for its result. Depends on the utilization of the build system.",
+            "resultETATooltip": "Shows how long an average submission must wait for its result. Depends on the current utilization of the build system.",
             "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
             "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
             "timeline": {
                 "manualReview": "Manual Review",
                 "automaticTests": "Automatic Tests",
-                "afterDueDate": "Run Tests once after Due Date",
-                "timelineLabel": "Timeline of the whole programming exercise",
-                "timelineTooltip": "The whole lifecycle of the programming exercise. You can specify different critical dates and decide when which kind of tests should be run on all submissions",
-                "automaticTestsMandatoryTooltip": "Every commit of a participant triggers all in the test repository committed tests. Exempt are tests, which are specified to be run after the due date.",
-                "automaticTestsAfterDueDateTooltip": "As soon as the specified after due date passes, all submissions will get tested again using ALL in the test repository committed tests (Including tests specified to be run after the due date)",
-                "manualReviewTooltip": "After all tests have been run, the tutors and instructors have to review all submissions manually one last time",
-                "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting from the specified date",
-                "dueDateTooltip": "The deadline on which submitting and committing new code will be deactivated for all students",
-                "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. The created results from the students' submission will be rated even though the due date has passed.",
+                "afterDueDate": "Run Tests after Due Date",
+                "timelineLabel": "Timeline of the entire programming exercise",
+                "timelineTooltip": "The entire lifecycle of the programming exercise. You can specify different critical dates and decide when which kind of tests should be run on all submissions",
+                "automaticTestsMandatoryTooltip": "Every commit from a participant triggers all tests in the test repository. This does not include tests specified only to be run after the due date.",
+                "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
+                "manualReviewTooltip": "After all tests have been run, the tutors and instructors must manually review all submissions one last time",
+                "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting on the specified date",
+                "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students",
+                "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
-                "alertNewAfterDueDate": "The after due date has been set to the release date!",
+                "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set"
             },
             "repositoryIsLocked": {
-                "title": "Your Repository is locked.",
-                "tooltip": "The due date has passed, your repository is locked. You can still read the code but not make any changes to it."
+                "title": "Your repository is locked.",
+                "tooltip": "The due date has passed, your repository is locked. You may still read the code but you may not make any changes to it."
             },
             "preview": {
                 "label": "Preview",
-                "tooltip": "For every programming exercises, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
+                "tooltip": "For every programming exercise, repositories and build plans will be generated. Here you can find their generated names based on the short name of the exercise (and course)",
                 "repositories": "Repositories",
                 "buildPlans": "Build Plans",
-                "templateRepoTooltip": "The repository, which contains the template of the exercise",
-                "solutionRepoTooltip": "The repository, which contains the solution of the exercise",
-                "testRepoTooltip": "The repository, which contains all tests",
+                "templateRepoTooltip": "The repository which contains the template of the exercise",
+                "solutionRepoTooltip": "The repository which contains the solution to the exercise",
+                "testRepoTooltip": "The repository which contains all tests",
                 "auxiliaryRepoTooltip": "{{description}}",
-                "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the template of the exercise. Used as a reference, for which all tests have to fail",
-                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the solution of the exercise. Used as a reference, for which all tests have to succeed"
+                "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the exercise template. Used as a reference in which all tests must fail",
+                "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the exercise solution. Used as a reference in which all tests must succeed"
             },
             "intellij": {
                 "openEditor": "Open Editor"
             },
             "reEvaluate": "Re-evaluate all",
-            "reEvaluateTooltip": "Re-evaluate the latest automatic results of all participations. Manual results are not affected.",
+            "reEvaluateTooltip": "Re-evaluate the automatic results of all participants' latest submissions. Manual results are not affected.",
             "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",
             "reEvaluateFailed": "The re-evaluation failed: {{message}}",
             "editSelectedModal": {
@@ -275,17 +275,17 @@
             "unlockAllRepositories": "Unlock all repositories",
             "lockAllRepositories": "Lock all repositories",
             "unlockAllRepositoriesModalText": "All repositories will be unlocked immediately! Students can push changes again, even if the exercise is already over!\n\nThis operation is performed automatically once students start to work on the exercise. Therefore, use this option only if the automatic unlocking was not performed correctly or if the repositories were locked by mistake!",
-            "lockAllRepositoriesModalText": "All repositories will be locked immediately! Students will not be able to push even if the assignment is still running!\n\nThe operation will be performed automatically at the due date of the exercise if 'Run Tests once after Due Date' or 'Manual Review' is enabled. Therefore, use this option only if automatic locking was not performed correctly or if the repositories were unlocked by mistake!",
-            "unlockAllRepositoriesSuccess": "The repositories are now being unlocked. Please be patient for a while. You will soon receive a notification whether the operation was successful.",
-            "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon receive a notification whether the operation was successful.",
+            "lockAllRepositoriesModalText": "All repositories will be locked immediately! Students will not be able to push even if the assignment is still running!\n\nThe operation will be performed automatically on the exercise due date if 'Run Tests after Due Date' or 'Manual Review' is enabled. Therefore, use this option only if automatic locking was not performed correctly or if the repositories were unlocked by mistake!",
+            "unlockAllRepositoriesSuccess": "The repositories are now being unlocked. Please be patient for a while. You will soon be notified whether the operation was successful.",
+            "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon be notified whether the operation was successful.",
             "auxiliaryRepository": {
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
                 "repositoryNameRequired": "The repository name is required.",
-                "invalidRepositoryName": "The repository name does already exist for this exercise!",
-                "invalidDirectoryName": "An existing repository is already checked out into this directory!",
-                "noModificationPossibleWarning": "It is not possible to modify the entered details (repository name, checkout directory, description) after the generation of the auxiliary repository!",
+                "invalidRepositoryName": "A repository with that name already exists in this exercise!",
+                "invalidDirectoryName": "An existing repository is already checked out into that directory!",
+                "noModificationPossibleWarning": "It will not be possible to modify these details (repository name, checkout directory, description) after generating the auxiliary repository!",
                 "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!"
             }
         },

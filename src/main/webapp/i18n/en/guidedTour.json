@@ -13,7 +13,7 @@
         },
         "cancel": {
             "headline": "Tutorial cancelled",
-            "content": "You have cancelled the tutorial. If you want to continue this tutorial at any other time, then click on <tt>Continue tutorial</tt> from the account menu."
+            "content": "You have cancelled the tutorial. If you want to continue this tutorial at another time, click on <tt>Continue tutorial</tt> from the account menu."
         },
         "completed": {
             "headline": "Congratulations 🎉",
@@ -27,16 +27,16 @@
             "text": "Enter any new line to proceed with the next step."
         },
         "waitHint": {
-            "text": "Please wait until the next step is loaded."
+            "text": "Please wait until the next step has loaded."
         },
         "modelingHint": {
             "text": "Add or edit the UML element to continue with the tour"
         },
         "videoHint": {
-            "text": "While watching the video, follow the steps on your computer side-by-side."
+            "text": "While watching the video, follow along with the steps on your computer side-by-side."
         },
         "stepAlreadyExecutedHint": {
-            "text": "You have already successfully completed this step, therefore you do not need to do anything here. Just click on next to proceed with the tutorial"
+            "text": "You have already successfully completed this step, therefore you do not need to do anything here. Just click on Next to proceed with the tutorial"
         }
     }
 }
