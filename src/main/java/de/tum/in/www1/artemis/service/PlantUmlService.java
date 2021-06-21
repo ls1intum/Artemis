@@ -76,17 +76,22 @@ public class PlantUmlService {
     // invoke the rendering with a 5s timeout to avoid issues with long running operations
     private void generateImage(SourceStringReader reader, ByteArrayOutputStream bos, FileFormatOption option) {
         Callable<Object> task = () -> reader.outputImage(bos, option);
-
-        Future<Object> future = executorService.submit(task);
+        Future<Object> future = null;
         try {
+            future = executorService.submit(task);
             // blocking method call
             future.get(5, TimeUnit.SECONDS);
         }
         catch (TimeoutException | InterruptedException | ExecutionException ex) {
-            log.warn("Exception in PlantUmlService generateImage: {}", ex.getMessage(), ex);
+            log.warn("Exception in PlantUmlService generateImage: {}", ex.getClass().getName());
+        }
+        catch (RejectedExecutionException ex) {
+            log.warn("PlantUmlService overloaded with too many requests. Reject current request");
         }
         finally {
-            future.cancel(true); // may or may not desire this
+            if (future != null) {
+                future.cancel(true); // may or may not desire this
+            }
         }
     }
 }
