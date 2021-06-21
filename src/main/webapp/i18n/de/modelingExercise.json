@@ -29,22 +29,22 @@
             "saveExampleAssessment": "Beispielbewertung speichern",
             "showExampleSubmission": "Abgabe anzeigen",
             "showExampleAssessment": "Bewertung anzeigen",
-            "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen.",
+            "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen. Du wirst automatisch weitergeleitet.",
             "exampleSubmissionForModelingExercise": "Beispielabgabe für Modellierungsaufgabe {{ exerciseTitle }}",
             "usedForTutorial": "Für Tutorial",
             "apollonConversion": {
                 "error": "Apollon-Konvertierung ist nicht verfügbar"
             },
-            "clusters": "Clusters",
+            "clusters": "Cluster",
             "buildClusters": {
-                "action": "Build Clusters",
-                "error": "Building Clusters ist ausgefallen",
-                "success": "Building Clusters war erfolgreich"
+                "action": "Cluster erstellen",
+                "error": "Cluster erstellen fehlgeschlagen",
+                "success": "Cluster erfolgreich erstellt"
             },
             "deleteClusters": {
-                "action": "Delete Clusters",
-                "error": "Clusters löschen ist ausgefallen",
-                "success": "Clusters löschen war erfolgreich"
+                "action": "Cluster löschen",
+                "error": "Cluster löschen fehlgeschlagen",
+                "success": "Cluster erfolgreich gelöscht"
             }
         }
     }

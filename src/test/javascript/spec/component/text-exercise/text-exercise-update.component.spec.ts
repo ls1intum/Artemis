@@ -66,7 +66,7 @@ describe('TextExercise Management Update Component', () => {
             comp.textExercise.course = { id: 1 } as Course;
             // WHEN
             comp.save();
-            tick(); // simulate async
+            tick(1000); // simulate async
 
             // THEN
             expect(service.create).toHaveBeenCalledWith(entity);
@@ -82,7 +82,7 @@ describe('TextExercise Management Update Component', () => {
             comp.isImport = true;
             // WHEN
             comp.save();
-            tick(); // simulate async
+            tick(1000); // simulate async
 
             // THEN
             expect(service.import).toHaveBeenCalledWith(entity);
@@ -99,7 +99,7 @@ describe('TextExercise Management Update Component', () => {
 
             // WHEN
             comp.save();
-            tick(); // simulate async
+            tick(1000); // simulate async
 
             // THEN
             expect(service.create).toHaveBeenCalledWith(entity);

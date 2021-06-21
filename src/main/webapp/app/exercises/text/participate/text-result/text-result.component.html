@@ -1,5 +1,5 @@
 <ng-container *ngFor="let block of textResults">
-    <span [ngClass]="block.cssClass" [innerHTML]="block.text"></span>
+    <span class="white-space" [ngClass]="block.cssClass" [innerHTML]="block.text"></span>
     <ng-container *ngIf="block.feedback">
         <span [ngClass]="block.iconCssClass" *ngIf="block.icon" [title]="creditsTranslationForTextResultBlock(block)">
             <fa-icon *ngFor="let i of repeatForEachCredit(block)" [icon]="block.icon"></fa-icon>

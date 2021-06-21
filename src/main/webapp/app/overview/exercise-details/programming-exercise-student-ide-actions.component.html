@@ -26,7 +26,7 @@
     ></button>
     <jhi-ide-button
         [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-        (click)="importIntoIDE()"
+        (clickHandler)="importIntoIDE()"
         [buttonLabel]="'artemisApp.exerciseActions.importIntoIntelliJ' | artemisTranslate"
         [buttonLoading]="!!exercise.loading || ideState.cloning"
         [smallButton]="smallButtons"
@@ -34,7 +34,7 @@
     ></jhi-ide-button>
     <jhi-ide-button
         [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-        (click)="submitChanges()"
+        (clickHandler)="submitChanges()"
         buttonLabel="Submit"
         [buttonLoading]="exercise.loading || ideState.building"
         [smallButton]="smallButtons"

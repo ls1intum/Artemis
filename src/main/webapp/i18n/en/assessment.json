@@ -8,15 +8,15 @@
             "feedback": "Feedback",
             "automaticGenerated": "Automatically generated feedback",
             "error": {
-                "assessmentDueDateOver": "The assessment due date of this exercise is over."
+                "assessmentDueDateOver": "The assessment due date of this exercise has passed."
             },
             "assessmentLocked": "Assessment locked by: {{otherUser}}",
             "assessmentLockedComplaintView": "Original Assessor: {{otherUser}}",
             "assessmentLockedCurrentUser": "You have the lock for this assessment",
             "assessmentReadOnlyUnhandledComplaint": "There is a complaint for this assessment. Another tutor must respond.",
-            "moreFeedbackRequest": "You have to respond to the feedback request.",
+            "moreFeedbackRequest": "You must respond to the feedback request.",
             "assessmentReadOnlyHandledComplaint": "The complaint about your assessment has been resolved.",
-            "assessmentDueDateIsOver": "Assessment Due Date is over, the assessment will be published immediately after submitting",
+            "assessmentDueDateIsOver": "Assessment Due Date has passed, the assessment will be published immediately after submitting.",
             "diffView": {
                 "differenceActivate": "Activate Diff View",
                 "differenceDeactivate": "Deactivate Diff View",
@@ -42,12 +42,13 @@
                 "saveSuccessful": "Your assessment was saved successfully!",
                 "saveFailed": "Saving your assessment failed!",
                 "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
-                "updateAfterComplaintFailed": "Updating the assessment failed."
+                "updateAfterComplaintFailed": "Updating the assessment failed.",
+                "removeGradingInstructionLink": "Do you want to remove the link to the grading instruction?"
             },
             "dashboard": {
-                "warning": "Warning: The due date is not over yet and students can still submit their solutions. Please do not start the assessment yet.",
+                "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",
                 "empty": "No Submissions for this exercise!",
-                "loading": "Loading..",
+                "loading": "Loading...",
                 "columns": {
                     "submissionDate": "Submission date",
                     "result": "Latest Result",

@@ -8,14 +8,14 @@
                 "createOrEditLabel": "Create or edit a Quiz Exercise",
                 "exportLabel": "Export Quiz Exercises"
             },
-            "created": "A new Quiz Exercise is created with identifier {{ param }}",
-            "updated": "A Quiz Exercise is updated with identifier {{ param }}",
-            "deleted": "A Quiz Exercise is deleted with identifier {{ param }}",
+            "created": "Created new Quiz Exercise with identifier {{ param }}",
+            "updated": "Updated Quiz Exercise with identifier {{ param }}",
+            "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!"
             },
             "reset": {
-                "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all student participations, results and statistics will be deleted, but the questions of the quiz remain. Then you can start the quiz again."
+                "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, results, and statistics will be deleted, but the quiz questions will remain. Then you can start the quiz again."
             },
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
@@ -28,7 +28,7 @@
                 "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\", once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)",
                 "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options."
             },
-            "saveError": "An error occurred during save. Please review your input data and try again later.",
+            "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
             },
@@ -92,14 +92,14 @@
             "quiz": "Quiz",
             "totalPoints": "Overall Points",
             "totalScore": "Result",
-            "maxScore": "Max. Points",
+            "maxScore": "Max Points",
             "remainingTime": "Time left",
             "waitingForStart": "Waiting for Start",
             "numberOfQuestions": "Number of Questions",
             "quizInstructions": {
-                "live": "Answer all questions in remaining time and only click the \"Submit\" button, when you're done.",
+                "live": "Answer all questions in the remaining time and only click the \"Submit\" button once you are done.",
                 "wait": "Please wait until the quiz has ended to see your results.",
-                "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
+                "result": "You completed the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
                 "timeUntilPlannedStart": "Time until planned start:"
             },
@@ -114,9 +114,9 @@
             "preview": "Preview Quiz",
             "solution": "Sample Solution",
             "quizIsOverText": "The quiz has ended. Please wait. If the results do not load automatically within 60s, please refresh the page.",
-            "notParticipatedText": "The quiz has ended and you have not participated. There are no results to display.",
+            "notParticipatedText": "The quiz has ended and you did not participate. There are no results to display.",
             "statisticsNotPublished": "The instructor has not published any statistics.",
-            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear after the quiz has ended.<br><br>If the results are not displayed automatically 60s after the end of the quiz, please reload the page.",
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear after the quiz has ended.<br><br>If the results are not displayed automatically within 60s after the end of the quiz, please reload the page.",
             "re-evaluate": {
                 "title": "Re-evaluate Quiz Exercise for {{ param }}",
                 "resetQuiz": "Reset Quiz Exercise",
@@ -137,21 +137,21 @@
                     "question_deleted": "Question deleted:",
                     "question_invalid": "Question set invalid:",
                     "scoring_change": "Scoring changed:",
-                    "no_changes": "No changes, which affect the existing results",
+                    "no_changes": "No changes which affect the existing results",
                     "quizStatistic": "The existing statistics must be recalculated!",
                     "results": "The existing results must be recalculated!",
-                    "exam": "This is an exam exercise. Make sure to evaluate the quiz before attempting to re-evaluate it!",
+                    "exam": "This quiz is an exam exercise. Make sure the quiz was already evaluated once before attempting to re-evaluate it!",
                     "resulttext": {
                         "element_deleted": "The question-element will be removed from all results",
-                        "element_invalid": "All participants receive the points for the invalid question-element",
+                        "element_invalid": "All participants will receive the points for the invalid question-element",
                         "answer_deleted": "The answer option will be removed from all results",
-                        "answer_invalid": "All participants receive the points for the invalid answer",
+                        "answer_invalid": "All participants will receive the points for the invalid answer",
                         "question_deleted": "The question will be removed from all results",
-                        "question_invalid": "All participants receive the points for the invalid question",
-                        "scoring_change": "The points will be recalculated. A participant could also lose points"
+                        "question_invalid": "All participants will receive the points for the invalid question",
+                        "scoring_change": "The points will be recalculated. Some participants may lose points."
                     },
-                    "confirmtext": "Do you really want to perform these changes?",
-                    "succesfully_confirm": "Changes successfully adopted!"
+                    "confirmtext": "Do you really want to apply these changes?",
+                    "succesfully_confirm": "Changes successfully applied!"
                 }
             },
             "hidden": "Hidden",
@@ -159,24 +159,24 @@
             "invalidReasons": {
                 "quizTitle": "Quiz: The title is missing.",
                 "quizDuration": "Quiz: The duration is missing or invalid.",
-                "noQuestion": "Quiz: The quiz has no question.",
+                "noQuestion": "Quiz: The quiz has no questions.",
                 "invalidStartTime": "Quiz: The Start Time is not valid.",
-                "startTimeInPast": "Quiz: The Start Time lies in the past.",
+                "startTimeInPast": "Quiz: The Start Time has already passed.",
                 "questionTitle": "Question {{index}}: The title is missing.",
-                "questionScore": "Question {{index}}: At least one point per question required.",
+                "questionScore": "Question {{index}}: At least one point is required per question.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
                 "shortAnswerQuestionEverySpotHasASolution": "Question {{index}}: At least one spot is missing a solution.",
-                "shortAnswerQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing for a correct mapping.",
+                "shortAnswerQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing that is necessary for a correct mapping.",
                 "shortAnswerQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly. Please check your mapped solutions",
                 "shortAnswerQuestionSolutionHasNoValue": "Question {{index}}: At least one solution has no value.",
-                "shortAnswerQuestionDuplicateMapping": "Question {{index}}: At least one mapping ist duplicated.",
-                "questionTitleLength": "Question {{index}}: Please shorten your question title. Currently it contains more than 250 signs.",
-                "quizTitleLength": "Quiz: The title is too long. Currently it contains more than 250 signs.",
+                "shortAnswerQuestionDuplicateMapping": "Question {{index}}: At least one mapping is duplicated.",
+                "questionTitleLength": "Question {{index}}: The question is too long. Please shorten it to fewer than 250 characters.",
+                "quizTitleLength": "Quiz: The title is too long. Please shorten it to fewer than 250 characters.",
                 "explanationIsMissing": "Question {{index}}: Not every answer option contains an explanation. Please add an explanation!",
-                "questionHasInvalidFlaggedElements": "<strong>Question {{index}} </strong>: This question has been marked previously as invalid or contains invalid elements."
+                "questionHasInvalidFlaggedElements": "<strong>Question {{index}} </strong>: This question has been previously marked as invalid or contains invalid elements."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
@@ -185,9 +185,9 @@
             },
             "scoringTypeExplanation": {
                 "title": "Scoring Types",
-                "all_or_nothing": "All correct choices must be chosen and all wrong choice must be empty to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
-                "proportional_with_penalty": "Each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the score of the question is 3 and there are 5 options. Each correct answer option results in 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
-                "proportional_without_penalty": "Each correct answer results in a fraction of the total score. No points are deducted for mistakes. Example: if the score of the question is 3 and there are 5 options. Each correct answer option results in 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
+                "all_or_nothing": "All correct options must be selected and all incorrect options must not be selected to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
+                "proportional_with_penalty": "Each correct answer is awarded with a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
+                "proportional_without_penalty": "Each correct answer is awarded with a fraction of the total score. No points are deducted for mistakes. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
             },
             "importJSON": "Import Question(s) in JSON Format",
             "importWarningShort": "Invalid questions found",
@@ -206,20 +206,20 @@
                 "scoringTypeProportional": "Scoring Proportional with Penalty: ",
                 "scoringTypeProportionalWithout": "Scoring Proportional without Penalty: ",
                 "scoringTypeAllOrNothing": "Scoring All or Nothing: ",
-                "scoringTypeProportionalExplanation": "Every correct answer gives positive points, each mistake gives negative points to avoid guesswork.",
-                "scoringTypeProportionalWithoutExplanation": "Every correct answer gives positive points. No points are deducted for mistakes.",
+                "scoringTypeProportionalExplanation": "Every correct answer is awarded with points, every mistake results in a point penalty to prevent guesswork. ",
+                "scoringTypeProportionalWithoutExplanation": "Every correct answer is awarded with points. No points are deducted for mistakes. ",
                 "scoringTypeAllOrNothingExplanation": "You either get all points or none at all.",
-                "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you have selected all answer options correctly you have achieved all points in this question. Great Job!",
-                "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you have selected {{paramInTotalWrongOptions}} answer {{wrongOption}} wrongly and {{paramInTotalRightOptions}} answer {{rightOption}} correctly. Keep trying!",
-                "multipleChoiceProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramAmountOfAnswerOptions}} options grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points if you select the answer options correctly. You have selected {{paramInTotalWrongOptions}} answer {{wrongOption}} wrongly and {{paramInTotalRightOptions}} answer {{rightOption}} correctly. In total you have",
-                "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you have mapped all the items correctly you have achieved all points in this question. Great Job!",
-                "dragAndDropAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you mapped {{paramRightMapping}} {{rightMap}} correctly and mismapped {{paramWrongMappedItems}} {{wrongMap}}. Keep trying!",
-                "dragAndDropProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramDragAndDropElementsCount}} drag and drop items grants you {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} points if you map it to the corresponding location. You have mismapped {{paramWrongMappedItems}} {{wrongMap}} and correctly mapped {{paramRightMapping}} {{rightMap}}. In total you have",
-                "shortAnswerAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you filled all text gaps correctly you have achieved all points in this question. Great Job!",
-                "shortAnswerAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you filled out {{paramShortAnswerWrongOption}} {{wrongGap}} wrongly and {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly. Keep trying!",
-                "shortAnswerProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each text gap grants you {{paramQuestionScore}}/{{paramCount}} points if you fill it out correctly. You filled out {{paramShortAnswerWrongOption}} {{wrongGap}} wrongly and {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly. In total you have",
+                "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you selected all answer options correctly you have received full credit for this question. Great Job!",
+                "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. Keep trying!",
+                "multipleChoiceProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramAmountOfAnswerOptions}} options grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points for selecting the answer options correctly. You selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. In total you have",
+                "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you mapped all the items correctly you have received full credit for this question. Great Job!",
+                "dragAndDropAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you mapped {{paramRightMapping}} {{rightMap}} correctly and mapped {{paramWrongMappedItems}} {{wrongMap}} incorrectly. Keep trying!",
+                "dragAndDropProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramDragAndDropElementsCount}} drag and drop items grants you {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} points for mapping it to the corresponding location. You mapped {{paramRightMapping}} {{rightMap}} correctly and {{paramWrongMappedItems}} {{wrongMap}} incorrectly. In total you have",
+                "shortAnswerAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you filled all text gaps correctly you have received full credit for this question. Great Job!",
+                "shortAnswerAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you filled out {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly and {{paramShortAnswerWrongOption}} {{wrongGap}} incorrectly. Keep trying!",
+                "shortAnswerProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each text gap grants you {{paramQuestionScore}}/{{paramCount}} points for filling it out correctly. You filled out {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly and {{paramShortAnswerWrongOption}} {{wrongGap}} incorrectly. In total you have",
                 "KeepTrying": "Keep trying!",
-                "zeroPointer": "(Of course you can not have less than 0 points.)"
+                "zeroPointer": "(Of course you cannot have fewer than 0 points.)"
             },
             "explanationAnswered": "You have answered this question",
             "explanationNotAnswered": "You have not answered this question",

@@ -108,19 +108,19 @@
         <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.courseInformation' | artemisTranslate">
             <div class="row mb-1">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.totalExercises' | artemisTranslate }}</div>
-                <div class="col-4">{{ numberOfExercises }}</div>
+                <div class="col-4" style="text-align: end">{{ numberOfExercises }}</div>
             </div>
             <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.' + exerciseCount.key + 'Total' | artemisTranslate }}</div>
-                <div class="col-4">{{ exerciseCount.value }}</div>
+                <div class="col-4" style="text-align: end">{{ exerciseCount.value }}</div>
             </div>
             <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | artemisTranslate }}</div>
-                <div class="col-4">{{ course?.startDate | artemisDate }}</div>
+                <div class="col-4" style="text-align: end">{{ course?.startDate | artemisDate }}</div>
             </div>
             <div class="row" *ngIf="course?.endDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
-                <div class="col-4">{{ course?.endDate | artemisDate }}</div>
+                <div class="col-4" style="text-align: end">{{ course?.endDate | artemisDate }}</div>
             </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">

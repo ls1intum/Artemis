@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Multiple Choice Question",
                 "createOrEditLabel": "Create or edit a Multiple Choice Question"
             },
-            "created": "A new Multiple Choice Question is created with identifier {{ param }}",
-            "updated": "A Multiple Choice Question is updated with identifier {{ param }}",
-            "deleted": "A Multiple Choice Question is deleted with identifier {{ param }}",
+            "created": "Created new Multiple Choice Question with identifier {{ param }}",
+            "updated": "Updated Multiple Choice Question with identifier {{ param }}",
+            "deleted": "Deleted Multiple Choice Question with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Multiple Choice Question {{ id }}?"
             },

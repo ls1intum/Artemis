@@ -9,7 +9,6 @@ import {
     STUDENT_EXAM_WORKINGTIME,
     STUDENT_EXAMS,
     SUBMIT_EXAM,
-    TEXT_EXERCISE,
 } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
@@ -63,28 +62,6 @@ export function newExerciseGroup(artemis, exam, mandatory = true) {
         fail('FAILTEST: Could not create exercise group (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     console.log('SUCCESS: Generated new exercise group');
-
-    return JSON.parse(res[0].body);
-}
-
-export function newTextExercise(artemis, exerciseGroup) {
-    const textExercise = {
-        exerciseGroup: exerciseGroup,
-        maxPoints: 1,
-        title: 'text' + nextAlphanumeric(5),
-        type: 'text',
-        mode: 'INDIVIDUAL',
-    };
-
-    const res = artemis.post(TEXT_EXERCISE, textExercise);
-    if (res[0].status !== 201) {
-        console.log('ERROR when creating a new text exercise. Response headers:');
-        for (let [key, value] of Object.entries(res[0].headers)) {
-            console.log(`${key}: ${value}`);
-        }
-        fail('FAILTEST: Could not create text exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
-    }
-    console.log('SUCCESS: Generated new text exercise');
 
     return JSON.parse(res[0].body);
 }

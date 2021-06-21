@@ -168,15 +168,14 @@ public class CompassService {
         // NOTE: Currently, this is only possible for for exercises with class or activity diagrams
         DiagramType diagramType = modelingExercise.getDiagramType();
         if (modelingExercise.getAssessmentType() != null) {
-            return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
-            // && (diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram);
+            return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC)
+                    && (diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram);
         }
         // if the assessment mode is not specified (e.g. for legacy exercises), team exercises are not supported
         if (modelingExercise.isTeamMode()) {
             return false;
         }
-        // return diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram;
-        return true;
+        return diagramType == DiagramType.ClassDiagram || diagramType == DiagramType.ActivityDiagram;
     }
 
     /**
