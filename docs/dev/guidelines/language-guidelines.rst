@@ -3,7 +3,7 @@ Inclusive, Diversity-Sensitive, and Appreciative Language
 *********************************************************
 
 Motivation
-======
+==========
 
 Inclusive, diversity-sensitive language is important because language influences our thoughts and assessments of reality
 and actively contributes to equality.
