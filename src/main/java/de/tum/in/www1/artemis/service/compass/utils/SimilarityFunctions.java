@@ -6,6 +6,16 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class SimilarityFunctions {
 
+    /**
+     * Checks if both parent elements have similarity id
+     * If they have returns whether they are equal or not
+     * If not returns whether they are similar
+     *
+     * @param parent1 the first parent element
+     * @param parent2 the second parent element
+     *
+     * @return whether the elements equal or similar depending on their similarity id
+     */
     public static boolean parentsSimilarOrEqual(UMLElement parent1, UMLElement parent2) {
         if (parent1 == null) {
             return parent2 == null;
