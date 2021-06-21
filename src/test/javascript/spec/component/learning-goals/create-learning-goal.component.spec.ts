@@ -80,7 +80,8 @@ describe('CreateLearningGoal', () => {
         createLearningGoalComponentFixture.detectChanges();
         expect(createLearningGoalComponent).to.be.ok;
     });
-    it('should send POST request upon form submission and navigate', fakeAsync(() => {
+
+    it('should send POST request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -119,5 +120,5 @@ describe('CreateLearningGoal', () => {
             expect(createStub).to.have.been.calledOnce;
             expect(navigateSpy).to.have.been.calledOnce;
         });
-    }));
+    });
 });
