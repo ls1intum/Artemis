@@ -56,15 +56,6 @@
             The complaint about your assessment has been resolved.
         </span>
         <span
-            *ngIf="!isAssessor && hasComplaint"
-            class="ms-3"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.assessmentLockedComplaintView"
-            [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
-        >
-            Original Assessor: otherUser
-        </span>
-        <span
             id="assessmentLockedCurrentUser"
             *ngIf="isAssessor && (!hasComplaint || isAtLeastInstructor)"
             class="text-danger ms-3"
@@ -130,7 +121,7 @@
         </button>
 
         <a [routerLink]="exerciseDashboardLink" class="btn ms-2 btn-info">
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+            <span jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
         </a>
     </div>
 </h3>

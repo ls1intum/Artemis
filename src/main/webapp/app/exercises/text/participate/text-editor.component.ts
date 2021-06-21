@@ -24,7 +24,7 @@ import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 
 @Component({
@@ -37,6 +37,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
+    resultWithComplaint?: Result;
     submission: TextSubmission;
     isSaving: boolean;
     private textEditorInput = new Subject<string>();
@@ -107,6 +108,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.result = this.submission.latestResult!;
                 this.result.participation = participation;
             }
+            // if one of the submissions results has a complaint, we get it
+            this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
 
             if (this.submission && this.submission.text) {
                 this.answer = this.submission.text;

@@ -18,7 +18,7 @@
         <span [jhiTranslate]="'artemisApp.textAssessment.conflict.type.' + conflictType"></span>
     </span>
 
-    <div class="close-button" *ngIf="!readOnly">
+    <div class="close" *ngIf="!readOnly">
         <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
         <ng-template #closeButton>
             <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()"> </fa-icon>
@@ -51,13 +51,18 @@
                 (ngModelChange)="didChange()"
             ></textarea>
             <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
-                <fa-icon [icon]="'exclamation-triangle'" size="1x" class="text-warning" placement="left"></fa-icon>
-                <span jhiTranslate="artemisApp.textAssessment.feedbackImpactWarning" [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"
+                <fa-icon [icon]="'info-circle'" size="1x" class="text-info" placement="left"></fa-icon>
+                <span
+                    jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
+                    [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
+                    placement="bottom"
+                    class="impactWarningLabel"
+                    [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"
                     >This feedback might affect <b>{{ textBlock.numberOfAffectedSubmissions }}</b> other similar submission/s.</span
                 >
             </div>
         </div>
-        <div class="form-group col-md-2 text-end">
+        <div class="form-group col-md-1 text-end">
             <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
             <input
                 class="form-control"
@@ -71,6 +76,9 @@
                 (ngModelChange)="didChange()"
                 [readOnly]="disableEditScore || (readOnly && !isConflictingFeedbackEditable)"
             />
+        </div>
+        <div class="form-group col-md-1" *ngIf="feedback.gradingInstruction!">
+            <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
         </div>
     </div>
 
