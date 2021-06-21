@@ -74,6 +74,12 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
                 legend: {
                     position: 'bottom',
                 },
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 0,
+                },
                 tooltip: {
                     enabled: true,
                     callbacks: {

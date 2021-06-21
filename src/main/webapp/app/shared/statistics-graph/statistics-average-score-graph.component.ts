@@ -2,11 +2,9 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import { ChartElement, DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
-import Chart from 'chart.js/auto';
 
 @Component({
     selector: 'jhi-statistics-average-score-graph',
@@ -69,6 +67,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 borderColor: GraphColors.BLUE,
                 hoverBackgroundColor: GraphColors.BLUE,
                 hoverBorderColor: GraphColors.BLUE,
+                order: 1,
             },
             {
                 // Average exercise score bars
@@ -78,11 +77,13 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 backgroundColor: GraphColors.DARK_BLUE,
                 borderColor: GraphColors.DARK_BLUE,
                 hoverBackgroundColor: GraphColors.DARK_BLUE,
+                order: 2,
             },
         ];
     }
 
     private createCharts() {
+        const self = this;
         this.barChartOptions = {
             layout: {
                 padding: {
@@ -98,6 +99,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                     beginAtZero: true,
                     min: 0,
                     max: 100,
+                    ticks: {
+                        autoSkip: true,
+                    },
                 },
                 x: {
                     grid: {
@@ -105,8 +109,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                     },
                     ticks: {
                         autoSkip: false,
-                        callback(title: string) {
-                            return title.length > 10 ? title.substr(0, 10) + '...' : title;
+                        callback(index: number) {
+                            const label = self.barChartLabels[index] + '';
+                            return label.length > 10 ? label.substr(0, 10) + '...' : label;
                         },
                     },
                 },
