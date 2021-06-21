@@ -67,6 +67,10 @@ public class Feedback extends DomainObject {
     private Result result;
 
     @ManyToOne
+    @JsonIgnoreProperties("feedbacks")
+    private AssessmentKnowledge knowledge;
+
+    @ManyToOne
     private GradingInstruction gradingInstruction;
 
     // TODO: JP remove these two references as they are not really needed
@@ -336,5 +340,13 @@ public class Feedback extends DomainObject {
             totalScore += getCredits();
         }
         return totalScore;
+    }
+
+    public AssessmentKnowledge getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(AssessmentKnowledge knowledge) {
+        this.knowledge = knowledge;
     }
 }

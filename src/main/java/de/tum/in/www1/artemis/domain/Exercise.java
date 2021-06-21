@@ -163,6 +163,10 @@ public abstract class Exercise extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
+    @ManyToOne
+    @JsonIgnoreProperties("exercises")
+    private AssessmentKnowledge knowledge;
+
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -915,6 +919,14 @@ public abstract class Exercise extends DomainObject {
         else {
             return 1;
         }
+    }
+
+    public AssessmentKnowledge getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(AssessmentKnowledge knowledge) {
+        this.knowledge = knowledge;
     }
 
     /**

@@ -9,6 +9,7 @@ import java.util.Objects;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -66,6 +67,10 @@ public class TextBlock implements Serializable {
     @ManyToOne
     @JsonIgnore
     private TextSubmission submission;
+
+    @ManyToOne
+    @JsonIgnoreProperties("textBlocks")
+    private AssessmentKnowledge knowledge;
 
     @ManyToOne
     @JsonIgnore
@@ -225,5 +230,13 @@ public class TextBlock implements Serializable {
 
     public void setNumberOfAffectedSubmissions(int numberOfAffectedSubmissions) {
         this.numberOfAffectedSubmissions = numberOfAffectedSubmissions;
+    }
+
+    public AssessmentKnowledge getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(AssessmentKnowledge knowledge) {
+        this.knowledge = knowledge;
     }
 }
