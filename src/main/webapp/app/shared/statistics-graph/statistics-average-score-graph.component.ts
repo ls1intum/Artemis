@@ -3,7 +3,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 
 @Component({
@@ -19,8 +19,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     // Html properties
     LEFT = false;
     RIGHT = true;
-    SpanType = SpanType;
-    Graphs = Graphs;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
@@ -34,7 +32,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     // Data
     barChartLabels: Label[] = [];
     chartData: ChartDataset[] = [];
-    dataForSpanType: number[];
 
     // Left arrow -> decrease, right arrow -> increase
     currentPeriod = 0;

@@ -24,7 +24,6 @@ export enum Graphs {
     ACTIVE_STUDENTS = 'ACTIVE_STUDENTS',
 
     // Course Statistics
-    AVERAGE_SCORE = 'AVERAGE_SCORE',
     POSTS = 'POSTS',
     ANSWERED_POSTS = 'ANSWERED_POSTS',
 }

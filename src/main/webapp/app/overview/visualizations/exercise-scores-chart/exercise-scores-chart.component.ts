@@ -47,13 +47,14 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
 
     ngOnDestroy() {
         // important to prevent memory leaks
-        this.chartInstance.destroy();
+        // this.chartInstance.destroy();
     }
 
     ngAfterViewInit() {
-        this.chartInstance = this.chartDirective.chart;
+        // this.chartInstance = this.chartDirective.chart;
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = +params['courseId'];
+            console.log(this.courseId);
             if (this.courseId) {
                 this.loadDataAndInitializeChart();
             }
@@ -61,6 +62,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     }
 
     private loadDataAndInitializeChart() {
+        console.log('loadDataAndInitializeChart');
         this.isLoading = true;
         this.exerciseScoresChartService
             .getExerciseScoresForCourse(this.courseId)
@@ -72,13 +74,16 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             .subscribe(
                 (exerciseScoresResponse) => {
                     this.exerciseScores = exerciseScoresResponse.body!;
+                    // this.chartInstance = this.chartDirective.chart;
                     this.initializeChart();
+                    this.defineOptions();
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             );
     }
 
     private initializeChart() {
+        console.log('initializeChart');
         // we calculate the chart width depending on the number of exercises we have to show. If you look into
         // exercise-scores-chart.component.scss you will see that we show a horizontal navigation bar when the
         // chart has reached a certain width
@@ -89,13 +94,13 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         }
 
         this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
-        this.chartInstance.resize();
+        // this.chartInstance.resize();
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
-        this.addData(this.chartInstance, sortedExerciseScores);
+        this.addData(sortedExerciseScores);
     }
 
-    private addData(chart: Chart, exerciseScoresDTOs: ExerciseScoresDTO[]) {
+    private addData(exerciseScoresDTOs: ExerciseScoresDTO[]) {
         for (const exerciseScoreDTO of exerciseScoresDTOs) {
             const extraInformation = {
                 exerciseId: exerciseScoreDTO.exerciseId,
@@ -103,22 +108,27 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
 
-            chart.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
+            this.labels!.push(exerciseScoreDTO.exerciseTitle!);
+            /*this.chartInstance.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
             // from each dto we generate a data point for each of three data sets
-            (chart.data.datasets![0].data as CustomChartPoint[])!.push({
+            (this.chartInstance.data.datasets![0].data as CustomChartPoint[])!.push({
                 y: exerciseScoreDTO.scoreOfStudent,
                 ...extraInformation,
             } as CustomChartPoint);
-            (chart.data.datasets![1].data as CustomChartPoint[])!.push({
+            (this.chartInstance.data.datasets![1].data as CustomChartPoint[])!.push({
                 y: exerciseScoreDTO.averageScoreAchieved,
                 ...extraInformation,
             } as CustomChartPoint);
-            (chart.data.datasets![2].data as CustomChartPoint[])!.push({
+            (this.chartInstance.data.datasets![2].data as CustomChartPoint[])!.push({
                 y: exerciseScoreDTO.maxScoreAchieved,
                 ...extraInformation,
-            } as CustomChartPoint);
+            } as CustomChartPoint);*/
+            this.dataSets[0]!.data.push(exerciseScoreDTO.scoreOfStudent!);
+            this.dataSets[1]!.data.push(exerciseScoreDTO.averageScoreAchieved!);
+            this.dataSets[2]!.data.push(exerciseScoreDTO.maxScoreAchieved!);
         }
-        this.chartInstance.update();
+        console.log('reached');
+        // this.chartInstance.update();
     }
 
     /**
@@ -171,95 +181,103 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         },
     ];
     public labels: Label[] = this.exerciseScores.map((exerciseScoreDTO) => exerciseScoreDTO.exerciseTitle!);
-    public chartOptions: ChartOptions = {
-        // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
-        onHover: (event: any, chartElement) => {
-            event.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-        },
-        // when the user clicks on a data point, we navigate to the subpage of the corresponding exercise
-        onClick: (evt) => {
-            const point: any = this.chartInstance.getElementAtEvent(evt)[0];
+    public chartOptions: ChartOptions = {};
 
-            if (point) {
-                const value: any = this.chartInstance.data.datasets![point._datasetIndex]!.data![point._index];
-                if (value.exerciseId) {
-                    this.navigateToExercise(value.exerciseId);
+    private defineOptions() {
+        console.log('defineOptions');
+        const self = this;
+        this.chartOptions = {
+            // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
+            onHover: (event: any, chartElement) => {
+                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+            },
+            // when the user clicks on a data point, we navigate to the subpage of the corresponding exercise
+            onClick: (evt) => {
+                const point: any = this.chartInstance.getElementAtEvent(evt)[0];
+
+                if (point) {
+                    const value: any = this.chartInstance.data.dataset!.data![point._index];
+                    if (value.exerciseId) {
+                        this.navigateToExercise(value.exerciseId);
+                    }
                 }
-            }
-        },
-        plugins: {
-            tooltip: {
-                callbacks: {
-                    label(context) {
-                        let label = context.dataset.label || '';
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label(context) {
+                            let label = context.dataset.label || '';
 
-                        if (label) {
-                            label += ': ';
-                        }
-                        label += Math.round((context.parsed.y as number) * 100) / 100;
-                        label += ' %';
-                        return label;
-                    },
-                    footer(context) {
-                        const dataset = context[0].dataset.data;
-                        const exerciseType = (dataset as any).exerciseType;
-                        return [`Exercise Type: ${exerciseType}`];
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += Math.round((context.parsed.y as number) * 100) / 100;
+                            label += ' %';
+                            return label;
+                        },
+                        footer(context) {
+                            const dataset = context[0].dataset.data;
+                            const exerciseType = (dataset as any).exerciseType;
+                            return [`Exercise Type: ${exerciseType}`];
+                        },
                     },
                 },
-            },
-            title: {
-                display: false,
-            },
-            legend: {
-                position: 'left',
-            },
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
                 title: {
-                    display: true,
-                    text: this.translateService.instant('artemisApp.exercise-scores-chart.yAxis'),
-                    font: {
-                        size: 12,
+                    display: false,
+                },
+                legend: {
+                    position: 'left',
+                },
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: this.translateService.instant('artemisApp.exercise-scores-chart.yAxis'),
+                        font: {
+                            size: 12,
+                        },
+                    },
+                    suggestedMax: 100,
+                    suggestedMin: 0,
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        font: {
+                            size: 12,
+                        },
                     },
                 },
-                suggestedMax: 100,
-                suggestedMin: 0,
-                beginAtZero: true,
-                ticks: {
-                    precision: 0,
-                    font: {
-                        size: 12,
+                x: {
+                    title: {
+                        display: true,
+                        text: this.translateService.instant('artemisApp.exercise-scores-chart.xAxis'),
+                        font: {
+                            size: 12,
+                        },
+                    },
+                    ticks: {
+                        autoSkip: false,
+                        font: {
+                            size: 12,
+                        },
+                        callback(index: number) {
+                            const label = self.labels[index] + '';
+                            if (label.length > 20) {
+                                // shorten exercise title if too long (will be displayed in full in tooltip)
+                                return label.substr(0, 20) + '...';
+                            } else {
+                                return label;
+                            }
+                        },
                     },
                 },
             },
-            x: {
-                title: {
-                    display: true,
-                    text: this.translateService.instant('artemisApp.exercise-scores-chart.xAxis'),
-                    font: {
-                        size: 12,
-                    },
-                },
-                ticks: {
-                    autoSkip: false,
-                    font: {
-                        size: 12,
-                    },
-                    callback(exerciseTitle: string) {
-                        if (exerciseTitle.length > 20) {
-                            // shorten exercise title if too long (will be displayed in full in tooltip)
-                            return exerciseTitle.substr(0, 20) + '...';
-                        } else {
-                            return exerciseTitle;
-                        }
-                    },
-                },
-            },
-        },
-    };
+        };
+    }
+
     public chartColors: Color[] = [
         // score of logged in user in exercise
         {

@@ -34,7 +34,6 @@ export class StatisticsGraphComponent implements OnChanges {
     // Html properties
     LEFT = false;
     RIGHT = true;
-    SpanType = SpanType;
 
     // Histogram related properties
     barChartOptions: ChartOptions = {};
