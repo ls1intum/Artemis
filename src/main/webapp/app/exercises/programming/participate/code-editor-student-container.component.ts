@@ -152,7 +152,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
     }
 
     canDeactivate() {
-        return this.codeEditorContainer.canDeactivate();
+        return this.codeEditorContainer?.canDeactivate() ?? true;
     }
 
     checkForTutorAssessment(dueDateHasPassed: boolean) {
