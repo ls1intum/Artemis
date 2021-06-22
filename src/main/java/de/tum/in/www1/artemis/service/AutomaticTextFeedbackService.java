@@ -67,9 +67,11 @@ public class AutomaticTextFeedbackService {
                     if (mostSimilarBlockInClusterWithFeedback.isPresent()
                             && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
                         final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
+                        String originBlockId = mostSimilarBlockInClusterWithFeedback.get().getId();
+                        Long submissionId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getId();
+                        Long participationId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getParticipation().getId();
                         var ret = new Feedback().reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText())
-                                .suggestedFeedbackOrigin(mostSimilarBlockInClusterWithFeedback.get().getId(), mostSimilarBlockInClusterWithFeedback.get().getSubmission())
-                                .type(FeedbackType.AUTOMATIC);
+                                .suggestedFeedbackOrigin(originBlockId, submissionId, participationId).type(FeedbackType.AUTOMATIC);
                         return ret;
                     }
                 }

@@ -82,12 +82,11 @@
         </div>
     </div>
 
-    <a href="#">Show where this feedback came from</a>
-    Coming from: Length = {{ feedback.suggestedFeedbackOriginSubmission?.blocks?.length }}:
+    Coming from: Block ID = {{ feedback.suggestedFeedbackReference }}:
     <br />
-    Text = {{ feedback.suggestedFeedbackOriginSubmission?.text }}:
+    Sub ID = {{ feedback.suggestedFeedbackOriginSubmissionReference }}:
     <br />
-    Submission Id = {{ feedback.suggestedFeedbackOriginSubmission?.id }}
+
     <ng-template #toggleMore let-modal>
         <div class="modal-header">
             <h4 class="modal-title">
@@ -96,14 +95,15 @@
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
-            <div class="feedback-text mt-1">
-                <b><fa-icon [icon]="['far', 'check-circle']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
-                test
+            <div *ngFor="let block of listOfBlocksForModal">
+                <div class="feedback-text mt-1">
+                    <b><fa-icon [icon]="['far', 'check-circle']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
+                    {{ block.text }}
+                </div>
             </div>
         </div>
     </ng-template>
-
-    <button (click)="openConfirmationModal(toggleMore)">test</button>
+    <a (click)="openConfirmationModal(toggleMore)">Show where this feedback came from</a>
     <br />
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>

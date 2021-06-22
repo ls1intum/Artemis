@@ -75,7 +75,7 @@ public class Feedback extends DomainObject {
      */
     @Transient
     @JsonSerialize
-    private String suggestedFeedbackOriginReference;
+    private String suggestedFeedbackReference;
 
     /**
      * Represents the submission of the previously assessed block, whose feedback we are reusing
@@ -83,7 +83,11 @@ public class Feedback extends DomainObject {
      */
     @Transient
     @JsonSerialize
-    private TextSubmission suggestedFeedbackOriginSubmission;
+    private Long suggestedFeedbackOriginSubmissionReference;
+
+    @Transient
+    @JsonSerialize
+    private Long suggestedFeedbackParticipationReference;
 
     // TODO: JP remove these two references as they are not really needed
     @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
@@ -252,26 +256,35 @@ public class Feedback extends DomainObject {
         this.gradingInstruction = gradingInstruction;
     }
 
-    public String getSuggestedFeedbackOriginBlock() {
-        return suggestedFeedbackOriginReference;
+    public String getSuggestedFeedbackReference() {
+        return suggestedFeedbackReference;
     }
 
-    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockId, TextSubmission submission) {
-        this.suggestedFeedbackOriginReference = suggestedFeedbackOriginBlockId;
-        this.suggestedFeedbackOriginSubmission = submission;
+    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionReference, Long suggestedFeedbackParticipationReference) {
+        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockReference;
+        this.suggestedFeedbackOriginSubmissionReference = submissionReference;
+        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
         return this;
     }
 
     public void setSuggestedFeedbackOriginBlock(String suggestedFeedbackOriginBlockId) {
-        this.suggestedFeedbackOriginReference = suggestedFeedbackOriginBlockId;
+        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockId;
     }
 
-    public TextSubmission getSuggestedFeedbackOriginSubmission() {
-        return suggestedFeedbackOriginSubmission;
+    public Long getSuggestedFeedbackOriginSubmissionReference() {
+        return suggestedFeedbackOriginSubmissionReference;
     }
 
-    public void setSuggestedFeedbackOriginSubmission(TextSubmission suggestedFeedbackOriginSubmission) {
-        this.suggestedFeedbackOriginSubmission = suggestedFeedbackOriginSubmission;
+    public void setSuggestedFeedbackOriginSubmission(Long suggestedFeedbackOriginSubmission) {
+        this.suggestedFeedbackOriginSubmissionReference = suggestedFeedbackOriginSubmission;
+    }
+
+    public Long getSuggestedFeedbackParticipationReference() {
+        return suggestedFeedbackParticipationReference;
+    }
+
+    public void setSuggestedFeedbackParticipationReference(Long suggestedFeedbackParticipationReference) {
+        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
     }
 
     public List<FeedbackConflict> getFirstConflicts() {

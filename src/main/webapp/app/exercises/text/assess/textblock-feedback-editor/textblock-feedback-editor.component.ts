@@ -5,6 +5,9 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Observable, lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -31,7 +34,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
-
+    listOfBlocksForModal: any[];
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
     @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
@@ -54,7 +57,11 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.isSelectedConflict;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, protected modalService: NgbModal) {}
+    constructor(
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
+        protected modalService: NgbModal,
+        protected assessmentsService: TextAssessmentService,
+    ) {}
 
     /**
      * Life cycle hook to indicate component initialization is done
@@ -68,6 +75,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             this.disableEditScore = false;
         }
     }
+
     /**
      * Increase size of text area automatically
      */
@@ -144,14 +152,30 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         this.didChange();
     }
 
-    openConfirmationModal(content: any) {
-        this.modalService.open(content).result.then(
-            (result: string) => {
-                if (result === 'confirm') {
-                    console.warn('Confirm?');
-                }
-            },
-            () => {},
-        );
+    async openConfirmationModal(content: any) {
+        console.warn('first', this.feedback.suggestedFeedbackParticipationReference);
+        const participationId = this.feedback.suggestedFeedbackParticipationReference ? this.feedback.suggestedFeedbackParticipationReference : -1;
+
+        const submissionId = this.feedback.suggestedFeedbackOriginSubmissionReference ? this.feedback.suggestedFeedbackOriginSubmissionReference : -1;
+        if (participationId >= 0 && submissionId >= 0) {
+            console.warn('second', this.feedback.suggestedFeedbackOriginSubmissionReference);
+            const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
+            console.log('participation.results', participation.results);
+            console.log('participation.submissions', participation.submissions);
+            console.log(participation.submissions?.length);
+            console.log(participation.submissions?.values().next().value.blocks);
+            this.listOfBlocksForModal = participation.submissions?.values().next().value.blocks;
+            // console.log(participation.submissions?[0]);
+            this.modalService.open(content).result.then(
+                (result: string) => {
+                    if (result === 'confirm') {
+                        console.warn('Confirm?');
+                        console.warn(participation);
+                    }
+                    console.warn('test', participation);
+                },
+                () => {},
+            );
+        }
     }
 }
