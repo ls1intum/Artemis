@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
 /*
     We also register the ChartDataLabels plugin globally but set display to false. This way by setting display to true
@@ -13,6 +14,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
  */
 Chart.register(...registerables);
 Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({

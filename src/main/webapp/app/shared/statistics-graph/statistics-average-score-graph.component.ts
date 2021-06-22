@@ -60,10 +60,10 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 data: new Array(this.barChartLabels.length).fill(this.courseAverage),
                 backgroundColor: GraphColors.BLUE,
                 fill: false,
-                pointBackgroundColor: GraphColors.TRANSPARENT,
-                pointBorderColor: GraphColors.TRANSPARENT,
+                pointBackgroundColor: GraphColors.BLUE,
+                pointBorderColor: GraphColors.BLUE,
                 pointHoverBackgroundColor: GraphColors.BLUE,
-                pointHoverBorderColor: GraphColors.TRANSPARENT,
+                pointHoverBorderColor: GraphColors.BLUE,
                 borderColor: GraphColors.BLUE,
                 hoverBackgroundColor: GraphColors.BLUE,
                 hoverBorderColor: GraphColors.BLUE,
@@ -112,6 +112,19 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                         callback(index: number) {
                             const label = self.barChartLabels[index] + '';
                             return label.length > 10 ? label.substr(0, 10) + '...' : label;
+                        },
+                    },
+                },
+            },
+            plugins: {
+                annotation: {
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: this.courseAverage,
+                            yMax: this.courseAverage,
+                            borderColor: GraphColors.BLUE,
+                            borderWidth: 4,
                         },
                     },
                 },

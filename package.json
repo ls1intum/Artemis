@@ -34,6 +34,7 @@
         "blob-util": "2.0.2",
         "bootstrap": "5.0.1",
         "chart.js": "3.3.2",
+        "chartjs-plugin-annotation": "1.0.2",
         "chartjs-plugin-datalabels": "2.0.0-rc",
         "compare-versions": "3.6.0",
         "core-js": "3.14.0",
