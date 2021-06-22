@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -123,6 +126,29 @@ public class SubmissionResource {
         else {
             return ResponseEntity.ok(List.of());
         }
+    }
+
+    /**
+     * Get /exercises/:exerciseId/submissions-with-complaints
+     *
+     * Get all submissions associated to an exercise which have complaints in,
+     * but filter out the ones that are about the tutor who is doing the request, since tutors cannot act on their own complaint
+     * Additionally, filter out the ones where the student is the same as the assessor as this indicated that this is a test run.
+     *
+     * @param exerciseId of the exercise we are interested in
+     * @param principal that wants to get complaints
+     * @return the ResponseEntity with status 200 (OK) and a list of SubmissionWithComplaintDTOs. The list can be empty.
+     */
+    @GetMapping("/exercises/{exerciseId}/submissions-with-complaints")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<SubmissionWithComplaintDTO>> getSubmissionsWithComplaintsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise);
+        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = submissionService.getSubmissionsWithComplaintsForExercise(exerciseId, principal, isAtLeastInstructor);
+
+        return ResponseEntity.ok(submissionWithComplaintDTOs);
     }
 
     private void checkAccessPermissionAtInstructor(Submission submission) {

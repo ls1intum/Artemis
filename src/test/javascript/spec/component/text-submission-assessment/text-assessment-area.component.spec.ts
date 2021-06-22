@@ -14,6 +14,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextSharedModule } from 'app/exercises/text/shared/text-shared.module';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
@@ -21,7 +22,7 @@ describe('TextAssessmentAreaComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule, TextSharedModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule, TextSharedModule, ArtemisGradingInstructionLinkIconModule],
             declarations: [
                 TextAssessmentAreaComponent,
                 TextblockAssessmentCardComponent,

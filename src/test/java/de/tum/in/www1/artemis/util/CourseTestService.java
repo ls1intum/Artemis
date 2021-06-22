@@ -394,6 +394,12 @@ public class CourseTestService {
     }
 
     // Test
+    public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+    }
+
+    // Test
     public void testUpdateCourseIsEmpty() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
         request.put("/api/courses", course, HttpStatus.NOT_FOUND);
@@ -1739,8 +1745,8 @@ public class CourseTestService {
         assessmentUpdate.feedbacks(feedbackListForComplaint).complaintResponse(complaintResponse);
         assessmentUpdate.setTextBlocks(new HashSet<>());
 
-        request.putWithResponseBody("/api/text-assessments/text-submissions/" + result1.getSubmission().getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
+                + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
 
         // Feedback request
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
@@ -1758,8 +1764,8 @@ public class CourseTestService {
         feedbackUpdate.feedbacks(feedbackListForMoreFeedback).complaintResponse(feedbackResponse);
         feedbackUpdate.setTextBlocks(new HashSet<>());
 
-        request.putWithResponseBody("/api/text-assessments/text-submissions/" + result2.getSubmission().getId() + "/assessment-after-complaint", feedbackUpdate, Result.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
+                + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
         // API call
         var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
@@ -1774,9 +1780,10 @@ public class CourseTestService {
         assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
         assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(1);
 
-        // Assessments
-        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(66.7);
-        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(2);
+        // Assessments - 133 because each we have only 2 submissions which have assessments, but as they have complaints which got accepted
+        // they now have 2 results each.
+        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(133.3);
+        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(4);
         assertThat(courseDTO.getCurrentMaxAssessments()).isEqualTo(3);
 
         // Complaints
