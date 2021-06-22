@@ -94,8 +94,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
         // save files automatically every minute
         this.interval = setInterval(() => {
-            this.saveChangedFiles(); // maybe onSave()?
-        }, 60 * 1000);
+            this.onSave();
+        }, 5 * 1000);
     }
 
     /**
