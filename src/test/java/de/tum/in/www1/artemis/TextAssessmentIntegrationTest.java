@@ -165,6 +165,21 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testDeleteTextExampleAssessment_wrongExerciseId() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission.setExampleSubmission(true);
+        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
+        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        database.addExampleSubmission(exampleSubmission);
+        long randomId = 4532;
+        request.delete("/api/exercises/" + randomId + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback", HttpStatus.BAD_REQUEST);
+        assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
+        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getId())).isEmpty();
+
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "TA")
     public void getTextSubmissionWithResultId() throws Exception {
         TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
@@ -190,6 +205,44 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         params.add("resultId", String.valueOf(storedResult.getId()));
         request.get("/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.FORBIDDEN,
                 TextSubmission.class, params);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void getTextSubmissionWithResultIdAsTutor_wrongParticipationId() throws Exception {
+        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
+        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
+        Result storedResult = submission.getResultForCorrectionRound(0);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("resultId", String.valueOf(storedResult.getId()));
+        long randomId = 12534;
+
+        TextSubmission returnedSubmission = request.get("/api/participations/" + randomId + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.BAD_REQUEST,
+                TextSubmission.class, params);
+        assertThat(returnedSubmission).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        Result textAssessment = textSubmission.getLatestResult();
+        Complaint complaint = new Complaint().result(textAssessment).complaintText("This is not fair");
+
+        complaintRepo.save(complaint);
+        complaint.getResult().setParticipation(null); // Break infinite reference chain
+
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(new ArrayList<>()).complaintResponse(complaintResponse);
+
+        long randomId = 12354;
+        Result updatedResult = request.putWithResponseBody("/api/participations/" + randomId + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
+                assessmentUpdate, Result.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(updatedResult).as("updated result found").isNull();
     }
 
     @Test
@@ -276,6 +329,29 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void saveTextAssessment_wrongParticipationId() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setFeedbacks(new ArrayList<>());
+
+        long randomId = 1343;
+
+        Result result = request.putWithResponseBody("/api/participations/" + randomId + "/results/" + submissionWithoutAssessment.getLatestResult().getId() + "/text-assessment",
+                textAssessmentDTO, Result.class, HttpStatus.BAD_REQUEST);
+        assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void submitTextAssessment_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
@@ -294,6 +370,29 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void submitTextAssessment_wrongParticipationId() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setFeedbacks(new ArrayList<>());
+        long randomId = 1548;
+        Result result = request.postWithResponseBody(
+                "/api/participations/" + randomId + "/results/" + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO,
+                Result.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(result).isNull();
     }
 
     @Test
@@ -484,6 +583,20 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         return result;
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getExampleResultForTutor_wrongExerciseId() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission.setExampleSubmission(true);
+        textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
+        final var exampleSubmission = ModelFactory.generateExampleSubmission(textSubmission, textExercise, true);
+        database.addExampleSubmission(exampleSubmission);
+        long randomId = 23454;
+        Result result = request.get("/api/exercises/" + randomId + "/submissions/" + textSubmission.getId() + "/example-result", HttpStatus.BAD_REQUEST, Result.class);
+
+        assertThat(result).as("result found").isNull();
     }
 
     @Test
@@ -1003,6 +1116,17 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void retrieveConflictingTextSubmissions_wrongParticipationId() throws Exception {
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        long randomId = 54234;
+        List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + randomId + "/submissions/" + textSubmissions.get(0).getId() + "/feedbacks/"
+                + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
+
+        assertThat(conflictingTextSubmissions).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void retrieveConflictingTextSubmissions_automaticAssessmentDisabled() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         textExercise.setAssessmentType(AssessmentType.MANUAL);
@@ -1064,6 +1188,17 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         prepareTextSubmissionsWithFeedbackAndConflicts();
 
         FeedbackConflict feedbackConflict = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/feedback-conflicts/2/solve", null, FeedbackConflict.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
+    }
+
+    // @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void solveFeedbackConflict_wrongExerciseId() throws Exception {
+        prepareTextSubmissionsWithFeedbackAndConflicts();
+        long randomId = 57456;
+        FeedbackConflict feedbackConflict = request.postWithResponseBody(
+                "/api/exercises/" + randomId + "/feedback-conflicts/" + feedbackConflictRepository.findAll().get(0).getId() + "/solve", null, FeedbackConflict.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
     }
