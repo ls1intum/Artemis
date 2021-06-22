@@ -69,13 +69,27 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmission() throws Exception {
-        submitFile();
+        submitFile("file.png");
     }
 
-    private void submitFile() throws Exception {
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionWithShortName() throws Exception {
+        submitFile(".png");
+    }
+
+    private void submitFile(String filename) throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
-        FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission);
-        String actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+        FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
+        String actualFilePath;
+
+        if (filename.length() < 5) {
+            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
+        }
+        else {
+            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+        }
+
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
@@ -87,8 +101,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
-        submitFile();
-        submitFile();
+        submitFile("file.png");
+        submitFile("file.png");
 
         // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
     }
@@ -390,8 +404,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
     }
 
-    private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission) throws Exception {
-        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+    private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission, String originalFilename) throws Exception {
+        var file = new MockMultipartFile("file", originalFilename, "application/json", "some data".getBytes());
         return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
                 HttpStatus.OK);
     }
