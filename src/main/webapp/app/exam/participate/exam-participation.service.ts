@@ -13,7 +13,7 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -244,6 +244,20 @@ export class ExamParticipationService {
                     });
                 }
             });
+        }
+    }
+
+    public getSubmissionForExercise(exercise: Exercise) {
+        if (
+            exercise &&
+            exercise.studentParticipations &&
+            exercise.studentParticipations.length > 0 &&
+            exercise.studentParticipations[0].submissions &&
+            exercise.studentParticipations[0].submissions.length > 0
+        ) {
+            return exercise.studentParticipations[0].submissions[0];
+        } else {
+            return undefined;
         }
     }
 }

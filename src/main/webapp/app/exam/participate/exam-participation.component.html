@@ -29,7 +29,7 @@
             </div>
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">
-                <jhi-exam-exercise-overview-page [exercises]="studentExam.exercises!" (onPageChanged)="onPageChange($event)"> </jhi-exam-exercise-overview-page>
+                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"> </jhi-exam-exercise-overview-page>
             </div>
             <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
                 <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">

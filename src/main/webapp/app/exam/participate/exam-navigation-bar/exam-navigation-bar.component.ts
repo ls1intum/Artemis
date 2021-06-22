@@ -5,6 +5,7 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -27,8 +28,9 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = moment.duration(5, 'minutes');
 
     icon: IconProp;
+    getSubmissionForExercise = this.examParticipationService.getSubmissionForExercise;
 
-    constructor(private layoutService: LayoutService) {}
+    constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService) {}
 
     ngOnInit(): void {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -114,6 +116,7 @@ export class ExamNavigationBarComponent implements OnInit {
         const exercise = this.exercises[exerciseIndex];
         const submission = this.getSubmissionForExercise(exercise);
         if (submission) {
+            console.log('exam navibation bar', submission);
             if (submission.submitted) {
                 this.icon = 'check';
             }
@@ -169,20 +172,5 @@ export class ExamNavigationBarComponent implements OnInit {
     handInEarly() {
         this.saveExercise(false);
         this.onExamHandInEarly.emit();
-    }
-
-    // TODO: find usages of similar logic -> put into utils method
-    getSubmissionForExercise(exercise: Exercise) {
-        if (
-            exercise &&
-            exercise.studentParticipations &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].submissions &&
-            exercise.studentParticipations[0].submissions.length > 0
-        ) {
-            return exercise.studentParticipations[0].submissions[0];
-        } else {
-            return undefined;
-        }
     }
 }
