@@ -3588,12 +3588,12 @@ chardet@^0.7.0:
   resolved "https://registry.yarnpkg.com/chardet/-/chardet-0.7.0.tgz#90094849f0937f2eedc2425d0d28a9e5f0cbad9e"
   integrity sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==
 
-chart.js@^3.3.2:
+chart.js@3.3.2:
   version "3.3.2"
   resolved "https://registry.yarnpkg.com/chart.js/-/chart.js-3.3.2.tgz#667f3a0b6371b9719d8949c04a5bcbaec0d8c615"
   integrity sha512-H0hSO7xqTIrwxoACqnSoNromEMfXvfuVnrbuSt2TuXfBDDofbnto4zuZlRtRvC73/b37q3wGAWZyUU41QPvNbA==
 
-chartjs-plugin-datalabels@^2.0.0-rc:
+chartjs-plugin-datalabels@2.0.0-rc:
   version "2.0.0-rc"
   resolved "https://registry.yarnpkg.com/chartjs-plugin-datalabels/-/chartjs-plugin-datalabels-2.0.0-rc.tgz#c5db77fec5112f3c15739d6f27f244985bdc8a4c"
   integrity sha512-Wau5ycQltfDrzNydBVs71HIJeo/tl1lkRJLM0OM2kT6GwcCOYZad6dmTeqXGzPFJN7oJe5Gledu4Ary0W205iQ==
