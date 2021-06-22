@@ -30,7 +30,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     courseId: number;
     isLoading = false;
     public exerciseScores: ExerciseScoresDTO[] = [];
-    private exerciseTypes: string[];
 
     @ViewChild(BaseChartDirective)
     chartDirective: BaseChartDirective;
@@ -65,7 +64,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
             )
             .subscribe(
                 (exerciseScoresResponse) => {
-                    this.exerciseScores = exerciseScoresResponse.body!;
+                    // we show all the exercises ordered by their release data
+                    this.exerciseScores = _.sortBy(exerciseScoresResponse.body!, (exerciseScore) => exerciseScore.releaseDate);
                     this.initializeChart();
                     this.defineOptions();
                 },
@@ -84,14 +84,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         }
 
         this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
-        // we show all the exercises ordered by their release data
-        const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
-        this.exerciseTypes = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate).map((exerciseScore) => exerciseScore.exerciseType!);
-        this.addData(sortedExerciseScores);
+        this.addData();
     }
 
-    private addData(exerciseScoresDTOs: ExerciseScoresDTO[]) {
-        for (const exerciseScoreDTO of exerciseScoresDTOs) {
+    private addData() {
+        for (const exerciseScoreDTO of this.exerciseScores) {
             this.labels!.push(exerciseScoreDTO.exerciseTitle!);
             this.dataSets[0]!.data.push(exerciseScoreDTO.scoreOfStudent!);
             this.dataSets[1]!.data.push(exerciseScoreDTO.averageScoreAchieved!);
@@ -154,6 +151,20 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     private defineOptions() {
         const self = this;
         this.chartOptions = {
+            // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
+            onHover: (event: any, chartElement) => {
+                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+            },
+            // when the user clicks on a data point, we navigate to the subpage of the corresponding exercise
+            onClick: (event: any, context: any) => {
+                const index = context[0].index;
+                if (index) {
+                    const exerciseId = self.exerciseScores[index].exerciseId;
+                    if (exerciseId) {
+                        this.navigateToExercise(exerciseId!);
+                    }
+                }
+            },
             plugins: {
                 tooltip: {
                     callbacks: {
@@ -169,7 +180,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                         },
                         footer(context) {
                             const index = context[0].dataIndex;
-                            const exerciseType = self.exerciseTypes[index];
+                            const exerciseType = self.exerciseScores[index].exerciseType;
                             return [`Exercise Type: ${exerciseType}`];
                         },
                     },
