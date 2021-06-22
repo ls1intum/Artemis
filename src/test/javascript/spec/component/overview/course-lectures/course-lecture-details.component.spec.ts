@@ -186,7 +186,7 @@ describe('CourseLectureDetails', () => {
 
         const downloadAttachmentStub = sinon.stub(courseLecturesDetailsComponent, 'downloadMergedFiles');
         const downloadButton = debugElement.query(By.css('#downloadButton'));
-        expect(downloadButton).to.be.ok;
+        expect(downloadButton).to.exist;
 
         downloadButton.nativeElement.click();
         expect(downloadAttachmentStub).to.have.been.calledOnce;
