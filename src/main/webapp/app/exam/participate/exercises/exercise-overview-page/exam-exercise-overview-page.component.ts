@@ -5,6 +5,8 @@ import { ChangeDetectorRef } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { Submission } from 'app/entities/submission.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -19,6 +21,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
     getSubmissionForExercise = this.examParticipationService.getSubmissionForExercise;
+    getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     constructor(protected changeDetectorReference: ChangeDetectorRef, private examParticipationService: ExamParticipationService) {
         super(changeDetectorReference);
@@ -61,34 +64,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
             }
         } else {
             // in case no participation yet exists -> display synced
-            return 'synced';
-        }
-    }
-
-    getExerciseButtonTooltip(item: ExamExerciseOverviewItem): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
-        const submission = item.submission;
-        if (submission) {
-            if (item.exercise!.type === ExerciseType.PROGRAMMING) {
-                if (submission.submitted && submission.isSynced) {
-                    return 'submitted'; // You have submitted an exercise. You can submit again
-                } else if (submission.submitted && !submission.isSynced) {
-                    return 'notSavedOrSubmitted'; // You have unsaved and/or unsubmitted changes
-                } else if (!submission.submitted && submission.isSynced) {
-                    return 'notSubmitted'; // starting point
-                } else {
-                    return 'notSavedOrSubmitted';
-                }
-            } else {
-                if (submission.isSynced) {
-                    return 'synced';
-                } else {
-                    return 'notSynced';
-                }
-            }
-        } else {
-            // submission does not yet exist for this exercise.
-            // When the participant navigates to the exercise the submissions are created.
-            // Until then show, that the exercise is synced
             return 'synced';
         }
     }

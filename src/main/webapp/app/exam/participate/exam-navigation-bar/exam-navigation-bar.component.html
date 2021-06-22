@@ -36,7 +36,7 @@
                     <button
                         class="btn w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
-                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(i) | artemisTranslate"
+                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate"
                         (click)="changePage(false, i, false)"
                     >
                         <fa-icon [icon]="icon"></fa-icon>

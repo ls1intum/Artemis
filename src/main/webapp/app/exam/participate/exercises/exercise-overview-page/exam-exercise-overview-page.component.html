@@ -47,7 +47,7 @@
                     <div
                         style="max-width: 10px"
                         [ngClass]="setExerciseButtonStatus(item)"
-                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item) | artemisTranslate"
+                        [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise!, item.submission!) | artemisTranslate"
                     >
                         <fa-icon [icon]="item.icon!"></fa-icon>
                     </div>
