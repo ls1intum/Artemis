@@ -258,7 +258,6 @@ describe('ExamParticipationComponent', () => {
                 submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             } as ProgrammingSubmissionStateObj),
         );
-        const createParticipationForExerciseStub = stub(comp, 'createParticipationForExercise').returns(of(new StudentParticipation()));
         comp.ngOnInit();
         const firstExercise = exerciseWithParticipation('programming', false);
         const secondExercise = exerciseWithParticipation('modeling', true);
@@ -351,8 +350,7 @@ describe('ExamParticipationComponent', () => {
         let quizSubmissionUpdateStub: sinon.SinonStub;
 
         beforeEach(() => {
-            const studentExam = new StudentExam();
-            comp.studentExam = studentExam;
+            comp.studentExam = new StudentExam();
         });
 
         afterEach(() => {

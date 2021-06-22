@@ -63,7 +63,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 1;
         const force = false;
 
-        comp.changeExercise(exerciseIndex, force);
+        comp.changePage(exerciseIndex, force);
 
         expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onPageChanged.emit).toHaveBeenCalled();
@@ -79,7 +79,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 5;
         const force = false;
 
-        comp.changeExercise(exerciseIndex, force);
+        comp.changePage(exerciseIndex, force);
 
         expect(comp.exerciseIndex).toEqual(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
@@ -110,7 +110,7 @@ describe('Exam Navigation Bar Component', () => {
 
         comp.saveExercise(changeExercise);
 
-        expect(comp.changeExercise).toHaveBeenCalled();
+        expect(comp.changePage).toHaveBeenCalled();
     });
 
     it('save the exercise without changeExercise', () => {
@@ -119,7 +119,7 @@ describe('Exam Navigation Bar Component', () => {
 
         comp.saveExercise(changeExercise);
 
-        expect(comp.changeExercise).not.toHaveBeenCalled();
+        expect(comp.changePage).not.toHaveBeenCalled();
     });
 
     it('should hand in the exam early', () => {
