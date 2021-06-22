@@ -25,15 +25,15 @@ export class CustomChartPoint implements Chart.ChartPoint {
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
+export class ExerciseScoresChartComponent implements AfterViewInit {
     @Input()
     courseId: number;
     isLoading = false;
     public exerciseScores: ExerciseScoresDTO[] = [];
+    private exerciseTypes: string[];
 
     @ViewChild(BaseChartDirective)
     chartDirective: BaseChartDirective;
-    chartInstance: Chart;
     @ViewChild('chartDiv')
     chartDiv: ElementRef;
 
@@ -45,16 +45,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         private translateService: TranslateService,
     ) {}
 
-    ngOnDestroy() {
-        // important to prevent memory leaks
-        // this.chartInstance.destroy();
-    }
-
     ngAfterViewInit() {
-        // this.chartInstance = this.chartDirective.chart;
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = +params['courseId'];
-            console.log(this.courseId);
             if (this.courseId) {
                 this.loadDataAndInitializeChart();
             }
@@ -62,7 +55,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     }
 
     private loadDataAndInitializeChart() {
-        console.log('loadDataAndInitializeChart');
         this.isLoading = true;
         this.exerciseScoresChartService
             .getExerciseScoresForCourse(this.courseId)
@@ -74,7 +66,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
             .subscribe(
                 (exerciseScoresResponse) => {
                     this.exerciseScores = exerciseScoresResponse.body!;
-                    // this.chartInstance = this.chartDirective.chart;
                     this.initializeChart();
                     this.defineOptions();
                 },
@@ -83,7 +74,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     }
 
     private initializeChart() {
-        console.log('initializeChart');
         // we calculate the chart width depending on the number of exercises we have to show. If you look into
         // exercise-scores-chart.component.scss you will see that we show a horizontal navigation bar when the
         // chart has reached a certain width
@@ -94,41 +84,19 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
         }
 
         this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
-        // this.chartInstance.resize();
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
+        this.exerciseTypes = _.sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate).map((exerciseScore) => exerciseScore.exerciseType!);
         this.addData(sortedExerciseScores);
     }
 
     private addData(exerciseScoresDTOs: ExerciseScoresDTO[]) {
         for (const exerciseScoreDTO of exerciseScoresDTOs) {
-            const extraInformation = {
-                exerciseId: exerciseScoreDTO.exerciseId,
-                exerciseTitle: exerciseScoreDTO.exerciseTitle,
-                exerciseType: exerciseScoreDTO.exerciseType,
-            };
-
             this.labels!.push(exerciseScoreDTO.exerciseTitle!);
-            /*this.chartInstance.data.labels!.push(exerciseScoreDTO.exerciseTitle!);
-            // from each dto we generate a data point for each of three data sets
-            (this.chartInstance.data.datasets![0].data as CustomChartPoint[])!.push({
-                y: exerciseScoreDTO.scoreOfStudent,
-                ...extraInformation,
-            } as CustomChartPoint);
-            (this.chartInstance.data.datasets![1].data as CustomChartPoint[])!.push({
-                y: exerciseScoreDTO.averageScoreAchieved,
-                ...extraInformation,
-            } as CustomChartPoint);
-            (this.chartInstance.data.datasets![2].data as CustomChartPoint[])!.push({
-                y: exerciseScoreDTO.maxScoreAchieved,
-                ...extraInformation,
-            } as CustomChartPoint);*/
             this.dataSets[0]!.data.push(exerciseScoreDTO.scoreOfStudent!);
             this.dataSets[1]!.data.push(exerciseScoreDTO.averageScoreAchieved!);
             this.dataSets[2]!.data.push(exerciseScoreDTO.maxScoreAchieved!);
         }
-        console.log('reached');
-        // this.chartInstance.update();
     }
 
     /**
@@ -184,24 +152,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     public chartOptions: ChartOptions = {};
 
     private defineOptions() {
-        console.log('defineOptions');
         const self = this;
         this.chartOptions = {
-            // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
-            onHover: (event: any, chartElement) => {
-                event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-            },
-            // when the user clicks on a data point, we navigate to the subpage of the corresponding exercise
-            onClick: (evt) => {
-                const point: any = this.chartInstance.getElementAtEvent(evt)[0];
-
-                if (point) {
-                    const value: any = this.chartInstance.data.dataset!.data![point._index];
-                    if (value.exerciseId) {
-                        this.navigateToExercise(value.exerciseId);
-                    }
-                }
-            },
             plugins: {
                 tooltip: {
                     callbacks: {
@@ -216,8 +168,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
                             return label;
                         },
                         footer(context) {
-                            const dataset = context[0].dataset.data;
-                            const exerciseType = (dataset as any).exerciseType;
+                            const index = context[0].dataIndex;
+                            const exerciseType = self.exerciseTypes[index];
                             return [`Exercise Type: ${exerciseType}`];
                         },
                     },
