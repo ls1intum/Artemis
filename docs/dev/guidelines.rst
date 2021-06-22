@@ -11,3 +11,4 @@ Coding and design guidelines
    guidelines/client
    guidelines/database
    guidelines/code-review
+   guidelines/language-guidelines
