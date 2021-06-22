@@ -78,6 +78,12 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         submitFile(".png");
     }
 
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionWithDoubleBackslash() throws Exception {
+        submitFile("file\\file.png");
+    }
+
     private void submitFile(String filename) throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
@@ -85,6 +91,9 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
         if (filename.length() < 5) {
             actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
+        }
+        else if (filename.contains("\\")) {
+            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
         }
         else {
             actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
