@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -84,6 +85,6 @@ export class GradingKeyOverviewComponent implements OnInit {
         if (num == undefined) {
             return;
         }
-        return Math.round(num * 100) / 100;
+        return round(num, 2);
     }
 }

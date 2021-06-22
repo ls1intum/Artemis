@@ -1,6 +1,8 @@
 <div class="row justify-content-center">
     <div class="col-6">
-        <h1 style="text-align: center">{{ 'artemisApp.gradingSystem.titleExam' | artemisTranslate }} {{ title }}</h1>
+        <h1 style="text-align: center">
+            {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }} {{ title }}
+        </h1>
         <div style="margin-top: 2em; font-size: 1.1em">
             <table class="table table-striped">
                 <thead>
@@ -14,7 +16,7 @@
                     <tr *ngFor="let gradeStep of gradeSteps; let i = index" [class.highlighted]="gradeStep.gradeName == studentGrade">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
-                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ gradeStep.lowerBoundPercentage }} - {{ gradeStep.upperBoundPercentage
+                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ round(gradeStep.lowerBoundPercentage) }} - {{ round(gradeStep.upperBoundPercentage)
                             }}{{ gradeStep.upperBoundInclusive ? ']' : ')' }}
                         </td>
                         <td *ngIf="hasPointsSet()">
