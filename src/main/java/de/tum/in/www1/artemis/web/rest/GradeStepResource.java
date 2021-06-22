@@ -60,12 +60,12 @@ public class GradeStepResource {
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/grading-scale/grade-steps")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all grade steps for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, course.getMaxPoints(), course.getTitle());
         return ResponseEntity.ok(gradeStepsDTO);
     }

@@ -17,7 +17,7 @@ export const examParticipationRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'grading-key',
+        path: 'overview/grading-key',
         component: GradingKeyOverviewComponent,
         data: {
             authorities: [Authority.USER],

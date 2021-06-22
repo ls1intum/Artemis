@@ -68,7 +68,7 @@ export class GradingKeyOverviewComponent implements OnInit {
      */
     hasPointsSet(): boolean {
         for (const gradeStep of this.gradeSteps) {
-            if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined) {
+            if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined || gradeStep.upperBoundPoints === 0) {
                 return false;
             }
         }

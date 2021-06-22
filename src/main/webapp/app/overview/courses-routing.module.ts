@@ -71,16 +71,16 @@ const routes: Routes = [
                 redirectTo: 'exercises',
                 pathMatch: 'full',
             },
-            {
-                path: 'statistics/grading-key',
-                component: GradingKeyOverviewComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'artemisApp.gradingSystem.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
         ],
+    },
+    {
+        path: 'courses/:courseId/statistics/grading-key',
+        component: GradingKeyOverviewComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.gradingSystem.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
