@@ -45,14 +45,14 @@
                 </div>
             </ng-container>
             <div class="navigation-item">
-                <button *ngIf="!overviewPageOpen" class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex + 1, false)">
+                <button class="btn btn-secondary w-100" (click)="changePage(false, overviewPageOpen ? 0 : exerciseIndex + 1, false)">
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
                 </button>
-                <button *ngIf="overviewPageOpen" class="btn btn-secondary w-100" (click)="changePage(false, 0, false)">
+                <!--button *ngIf="overviewPageOpen" class="btn btn-secondary w-100" (click)="changePage(false, 0, false)">
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
-                </button>
+                </button-->
             </div>
         </div>
     </div>
