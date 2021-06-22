@@ -6,6 +6,8 @@
             },
             "title": "Code Editor for Exercise:",
             "instructions": "&nbsp; Instructions &nbsp;",
+            "autosaveTooltip": " Changes will be saved automatically every 5 seconds.",
+            "submitTooltip": "You have to submit the saved changes manually.",
             "unsavedChanges": "Unsaved.",
             "unsavedChangesTooltip": "There are unsaved changes.",
             "savingChanges": "Saving...",

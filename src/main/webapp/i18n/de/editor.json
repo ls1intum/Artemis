@@ -6,6 +6,8 @@
             },
             "title": "Code-Editor für Übung:",
             "instructions": "Aufgabenstellung &nbsp;",
+            "autosaveTooltip": " Änderungen werden alle 5 Sekunden automatisch gespeichert.",
+            "submitTooltip": "Du musst die gepspeicherten Änderungen manuell absenden.",
             "unsavedChanges": "Ungespeichert.",
             "unsavedChangesTooltip": "Nicht gespeicherte Änderungen vorhanden.",
             "savingChanges": "Speichert...",
