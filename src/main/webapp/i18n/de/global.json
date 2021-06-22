@@ -277,7 +277,7 @@
             "pattern": "Dieses Feld muss das Muster {{pattern}} erfüllen.",
             "number": "Dieses Feld muss eine Zahl sein.",
             "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
-            "validPattern": "Dieses Feld beinhaltet einen ungültigen Muster"
+            "invalidPattern": "Dieses Feld entspricht nicht dem vorgegebenen Muster."
         }
     },
     "error": {
