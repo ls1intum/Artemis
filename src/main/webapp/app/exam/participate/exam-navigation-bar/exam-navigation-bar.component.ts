@@ -50,23 +50,30 @@ export class ExamNavigationBarComponent implements OnInit {
         this.examAboutToEnd.emit();
     }
 
-    openExerciseOverview() {
-        // set index and emit event
-        this.exerciseIndex = 0;
-        // save current exercise
-        this.onPageChanged.emit({ overViewChange: true, exercise: this.exercises[this.exerciseIndex], forceSave: false });
-        this.setExerciseButtonStatus(this.exerciseIndex);
-    }
-
-    changeExercise(exerciseIndex: number, forceSave: boolean) {
-        // out of index -> do nothing
-        if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
-            return;
+    /*
+        @param exerciseIndex: exercise to switch to
+        @param overviewPage: user wants to switch to the overview page
+        @param forceSave: true if forceSave shall be used.
+     */
+    changePage(overviewPage: boolean, exerciseIndex?: number, forceSave?: boolean) {
+        console.log(overviewPage, exerciseIndex, forceSave);
+        if (!overviewPage) {
+            console.log('lets');
+            // out of index -> do nothing
+            if (exerciseIndex! > this.exercises.length - 1 || exerciseIndex! < 0) {
+                console.log('what');
+                return;
+            }
+            // set index and emit event
+            this.exerciseIndex = exerciseIndex!;
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
+        } else if (overviewPage) {
+            // set index and emit event
+            this.exerciseIndex = 0;
+            // save current exercise
+            this.onPageChanged.emit({ overViewChange: true, exercise: this.exercises[this.exerciseIndex], forceSave: false });
         }
-        // set index and emit event
-        this.exerciseIndex = exerciseIndex;
-        this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[exerciseIndex], forceSave });
-        this.setExerciseButtonStatus(exerciseIndex);
+        this.setExerciseButtonStatus(this.exerciseIndex);
     }
 
     /**
@@ -83,9 +90,9 @@ export class ExamNavigationBarComponent implements OnInit {
         if (changeExercise) {
             if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changeExercise(this.exerciseIndex, true);
+                this.changePage(false, this.exerciseIndex, true);
             } else {
-                this.changeExercise(newIndex, true);
+                this.changePage(false, newIndex, true);
             }
         }
     }
@@ -98,7 +105,7 @@ export class ExamNavigationBarComponent implements OnInit {
         return this.exercises[this.exerciseIndex].type === ExerciseType.FILE_UPLOAD;
     }
 
-    setOverviewStatus(): 'active' | '' {
+    getOverviewStatus(): 'active' | '' {
         return this.overviewPageOpen ? 'active' : '';
     }
 

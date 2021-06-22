@@ -86,11 +86,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     isProgrammingExerciseWithCodeEditor(): boolean {
-        return this.isProgrammingExercise() && !this.activeExamPage.isOverviewPage && (this.activeExamPage.exercise as ProgrammingExercise).allowOnlineEditor === true;
+        return this.isProgrammingExercise() && (this.activeExamPage.exercise as ProgrammingExercise).allowOnlineEditor === true;
     }
 
     isProgrammingExerciseWithOfflineIDE(): boolean {
-        return this.isProgrammingExercise() && !this.activeExamPage.isOverviewPage && (this.activeExamPage.exercise as ProgrammingExercise).allowOfflineIde === true;
+        return this.isProgrammingExercise() && (this.activeExamPage.exercise as ProgrammingExercise).allowOfflineIde === true;
     }
 
     examStartConfirmed = false;
@@ -212,7 +212,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
             return -1;
         }
-        return this.studentExam.exercises!.findIndex((examExercise) => !this.activeExamPage.isOverviewPage && examExercise.id === this.activeExamPage.exercise!.id);
+        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise!.id);
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
@@ -269,7 +269,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 });
             });
-            const initialExercise = this.studentExam.exercises![0];
             this.initializeOverviewPage();
         }
         this.examStartConfirmed = true;
