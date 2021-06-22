@@ -37,7 +37,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     ngOnChanges() {
         this.examExerciseOverviewItems?.forEach((item) => {
-            console.log('status:', item, item.submission!.isSynced);
             this.setExerciseButtonStatus(item);
         });
     }

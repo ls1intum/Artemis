@@ -58,12 +58,9 @@ export class ExamNavigationBarComponent implements OnInit {
         @param forceSave: true if forceSave shall be used.
      */
     changePage(overviewPage: boolean, exerciseIndex?: number, forceSave?: boolean) {
-        console.log(overviewPage, exerciseIndex, forceSave);
         if (!overviewPage) {
-            console.log('lets');
             // out of index -> do nothing
             if (exerciseIndex! > this.exercises.length - 1 || exerciseIndex! < 0) {
-                console.log('what');
                 return;
             }
             // set index and emit event
@@ -116,7 +113,6 @@ export class ExamNavigationBarComponent implements OnInit {
         const exercise = this.exercises[exerciseIndex];
         const submission = this.getSubmissionForExercise(exercise);
         if (submission) {
-            console.log('exam navibation bar', submission);
             if (submission.submitted) {
                 this.icon = 'check';
             }
