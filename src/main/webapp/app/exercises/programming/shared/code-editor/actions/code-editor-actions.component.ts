@@ -55,6 +55,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     conflictStateSubscription: Subscription;
     submissionSubscription: Subscription;
 
+    interval: any;
+
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
@@ -89,6 +91,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             .getBuildingState()
             .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
             .subscribe();
+
+        // save files automatically every minute
+        this.interval = setInterval(() => {
+            this.saveChangedFiles(); // maybe onSave()?
+        }, 60 * 1000);
     }
 
     /**
@@ -110,6 +117,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     ngOnDestroy(): void {
+        clearInterval(this.interval);
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
         }
