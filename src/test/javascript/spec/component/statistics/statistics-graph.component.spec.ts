@@ -119,7 +119,7 @@ describe('StatisticsGraphComponent', () => {
         const graphData = [1, 2, 3, 4, 5, 6, 8];
         spyOn(service, 'getChartData').and.returnValue(of(graphData));
 
-        fixture.detectChanges();
+        component.ngOnChanges({});
 
         component.switchTimeSpan(true);
 
