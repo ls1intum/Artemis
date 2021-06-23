@@ -1,30 +1,4 @@
 <div class="card-footer code-editor-status text-nowrap">
-    <div id="editor_state" [ngSwitch]="editorState">
-        <div *ngSwitchCase="EditorState.CLEAN">
-            <span ngbTooltip="{{ 'artemisApp.editor.changesSavedTooltip' | artemisTranslate }}{{ 'artemisApp.editor.autosaveTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="['fas', 'check-circle']" class="text-success me-1"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.changesSaved' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="EditorState.UNSAVED_CHANGES">
-            <span ngbTooltip="{{ 'artemisApp.editor.unsavedChangesTooltip' | artemisTranslate }}{{ 'artemisApp.editor.autosaveTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="['fas', 'exclamation-triangle']" class="text-warning me-1"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.unsavedChanges' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="EditorState.SAVING">
-            <span ngbTooltip="{{ 'artemisApp.editor.savingChangesTooltip' | artemisTranslate }}{{ 'artemisApp.editor.autosaveTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="['fas', 'circle-notch']" class="text-info me-1" [spin]="true"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.savingChanges' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="EditorState.REFRESHING">
-            <span ngbTooltip="{{ 'artemisApp.editor.refreshingFilesTooltip' | artemisTranslate }}{{ 'artemisApp.editor.autosaveTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="['fas', 'circle-notch']" class="text-info me-1" [spin]="true"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.refreshingFiles' | artemisTranslate }}</span>
-            </span>
-        </div>
-    </div>
     <div id="commit_state" [ngSwitch]="commitState">
         <div *ngSwitchCase="CommitState.UNDEFINED">
             <span ngbTooltip="{{ 'artemisApp.editor.changesUndefinedTooltip' | artemisTranslate }}">
