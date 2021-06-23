@@ -151,7 +151,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     private defineOptions() {
         const self = this;
         this.chartOptions = {
-            // we show the a pointer to indicate to the user that a data point is clickable (navigation to exercise)
+            // we show a pointer to indicate to the user that a data point is clickable (navigation to exercise)
             onHover: (event: any, chartElement) => {
                 event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
             },
