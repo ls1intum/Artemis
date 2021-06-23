@@ -300,7 +300,7 @@ public interface ContinuousIntegrationService {
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";
             case VHDL -> "tizianleonhardt/era-artemis-vhdl:latest";
             case ASSEMBLER -> "tizianleonhardt/era-artemis-assembler:latest";
-            case SWIFT -> "norionomura/swiftlint:latest"; // TODO: get ls1 docker? for Xcode and Swift?
+            case SWIFT -> "norionomura/swiftlint:latest";
             case OCAML -> "ls1tum/artemis-ocaml-docker:latest";
         };
     }
