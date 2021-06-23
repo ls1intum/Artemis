@@ -1,6 +1,6 @@
 import { extractDestination, nextAlphanumeric, nextWSSubscriptionId } from '../util/utils.js';
-import { COMMIT, FILES, NEW_FILE, PARTICIPATION_WITH_RESULT, PARTICIPATIONS, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP, SCA_CATEGORIES } from './endpoints.js';
-import { fail, sleep } from 'k6';
+import { COMMIT, FILES, NEW_FILE, PARTICIPATION_WITH_RESULT, PROGRAMMING_EXERCISE, PROGRAMMING_EXERCISES_SETUP, SCA_CATEGORIES } from './endpoints.js';
+import { fail } from 'k6';
 import { programmingExerciseProblemStatementJava } from '../resource/constants_java.js';
 import { programmingExerciseProblemStatementPython } from '../resource/constants_python.js';
 import { programmingExerciseProblemStatementC } from '../resource/constants_c.js';
@@ -162,25 +162,6 @@ export function deleteProgrammingExercise(artemis, exerciseId) {
         fail('FAILTEST: Could not delete exercise (' + res[0].status + ')! Response was + ' + res[0].body);
     }
     console.log('DELETED programming exercise, ID=' + exerciseId);
-}
-
-export function startExercise(artemis, courseId, exerciseId) {
-    console.log('Try to start exercise for test user ' + __VU);
-    const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), undefined, undefined);
-    // console.log('RESPONSE of starting exercise: ' + res[0].body);
-
-    if (res[0].status === 400) {
-        sleep(3000);
-        return;
-    }
-
-    if (res[0].status !== 201) {
-        fail('FAILTEST: error trying to start exercise for test user ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
-    } else {
-        console.log('SUCCESSFULLY started exercise for test user ' + __VU);
-    }
-
-    return JSON.parse(res[0].body).id;
 }
 
 export function createNewFile(artemis, participationId, filename) {
