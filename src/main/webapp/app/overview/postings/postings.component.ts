@@ -10,7 +10,6 @@ import { PostService } from 'app/overview/postings/post/post.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import interact from 'interactjs';
 import { ActivatedRoute } from '@angular/router';
 
