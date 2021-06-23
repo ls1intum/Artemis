@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -96,6 +96,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private sourceTreeService: SourceTreeService,
         private courseServer: CourseManagementService,
         private route: ActivatedRoute,
+        private router: Router,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
         private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
@@ -316,8 +317,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Navigates to the previous page or, if no previous navigation happened, to the courses exercise overview
+     */
     backToCourse() {
-        this.$location.back();
+        if (this.router.navigated) {
+            this.$location.back();
+        } else {
+            // If no previous navigation happened just return to the exercise overview
+            this.router.navigate(['courses', this.courseId, 'exercises']);
+        }
     }
 
     exerciseRatedBadge(result: Result): string {
