@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -85,7 +84,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public wasSubmissionSimulated = false;
 
     constructor(
-        private $location: Location,
         private exerciseService: ExerciseService,
         private courseService: CourseManagementService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -318,15 +316,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Navigates to the previous page or, if no previous navigation happened, to the courses exercise overview
+     * Navigates to the courses exercise overview
      */
     backToCourse() {
-        if (this.router.navigated) {
-            this.$location.back();
-        } else {
-            // If no previous navigation happened just return to the exercise overview
-            this.router.navigate(['courses', this.courseId, 'exercises']);
-        }
+        this.router.navigate(['courses', this.courseId, 'exercises']);
     }
 
     exerciseRatedBadge(result: Result): string {
