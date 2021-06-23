@@ -209,12 +209,15 @@ public abstract class AssessmentResource {
         return ResponseEntity.ok().build();
     }
 
-    protected ResponseEntity<Void> deleteAssessment(Long submissionId, Long resultId) {
+    protected ResponseEntity<Void> deleteAssessment(Long participationId, Long submissionId, Long resultId) {
         log.info("REST request by user: {} to delete result {}", userRepository.getUser().getLogin(), resultId);
         // check authentication
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (!studentParticipation.getId().equals(participationId)) {
+            return badRequest("participationId", "400", "participationId in path does not match the id of the participation to submission " + submissionId + " !");
+        }
         Exercise exercise = exerciseRepository.findByIdElseThrow(studentParticipation.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 

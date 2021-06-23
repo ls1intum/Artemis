@@ -12,7 +12,7 @@
   "methods" : [ {
     "name" : "getDates",
     "modifiers" : [ "public" ],
-    "returnType" : "List"
+    "returnType" : "List<Date>"
   }, {
     "name" : "setDates",
     "modifiers" : [ "public" ],
@@ -39,7 +39,7 @@
   }, {
     "name" : "dates",
     "modifiers" : [ "private" ],
-    "type" : "List"
+    "type" : "List<Date>"
   } ]
 }, {
   "class" : {
@@ -53,7 +53,7 @@
   } ],
   "attributes" : [ {
     "name" : "context",
-    "modifiers" : [ "private" ],
+    "modifiers" : [ "private", "optional: final" ],
     "type" : "Context"
   } ],
   "constructors" : [ {
@@ -76,6 +76,6 @@
   "class" : {
     "name" : "BubbleSort",
     "package" : "${packageName}",
-    "interfaces" : [ "SortStrategy" ],
+    "interfaces" : [ "SortStrategy" ]
   }
 } ]

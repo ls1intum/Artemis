@@ -23,7 +23,7 @@
             "action": "Action",
             "exerciseDashboard": "Exercise dashboard",
             "rating": "Ratings",
-            "questionsAndAnswers": "Questions",
+            "discussion": "Discussion",
             "tutorLeaderboard": {
                 "courseTitle": "Tutor Course Leaderboard",
                 "id": "ID",

@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +23,7 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -102,8 +104,18 @@ public class RequestUtilService {
     }
 
     public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
-        String jsonBody = mapper.writeValueAsString(body);
-        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+        final String jsonBody = mapper.writeValueAsString(body);
+        postWithoutLocation(path, request -> request.content(jsonBody), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE);
+    }
+
+    public void postWithoutLocation(String path, byte[] body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders, String contentType) throws Exception {
+        postWithoutLocation(path, request -> request.content(body), expectedStatus, httpHeaders, contentType);
+    }
+
+    private void postWithoutLocation(String path, Function<MockHttpServletRequestBuilder, MockHttpServletRequestBuilder> contentCompletion, HttpStatus expectedStatus,
+            @Nullable HttpHeaders httpHeaders, String contentType) throws Exception {
+        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(contentType);
+        contentCompletion.apply(request);
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
         }
