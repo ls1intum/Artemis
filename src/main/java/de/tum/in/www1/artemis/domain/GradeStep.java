@@ -129,7 +129,6 @@ public class GradeStep extends DomainObject {
      * - the grade name should be set and it shouldn't be empty
      * - both bounds should be between 0 and 100 (both inclusive)
      * - the lower bound should be less than or equal to the upper bound
-     *
      * @return true if all conditions are true and false otherwise
      */
     public boolean checkValidity() {

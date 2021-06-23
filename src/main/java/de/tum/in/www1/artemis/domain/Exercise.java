@@ -936,4 +936,47 @@ public abstract class Exercise extends DomainObject {
         }
     }
 
+    /**
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
+     * @throws BadRequestException if the dates are not valid
+     */
+    public void validateDates() {
+        // All fields are optional, so there is no error if none of them is set
+        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
+            return;
+        }
+        // at least one is set, so we have to check the two possible errors
+        boolean validDates = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
+
+        if (!validDates) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
+    }
+
+    /**
+     * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
+     * @return true if there is no assessmentDueDateError
+     */
+    private boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        if (assessmentDueDate == null) {
+            return true;
+        }
+        // There cannot be a assessmentDueDate without dueDate
+        if (dueDate == null) {
+            return false;
+        }
+        return isBeforeAndNotNull(dueDate, assessmentDueDate) && isBeforeAndNotNull(releaseDate, assessmentDueDate);
+    }
+
+    /**
+     * This method is used to validate if the previousDate is before the laterDate.
+     * @return true if the previousDate is valid
+     */
+    private boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+        if (previousDate == null || laterDate == null) {
+            return true;
+        }
+        return previousDate.isBefore(laterDate);
+    }
+
 }

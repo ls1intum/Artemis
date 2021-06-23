@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -84,12 +87,31 @@ public class UserResource {
         this.authorityRepository = authorityRepository;
     }
 
+    private static void checkUsernameAndPasswordValidity(String username, String password) {
+
+        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
+            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
+        }
+        else if (username.length() > USERNAME_MAX_LENGTH) {
+            throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
+        }
+
+        // Note: the password can be null, then a random one will be generated (Create) or it won't be changed (Update).
+        // If the password is not null, its length has to be at least PASSWORD_MIN_LENGTH
+        if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
+            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
+        else if (password != null && password.length() > PASSWORD_MAX_LENGTH) {
+            throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+        }
+    }
+
     /**
      * POST /users : Creates a new user.
      * <p>
      * Creates a new user if the login and email are not already used, and sends an mail with an activation link. The user needs to be activated on creation.
      *
-     * @param managedUserVM the user to create
+     * @param managedUserVM the user to create. If the password is null, a random one will be generated
      * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
      * @throws URISyntaxException       if the Location URI syntax is incorrect
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
@@ -97,6 +119,9 @@ public class UserResource {
     @PostMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
+
+        checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
+
         log.debug("REST request to save User : {}", managedUserVM);
 
         if (managedUserVM.getId() != null) {
@@ -133,6 +158,7 @@ public class UserResource {
     @PutMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
+        checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
         var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
