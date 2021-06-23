@@ -18,8 +18,8 @@ export class AboutUsComponent implements OnInit {
     readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.md`;
     readonly examFeatureOverviewUrlStudents = '../features/students/';
     readonly examFeatureOverviewUrlInstructors = '../features/instructors/';
-    readonly examInstructionsUrlStudents = 'https://artemis-platform.readthedocs.io/en/latest/user/exams/students_guide/';
-    readonly examInstructionsUrlInstructors = 'https://artemis-platform.readthedocs.io/en/latest/user/exams/instructors_guide/';
+    readonly examInstructionsUrlStudents = 'https://docs.artemis.ase.in.tum.de/user/exams/students_guide/';
+    readonly examInstructionsUrlInstructors = 'https://docs.artemis.ase.in.tum.de/user/exams/instructors_guide/';
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
