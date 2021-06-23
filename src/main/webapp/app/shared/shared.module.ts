@@ -31,10 +31,9 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
-import { ArtemisChartsModule } from 'app/shared/charts.module';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule, ArtemisChartsModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
         ArtemisDatePipe,
         CircularProgressBarComponent,
