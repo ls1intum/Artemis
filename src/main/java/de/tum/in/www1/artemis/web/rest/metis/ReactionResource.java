@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +72,7 @@ public class ReactionResource {
      */
     @PostMapping("courses/{courseId}/postings/reactions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @RequestBody Reaction reaction) throws URISyntaxException {
+    public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
         Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
 
         if (!posting.getCourse().getId().equals(courseId)) {

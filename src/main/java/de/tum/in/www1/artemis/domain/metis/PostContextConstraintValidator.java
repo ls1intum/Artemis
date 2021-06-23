@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis;
 
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
 /**
  * A specific ConstraintValidator that validates if the Post context is mutually exclusive,
@@ -12,8 +12,8 @@ public class PostContextConstraintValidator implements ConstraintValidator<PostC
 
     @Override
     public boolean isValid(Post post, ConstraintValidatorContext ctx) {
-        return (post.getExercise() != null && post.getLecture() == null && post.getCourse() == null)
-                || (post.getExercise() == null && post.getLecture() != null && post.getCourse() == null)
-                || (post.getExercise() == null && post.getLecture() == null && post.getCourse() != null && post.getCourseWideContext() != null);
+        return (post.getExercise() != null && post.getLecture() == null && post.getCourseWideContext() == null)
+                || (post.getExercise() == null && post.getLecture() != null && post.getCourseWideContext() == null)
+                || (post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() != null);
     }
 }

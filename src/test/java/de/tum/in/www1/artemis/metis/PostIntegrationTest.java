@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 
@@ -124,6 +125,28 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(existingPosts.size()).isEqualTo(postRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testValidatePostContextConstraint() throws Exception {
+        Post invalidPost = createPostWithoutContext();
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
+
+        invalidPost = createPostWithoutContext();
+        invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
+        invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
+
+        invalidPost = createPostWithoutContext();
+        invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
+        invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
+
+        invalidPost = createPostWithoutContext();
+        invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
+        invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
     }
 
     // UPDATE

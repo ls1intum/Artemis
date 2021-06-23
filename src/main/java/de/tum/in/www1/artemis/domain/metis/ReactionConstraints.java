@@ -5,23 +5,23 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
 
 /**
- * Custom constraint annotation for Posts.
+ * Custom constraint annotation for Reactions.
  * It defines a validation constraint that Hibernate Validator will check
  * before Hibernate ORM persists or updates the entities using this annotation.
  */
-@Constraint(validatedBy = { PostContextConstraintValidator.class })
+@Constraint(validatedBy = { ReactionConstraintValidator.class })
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PostConstraints {
+public @interface ReactionConstraints {
 
     /**
      * @return the message of the violated constraint
      */
-    String message() default "{de.tum.in.www1.artemis.domain.metis.PostConstraints}";
+    String message() default "{de.tum.in.www1.artemis.domain.metis.ReactionConstraints}";
 
     /**
      * @return the groups, default is empty

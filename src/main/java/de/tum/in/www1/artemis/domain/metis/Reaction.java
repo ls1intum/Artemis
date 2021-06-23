@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
  * A Reaction on a Posting.
  */
 @Entity
+@ReactionConstraints
 @Table(name = "reaction")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

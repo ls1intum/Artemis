@@ -54,7 +54,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).collect(Collectors.toList());
 
         courseId = existingPostsWithAnswers.get(0).getCourse().getId();
-
     }
 
     @AfterEach
@@ -160,6 +159,13 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPost_Id(answerPostReactedOn.getId()).size());
     }
 
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testValidateReactionConstraint() throws Exception {
+        Reaction invalidReaction = createInvalidReaction();
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", invalidReaction, Reaction.class, HttpStatus.BAD_REQUEST);
+    }
+
     // DELETE
 
     @Test
@@ -241,6 +247,15 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         reaction.setEmojiId("smiley");
         reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
         reaction.setPost(postReactedOn);
+        return reaction;
+    }
+
+    private Reaction createInvalidReaction() {
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId("smiley");
+        reaction.setCreationDate(ZonedDateTime.of(2015, 11, 30, 23, 45, 59, 1234, ZoneId.of("UTC")));
+        reaction.setPost(existingPostsWithAnswers.get(0));
+        reaction.setAnswerPost(existingAnswerPosts.get(0));
         return reaction;
     }
 

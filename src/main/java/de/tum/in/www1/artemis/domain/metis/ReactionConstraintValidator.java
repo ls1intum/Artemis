@@ -7,7 +7,7 @@ import jakarta.validation.ConstraintValidatorContext;
  * A specific ConstraintValidator that validates if the Reaction context mutually exclusive,
  * i.e. that either a Post, an AnswerPost is associated with the Reaction.
  */
-public class ReactionConstraintValidator implements ConstraintValidator<PostConstraints, Reaction> {
+public class ReactionConstraintValidator implements ConstraintValidator<ReactionConstraints, Reaction> {
 
     @Override
     public boolean isValid(Reaction reaction, ConstraintValidatorContext ctx) {

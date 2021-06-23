@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.metis;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -47,7 +45,7 @@ public class Post extends Posting {
 
     // To be used with introduction of Metis
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<Reaction> reactions = new ArrayList<>();
+    private Set<Reaction> reactions = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
@@ -99,12 +97,12 @@ public class Post extends Posting {
     }
 
     @Override
-    public List<Reaction> getReactions() {
+    public Set<Reaction> getReactions() {
         return reactions;
     }
 
     @Override
-    public void setReactions(List<Reaction> reactions) {
+    public void setReactions(Set<Reaction> reactions) {
         this.reactions = reactions;
     }
 

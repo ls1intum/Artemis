@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import jakarta.validation.Valid;
 
 /**
  * REST controller for managing Post.
@@ -74,7 +75,7 @@ public class PostResource {
      */
     @PostMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> createPost(@PathVariable Long courseId, @RequestBody Post post) throws URISyntaxException {
+    public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         if (!post.getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesn't match the courseId of the sent Post in Body");
         }

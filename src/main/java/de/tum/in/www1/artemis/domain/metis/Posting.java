@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Lob;
@@ -78,9 +78,9 @@ public abstract class Posting extends DomainObject {
 
     public abstract Course getCourse();
 
-    public abstract List<Reaction> getReactions();
+    public abstract Set<Reaction> getReactions();
 
-    public abstract void setReactions(List<Reaction> reactions);
+    public abstract void setReactions(Set<Reaction> reactions);
 
     public abstract void addReaction(Reaction reaction);
 }
