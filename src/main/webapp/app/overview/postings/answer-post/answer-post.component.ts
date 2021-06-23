@@ -33,7 +33,7 @@ export class AnswerPostComponent implements OnInit {
     courseId: number;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'ins', 'blockquote', 'pre', 'code', 'span', 'li', 'ul'];
+    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
     constructor(private answerPostService: AnswerPostService, private route: ActivatedRoute) {}
