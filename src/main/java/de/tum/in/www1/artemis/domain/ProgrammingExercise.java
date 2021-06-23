@@ -104,6 +104,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "submission_policy_type", table = "programming_exercise_details")
     private SubmissionPolicyType submissionPolicyType;
 
