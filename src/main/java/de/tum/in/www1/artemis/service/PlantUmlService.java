@@ -7,6 +7,7 @@ import java.util.concurrent.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -37,6 +38,7 @@ public class PlantUmlService {
      * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
      */
+    @Cacheable(value = "plantUmlPng", unless = "#result == null || #result.isEmpty()")
     public byte[] generatePng(final String plantUml) throws IOException {
         log.info("Generate plantUml svg with " + linkedBlockingDeque.size() + " requests in the queue");
         validateInput(plantUml);
@@ -54,8 +56,9 @@ public class PlantUmlService {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the SVG
      */
+    @Cacheable(value = "plantUmlSvg", unless = "#result == null || #result.isEmpty()")
     public String generateSvg(final String plantUml) throws IOException {
-        log.info("Generage plantUml svg with " + linkedBlockingDeque.size() + " requests in the queue");
+        log.info("Generate plantUml svg with " + linkedBlockingDeque.size() + " requests in the queue");
         validateInput(plantUml);
         try (final var bos = new ByteArrayOutputStream()) {
             final var reader = new SourceStringReader(plantUml);
