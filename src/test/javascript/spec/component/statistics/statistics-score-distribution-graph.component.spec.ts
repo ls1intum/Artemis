@@ -55,9 +55,9 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
     it('tests data functions', () => {
         // we need a @ts-ignore so we can execute the nested functions
         // @ts-ignore
-        expect(component!.barChartOptions!.tooltips!.callbacks!.label({ index: 5 }, {} as ChartData)!).to.be.equal(' 5');
+        expect(component!.barChartOptions!.plugins.tooltip!.callbacks!.label({ dataIndex: 5 }, {} as ChartData)!).to.be.equal(' 5');
         component.scoreDistribution = undefined;
         // @ts-ignore
-        expect(component.barChartOptions!.tooltips!.callbacks!.label({ index: 5 }, {} as ChartData)).to.be.equal(' 0');
+        expect(component.barChartOptions!.plugins.tooltip!.callbacks!.label({ dataIndex: 5 }, {} as ChartData)).to.be.equal(' 0');
     });
 });

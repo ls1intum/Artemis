@@ -70,9 +70,9 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     it('should create tooltip', () => {
         const result = {
-            index: 2,
+            dataIndex: 2,
         };
         // @ts-ignore
-        expect(component.barChartOptions.tooltips.callbacks.label(result, {})).to.deep.equal('artemisApp.examScores.averagePointsTooltip: 4 (40%)');
+        expect(component.barChartOptions.plugins.tooltip.callbacks.label!(result)).to.deep.equal('artemisApp.examScores.averagePointsTooltip: 4 (40%)');
     });
 });

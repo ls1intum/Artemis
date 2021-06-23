@@ -9,7 +9,8 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
 
 /*
-    We also register the ChartDataLabels plugin globally but set display to false. This way by setting display to true
+    Globally registering chart.js dependencies.
+    We also register the ChartDataLabels plugin globally but set display to false. This way, setting display to true
     in specific chart options enables the datalabels plugin
  */
 Chart.register(...registerables);
