@@ -138,8 +138,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     }
                     this.isLoading = false;
                     this.createChart();
-                    this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
+                    this.changeDetector.detectChanges();
                 },
                 (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
             );
