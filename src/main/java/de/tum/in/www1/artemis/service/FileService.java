@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -828,5 +829,21 @@ public class FileService implements DisposableBean {
             log.warn("Could not write given object in file {}", path);
         }
         return path;
+    }
+
+    /**
+     * Deletes all specified files.
+     *
+     * @param filePaths A list of all paths to the files that should be deleted
+     */
+    public void deleteFiles(List<Path> filePaths) {
+        for (Path filePath : filePaths) {
+            try {
+                Files.delete(filePath);
+            }
+            catch (Exception ex) {
+                log.warn("Could not delete file {}. Error message: {}", filePath, ex.getMessage());
+            }
+        }
     }
 }
