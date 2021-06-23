@@ -348,8 +348,14 @@ public class FileResource {
         // Currently set to 10 MB
 
         // check for file type
-        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-        if (fileExtension == null || this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+        String filename = file.getOriginalFilename();
+        if (filename == null) {
+            throw new IllegalArgumentException("Filename cannot be null");
+        }
+        // sanitize the filename and replace all invalid characters with "_"
+        filename = filename.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        String fileExtension = FilenameUtils.getExtension(filename);
+        if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
             return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
         }
 
@@ -383,12 +389,9 @@ public class FileResource {
             // create file (generate new filename, if file already exists)
             boolean fileCreated;
             File newFile;
-            String filename;
+
             do {
-                if (keepFileName) {
-                    filename = file.getOriginalFilename().replaceAll("\\s", "");
-                }
-                else {
+                if (!keepFileName) {
                     filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
                             + "." + fileExtension;
                 }
@@ -407,7 +410,7 @@ public class FileResource {
             Files.copy(file.getInputStream(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
             // return path for getting the file
-            String responseBody = "{\"path\":\"" + responsePath.toString() + "\"}";
+            String responseBody = "{\"path\":\"" + responsePath + "\"}";
             return ResponseEntity.created(new URI(responsePath.toString())).body(responseBody);
         }
         catch (IOException e) {
@@ -431,9 +434,18 @@ public class FileResource {
                 return ResponseEntity.notFound().build();
             }
 
-            ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentDisposition(contentDisposition);
+
+            if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg")) {
+                // attachment will force the user to download the file
+                ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(filename).build();
+                headers.setContentDisposition(contentDisposition);
+            }
+            else {
+                ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
+                headers.setContentDisposition(contentDisposition);
+            }
+
             FileNameMap fileNameMap = URLConnection.getFileNameMap();
             String mimeType = fileNameMap.getContentTypeFor(filename);
 
