@@ -394,6 +394,12 @@ public class CourseTestService {
     }
 
     // Test
+    public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+    }
+
+    // Test
     public void testUpdateCourseIsEmpty() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
         request.put("/api/courses", course, HttpStatus.NOT_FOUND);

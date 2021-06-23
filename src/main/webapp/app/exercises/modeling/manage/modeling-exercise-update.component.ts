@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -20,6 +20,8 @@ import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { EditType } from 'app/exercises/shared/exercise/exercise-utils';
+import { UMLModel } from '@ls1intum/apollon';
+import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -27,6 +29,9 @@ import { EditType } from 'app/exercises/shared/exercise/exercise-utils';
     styleUrls: ['./modeling-exercise-update.scss'],
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
+    @ViewChild(ModelingEditorComponent, { static: false })
+    modelingEditor?: ModelingEditorComponent;
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     EditorMode = EditorMode;
@@ -36,6 +41,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;
+    exampleSolution: UMLModel;
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -84,6 +90,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
+
+            if (this.modelingExercise.sampleSolutionModel != undefined) {
+                this.exampleSolution = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            }
+
             this.backupExercise = cloneDeep(this.modelingExercise);
             this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
         });
@@ -166,6 +177,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
+        this.modelingExercise.sampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
+
         if (this.modelingExercise.gradingInstructionFeedbackUsed) {
             const ref = this.popupService.checkExerciseBeforeUpdate(this.modelingExercise, this.backupExercise);
             if (!this.modalService.hasOpenModals()) {

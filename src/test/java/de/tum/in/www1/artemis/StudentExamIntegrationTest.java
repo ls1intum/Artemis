@@ -579,6 +579,21 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testSubmitStudentExam_differentUser() throws Exception {
+        studentExam1.setSubmitted(false);
+        studentExamRepository.save(studentExam1);
+        // Forbidden because user object is wrong
+        User student2 = database.getUserByLogin("student2");
+        studentExam1.setUser(student2);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.FORBIDDEN);
+
+        User student1 = database.getUserByLogin("student1");
+        studentExam1 = studentExamRepository.findByIdElseThrow(studentExam1.getId());
+        assertThat(studentExam1.getUser()).isEqualTo(student1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testSubmitStudentExam() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExam1.getId()).get();
@@ -914,8 +929,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (exercise instanceof ModelingExercise) {
                     // check that the submission was saved and that a submitted version was created
                     String newModel = "This is a new model";
+                    String newExplanation = "This is an explanation";
                     var modelingSubmission = (ModelingSubmission) submission;
                     modelingSubmission.setModel(newModel);
+                    modelingSubmission.setExplanationText(newExplanation);
                     request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
                     var savedModelingSubmission = request.get(
                             "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
@@ -1108,7 +1125,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof ModelingSubmission) {
-            assertThat(((ModelingSubmission) submission).getModel()).isEqualTo(versionedSubmission.get().getContent());
+            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+            assertThat("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof FileUploadSubmission) {
             assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
