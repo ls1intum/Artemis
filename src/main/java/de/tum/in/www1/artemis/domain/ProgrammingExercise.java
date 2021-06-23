@@ -104,6 +104,16 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
+    @Column(name = "submission_policy_type", table = "programming_exercise_details")
+    private SubmissionPolicyType submissionPolicyType;
+
+    /**
+     * If submissionPolicyType is not NONE, this attribute represents the maximum
+     * number of submissions until the submission policy takes effect.
+     */
+    @Column(name = "max_number_of_submissions", table = "programming_exercise_details")
+    private Integer maxNumberOfSubmissions;
+
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
@@ -575,6 +585,22 @@ public class ProgrammingExercise extends Exercise {
 
     public void setProjectType(@Nullable ProjectType projectType) {
         this.projectType = projectType;
+    }
+
+    public SubmissionPolicyType getSubmissionPolicyType() {
+        return this.submissionPolicyType;
+    }
+
+    public void setSubmissionPolicyType(SubmissionPolicyType submissionPolicyType) {
+        this.submissionPolicyType = submissionPolicyType;
+    }
+
+    public Integer getMaxNumberOfSubmissions() {
+        return this.maxNumberOfSubmissions;
+    }
+
+    public void setMaxNumberOfSubmissions(Integer maxNumberOfSubmissions) {
+        this.maxNumberOfSubmissions = maxNumberOfSubmissions;
     }
 
     /**
