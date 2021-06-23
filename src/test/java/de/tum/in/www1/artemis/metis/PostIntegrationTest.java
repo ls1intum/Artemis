@@ -5,7 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +44,14 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Long lectureId;
 
+    private Validator validator;
+
     @BeforeEach
     public void initTestCase() {
+
+        // used to test hibernate validation using custom PostContextConstraintValidator
+        validator = Validation.buildDefaultValidatorFactory().getValidator();
+
         database.addUsers(5, 5, 0, 1);
 
         // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context, and 3 with course-wide context - initialized): 11
@@ -137,16 +148,22 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
+        Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
+        assertThat(constraintViolations.size()).isEqualTo(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
+        constraintViolations = validator.validate(invalidPost);
+        assertThat(constraintViolations.size()).isEqualTo(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
+        constraintViolations = validator.validate(invalidPost);
+        assertThat(constraintViolations.size()).isEqualTo(1);
     }
 
     // UPDATE

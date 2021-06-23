@@ -6,7 +6,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,8 +47,14 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     private Long courseId;
 
+    private Validator validator;
+
     @BeforeEach
     public void initTestCase() {
+
+        // used to test hibernate validation using custom ReactionConstraintValidator
+        validator = Validation.buildDefaultValidatorFactory().getValidator();
+
         database.addUsers(5, 5, 0, 1);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
@@ -164,6 +175,8 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void testValidateReactionConstraint() throws Exception {
         Reaction invalidReaction = createInvalidReaction();
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", invalidReaction, Reaction.class, HttpStatus.BAD_REQUEST);
+        Set<ConstraintViolation<Reaction>> constraintViolations = validator.validate(invalidReaction);
+        assertThat(constraintViolations.size()).isEqualTo(1);
     }
 
     // DELETE

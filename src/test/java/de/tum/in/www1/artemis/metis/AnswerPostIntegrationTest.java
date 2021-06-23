@@ -40,6 +40,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     public void initTestCase() {
+
         database.addUsers(5, 5, 0, 1);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
