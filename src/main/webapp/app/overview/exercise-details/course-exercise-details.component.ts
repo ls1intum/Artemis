@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -135,6 +135,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.inProductionEnvironment = profileInfo.inProduction;
             }
         });
+
+        this.router.events.pipe(
+            filter(event => event instanceof NavigationEnd))
+            .subscribe(event => console.log('prev:', (event as NavigationEnd).url));
     }
 
     ngOnDestroy() {
