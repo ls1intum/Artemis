@@ -391,10 +391,7 @@ public class FileResource {
             File newFile;
 
             do {
-                if (keepFileName) {
-                    filename = file.getOriginalFilename().replaceAll("\\s", "");
-                }
-                else {
+                if (!keepFileName) {
                     filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
                             + "." + fileExtension;
                 }
