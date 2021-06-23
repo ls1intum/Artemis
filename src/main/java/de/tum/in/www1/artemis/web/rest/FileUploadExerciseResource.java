@@ -337,7 +337,7 @@ public class FileUploadExerciseResource {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
         // check that the exercise is exist for given id
-        fileUploadExerciseRepository.findOne(exerciseId);
+        fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
 
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, fileUploadExercise);
 
