@@ -162,6 +162,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.mockDefaultBranch("master", ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl());
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getVcsTemplateRepositoryUrl());
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -280,7 +281,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(eq(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl()), eq(true), any());
 
         var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
 
