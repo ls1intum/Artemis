@@ -187,7 +187,8 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
         var expectedResponseHeaders = new HashMap<String, String>();
         expectedResponseHeaders.put("x-artemisapp-error", "CAPTCHA required");
-        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.FORBIDDEN, httpHeaders,
+        // validation fails due to empty password is validated against min size
+        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.BAD_REQUEST, httpHeaders,
                 expectedResponseHeaders);
     }
 }
