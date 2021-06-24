@@ -580,6 +580,3 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return scores.get(scoreType)!;
     }
 }
-function of(undefined: undefined): any {
-    throw new Error('Function not implemented.');
-}

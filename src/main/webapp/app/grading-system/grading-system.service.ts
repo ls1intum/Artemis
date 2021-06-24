@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/entities/grading-scale.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
@@ -97,8 +97,7 @@ export class GradingSystemService {
     /**
      * Finds all grade steps for exam
      *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the grade steps are retrieved
+     * @param courseId the course for which the grade steps are retrieved
      */
     findGradeStepsForCourse(courseId: number): Observable<HttpResponse<GradeStepsDTO>> {
         return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/grading-scale/grade-steps`, { observe: 'response' });
@@ -121,13 +120,13 @@ export class GradingSystemService {
      * @param examId if present the grade steps for this exam are queried instead
      */
     findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
-        let gradeStepsObservabe: Observable<HttpResponse<GradeStepsDTO>>;
+        let gradeStepsObservable: Observable<HttpResponse<GradeStepsDTO>>;
         if (examId != undefined) {
-            gradeStepsObservabe = this.findGradeStepsForExam(courseId, examId);
+            gradeStepsObservable = this.findGradeStepsForExam(courseId, examId);
         } else {
-            gradeStepsObservabe = this.findGradeStepsForCourse(courseId);
+            gradeStepsObservable = this.findGradeStepsForCourse(courseId);
         }
-        return gradeStepsObservabe.pipe(
+        return gradeStepsObservable.pipe(
             catchError(() => {
                 return of(undefined);
             }),
