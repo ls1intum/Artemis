@@ -188,6 +188,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                     reference.componentInstance.confirmed.subscribe(() => {
                         this.saveExercise();
                     });
+                    reference.componentInstance.reEvaluated.subscribe(() => {
+                        const requestOptions = {} as any;
+                        requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
+                        this.subscribeToSaveResponse(this.modelingExerciseService.reevaluateAndUpdate(this.modelingExercise, requestOptions));
+                    });
                 });
             }
             return;
@@ -283,9 +288,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
      */
     diagramTypeChanged() {
-        const semiAutomaticSupportPossible =
-            this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram;
-        if (this.isExamMode || !semiAutomaticSupportPossible) {
+        if (this.isExamMode || !this.semiAutomaticAssessmentAvailable) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }
