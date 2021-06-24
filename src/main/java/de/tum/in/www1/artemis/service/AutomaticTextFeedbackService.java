@@ -70,9 +70,8 @@ public class AutomaticTextFeedbackService {
                         String originBlockId = mostSimilarBlockInClusterWithFeedback.get().getId();
                         Long submissionId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getId();
                         Long participationId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getParticipation().getId();
-                        var ret = new Feedback().reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText())
+                        return new Feedback().reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText())
                                 .suggestedFeedbackOrigin(originBlockId, submissionId, participationId).type(FeedbackType.AUTOMATIC);
-                        return ret;
                     }
                 }
             }
