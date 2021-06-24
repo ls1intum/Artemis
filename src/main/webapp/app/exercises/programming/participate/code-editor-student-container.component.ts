@@ -20,7 +20,6 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
 import { SubmissionType } from 'app/entities/submission.model';
@@ -29,7 +28,7 @@ import { SubmissionType } from 'app/entities/submission.model';
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
 })
-export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
@@ -149,10 +148,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, C
                 return res.body || [];
             }),
         );
-    }
-
-    canDeactivate() {
-        return this.codeEditorContainer.canDeactivate();
     }
 
     checkForTutorAssessment(dueDateHasPassed: boolean) {
