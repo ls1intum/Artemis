@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.usecase;
 
-import java.util.Objects;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import de.tum.in.www1.artemis.service.compass.utils.SimilarityUtils;
 
 public class UMLUseCase extends UMLElement {
 
@@ -45,7 +44,7 @@ public class UMLUseCase extends UMLElement {
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceUseCase.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
-        if (Objects.equals(getParentElement(), referenceUseCase.getParentElement())) {
+        if (SimilarityUtils.parentsSimilarOrEqual(getParentElement(), referenceUseCase.getParentElement())) {
             similarity += CompassConfiguration.COMPONENT_PARENT_WEIGHT;
         }
 

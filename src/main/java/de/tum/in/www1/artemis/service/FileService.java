@@ -834,4 +834,19 @@ public class FileService implements DisposableBean {
 
         return Optional.of(outputStream.toByteArray());
     }
+
+    /*
+     * Deletes all specified files.
+     * @param filePaths A list of all paths to the files that should be deleted
+     */
+    public void deleteFiles(List<Path> filePaths) {
+        for (Path filePath : filePaths) {
+            try {
+                Files.delete(filePath);
+            }
+            catch (Exception ex) {
+                log.warn("Could not delete file {}. Error message: {}", filePath, ex.getMessage());
+            }
+        }
+    }
 }

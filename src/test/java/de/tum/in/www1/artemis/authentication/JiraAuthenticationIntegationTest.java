@@ -204,7 +204,8 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.FORBIDDEN, httpHeaders);
+        // validation fails due to empty password is validated against min size
+        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.BAD_REQUEST, httpHeaders);
         assertThat(jwtToken).as("JWT token is not present").isNull();
     }
 }
