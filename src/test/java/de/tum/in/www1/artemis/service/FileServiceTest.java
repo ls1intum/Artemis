@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -157,7 +155,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     public void testMergePdf_emptyList_shouldReturnEmptyOptional() {
-        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<String>());
+        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<>());
         assertThat(result.isEmpty()).isTrue();
     }
 
@@ -189,7 +187,6 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(mergedFile.isPresent()).isTrue();
         assertThat(mergedFile.get()).isNotEmpty();
         PDDocument mergedDoc = PDDocument.load(mergedFile.get());
-        assertEquals(5, mergedDoc.getNumberOfPages());
-
+        assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
     }
 }

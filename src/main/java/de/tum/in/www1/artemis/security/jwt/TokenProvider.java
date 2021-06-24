@@ -168,7 +168,7 @@ public class TokenProvider {
     }
 
     /**
-     * Checks if a certain downloadFileKey and course id is inside the JWT token. Also validates the JWT token if it is still valid.
+     * Checks if a certain course id is inside the JWT token. Also validates the JWT token if it is still valid.
      *
      * @param authToken The token that has to be checked
      * @param courseId  The course id the token belongs to
