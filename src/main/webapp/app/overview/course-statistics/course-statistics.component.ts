@@ -38,7 +38,7 @@ export interface CourseStatisticsDataSet {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview.scss', 'course-statistics.component.scss'],
+    styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
