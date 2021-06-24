@@ -74,13 +74,6 @@
         "type": "MANUAL"
     },
     {
-        "id": 2388,
-        "reference": "ActivityForkNode:295d7ebe-81f8-44a4-9e61-1984d900ddb0",
-        "credits": 0.0,
-        "positive": true,
-        "type": "MANUAL"
-    },
-    {
         "id": 2389,
         "text": "awesome",
         "reference": "ActivityObjectNode:525b1697-6f48-4b07-9504-8feddb48a882",
