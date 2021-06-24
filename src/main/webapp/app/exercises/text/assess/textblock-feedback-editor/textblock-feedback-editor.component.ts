@@ -175,8 +175,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             c.push({
                 text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.',
                 feedback: undefined,
-                credits: undefined,
+                credits: 0,
                 type: 'MANUAL',
+                reusedCount: 0,
             });
             let test = c.concat(
                 blocks
@@ -186,7 +187,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
                         return {
                             text: block.text,
                             feedback: blockFeedback && blockFeedback.detailText,
-                            credits: blockFeedback && blockFeedback.credits,
+                            credits: blockFeedback ? blockFeedback.credits : 0,
+                            reusedCount: blockFeedback && block.numberOfAffectedSubmissions,
                             type: this.feedback.suggestedFeedbackReference === block.id ? 'AUTOMATIC' : 'MANUAL',
                         };
                     })
@@ -196,32 +198,37 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             test.push({
                 text: 'another sentence.',
                 feedback: undefined,
-                credits: undefined,
+                credits: 0,
                 type: 'MANUAL',
+                reusedCount: 0,
             });
             test.push({
                 text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim venia.',
                 feedback: undefined,
-                credits: undefined,
+                credits: 0,
                 type: 'MANUAL',
+                reusedCount: 0,
             });
             test.push({
                 text: 'yet another sentence.',
                 feedback: undefined,
-                credits: 1,
+                credits: 0,
                 type: 'MANUAL',
+                reusedCount: 1,
             });
             test.push({
-                text: 'that is why I think so.',
+                text: 'That is why I think it is better to use it instead.',
                 feedback: undefined,
-                credits: undefined,
+                credits: 1,
                 type: 'MANUAL',
+                reusedCount: 0,
             });
             test.push({
                 text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
                 feedback: undefined,
-                credits: undefined,
+                credits: 0,
                 type: 'MANUAL',
+                reusedCount: 0,
             });
 
             this.listOfBlocksWithFeedback = test;

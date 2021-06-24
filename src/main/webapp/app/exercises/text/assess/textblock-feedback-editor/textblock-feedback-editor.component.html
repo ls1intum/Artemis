@@ -85,15 +85,12 @@
     <ng-template #toggleMore let-modal>
         <div class="modal-header">
             <h4 class="modal-title">
-                <span>Automatic Feedback Helper</span>
+                <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.heading">Automatic Feedback Information</span>
             </h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
-            A preview of a previously graded submission is shown below. <br />
-            The feedback which is highlighted in<span style="background-color: #d8e8f5"> blue </span>is the one we have reused to generate this automatic feedback.<br />
-            <br />
-            <i>Preview:</i>
+            <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.introduction"></span>
             <div class="reused-feedback-preview">
                 <ng-container *ngFor="let block of listOfBlocksWithFeedback">
                     <span
@@ -101,16 +98,23 @@
                         >{{ block.text }}</span
                     >
 
-                    <div class="{{ (block.type === 'AUTOMATIC' ? 'alert-primary' : 'alert-secondary') + ' alert white-space' }}" *ngIf="block.credits">
+                    <div class="{{ (block.type === FeedbackType.AUTOMATIC ? 'alert-primary' : 'alert-secondary') + ' alert white-space' }}" *ngIf="block.credits">
                         <div *ngIf="block.type === FeedbackType.AUTOMATIC">
                             <fa-icon [icon]="'robot'"></fa-icon>
-                            <span style="font-weight: bold">Reused</span>
+                            <span
+                                style="font-weight: bold"
+                                jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.reused"
+                                [translateValues]="{ reusedCount: block.reusedCount }"
+                                >Reused {{ block.reusedCount }} times</span
+                            >
                         </div>
                         <div>
-                            <fa-icon [icon]="'info-circle'"></fa-icon>&nbsp;<span style="font-weight: bold"> Points: </span> <span>{{ block.credits }}</span>
+                            <fa-icon [icon]="'info-circle'"></fa-icon>&nbsp;
+                            <span style="font-weight: bold" jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.points"> Points: </span
+                            ><span>: {{ block.credits }}</span>
                         </div>
                         <div *ngIf="block.feedback">
-                            <fa-icon [icon]="'edit'"></fa-icon>&nbsp;<span style="font-weight: bold" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:
+                            <fa-icon [icon]="'edit'"></fa-icon>&nbsp; <span style="font-weight: bold" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:
                             {{ block.feedback }}
                         </div>
                     </div>
@@ -118,7 +122,12 @@
             </div>
         </div>
     </ng-template>
-    <a style="border: 2px solid rgba(228, 228, 228, 0.87)" (click)="openConfirmationModal(toggleMore)">Trace automatic feedback origin</a>
+    <a
+        *ngIf="feedback.type === FeedbackType.AUTOMATIC"
+        (click)="openConfirmationModal(toggleMore)"
+        jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace"
+        >Trace automatic feedback origin</a
+    >
     <br />
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>
