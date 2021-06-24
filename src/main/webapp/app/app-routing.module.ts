@@ -68,6 +68,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/grading-system',
                     loadChildren: () => import('./grading-system/grading-system.module').then((m) => m.GradingSystemModule),
                 },
+                {
+                    path: 'courses/:courseId/statistics/grading-key',
+                    loadChildren: () => import('./grading-system/grading-key-overview/grading-key-overview.module').then((m) => m.GradingKeyOverviewModule),
+                },
                 // ===== EXAM =====
                 {
                     path: 'courses/:courseId/exams/:examId',
