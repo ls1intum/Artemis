@@ -2,27 +2,89 @@
     <div class="col-8">
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
-            <hr />
+            <hr/>
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div class="text-start">
-                <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="getEditRoute()" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
-                    <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-                </a>
+            <div class="text-start btn-group flex-btn-group-container">
+                <div class="btn-group-vertical me-1 mb-1">
+                    <a *ngIf="programmingExercise.isAtLeastEditor"
+                       [routerLink]="baseResource + 'edit'"
+                       class="btn btn-warning btn-sm me-1"
+                        <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;
+                        <span jhiTranslate="entity.action.edit"> Edit</span>
+                    </a>
+                    <a
+                        *ngIf="programmingExercise.isAtLeastEditor"
+                        [routerLink]="baseResource + 'scores'"
+                        class="btn btn-info btn-sm me-1"
+                    >
+                        <fa-icon [icon]="'table'"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                    </a>
+                </div>
+                <div class="btn-group-vertical me-1 mb-1">
+                    <!-- Edit in editor button -->
+                    <a
+                        [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                        *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        [routerLink]="baseResource + 'code-editor/' + programmingExercise.templateParticipation.id"
+                        class="btn btn-warning btn-sm me-1"
+                    >
+                        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                    </a>
+                    <a
+                        *ngIf="programmingExercise.isAtLeastEditor"
+                        [routerLink]="baseResource + 'submissions'"
+                        class="btn btn-success btn-sm me-1"
+                    >
+                        <fa-icon [icon]="'book'"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                    </a>
+                </div>
+                <div class="btn-group-vertical me-1 mb-1">
+                    <a
+                        *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise "
+                        [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
+                        class="btn btn-warning btn-sm me-1"
+                    >
+                        <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
+                    </a>
+                    <a
+                        *ngIf="programmingExercise.isAtLeastEditor"
+                        [routerLink]="baseResource +'participations'"
+                        class="btn btn-primary btn-sm me-1"
+                    >
+                        <fa-icon [icon]="'list-alt'"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                    </a>
+                </div>
+                <div class="btn-group-vertical me-1 mb-1">
 
+                </div>
+                <div class="btn-group-vertical me-1 mb-1">
+
+                </div>
+                </div>
+            <div>
+                <div>
+                <a *ngIf="programmingExercise.isAtLeastEditor"
+                    [routerLink]="baseResource + 'edit'"
+                    class="btn btn-warning btn-sm me-1"
+                    style="margin-bottom: 10px">
+                    <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;
+                    <span jhiTranslate="entity.action.edit"> Edit</span>
+                </a>
+                <!-- Edit in editor button -->
                 <a
                     [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation && programmingExercise.course !== undefined"
+                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
                     jhiOrionFilter
                     [showInOrionWindow]="false"
-                    [routerLink]="[
-                        '/course-management',
-                        programmingExercise.course.id,
-                        'programming-exercises',
-                        programmingExercise.id,
-                        'code-editor',
-                        programmingExercise.templateParticipation.id
-                    ]"
+                    [routerLink]="baseResource + 'code-editor/' + programmingExercise.templateParticipation.id"
                     class="btn btn-warning btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
@@ -31,38 +93,9 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'participations']"
-                    class="btn btn-primary btn-sm me-1"
-                    style="margin-bottom: 10px"
-                >
-                    <fa-icon [icon]="'list-alt'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                </a>
-                <a
-                    *ngIf="programmingExercise.course !== undefined"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'scores']"
-                    class="btn btn-info btn-sm me-1"
-                    style="margin-bottom: 10px"
-                >
-                    <fa-icon [icon]="'table'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                </a>
-
-                <a
-                    *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastEditor"
-                    [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'grading', 'test-cases']"
-                    class="btn btn-info btn-sm me-1"
-                    style="margin-bottom: 10px"
-                >
-                    <fa-icon [icon]="'file-signature'"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
-                </a>
-
-                <a
-                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course !== undefined"
+                    *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise "
                     [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
-                    class="btn btn-info btn-sm me-1"
+                    class="btn btn-warning btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
@@ -70,25 +103,66 @@
                 </a>
 
                 <a
-                    *ngIf="programmingExercise.isAtLeastTutor && programmingExercise.course !== undefined"
+                    *ngIf="programmingExercise.isAtLeastEditor"
+                    [routerLink]="baseResource + 'grading/test-cases'"
+                    class="btn btn-warning btn-sm me-1"
+                    style="margin-bottom: 10px"
+                >
+                    <fa-icon [icon]="'user-check'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                </a>
+                <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="me-1"></jhi-external-submission>
+
+                </div>
+                <div>
+                <a
+                    *ngIf="programmingExercise.isAtLeastEditor"
+                    [routerLink]="baseResource + 'scores'"
+                    class="btn btn-info btn-sm me-1"
+                    style="margin-bottom: 10px"
+                >
+                    <fa-icon [icon]="'table'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                </a>
+                <a
+                    *ngIf="programmingExercise.isAtLeastEditor"
+                    [routerLink]="baseResource + 'submissions'"
+                    class="btn btn-success btn-sm me-1"
+                    style="margin-bottom: 10px"
+                >
+                    <fa-icon [icon]="'book'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                </a>
+
+                <a
+                    *ngIf="programmingExercise.isAtLeastEditor"
+                    [routerLink]="baseResource +'participations'"
+                    class="btn btn-primary btn-sm me-1"
+                    style="margin-bottom: 10px"
+                >
+                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                </a>
+
+                <a
+                    *ngIf="programmingExercise.isAtLeastTutor && programmingExercise.course && !isExamExercise "
                     [routerLink]="['/course-management', programmingExercise.course!.id!, 'programming-exercises', programmingExercise.id!, 'exercise-statistics']"
                     class="btn btn-info btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
                     <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                 </a>
-
                 <a
-                    *ngIf="programmingExercise.isAtLeastEditor"
-                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    class="btn btn-outline-primary btn-sm me-1"
-                    routerLink="plagiarism"
+                    *ngIf="programmingExercise.assessmentType === assessmentType"
+                    [routerLink]="shortBaseResource +'assessment-dashboard/' + programmingExercise.id"
+                    class="btn btn-info btn-sm me-1"
                     style="margin-bottom: 10px"
                 >
-                    <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
+                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
                 </a>
-
-                <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="me-1"></jhi-external-submission>
+                </div>
+                <div>
                 <jhi-programming-exercise-instructor-exercise-download
                     *ngIf="programmingExercise.isAtLeastInstructor"
                     [exerciseId]="programmingExercise.id!"
@@ -99,38 +173,20 @@
                     [exerciseId]="programmingExercise.id!"
                     class="me-1"
                 ></jhi-programming-assessment-repo-export>
-                <button
-                    *ngIf="programmingExercise.isAtLeastInstructor"
-                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-                    jhiDeleteButton
-                    [actionType]="ActionType.Cleanup"
-                    [entityTitle]="programmingExercise.title || ''"
-                    deleteQuestion="instructorDashboard.cleanup.question"
-                    (delete)="cleanupProgrammingExercise($event)"
-                    [dialogError]="dialogError$"
-                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                    [additionalChecks]="{
-                        deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
-                    }"
+                <span>
+                <a
+                    *ngIf="programmingExercise.isAtLeastEditor"
+                    [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                    class="btn btn-outline-primary btn-sm me-1"
+                    routerLink="plagiarism"
+                    style="margin-bottom: 10px"
                 >
-                    <fa-icon [icon]="'eraser'"></fa-icon>
-                </button>
+                    <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
+                </a>
+                </span>
 
-                <button
-                    *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor"
-                    jhiDeleteButton
-                    [entityTitle]="programmingExercise.title || ''"
-                    deleteQuestion="artemisApp.programmingExercise.delete.question"
-                    (delete)="deleteProgrammingExercise($event)"
-                    [dialogError]="dialogError$"
-                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                    [additionalChecks]="{
-                        deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                        deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                    }"
-                >
-                    <fa-icon [icon]="'times'"></fa-icon>
-                </button>
+                </div>
+                <div>
 
                 <span
                     *ngIf="
@@ -171,6 +227,8 @@
                         ngbTooltip="{{ 'artemisApp.programmingExercise.recreateBuildPlans.warning' | artemisTranslate }}"
                     ></fa-icon>
                 </span>
+                </div>
+                <div>
                 <button
                     id="unlockAllRepositoriesButton"
                     class="btn btn-danger btn-sm me-1"
@@ -193,6 +251,40 @@
                     <fa-icon [icon]="'exclamation-triangle'" class="text-warning"></fa-icon>
                     <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                 </button>
+
+                <button
+                    *ngIf="programmingExercise.isAtLeastInstructor"
+                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                    jhiDeleteButton
+                    [actionType]="ActionType.Cleanup"
+                    [entityTitle]="programmingExercise.title || ''"
+                    deleteQuestion="instructorDashboard.cleanup.question"
+                    (delete)="cleanupProgrammingExercise($event)"
+                    [dialogError]="dialogError$"
+                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                    [additionalChecks]="{
+                        deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
+                    }"
+                >
+                    <fa-icon [icon]="'eraser'"></fa-icon>
+                </button>
+
+                <button
+                    *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor"
+                    jhiDeleteButton
+                    [entityTitle]="programmingExercise.title || ''"
+                    deleteQuestion="artemisApp.programmingExercise.delete.question"
+                    (delete)="deleteProgrammingExercise($event)"
+                    [dialogError]="dialogError$"
+                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                    [additionalChecks]="{
+                        deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                        deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                    }"
+                >
+                    <fa-icon [icon]="'times'"></fa-icon>
+                </button>
+                </div>
             </div>
             <div *ngIf="programmingExercise.releaseDate != undefined && moment(programmingExercise.releaseDate).isBefore(moment())" class="mt-3">
                 <jhi-exercise-detail-statistics [exercise]="programmingExercise" [doughnutStats]="doughnutStats" [exerciseType]="PROGRAMMING"></jhi-exercise-detail-statistics>

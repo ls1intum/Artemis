@@ -44,21 +44,21 @@
         <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastEditor">
             <span class="me-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | artemisTranslate }}</span>
             <div class="btn-group flex-btn-group-container">
-                <a *ngIf="exercise.type !== QUIZ" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id]" class="btn btn-info btn-sm me-1">
+                <a *ngIf="exercise.type !== QUIZ" [routerLink]="baseResource" class="btn btn-info btn-sm me-1">
                     <fa-icon [icon]="'eye'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                 </a>
-                <a [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'scores']" class="btn btn-info btn-sm me-1">
+                <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1">
                     <fa-icon [icon]="'table'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                 </a>
-                <a *ngIf="exerciseRouterLink" [routerLink]="[exerciseRouterLink]" class="btn btn-primary btn-sm me-1">
+                <a [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1">
                     <fa-icon [icon]="'book'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
                 </a>
                 <a
                     *ngIf="exercise.type === MODELING"
-                    [routerLink]="['/course-management', courseId, 'modeling-exercises', exercise.id, 'statistics']"
+                    [routerLink]="baseResource + 'statistics'"
                     class="btn btn-info btn-sm me-1"
                 >
                     <fa-icon [icon]="'signal'"></fa-icon>
@@ -66,7 +66,7 @@
                 </a>
                 <a
                     *ngIf="exercise.type === PROGRAMMING"
-                    [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'participations']"
+                    [routerLink]="baseResource + 'participations'"
                     class="btn btn-primary btn-sm me-1"
                 >
                     <fa-icon [icon]="'list-alt'"></fa-icon>
@@ -74,7 +74,7 @@
                 </a>
                 <a
                     *ngIf="exercise.type === PROGRAMMING"
-                    [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
+                    [routerLink]="baseResource + 'grading/test-cases'"
                     class="btn btn-info btn-sm me-1"
                 >
                     <fa-icon [icon]="'file-signature'"></fa-icon>
@@ -83,7 +83,7 @@
                 <a
                     *ngIf="!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
                     [class.disabled]="quizExerciseStatus === QuizStatus.ACTIVE"
-                    [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'edit']"
+                    [routerLink]="baseResource + 'edit'"
                     class="btn btn-warning btn-sm me-1"
                 >
                     <fa-icon [icon]="'wrench'"></fa-icon>
@@ -91,7 +91,7 @@
                 </a>
                 <a
                     *ngIf="QUIZ_ENDED_STATUS.includes(quizExerciseStatus) && exercise.isAtLeastInstructor"
-                    [routerLink]="['/course-management', courseId, 'quiz-exercises', exercise.id, 're-evaluate']"
+                    [routerLink]="baseResource + 're-evaluate'"
                     class="btn btn-warning btn-sm me-1"
                 >
                     <fa-icon [icon]="'wrench'"></fa-icon>
