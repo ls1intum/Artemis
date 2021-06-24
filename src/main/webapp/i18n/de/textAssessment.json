@@ -51,7 +51,7 @@
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
                 "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein ...",
                 "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
-                "impactWarningTooltip": "Die Anzahl, wie oft deine Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
+                "impactWarningTooltip": "Die Anzahl, wie oft dein Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
                 "automaticFeedbackInformationModal": {
                     "heading": "Automatische Feedback Informationen",
                     "introduction": "Eine Vorschau einer bereits bewerteten Einreichung wird unten angezeigt.<br/> Die blau hervorgehobene Feedback ist diejenige, die wir wieder <span style='background-color: #d8e8f5'>verwendet</span> haben, um diese automatische Feedback zu erzeugen.<br/><br/><i>Vorschau:</i>",
