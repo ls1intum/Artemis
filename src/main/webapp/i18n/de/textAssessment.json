@@ -57,7 +57,7 @@
                     "introduction": "Die Vorschau einer bereits bewerteten Abgabe wird unten angezeigt.<br/> Das  <span style='background-color: #d8e8f5'>hervorgehobene Feedback</span> wurde verwendet, um das automatische Feedback zu erzeugen.<br/><br/><i>Vorschau:</i>",
                     "trace": "Herkunft des automatischen Feedbacks verfolgen",
                     "points": "Punkte",
-                    "reused": "Wiederverwendet"
+                    "reused": "{{reusedCount}} mal wiederverwendet"
                 }
             },
             "assessmentInstruction": "Bitte hovern Sie mit der Maus über den zu bewertenden Textblock und klicken Sie diesen an um ihn zu bewerten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
