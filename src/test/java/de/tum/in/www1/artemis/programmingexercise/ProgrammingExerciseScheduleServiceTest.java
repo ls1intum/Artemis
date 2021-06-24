@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
-import de.tum.in.www1.artemis.util.TimeService;
+import de.tum.in.www1.artemis.util.TimeUtilService;
 
 class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -44,7 +44,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
-    private TimeService timeService;
+    private TimeUtilService timeUtilService;
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
@@ -100,7 +100,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         long delayMS = 1000;
         final var dueDateDelayMS = 200;
         programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(dueDateDelayMS)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(dueDateDelayMS)));
         programmingExerciseRepository.save(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -146,14 +146,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
         mockStudentRepoLocks();
         long delayMS = 200; // 200 ms.
-        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS / 2)));
         // Setting it the first time.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS)));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         // Setting it the second time.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS * 2)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS * 2)));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -169,7 +169,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     void shouldNotExecuteScheduledIfBuildAndTestAfterDueDateChangesToNull() throws Exception {
         long delayMS = 200;
         // Setting it the first time.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS)));
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         // Now setting the date to null - this must also clear the old scheduled task!
@@ -188,8 +188,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws Exception {
         mockStudentRepoLocks();
         long delayMS = 200;
-        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS / 2)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS)));
         programmingExerciseRepository.save(programmingExercise);
 
         database.addCourseWithOneProgrammingExercise();
@@ -210,7 +210,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     void shouldScheduleExercisesWithManualAssessment() throws Exception {
         mockStudentRepoLocks();
         long delayMS = 200;
-        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(delayMS / 2)));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
@@ -253,7 +253,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         mockStudentRepoLocks();
         final var dueDateDelayMS = 200;
         programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(dueDateDelayMS)));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(dueDateDelayMS)));
         programmingExerciseRepository.save(programmingExercise);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         testCases.stream().findFirst().get().setVisibility(Visibility.AFTER_DUE_DATE);
@@ -277,7 +277,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         final var dueDateDelayMS = 200;
         programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
         if (hasBuildAndTestAfterDueDate) {
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(dueDateDelayMS)));
+            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeUtilService.milliSecondsToNanoSeconds(dueDateDelayMS)));
         }
         else {
             programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);

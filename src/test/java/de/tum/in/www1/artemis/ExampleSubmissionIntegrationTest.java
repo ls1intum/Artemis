@@ -189,9 +189,8 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
     public void createExampleTextAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
         database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        final Result exampleResult = request.get(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/submission/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
-                Result.class);
+        final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
+                HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
         List<Feedback> feedbacks = new ArrayList<>();
@@ -200,7 +199,8 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2").reference(textBlockIterator.next().getId()));
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
-        request.putWithResponseBody("/api/text-assessments/text-submissions/" + storedExampleSubmission.getId() + "/example-assessment", dto, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
+                Result.class, HttpStatus.OK);
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
         database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
