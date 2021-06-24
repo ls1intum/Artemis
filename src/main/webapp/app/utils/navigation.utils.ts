@@ -4,7 +4,7 @@ import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class ArtemisNavigationUtilService {
     private onFirstPage = true;
 

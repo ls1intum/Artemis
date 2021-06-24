@@ -31,6 +31,7 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -92,6 +93,6 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statisti
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
     ],
-    providers: [ArtemisDatePipe, TranslatePipe],
+    providers: [ArtemisDatePipe, TranslatePipe, ArtemisNavigationUtilService],
 })
 export class ArtemisSharedModule {}
