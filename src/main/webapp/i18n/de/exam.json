@@ -122,7 +122,7 @@
             "timer": "Restzeit: ",
             "timerEndView": "Restzeit: ",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
-            "ideConnected": "Diese Aufgabe muss manuell abgesendet werden",
+            "ideConnected": "Deine Antworten müssen manuell abgesendet werden.",
             "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
             "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du das Repository klonst.",
             "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code-Editor weiterarbeiten zu können.",

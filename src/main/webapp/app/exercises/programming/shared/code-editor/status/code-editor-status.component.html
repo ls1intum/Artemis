@@ -25,7 +25,7 @@
             </span>
         </div>
         <div *ngSwitchCase="CommitState.UNCOMMITTED_CHANGES">
-            <span ngbTooltip="{{ 'artemisApp.editor.unsubmittedChangesTooltip' | artemisTranslate }}{{ 'artemisApp.editor.submitTooltip' | artemisTranslate }}">
+            <span ngbTooltip="{{ 'artemisApp.editor.unsubmittedChangesTooltip' | artemisTranslate }}">
                 <fa-icon [icon]="['fas', 'exclamation-triangle']" class="text-warning me-1"></fa-icon>
                 <span class="text-info">{{ 'artemisApp.editor.unsubmittedChanges' | artemisTranslate }}</span>
             </span>
