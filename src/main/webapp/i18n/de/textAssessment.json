@@ -55,7 +55,7 @@
                 "automaticFeedbackInformationModal": {
                     "heading": "Automatische Feedback Informationen",
                     "introduction": "Eine Vorschau einer bereits bewerteten Einreichung wird unten angezeigt.<br/> Die blau hervorgehobene Feedback ist diejenige, die wir wieder <span style='background-color: #d8e8f5'>verwendet</span> haben, um diese automatische Feedback zu erzeugen.<br/><br/><i>Vorschau:</i>",
-                    "trace": "Herkunft der automatischen Feedback verfolgen",
+                    "trace": "Herkunft des automatischen Feedbacks verfolgen",
                     "points": "Punkte",
                     "reused": "Wiederverwendet"
                 }
