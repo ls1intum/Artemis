@@ -835,7 +835,7 @@ public class FileService implements DisposableBean {
         return Optional.of(outputStream.toByteArray());
     }
 
-    /*
+    /**
      * Deletes all specified files.
      * @param filePaths A list of all paths to the files that should be deleted
      */
