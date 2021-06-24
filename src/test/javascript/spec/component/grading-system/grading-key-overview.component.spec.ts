@@ -40,6 +40,7 @@ describe('GradeKeyOverviewComponent', () => {
         title: 'Title',
         gradeType: GradeType.BONUS,
         gradeSteps: [gradeStep1, gradeStep2],
+        maxPoints: 100,
     };
 
     beforeEach(() => {
@@ -68,6 +69,7 @@ describe('GradeKeyOverviewComponent', () => {
     it('should initialize', () => {
         spyOn(gradingSystemService, 'findGradeSteps').and.returnValue(of(gradeStepsDto));
         spyOn(gradingSystemService, 'sortGradeSteps').and.returnValue([gradeStep1, gradeStep2]);
+        const gradePointsSpy = spyOn(gradingSystemService, 'setGradePoints').and.stub();
 
         fixture.detectChanges();
 
@@ -78,10 +80,21 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.studentGrade).toEqual('2.0');
         expect(comp.title).toEqual('Title');
         expect(comp.isBonus).toEqual(true);
+        expect(comp.isExam).toEqual(true);
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
+        expect(gradePointsSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], 100);
     });
 
-    it('should navigate to previous state', () => {
+    it('should navigate to previous state for course', () => {
+        const routerSpy = spyOn(router, 'navigate').and.callFake(() => {});
+        comp.courseId = 123;
+
+        comp.previousState();
+
+        expect(routerSpy).toHaveBeenCalledWith(['courses', '123', 'statistics']);
+    });
+
+    it('should navigate to previous state for exam', () => {
         const routerSpy = spyOn(router, 'navigate').and.callFake(() => {});
         comp.courseId = 345;
         comp.examId = 123;

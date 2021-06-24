@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { pipe, Subscription, throwError } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 import { Course } from 'app/entities/course.model';
@@ -22,8 +22,6 @@ import { round } from 'app/shared/util/utils';
 import { ChartType } from 'chart.js';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { catchError } from 'rxjs/operators';
 import { GradeDTO } from 'app/entities/grade-step.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';

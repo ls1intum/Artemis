@@ -244,8 +244,8 @@ export class GradingSystemService {
     /**
      * Sets the grade points
      *
-     * @param gradeSteps
-     * @param maxPoints
+     * @param gradeSteps the grade steps for which the grade points are set
+     * @param maxPoints the max points, based on which the grade points are set
      */
     setGradePoints(gradeSteps: GradeStep[], maxPoints: number) {
         for (const gradeStep of gradeSteps) {

@@ -5,6 +5,8 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
 import { RouterTestingModule } from '@angular/router/testing';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
+import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('Grading System Service', () => {
     let injector: TestBed;
@@ -130,6 +132,22 @@ describe('Grading System Service', () => {
         tick();
     }));
 
+    it('should find all grade steps for course', fakeAsync(() => {
+        const dto: GradeStepsDTO = {
+            gradeSteps,
+            title: 'Course Title',
+            gradeType: GradeType.BONUS,
+        };
+
+        service
+            .findGradeStepsForCourse(234)
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(dto));
+
+        httpMock.expectOne({ method: 'GET' }).flush(dto);
+        tick();
+    }));
+
     it('should find all grade steps for exam', fakeAsync(() => {
         const dto: GradeStepsDTO = {
             gradeSteps,
@@ -146,6 +164,32 @@ describe('Grading System Service', () => {
         tick();
     }));
 
+    it('should find all grade steps', fakeAsync(() => {
+        const dto: GradeStepsDTO = {
+            gradeSteps,
+            title: 'Title',
+            gradeType: GradeType.GRADE,
+        };
+
+        service
+            .findGradeSteps(678)
+            .pipe(take(1))
+            .subscribe((data) => expect(data).toEqual(dto));
+
+        httpMock.expectOne({ method: 'GET' }).flush(dto);
+        tick();
+    }));
+
+    it('should match a grade step for course to a percentage', fakeAsync(() => {
+        service
+            .matchPercentageToGradeStepForCourse(123, 90)
+            .pipe(take(1))
+            .subscribe((data) => expect(data.body).toEqual(gradeStep3));
+
+        httpMock.expectOne({ method: 'GET' }).flush(gradeStep3);
+        tick();
+    }));
+
     it('should match a grade step for exam to a percentage', fakeAsync(() => {
         service
             .matchPercentageToGradeStepForExam(123, 456, 70)
@@ -153,6 +197,27 @@ describe('Grading System Service', () => {
             .subscribe((data) => expect(data.body).toEqual(gradeStep2));
 
         httpMock.expectOne({ method: 'GET' }).flush(gradeStep2);
+        tick();
+    }));
+
+    it('should match a grade step for to a percentage when no grading scale exists', fakeAsync(() => {
+        spyOn(service, 'matchPercentageToGradeStepForExam').and.returnValue(of(new HttpErrorResponse({ error: 'Not found', status: 404 })));
+
+        service
+            .matchPercentageToGradeStep(50, 189, 256)
+            .pipe(take(1))
+            .subscribe((data) => expect(data).toBeUndefined());
+
+        tick();
+    }));
+
+    it('should match a grade step for to a percentage', fakeAsync(() => {
+        service
+            .matchPercentageToGradeStep(20, 12)
+            .pipe(take(1))
+            .subscribe((data) => expect(data).toEqual(gradeStep1));
+
+        httpMock.expectOne({ method: 'GET' }).flush(gradeStep1);
         tick();
     }));
 
@@ -180,5 +245,14 @@ describe('Grading System Service', () => {
     it('should find max grade correctly', () => {
         expect(service.maxGrade(gradeSteps)).toEqual(gradeStep3.gradeName);
         expect(service.maxGrade([])).toEqual('');
+    });
+
+    it('should set grade points correctly', () => {
+        service.setGradePoints(gradeSteps, 100);
+
+        for (const gradeStep of gradeSteps) {
+            expect(gradeStep.lowerBoundPoints).toEqual(gradeStep.lowerBoundPercentage);
+            expect(gradeStep.upperBoundPoints).toEqual(gradeStep.upperBoundPercentage);
+        }
     });
 });
