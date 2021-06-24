@@ -124,6 +124,9 @@ export class CourseUpdateComponent implements OnInit {
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
+                maxPoints: new FormControl(this.course.maxPoints, {
+                    validators: [Validators.min(1)],
+                }),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),

@@ -142,6 +142,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * @param {simpleChanges} changes - Changes made
      */
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes.diagramType) {
+            // if diagram type changed -> recreate the editor
+            this.initializeApollonEditor();
+        }
+
         if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
             this.umlModel = changes.umlModel.currentValue;
             // Apollon doesn't need assessments in Modeling mode

@@ -4,12 +4,12 @@ import {
     createProgrammingExercise,
     configureScaCategories,
     getScaCategories,
-    startExercise,
     simulateSubmission,
     ParticipationSimulation,
     TestResult,
     deleteProgrammingExercise,
 } from './requests/programmingExercise.js';
+import { startExercise } from './requests/exercises.js';
 import { deleteCourse, newCourse } from './requests/course.js';
 import { createUsersIfNeeded } from './requests/user.js';
 import { allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava } from './resource/constants_java.js';
@@ -124,7 +124,7 @@ export default function (data) {
     }
 
     group('Participate in Programming Exercise', function () {
-        let participationId = startExercise(artemis, courseId, exerciseId);
+        let participationId = startExercise(artemis, courseId, exerciseId).id;
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
             let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, someSuccessfulErrorContent);

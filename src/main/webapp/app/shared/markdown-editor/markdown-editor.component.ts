@@ -153,6 +153,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
+    @Input()
+    shouldDisplayAlert = true;
+
     constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private jhiAlertService: JhiAlertService) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
