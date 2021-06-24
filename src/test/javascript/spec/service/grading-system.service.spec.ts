@@ -133,7 +133,7 @@ describe('Grading System Service', () => {
     }));
 
     it('should find all grade steps for course', fakeAsync(() => {
-        const dto: GradeStepsDTO = {
+        const courseDTO: GradeStepsDTO = {
             gradeSteps,
             title: 'Course Title',
             gradeType: GradeType.BONUS,
@@ -142,14 +142,14 @@ describe('Grading System Service', () => {
         service
             .findGradeStepsForCourse(234)
             .pipe(take(1))
-            .subscribe((data) => expect(data.body).toEqual(dto));
+            .subscribe((courseGradeStepsData) => expect(courseGradeStepsData.body).toEqual(courseDTO));
 
-        httpMock.expectOne({ method: 'GET' }).flush(dto);
+        httpMock.expectOne({ method: 'GET' }).flush(courseDTO);
         tick();
     }));
 
     it('should find all grade steps for exam', fakeAsync(() => {
-        const dto: GradeStepsDTO = {
+        const examDTO: GradeStepsDTO = {
             gradeSteps,
             title: 'Exam Title',
             gradeType: GradeType.GRADE,
@@ -158,9 +158,9 @@ describe('Grading System Service', () => {
         service
             .findGradeStepsForExam(123, 456)
             .pipe(take(1))
-            .subscribe((data) => expect(data.body).toEqual(dto));
+            .subscribe((examGradeStepsData) => expect(examGradeStepsData.body).toEqual(examDTO));
 
-        httpMock.expectOne({ method: 'GET' }).flush(dto);
+        httpMock.expectOne({ method: 'GET' }).flush(examDTO);
         tick();
     }));
 
