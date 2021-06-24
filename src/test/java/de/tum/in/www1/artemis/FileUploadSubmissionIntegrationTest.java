@@ -37,6 +37,8 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
 
     private FileUploadExercise assessedFileUploadExercise;
 
+    private FileUploadExercise noDueDateFileUploadExercise;
+
     private FileUploadSubmission submittedFileUploadSubmission;
 
     private FileUploadSubmission notSubmittedFileUploadSubmission;
@@ -50,10 +52,11 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 0, 1);
-        Course course = database.addCourseWithThreeFileUploadExercise();
+        Course course = database.addCourseWithFourFileUploadExercise();
         releasedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         finishedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
         assessedFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
+        noDueDateFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "noDueDate");
         submittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         notSubmittedFileUploadSubmission = ModelFactory.generateFileUploadSubmission(false);
         lateFileUploadSubmission = ModelFactory.generateLateFileUploadSubmission();
@@ -392,13 +395,33 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     public void submitExerciseWithSubmissionID() throws Exception {
         FileUploadSubmission submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", validFile,
-            FileUploadSubmission.class, HttpStatus.OK);
+                FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDate_allowed() throws Exception {
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
+                FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_afterDueDate() throws Exception {
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(releasedFileUploadExercise, "student3");
+        submittedFileUploadSubmission.setParticipation(studentParticipation);
+
+        request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
+                FileUploadSubmission.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student3", roles = "USER")
+    public void submitExercise_withoutDueDate() throws Exception {
+        StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(noDueDateFileUploadExercise, "student3");
+        submittedFileUploadSubmission.setParticipation(studentParticipation);
+
+        request.postWithMultipartFile("/api/exercises/" + noDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
                 FileUploadSubmission.class, HttpStatus.OK);
     }
 
