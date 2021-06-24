@@ -89,6 +89,9 @@ public class ProgrammingExerciseIntegrationServiceTest {
     private CourseRepository courseRepository;
 
     @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
@@ -1692,5 +1695,25 @@ public class ProgrammingExerciseIntegrationServiceTest {
         public AuxiliaryRepository get() {
             return repository;
         }
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "instructoralt");
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+        request.put("/api/programming-exercises/" + 123456789 + "/re-evaluate", programmingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
+
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
     }
 }

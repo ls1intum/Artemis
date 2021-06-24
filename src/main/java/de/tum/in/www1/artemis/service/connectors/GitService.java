@@ -447,7 +447,7 @@ public class GitService {
             }
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
-                // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid a try-catch block.
+                // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
                 FileUtils.deleteQuietly(localPath.toFile());
                 throw new GitException(e);
             }
@@ -546,10 +546,14 @@ public class GitService {
             // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
             // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
             // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-            repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+            StoredConfig gitRepoConfig = repository.getConfig();
+            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, "origin");
+            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
 
-            repository.getConfig().setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, "origin");
-            repository.getConfig().setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+            // disable symlinks to avoid security issues such as remote code execution
+            gitRepoConfig.save();
 
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
@@ -1000,6 +1004,14 @@ public class GitService {
 
             while (itr.hasNext()) {
                 File nextFile = new File(itr.next(), repo);
+                Path nextPath = nextFile.toPath();
+
+                // filter out symlinks
+                if (Files.isSymbolicLink(nextPath)) {
+                    log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
+                    continue;
+                }
+
                 // Files starting with a '.' are not marked as hidden in Windows. WE must exclude these
                 if (nextFile.getName().charAt(0) != '.') {
                     files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
