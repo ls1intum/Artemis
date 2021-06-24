@@ -54,7 +54,7 @@
                 "impactWarningTooltip": "The number of times that your feedback will be reused as an automatic suggestion in other submissions that were found to have a similar text block.",
                 "automaticFeedbackInformationModal": {
                     "heading": "Automatic Feedback Information",
-                    "introduction": "A preview of a previously graded submission is shown below. <br />The feedback which is highlighted in <span style='background-color: #d8e8f5'>blue</span> is the one we have reused to generate this automatic feedback.<br/><br/><i>Preview</i>",
+                    "introduction": "A preview of a previously graded submission is shown below. <br />The <span style='background-color: #d8e8f5'>highlighted feedback</span> was used to generate the automatic feedback.<br/><br/><i>Preview</i>",
                     "trace": "Trace automatic feedback origin",
                     "points": "Points",
                     "reused": "Reused {{reusedCount}} times"
