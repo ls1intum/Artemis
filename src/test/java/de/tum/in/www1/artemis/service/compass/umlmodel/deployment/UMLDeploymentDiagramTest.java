@@ -7,10 +7,10 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
 
@@ -23,9 +23,9 @@ public class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityDeploymentDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), 0.0, 36.88);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.22);
-        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.99);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), 0.0, 35.65);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_1), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 10.70);
+        compareSubmissions(modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_2), modelingSubmission(UMLDeploymentDiagrams.DEPLOYMENT_MODEL_3), 0.0, 11.50);
     }
 
     @Test
