@@ -133,7 +133,7 @@ describe('Grading System Service', () => {
     it('should find all grade steps for exam', fakeAsync(() => {
         const dto: GradeStepsDTO = {
             gradeSteps,
-            examTitle: 'Exam Title',
+            title: 'Exam Title',
             gradeType: GradeType.GRADE,
         };
 

@@ -114,6 +114,12 @@ export class GradingSystemService {
         return this.http.get<GradeStepsDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/grade-steps`, { observe: 'response' });
     }
 
+    /**
+     * Finds all grade steps for a course or an exam
+     *
+     * @param courseId the course for which the grade steps are queried
+     * @param examId if present the grade steps for this exam are queried instead
+     */
     findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
         let gradeStepsObservabe: Observable<HttpResponse<GradeStepsDTO>>;
         if (examId != undefined) {
@@ -154,6 +160,13 @@ export class GradingSystemService {
         return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
     }
 
+    /**
+     * Finds a grade step for an exam or a course that matches the given percentage
+     *
+     * @param percentage the percentage which will be matched
+     * @param courseId the course for which the matching is done
+     * @param examId if present, the matching is done for this exam instead
+     */
     public matchPercentageToGradeStep(percentage: number, courseId: number, examId?: number): Observable<GradeDTO | undefined> {
         let responseObservable: Observable<HttpResponse<GradeDTO>>;
         if (examId != undefined) {
@@ -194,9 +207,10 @@ export class GradingSystemService {
      * @param percentage the percentage to be matched
      */
     matchGradePercentage(gradeStep: GradeStep, percentage: number): boolean {
-        if (Math.abs(percentage - gradeStep.lowerBoundPercentage) < Number.EPSILON) {
+        const EPSILON = 0.01;
+        if (Math.abs(percentage - gradeStep.lowerBoundPercentage) < EPSILON) {
             return gradeStep.lowerBoundInclusive;
-        } else if (Math.abs(percentage - gradeStep.upperBoundPercentage) < Number.EPSILON) {
+        } else if (Math.abs(percentage - gradeStep.upperBoundPercentage) < EPSILON) {
             return gradeStep.upperBoundInclusive;
         } else {
             return percentage > gradeStep.lowerBoundPercentage && percentage < gradeStep.upperBoundPercentage;
@@ -227,6 +241,12 @@ export class GradingSystemService {
         return maxGradeStep?.gradeName || '';
     }
 
+    /**
+     * Sets the grade points
+     *
+     * @param gradeSteps
+     * @param maxPoints
+     */
     setGradePoints(gradeSteps: GradeStep[], maxPoints: number) {
         for (const gradeStep of gradeSteps) {
             gradeStep.lowerBoundPoints = (maxPoints * gradeStep.lowerBoundPercentage) / 100;

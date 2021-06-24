@@ -12,7 +12,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { HttpResponse } from '@angular/common/http';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -38,7 +37,7 @@ describe('GradeKeyOverviewComponent', () => {
         isPassingGrade: true,
     };
     const gradeStepsDto: GradeStepsDTO = {
-        examTitle: 'Title',
+        title: 'Title',
         gradeType: GradeType.BONUS,
         gradeSteps: [gradeStep1, gradeStep2],
     };
@@ -67,7 +66,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should initialize', () => {
-        spyOn(gradingSystemService, 'findGradeStepsForExam').and.returnValue(of(new HttpResponse<GradeStepsDTO>({ body: gradeStepsDto })));
+        spyOn(gradingSystemService, 'findGradeSteps').and.returnValue(of(gradeStepsDto));
         spyOn(gradingSystemService, 'sortGradeSteps').and.returnValue([gradeStep1, gradeStep2]);
 
         fixture.detectChanges();
@@ -77,7 +76,7 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.examId).toEqual(123);
         expect(comp.courseId).toEqual(345);
         expect(comp.studentGrade).toEqual('2.0');
-        expect(comp.examTitle).toEqual('Title');
+        expect(comp.title).toEqual('Title');
         expect(comp.isBonus).toEqual(true);
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
     });
@@ -86,6 +85,7 @@ describe('GradeKeyOverviewComponent', () => {
         const routerSpy = spyOn(router, 'navigate').and.callFake(() => {});
         comp.courseId = 345;
         comp.examId = 123;
+        comp.isExam = true;
 
         comp.previousState();
 
