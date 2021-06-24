@@ -155,83 +155,28 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     async openConfirmationModal(content: any) {
-        console.warn('first', this.feedback.suggestedFeedbackParticipationReference);
         const participationId = this.feedback.suggestedFeedbackParticipationReference ? this.feedback.suggestedFeedbackParticipationReference : -1;
 
         const submissionId = this.feedback.suggestedFeedbackOriginSubmissionReference ? this.feedback.suggestedFeedbackOriginSubmissionReference : -1;
         if (participationId >= 0 && submissionId >= 0) {
-            console.warn('second', this.feedback.suggestedFeedbackOriginSubmissionReference);
-
             const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
-
-            console.log(participation.submissions?.values().next().value.blocks);
 
             const blocks: any[] = participation.submissions?.values().next().value.blocks;
             const feedbacks: any[] = participation.submissions?.values().next().value.latestResult.feedbacks;
 
-            console.warn({ feedbacks });
-            console.warn('THIS.FEEDBACK', this.feedback);
-            let c = [];
-            c.push({
-                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.',
-                feedback: undefined,
-                credits: 0,
-                type: 'MANUAL',
-                reusedCount: 0,
-            });
-            let test = c.concat(
-                blocks
-                    .map((block) => {
-                        const blockFeedback = feedbacks.find((feedback) => feedback.reference === block.id);
-                        console.warn('map-block-reference', block.reference);
-                        return {
-                            text: block.text,
-                            feedback: blockFeedback && blockFeedback.detailText,
-                            credits: blockFeedback ? blockFeedback.credits : 0,
-                            reusedCount: blockFeedback && block.numberOfAffectedSubmissions,
-                            type: this.feedback.suggestedFeedbackReference === block.id ? 'AUTOMATIC' : 'MANUAL',
-                        };
-                    })
-                    .filter((item) => item != undefined),
-            );
-
-            test.push({
-                text: 'another sentence.',
-                feedback: undefined,
-                credits: 0,
-                type: 'MANUAL',
-                reusedCount: 0,
-            });
-            test.push({
-                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim venia.',
-                feedback: undefined,
-                credits: 0,
-                type: 'MANUAL',
-                reusedCount: 0,
-            });
-            test.push({
-                text: 'yet another sentence.',
-                feedback: undefined,
-                credits: 0,
-                type: 'MANUAL',
-                reusedCount: 1,
-            });
-            test.push({
-                text: 'That is why I think it is better to use it instead.',
-                feedback: undefined,
-                credits: 1,
-                type: 'MANUAL',
-                reusedCount: 0,
-            });
-            test.push({
-                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
-                feedback: undefined,
-                credits: 0,
-                type: 'MANUAL',
-                reusedCount: 0,
-            });
-
-            this.listOfBlocksWithFeedback = test;
+            this.listOfBlocksWithFeedback = blocks
+                .map((block) => {
+                    const blockFeedback = feedbacks.find((feedback) => feedback.reference === block.id);
+                    console.warn('map-block-reference', block.reference);
+                    return {
+                        text: block.text,
+                        feedback: blockFeedback && blockFeedback.detailText,
+                        credits: blockFeedback ? blockFeedback.credits : 0,
+                        reusedCount: blockFeedback && block.numberOfAffectedSubmissions,
+                        type: this.feedback.suggestedFeedbackReference === block.id ? 'AUTOMATIC' : 'MANUAL',
+                    };
+                })
+                .filter((item) => item != undefined);
 
             this.modalService.open(content, { size: 'lg' }).result.then(
                 (result: string) => {
