@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 const expect = chai.expect;
