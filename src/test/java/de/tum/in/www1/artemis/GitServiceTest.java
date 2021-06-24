@@ -52,7 +52,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void doSomeCommits() {
+    public void testDoSomeCommits() {
         Collection<ReflogEntry> reflog = gitUtilService.getReflog(GitUtilService.REPOS.LOCAL);
         assertThat(reflog.size()).isEqualTo(1);
 
@@ -67,7 +67,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void checkoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException {
+    public void testCheckoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException {
         gitUtilService.initRepo(defaultBranch);
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
@@ -81,7 +81,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void checkoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
+    public void testCheckoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
@@ -91,7 +91,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void resetToOriginHead(String defaultBranch) throws GitAPIException {
+    public void testResetToOriginHead(String defaultBranch) throws GitAPIException {
         gitUtilService.initRepo(defaultBranch);
         gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1, "Some Change");
         assertThat(gitUtilService.isLocalEqualToRemote()).isFalse();
@@ -103,7 +103,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void getOriginHead(String defaultBranch) throws GitAPIException {
+    public void testGetOriginHead(String defaultBranch) throws GitAPIException {
         gitUtilService.initRepo(defaultBranch);
         // Checkout a different branch in local repo
         gitUtilService.checkoutBranch(GitUtilService.REPOS.LOCAL, "other-branch");
@@ -114,7 +114,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void pushSourceToTargetRepoWithoutBranch(String defaultBranch) throws GitAPIException, IOException {
+    public void testPushSourceToTargetRepoWithoutBranch(String defaultBranch) throws GitAPIException, IOException {
         gitUtilService.initRepo(defaultBranch);
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
@@ -136,7 +136,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void pushSourceToTargetRepoWithBranch(String defaultBranch) throws GitAPIException, IOException {
+    public void testPushSourceToTargetRepoWithBranch(String defaultBranch) throws GitAPIException, IOException {
         gitUtilService.initRepo(defaultBranch);
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.REMOTE);
@@ -157,7 +157,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void getExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
+    public void testGetExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         doReturn(localRepo.getLocalPath()).when(gitService).getLocalPathOfRepo(any(), any());
@@ -178,7 +178,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("getBranchCombinationsToTest")
-    public void getExistingCheckedOutRepositoryByLocalPathSetsBranchCorrectly(String defaultBranchVCS, String defaultBranchArtemis) throws IOException {
+    public void testGetExistingCheckedOutRepositoryByLocalPathSetsBranchCorrectly(String defaultBranchVCS, String defaultBranchArtemis) throws IOException {
         gitUtilService.initRepo(defaultBranchVCS);
 
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
@@ -199,7 +199,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void listFilesAndFolders() {
+    public void testListFilesAndFolders() {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         var map = gitService.listFilesAndFolders(localRepo);
@@ -212,7 +212,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void listFiles() {
+    public void testListFiles() {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         var fileList = gitService.listFiles(localRepo);
@@ -225,7 +225,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void getFileByName() {
+    public void testGetFileByName() {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         var presentFile = gitService.getFileByName(localRepo, gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1).getName());
@@ -237,7 +237,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void combineAllCommitsIntoInitialCommitTest() throws GitAPIException {
+    public void testCombineAllCommitsIntoInitialCommitTest() throws GitAPIException {
         String newFileContent1 = "lorem ipsum";
         String newFileContent2 = "lorem ipsum solet";
         String fileContent = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
@@ -270,7 +270,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void combineAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws GitAPIException {
+    public void testCombineAllCommitsIntoInitialCommitWithoutNewCommitsTest() throws GitAPIException {
         String oldFileContent1 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE1);
         String oldFileContent2 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE2);
         String oldFileContent3 = gitUtilService.getFileContent(GitUtilService.REPOS.REMOTE, GitUtilService.FILES.FILE3);
