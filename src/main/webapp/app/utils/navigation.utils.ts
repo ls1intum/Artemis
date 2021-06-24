@@ -1,5 +1,33 @@
-import { Router } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { filter, skip, take } from 'rxjs/operators';
+
+@Injectable({ providedIn: 'root' })
+export class ArtemisNavigationUtilService {
+    private onFirstPage = true;
+
+    constructor(private router: Router, private location: Location) {
+        console.log("Instantiated")
+        router.events.pipe(
+            filter(e => e instanceof NavigationEnd),
+            skip(1),
+            // take(1)
+        ).subscribe(e => {
+            this.onFirstPage = false;
+            console.log((e as NavigationEnd).urlAfterRedirects);
+        });
+    }
+
+    navigateBack(fallbackUrl: string[]) {
+        if (!this.onFirstPage) {
+            this.location.back();
+        } else {
+            this.router.navigate(fallbackUrl);
+        }
+    }
+}
 
 export const navigateBack = (router: Router, fallbackUrl: string[]): void => {
     if (window.history.length > 1) {
