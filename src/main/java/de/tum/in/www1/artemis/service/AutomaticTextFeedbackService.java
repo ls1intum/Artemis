@@ -60,18 +60,17 @@ public class AutomaticTextFeedbackService {
                             // Filter all other blocks in the cluster for those with Feedback
                             .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
 
-                            // sort, kill duplicates
                             // Find the closest block
                             .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
 
                     if (mostSimilarBlockInClusterWithFeedback.isPresent()
                             && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
                         final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
-                        String originBlockId = mostSimilarBlockInClusterWithFeedback.get().getId();
-                        Long submissionId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getId();
-                        Long participationId = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getParticipation().getId();
+                        String originBlockReference = mostSimilarBlockInClusterWithFeedback.get().getId();
+                        Long originsubmissionReference = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getId();
+                        Long originparticipationReference = mostSimilarBlockInClusterWithFeedback.get().getSubmission().getParticipation().getId();
                         return new Feedback().reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText())
-                                .suggestedFeedbackOrigin(originBlockId, submissionId, participationId).type(FeedbackType.AUTOMATIC);
+                                .suggestedFeedbackOrigin(originBlockReference, originsubmissionReference, originparticipationReference).type(FeedbackType.AUTOMATIC);
                     }
                 }
             }
