@@ -89,7 +89,7 @@ export const commonConfig = (options: Options) => ({
         new CopyWebpackPlugin({
             patterns: [
                 { from: './src/main/webapp/content/', to: 'content' },
-                { from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico' },
+                { from: './src/main/webapp/favicon.svg', to: 'favicon.svg' },
                 { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },
                 { from: './src/main/webapp/robots.txt', to: 'robots.txt' },
             ],
