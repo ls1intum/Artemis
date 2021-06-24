@@ -28,24 +28,10 @@ describe('CodeEditorStatusComponent', () => {
             });
     }));
 
-    it('should show an empty status segment for EditorState if no EditorState is given', () => {
-        const editorStateSegment = fixture.debugElement.query(By.css('#editor_state'));
-        expect(editorStateSegment.children).to.be.empty;
-    });
-
-    it('should show an empty status segment for EditorState if no EditorState is given', () => {
+    it('should show an empty status segment for CommitState if no EditorState is given', () => {
         const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
         expect(commitStateSegment.children).to.be.empty;
     });
-
-    Object.keys(EditorState).map((editorState) =>
-        it(`should show exactly one status segment for EditorState ${editorState} with an icon and a non empty description`, function () {
-            comp.editorState = editorState as EditorState;
-            fixture.detectChanges();
-            const editorStateSegment = fixture.debugElement.query(By.css('#editor_state'));
-            showsExactlyOneStatusSegment(editorStateSegment);
-        }),
-    );
 
     Object.keys(CommitState).map((commitState) =>
         it(`should show exactly one status segment for CommitState ${commitState} with an icon and a non empty description`, function () {
