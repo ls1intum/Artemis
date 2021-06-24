@@ -629,6 +629,16 @@ public class GitService {
         }
     }
 
+    /**
+     * The remote uri of the target repo is still the uri of the source repo.
+     * We need to change it to the uri of the target repo.
+     * The content to be copied then gets pushed to the new repo.
+     *
+     * @param targetRepo    Local target repo
+     * @param targetRepoUrl URI of targets repo
+     * @param oldBranch     default branch that was used when the exercise was created (might differ from the default branch of a participation)
+     * @throws GitAPIException if the repo could not be pushed
+     */
     public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl, String oldBranch) throws GitAPIException {
         try (Git git = new Git(targetRepo)) {
             // overwrite the old remote uri with the target uri
