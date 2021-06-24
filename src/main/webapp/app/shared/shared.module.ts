@@ -93,6 +93,6 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
         DoughnutChartComponent,
         ExerciseDetailStatisticsComponent,
     ],
-    providers: [ArtemisDatePipe, TranslatePipe, ArtemisNavigationUtilService],
+    providers: [ArtemisDatePipe, TranslatePipe],
 })
 export class ArtemisSharedModule {}
