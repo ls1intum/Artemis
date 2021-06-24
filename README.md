@@ -35,7 +35,7 @@ Artemis also supports an exam mode now. You can find more information on [Exam m
 
 ### Documentation
 
-[Read the Docs](https://readthedocs.org) hosts the [Artemis documentation](https://artemis-platform.readthedocs.io).
+The Artemis documentation is available [here](https://docs.artemis.ase.in.tum.de/).
 You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
