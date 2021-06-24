@@ -82,28 +82,43 @@
         </div>
     </div>
 
-    Coming from: Block ID = {{ feedback.suggestedFeedbackReference }}:
-    <br />
-    Sub ID = {{ feedback.suggestedFeedbackOriginSubmissionReference }}:
-    <br />
-
     <ng-template #toggleMore let-modal>
         <div class="modal-header">
             <h4 class="modal-title">
-                <span>This submission was used to generate this automatic feedbacks</span>
+                <span>Automatic Feedback Helper</span>
             </h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
-            <div *ngFor="let block of listOfBlocksForModal">
-                <div class="feedback-text mt-1">
-                    <b><fa-icon [icon]="['far', 'check-circle']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
-                    {{ block.text }}
-                </div>
+            A preview of a previously graded submission is shown below. <br />
+            The feedback which is highlighted in<span style="background-color: #d8e8f5"> blue </span>is the one we have reused to generate this automatic feedback.<br />
+            <br />
+            <i>Preview:</i>
+            <div class="reused-feedback-preview">
+                <ng-container *ngFor="let block of listOfBlocksWithFeedback">
+                    <span
+                        class="{{ block.type === 'AUTOMATIC' ? 'text-with-feedback positive-feedback' : block.credits ? 'text-with-feedback neutral-feedback' : 'text-inline' }}"
+                        >{{ block.text }}</span
+                    >
+
+                    <div class="{{ (block.type === 'AUTOMATIC' ? 'alert-primary' : 'alert-secondary') + ' alert white-space' }}" *ngIf="block.credits">
+                        <div *ngIf="block.type === FeedbackType.AUTOMATIC">
+                            <fa-icon [icon]="'robot'"></fa-icon>
+                            <span style="font-weight: bold">Reused</span>
+                        </div>
+                        <div>
+                            <fa-icon [icon]="'info-circle'"></fa-icon>&nbsp;<span style="font-weight: bold"> Points: </span> <span>{{ block.credits }}</span>
+                        </div>
+                        <div *ngIf="block.feedback">
+                            <fa-icon [icon]="'edit'"></fa-icon>&nbsp;<span style="font-weight: bold" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:
+                            {{ block.feedback }}
+                        </div>
+                    </div>
+                </ng-container>
             </div>
         </div>
     </ng-template>
-    <a (click)="openConfirmationModal(toggleMore)">Show where this feedback came from</a>
+    <a style="border: 2px solid rgba(228, 228, 228, 0.87)" (click)="openConfirmationModal(toggleMore)">Trace automatic feedback origin</a>
     <br />
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>

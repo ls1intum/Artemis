@@ -8,6 +8,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable, lastValueFrom } from 'rxjs';
+import { text } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -34,7 +35,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
-    listOfBlocksForModal: any[];
+    listOfBlocksWithFeedback: any[];
+
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
     @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
@@ -159,14 +161,72 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         const submissionId = this.feedback.suggestedFeedbackOriginSubmissionReference ? this.feedback.suggestedFeedbackOriginSubmissionReference : -1;
         if (participationId >= 0 && submissionId >= 0) {
             console.warn('second', this.feedback.suggestedFeedbackOriginSubmissionReference);
+
             const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
-            console.log('participation.results', participation.results);
-            console.log('participation.submissions', participation.submissions);
-            console.log(participation.submissions?.length);
+
             console.log(participation.submissions?.values().next().value.blocks);
-            this.listOfBlocksForModal = participation.submissions?.values().next().value.blocks;
-            // console.log(participation.submissions?[0]);
-            this.modalService.open(content).result.then(
+
+            const blocks: any[] = participation.submissions?.values().next().value.blocks;
+            const feedbacks: any[] = participation.submissions?.values().next().value.latestResult.feedbacks;
+
+            console.warn({ feedbacks });
+            console.warn('THIS.FEEDBACK', this.feedback);
+            let c = [];
+            c.push({
+                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.',
+                feedback: undefined,
+                credits: undefined,
+                type: 'MANUAL',
+            });
+            let test = c.concat(
+                blocks
+                    .map((block) => {
+                        const blockFeedback = feedbacks.find((feedback) => feedback.reference === block.id);
+                        console.warn('map-block-reference', block.reference);
+                        return {
+                            text: block.text,
+                            feedback: blockFeedback && blockFeedback.detailText,
+                            credits: blockFeedback && blockFeedback.credits,
+                            type: this.feedback.suggestedFeedbackReference === block.id ? 'AUTOMATIC' : 'MANUAL',
+                        };
+                    })
+                    .filter((item) => item != undefined),
+            );
+
+            test.push({
+                text: 'another sentence.',
+                feedback: undefined,
+                credits: undefined,
+                type: 'MANUAL',
+            });
+            test.push({
+                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim venia.',
+                feedback: undefined,
+                credits: undefined,
+                type: 'MANUAL',
+            });
+            test.push({
+                text: 'yet another sentence.',
+                feedback: undefined,
+                credits: 1,
+                type: 'MANUAL',
+            });
+            test.push({
+                text: 'that is why I think so.',
+                feedback: undefined,
+                credits: undefined,
+                type: 'MANUAL',
+            });
+            test.push({
+                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+                feedback: undefined,
+                credits: undefined,
+                type: 'MANUAL',
+            });
+
+            this.listOfBlocksWithFeedback = test;
+
+            this.modalService.open(content, { size: 'lg' }).result.then(
                 (result: string) => {
                     if (result === 'confirm') {
                         console.warn('Confirm?');
