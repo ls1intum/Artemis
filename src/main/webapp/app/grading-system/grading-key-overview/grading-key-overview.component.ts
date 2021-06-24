@@ -4,7 +4,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { round } from 'app/shared/util/utils';
-import { CourseScoreCalculationService, MAX_POINTS } from 'app/overview/course-score-calculation.service';
+import { CourseScoreCalculationService, REACHABLE_POINTS } from 'app/overview/course-score-calculation.service';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -45,7 +45,7 @@ export class GradingKeyOverviewComponent implements OnInit {
                         if (!this.isExam) {
                             // calculate course max points based on exercises
                             const course = this.courseCalculationService.getCourse(this.courseId!);
-                            const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!).get(MAX_POINTS);
+                            const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!).get(REACHABLE_POINTS);
                             this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
                         } else {
                             // for exams the max points filed should equal the total max points (otherwise exams can't be started)
