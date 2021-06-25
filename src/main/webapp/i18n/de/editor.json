@@ -18,7 +18,7 @@
             "changesSubmitted": "Abgesendet.",
             "changesSubmittedTooltip": "Alle Änderungen abgesendet.",
             "unsubmittedChanges": "Nicht abgesendet.",
-            "unsubmittedChangesTooltip": "Nicht abgesendete Änderungen vorhanden.\nDu musst die gepspeicherten Änderungen manuell absenden.",
+            "unsubmittedChangesTooltip": "Nicht abgesendete Änderungen vorhanden.\nDu musst die gespeicherten Änderungen manuell absenden.",
             "changesConflict": "Konflikt",
             "changesConflictTooltip": "Dein Repository befindet sich ein einem Konfliktzustand. Löse den Konflikt, um weiterzuarbeiten.",
             "submittingChanges": "Sendet...",
