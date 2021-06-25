@@ -19,7 +19,6 @@ import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -27,7 +26,6 @@ describe('ModelingExercise Management Update Component', () => {
     let service: ModelingExerciseService;
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
-    let exampleSubmissionService: ExampleSubmissionService;
     const categories = [{ category: 'testCat' }, { category: 'testCat2' }];
     const categoriesStringified = categories.map((cat) => JSON.stringify(cat));
 
@@ -50,7 +48,6 @@ describe('ModelingExercise Management Update Component', () => {
         service = fixture.debugElement.injector.get(ModelingExerciseService);
         courseService = fixture.debugElement.injector.get(CourseManagementService);
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
-        exampleSubmissionService = fixture.debugElement.injector.get(ExampleSubmissionService);
     });
 
     describe('save', () => {

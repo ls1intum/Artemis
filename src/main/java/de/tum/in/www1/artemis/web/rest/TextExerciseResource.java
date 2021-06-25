@@ -3,20 +3,18 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +24,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
@@ -35,6 +34,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 import jplag.ExitException;
 
 /**
@@ -50,9 +50,6 @@ public class TextExerciseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-
-    @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
 
     private final FeedbackRepository feedbackRepository;
 
@@ -94,17 +91,13 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final FileService fileService;
-
-    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
-
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
             ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository, FileService fileService) {
+            CourseRepository courseRepository) {
         this.feedbackRepository = feedbackRepository;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textBlockRepository = textBlockRepository;
@@ -125,7 +118,6 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
-        this.fileService = fileService;
     }
 
     /**
@@ -147,8 +139,8 @@ public class TextExerciseResource {
         if (textExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
-
-        exerciseService.validateScoreSettings(textExercise);
+        // validates general settings: points, dates
+        exerciseService.validateGeneralSettings(textExercise);
 
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
@@ -197,8 +189,8 @@ public class TextExerciseResource {
             return createTextExercise(textExercise);
         }
 
-        // Validate score settings
-        exerciseService.validateScoreSettings(textExercise);
+        // validates general settings: points, dates
+        exerciseService.validateGeneralSettings(textExercise);
 
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -364,10 +356,9 @@ public class TextExerciseResource {
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
-        if (!(participation.getExercise() instanceof TextExercise)) {
+        if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
         }
-        TextExercise textExercise = (TextExercise) participation.getExercise();
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
         if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
@@ -520,36 +511,16 @@ public class TextExerciseResource {
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
 
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
-            return forbidden();
-        }
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
 
         // TAs are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(textExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
-            return forbidden();
+        if (submissionExportOptions.isExportAllParticipants()) {
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, textExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 
-        try {
-            Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
-            Optional<File> zipFile = textSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
-            // Assume user finished download after the given delay
-            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
-
-            if (zipFile.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
-                        .body(null);
-            }
-
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
-            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
-                    .body(resource);
-
-        }
-        catch (IOException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
+        File zipFile = textSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
+        return ResponseUtil.ok(zipFile);
     }
 
     /**

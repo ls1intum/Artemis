@@ -3,22 +3,15 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
@@ -49,9 +43,6 @@ public class ModelingExerciseResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
-
-    @Value("${artemis.submission-export-path}")
-    private String submissionExportPath;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
@@ -85,16 +76,12 @@ public class ModelingExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final FileService fileService;
-
-    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
-
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService) {
+            InstanceMessageSendService instanceMessageSendService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -111,7 +98,6 @@ public class ModelingExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.fileService = fileService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -136,7 +122,8 @@ public class ModelingExerciseResource {
         // make sure the course actually exists
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        exerciseService.validateScoreSettings(modelingExercise);
+        // validates general settings: points, dates
+        exerciseService.validateGeneralSettings(modelingExercise);
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
 
@@ -183,7 +170,8 @@ public class ModelingExerciseResource {
         // make sure the course actually exists
         var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-        exerciseService.validateScoreSettings(modelingExercise);
+        // validates general settings: points, dates
+        exerciseService.validateGeneralSettings(modelingExercise);
 
         ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
@@ -369,7 +357,8 @@ public class ModelingExerciseResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
-        exerciseService.validateScoreSettings(importedExercise);
+        // validates general settings: points, dates
+        exerciseService.validateGeneralSettings(importedExercise);
 
         if (importedExercise.isExamExercise()) {
             log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
@@ -394,35 +383,17 @@ public class ModelingExerciseResource {
     @PostMapping("/modeling-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
-        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
 
-        // ta's are not allowed to download all participations
-        if (submissionExportOptions.isExportAllParticipants() && !authCheckService.isAtLeastInstructorInCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null)) {
-            return forbidden();
+        // TAs are not allowed to download all participations
+        if (submissionExportOptions.isExportAllParticipants()) {
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 
-        try {
-            Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
-            Optional<File> zipFile = modelingSubmissionExportService.exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
-            // Assume user finished download after the given delay
-            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
-
-            if (zipFile.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "nosubmissions", "No existing user was specified or no submission exists."))
-                        .body(null);
-            }
-
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
-            return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName())
-                    .body(resource);
-
-        }
-        catch (IOException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
+        File zipFile = modelingSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
+        return ResponseUtil.ok(zipFile);
     }
 
     /**

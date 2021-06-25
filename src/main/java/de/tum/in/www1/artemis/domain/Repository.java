@@ -15,7 +15,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Path localPath;
 
-    private VcsRepositoryUrl remoteRepositoryUrl;
+    private final VcsRepositoryUrl remoteRepositoryUrl;
 
     private Map<File, FileType> filesAndFolders;
 
@@ -39,18 +39,20 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     /**
      * Check if the file is allowed in this repository. This checks if the path of the file is a subdirectory of the repository directory. Also checks that the ../ operator is not
-     * used to traverse up directories on the server.
+     * used to traverse up directories on the server. Also checks that the file is not using the ".git" folder
      *
      * @param file for which to check if it is valid.
      * @return true if the file is valid.
      */
     public boolean isValidFile(java.io.File file) {
 
-        if (file == null || file.getPath().contains("../"))
+        if (file == null || file.getPath().contains("../") || file.getPath().contains(".git")) {
             return false;
+        }
 
-        if (file.equals(this.localPath.toFile()))
+        if (file.equals(this.localPath.toFile())) {
             return true;
+        }
 
         return isValidFile(file.getParentFile());
     }

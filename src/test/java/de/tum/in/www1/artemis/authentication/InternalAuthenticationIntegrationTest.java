@@ -268,6 +268,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
+        managedUserVM.setPassword("asbdasd");
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 

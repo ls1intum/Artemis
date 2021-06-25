@@ -50,7 +50,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     ) {}
 
     get editType(): EditType {
-        return this.fileUploadExercise.id === undefined ? EditType.CREATE : EditType.UPDATE;
+        return this.fileUploadExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
     /**
