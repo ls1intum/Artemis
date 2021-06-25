@@ -25,7 +25,7 @@
                         </div>
                     </div>
                 </div>
-                <jhi-postings-markdown-editor [(content)]="answerPostEditContent"></jhi-postings-markdown-editor>
+                <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
                 <div class="col-12 mt-1 d-flex">
                     <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
                         {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
@@ -33,7 +33,7 @@
                     <button
                         jhi-postings-button
                         [buttonLoading]="isLoading"
-                        [disabled]="!answerPostEditContent || answerPostEditContent.length === 0"
+                        [disabled]="!content || content.length === 0"
                         [buttonLabel]="'artemisApp.metis.sidebar.saveAnswer' | artemisTranslate"
                         class="btn btn-sm btn-outline-secondary"
                         (click)="saveAnswerPost()"

@@ -26,14 +26,14 @@ export class PostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactPost = new EventEmitter<PostAction>();
-    postEditContent?: string;
+    content?: string;
     maxPostContentLength = 1000;
     isEditMode: boolean;
     isLoading = false;
     courseId: number;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'ins', 'blockquote', 'pre', 'code', 'span'];
+    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
     constructor(private postingService: PostingService, private route: ActivatedRoute) {}
@@ -44,7 +44,7 @@ export class PostComponent implements OnInit {
      */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.postEditContent = this.post.content;
+        this.content = this.post.content;
     }
 
     /**
@@ -62,7 +62,7 @@ export class PostComponent implements OnInit {
      */
     savePost(): void {
         this.isLoading = true;
-        this.post.content = this.postEditContent;
+        this.post.content = this.content;
         this.postingService.update(this.courseId, this.post).subscribe({
             next: () => {
                 this.isEditMode = false;
@@ -79,7 +79,7 @@ export class PostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.postEditContent = this.post.content;
+        this.content = this.post.content;
     }
 
     /**

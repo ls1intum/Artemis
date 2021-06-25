@@ -32,7 +32,7 @@
 <!-- post in edit mode -->
 <ng-container *ngIf="isEditMode">
     <jhi-postings-header [posting]="post"></jhi-postings-header>
-    <jhi-postings-markdown-editor [(content)]="postEditContent"></jhi-postings-markdown-editor>
+    <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
     <div class="row mt-2 d-flex align-items-sm-center">
         <div class="col">
             <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
@@ -42,7 +42,7 @@
                 class="btn btn-sm btn-outline-secondary"
                 jhi-postings-button
                 [buttonLoading]="isLoading"
-                [disabled]="!postEditContent || postEditContent.length === 0 || postEditContent.length > maxPostContentLength"
+                [disabled]="!content || content.length === 0"
                 [buttonLabel]="'artemisApp.metis.sidebar.savePost' | artemisTranslate"
                 (click)="savePost()"
             ></button>

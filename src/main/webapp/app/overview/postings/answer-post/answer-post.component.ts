@@ -25,13 +25,13 @@ export class AnswerPostComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswer = new EventEmitter<AnswerPostAction>();
-    answerPostEditContent?: string;
+    content?: string;
     isLoading = false;
     isEditMode: boolean;
     courseId: number;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'ins', 'blockquote', 'pre', 'code', 'span'];
+    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
     constructor(private postingService: PostingService, private route: ActivatedRoute) {}
@@ -40,7 +40,7 @@ export class AnswerPostComponent implements OnInit {
      * Sets the text of the answerPost as the editor text
      */
     ngOnInit(): void {
-        this.answerPostEditContent = this.answerPost.content;
+        this.content = this.answerPost.content;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
     }
 
@@ -70,7 +70,7 @@ export class AnswerPostComponent implements OnInit {
      */
     saveAnswerPost(): void {
         this.isLoading = true;
-        this.answerPost.content = this.answerPostEditContent;
+        this.answerPost.content = this.content;
         this.postingService.update(this.courseId, this.answerPost).subscribe({
             next: () => {
                 this.isEditMode = false;
@@ -100,6 +100,6 @@ export class AnswerPostComponent implements OnInit {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.answerPostEditContent = this.answerPost.content;
+        this.content = this.answerPost.content;
     }
 }
