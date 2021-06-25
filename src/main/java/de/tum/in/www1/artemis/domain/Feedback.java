@@ -71,7 +71,7 @@ public class Feedback extends DomainObject {
     private GradingInstruction gradingInstruction;
 
     /**
-     * Represents the id of the previously assessed block, whose feedback we are reusing
+     * Represents the reference of the previously assessed block, whose feedback we are reusing
      */
     @Transient
     @JsonSerialize
@@ -79,12 +79,14 @@ public class Feedback extends DomainObject {
 
     /**
      * Represents the submission of the previously assessed block, whose feedback we are reusing
-     * The specific block refers to the field `suggestedFeedbackOriginBlockId`
      */
     @Transient
     @JsonSerialize
     private Long suggestedFeedbackOriginSubmissionReference;
 
+    /**
+     * Represents the participation reference of the submission to which the previously assessed block being reused belongs to
+     */
     @Transient
     @JsonSerialize
     private Long suggestedFeedbackParticipationReference;
@@ -260,13 +262,6 @@ public class Feedback extends DomainObject {
         return suggestedFeedbackReference;
     }
 
-    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionReference, Long suggestedFeedbackParticipationReference) {
-        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockReference;
-        this.suggestedFeedbackOriginSubmissionReference = submissionReference;
-        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
-        return this;
-    }
-
     public void setSuggestedFeedbackOriginBlock(String suggestedFeedbackOriginBlockId) {
         this.suggestedFeedbackReference = suggestedFeedbackOriginBlockId;
     }
@@ -285,6 +280,21 @@ public class Feedback extends DomainObject {
 
     public void setSuggestedFeedbackParticipationReference(Long suggestedFeedbackParticipationReference) {
         this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
+    }
+
+    /**
+     *  This function sets the described parameters and then returns the current instance with the updated references.
+     *  
+     * @param suggestedFeedbackOriginBlockReference - Block reference of the suggested (automatic) feedback
+     * @param submissionReference - Submission reference where the suggested feedback was generated from
+     * @param suggestedFeedbackParticipationReference - respective participation reference
+     * @return updated Feedback
+     */
+    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionReference, Long suggestedFeedbackParticipationReference) {
+        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockReference;
+        this.suggestedFeedbackOriginSubmissionReference = submissionReference;
+        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
+        return this;
     }
 
     public List<FeedbackConflict> getFirstConflicts() {
