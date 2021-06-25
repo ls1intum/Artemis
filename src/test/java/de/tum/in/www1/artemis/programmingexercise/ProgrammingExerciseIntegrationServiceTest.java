@@ -291,7 +291,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         // Mock and pretend first commit is template commit
         ObjectId head = localGit.getRepository().findRef("HEAD").getObjectId();
         when(gitService.getLastCommitHash(any())).thenReturn(head);
-        doNothing().when(gitService).resetToOriginMaster(any());
+        doNothing().when(gitService).resetToOriginHead(any());
 
         // Add commit to anonymize
         assertThat(localRepoFile.toPath().resolve("Test.java").toFile().createNewFile()).isTrue();
@@ -1312,6 +1312,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
     public void unlockAllRepositories() throws Exception {
         mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), false);
         mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), false);
+        mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResource.Endpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
@@ -1322,7 +1323,7 @@ public class ProgrammingExerciseIntegrationServiceTest {
         database.changeUser("instructor1");
 
         var notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Intructor get notified that unlock operations were successful")
+        assertThat(notifications).as("Instructor get notified that unlock operations were successful")
                 .anyMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION))
                 .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
     }
