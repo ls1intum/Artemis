@@ -118,9 +118,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
         // For every 100 submissions, we increase the expected time by 1 minute.
         this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA + Math.floor(buildingSubmissionCount / 100) * 4000 * 60;
-        if (this.resultEtaSubject) {
-            this.resultEtaSubject.next(this.currentExpectedResultETA);
-        }
+        this.resultEtaSubject?.next(this.currentExpectedResultETA);
     }
 
     /**
