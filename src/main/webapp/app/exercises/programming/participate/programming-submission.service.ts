@@ -450,10 +450,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
-                const exerciseBuildStageSubject = this.exerciseBuildStateSubjects.get(exerciseId);
-                if (exerciseBuildStageSubject) {
-                    exerciseBuildStageSubject.next(exerciseBuildState);
-                }
+                this.exerciseBuildStateSubjects.get(exerciseId)?.next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects
             .get(exerciseId)!
