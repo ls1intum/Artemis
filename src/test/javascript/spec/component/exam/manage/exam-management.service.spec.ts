@@ -46,25 +46,25 @@ describe('Exam Management Service Tests', () => {
 
     it('should create an exam', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = {};
-        const mockCopyExam = ExamManagementService.convertDateFromClient(mockExam);
-        const expected: Exam = {};
+        const mockExam: Exam = { id: 1 };
+        const mockCopyExam = ExamManagementService.convertDateFromClient({ id: 1 });
+
         // WHEN
-        service.create(course.id!, mockExam).subscribe((res) => expect(res.body).to.deep.equal(mockCopyExam));
+        service.create(course.id!, mockExam).subscribe((res) => expect(res.body).to.eq(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams` });
         expect(req.request.body).to.include(mockCopyExam);
 
         // CLEANUP
-        req.flush(expected);
+        req.flush(mockExam);
         tick();
     }));
 
     it('should update an exam', fakeAsync(() => {
         // GIVEN
-        const mockExam: Exam = {};
-        const mockCopyExam = ExamManagementService.convertDateFromClient(mockExam);
+        const mockExam: Exam = { id: 1 };
+        const mockCopyExam = ExamManagementService.convertDateFromClient({ id: 1 });
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).to.eq(mockExam));
@@ -574,7 +574,7 @@ describe('Exam Management Service Tests', () => {
             { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
         ];
 
-        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).to.be.undefined);
+        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body === null));
 
         const req = httpMock.expectOne({
             method: 'POST',
