@@ -101,7 +101,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.baseResource =  `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-
             }
         });
 
