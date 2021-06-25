@@ -155,7 +155,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should register all enrolled students of the course to the exam', () => {
-        const examServiceStubAddAll = sinon.stub(examManagementService, 'addAllStudentsOfCourseToExam').returns(of(new HttpResponse<StudentDTO[]>()));
+        const examServiceStubAddAll = sinon.stub(examManagementService, 'addAllStudentsOfCourseToExam').returns(of(new HttpResponse<void>()));
         const examWithOneUser = { course, id: 2, registeredUsers: [user2] };
         const examServiceStub = sinon.stub(examManagementService, 'find').returns(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
