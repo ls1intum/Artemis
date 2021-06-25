@@ -44,6 +44,11 @@ label {
     font-size: small;
 }
 
+.findOrigin {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
 .feedback-icon {
     &.positive-feedback {
         color: #3d9970;

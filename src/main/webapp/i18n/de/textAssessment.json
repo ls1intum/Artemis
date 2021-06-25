@@ -53,8 +53,8 @@
                 "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
                 "impactWarningTooltip": "Die Anzahl, wie oft dein Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
                 "automaticFeedbackInformationModal": {
-                    "heading": "Automatische Feedback Informationen",
-                    "introduction": "Die Vorschau einer bereits bewerteten Abgabe wird unten angezeigt.<br/> Das  <span style='background-color: #d8e8f5'>hervorgehobene Feedback</span> wurde verwendet, um das automatische Feedback zu erzeugen.<br/><br/><i>Vorschau:</i>",
+                    "heading": "Automatische Feedbackverfolgung",
+                    "introduction": "Dieser automatische Vorschlag stammt von einer zuvor bewerteten Vorlage, die unten gezeigt wird. .<br/> Das  <span style='background-color: #d8e8f5'>hervorgehobene Feedback</span> wurde wiederverwendet.<br/><br/><i>Vorschau:</i>",
                     "trace": "Herkunft des automatischen Feedbacks verfolgen",
                     "points": "Punkte",
                     "reused": "{{reusedCount}} mal wiederverwendet"

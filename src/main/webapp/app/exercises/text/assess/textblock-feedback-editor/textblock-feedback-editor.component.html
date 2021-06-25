@@ -5,6 +5,17 @@
     </span>
 
     <span
+        class="badge bg-primary findOrigin"
+        title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}"
+        *ngIf="feedback.type === FeedbackType.AUTOMATIC"
+        (click)="openOriginOfFeedbackModal(toggleMore)"
+        [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace' | artemisTranslate"
+        placement="top"
+    >
+        <fa-icon [icon]="'search'"></fa-icon>
+    </span>
+
+    <span
         class="badge bg-warning"
         *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
         (click)="onConflictsClicked.emit(feedback.id)"
@@ -122,13 +133,6 @@
             </div>
         </div>
     </ng-template>
-    <a
-        *ngIf="feedback.type === FeedbackType.AUTOMATIC"
-        (click)="openConfirmationModal(toggleMore)"
-        jhiTranslate="artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace"
-        >Trace automatic feedback origin</a
-    >
-    <br />
     <!-- correction round label-->
     <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>
 </div>

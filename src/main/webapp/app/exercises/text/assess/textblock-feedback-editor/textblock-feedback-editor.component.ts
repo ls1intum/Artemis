@@ -154,20 +154,32 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         this.didChange();
     }
 
-    async openConfirmationModal(content: any) {
-        const participationId = this.feedback.suggestedFeedbackParticipationReference ? this.feedback.suggestedFeedbackParticipationReference : -1;
+    // this method fires the modal service and shows a modal after connecting feedback with its respective blocks
+    async openOriginOfFeedbackModal(content: any) {
+        await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
+        this.modalService.open(content, { size: 'lg' });
+    }
 
+    /**
+     * This method is used to parse information and find the submission used for making the current Automatic Feedback
+     * The respective blocks are structured and set as a local property of this component.
+     */
+    async connectAutomaticFeedbackOriginBlocksWithFeedback() {
+        // retrieve participation and submission references for the Automatic Feedback generated
+        const participationId = this.feedback.suggestedFeedbackParticipationReference ? this.feedback.suggestedFeedbackParticipationReference : -1;
         const submissionId = this.feedback.suggestedFeedbackOriginSubmissionReference ? this.feedback.suggestedFeedbackOriginSubmissionReference : -1;
         if (participationId >= 0 && submissionId >= 0) {
+            // finds the corresponding submission where the automatic feedback came from
             const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
 
+            // connect the feedback with its respective block if any.
             const blocks: any[] = participation.submissions?.values().next().value.blocks;
             const feedbacks: any[] = participation.submissions?.values().next().value.latestResult.feedbacks;
 
+            // set list of blocks to be shown in the modal
             this.listOfBlocksWithFeedback = blocks
                 .map((block) => {
                     const blockFeedback = feedbacks.find((feedback) => feedback.reference === block.id);
-                    console.warn('map-block-reference', block.reference);
                     return {
                         text: block.text,
                         feedback: blockFeedback && blockFeedback.detailText,
@@ -177,17 +189,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
                     };
                 })
                 .filter((item) => item != undefined);
-
-            this.modalService.open(content, { size: 'lg' }).result.then(
-                (result: string) => {
-                    if (result === 'confirm') {
-                        console.warn('Confirm?');
-                        console.warn(participation);
-                    }
-                    console.warn('test', participation);
-                },
-                () => {},
-            );
         }
     }
 }
