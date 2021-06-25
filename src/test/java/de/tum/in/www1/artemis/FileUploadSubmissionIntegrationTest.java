@@ -72,34 +72,59 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmission() throws Exception {
-        submitFile("file.png");
+        submitFile("file.png", false);
     }
 
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmissionWithShortName() throws Exception {
-        submitFile(".png");
+        submitFile(".png", false);
     }
 
     @Test
     @WithMockUser(value = "student3")
     public void submitFileUploadSubmissionWithDoubleBackslash() throws Exception {
-        submitFile("file\\file.png");
+        submitFile("file\\file.png", false);
     }
 
-    private void submitFile(String filename) throws Exception {
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionDifferentFile() throws Exception {
+        submitFile("file2.png", true);
+    }
+
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
+        submitFile("file.png", false);
+        submitFile("file.png", false);
+
+        // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
+    }
+
+    private void submitFile(String filename, boolean differentFilePath) throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
+
+        if (differentFilePath){
+            submission.setFilePath("/api/files/file-upload-exercises/1/submissions/1/file1.png");
+        }
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
+
         String actualFilePath;
 
-        if (filename.length() < 5) {
-            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
-        }
-        else if (filename.contains("\\")) {
-            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+        if (differentFilePath) {
+            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
         }
         else {
-            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+            if (filename.length() < 5) {
+                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
+            }
+            else if (filename.contains("\\")) {
+                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+            }
+            else {
+                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+            }
         }
 
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
@@ -108,15 +133,6 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         var fileBytes = Files.readAllBytes(Paths.get(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
-    }
-
-    @Test
-    @WithMockUser(value = "student3")
-    public void submitFileUploadSubmissionTwiceSameFile() throws Exception {
-        submitFile("file.png");
-        submitFile("file.png");
-
-        // TODO: upload a real file from the file system twice with the same and with different names and test both works correctly
     }
 
     @Test
