@@ -161,8 +161,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     /**
-     * This method is used to parse information and find the submission used for making the current Automatic Feedback
-     * The respective blocks are structured and set as a local property of this component.
+     * This method is used to find the submission used for making the current Automatic Feedback and retrieve its blocks.
+     * The blocks are then structured and set as a local property of this component to be shown in a modal
      */
     async connectAutomaticFeedbackOriginBlocksWithFeedback() {
         // retrieve participation and submission references for the Automatic Feedback generated

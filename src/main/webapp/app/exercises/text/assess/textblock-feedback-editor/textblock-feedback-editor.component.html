@@ -6,7 +6,6 @@
 
     <span
         class="badge bg-primary findOrigin"
-        title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}"
         *ngIf="feedback.type === FeedbackType.AUTOMATIC"
         (click)="openOriginOfFeedbackModal(toggleMore)"
         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace' | artemisTranslate"

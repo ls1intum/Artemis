@@ -116,7 +116,6 @@ export class TextAssessmentService {
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }
-        console.warn('KTU', participationId, submissionId);
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/for-text-assessment`, { observe: 'response', params })
             .pipe<HttpResponse<StudentParticipation>, StudentParticipation>(
