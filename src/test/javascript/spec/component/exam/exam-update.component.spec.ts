@@ -27,6 +27,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import * as moment from 'moment';
 import { Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -94,6 +96,16 @@ describe('Exam Update Component', function () {
                         return of(
                             new HttpResponse({
                                 body: course,
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForExam: () => {
+                        return of(
+                            new HttpResponse({
+                                body: new GradingScale(),
                                 status: 200,
                             }),
                         );

@@ -1666,6 +1666,31 @@ public class DatabaseUtilService {
         useCaseExercise.setTitle("UseCaseDiagram");
         course.addExercises(useCaseExercise);
 
+        ModelingExercise communicationExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.CommunicationDiagram,
+                course);
+        communicationExercise.setTitle("CommunicationDiagram");
+        course.addExercises(communicationExercise);
+
+        ModelingExercise componentExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ComponentDiagram, course);
+        componentExercise.setTitle("ComponentDiagram");
+        course.addExercises(componentExercise);
+
+        ModelingExercise deploymentExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.DeploymentDiagram, course);
+        deploymentExercise.setTitle("DeploymentDiagram");
+        course.addExercises(deploymentExercise);
+
+        ModelingExercise petriNetExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.PetriNet, course);
+        petriNetExercise.setTitle("PetriNet");
+        course.addExercises(petriNetExercise);
+
+        ModelingExercise syntaxTreeExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.SyntaxTree, course);
+        syntaxTreeExercise.setTitle("SyntaxTree");
+        course.addExercises(syntaxTreeExercise);
+
+        ModelingExercise flowchartExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.Flowchart, course);
+        flowchartExercise.setTitle("Flowchart");
+        course.addExercises(flowchartExercise);
+
         ModelingExercise finishedExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
         finishedExercise.setTitle("finished");
         course.addExercises(finishedExercise);
@@ -1675,10 +1700,16 @@ public class DatabaseUtilService {
         exerciseRepo.save(activityExercise);
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
+        exerciseRepo.save(communicationExercise);
+        exerciseRepo.save(componentExercise);
+        exerciseRepo.save(deploymentExercise);
+        exerciseRepo.save(petriNetExercise);
+        exerciseRepo.save(syntaxTreeExercise);
+        exerciseRepo.save(flowchartExercise);
         exerciseRepo.save(finishedExercise);
         Course storedCourse = courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
-        assertThat(exercises.size()).as("five exercises got stored").isEqualTo(5);
+        assertThat(exercises.size()).as("eleven exercises got stored").isEqualTo(11);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
         return course;
     }
@@ -3425,6 +3456,39 @@ public class DatabaseUtilService {
         programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation1);
         programmingExerciseStudentParticipationRepo.save(programmingExerciseStudentParticipation2);
         return course;
+    }
+
+    public void addAssessmentWithFeedbackWithGradingInstructionsForExercise(Exercise exercise, String login) {
+        // add participation and submission for exercise
+        StudentParticipation studentParticipation = createAndSaveParticipationForExercise(exercise, login);
+        Submission submission = null;
+        if (exercise instanceof TextExercise) {
+            submission = ModelFactory.generateTextSubmission("test", Language.ENGLISH, true);
+        }
+        if (exercise instanceof FileUploadExercise) {
+            submission = ModelFactory.generateFileUploadSubmission(true);
+        }
+        if (exercise instanceof ModelingExercise) {
+            submission = ModelFactory.generateModelingSubmission(null, true);
+        }
+        if (exercise instanceof ProgrammingExercise) {
+            submission = ModelFactory.generateProgrammingSubmission(true);
+        }
+        Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
+        Result result = addResultToParticipation(studentParticipation, submissionWithParticipation);
+        resultRepo.save(result);
+
+        assertThat(exercise.getGradingCriteria()).isNotNull();
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).isNotNull();
+
+        // add feedback which is associated with structured grading instructions
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+        addFeedbackToResult(feedback, result);
+    }
+
+    public List<Result> getResultsForExercise(Exercise exercise) {
+        return resultRepo.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
     }
 
     public Course saveCourse(Course course) {
