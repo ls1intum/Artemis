@@ -250,8 +250,8 @@ dependencies {
     implementation "com.ibm.icu:icu4j:69.1"
     implementation "com.github.seancfoley:ipaddress:5.3.3"
     implementation "org.apache.maven:maven-model:3.8.1"
+    implementation "org.apache.pdfbox:pdfbox:2.0.24"
     implementation "com.google.protobuf:protobuf-java:3.17.3"
-
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
