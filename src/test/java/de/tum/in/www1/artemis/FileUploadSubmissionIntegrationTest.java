@@ -105,7 +105,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     private void submitFile(String filename, boolean differentFilePath) throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
 
-        if (differentFilePath){
+        if (differentFilePath) {
             submission.setFilePath("/api/files/file-upload-exercises/1/submissions/1/file1.png");
         }
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
