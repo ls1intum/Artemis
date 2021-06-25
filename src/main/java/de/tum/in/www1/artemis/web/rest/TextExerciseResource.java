@@ -41,7 +41,7 @@ import jplag.ExitException;
  * REST controller for managing TextExercise.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(TextExerciseResource.Endpoints.ROOT)
 public class TextExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
@@ -294,14 +294,10 @@ public class TextExerciseResource {
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            textExercise.setGradingInstructionFeedbackUsed(true);
-        }
         textExercise.setGradingCriteria(gradingCriteria);
         textExercise.setExampleSubmissions(exampleSubmissions);
+
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
 
         return ResponseEntity.ok().body(textExercise);
     }
@@ -574,4 +570,54 @@ public class TextExerciseResource {
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * PUT /text-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing textExercise.
+     *
+     * @param exerciseId                                   of the exercise
+     * @param textExercise                                 the textExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
+     * with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500
+     * (Internal Server Error) if the textExercise couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+        log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
+
+        // check that the exercise is exist for given id
+        textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, textExercise);
+
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
+
+        // Check that the user is authorized to update the exercise
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
+
+        return updateTextExercise(textExercise, null);
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String TEXT_EXERCISES = "/text-exercises";
+
+        public static final String TEXT_EXERCISE = TEXT_EXERCISES + "/{exerciseId}";
+
+        public static final String REEVALUATE_EXERCISE = TEXT_EXERCISE + "/re-evaluate";
+
+        private Endpoints() {
+        }
+    }
+
 }
