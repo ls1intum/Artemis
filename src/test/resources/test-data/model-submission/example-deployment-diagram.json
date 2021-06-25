@@ -1,0 +1,102 @@
+{
+    "version": "2.0.0",
+    "type": "DeploymentDiagram",
+    "size": { "width": 920, "height": 1140 },
+    "interactive": { "elements": [], "relationships": [] },
+    "elements": [
+        {
+            "id": "6e1de192-ce9e-4dfa-bb15-64afd964c232",
+            "name": "Node",
+            "type": "DeploymentNode",
+            "owner": null,
+            "bounds": { "x": 10, "y": 0, "width": 200, "height": 100 },
+            "stereotype": "node"
+        },
+        {
+            "id": "a9f53b31-1041-4b78-84dc-e2c51d5cb153",
+            "name": "Component",
+            "type": "DeploymentComponent",
+            "owner": null,
+            "bounds": { "x": 0, "y": 440, "width": 200, "height": 100 }
+        },
+        {
+            "id": "a2366c55-c206-494d-aef8-f0672558ca0d",
+            "name": "Artifact",
+            "type": "DeploymentArtifact",
+            "owner": null,
+            "bounds": { "x": 670, "y": 240, "width": 200, "height": 40 }
+        },
+        {
+            "id": "d5e2bc8f-3851-44a0-927c-4f2caba9ac64",
+            "name": "Interface",
+            "type": "DeploymentInterface",
+            "owner": null,
+            "bounds": { "x": 290, "y": 250, "width": 20, "height": 20 }
+        },
+        {
+            "id": "1bd706f5-5aa2-4945-967a-f7c6d5180a81",
+            "name": "Component1",
+            "type": "DeploymentComponent",
+            "owner": null,
+            "bounds": { "x": 420, "y": 430, "width": 200, "height": 100 }
+        }
+    ],
+    "relationships": [
+        {
+            "id": "2d215ebc-6574-46c6-b437-901572e8ad47",
+            "name": "",
+            "type": "DeploymentInterfaceProvided",
+            "owner": null,
+            "bounds": { "x": 210, "y": 50, "width": 90, "height": 200 },
+            "path": [
+                { "x": 0, "y": 0 },
+                { "x": 90, "y": 0 },
+                { "x": 90, "y": 200 }
+            ],
+            "source": { "direction": "Right", "element": "6e1de192-ce9e-4dfa-bb15-64afd964c232" },
+            "target": { "direction": "Up", "element": "d5e2bc8f-3851-44a0-927c-4f2caba9ac64" }
+        },
+        {
+            "id": "e51e25e8-2767-49ed-aec1-5bea9232c213",
+            "name": "Association",
+            "type": "DeploymentAssociation",
+            "owner": null,
+            "bounds": { "x": 310, "y": 220, "width": 360, "height": 41 },
+            "path": [
+                { "x": 360, "y": 40 },
+                { "x": 0, "y": 40 }
+            ],
+            "source": { "direction": "Left", "element": "a2366c55-c206-494d-aef8-f0672558ca0d" },
+            "target": { "direction": "Right", "element": "d5e2bc8f-3851-44a0-927c-4f2caba9ac64" }
+        },
+        {
+            "id": "059cd7ba-a2fd-49b4-b9ab-68574dbc9d5c",
+            "name": "",
+            "type": "DeploymentDependency",
+            "owner": null,
+            "bounds": { "x": 100, "y": 260, "width": 190, "height": 180 },
+            "path": [
+                { "x": 0, "y": 180 },
+                { "x": 0, "y": 0 },
+                { "x": 190, "y": 0 }
+            ],
+            "source": { "direction": "Up", "element": "a9f53b31-1041-4b78-84dc-e2c51d5cb153" },
+            "target": { "direction": "Left", "element": "d5e2bc8f-3851-44a0-927c-4f2caba9ac64" }
+        },
+        {
+            "id": "0ac07a9d-fd5e-4920-ae15-a509e586de65",
+            "name": "",
+            "type": "DeploymentInterfaceRequired",
+            "owner": null,
+            "bounds": { "x": 287, "y": 257, "width": 233, "height": 173 },
+            "path": [
+                { "x": 233, "y": 173 },
+                { "x": 233, "y": 93 },
+                { "x": 13, "y": 93 },
+                { "x": 13, "y": 13 }
+            ],
+            "source": { "direction": "Up", "element": "1bd706f5-5aa2-4945-967a-f7c6d5180a81" },
+            "target": { "direction": "Down", "element": "d5e2bc8f-3851-44a0-927c-4f2caba9ac64" }
+        }
+    ]
+}

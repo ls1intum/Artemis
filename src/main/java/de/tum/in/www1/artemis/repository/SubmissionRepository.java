@@ -57,6 +57,19 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findAllWithResultsAndAssessorByParticipationId(Long participationId);
 
     /**
+     * Get all submissions with their results by the submission ids
+     *
+     * @param submissionIds the ids of the submissions which should be retrieved
+     * @return a list of submissions with their results eagerly loaded
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
+    @Query("""
+                SELECT DISTINCT s FROM Submission s
+                WHERE s.id IN :submissionIds
+            """)
+    List<Submission> findBySubmissionIdsWithEagerResults(@Param("submissionIds") List<Long> submissionIds);
+
+    /**
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *

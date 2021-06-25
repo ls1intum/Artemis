@@ -5,9 +5,7 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -192,6 +190,10 @@ public class StudentExamResource {
         Optional<ResponseEntity<StudentExam>> accessFailure = this.studentExamAccessService.checkStudentExamAccess(courseId, examId, studentExam.getId(), currentUser, isTestRun);
         if (accessFailure.isPresent()) {
             return accessFailure.get();
+        }
+        // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
+        if (!Objects.equals(studentExam.getUser().getId(), currentUser.getId())) {
+            return forbidden();
         }
 
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId());
@@ -602,6 +604,11 @@ public class StudentExamResource {
                 latestResult.setSubmission(lastSubmission);
                 // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
                 // lastResult -> lastSubmission
+                var resultWithComplaint = lastSubmission.getResultWithComplaint();
+                if (resultWithComplaint != null) {
+                    latestResult.setHasComplaint(true);
+                    latestResult.setId(resultWithComplaint.getId());
+                }
                 participation.setResults(Set.of(latestResult));
             }
             lastSubmission.setResults(null);

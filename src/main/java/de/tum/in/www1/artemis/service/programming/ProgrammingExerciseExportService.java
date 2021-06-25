@@ -430,7 +430,7 @@ public class ProgrammingExerciseExportService {
 
         // Checkout the repository
         repository = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, true);
-        gitService.resetToOriginMaster(repository);
+        gitService.resetToOriginHead(repository);
         repository.close();
 
         // Zip it and return the path to the file
@@ -486,7 +486,7 @@ public class ProgrammingExerciseExportService {
                 return null;
             }
 
-            gitService.resetToOriginMaster(repository);
+            gitService.resetToOriginHead(repository);
 
             if (repositoryExportOptions.isFilterLateSubmissions() && repositoryExportOptions.getFilterLateSubmissionsDate() != null) {
                 filterLateSubmissions(repositoryExportOptions.getFilterLateSubmissionsDate(), participation, repository);

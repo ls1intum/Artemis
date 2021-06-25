@@ -39,6 +39,9 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
     private ComplaintRepository complaintRepo;
 
     @Autowired
+    SubmissionRepository submissionRepository;
+
+    @Autowired
     private ComplaintResponseRepository complaintResponseRepo;
 
     @Autowired
@@ -186,29 +189,31 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
     public void submitComplaintResponse_updateAssessment() throws Exception {
         complaint = complaintRepo.save(complaint);
 
-        List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor1", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("accepted");
 
-        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
-        Result resultBeforeComplaint = mapper.readValue(storedComplaint.getResultBeforeComplaint(), Result.class);
+        Result restultOfComplaint = storedComplaint.getResult();
         // set dates to UTC and round to milliseconds for comparison
-        resultBeforeComplaint.setCompletionDate(ZonedDateTime.ofInstant(resultBeforeComplaint.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        restultOfComplaint.setCompletionDate(ZonedDateTime.ofInstant(restultOfComplaint.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(resultBeforeComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
-        assertThat(resultBeforeComplaint.getFeedbacks()).containsExactlyInAnyOrderElementsOf(modelingAssessment.getFeedbacks());
+        assertThat(restultOfComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
+        assertThat(restultOfComplaint).isEqualTo(modelingAssessment);
         String[] ignoringFields = { "participation", "submission", "feedbacks", "assessor" };
-        assertThat(resultBeforeComplaint).as("result before complaint is correctly stored").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
-        database.checkFeedbackCorrectlyStored(feedback, storedResult.getFeedbacks(), FeedbackType.MANUAL);
-        assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(modelingAssessment.getSubmission().getId());
+        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.getFirstResult()).isNotNull();
+        database.checkFeedbackCorrectlyStored(feedbacks, submission.getLatestResult().getFeedbacks(), FeedbackType.MANUAL);
+        assertThat(submission.getFirstResult().getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
 
     @Test

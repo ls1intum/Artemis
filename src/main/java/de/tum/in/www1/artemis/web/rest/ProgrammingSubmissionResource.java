@@ -365,6 +365,7 @@ public class ProgrammingSubmissionResource {
         var programmingSubmission = (ProgrammingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
         final var participation = programmingSubmission.getParticipation();
         final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
+        final var numberOfEnabledCorrectionRounds = programmingExercise.getNumberOfCorrectionRounds();
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
@@ -378,7 +379,11 @@ public class ProgrammingSubmissionResource {
         }
 
         var numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
-        if (numberOfManualResults < correctionRound + 1) {
+
+        // this makes sure that new results are only created if it is really necessary.
+        // At max 1 for course exercises and at max 2 results in exams with 2 correction rounds enabled.
+        // The second (or third) result for complaint responses is not created here.
+        if (numberOfManualResults < correctionRound + 1 && numberOfManualResults < numberOfEnabledCorrectionRounds) {
             // Check lock limit
             programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 

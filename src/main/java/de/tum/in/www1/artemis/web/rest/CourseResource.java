@@ -251,15 +251,21 @@ public class CourseResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
         log.debug("REST request to update Course : {}", updatedCourse);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (updatedCourse.getId() == null) {
-            return createCourse(updatedCourse);
+            if (authCheckService.isAdmin(user)) {
+                return createCourse(updatedCourse);
+            }
+            else {
+                return forbidden();
+            }
         }
+
         var existingCourse = courseRepository.findByIdElseThrow(updatedCourse.getId());
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", ENTITY_NAME, "shortNameCannotChange", true);
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         // only allow admins or instructors of the existing course to change it
         // this is important, otherwise someone could put himself into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
