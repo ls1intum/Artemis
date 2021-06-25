@@ -1,25 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" width="67.942429mm" height="67.942429mm"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="67.942429mm" height="67.942429mm" viewBox="0 0 67.942429 67.942429" version="1.1" id="SvgjsSvg1010" inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)">
-  <title id="SvgjsTitle1009">testKent</title>
-  <defs id="SvgjsDefs1008"></defs>
-  <sodipodi:namedview id="SvgjsSodipodi:namedview1007" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="1.414489" inkscape:cx="-1.1056881" inkscape:cy="139.88778" inkscape:document-units="mm" inkscape:current-layer="g3365" inkscape:document-rotation="0" showgrid="false" fit-margin-top="0" fit-margin-left="0" fit-margin-right="0" fit-margin-bottom="0" inkscape:window-width="1920" inkscape:window-height="1017" inkscape:window-x="1912" inkscape:window-y="-8" inkscape:window-maximized="1"></sodipodi:namedview>
-  <metadata id="SvgjsMetadata1006">
-    <rdf:rdf>
-      <cc:work rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"></dc:type>
-        <dc:title>testKent</dc:title>
-      </cc:work>
-    </rdf:rdf>
-  </metadata>
-  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="SvgjsG1005" transform="translate(-42.062714,-127.96269)">
-    <g id="SvgjsG1004" transform="matrix(1.0937602,0,0,1.0937602,-882.49751,-3000.7907)">
-      <g id="SvgjsG1003" inkscape:export-xdpi="87" inkscape:export-ydpi="87">
-        <g id="SvgjsG1002" transform="translate(-12.730764,-0.54479352)">
-          <path id="SvgjsPath1001" style="fill:#fffffc;fill-opacity:1;stroke:none;stroke-width:0.163472px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="m 889.09574,2865.3376 -10.26164,17.7529 0.007,0.01 z m 10.25509,17.7595 c -0.44648,-0.7733 -10.25509,8.924 -10.25509,8.924 l 30.96197,26.9458 z" sodipodi:nodetypes="cccccccc" inkscape:export-filename="C:\Users\IAMsay\Downloads\Logos 4 Stephan\2a.png" inkscape:export-xdpi="87" inkscape:export-ydpi="87"></path>
-          <path style="fill:#3070b3;fill-opacity:1;stroke:none;stroke-width:0.163472px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" d="m 858.13067,2918.967 30.96362,-53.6305 10.26175,17.7539 z" id="SvgjsPath1000" sodipodi:nodetypes="cccc" inkscape:export-filename="C:\Users\IAMsay\Downloads\Logos 4 Stephan\2a.png" inkscape:export-xdpi="87" inkscape:export-ydpi="87"></path>
-        </g>
-      </g>
-    </g>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="67.619mm" height="67.619mm" version="1.1" viewBox="0 0 67.619 67.619" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(13.468 -109.37)">
+  <g transform="matrix(1.0938 0 0 1.0938 -952.11 -3020.1)">
+   <path d="m889.1 2865.3-10.262 17.753 7e-3 0.01zm10.255 17.76c-0.44648-0.7733-10.255 8.924-10.255 8.924l30.962 26.946z" fill="#fffffc"/>
+   <path d="m858.13 2919 30.964-53.63 10.262 17.754z" fill="#399ce1"/>
   </g>
-</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
-</style></svg>
+ </g>
+</svg>
