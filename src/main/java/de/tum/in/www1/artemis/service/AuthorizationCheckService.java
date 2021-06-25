@@ -10,7 +10,9 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -642,5 +644,11 @@ public class AuthorizationCheckService {
      */
     public boolean isAllowedToAssesExercise(Exercise exercise, User user, Long resultId) {
         return this.isAtLeastTeachingAssistantForExercise(exercise, user) && (resultId == null || isAtLeastInstructorForExercise(exercise, user));
+    }
+
+    public void checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(Long exerciseId, Exercise exerciseInRequestBody) {
+        if (!exerciseId.equals(exerciseInRequestBody.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
     }
 }
