@@ -9,7 +9,6 @@ export class ArtemisNavigationUtilService {
     private onFirstPage = true;
 
     constructor(private router: Router, private location: Location) {
-        console.log('Instantiated');
         router.events
             .pipe(
                 filter((e) => e instanceof NavigationEnd),
