@@ -9,15 +9,16 @@ export class ArtemisNavigationUtilService {
     private onFirstPage = true;
 
     constructor(private router: Router, private location: Location) {
-        console.log("Instantiated")
-        router.events.pipe(
-            filter(e => e instanceof NavigationEnd),
-            skip(1),
-            // take(1)
-        ).subscribe(e => {
-            this.onFirstPage = false;
-            console.log((e as NavigationEnd).urlAfterRedirects);
-        });
+        console.log('Instantiated');
+        router.events
+            .pipe(
+                filter((e) => e instanceof NavigationEnd),
+                skip(1),
+                take(1),
+            )
+            .subscribe((_) => {
+                this.onFirstPage = false;
+            });
     }
 
     navigateBack(fallbackUrl: string[]) {
@@ -26,6 +27,13 @@ export class ArtemisNavigationUtilService {
         } else {
             this.router.navigate(fallbackUrl);
         }
+    }
+
+    navigateBackWithOptional(fallbackUrl: string[], optionalLastElement: string | undefined) {
+        if (optionalLastElement) {
+            fallbackUrl.push(optionalLastElement);
+        }
+        this.navigateBack(fallbackUrl);
     }
 }
 

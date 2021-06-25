@@ -94,6 +94,5 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 })
 export class ArtemisAppRoutingModule {
     // Ensure the service is initialized before any routing happens
-    constructor(private _: ArtemisNavigationUtilService) {
-    }
+    constructor(private _: ArtemisNavigationUtilService) {}
 }
