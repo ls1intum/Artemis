@@ -62,7 +62,7 @@
                 >
             </div>
         </div>
-        <div class="form-group col-md-2 text-end">
+        <div class="form-group col-md-1 text-end">
             <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
             <input
                 class="form-control"
@@ -76,6 +76,9 @@
                 (ngModelChange)="didChange()"
                 [readOnly]="disableEditScore || (readOnly && !isConflictingFeedbackEditable)"
             />
+        </div>
+        <div class="form-group col-md-1" *ngIf="feedback.gradingInstruction!">
+            <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
         </div>
     </div>
 

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
@@ -14,6 +13,7 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -24,9 +24,15 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public abstract class SubmissionExportService {
+
+    @Value("${artemis.submission-export-path}")
+    private String submissionExportPath;
+
+    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
 
     private final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
 
@@ -40,6 +46,42 @@ public abstract class SubmissionExportService {
         this.exerciseRepository = exerciseRepository;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
+    }
+
+    /**
+     * Exports student submission of an exercise to a zip file located in the submission exports folder.
+     * The zip file is deleted automatically after 30 minutes. The function throws a bad request if the
+     * export process fails.
+     *
+     * @param exerciseId the id   of the exercise to be exported
+     * @param submissionExportOptions the options for the export
+     * @return the zippped file with the exported submissions
+     */
+    public File exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
+        return exportStudentSubmissions(exerciseId, submissionExportOptions)
+                .orElseThrow(() -> new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "nosubmissions"));
+    }
+
+    /**
+     * Exports student submission of an exercise to a zip file located in the submission exports folder.
+     * The zip file is deleted automatically after 30 minutes.
+     *
+     * @param exerciseId the id   of the exercise to be exported
+     * @param submissionExportOptions the options for the export
+     * @return the zippped file with the exported submissions
+     */
+    public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
+        Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
+        try {
+            return exportStudentSubmissions(exerciseId, submissionExportOptions, outputDir, new ArrayList<>(), new ArrayList<>());
+        }
+        catch (IOException e) {
+            log.error("Failed to export student submissions for exercise {} to {}: {}", exerciseId, outputDir, e);
+            return Optional.empty();
+        }
+        finally {
+            fileService.scheduleForDirectoryDeletion(outputDir, EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES);
+        }
     }
 
     /**
@@ -190,7 +232,8 @@ public abstract class SubmissionExportService {
             zipFileService.createZipFile(zipFilePath, submissionFilePaths, submissionsFolderPath);
         }
         finally {
-            deleteTempFiles(submissionFilePaths);
+            log.debug("Delete all temporary files");
+            fileService.deleteFiles(submissionFilePaths);
         }
 
         return Optional.of(zipFilePath.toFile());
@@ -200,21 +243,4 @@ public abstract class SubmissionExportService {
 
     protected abstract String getFileEndingForSubmission(Submission submission);
 
-    /**
-     * Delete all temporary files created during export
-     *
-     * @param pathsToTempFiles A list of all paths to temporary files, that should be deleted
-     */
-    private void deleteTempFiles(List<Path> pathsToTempFiles) {
-        log.debug("Delete all temporary files");
-        // delete the temporary zipped repo files
-        for (Path tempFile : pathsToTempFiles) {
-            try {
-                Files.delete(tempFile);
-            }
-            catch (Exception ex) {
-                log.warn("Could not delete file {}. Error message: {}", tempFile, ex.getMessage());
-            }
-        }
-    }
 }

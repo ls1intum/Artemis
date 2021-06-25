@@ -464,7 +464,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
             final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
+            String defaultBranchName = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newRepoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, defaultBranchName,
+                    optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);

@@ -25,7 +25,7 @@
     {
       "id": "02c342c2-53d4-4bd7-9e08-774dbaa97ca6",
       "name": "Decision",
-      "type": "ActivityDecisionNode",
+      "type": "ActivityMergeNode",
       "owner": "f85b009b-3320-4c73-9c7b-0d4bbe7e74f9",
       "bounds": {
         "x": 540,
@@ -68,18 +68,6 @@
         "y": 250,
         "width": 200,
         "height": 100
-      }
-    },
-    {
-      "id": "295d7ebe-81f8-44a4-9e61-1984d900ddb0",
-      "name": "",
-      "type": "ActivityJoinNode",
-      "owner": "f85b009b-3320-4c73-9c7b-0d4bbe7e74f9",
-      "bounds": {
-        "x": 1360,
-        "y": 180,
-        "width": 20,
-        "height": 60
       }
     },
     {
@@ -285,7 +273,7 @@
       },
       "target": {
         "direction": "Left",
-        "element": "295d7ebe-81f8-44a4-9e61-1984d900ddb0"
+        "element": "f85b009b-3320-4c73-9c7b-0d4bbe7e74f9"
       }
     },
     {
@@ -323,7 +311,7 @@
       },
       "target": {
         "direction": "Left",
-        "element": "295d7ebe-81f8-44a4-9e61-1984d900ddb0"
+        "element": "f85b009b-3320-4c73-9c7b-0d4bbe7e74f9"
       }
     },
     {
@@ -443,7 +431,7 @@
       ],
       "source": {
         "direction": "Down",
-        "element": "295d7ebe-81f8-44a4-9e61-1984d900ddb0"
+        "element": "f85b009b-3320-4c73-9c7b-0d4bbe7e74f9"
       },
       "target": {
         "direction": "Right",

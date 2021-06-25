@@ -136,10 +136,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
-        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase("master")) {
-            // if the commit was made in a branch different than master, ignore this
+        String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(programmingExerciseParticipation.getVcsRepositoryUrl());
+        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(defaultBranch)) {
+            // if the commit was made in a branch different than the default, ignore this
             throw new IllegalStateException(
-                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
+                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
         }
         if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
                 && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
