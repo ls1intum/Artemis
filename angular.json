@@ -33,7 +33,7 @@
                       "./src/main/webapp/mstile-310x150.png",
                       "./src/main/webapp/mstile-310x310.png",
                       "./src/main/webapp/safari-pinned-tab.svg",
-                      ",./src/main/webapp/manifest.webapp"
+                      "./src/main/webapp/manifest.webapp"
                   ],
                   "styles": [
                       "src/main/webapp/content/scss/global.scss"
