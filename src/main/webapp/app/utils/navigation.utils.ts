@@ -21,6 +21,10 @@ export class ArtemisNavigationUtilService {
             });
     }
 
+    /**
+     * Navigates to the last page if possible or to the fallback url if not
+     * @param fallbackUrl Url to navigate to if current page is first navigation
+     */
     navigateBack(fallbackUrl: string[]) {
         if (!this.onFirstPage) {
             this.location.back();
@@ -29,6 +33,11 @@ export class ArtemisNavigationUtilService {
         }
     }
 
+    /**
+     * Navigates to the last page if possible or to the fallback url if not. If the optional element is present, it is appended to the fallback url
+     * @param fallbackUrl Url to navigate to if current page is first navigation
+     * @param optionalLastElement last element of the url or nothing
+     */
     navigateBackWithOptional(fallbackUrl: string[], optionalLastElement: string | undefined) {
         if (optionalLastElement) {
             fallbackUrl.push(optionalLastElement);
@@ -36,14 +45,6 @@ export class ArtemisNavigationUtilService {
         this.navigateBack(fallbackUrl);
     }
 }
-
-export const navigateBack = (router: Router, fallbackUrl: string[]): void => {
-    if (window.history.length > 1) {
-        window.history.back();
-    } else {
-        router.navigate(fallbackUrl);
-    }
-};
 
 export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
     setTimeout(() => {
