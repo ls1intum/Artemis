@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(ModelingExerciseResource.Endpoints.ROOT)
 public class ModelingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
@@ -72,15 +72,13 @@ public class ModelingExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final InstanceMessageSendService instanceMessageSendService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseRepository courseRepository, ModelingExerciseService modelingExerciseService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             CompassService compassService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository, FeedbackRepository feedbackRepository,
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ExampleSubmissionRepository exampleSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
@@ -96,7 +94,6 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
         this.instanceMessageSendService = instanceMessageSendService;
     }
 
@@ -266,12 +263,10 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            modelingExercise.setGradingInstructionFeedbackUsed(true);
-        }
         modelingExercise.setGradingCriteria(gradingCriteria);
+
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
+
         return ResponseEntity.ok().body(modelingExercise);
     }
 
@@ -445,5 +440,52 @@ public class ModelingExerciseResource {
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * PUT /modeling-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing modelingExercise.
+     *
+     * @param exerciseId                                   of the exercise
+     * @param modelingExercise                             the modelingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
+     * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the modelingExercise couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+        log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
+
+        modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, modelingExercise);
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // make sure the course actually exists
+        var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterGradingInstructionUpdate);
+
+        return updateModelingExercise(modelingExercise, null);
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String MODELING_EXERCISES = "/modeling-exercises";
+
+        public static final String MODELING_EXERCISE = MODELING_EXERCISES + "/{exerciseId}";
+
+        public static final String REEVALUATE_EXERCISE = MODELING_EXERCISE + "/re-evaluate";
+
+        private Endpoints() {
+        }
     }
 }

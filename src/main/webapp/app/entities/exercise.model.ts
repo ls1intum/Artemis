@@ -140,7 +140,7 @@ export abstract class Exercise implements BaseEntity {
      *
      * @param exercise
      */
-    public static sanitize(exercise: Exercise): Exercise {
+    public static sanitize<T extends Exercise>(exercise: T): T {
         exercise.title = exercise.title?.trim();
         return exercise;
     }

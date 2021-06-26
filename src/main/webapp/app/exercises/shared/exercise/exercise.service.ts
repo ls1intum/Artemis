@@ -21,6 +21,7 @@ export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
     import?(exercise: T): Observable<HttpResponse<T>>;
     update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+    reevaluateAndUpdate(exercise: T, req?: any): Observable<HttpResponse<T>>;
 }
 
 @Injectable({ providedIn: 'root' })

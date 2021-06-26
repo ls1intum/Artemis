@@ -186,6 +186,9 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.saveCommand.save(this.modelingExercise, this.notificationText).subscribe(
             (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
             (res: HttpErrorResponse) => this.onSaveError(res),
+            () => {
+                this.isSaving = false;
+            },
         );
     }
 
@@ -229,9 +232,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
      */
     diagramTypeChanged() {
-        const semiAutomaticSupportPossible =
-            this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram;
-        if (this.isExamMode || !semiAutomaticSupportPossible) {
+        if (this.isExamMode || !this.semiAutomaticAssessmentAvailable) {
             this.modelingExercise.assessmentType = AssessmentType.MANUAL;
         }
     }

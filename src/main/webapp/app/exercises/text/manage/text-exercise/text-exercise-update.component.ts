@@ -170,6 +170,9 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.saveCommand.save(this.textExercise, this.notificationText).subscribe(
             (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
             (res: HttpErrorResponse) => this.onSaveError(res),
+            () => {
+                this.isSaving = false;
+            },
         );
     }
 

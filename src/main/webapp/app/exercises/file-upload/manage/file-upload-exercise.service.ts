@@ -81,6 +81,23 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
+    /**
+     * Re-evaluates and updates an file upload exercise.
+     *
+     * @param fileUploadExercise that should be updated of type {FileUploadExercise}
+     * @param req optional request options
+     */
+    reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
+    }
+
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
         fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
