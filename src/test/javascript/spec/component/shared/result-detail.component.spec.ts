@@ -200,7 +200,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(comp.result.participation!.id!, comp.result.id);
         expect(comp.filteredFeedbackList).to.have.same.deep.members(expectedItems);
         expect(comp.isLoading).to.be.false;
     });
