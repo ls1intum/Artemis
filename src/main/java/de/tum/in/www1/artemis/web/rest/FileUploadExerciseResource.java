@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /** REST controller for managing FileUploadExercise. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
@@ -57,14 +57,12 @@ public class FileUploadExerciseResource {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
-            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository, FeedbackRepository feedbackRepository) {
+            ExerciseGroupRepository exerciseGroupRepository, CourseRepository courseRepository) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -75,7 +73,6 @@ public class FileUploadExerciseResource {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
-        this.feedbackRepository = feedbackRepository;
     }
 
     /**
@@ -256,11 +253,7 @@ public class FileUploadExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            fileUploadExercise.setGradingInstructionFeedbackUsed(true);
-        }
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, fileUploadExercise);
 
         return ResponseEntity.ok().body(fileUploadExercise);
     }
@@ -322,5 +315,54 @@ public class FileUploadExerciseResource {
 
         File zipFile = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFile);
+    }
+
+    /**
+     * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
+     *
+     * @param exerciseId                                   of the exercise
+     * @param fileUploadExercise                           the fileUploadExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
+     * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the fileUploadExercise couldn't be updated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+        log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
+
+        // check that the exercise is exist for given id
+        fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, fileUploadExercise);
+
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
+
+        // Check that the user is authorized to update the exercise
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterGradingInstructionUpdate);
+
+        return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
+    }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String FILE_UPLOAD_EXERCISES = "/file-upload-exercises";
+
+        public static final String FILE_UPLOAD_EXERCISE = FILE_UPLOAD_EXERCISES + "/{exerciseId}";
+
+        public static final String REEVALUATE_EXERCISE = FILE_UPLOAD_EXERCISE + "/re-evaluate";
+
+        private Endpoints() {
+        }
     }
 }
