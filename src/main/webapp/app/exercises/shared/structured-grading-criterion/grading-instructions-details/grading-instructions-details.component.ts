@@ -376,8 +376,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criterionIndex: number) {
-        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((sgi) => {
-            return sgi.id === instruction.id;
+        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((gradingInstruction) => {
+            return gradingInstruction.id === instruction.id;
         });
     }
 
