@@ -33,17 +33,14 @@ export class SaveExerciseCommand<T extends Exercise> {
         const prepareRequestOptions = (): any => {
             switch (this.editType) {
                 case EditType.UPDATE:
-                    if (notificationText) {
-                        return { notificationText: notificationText };
-                    }
-                    return {};
+                    return notificationText ? { notificationText } : {};
                 default:
                     return {};
             }
         };
 
         const callBackend = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
-            let ex = Exercise.sanitize(exercise);
+            const ex = Exercise.sanitize(exercise);
             switch (this.editType) {
                 case EditType.IMPORT:
                     return this.exerciseService.import!(ex);
@@ -61,17 +58,17 @@ export class SaveExerciseCommand<T extends Exercise> {
         let saveObservable = of([false, prepareRequestOptions()]);
 
         if (exercise.gradingInstructionFeedbackUsed && this.modalService.hasOpenModals()) {
-            let popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise));
+            const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise));
 
-            let confirmedCase = popupRefObs.pipe(
+            const confirmedCase = popupRefObs.pipe(
                 mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map(() => [false, prepareRequestOptions()]))),
             );
-            let reEvaluatedCase = popupRefObs.pipe(
+            const reEvaluatedCase = popupRefObs.pipe(
                 mergeMap((ref) =>
                     (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
                 ),
             );
-            let canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
+            const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
 
             saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
         }
