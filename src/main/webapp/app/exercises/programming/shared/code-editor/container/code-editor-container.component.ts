@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { fromPairs, toPairs, uniq } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import {
     CommitState,
@@ -29,7 +30,7 @@ import { Feedback } from 'app/entities/feedback.model';
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
-export class CodeEditorContainerComponent {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly CommitState = CommitState;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
@@ -213,6 +214,21 @@ export class CodeEditorContainerComponent {
      */
     onError(error: any) {
         this.jhiAlertService.error(`artemisApp.editor.errors.${error as string}`);
+    }
+
+    /**
+     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
+     */
+    canDeactivate() {
+        return _isEmpty(this.unsavedFiles);
+    }
+
+    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(event: any) {
+        if (!this.canDeactivate()) {
+            event.returnValue = this.translateService.instant('pendingChanges');
+        }
     }
 
     onToggleCollapse(event: InteractableEvent) {
