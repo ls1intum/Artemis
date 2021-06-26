@@ -1,16 +1,24 @@
-.warning-problem {
-    padding-top: 5px;
+.warning {
+    font-weight: bold;
+    font-size: 18px;
 
-    .warning-problem-result-wrapper {
-        padding-top: 5px;
+    .warning-problem {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 15px;
 
-        .warning-problem-result {
-            padding-left: 15px;
-
-            .warning-problem-result-element {
-                margin-bottom: -10px;
-            }
+        .warning-problem-element {
+            padding-top: 5px;
         }
+    }
+
+    .warning-info {
+        padding-top: 5px;
+        list-style-type: none;
+        margin: 0;
+        padding-left: 0;
+        font-size: 15px;
+        font-weight: normal;
     }
 }
 
@@ -28,6 +36,7 @@
     .form-group {
         display: flex;
         align-items: center;
+        margin: 0;
 
         > * {
             margin: 0 4px;
