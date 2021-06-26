@@ -63,7 +63,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      *
      * @return the return type of this method as String
      */
-    String getReturnType() {
+    public String getReturnType() {
         return returnType;
     }
 
@@ -72,7 +72,7 @@ public class UMLMethod extends UMLElement implements Serializable {
      *
      * @return the list of parameters (as Strings) of this method
      */
-    List<String> getParameters() {
+    public List<String> getParameters() {
         return parameters;
     }
 
@@ -131,6 +131,10 @@ public class UMLMethod extends UMLElement implements Serializable {
     @Override
     public String getName() {
         return name;
+    }
+
+    public String getCompleteName() {
+        return completeName;
     }
 
     @Override
