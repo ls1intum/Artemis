@@ -10,6 +10,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from './code-editor-confirm-refresh-modal.component';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-code-editor-actions',
@@ -96,11 +97,11 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 30) {
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
                 this.autoSaveTimer = 0;
                 this.onSave();
             }
-        }, 1000);
+        }, AUTOSAVE_CHECK_INTERVAL);
     }
 
     /**
