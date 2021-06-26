@@ -25,7 +25,7 @@ export class CustomChartPoint implements Chart.ChartPoint {
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent implements AfterViewInit {
+export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
     @Input()
     courseId: number;
     isLoading = false;
@@ -33,6 +33,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
 
     @ViewChild(BaseChartDirective)
     chartDirective: BaseChartDirective;
+    chartInstance: Chart;
     @ViewChild('chartDiv')
     chartDiv: ElementRef;
 
@@ -44,7 +45,13 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         private translateService: TranslateService,
     ) {}
 
+    ngOnDestroy() {
+        // important to prevent memory leaks
+        this.chartInstance.destroy();
+    }
+
     ngAfterViewInit() {
+        this.chartInstance = this.chartDirective.chart;
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
@@ -84,6 +91,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         }
 
         this.chartDiv.nativeElement.setAttribute('style', `width: ${chartWidth}px;`);
+        this.chartInstance.resize();
         this.addData();
     }
 
