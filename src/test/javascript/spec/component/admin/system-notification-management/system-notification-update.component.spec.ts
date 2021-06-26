@@ -40,10 +40,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
                 MockDirective(AlertErrorComponent),
                 MockDirective(FormDateTimePickerComponent),
             ],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                MockProvider(ArtemisNavigationUtilService),
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ArtemisNavigationUtilService)],
         })
             .compileComponents()
             .then(() => {

@@ -57,6 +57,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -119,6 +120,7 @@ describe('CourseExerciseDetailsComponent', () => {
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
