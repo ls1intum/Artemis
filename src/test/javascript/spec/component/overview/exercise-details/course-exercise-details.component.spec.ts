@@ -56,6 +56,7 @@ import { MockParticipationWebsocketService } from '../../../helpers/mocks/servic
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -135,6 +136,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ComplaintService),
+                MockProvider(ArtemisNavigationUtilService),
             ],
         })
             .compileComponents()
