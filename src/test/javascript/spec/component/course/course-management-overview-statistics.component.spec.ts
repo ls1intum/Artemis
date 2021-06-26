@@ -47,7 +47,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
         component.initialStats = initialStats;
 
-        fixture.detectChanges();
+        component.ngOnInit();
         expect(component).to.be.ok;
 
         expect(component.dataForSpanType).to.deep.equal([0, 44, 36, 92]);
@@ -55,12 +55,14 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         expect(component.chartData[0].data).to.deep.equal([0, 44, 36, 92]);
 
         // Test formatting
-        expect(component.barChartOptions.scales.y.ticks.callback(44)).to.equal('44%');
-        expect(component.barChartOptions.tooltips.callbacks.label({ index: 2 })).to.equal(' ' + initialStats[2]);
+        // @ts-ignore
+        expect(component!.barChartOptions.scales.y.ticks.callback(44)).to.equal('44%');
+        // @ts-ignore
+        expect(component.barChartOptions.plugins.tooltip.callbacks.label({ dataIndex: 2 })).to.equal(' ' + initialStats[2]);
     });
 
     it('should react to changes', () => {
-        fixture.detectChanges();
+        component.ngOnInit();
 
         component.initialStats = [];
         component.amountOfStudentsInCourse = 0;

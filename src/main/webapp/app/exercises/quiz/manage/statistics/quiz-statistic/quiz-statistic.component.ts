@@ -74,12 +74,12 @@ export function createOptions(dataSetProvider: DataSetProvider, max: number, ste
                 },
             },
         },
-        animation: createAnimation(dataSetProvider),
+        animation: createAnimation(),
     };
 }
 
 // this code is reused in 4 different statistic components
-export function createAnimation(dataSetProvider: DataSetProvider) {
+export function createAnimation() {
     return {
         duration: 500,
     };
