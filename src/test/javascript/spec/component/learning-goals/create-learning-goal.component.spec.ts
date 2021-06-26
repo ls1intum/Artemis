@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { JhiAlertService } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
