@@ -15,8 +15,8 @@ const expect = chai.expect;
 describe('Navigation Util Service', () => {
     let service: ArtemisNavigationUtilService;
 
-    let router = new MockRouter();
-    let events = of(new NavigationEnd(1, 'a', 'b'), new NavigationEnd(1, 'a', 'b'));
+    const router = new MockRouter();
+    const events = of(new NavigationEnd(1, 'a', 'b'), new NavigationEnd(1, 'a', 'b'));
     router.setEvents(events);
 
     beforeEach(() => {
@@ -40,7 +40,7 @@ describe('Navigation Util Service', () => {
     });
 
     it('should go back', () => {
-        let backSpy = spy(TestBed.inject(Location), 'back');
+        const backSpy = spy(TestBed.inject(Location), 'back');
         // @ts-ignore
         service.onFirstPage = false;
 

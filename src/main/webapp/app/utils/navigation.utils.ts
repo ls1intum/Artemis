@@ -15,7 +15,7 @@ export class ArtemisNavigationUtilService {
                 skip(1),
                 take(1),
             )
-            .subscribe((_) => {
+            .subscribe(() => {
                 this.onFirstPage = false;
             });
     }
