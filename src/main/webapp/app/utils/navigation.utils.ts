@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { filter, skip, take, tap } from 'rxjs/operators';
+import { filter, skip, take } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisNavigationUtilService {
@@ -12,7 +12,6 @@ export class ArtemisNavigationUtilService {
         router.events
             .pipe(
                 filter((e) => e instanceof NavigationEnd),
-                tap((e) => console.log((e as NavigationEnd).urlAfterRedirects)),
                 skip(1),
                 take(1),
             )
