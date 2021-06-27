@@ -8,6 +8,10 @@ import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 describe('Exam Exercise Overview Component', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
@@ -17,12 +21,13 @@ describe('Exam Exercise Overview Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamExerciseOverviewPageComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
+            providers: [ExamParticipationService, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamExerciseOverviewPageComponent);
         comp = fixture.componentInstance;
-
-        comp.exercises = [
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -45,7 +50,7 @@ describe('Exam Exercise Overview Component', () => {
     it('should open the exercise', () => {
         spyOn(comp.onPageChanged, 'emit');
 
-        comp.openExercise(comp.exercises[0]);
+        comp.openExercise(comp.studentExam.exercises![0]);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalled();
     });
