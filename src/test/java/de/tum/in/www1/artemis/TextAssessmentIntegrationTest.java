@@ -624,7 +624,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
         database.addSampleFeedbackToResults(textSubmission.getLatestResult());
-        request.postWithoutLocation("/api/participations/" + textSubmission.getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null, expectedStatus, null);
+        request.postWithoutLocation("/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null,
+                expectedStatus, null);
     }
 
     @Test
