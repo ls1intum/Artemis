@@ -341,7 +341,7 @@ with your TUM Online account.
 In case you encounter any problems regarding JavaScript heap memory leaks when executing ``yarn start`` or any other scripts from ``package.json``, you can change the memory limit parameter used in the ``webpack-ts`` script in ``package.json`` to the following:
 
 ::
-   
+
    # This local change in `package.json` should not be comitted.
    "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=5120 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack" # possible higher values are 6144, 7168, and 8192
 
@@ -362,7 +362,7 @@ You can define the following custom assets for Artemis to be used
 instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
-* The favicon → ``${artemisRunDirectory}/public/images/favicon.ico``
+* The favicon → ``${artemisRunDirectory}/favicon.svg``
 * The privacy statement HTML → ``${artemisRunDirectory}/public/content/privacy_statement.html``
 * The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
