@@ -34,6 +34,7 @@ import * as Sentry from '@sentry/browser';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -297,10 +298,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 30 && !this.isOver()) {
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && !this.isOver()) {
                 this.triggerSave(false);
             }
-        }, 1000);
+        }, AUTOSAVE_CHECK_INTERVAL);
     }
 
     /**
