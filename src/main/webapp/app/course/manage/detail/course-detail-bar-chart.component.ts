@@ -1,9 +1,17 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { ChartDataset, ChartType } from 'chart.js';
+import { ChartDataset, ChartType, registerables } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { CourseManagementService } from '../course-management.service';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
+Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({
     selector: 'jhi-course-detail-bar-chart',

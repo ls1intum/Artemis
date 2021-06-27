@@ -1,10 +1,18 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType, registerables } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
+Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({
     selector: 'jhi-statistics-average-score-graph',

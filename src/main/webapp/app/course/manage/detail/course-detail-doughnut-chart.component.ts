@@ -1,9 +1,17 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
-import { ChartType } from 'chart.js';
+import { ChartType, registerables } from 'chart.js';
 import { round } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
+Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',

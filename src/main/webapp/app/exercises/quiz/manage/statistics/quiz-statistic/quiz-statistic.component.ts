@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { Chart, ChartOptions, ChartType } from 'chart.js';
+import { Chart, ChartOptions, ChartType, registerables } from 'chart.js';
 import { Subscription } from 'rxjs';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,7 +11,13 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { BaseChartDirective, Color } from 'ng2-charts';
-// import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
+Chart.defaults.plugins.datalabels!.display = false;
 
 /**
  * this interface is adapted from chart.js

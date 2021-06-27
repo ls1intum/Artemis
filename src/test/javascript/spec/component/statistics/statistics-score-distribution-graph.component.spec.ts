@@ -10,7 +10,15 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ChartsModule } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
-import { ChartData } from 'chart.js';
+import { ChartData, registerables } from 'chart.js';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
+Chart.defaults.plugins.datalabels!.display = false;
 
 chai.use(sinonChai);
 const expect = chai.expect;

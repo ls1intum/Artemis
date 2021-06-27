@@ -1,7 +1,14 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
-import { ChartData } from 'chart.js';
+import { ChartData, registerables } from 'chart.js';
 import { Label } from 'ng2-charts';
 import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
+Chart.defaults.plugins.datalabels!.display = false;
 
 export class HorizontalStackedBarChartPreset implements ChartPreset {
     private readonly labels: Label[];

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import Chart from 'chart.js/auto';
-import { ChartDataset, ChartOptions } from 'chart.js';
+import { ChartDataset, ChartOptions, registerables } from 'chart.js';
 import { BaseChartDirective, Color, Label } from 'ng2-charts';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -11,6 +11,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise.model';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(...registerables);
+Chart.register(ChartDataLabels);
+Chart.register(annotationPlugin);
+Chart.defaults.plugins.datalabels!.display = false;
 
 // this exercise information is needed for tooltip generation and to navigate to an exercise page
 export class CustomChartPoint implements Chart.ChartPoint {
