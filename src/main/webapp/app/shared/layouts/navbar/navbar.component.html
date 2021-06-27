@@ -126,7 +126,7 @@
                         </a>
                     </li>
                     <li *ngIf="openApiEnabled">
-                        <a class="dropdown-item" routerLink="admin/docs" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="swagger-ui/index.html?configUrl=api-docs/swagger-config" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon icon="book" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.apidocs">API</span>
                         </a>
