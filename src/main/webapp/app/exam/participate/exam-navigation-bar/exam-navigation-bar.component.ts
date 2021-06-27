@@ -7,6 +7,7 @@ import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExercisesNavigationService } from 'app/exam/examExercisesNavigationService';
 import { LiveExamExerciseUpdateService } from 'app/exam/liveExamExerciseUpdateService';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -29,6 +30,13 @@ export class ExamNavigationBarComponent implements OnInit {
 
     icon: IconProp;
 
+    exerciseIdToNavigateTo: number;
+    subscriptionToExerciseNavigation: Subscription;
+
+    exerciseIdToUpdate: number;
+    exerciseProblemStatement: string;
+    subscriptionToLiveExamExerciseUpdates: Subscription;
+
     constructor(
         private layoutService: LayoutService,
         private examExercisesNavigationService: ExamExercisesNavigationService,
@@ -36,12 +44,15 @@ export class ExamNavigationBarComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.subsriptionToExerciseNavigation = this.examExercisesNavigationService.currentExerciseIdToNavigateTo.subscribe((exerciseId) => {
+        this.subscriptionToExerciseNavigation = this.examExercisesNavigationService.currentExerciseIdToNavigateTo.subscribe((exerciseId) => {
             this.exerciseIdToNavigateTo = exerciseId;
             this.changeExerciseById(exerciseId);
         });
 
-        //this.subscriptionToExerciseUpdates = this.exam
+        this.subscriptionToLiveExamExerciseUpdates = this.liveExamExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
+            this.exerciseIdToUpdate = update['exerciseId'];
+            this.exerciseProblemStatement = update['problemStatement'];
+        });
 
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
