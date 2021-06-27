@@ -5,6 +5,8 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { ExamExercisesNavigationService } from 'app/exam/examExercisesNavigationService';
+import { LiveExamExerciseUpdateService } from 'app/exam/liveExamExerciseUpdateService';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -27,9 +29,20 @@ export class ExamNavigationBarComponent implements OnInit {
 
     icon: IconProp;
 
-    constructor(private layoutService: LayoutService) {}
+    constructor(
+        private layoutService: LayoutService,
+        private examExercisesNavigationService: ExamExercisesNavigationService,
+        private liveExamExerciseUpdateService: LiveExamExerciseUpdateService,
+    ) {}
 
     ngOnInit(): void {
+        this.subsriptionToExerciseNavigation = this.examExercisesNavigationService.currentExerciseIdToNavigateTo.subscribe((exerciseId) => {
+            this.exerciseIdToNavigateTo = exerciseId;
+            this.changeExerciseById(exerciseId);
+        });
+
+        //this.subscriptionToExerciseUpdates = this.exam
+
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
             if (this.layoutService.isBreakpointActive(CustomBreakpointNames.extraLarge)) {
@@ -58,6 +71,11 @@ export class ExamNavigationBarComponent implements OnInit {
         this.exerciseIndex = exerciseIndex;
         this.onExerciseChanged.emit({ exercise: this.exercises[exerciseIndex], forceSave });
         this.setExerciseButtonStatus(exerciseIndex);
+    }
+
+    changeExerciseById(exerciseId: number) {
+        const foundIndex = this.exercises.findIndex((ex) => ex.id == exerciseId);
+        this.changeExercise(foundIndex, true);
     }
 
     /**

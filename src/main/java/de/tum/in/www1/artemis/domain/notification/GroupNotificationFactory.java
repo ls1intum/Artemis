@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.util.List;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
@@ -79,8 +81,14 @@ public class GroupNotificationFactory {
                 text = "Quiz \"" + exercise.getTitle() + "\" just started.";
             }
             case EXERCISE_UPDATED -> {
-                title = "Exercise updated";
-                text = "Exercise \"" + exercise.getTitle() + "\" updated.";
+                if (exercise.isExamExercise()) {
+                    title = Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+                    text = "Exam Exercise \"" + exercise.getTitle() + "\" updated.";
+                }
+                else {
+                    title = "Exercise updated";
+                    text = "Exercise \"" + exercise.getTitle() + "\" updated.";
+                }
             }
             case DUPLICATE_TEST_CASE -> {
                 title = "Duplicate test case was found.";
@@ -105,6 +113,13 @@ public class GroupNotificationFactory {
             if (exercise instanceof ProgrammingExercise) {
                 notification.setTarget(notification.getExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, "exerciseUpdated"));
             }
+            else if (exercise instanceof TextExercise) {
+                notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
+            }
+            else {
+                // TODO after the live Exam Exercise PopUps are merged I will add the other types too @Malyuk
+            }
+            notification.setPriority(NotificationPriority.HIGH);
         }
         // Exercises for courses (not for exams)
         else if (notificationType == NotificationType.EXERCISE_CREATED) {
