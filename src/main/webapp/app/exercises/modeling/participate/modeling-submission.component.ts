@@ -31,6 +31,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Subject } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -247,10 +248,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
-            if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
+            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && !this.canDeactivate()) {
                 this.saveDiagram();
             }
-        }, 1000);
+        }, AUTOSAVE_CHECK_INTERVAL);
     }
 
     /**
@@ -264,7 +265,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 // notify the team sync component to send this.submission to the server (and all online team members)
                 this.submissionChange.next(this.submission);
             }
-        }, 2000);
+        }, AUTOSAVE_TEAM_EXERCISE_INTERVAL);
     }
 
     saveDiagram(): void {
