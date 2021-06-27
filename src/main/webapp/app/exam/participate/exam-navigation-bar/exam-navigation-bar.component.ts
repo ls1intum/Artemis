@@ -6,7 +6,6 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { Submission } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -29,8 +28,6 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = moment.duration(5, 'minutes');
 
     icon: IconProp;
-    getSubmissionForExercise = this.examParticipationService.getSubmissionForExercise;
-    getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService) {}
 
@@ -83,7 +80,7 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
-        const submission = this.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const submission = this.examParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
@@ -113,7 +110,7 @@ export class ExamNavigationBarComponent implements OnInit {
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
         this.icon = 'edit';
         const exercise = this.exercises[exerciseIndex];
-        const submission = this.getSubmissionForExercise(exercise);
+        const submission = this.examParticipationService.getSubmissionForExercise(exercise);
         if (submission) {
             if (submission.submitted) {
                 this.icon = 'check';

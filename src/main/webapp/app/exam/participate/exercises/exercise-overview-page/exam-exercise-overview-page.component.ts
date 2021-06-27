@@ -1,13 +1,10 @@
 import { Component, EventEmitter, Input, OnChanges, Output, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { ChangeDetectorRef } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { Submission } from 'app/entities/submission.model';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
     templateUrl: './exam-exercise-overview-page.component.html',
@@ -40,7 +37,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     ngOnChanges() {
         this.examExerciseOverviewItems?.forEach((item) => {
-            this.setExerciseButtonStatus(item);
+            this.setExerciseIconStatus(item);
         });
     }
 
@@ -48,23 +45,20 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
     }
 
-    setExerciseButtonStatus(item: ExamExerciseOverviewItem): 'synced' | 'synced active' | 'notSynced' {
-        item.icon = 'edit';
-        if (item.submission) {
-            if (item.submission.submitted) {
-                item.icon = 'check';
-            }
-            if (item.submission.isSynced) {
-                // make button blue
-                return 'synced';
-            } else {
-                // make button yellow
-                item.icon = 'edit';
-                return 'notSynced';
-            }
-        } else {
-            // in case no participation yet exists -> display synced
+    setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'synced active' | 'notSynced' {
+        if (!item?.submission) {
             return 'synced';
+        }
+        if (item.submission.submitted) {
+            item.icon = 'check';
+        }
+        if (item.submission.isSynced) {
+            // make status blue
+            return 'synced';
+        } else {
+            // make status yellow
+            item.icon = 'edit';
+            return 'notSynced';
         }
     }
 }

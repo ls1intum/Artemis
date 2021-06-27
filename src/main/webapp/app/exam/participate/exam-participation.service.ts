@@ -9,7 +9,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import * as moment from 'moment';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
@@ -265,30 +265,23 @@ export class ExamParticipationService {
         exercise: Exercise,
         submission = this.getSubmissionForExercise(exercise),
     ): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
-        console.log('exercise, submission', exercise, submission);
-        if (submission) {
-            if (exercise.type === ExerciseType.PROGRAMMING) {
-                if (submission.submitted && submission.isSynced) {
-                    return 'submitted'; // You have submitted an exercise. You can submit again
-                } else if (submission.submitted && !submission.isSynced) {
-                    return 'notSavedOrSubmitted'; // You have unsaved and/or unsubmitted changes
-                } else if (!submission.submitted && submission.isSynced) {
-                    return 'notSubmitted'; // starting point
-                } else {
-                    return 'notSavedOrSubmitted';
-                }
-            } else {
-                if (submission.isSynced) {
-                    return 'synced';
-                } else {
-                    return 'notSynced';
-                }
-            }
-        } else {
-            // submission does not yet exist for this exercise.
-            // When the participant navigates to the exercise the submissions are created.
-            // Until then show, that the exercise is synced
+        // submission does not yet exist for this exercise.
+        // When the participant navigates to the exercise the submissions are created.
+        // Until then show, that the exercise is synced
+        if (!submission) {
             return 'synced';
+        }
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
+            return submission.isSynced ? 'synced' : 'notSynced';
+        }
+        if (submission.submitted && submission.isSynced) {
+            return 'submitted'; // You have submitted an exercise. You can submit again
+        } else if (submission.submitted && !submission.isSynced) {
+            return 'notSavedOrSubmitted'; // You have unsaved and/or unsubmitted changes
+        } else if (!submission.submitted && submission.isSynced) {
+            return 'notSubmitted'; // starting point
+        } else {
+            return 'notSavedOrSubmitted';
         }
     }
 }
