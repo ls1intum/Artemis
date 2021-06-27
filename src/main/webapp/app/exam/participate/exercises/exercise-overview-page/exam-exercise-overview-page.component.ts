@@ -17,7 +17,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     getIconTooltip = getIconTooltip;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-    getSubmissionForExercise = this.examParticipationService.getSubmissionForExercise;
+    getSubmissionForExercise = ExamParticipationService.getSubmissionForExercise;
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     constructor(protected changeDetectorReference: ChangeDetectorRef, private examParticipationService: ExamParticipationService) {
