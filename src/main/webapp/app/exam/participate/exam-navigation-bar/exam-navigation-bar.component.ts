@@ -28,6 +28,7 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = moment.duration(5, 'minutes');
 
     icon: IconProp;
+    getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService) {}
 
@@ -80,7 +81,7 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
-        const submission = this.examParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
@@ -110,7 +111,7 @@ export class ExamNavigationBarComponent implements OnInit {
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
         this.icon = 'edit';
         const exercise = this.exercises[exerciseIndex];
-        const submission = this.examParticipationService.getSubmissionForExercise(exercise);
+        const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (submission) {
             if (submission.submitted) {
                 this.icon = 'check';

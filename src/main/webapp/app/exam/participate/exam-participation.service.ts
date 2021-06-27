@@ -247,7 +247,7 @@ export class ExamParticipationService {
         }
     }
 
-    public getSubmissionForExercise(exercise: Exercise) {
+    public static getSubmissionForExercise(exercise: Exercise) {
         if (
             exercise &&
             exercise.studentParticipations &&
@@ -263,7 +263,7 @@ export class ExamParticipationService {
 
     getExerciseButtonTooltip(
         exercise: Exercise,
-        submission = this.getSubmissionForExercise(exercise),
+        submission = ExamParticipationService.getSubmissionForExercise(exercise),
     ): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
         // submission does not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.
