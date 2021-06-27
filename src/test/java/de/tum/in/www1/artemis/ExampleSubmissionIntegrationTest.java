@@ -243,7 +243,8 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
         long randomId_nonExistent = 1233;
-        request.putWithResponseBody("/api/exercises/" + randomId_nonExistent + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
+        request.putWithResponseBody(
+                "/api/exercises/" + randomId_nonExistent + "/example-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-text-assessment", dto,
                 Result.class, HttpStatus.BAD_REQUEST);
         assertThat(exampleSubmissionRepo.findBySubmissionId(randomId_nonExistent)).isEmpty();
     }

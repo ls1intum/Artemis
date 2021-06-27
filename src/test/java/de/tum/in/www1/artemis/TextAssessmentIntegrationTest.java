@@ -161,7 +161,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 HttpStatus.NO_CONTENT);
         assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
         assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getId())).isEmpty();
-
     }
 
     @Test

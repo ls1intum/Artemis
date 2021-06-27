@@ -193,6 +193,18 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
+    public void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_wrongParticipationId() throws Exception {
+        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        long randomId = 1432;
+
+        List<Feedback> feedbacks = request.getList("/api/participations/" + randomId + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
+
+        assertThat(feedbacks).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
     public void shouldReturnTheResultDetailsWithStaticCodeAnalysisFeedbackForAProgrammingExerciseStudentParticipation() throws Exception {
         Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
         result = database.addSampleStaticCodeAnalysisFeedbackToResults(result);
@@ -575,6 +587,16 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void deleteResult_wrongParticipationId() throws Exception {
+        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        result = database.addSampleFeedbackToResults(result);
+        long randomId = 1653;
+        request.delete("/api/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(resultRepository.existsById(result.getId())).isTrue();
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void deleteResultStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
@@ -596,6 +618,19 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createExampleResult_wrongParticipationId() throws Exception {
+        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
+        exampleSubmission = database.addExampleSubmission(exampleSubmission);
+        modelingSubmission.setExampleSubmission(true);
+        submissionRepository.save(modelingSubmission);
+        long randomId = 1874;
+        request.postWithResponseBody("/api/participations/" + randomId + "/submissions/" + modelingSubmission.getId() + "/example-result", exampleSubmission, Result.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission() throws Exception {
         Result result = new Result().rated(false);
         var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
@@ -603,6 +638,15 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(createdResult).isNotNull();
         assertThat(createdResult.isRated()).isFalse();
         // TODO: we should assert that the result has been created with all corresponding objects in the database
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createResultForExternalSubmission_wrongExerciseId() throws Exception {
+        Result result = new Result().rated(false);
+        long randomId = 2145;
+        var createdResult = request.postWithResponseBody("/api/exercises/" + randomId + "/external-submission-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        assertThat(createdResult).isNull();
     }
 
     @Test
