@@ -26,7 +26,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     ngOnInit() {
         this.studentExam.exercises?.forEach((exercise) => {
-            console.log('status:', exercise, exercise.studentParticipations?.[0].submissions?.[0].isSynced);
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
             item.submission = this.getSubmissionForExercise(exercise);
