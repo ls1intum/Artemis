@@ -89,9 +89,22 @@ export const commonConfig = (options: Options) => ({
         new CopyWebpackPlugin({
             patterns: [
                 { from: './src/main/webapp/content/', to: 'content' },
-                { from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico' },
+                { from: './src/main/webapp/favicon.svg', to: 'favicon.svg' },
                 { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },
                 { from: './src/main/webapp/robots.txt', to: 'robots.txt' },
+                { from: './src/main/webapp/android-chrome-192x192.png', to: 'android-chrome-192x192.png' },
+                { from: './src/main/webapp/android-chrome-512x512.png', to: 'android-chrome-512x512.png' },
+                { from: './src/main/webapp/apple-touch-icon.png', to: 'apple-touch-icon.png' },
+                { from: './src/main/webapp/browserconfig.xml', to: 'browserconfig.xml' },
+                { from: './src/main/webapp/favicon.ico', to: 'favicon.ico' },
+                { from: './src/main/webapp/favicon-16x16.png', to: 'favicon-16x16.png' },
+                { from: './src/main/webapp/favicon-32x32.png', to: 'favicon-32x32.png' },
+                { from: './src/main/webapp/mstile-70x70.png', to: 'mstile-70x70.png' },
+                { from: './src/main/webapp/mstile-144x144.png', to: 'mstile-144x144.png' },
+                { from: './src/main/webapp/mstile-150x150.png', to: 'mstile-150x150.png' },
+                { from: './src/main/webapp/mstile-310x150.png', to: 'mstile-310x150.png' },
+                { from: './src/main/webapp/mstile-310x310.png', to: 'mstile-310x310.png' },
+                { from: './src/main/webapp/safari-pinned-tab.svg', to: 'safari-pinned-tab.svg' },
             ],
         }),
         new MergeJsonWebpackPlugin({
