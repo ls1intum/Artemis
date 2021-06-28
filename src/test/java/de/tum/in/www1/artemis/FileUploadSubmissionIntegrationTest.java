@@ -303,6 +303,19 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetSubmissionWithoutAssessmentWithoutSubmissionLock() throws Exception {
+        database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
+
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
+                HttpStatus.NOT_FOUND, FileUploadSubmission.class);
+
+        assertThat(storedSubmission).as("no submission present and therefore none locked").isNull();
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void getFileUploadSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
         database.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, "student1");
