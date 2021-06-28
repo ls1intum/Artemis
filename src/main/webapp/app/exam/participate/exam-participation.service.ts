@@ -276,8 +276,6 @@ export class ExamParticipationService {
         }
         if (submission.submitted && submission.isSynced) {
             return 'submitted'; // You have submitted an exercise. You can submit again
-        } else if (submission.submitted && !submission.isSynced) {
-            return 'notSavedOrSubmitted'; // You have unsaved and/or unsubmitted changes
         } else if (!submission.submitted && submission.isSynced) {
             return 'notSubmitted'; // starting point
         } else {
