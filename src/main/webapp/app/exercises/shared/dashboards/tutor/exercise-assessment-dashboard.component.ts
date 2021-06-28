@@ -35,7 +35,6 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
-import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { round } from 'app/shared/util/utils';
@@ -525,11 +524,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param correctionRound for which to get status
      */
     calculateSubmissionStatus(submission: Submission, correctionRound = 0) {
-        const tmpResult = submission.results?.[correctionRound];
-        if (tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!)) {
-            return 'DONE';
-        }
-        return 'DRAFT';
+        return this.programmingSubmissionService.calculateSubmissionStatus(submission, correctionRound);
     }
 
     calculateComplaintStatus(complaint: Complaint) {

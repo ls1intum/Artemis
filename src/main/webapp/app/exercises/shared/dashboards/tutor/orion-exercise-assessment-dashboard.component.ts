@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Injectable, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Submission } from 'app/entities/submission.model';
@@ -6,8 +6,10 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
+import { ActivatedRoute } from '@angular/router';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',
@@ -20,16 +22,22 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     orionState: OrionState;
     isOrionAndProgramming = false;
 
+    exerciseId: number;
     exercise: Exercise;
 
     constructor(
-        private exerciseAssessmentDashboard: ExerciseAssessmentDashboardComponent,
+        private route: ActivatedRoute,
+        private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private repositoryExportService: ProgrammingAssessmentRepoExportService,
         private orionConnectorService: OrionConnectorService,
         private jhiAlertService: JhiAlertService,
     ) {
-        this.exercise = exerciseAssessmentDashboard.exercise;
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.exerciseService.getForTutors(this.exerciseId).subscribe(
+            (res) => this.exercise = res.body!,
+            (error) => onError(jhiAlertService, error, false)
+        );
     }
 
     ngOnInit(): void {
@@ -41,7 +49,7 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     calculateSubmissionStatus(submission: Submission, correctionRound?: number): 'DONE' | 'DRAFT' {
-        return this.exerciseAssessmentDashboard.calculateSubmissionStatus(submission, correctionRound);
+        return this.programmingSubmissionService.calculateSubmissionStatus(submission, correctionRound);
     }
 
     /**
@@ -96,10 +104,10 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
         if (submission === 'new') {
             this.programmingSubmissionService
-                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, correctionRound)
-                .subscribe((newSubmission) => this.sendSubmissionToOrion(this.exercise.id!, newSubmission.id!, correctionRound));
+                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, true, correctionRound)
+                .subscribe((newSubmission) => this.sendSubmissionToOrion(this.exerciseId, newSubmission.id!, correctionRound));
         } else {
-            this.sendSubmissionToOrion(this.exercise.id!, submission.id!, correctionRound);
+            this.sendSubmissionToOrion(this.exerciseId, submission.id!, correctionRound);
         }
     }
 }
