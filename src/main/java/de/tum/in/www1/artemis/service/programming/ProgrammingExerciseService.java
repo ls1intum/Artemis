@@ -791,7 +791,6 @@ public class ProgrammingExerciseService {
          * chance to remove the Artemis-local repositories on the server. In summary, they should and can always be deleted.
          */
         if (programmingExercise.getTemplateRepositoryUrl() != null) {
-
             gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
         }
         if (programmingExercise.getSolutionRepositoryUrl() != null) {
