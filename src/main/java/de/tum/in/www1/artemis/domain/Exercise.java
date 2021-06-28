@@ -937,6 +937,14 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * This Method removes douplicated whitespaces, tabs etc from exercise titles and replaces them with a single space.
+     */
+    public void validateTitle() {
+        // replace all consecutive whitespaces with a single space.
+        setTitle(getTitle().trim().replaceAll("\\s+", " "));
+    }
+
+    /**
      * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
      * @throws BadRequestException if the dates are not valid
      */

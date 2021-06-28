@@ -774,6 +774,7 @@ public class ExerciseService {
 
     public void validateGeneralSettings(Exercise exercise) {
         validateScoreSettings(exercise);
+        exercise.validateTitle();
         exercise.validateDates();
     }
 
