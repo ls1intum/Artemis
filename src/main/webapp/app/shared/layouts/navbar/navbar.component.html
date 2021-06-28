@@ -126,7 +126,7 @@
                         </a>
                     </li>
                     <li *ngIf="openApiEnabled">
-                        <a class="dropdown-item" routerLink="admin/docs" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
                             <fa-icon icon="book" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.apidocs">API</span>
                         </a>
@@ -156,7 +156,7 @@
                 ngbDropdown
                 class="nav-item dropdown pointer"
                 display="dynamic"
-                placement="bottom-right"
+                placement="bottom-end"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
                 [autoClose]="true"
