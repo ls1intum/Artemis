@@ -106,7 +106,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOne(resultId);
+        Result result = resultRepository.findOneElseThrow(resultId);
         if (!result.getParticipation().getId().equals(participationId)) {
             badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
         }
@@ -213,7 +213,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOne(resultId);
+        Result result = resultRepository.findOneElseThrow(resultId);
         if (!(result.getParticipation().getExercise() instanceof TextExercise)) {
             badRequest("Exercise", "400", "This exercise isn't a TextExercise!");
         }

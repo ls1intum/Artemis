@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -124,9 +125,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public String getPlanKey(Object requestBody) throws Exception {
-        final TestResultsDTO testResultsDTO = TestResultsDTO.convert(requestBody);
-        return jenkinsBuildPlanService.getBuildPlanKeyFromTestResults(testResultsDTO);
+    public String getPlanKey(Object requestBody) throws JenkinsException {
+        try {
+            TestResultsDTO dto = TestResultsDTO.convert(requestBody);
+            return jenkinsBuildPlanService.getBuildPlanKeyFromTestResults(dto);
+        }
+        catch (JsonProcessingException jsonProcessingException) {
+            throw new JenkinsException("Something went wrong trying to parse the requestBody while getting the PlanKey from Jenkins!");
+        }
     }
 
     @Override
