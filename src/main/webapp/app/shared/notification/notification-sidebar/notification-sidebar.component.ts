@@ -115,8 +115,10 @@ export class NotificationSidebarComponent implements OnInit {
 
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
-            //ignores live exam notifications because the sidebar is not visible during the exam mode
-            if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) return;
+            // ignores live exam notifications because the sidebar is not visible during the exam mode
+            if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+                return;
+            }
 
             // Increase total notifications count if the notification does not already exist.
             if (!this.notifications.some(({ id }) => id === notification.id)) {

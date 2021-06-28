@@ -52,7 +52,9 @@ export class NotificationPopupComponent implements OnInit {
         if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             const target = JSON.parse(notification.target!);
             this.examExercisesNavigationService.navigateToExamExercise(target.exercise);
-        } else this.router.navigateByUrl(this.notificationTargetRoute(notification));
+        } else {
+            this.router.navigateByUrl(this.notificationTargetRoute(notification));
+        }
     }
 
     private notificationTargetRoute(notification: Notification): UrlTree | string {
@@ -122,7 +124,7 @@ export class NotificationPopupComponent implements OnInit {
             const target = JSON.parse(notification.target);
             this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
 
-            if (notification.text != null) {
+            if (notification.text != undefined) {
                 this.notifications.unshift(notification);
             }
         }
