@@ -1,8 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
-import Chart from 'chart.js/auto';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 export interface ChartPreset {
     applyTo(chart: ChartComponent): void;

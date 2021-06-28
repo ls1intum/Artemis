@@ -10,6 +10,7 @@ import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-s
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -63,6 +64,9 @@ export class CourseCardComponent implements OnChanges {
     ) {}
 
     ngOnChanges() {
+        Chart.register(ChartDataLabels);
+        Chart.register(annotationPlugin);
+        Chart.defaults.plugins.datalabels!.display = false;
         if (this.course.exercises && this.course.exercises.length > 0) {
             this.exerciseCount = this.course.exercises.length;
 
