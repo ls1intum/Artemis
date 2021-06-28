@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -38,10 +38,8 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/sha
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export interface ExampleSubmissionQueryParams {
@@ -50,14 +48,13 @@ export interface ExampleSubmissionQueryParams {
 }
 
 @Component({
-    selector: 'jhi-courses',
+    selector: 'jhi-exercise-assessment-dashboard',
     templateUrl: './exercise-assessment-dashboard.component.html',
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
-    readonly ExerciseView = ExerciseView;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -117,9 +114,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
-    orionState: OrionState;
-    isOrionAndProgramming = false;
-
     stats = {
         toReview: {
             done: 0,
@@ -141,6 +135,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     exerciseForGuidedTour?: Exercise;
 
+    @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
+    @ContentChild('overrideOpenButton') overrideOpenButton: TemplateRef<any>;
+    @ContentChild('overrideNewButton') overrideNewButton: TemplateRef<any>;
+
     constructor(
         private exerciseService: ExerciseService,
         private courseManagementService: CourseManagementService,
@@ -161,7 +159,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
-        private orionConnectorService: OrionConnectorService,
     ) {}
 
     /**
@@ -177,10 +174,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
-
-        this.orionConnectorService.state().subscribe((state) => {
-            this.orionState = state;
-        });
 
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
@@ -254,8 +247,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
-
-                this.isOrionAndProgramming = isOrion && this.exercise.type === ExerciseType.PROGRAMMING;
 
                 // load the guided tour step only after everything else on the page is loaded
                 this.guidedTourService.componentPageLoaded();
@@ -614,30 +605,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             await this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
         }
         this.openingAssessmentEditorForNewSubmission = false;
-    }
-
-    /**
-     * Triggers downloading the test repository and opening it, allowing for submissions to be downloaded
-     */
-    openAssessmentInOrion() {
-        this.orionConnectorService.assessExercise(this.exercise);
-    }
-
-    /**
-     * Retrieves a new submission if necessary and then delegates to the
-     * {@link programmingSubmissionService} to download the submission
-     *
-     * @param submission submission to send to Orion or 'new' if a new one should be loaded
-     * @param correctionRound correction round
-     */
-    downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
-        if (submission === 'new') {
-            this.programmingSubmissionService
-                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, true, correctionRound)
-                .subscribe((newSubmission) => this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, newSubmission.id!, correctionRound));
-        } else {
-            this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission.id!, correctionRound);
-        }
     }
 
     /**

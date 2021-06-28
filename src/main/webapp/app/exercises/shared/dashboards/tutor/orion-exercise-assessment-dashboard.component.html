@@ -1,0 +1,42 @@
+<jhi-exercise-assessment-dashboard *ngIf="this.exercise.type !== ExerciseType.PROGRAMMING; else orionVersion"> </jhi-exercise-assessment-dashboard>
+
+<ng-template #orionVersion>
+    <jhi-exercise-assessment-dashboard *ngIf="orionState.opened !== exercise.id || orionState.view !== ExerciseView.TUTOR; else withTable">
+        <ng-template #overrideAssessmentTable>
+            <jhi-ide-button
+                [buttonLoading]="orionState.cloning"
+                buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startYourParticipation' | artemisTranslate }}"
+                (clickHandler)="openAssessmentInOrion()"
+            >
+            </jhi-ide-button>
+        </ng-template>
+    </jhi-exercise-assessment-dashboard>
+
+    <ng-template #withTable>
+        <jhi-exercise-assessment-dashboard>
+            <ng-template #overrideOpenButton let-submission="submission" let-correctionRound="correctionRound">
+                <jhi-ide-button
+                    class="btn btn-sm"
+                    [buttonLoading]="orionState.cloning"
+                    buttonLabel="{{
+                        (submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'
+                            ? 'artemisApp.exerciseAssessmentDashboard.orion.continueAssessment'
+                            : 'artemisApp.exerciseAssessmentDashboard.orion.openAssessment'
+                        ) | artemisTranslate
+                    }}"
+                    (clickHandler)="downloadSubmissionInOrion(submission, correctionRound)"
+                >
+                </jhi-ide-button>
+            </ng-template>
+            <ng-template #overrideNewButton let-correctionRound="correctionRound">
+                <jhi-ide-button
+                    class="btn btn-sm"
+                    [buttonLoading]="orionState.cloning"
+                    buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startAssessment' | artemisTranslate }}"
+                    (clickHandler)="downloadSubmissionInOrion('new', correctionRound)"
+                >
+                </jhi-ide-button>
+            </ng-template>
+        </jhi-exercise-assessment-dashboard>
+    </ng-template>
+</ng-template>
