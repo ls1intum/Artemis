@@ -5,6 +5,7 @@ import java.util.List;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
+@SecondaryTable(name = "text_assessment_knowledge")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
@@ -24,6 +26,11 @@ public class TextExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private List<TextCluster> clusters;
+
+    @ManyToOne
+    @JoinColumn (table = "text_assessment_knowledge")
+    @JsonIgnoreProperties("exercises")
+    private TextAssessmentKnowledge knowledge;
 
     public String getSampleSolution() {
         return sampleSolution;
@@ -49,6 +56,14 @@ public class TextExercise extends Exercise {
     @Override
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", sampleSolution='" + getSampleSolution() + "'" + "}";
+    }
+
+    public TextAssessmentKnowledge getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(TextAssessmentKnowledge knowledge) {
+        this.knowledge = knowledge;
     }
 
 }

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  */
 @Entity
 @Table(name = "text_block")
+@SecondaryTable(name = "text_assessment_knowledge")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextBlock implements Serializable {
@@ -69,8 +70,9 @@ public class TextBlock implements Serializable {
     private TextSubmission submission;
 
     @ManyToOne
+    @JoinColumn (table = "text_assessment_knowledge")
     @JsonIgnoreProperties("textBlocks")
-    private AssessmentKnowledge knowledge;
+    private TextAssessmentKnowledge knowledge;
 
     @ManyToOne
     @JsonIgnore
@@ -232,11 +234,11 @@ public class TextBlock implements Serializable {
         this.numberOfAffectedSubmissions = numberOfAffectedSubmissions;
     }
 
-    public AssessmentKnowledge getKnowledge() {
+    public TextAssessmentKnowledge getKnowledge() {
         return knowledge;
     }
 
-    public void setKnowledge(AssessmentKnowledge knowledge) {
+    public void setKnowledge(TextAssessmentKnowledge knowledge) {
         this.knowledge = knowledge;
     }
 }

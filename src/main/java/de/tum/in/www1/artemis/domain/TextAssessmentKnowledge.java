@@ -12,43 +12,28 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "assessment_knowledge")
+@Table(name = "text_assessment_knowledge")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AssessmentKnowledge extends DomainObject{
+public class TextAssessmentKnowledge extends DomainObject{
 
     @OneToMany(mappedBy = "knowledge", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("knowledge")
-    private Set<Exercise> exercises = new HashSet<>();
-
-    @OneToMany(mappedBy = "knowledge", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("knowledge")
-    private Set<Feedback> feedbacks = new HashSet<>();
+    private Set<TextExercise> exercises = new HashSet<>();
 
     @OneToMany(mappedBy = "knowledge", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("knowledge")
     private Set<TextBlock> textBlocks = new HashSet<>();
 
-    public Set<Exercise> getExercises() {
+    public Set<TextExercise> getExercises() {
         return exercises;
     }
 
-    public AssessmentKnowledge addExercises(Exercise exercise) {
+    public TextAssessmentKnowledge addExercises(TextExercise exercise) {
         this.exercises.add(exercise);
         exercise.setKnowledge(this);
-        return this;
-    }
-
-    public Set<Feedback> getFeedbacks() {
-        return feedbacks;
-    }
-
-    public AssessmentKnowledge addFeedbacks(Feedback feedback) {
-        this.feedbacks.add(feedback);
-        feedback.setKnowledge(this);
         return this;
     }
 
@@ -56,7 +41,7 @@ public class AssessmentKnowledge extends DomainObject{
         return textBlocks;
     }
 
-    public AssessmentKnowledge addTextBlocks(TextBlock textBlock) {
+    public TextAssessmentKnowledge addTextBlocks(TextBlock textBlock) {
         this.textBlocks.add(textBlock);
         textBlock.setKnowledge(this);
         return this;
