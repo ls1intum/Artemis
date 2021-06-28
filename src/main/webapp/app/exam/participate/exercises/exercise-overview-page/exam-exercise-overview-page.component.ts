@@ -44,15 +44,19 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
     }
 
-    setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'synced active' | 'notSynced' {
-        if (!item?.submission || item.submission.isSynced) {
+    setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'notSynced' {
+        item.icon = 'edit';
+        if (!item?.submission) {
             return 'synced';
         }
         if (item.submission.submitted) {
             item.icon = 'check';
+        }
+        if (item.submission.isSynced) {
+            // make status blue
+            return 'synced';
         } else {
             // make status yellow
-            item.icon = 'edit';
             return 'notSynced';
         }
     }
