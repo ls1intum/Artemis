@@ -79,7 +79,6 @@ public class AutomaticTextFeedbackService {
         }).filter(Objects::nonNull).collect(toList());
 
         result.setFeedbacks(suggestedFeedback);
-        result.getSubmission();
     }
 
 }

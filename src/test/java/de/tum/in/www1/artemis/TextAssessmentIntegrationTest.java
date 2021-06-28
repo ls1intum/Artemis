@@ -122,59 +122,51 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "instructor1", roles = "TA")
     public void testPrepareSubmissionForAssessmentAutomaticLabel1() throws Exception {
-        //
         int submissionCount = 5;
         int submissionSize = 1;
         int numberOfBlocksTotally = submissionCount * submissionSize;
         int[] clusterSizes = new int[] { 5 };
         var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-        TextBlock gradedTextBlock = textBlocks.stream().toList().get(0);
-        // gradedTextBlock.
+
+        textBlocks.forEach(TextBlock::computeId);
+
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
         textExercise.setMaxPoints(1000D);
-        textBlocks.forEach(TextBlock::computeId);
-        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
-
         exerciseRepository.save(textExercise);
+
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         double[][] minimalDistanceMatrix = new double[numberOfBlocksTotally][numberOfBlocksTotally];
-        //
-        // // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
+        // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
         for (double[] row : minimalDistanceMatrix)
             Arrays.fill(row, 0.1);
         clusters.get(0).blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
-
-        // textExercise
-        // LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        // params.add("lock", "true");
-        //
-        // TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-        // TextSubmission.class, params);
-        // database.saveTextSubmission(textExercise, submissionWithoutAssessment, "student1");
-
         textClusterRepository.saveAll(clusters);
+
         textBlockRepository.saveAll(textBlocks);
 
-        TextSubmission submission = (TextSubmission) submissionRepository.findAll().get(0);
-        Result result = new Result();
+        // TextSubmission submission2 = new TextSubmission();
+        // submission2 = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission2, "student1", "tutor1");
+        //
+        // database.saveTextSubmission(textExercise, submission, "student1");
 
-        var params2 = new LinkedMultiValueMap<String, String>();
-        // storedResult.getSubmission().getParticipation();
-        params2.add("resultId", String.valueOf(result.getId()));
-        StudentParticipation participation = request.get(
-                "/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.OK,
-                StudentParticipation.class, params2);
-        result.setSubmission(submission);
-
-        result.setParticipation(participation);
+        var test = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId());
+        TextSubmission submission = test.get(0);
+        submission = new TextSubmission();
+        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "instructor1");
+        textSubmissionRepository.save(submission);
+        // submission.setParticipation(database.createAndSaveParticipationForExercise(textExercise,"student1"));
+        exerciseRepository.save(textExercise);
+        Result result = submission.getResultForCorrectionRound(1);
         resultRepo.save(result);
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore((TextSubmission) result.getSubmission(), textAssessmentDTO, feedbacks, 4.0, 10L);
+        feedbacks.get(0).setReference(textBlocks.stream().toList().get(0).getId());
+        // submission.setResults();
+        addManualAssessmentFeedbackAndCheckScore(submission, textAssessmentDTO, feedbacks, 100, 10);
 
         result.setFeedbacks(feedbacks);
 
         var saved = feedbackRepository.getFeedbackForTextExerciseInCluster(clusters.get(0));
-        System.out.println(saved);
 
         automaticTextFeedbackService.suggestFeedback(result);
         // textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
@@ -183,6 +175,21 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(submission.getBlocks().size()).isEqualTo(1);
         // assertThat(submissionWithoutAssessment.getBlocks().stream().toList().get(0).getNumberOfAffectedSubmissions()).isEqualTo(numberOfBlocksTotally - 1);
         //
+    }
+
+    public StudentParticipation createSavedParticipation(Exercise exercise, String login) {
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        if (storedParticipation.isEmpty()) {
+            User user = database.getUserByLogin(login);
+            StudentParticipation participation = new StudentParticipation();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setParticipant(user);
+            participation.setExercise(exercise);
+            studentParticipationRepository.save(participation);
+            storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+            assertThat(storedParticipation).isPresent();
+        }
+        return studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
     @Test
@@ -1429,6 +1436,15 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
             long expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
+        textAssessmentDTO.setFeedbacks(feedbacks);
+        Result response = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
+                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+        assertThat(response.getScore()).isEqualTo(expectedScore);
+    }
+
+    public void addManualAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks,
+            double pointsAwarded, long expectedScore) throws Exception {
+        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL).detailText("gj"));
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result response = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);

@@ -126,4 +126,42 @@ public class TextExerciseUtilService {
         }
         return textExercise;
     }
+
+    public TextExercise createSampleTextExerciseWithSubmissionsAndResult(Course course, List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
+        if (textBlocks.size() != submissionCount * submissionSize) {
+            throw new IllegalArgumentException("number of textBlocks must be eqaul to submissionCount * submissionSize");
+        }
+        TextExercise textExercise = new TextExercise();
+        textExercise.setCourse(course);
+        textExercise.setTitle("Title");
+        textExercise.setShortName("Shortname");
+        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        textExercise = textExerciseRepository.save(textExercise);
+
+        // submissions.length must be equal to studentParticipations.length;
+        for (int i = 0; i < submissionCount; i++) {
+            TextSubmission submission = new TextSubmission();
+            StudentParticipation studentParticipation = new StudentParticipation();
+            studentParticipation.setExercise(textExercise);
+            studentParticipation = participationRepository.save(studentParticipation);
+            submission.setParticipation(studentParticipation);
+            submission.setLanguage(Language.ENGLISH);
+            submission.setText("Test123");
+            submission.setBlocks(new HashSet<>(textBlocks.subList(i * submissionSize, (i + 1) * submissionSize)));
+            submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
+            textBlocks.subList(i * submissionSize, (i + 1) * submissionSize).forEach(textBlock -> textBlock.setSubmission(submission));
+
+            studentParticipation.addSubmission(submission);
+            textSubmissionRepository.save(submission);
+        }
+        return textExercise;
+    }
+    // public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
+    // StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
+    // submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+    // submission = addSubmissionWithFinishedResultsWithAssessor(participation, exercise, submission, login, assessorLogin);
+    // return submission;
+    // }
+
 }
