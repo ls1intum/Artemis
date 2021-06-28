@@ -16,7 +16,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
-    let examParticipationService: ExamParticipationService;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
@@ -26,7 +26,7 @@ describe('Exam Navigation Bar Component', () => {
 
         fixture = TestBed.createComponent(ExamNavigationBarComponent);
         comp = fixture.componentInstance;
-        examParticipationService = TestBed.inject(ExamParticipationService);
+        TestBed.inject(ExamParticipationService);
 
         comp.endDate = moment();
         comp.exercises = [
