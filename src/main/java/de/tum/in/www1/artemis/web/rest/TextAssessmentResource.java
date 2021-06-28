@@ -505,13 +505,13 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Automatic text assessment conflict service is not available!", "automaticTextAssessmentConflictService",
                     "AutomaticTextAssessmentConflictServiceNotFound");
         }
-        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
         if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().getId().equals(exerciseId)) {
             return badRequest("exerciseId", "400", "The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !");
         }
+        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
         final User secondAssessor = feedbackConflict.getSecondFeedback().getResult().getAssessor();
 

@@ -104,6 +104,7 @@ export class TextAssessmentService {
 
     /**
      * Get all feedback items for a submission.
+     * @param participationId id of the participation to the submission
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      * @param correctionRound
      * @param resultId instructors can results by id

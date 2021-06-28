@@ -208,7 +208,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createExampleTextAssessment_notExistentId() throws Exception {
+    public void createExampleTextAssessmentNotExistentId() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
         database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
         final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
@@ -221,10 +221,10 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2").reference(textBlockIterator.next().getId()));
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
-        long randomId_nonExistent = 1233;
-        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + randomId_nonExistent + "/example-text-assessment", dto, Result.class,
+        long randomId = 1233;
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + randomId + "/example-text-assessment", dto, Result.class,
                 HttpStatus.NOT_FOUND);
-        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId_nonExistent)).isEmpty();
+        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
     @Test

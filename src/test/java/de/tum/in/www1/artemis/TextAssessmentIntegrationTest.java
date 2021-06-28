@@ -1192,7 +1192,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(feedbackConflict).as("feedback conflict should not be found").isNull();
     }
 
-    // @Test
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void solveFeedbackConflict_wrongExerciseId() throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
