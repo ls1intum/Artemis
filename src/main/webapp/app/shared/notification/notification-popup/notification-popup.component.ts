@@ -49,7 +49,8 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     navigateToTarget(notification: Notification): void {
-        if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+        // tslint:disable-next-line:triple-equals
+        if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             const target = JSON.parse(notification.target!);
             this.examExercisesNavigationService.navigateToExamExercise(target.exercise);
         } else {
@@ -60,9 +61,11 @@ export class NotificationPopupComponent implements OnInit {
     private notificationTargetRoute(notification: Notification): UrlTree | string {
         if (notification.target) {
             const target = JSON.parse(notification.target);
-
             if (notification.title === 'Quiz started' && target.status) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id, target.status]);
+            } // tslint:disable-next-line:triple-equals
+            else if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+                return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.exam]);
             } else {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
             }
@@ -124,7 +127,8 @@ export class NotificationPopupComponent implements OnInit {
             const target = JSON.parse(notification.target);
             this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
 
-            if (notification.text != undefined) {
+            //only show pop-up if explicit notification text was set and only inside exam mode
+            if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
                 this.notifications.unshift(notification);
             }
         }

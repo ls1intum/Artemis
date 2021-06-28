@@ -116,6 +116,7 @@ export class NotificationSidebarComponent implements OnInit {
     private subscribeToNotificationUpdates(): void {
         this.notificationService.subscribeToNotificationUpdates().subscribe((notification: Notification) => {
             // ignores live exam notifications because the sidebar is not visible during the exam mode
+            // tslint:disable-next-line:triple-equals
             if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 return;
             }

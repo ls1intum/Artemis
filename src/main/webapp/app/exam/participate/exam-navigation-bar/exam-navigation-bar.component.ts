@@ -86,13 +86,13 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     changeExerciseById(exerciseId: number) {
-        const foundIndex = this.exercises.findIndex((ex) => ex.id == exerciseId);
+        const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
         this.changeExercise(foundIndex, true);
     }
 
     updateExerciseById(exerciseId: number, problemStatement: string) {
-        if (exerciseId != -1 && problemStatement != undefined) {
-            const foundIndex = this.exercises.findIndex((ex) => ex.id == exerciseId);
+        if (exerciseId !== -1 && problemStatement != undefined) {
+            const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
             this.exercises[foundIndex].problemStatement = problemStatement;
         }
     }

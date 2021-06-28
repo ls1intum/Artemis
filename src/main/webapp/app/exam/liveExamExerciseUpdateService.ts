@@ -9,6 +9,6 @@ export class LiveExamExerciseUpdateService {
     constructor() {}
 
     updateLiveExamExercise(exerciseId: number, problemStatement: string) {
-        this.examExerciseIdAndProblemStatementSource.next({ exerciseId: exerciseId, problemStatement: problemStatement });
+        this.examExerciseIdAndProblemStatementSource.next({ exerciseId, problemStatement });
     }
 }
