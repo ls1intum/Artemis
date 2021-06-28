@@ -20,6 +20,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/orion-exercise-assessment-dashboard.component';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
 
@@ -43,7 +44,7 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         ArtemisMarkdownModule,
         OrionModule,
     ],
-    declarations: [ExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
+    declarations: [ExerciseAssessmentDashboardComponent, OrionExerciseAssessmentDashboardComponent, SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
     providers: [],
     exports: [SecondCorrectionEnableButtonComponent, LanguageTableCellComponent],
 })
