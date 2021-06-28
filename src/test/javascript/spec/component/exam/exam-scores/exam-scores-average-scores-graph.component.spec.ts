@@ -58,7 +58,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
                 component = fixture.componentInstance;
 
                 component.averageScores = returnValue;
-                fixture.detectChanges();
+                component.ngOnInit();
             });
     });
 

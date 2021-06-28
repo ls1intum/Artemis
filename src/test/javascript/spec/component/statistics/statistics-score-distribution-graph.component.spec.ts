@@ -38,7 +38,7 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
                 component.averageScoreOfExercise = 75;
                 component.scoreDistribution = [0, 0, 0, 0, 0, 5, 0, 0, 0, 5];
                 component.numberOfExerciseScores = 10;
-                fixture.detectChanges();
+                component.ngOnInit();
             });
     });
 

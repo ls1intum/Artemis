@@ -53,7 +53,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
                 component.exerciseAverageScores = returnValue;
                 component.courseAverage = courseAverageScore;
-                fixture.detectChanges();
+                component.ngOnInit();
             });
     });
 
