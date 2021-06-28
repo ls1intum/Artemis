@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
 import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -79,6 +80,9 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     private FeedbackConflictRepository feedbackConflictRepository;
 
     @Autowired
+    private AutomaticTextFeedbackService automaticTextFeedbackService;
+
+    @Autowired
     private FeedbackRepository feedbackRepository;
 
     @Autowired
@@ -117,69 +121,135 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "instructor1", roles = "TA")
-    public void testPrepareSubmissionForAssessmentAutomaticLabel() throws Exception {
-        int submissionCount = 11;
+    public void testPrepareSubmissionForAssessmentAutomaticLabel1() throws Exception {
+        //
+        int submissionCount = 5;
         int submissionSize = 1;
         int numberOfBlocksTotally = submissionCount * submissionSize;
-        // int[] clusterSizes = new int[] { 11 };
-        //
+        int[] clusterSizes = new int[] { 5 };
         var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-        // TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
-        // textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        TextBlock gradedTextBlock = textBlocks.stream().toList().get(0);
+        // gradedTextBlock.
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
+        textExercise.setMaxPoints(1000D);
         textBlocks.forEach(TextBlock::computeId);
-        // // TODO - ADD FEEDBACKS to One of them for it to work!!!
-        final TextCluster cluster = new TextCluster().exercise(textExercise);
-        //
+        List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
+
+        exerciseRepository.save(textExercise);
         double[][] minimalDistanceMatrix = new double[numberOfBlocksTotally][numberOfBlocksTotally];
         //
         // // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
         for (double[] row : minimalDistanceMatrix)
             Arrays.fill(row, 0.1);
-        cluster.blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
-        //
-        textClusterRepository.save(cluster);
-        textBlockRepository.saveAll(cluster.getBlocks());
-        //
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1"));
-        // feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
-        // textAssessmentDTO.setFeedbacks(feedbacks);
+        clusters.get(0).blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
 
-        feedbackRepository.saveFeedbacks(feedbacks);
-        // textSubmissionRepository.saveAll();
-        // final TextSubmission submission = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId()).get(0);
+        // textExercise
+        // LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        // params.add("lock", "true");
         //
-        // final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        // List<Feedback> feedbacks = new ArrayList<>();
+        // TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+        // TextSubmission.class, params);
+        // database.saveTextSubmission(textExercise, submissionWithoutAssessment, "student1");
 
-        TextSubmission submission = ModelFactory.generateTextSubmission("asdf", Language.ENGLISH, true);
-        submission.setBlocks(textBlocks);
-        submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
-        Result storedResult = submission.getResultForCorrectionRound(1);
-        var params = new LinkedMultiValueMap<String, String>();
+        textClusterRepository.saveAll(clusters);
+        textBlockRepository.saveAll(textBlocks);
+
+        TextSubmission submission = (TextSubmission) submissionRepository.findAll().get(0);
+        Result result = new Result();
+
+        var params2 = new LinkedMultiValueMap<String, String>();
         // storedResult.getSubmission().getParticipation();
-        params.add("resultId", String.valueOf(storedResult.getId()));
+        params2.add("resultId", String.valueOf(result.getId()));
         StudentParticipation participation = request.get(
                 "/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.OK,
-                StudentParticipation.class, params);
+                StudentParticipation.class, params2);
+        result.setSubmission(submission);
 
-        final Result result = participation.getResults().iterator().next();
+        result.setParticipation(participation);
+        resultRepo.save(result);
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        List<Feedback> feedbacks = new ArrayList<>();
+        addAssessmentFeedbackAndCheckScore((TextSubmission) result.getSubmission(), textAssessmentDTO, feedbacks, 4.0, 10L);
 
-        // result.setSubmission(submission);
-        // TextSubmission textSubmissionResult = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        // textSubmissionResult.setParticipation();
-        // // textSubmissionResult = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmissionResult, "student2", "tutor2");
-        // Result result = textSubmissionResult.getLatestResult();
+        result.setFeedbacks(feedbacks);
 
-        // TextSubmission textSubmission = ModelFactory.generateTextSubmission(submission.getText(), Language.ENGLISH, false);
-        // textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
+        var saved = feedbackRepository.getFeedbackForTextExerciseInCluster(clusters.get(0));
+        System.out.println(saved);
+
+        automaticTextFeedbackService.suggestFeedback(result);
+        // textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
+
+        assertThat(result).as("saved result found").isNotNull();
+        assertThat(submission.getBlocks().size()).isEqualTo(1);
+        // assertThat(submissionWithoutAssessment.getBlocks().stream().toList().get(0).getNumberOfAffectedSubmissions()).isEqualTo(numberOfBlocksTotally - 1);
         //
-        // System.out.println(textExercise.getStudentParticipations() + "" + database.getAllSubmissionsOfExercise(textExercise));
-        // addAssessmentFeedbackAndCheckScore(textSubmissionResult, textAssessmentDTO, feedbacks, 4.0, 10L);
+    }
 
-        textAssessmentService.prepareSubmissionForAssessment(submission, result);
-        var result2 = resultRepo.findByIdWithEagerSubmissionAndFeedbacks(submission.getId());
-        assertThat(result2).isPresent();
+    @Test
+    @WithMockUser(value = "instructor1", roles = "TA")
+    public void testPrepareSubmissionForAssessmentAutomaticLabel() throws Exception {
+        // int submissionCount = 11;
+        // int submissionSize = 1;
+        // int numberOfBlocksTotally = submissionCount * submissionSize;
+        // // int[] clusterSizes = new int[] { 11 };
+        // //
+        // var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
+        // // TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
+        // // textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        // textBlocks.forEach(TextBlock::computeId);
+        // // // TODO - ADD FEEDBACKS to One of them for it to work!!!
+        // final TextCluster cluster = new TextCluster().exercise(textExercise);
+        // //
+        // double[][] minimalDistanceMatrix = new double[numberOfBlocksTotally][numberOfBlocksTotally];
+        // //
+        // // // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
+        // for (double[] row : minimalDistanceMatrix)
+        // Arrays.fill(row, 0.1);
+        // cluster.blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
+        // //
+        // textClusterRepository.save(cluster);
+        // textBlockRepository.saveAll(cluster.getBlocks());
+        // //
+        // List<Feedback> feedbacks = new ArrayList<>();
+        // feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1"));
+        // // feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
+        // // textAssessmentDTO.setFeedbacks(feedbacks);
+        //
+        // feedbackRepository.saveFeedbacks(feedbacks);
+        // // textSubmissionRepository.saveAll();
+        // // final TextSubmission submission = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId()).get(0);
+        // //
+        // // final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        // // List<Feedback> feedbacks = new ArrayList<>();
+        //
+        // TextSubmission submission = ModelFactory.generateTextSubmission("asdf", Language.ENGLISH, true);
+        // submission.setBlocks(textBlocks);
+        // submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
+        // Result storedResult = submission.getResultForCorrectionRound(1);
+        // var params = new LinkedMultiValueMap<String, String>();
+        // // storedResult.getSubmission().getParticipation();
+        // params.add("resultId", String.valueOf(storedResult.getId()));
+        // StudentParticipation participation = request.get(
+        // "/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.OK,
+        // StudentParticipation.class, params);
+        //
+        // final Result result = participation.getResults().iterator().next();
+        //
+        // // result.setSubmission(submission);
+        // // TextSubmission textSubmissionResult = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        // // textSubmissionResult.setParticipation();
+        // // // textSubmissionResult = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmissionResult, "student2", "tutor2");
+        // // Result result = textSubmissionResult.getLatestResult();
+        //
+        // // TextSubmission textSubmission = ModelFactory.generateTextSubmission(submission.getText(), Language.ENGLISH, false);
+        // // textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
+        // //
+        // // System.out.println(textExercise.getStudentParticipations() + "" + database.getAllSubmissionsOfExercise(textExercise));
+        // // addAssessmentFeedbackAndCheckScore(textSubmissionResult, textAssessmentDTO, feedbacks, 4.0, 10L);
+        //
+        // textAssessmentService.prepareSubmissionForAssessment(submission, result);
+        // var result2 = resultRepo.findByIdWithEagerSubmissionAndFeedbacks(submission.getId());
+        // assertThat(result2).isPresent();
     }
 
     @Test

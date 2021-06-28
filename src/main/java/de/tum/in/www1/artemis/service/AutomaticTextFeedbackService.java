@@ -53,7 +53,7 @@ public class AutomaticTextFeedbackService {
                 // Find all Feedbacks for other Blocks in Cluster.
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).collect(toList());
                 final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackRepository.getFeedbackForTextExerciseInCluster(cluster);
-
+                feedbackForTextExerciseInCluster.size();
                 if (feedbackForTextExerciseInCluster.size() != 0) {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
 
@@ -79,6 +79,7 @@ public class AutomaticTextFeedbackService {
         }).filter(Objects::nonNull).collect(toList());
 
         result.setFeedbacks(suggestedFeedback);
+        result.getSubmission();
     }
 
 }
