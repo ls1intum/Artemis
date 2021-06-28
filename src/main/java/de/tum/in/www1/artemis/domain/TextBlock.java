@@ -9,11 +9,11 @@ import java.util.Objects;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -70,7 +70,7 @@ public class TextBlock implements Serializable {
     private TextSubmission submission;
 
     @ManyToOne
-    @JoinColumn (table = "text_assessment_knowledge")
+    @JoinColumn(table = "text_assessment_knowledge")
     @JsonIgnoreProperties("textBlocks")
     private TextAssessmentKnowledge knowledge;
 

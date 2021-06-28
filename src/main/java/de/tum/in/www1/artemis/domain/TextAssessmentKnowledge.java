@@ -1,21 +1,21 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "text_assessment_knowledge")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class TextAssessmentKnowledge extends DomainObject{
+public class TextAssessmentKnowledge extends DomainObject {
 
     @OneToMany(mappedBy = "knowledge", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

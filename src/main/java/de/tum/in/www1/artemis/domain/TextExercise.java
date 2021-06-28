@@ -28,7 +28,7 @@ public class TextExercise extends Exercise {
     private List<TextCluster> clusters;
 
     @ManyToOne
-    @JoinColumn (table = "text_assessment_knowledge")
+    @JoinColumn(table = "text_assessment_knowledge")
     @JsonIgnoreProperties("exercises")
     private TextAssessmentKnowledge knowledge;
 
