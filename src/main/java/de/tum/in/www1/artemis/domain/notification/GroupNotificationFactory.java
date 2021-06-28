@@ -102,10 +102,7 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        if (notificationText == null && title.equals(Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE)) {
-            text = null;
-        }
-        if (notificationText != null) {
+        if (notificationText != null || (notificationText == null && title.equals(Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE))) {
             text = notificationText;
         }
 

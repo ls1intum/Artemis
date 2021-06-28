@@ -184,6 +184,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+        log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
