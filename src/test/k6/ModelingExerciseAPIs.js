@@ -1,17 +1,10 @@
 import { group, sleep } from 'k6';
 import { addUserToInstructorsInCourse, deleteCourse, newCourse } from './requests/course.js';
-import {
-    assessModelingSubmission,
-    deleteModelingExercise,
-    getAndLockModelingSubmission,
-    getExercise,
-    newModelingExercise,
-    startExercise,
-    startTutorParticipation,
-    submitRandomModelingAnswerExam,
-} from './requests/modeling.js';
+import { assessModelingSubmission, newModelingExercise, submitRandomModelingAnswerExam, updateModelingExerciseDueDate } from './requests/modeling.js';
+import { startExercise, getExercise, startTutorParticipation, deleteExercise, getAndLockSubmission } from './requests/exercises.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
+import { MODELING_EXERCISE, MODELING_SUBMISSION_WITHOUT_ASSESSMENT } from './requests/endpoints';
 
 // Version: 1.1
 // Creator: Firefox
@@ -46,7 +39,9 @@ export function setup() {
     let artemis;
     let exercise;
     const iterations = parseInt(__ENV.ITERATIONS);
-
+    // Create course
+    const instructorUsername = baseUsername.replace('USERID', '1');
+    const instructorPassword = basePassword.replace('USERID', '1');
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new exercise as no parameters are given');
 
@@ -59,10 +54,6 @@ export function setup() {
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
         console.log('Create users with ids starting from ' + (userOffset + iterations) + ' and up to ' + (userOffset + iterations + iterations));
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset + iterations, true);
-
-        // Create course
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
 
         console.log('Assigning ' + instructorUsername + 'to course ' + course.id + ' as the instructor');
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
@@ -89,7 +80,7 @@ export function setup() {
         artemis = login(adminUsername, adminPassword);
 
         console.log('Getting exercise');
-        exercise = getExercise(artemis, exerciseId);
+        exercise = getExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
     }
 
     for (let i = 1; i <= iterations; i++) {
@@ -115,6 +106,13 @@ export function setup() {
 
     sleep(2);
 
+    // Login to Artemis
+    artemis = login(instructorUsername, instructorPassword);
+
+    updateModelingExerciseDueDate(artemis, exercise);
+
+    sleep(30);
+
     console.log('Using existing course ' + courseId + ' and exercise ' + exerciseId);
     return { exerciseId, courseId };
 }
@@ -139,7 +137,7 @@ export default function (data) {
         let participation = startTutorParticipation(artemis, exerciseId);
         if (participation) {
             console.log('Get and lock modeling submission for tutor ' + userId + ' and exercise');
-            const submission = getAndLockModelingSubmission(artemis, exerciseId);
+            const submission = getAndLockSubmission(artemis, exerciseId, MODELING_SUBMISSION_WITHOUT_ASSESSMENT(exerciseId));
             const submissionId = submission.id;
             console.log('Assess modeling submission ' + submissionId);
             console.log('Result before manual assessment ' + JSON.stringify(submission.results[0]));
@@ -158,7 +156,7 @@ export function teardown(data) {
         const courseId = data.courseId;
         const exerciseId = data.exerciseId;
 
-        deleteModelingExercise(artemis, exerciseId);
+        deleteExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
         deleteCourse(artemis, courseId);
     }
 }

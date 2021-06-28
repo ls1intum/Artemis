@@ -109,9 +109,9 @@ public interface ContinuousIntegrationService {
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
-     * @throws Exception if the Body could not be parsed
+     * @throws ContinuousIntegrationException if the Body could not be parsed
      */
-    String getPlanKey(Object requestBody) throws Exception;
+    String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
      * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
@@ -294,7 +294,7 @@ public interface ContinuousIntegrationService {
      */
     static String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
-            case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java16-2";
+            case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java16-3";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";

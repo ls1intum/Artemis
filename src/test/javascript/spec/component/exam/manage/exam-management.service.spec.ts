@@ -110,7 +110,15 @@ describe('Exam Management Service Tests', () => {
     it('should get exam scores', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockExamScore: ExamScoreDTO = { examId: mockExam.id!, title: '', averagePointsAchieved: 1, exerciseGroups: [], maxPoints: 1, studentResults: [] };
+        const mockExamScore: ExamScoreDTO = {
+            examId: mockExam.id!,
+            title: '',
+            averagePointsAchieved: 1,
+            exerciseGroups: [],
+            maxPoints: 1,
+            hasSecondCorrectionAndStarted: false,
+            studentResults: [],
+        };
         const expectedExamScore = { ...mockExamScore };
 
         // WHEN

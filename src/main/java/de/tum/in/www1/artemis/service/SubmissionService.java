@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,11 +16,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -48,9 +51,12 @@ public class SubmissionService {
 
     protected final ParticipationRepository participationRepository;
 
+    protected final ComplaintRepository complaintRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ComplaintRepository complaintRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -61,6 +67,7 @@ public class SubmissionService {
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
+        this.complaintRepository = complaintRepository;
     }
 
     /**
@@ -279,12 +286,22 @@ public class SubmissionService {
      */
     public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         List<Feedback> oldFeedback = oldResult.getFeedbacks();
-        oldFeedback.forEach(feedback -> {
-            Feedback newFeedback = feedback.copyFeedback();
-            newResult.addFeedback(newFeedback);
-        });
-        resultRepository.save(newResult);
+        copyFeedbackToResult(newResult, oldFeedback);
         return newResult.getFeedbacks();
+    }
+
+    /**
+     * Copy feedback from a feedback list to a Result
+     * @param result the result to copy feedback to
+     * @param feedbacks the feedbacks which are copied
+     */
+    private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
+        feedbacks.forEach(feedback -> {
+            Feedback newFeedback = feedback.copyFeedback();
+            newFeedback.setPositive(newFeedback.getCredits() > 0);
+            result.addFeedback(newFeedback);
+        });
+        resultRepository.save(result);
     }
 
     /**
@@ -303,16 +320,44 @@ public class SubmissionService {
         Result newResult = new Result();
         newResult.setParticipation(submission.getParticipation());
         copyFeedbackToNewResult(newResult, oldResult);
+        return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+    }
 
+    /**
+     * This method is used to create a new result, after a complaint has been accepted.
+     * The new result contains the updated feedback of the result the complaint belongs to.
+     *
+     * @param submission the submission where the original result and the result after the complaintResponse belong to
+     * @param oldResult the original result, before the response
+     * @param feedbacks the new feedbacks after the response
+     * @return the newly created result
+     */
+    public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks) {
+        Result newResult = new Result();
+        newResult.setParticipation(submission.getParticipation());
+        copyFeedbackToResult(newResult, feedbacks);
+        newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        return newResult;
+    }
+
+    /**
+     * Copies the content of one result to another, and adds the second result to the submission.
+     *
+     * @param submission the submission which both results belong to, the newResult comes after the oldResult in the resultlist
+     * @param newResult the result where the content is set
+     * @param oldResult the result from which the content is copied from
+     * @return the newResult
+     */
+    private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
         newResult.setResultString(oldResult.getResultString());
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
-        newResult = resultRepository.save(newResult);
-        newResult.setSubmission(submission);
-        submission.addResult(newResult);
+        var savedResult = resultRepository.save(newResult);
+        savedResult.setSubmission(submission);
+        submission.addResult(savedResult);
         submissionRepository.save(submission);
-        return newResult;
+        return savedResult;
     }
 
     /**
@@ -531,4 +576,51 @@ public class SubmissionService {
         return submissions;
     }
 
+    /**
+     * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
+     *
+     * @param exerciseId the exerciseId of the exercise of which the complaints are fetched
+     * @param principal the current user
+     * @param isAtLeastInstructor if the user is an instructor
+     * @return a list of DTOs containing a complaint and its submission
+     */
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, Principal principal, boolean isAtLeastInstructor) {
+        List<SubmissionWithComplaintDTO> submissionWithComplaintDTOs = new ArrayList<>();
+
+        // get all complaints which belong to the exercise
+        List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        var complaintMap = complaints.stream().collect(Collectors.toMap(complaint -> complaint.getResult().getId(), value -> value));
+
+        if (complaints.isEmpty()) {
+            return submissionWithComplaintDTOs;
+        }
+        // get the ids of all results which have a complaint, and with those fetch all their submissions
+        List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).collect(toList());
+        List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
+
+        // add each submission with its complaint to the DTO
+        submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
+            // get the complaint which belongs to the submission
+            Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+            prepareComplaintAndSubmission(complaintOfSubmission, submission);
+            submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+        });
+
+        return submissionWithComplaintDTOs;
+    }
+
+    /**
+     * Helper method to prepare the complaint for the client
+     * @param complaint the complaint which gets prepared
+     */
+    private void prepareComplaintAndSubmission(Complaint complaint, Submission submission) {
+        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        studentParticipation.setParticipant(null);
+        studentParticipation.setExercise(null);
+        complaint.setParticipant(null);
+
+        StudentParticipation submissionsParticipation = (StudentParticipation) submission.getParticipation();
+        submissionsParticipation.setParticipant(null);
+        submissionsParticipation.setExercise(null);
+    }
 }

@@ -11,6 +11,8 @@ public class GradeStepsDTO {
 
     public GradeStep[] gradeSteps;
 
+    public Integer maxPoints;
+
     public GradeStepsDTO() {
         // empty constructor for Jackson
     }
@@ -19,6 +21,13 @@ public class GradeStepsDTO {
         this.examTitle = examTitle;
         this.gradeType = gradeType;
         this.gradeSteps = gradeSteps;
+    }
+
+    public GradeStepsDTO(String examTitle, GradeType gradeType, GradeStep[] gradeSteps, Integer maxPoints) {
+        this.examTitle = examTitle;
+        this.gradeType = gradeType;
+        this.gradeSteps = gradeSteps;
+        this.maxPoints = maxPoints;
     }
 
 }

@@ -81,4 +81,30 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInModelingExercises() {
         this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load(this.modelingExercise.id!));
     }
+
+    buildModelClusters() {
+        if (this.modelingExercise && this.modelingExercise.id) {
+            this.modelingExerciseService.buildClusters(this.modelingExercise.id).subscribe(
+                () => {
+                    this.jhiAlertService.success('artemisApp.modelingExercise.buildClusters.success');
+                },
+                () => {
+                    this.jhiAlertService.error('artemisApp.modelingExercise.buildClusters.error');
+                },
+            );
+        }
+    }
+
+    deleteModelClusters() {
+        if (this.modelingExercise && this.modelingExercise.id) {
+            this.modelingExerciseService.deleteClusters(this.modelingExercise.id).subscribe(
+                () => {
+                    this.jhiAlertService.success('artemisApp.modelingExercise.deleteClusters.success');
+                },
+                () => {
+                    this.jhiAlertService.error('artemisApp.modelingExercise.deleteClusters.error');
+                },
+            );
+        }
+    }
 }

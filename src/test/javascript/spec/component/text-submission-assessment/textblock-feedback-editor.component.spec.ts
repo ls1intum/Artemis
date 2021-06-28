@@ -6,11 +6,13 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
+import { ChangeDetectorRef } from '@angular/core';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -21,8 +23,9 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule, ArtemisGradingInstructionLinkIconModule],
             declarations: [TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            providers: [MockProvider(ChangeDetectorRef)],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
@@ -55,7 +58,6 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        // fixture.debugElement.query(By.css('fa-icon.back-button'));
         let button = compiled.querySelector('.close fa-icon[icon="times"]');
         let confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
@@ -149,9 +151,9 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.feedback.type = FeedbackType.MANUAL;
         fixture.detectChanges();
 
-        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="exclamation-triangle"]');
+        const warningIcon = compiled.querySelector('fa-icon[ng-reflect-icon="info-circle"]');
         expect(warningIcon).toBeTruthy();
-        const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
+        const text = compiled.querySelector('[jhiTranslate$=impactWarning]');
         expect(text).toBeTruthy();
     });
 
@@ -164,5 +166,19 @@ describe('TextblockFeedbackEditorComponent', () => {
 
         const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
         expect(text).toBeFalsy();
+    });
+
+    it('should show link icon when feedback is associated with grading instruction', () => {
+        component.feedback.gradingInstruction = new GradingInstruction();
+        fixture.detectChanges();
+        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        expect(linkIcon).toBeTruthy();
+    });
+
+    it('should not show link icon when feedback is not associated with grading instruction', () => {
+        component.feedback.gradingInstruction = undefined;
+        fixture.detectChanges();
+        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        expect(linkIcon).toBeFalsy();
     });
 });

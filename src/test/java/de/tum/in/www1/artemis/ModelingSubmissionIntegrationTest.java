@@ -218,6 +218,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.addTeamParticipationForExercise(useCaseExercise, team.getId());
         String emptyUseCaseModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
+        submission.setExplanationText("This is a use case diagram.");
         ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
 
@@ -225,7 +226,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
-        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+        assertThat(version.get().getContent()).as("submission version has correct content")
+                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
         assertThat(version.get().getCreatedDate()).isNotNull();
         assertThat(version.get().getLastModifiedDate()).isNotNull();
 
@@ -241,7 +243,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         version = submissionVersionRepository.findLatestVersion(returnedSubmission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student2");
-        assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(returnedSubmission.getModel());
+        assertThat(version.get().getContent()).as("submission version has correct content")
+                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
 
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
         database.changeUser("student2");
@@ -671,22 +674,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.addModelingSubmission(useCaseExercise, submission, "student2");
 
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void deleteNextOptimalModelSubmission() throws Exception {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(classExercise, submission, "student1");
-        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
-
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
-        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).hasSize(1);
-
-        request.delete("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.NO_CONTENT);
-        // TODO: Melih Oezbeyli(iozbeyli) Reactivate this code after hazelcast issue is resolved
-        // assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).isEmpty();
     }
 
     @Test

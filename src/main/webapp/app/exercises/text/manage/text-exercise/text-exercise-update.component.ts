@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
@@ -9,17 +8,18 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { navigateBackFromExerciseUpdate, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -49,6 +49,8 @@ export class TextExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
 
+    saveCommand: SaveExerciseCommand<TextExercise>;
+
     constructor(
         private jhiAlertService: JhiAlertService,
         private textExerciseService: TextExerciseService,
@@ -62,6 +64,14 @@ export class TextExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
     ) {}
+
+    get editType(): EditType {
+        if (this.isImport) {
+            return EditType.IMPORT;
+        }
+
+        return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
+    }
 
     /**
      * Initializes all relevant data for creating or editing text exercise
@@ -78,6 +88,8 @@ export class TextExerciseUpdateComponent implements OnInit {
             this.textExercise = textExercise;
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
+
+            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType);
         });
 
         this.activatedRoute.url
@@ -133,12 +145,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
     }
 
-    /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exercise
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise group page if we are in exam mode
-     */
     previousState() {
         navigateBackFromExerciseUpdate(this.router, this.textExercise);
     }
@@ -149,6 +155,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     validateDate() {
         this.exerciseService.validateDate(this.textExercise);
     }
+
     /**
      * Updates the exercise categories
      * @param categories list of exercise categories
@@ -158,69 +165,31 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (this.textExercise.gradingInstructionFeedbackUsed) {
-            const ref = this.popupService.checkExerciseBeforeUpdate(this.textExercise, this.backupExercise);
-            if (!this.modalService.hasOpenModals()) {
-                this.saveExercise();
-            } else {
-                ref.then((reference) => {
-                    reference.componentInstance.confirmed.subscribe(() => {
-                        this.saveExercise();
-                    });
-                });
-            }
-        } else {
-            this.saveExercise();
-        }
-    }
-
-    /**
-     * Sends a request to either update or create a text exercise
-     */
-    saveExercise() {
-        Exercise.sanitize(this.textExercise);
-
         this.isSaving = true;
-        if (this.isImport) {
-            this.subscribeToSaveResponse(this.textExerciseService.import(this.textExercise));
-        } else if (this.textExercise.id !== undefined) {
-            const requestOptions = {} as any;
-            if (this.notificationText) {
-                requestOptions.notificationText = this.notificationText;
-            }
-            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise, requestOptions));
-        } else {
-            this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
-        }
-    }
 
-    /**
-     * Deletes example submission
-     * @param id of the submission that will be deleted
-     * @param index in the example submissions array
-     */
-    deleteExampleSubmission(id: number, index: number) {
-        this.exampleSubmissionService.delete(id).subscribe(
-            () => {
-                this.textExercise.exampleSubmissions!.splice(index, 1);
-            },
-            (error: HttpErrorResponse) => {
-                this.jhiAlertService.error(error.message);
-            },
-        );
-    }
-
-    private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
+        this.saveCommand.save(this.textExercise, this.notificationText).subscribe(
+            (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
             (res: HttpErrorResponse) => this.onSaveError(res),
+            () => {
+                this.isSaving = false;
+            },
         );
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exerciseId: number) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
-        this.previousState();
+
+        switch (this.editType) {
+            case EditType.CREATE:
+            case EditType.IMPORT:
+                // Passing exerciseId since it is required for navigation to the example submission dashboard.
+                navigateToExampleSubmissions(this.router, { ...this.textExercise, id: exerciseId });
+                break;
+            case EditType.UPDATE:
+                this.previousState();
+                break;
+        }
     }
 
     private onSaveError(error: HttpErrorResponse) {

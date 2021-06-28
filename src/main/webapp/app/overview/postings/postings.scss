@@ -1,10 +1,43 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
 $background-color: #353d47;
+$inactive-icon: rgba(0, 0, 0, 0.4);
 
-.posts-container {
+.postings-container {
     display: flex;
     height: 100%;
+    margin-left: auto;
+}
+
+.labels {
+    color: $background-color;
+
+    &.answer-approved {
+        color: green;
+    }
+}
+
+.action-icon {
+    color: $inactive-icon;
+
+    &.answer-approved {
+        color: green;
+    }
+}
+
+.line {
+    width: auto;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.2);
+    content: ' ';
+}
+
+.vote {
+    color: $inactive-icon;
+
+    &.vote-active {
+        color: $background-color;
+    }
 }
 
 .expanded-posts {
@@ -42,12 +75,12 @@ $background-color: #353d47;
     }
 }
 
-.collapsed-posts {
+.collapsed-postings {
     width: 50px;
     justify-content: space-between;
     flex-flow: column nowrap;
     background-color: $background-color;
-    margin-left: 15px;
+    margin-left: auto;
     cursor: pointer;
 
     span {
@@ -63,7 +96,6 @@ $background-color: #353d47;
 }
 
 .post-row {
-    background-color: rgba(0, 0, 0, 0.02);
     border-radius: 3px;
 }
 
@@ -72,7 +104,6 @@ $background-color: #353d47;
 }
 
 .posting-content {
-    background: rgba(0, 0, 0, 0.05);
     padding: 8px 15px;
     border-radius: 3px;
 
@@ -82,7 +113,7 @@ $background-color: #353d47;
 }
 
 .answer-post {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: rgba(0, 0, 0, 0.03);
     border-radius: 4px;
 
     &.answer-approved {
@@ -92,30 +123,6 @@ $background-color: #353d47;
         .posting-content {
             color: initial;
         }
-    }
-}
-
-.line {
-    width: auto;
-    height: 2px;
-    background: rgba(0, 0, 0, 0.1);
-    content: ' ';
-    margin: auto 0;
-}
-
-.answer-posts-line {
-    height: auto;
-    margin: 0 7px;
-    background: rgba(0, 0, 0, 0.1);
-    width: 2px;
-    content: ' ';
-}
-
-.vote {
-    color: rgba(0, 0, 0, 0.4);
-
-    &.vote-active {
-        color: initial;
     }
 }
 

@@ -70,17 +70,14 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.restore();
     });
 
-    it('should show refresh, save and submit button without any inputs', () => {
+    it('should show refresh and submit button without any inputs', () => {
         fixture.detectChanges();
-        const saveButton = fixture.debugElement.query(By.css('#save_button'));
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));
         const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
-        expect(saveButton).to.exist;
         expect(submitButton).to.exist;
         expect(refreshButton).to.exist;
     });
 
-    const enableSaveButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES], [CommitState.CLEAN, CommitState.UNCOMMITTED_CHANGES], [true, false]);
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);
     const enableRefreshButtonCombinations = cartesianProduct(
         [EditorState.CLEAN, EditorState.UNSAVED_CHANGES],
@@ -93,11 +90,9 @@ describe('CodeEditorActionsComponent', () => {
         Object.keys(CommitState).filter((commitState) => commitState !== CommitState.CONFLICT),
         [true, false],
     ).map((combination: [EditorState, CommitState, boolean]) => {
-        const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
         const enableCommitButton = enableCommitButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
         const enableRefreshButton = enableRefreshButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));
         return it(`Should
-            ${enableSaveButton ? 'Enable save button' : 'Disable save button'} and
             ${enableCommitButton ? 'Enable commit button' : 'Disable commit button'} and
             ${enableRefreshButton ? 'Enable refresh buttton' : 'Disable refresh button'}
             for this state combination: EditorState.${combination[0]} / CommitState.${combination[1]} / ${combination[2] ? 'is building' : 'is not building'}
@@ -107,26 +102,12 @@ describe('CodeEditorActionsComponent', () => {
             comp.commitState = commitState;
             comp.isBuilding = isBuilding;
             fixture.detectChanges();
-            const saveButton = fixture.debugElement.query(By.css('#save_button'));
             const commitButton = fixture.debugElement.query(By.css('#submit_button'));
             const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
 
-            expect(!saveButton.nativeElement.disabled).to.equal(enableSaveButton);
             expect(!commitButton.nativeElement.disabled).to.equal(enableCommitButton);
             expect(!refreshButton.nativeElement.disabled).to.equal(enableRefreshButton);
         });
-    });
-
-    it('should update ui when saving', () => {
-        comp.commitState = CommitState.CLEAN;
-        comp.editorState = EditorState.UNSAVED_CHANGES;
-        fixture.detectChanges();
-        const saveButton = fixture.debugElement.query(By.css('#save_button'));
-        const saveButtonFeedbackBeforeSave = saveButton.nativeElement.innerHTML;
-        comp.editorState = EditorState.SAVING;
-        fixture.detectChanges();
-        const saveButtonFeedbackAfterSave = saveButton.nativeElement.innerHTML;
-        expect(saveButtonFeedbackAfterSave).not.to.be.equal(saveButtonFeedbackBeforeSave);
     });
 
     it('should NOT update ui when building', () => {
@@ -153,15 +134,12 @@ describe('CodeEditorActionsComponent', () => {
 
         updateFilesStub.returns(saveObservable);
 
-        const saveButton = debugElement.query(By.css('#save_button'));
-        expect(saveButton.nativeElement.disabled).to.be.false;
-        saveButton.nativeElement.click();
+        comp.onSave();
 
         // wait for save result
         expect(comp.editorState).to.be.equal(EditorState.SAVING);
 
         fixture.detectChanges();
-        expect(saveButton.nativeElement.disabled).to.be.true;
 
         // receive result for save
         saveObservable.next(savedFilesResult);
@@ -170,7 +148,6 @@ describe('CodeEditorActionsComponent', () => {
         expect(onSavedFilesSpy).to.have.been.calledOnceWith(savedFilesResult);
 
         fixture.detectChanges();
-        expect(saveButton.nativeElement.disabled).to.be.true;
     });
 
     it('should call repositoryFileService to save unsavedFiles and emit an error on failure', () => {
@@ -185,23 +162,19 @@ describe('CodeEditorActionsComponent', () => {
 
         updateFilesStub.returns(saveObservable);
 
-        const saveButton = debugElement.query(By.css('#save_button'));
-        expect(saveButton.nativeElement.disabled).to.be.false;
-        saveButton.nativeElement.click();
+        comp.onSave();
 
         // waiting for save result
         expect(updateFilesStub).to.have.been.calledOnceWithExactly([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false);
         expect(comp.editorState).to.be.equal(EditorState.SAVING);
 
         fixture.detectChanges();
-        expect(saveButton.nativeElement.disabled).to.be.true;
 
         // receive error for save
         saveObservable.error(errorResponse);
         expect(onErrorSpy).to.have.been.calledOnceWith('saveFailed');
         expect(comp.editorState).to.be.equal(EditorState.UNSAVED_CHANGES);
         fixture.detectChanges();
-        expect(saveButton.nativeElement.disabled).to.be.false;
     });
 
     it('should commit if no unsaved changes exist and update its state on response', () => {
@@ -312,4 +285,46 @@ describe('CodeEditorActionsComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should autosave unsaved files after 30 seconds', fakeAsync(() => {
+        const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
+        const savedFilesResult: { [fileName: string]: null } = { fileName: null };
+        const saveObservable = new Subject<typeof savedFilesResult>();
+        comp.editorState = EditorState.UNSAVED_CHANGES;
+        comp.isBuilding = false;
+        comp.unsavedFiles = unsavedFiles;
+        fixture.detectChanges();
+
+        updateFilesStub.returns(saveObservable);
+
+        tick(1000 * 31);
+
+        // receive result for save
+        saveObservable.next(savedFilesResult);
+        expect(comp.editorState).to.be.equal(EditorState.SAVING);
+
+        fixture.detectChanges();
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should save on destroy', () => {
+        const unsavedFiles = { fileName: 'lorem ipsum fileContent lorem ipsum' };
+        const savedFilesResult: { [fileName: string]: null } = { fileName: null };
+        const saveObservable = new Subject<typeof savedFilesResult>();
+        comp.editorState = EditorState.UNSAVED_CHANGES;
+        comp.isBuilding = false;
+        comp.unsavedFiles = unsavedFiles;
+        fixture.detectChanges();
+
+        updateFilesStub.returns(saveObservable);
+
+        // receive result for save
+        saveObservable.next(savedFilesResult);
+
+        fixture.detectChanges();
+        fixture.destroy();
+
+        expect(comp.editorState).to.be.equal(EditorState.SAVING);
+    });
 });

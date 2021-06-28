@@ -104,8 +104,6 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final GitService gitService;
 
     private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
@@ -136,8 +134,8 @@ public class ProgrammingExerciseResource {
             PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            CourseRepository courseRepository, FeedbackRepository feedbackRepository, GitService gitService,
-            ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
 
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -156,7 +154,6 @@ public class ProgrammingExerciseResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.courseRepository = courseRepository;
-        this.feedbackRepository = feedbackRepository;
         this.gitService = gitService;
         this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -261,14 +258,11 @@ public class ProgrammingExerciseResource {
 
     /**
      * Validates general programming exercise settings
-     * 1. Validate score settings
-     * 2. Validates the participation mode
-     * 3. Validates the programming language
+     * 1. Validates the programming language
      *
      * @param programmingExercise exercise to validate
      */
-    private void validateGeneralSettings(ProgrammingExercise programmingExercise) {
-        exerciseService.validateScoreSettings(programmingExercise);
+    private void validateProgrammingSettings(ProgrammingExercise programmingExercise) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
@@ -341,7 +335,8 @@ public class ProgrammingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        validateGeneralSettings(programmingExercise);
+        exerciseService.validateGeneralSettings(programmingExercise);
+        validateProgrammingSettings(programmingExercise);
         validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories(), programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
@@ -474,7 +469,8 @@ public class ProgrammingExerciseResource {
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        validateGeneralSettings(newExercise);
+        exerciseService.validateGeneralSettings(newExercise);
+        validateProgrammingSettings(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -699,11 +695,7 @@ public class ProgrammingExerciseResource {
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
 
-        List<Feedback> feedbackList = feedbackRepository.findFeedbackByStructuredGradingInstructionId(gradingCriteria);
-
-        if (!feedbackList.isEmpty()) {
-            programmingExercise.setGradingInstructionFeedbackUsed(true);
-        }
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -1375,6 +1367,40 @@ public class ProgrammingExerciseResource {
         validateAuxiliaryRepositoryDescriptionLength(auxiliaryRepository);
     }
 
+    /**
+     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
+     *
+     * @param exerciseId                                   of the exercise
+     * @param programmingExercise                          the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or
+     * with status 400 (Bad Request) if the ProgrammingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the ProgrammingExercise couldn't be updated
+     */
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+        log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
+
+        // check that the exercise is exist for given id
+        programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, programmingExercise);
+
+        // fetch course from database to make sure client didn't change groups
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
+
+        return updateProgrammingExercise(programmingExercise, null);
+    }
+
     public static final class Endpoints {
 
         public static final String ROOT = "/api";
@@ -1426,6 +1452,8 @@ public class ProgrammingExerciseResource {
         public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
 
         public static final String RECREATE_BUILD_PLANS = PROGRAMMING_EXERCISE + "/recreate-build-plans";
+
+        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
 
         private Endpoints() {
         }
