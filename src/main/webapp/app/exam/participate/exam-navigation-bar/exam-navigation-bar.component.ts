@@ -52,6 +52,7 @@ export class ExamNavigationBarComponent implements OnInit {
         this.subscriptionToLiveExamExerciseUpdates = this.liveExamExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             this.exerciseIdToUpdate = update['exerciseId'];
             this.exerciseProblemStatement = update['problemStatement'];
+            this.updateExerciseById(this.exerciseIdToUpdate, this.exerciseProblemStatement);
         });
 
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -87,6 +88,13 @@ export class ExamNavigationBarComponent implements OnInit {
     changeExerciseById(exerciseId: number) {
         const foundIndex = this.exercises.findIndex((ex) => ex.id == exerciseId);
         this.changeExercise(foundIndex, true);
+    }
+
+    updateExerciseById(exerciseId: number, problemStatement: string) {
+        if (exerciseId != -1 && problemStatement != undefined) {
+            const foundIndex = this.exercises.findIndex((ex) => ex.id == exerciseId);
+            this.exercises[foundIndex].problemStatement = problemStatement;
+        }
     }
 
     /**

@@ -184,7 +184,6 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
-        log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
@@ -222,7 +221,7 @@ public class TextExerciseResource {
             updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
 
-        if (notificationText != null && (textExercise.isCourseExercise() || textExercise.isExamExercise())) {
+        if ((notificationText != null && textExercise.isCourseExercise()) || textExercise.isExamExercise()) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(textExercise, notificationText);
         }
 

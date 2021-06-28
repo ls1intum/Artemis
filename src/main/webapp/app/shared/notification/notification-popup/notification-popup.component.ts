@@ -122,7 +122,9 @@ export class NotificationPopupComponent implements OnInit {
             const target = JSON.parse(notification.target);
             this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
 
-            this.notifications.unshift(notification);
+            if (notification.text != null) {
+                this.notifications.unshift(notification);
+            }
         }
     }
 
