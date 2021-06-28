@@ -14,7 +14,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { navigateBackFromExerciseUpdate, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -67,6 +67,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     get editType(): EditType {
@@ -242,8 +243,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         );
     }
 
+    /**
+     * Return to the previous page or a default if no previous page exists
+     */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.modelingExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {

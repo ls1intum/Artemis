@@ -43,6 +43,29 @@ export class ArtemisNavigationUtilService {
         }
         this.navigateBack(fallbackUrl);
     }
+
+    /**
+     * Go back to the previous page, equivalent with pressing the back button in the browser.
+     * If no previous page exists:
+     * Returns to the exercise group page if in exam mode.
+     * Returns to the detail page edited an existing exercise.
+     * Returns to the overview page if created a new exercise.
+     * @param exercise Exercise to return from
+     */
+    navigateBackFromExerciseUpdate(exercise: Exercise) {
+        if (exercise.exerciseGroup) {
+            // If an exercise group is set we are in exam mode
+            this.navigateBack([
+                'course-management',
+                exercise.exerciseGroup!.exam!.course!.id!.toString(),
+                'exams',
+                exercise.exerciseGroup!.exam!.id!.toString(),
+                'exercise-groups',
+            ]);
+        } else {
+            this.navigateBackWithOptional(['course-management', exercise.course!.id!.toString(), exercise.type! + '-exercises'], exercise.id?.toString());
+        }
+    }
 }
 
 export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
@@ -65,31 +88,6 @@ export const navigateToExampleSubmissions = (router: Router, exercise: Exercise)
 
         router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
     }, 1000);
-};
-
-/**
- * Revert to the previous state, equivalent with pressing the back button on your browser
- * Returns to the detail page if there is no previous state and we edited an existing exercise
- * Returns to the overview page if there is no previous state and we created a new exercise
- * Returns to the exercise group page if we are in exam mode
- */
-export const navigateBackFromExerciseUpdate = (router: Router, exercise: Exercise): void => {
-    if (window.history.length > 1) {
-        window.history.back();
-        return;
-    }
-
-    // If an exercise group is set we are in exam mode
-    if (exercise.exerciseGroup) {
-        router.navigate(['course-management', exercise.exerciseGroup!.exam!.course!.id!.toString(), 'exams', exercise.exerciseGroup!.exam!.id!.toString(), 'exercise-groups']);
-        return;
-    }
-
-    if (exercise.id) {
-        router.navigate(['course-management', exercise.course!.id!.toString(), exercise.type! + '-exercises', exercise.id!.toString()]);
-    } else {
-        router.navigate(['course-management', exercise.course!.id!.toString(), exercise.type! + '-exercises']);
-    }
 };
 
 export const getLinkToSubmissionAssessment = (

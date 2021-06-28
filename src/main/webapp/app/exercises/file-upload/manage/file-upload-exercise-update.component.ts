@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,7 +10,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -44,7 +44,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -75,13 +75,10 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exercise
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise group page if we are in exam mode
+     * Return to the previous page or a default if no previous page exists
      */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.fileUploadExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.fileUploadExercise);
     }
 
     save() {

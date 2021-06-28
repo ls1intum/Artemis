@@ -15,7 +15,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
-import { navigateBackFromExerciseUpdate, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -62,6 +62,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     get editType(): EditType {
@@ -142,8 +143,11 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
     }
 
+    /**
+     * Return to the previous page or a default if no previous page exists
+     */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.textExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.textExercise);
     }
 
     /**
