@@ -1,9 +1,9 @@
 import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
 import { deleteCourse, newCourse } from './requests/course.js';
-import { startExercise, createExercise, deleteExercise, ParticipationSimulation, simulateSubmission, TestResult } from './requests/programmingExercise.js';
+import { createExercise, ParticipationSimulation, simulateSubmission, TestResult } from './requests/programmingExercise.js';
 import { buildErrorContentJava } from './resource/constants_java.js';
-
+import { startExercise, deleteExercise } from './requests/exercises.js';
 // Version: 1.1
 // Creator: Firefox
 // Browser: Firefox

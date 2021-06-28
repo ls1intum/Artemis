@@ -17,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { SinonStub, stub } from 'sinon';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -76,7 +77,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         // call
         comp.ngOnInit();
         tick(); // simulate async
-        jest.advanceTimersByTime(201); // simulate setInterval time passing
+        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
         expect(accountSpy).toHaveBeenCalled();

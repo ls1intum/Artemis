@@ -54,6 +54,7 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import io.github.jhipster.config.JHipsterConstants;
 
 @Service
@@ -78,10 +79,13 @@ public class BambooBuildPlanService {
 
     private final Environment env;
 
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env) {
+    private final Optional<VersionControlService> versionControlService;
+
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.env = env;
+        this.versionControlService = versionControlService;
     }
 
     /**
@@ -255,13 +259,17 @@ public class BambooBuildPlanService {
         }
 
         List<VcsRepository<?, ?>> planRepositories = new ArrayList<>();
-        planRepositories.add(createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName));
-        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug));
+        planRepositories.add(
+                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, projectKey, repositoryName, versionControlService.get().getDefaultBranchOfRepository(projectKey, repositoryName)));
+        planRepositories.add(createBuildPlanRepository(TEST_REPO_NAME, projectKey, vcsTestRepositorySlug,
+                versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsTestRepositorySlug)));
         for (var repo : auxiliaryRepositories) {
-            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug()));
+            planRepositories.add(createBuildPlanRepository(repo.name(), projectKey, repo.repositorySlug(),
+                    versionControlService.get().getDefaultBranchOfRepository(projectKey, repo.repositorySlug())));
         }
         if (checkoutSolutionRepository) {
-            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug));
+            planRepositories.add(createBuildPlanRepository(SOLUTION_REPO_NAME, projectKey, vcsSolutionRepositorySlug,
+                    versionControlService.get().getDefaultBranchOfRepository(projectKey, vcsSolutionRepositorySlug)));
         }
 
         return new Plan(createBuildProject(projectName, projectKey), planKey, planKey).description(planDescription)
@@ -295,8 +303,9 @@ public class BambooBuildPlanService {
                         .recipientString(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH));
     }
 
-    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
-        return new BitbucketServerRepository().name(name).repositoryViewer(new BitbucketServerRepositoryViewer()).server(new ApplicationLink().name(vcsApplicationLinkName))
+    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String defaultBranch) {
+        return new BitbucketServerRepository().name(name).branch(defaultBranch).repositoryViewer(new BitbucketServerRepositoryViewer())
+                .server(new ApplicationLink().name(vcsApplicationLinkName))
                 // make sure to use lower case to avoid problems in change detection between
                 // Bamboo and Bitbucket
                 .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)

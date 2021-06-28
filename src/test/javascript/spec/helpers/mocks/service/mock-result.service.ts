@@ -5,10 +5,9 @@ import { Result } from 'app/entities/result.model';
 
 export class MockResultService implements IResultService {
     create = (result: Result) => of();
-    delete = (id: number) => empty();
+    delete = (participationId: number, resultId: number) => empty();
     find = (id: number) => empty();
-    findBySubmissionId = (submissionId: number) => empty();
-    getFeedbackDetailsForResult = (resultId: number) => empty();
+    getFeedbackDetailsForResult = (participationId: number, resultId: number) => empty();
     getResultsForExercise = (courseId: number, exerciseId: number, req?: any) => empty();
     update = (result: Result) => of();
     getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
