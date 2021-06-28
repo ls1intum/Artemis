@@ -7,6 +7,7 @@ import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
+import { ArtemisInfoPanelModule } from 'app/shared/info-panel/info-panel.module';
 import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
@@ -34,6 +35,7 @@ const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisSidePanelModule,
+        ArtemisInfoPanelModule,
         ArtemisTutorLeaderboardModule,
         ArtemisSharedComponentModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,

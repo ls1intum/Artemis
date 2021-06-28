@@ -1,0 +1,17 @@
+import { Component, Input, OnInit } from '@angular/core';
+
+@Component({
+    selector: 'jhi-info-panel',
+    templateUrl: './info-panel.component.html',
+    styleUrls: ['./info-panel.scss'],
+})
+export class InfoPanelComponent implements OnInit {
+    @Input() panelHeader: string;
+
+    constructor() {}
+
+    /**
+     * Do nothing on initialization.
+     */
+    ngOnInit() {}
+}

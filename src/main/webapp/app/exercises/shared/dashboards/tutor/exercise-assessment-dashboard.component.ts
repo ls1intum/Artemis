@@ -202,18 +202,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
                         const textExercise = this.exercise as TextExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.sampleSolution);
+                        this.formattedSampleSolution = textExercise.sampleSolution;
                         break;
                     case ExerciseType.MODELING:
                         this.modelingExercise = this.exercise as ModelingExercise;
                         if (this.modelingExercise.sampleSolutionModel) {
-                            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
+                            this.formattedSampleSolution = this.modelingExercise.sampleSolutionExplanation;
                             this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:
                         const fileUploadExercise = this.exercise as FileUploadExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.sampleSolution);
+                        this.formattedSampleSolution = fileUploadExercise.sampleSolution;
                         break;
                     case ExerciseType.PROGRAMMING:
                         this.programmingExercise = this.exercise as ProgrammingExercise;

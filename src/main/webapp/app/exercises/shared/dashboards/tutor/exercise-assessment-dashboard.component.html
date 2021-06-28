@@ -107,31 +107,51 @@
     </div>
 
     <div class="guided-tour-markdown-preview markdown-preview" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
-        <div class="col-12" *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.problemStatement' | artemisTranslate }}</h4>
+        <jhi-info-panel
+            *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0"
+            [panelHeader]="'artemisApp.exerciseAssessmentDashboard.problemStatement' | artemisTranslate"
+        >
+            <div *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingInstructions">
+                {{ this.exercise.problemStatement }}
+            </div>
+            <div>
+                <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
+                <ng-template #programmingInstructions>
+                    <jhi-programming-exercise-instructions
+                        [exercise]="programmingExercise"
+                        [participation]="programmingExercise.templateParticipation!"
+                        [personalParticipation]="false"
+                    ></jhi-programming-exercise-instructions>
+                </ng-template>
+            </div>
+        </jhi-info-panel>
 
-            <p *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingInstructions" [innerHTML]="formattedProblemStatement"></p>
-            <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
-            <ng-template #programmingInstructions>
-                <jhi-programming-exercise-instructions
-                    [exercise]="programmingExercise"
-                    [participation]="programmingExercise.templateParticipation!"
-                    [personalParticipation]="false"
-                ></jhi-programming-exercise-instructions>
-            </ng-template>
-        </div>
+        <jhi-info-panel
+            *ngIf="exercise.type === ExerciseType.TEXT && formattedSampleSolution"
+            [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate"
+        >
+            <div>
+                {{ formattedSampleSolution }}
+            </div>
+        </jhi-info-panel>
 
-        <div class="col-12" *ngIf="exercise.type === ExerciseType.TEXT && formattedSampleSolution">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
+        <jhi-info-panel
+            *ngIf="exercise.type === ExerciseType.MODELING && exampleSolutionModel"
+            [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate"
+        >
+            <div>
+                <jhi-modeling-editor [umlModel]="exampleSolutionModel" [diagramType]="modelingExercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
+            </div>
+        </jhi-info-panel>
 
-            <p [innerHTML]="formattedSampleSolution"></p>
-        </div>
-
-        <div class="col-12" *ngIf="exercise.type === ExerciseType.MODELING && exampleSolutionModel">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
-            <jhi-modeling-editor [umlModel]="exampleSolutionModel" [diagramType]="modelingExercise.diagramType" [readOnly]="true"></jhi-modeling-editor>
-            <p class="mt-2" *ngIf="formattedSampleSolution" [innerHTML]="formattedSampleSolution"></p>
-        </div>
+        <jhi-info-panel
+            *ngIf="exercise.type === ExerciseType.MODELING && exampleSolutionModel"
+            [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolutionExplanation' | artemisTranslate"
+        >
+            <div>
+                {{ formattedSampleSolution }}
+            </div>
+        </jhi-info-panel>
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
             <h4>{{ 'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate }}</h4>
@@ -151,8 +171,8 @@
         ></jhi-structured-grading-instructions-assessment-layout>
     </div>
 
-    <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
-        <button class="btn btn-primary guided-tour-instructions-button" (click)="readInstruction()">
+    <div class="col-12 text-center" style="margin-top: 20px; margin-bottom: 40px" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
+        <button class="btn btn-primary guided-tour-instructions-button" (click)="readInstruction()" style="font-size: 17px; padding: 10px">
             <span *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
                 {{ 'artemisApp.exerciseAssessmentDashboard.readAndUnderstood' | artemisTranslate }}
             </span>

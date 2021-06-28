@@ -19,6 +19,7 @@
             "gradingInstructions": "Grading instructions",
             "problemStatement": "Problem statement",
             "exampleSolution": "Example solution",
+            "exampleSolutionExplanation": "Example solution explanation",
             "close": "Close",
             "readAndUnderstood": "I have read and understood the instructions",
             "totalExampleSubmissions": "There are {{total}} example submissions: {{toReview}} to review and {{toAssess}} to assess.",
