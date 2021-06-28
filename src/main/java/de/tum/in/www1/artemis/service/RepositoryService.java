@@ -215,7 +215,7 @@ public class RepositoryService {
      * @param fileMove dto for describing the old and the new filename.
      * @throws FileNotFoundException if the file to rename is not available.
      * @throws FileAlreadyExistsException if the new filename is already taken.
-     * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains .. or /../)
+     * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains .. or /../ or .git)
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Optional<File> existingFile = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
@@ -226,6 +226,9 @@ public class RepositoryService {
             throw new IllegalArgumentException();
         }
         File newFile = new File(existingFile.get().toPath().getParent().resolve(fileMove.getNewFilename()), repository);
+        if (!repository.isValidFile(newFile)) {
+            throw new IllegalArgumentException();
+        }
         if (gitService.getFileByName(repository, newFile.getName()).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
         }
@@ -296,6 +299,20 @@ public class RepositoryService {
      */
     public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException, InterruptedException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
+        return gitService.isClean(repository);
+    }
+
+    /**
+     * Retrieve the status of the repository. Also pulls the repository.
+     *
+     * @param repositoryUrl of the repository to check the status for.
+     * @param defaultBranch the already used default branch in the remote repository
+     * @return a dto to determine the status of the repository.
+     * @throws InterruptedException if the repository can't be checked out on the server.
+     * @throws GitAPIException if the repository status can't be retrieved.
+     */
+    public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException, InterruptedException {
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
         return gitService.isClean(repository);
     }
 

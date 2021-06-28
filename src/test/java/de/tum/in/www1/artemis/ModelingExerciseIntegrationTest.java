@@ -53,6 +53,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
+    @Autowired
+    private CourseRepository courseRepo;
+
     private ModelingExercise classExercise;
 
     private List<GradingCriterion> gradingCriteria;
@@ -592,5 +595,74 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     public void testGetPlagiarismResultWithoutExercise() throws Exception {
         ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, ModelingPlagiarismResult.class);
         assertThat(result).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise() throws Exception {
+
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, "instructor1");
+
+        // change grading instruction score
+        gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
+        gradingCriteria.remove(1);
+        classExercise.setGradingCriteria(gradingCriteria);
+
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
+                classExercise, ModelingExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
+        assertThat(updatedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
+        assertThat(updatedResults.get(0).getFeedbacks().get(0).getCredits()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_shouldDeleteFeedbacks() throws Exception {
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, "instructor1");
+
+        // remove instruction which is associated with feedbacks
+        gradingCriteria.remove(1);
+        gradingCriteria.remove(0);
+        classExercise.setGradingCriteria(gradingCriteria);
+
+        ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=true",
+                classExercise, ModelingExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
+        assertThat(updatedModelingExercise.getGradingCriteria().size()).isEqualTo(1);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
+        assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
+        Course course = database.addCourseWithOneModelingExercise();
+        classExercise = (ModelingExercise) course.getExercises().iterator().next();
+        course.setInstructorGroupName("test");
+        courseRepo.save(course);
+        request.put("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate", classExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        ModelingExercise modelingExerciseToBeConflicted = modelingExerciseRepository.findByIdElseThrow(classExercise.getId());
+        modelingExerciseToBeConflicted.setId(123456789L);
+        modelingExerciseRepository.save(modelingExerciseToBeConflicted);
+
+        request.put("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate", modelingExerciseToBeConflicted, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateModelingExercise_notFound() throws Exception {
+        request.put("/api/modeling-exercises/" + 123456789 + "/re-evaluate", classExercise, HttpStatus.NOT_FOUND);
     }
 }

@@ -33,6 +33,8 @@ public class TokenProvider {
 
     private static final String FILENAME_KEY = "filename";
 
+    private static final String COURSE_ID_KEY = "courseId";
+
     public static final String DOWNLOAD_FILE = "FILE_DOWNLOAD";
 
     private Key key;
@@ -110,6 +112,21 @@ public class TokenProvider {
     }
 
     /**
+     * Generates an access token that allows a user to download a file of a course. This token is only valid for the given validity period.
+     *
+     * @param authentication Currently active authentication mostly the currently logged in user
+     * @param durationValidityInSeconds The duration how long the access token should be valid
+     * @param courseId The id of the course, which the token belongs to
+     * @return File access token as a JWT token
+     */
+    public String createFileTokenForCourseWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Long courseId) throws IllegalAccessException {
+        long now = (new Date()).getTime();
+        Date validity = new Date(now + durationValidityInSeconds * 1000);
+
+        return Jwts.builder().setSubject(authentication.getName()).claim(COURSE_ID_KEY, courseId).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
+    }
+
+    /**
      * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
      * @param token JWT Authorization Token
      * @return UsernamePasswordAuthenticationToken
@@ -146,6 +163,27 @@ public class TokenProvider {
         }
         catch (Exception e) {
             log.warn("Invalid action validateTokenForAuthorityAndFile: ", e);
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a certain course id is inside the JWT token. Also validates the JWT token if it is still valid.
+     *
+     * @param authToken The token that has to be checked
+     * @param courseId  The course id the token belongs to
+     * @return true if everything matches
+     */
+    public boolean validateTokenForAuthorityAndCourse(String authToken, Long courseId) {
+        if (!validateJwsToken(authToken)) {
+            return false;
+        }
+        try {
+            Long courseIdToken = ((Integer) Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody().get(COURSE_ID_KEY)).longValue();
+            return courseIdToken.equals(courseId);
+        }
+        catch (Exception e) {
+            log.warn("Invalid action validateTokenForAuthorityAndCourse: ", e);
         }
         return false;
     }
