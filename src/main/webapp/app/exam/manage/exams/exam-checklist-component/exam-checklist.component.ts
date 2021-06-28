@@ -61,12 +61,10 @@ export class ExamChecklistComponent implements OnInit {
         // calculate mandatory points and optional points
         if (this.pointsExercisesEqual) {
             this.exam.exerciseGroups!.forEach((exerciseGroup) => {
-                if (exerciseGroup.isMandatory) {
-                    if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
+                if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
+                    if (exerciseGroup.isMandatory) {
                         sumPointsExerciseGroupsMandatory += exerciseGroup!.exercises![0]!.maxPoints!;
-                    }
-                } else {
-                    if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
+                    } else {
                         sumPointsExerciseGroupsOptional += exerciseGroup!.exercises![0]!.maxPoints!;
                     }
                 }
