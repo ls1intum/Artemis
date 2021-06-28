@@ -116,9 +116,8 @@ public class GroupNotificationFactory {
             else if (exercise instanceof TextExercise) {
                 notification.setTarget(notification.getExamExerciseTargetWithExerciseUpdate(exercise));
             }
-            else {
-                // TODO after the live Exam Exercise PopUps are merged I will add the other types too @Malyuk
-            }
+            // else// TODO after the live Exam Exercise PopUps are merged I will add the other types too @Malyuk
+
             notification.setPriority(NotificationPriority.HIGH);
         }
         // Exercises for courses (not for exams)
