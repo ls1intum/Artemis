@@ -1,5 +1,9 @@
 /// <reference types="cypress" />
+
 import { generateUUID } from '../support/utils';
+import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../pageobjects/OnlineEditorPage';
+import allSuccessful from '../fixtures/programming_exercises/all_successful/submission.json';
+import partiallySuccessful from '../fixtures/programming_exercises/partially_successful/submission.json';
 
 // Environmental variables
 const adminUsername = Cypress.env('adminUsername');
@@ -11,6 +15,9 @@ if (Cypress.env('isCi')) {
     password = password.replace('USERID', '1');
 }
 
+// PageObjects
+var editorPage: OnlineEditorPage;
+
 // Common primitives
 const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
@@ -20,6 +27,7 @@ const programmingExerciseShortName = courseShortName;
 const exercisePath = '/exercises';
 const longTimeout = 60000;
 const beVisible = 'be.visible';
+const packageName = 'de.test';
 
 // Selectors
 const fieldTitle = '#field_title';
@@ -28,37 +36,107 @@ const saveEntity = '#save-entity';
 const datepickerButtons = '.owl-dt-container-control-button';
 const exerciseRow = '.course-exercise-row';
 const modalDeleteButton = '.modal-footer > .btn-danger';
+const buildingAndTesting = 'Building and testing...';
 
 describe('Programming exercise', () => {
     before(() => {
-        cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
-        cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
-        cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
-        cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
-        cy.intercept('POST', '/api/courses').as('createCourseQuery');
-        cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExerciseQuery');
-        cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
+        editorPage = new OnlineEditorPage();
+        registerQueries();
+        setupCourseAndProgrammingExercise();
     });
 
     it('Creates a new course, participates in it and deletes it afterwards', function () {
-        cy.login(adminUsername, adminPassword, '/');
-        createTestCourse();
-        // We sleep for 80 seconds to allow bamboo/bitbucket to synchronize the group rights, because they programming exercise creation fails otherwise
-        cy.log('Created course. Sleeping before adding a programming exercise...');
-        cy.wait(80000);
-        openExercisesFromCourseManagement();
-        createProgrammingExercise();
-        addStudentToCourse();
-        // Login as the student
         cy.login(username, password, '/');
         startParticipationInProgrammingExercise();
-        makeCodeSubmissionAndCheckResults();
-        // Login is admin again
-        cy.login(adminUsername, adminPassword, '/');
-        deleteProgrammingExercise();
-        deleteCourse();
+        makeFailingSubmission();
+        makePartiallySuccessfulSubmission();
+        makeSuccessfulSubmission();
+    });
+
+    after(() => {
+        cleanupProgrammingExerciseAndCourse();
     });
 });
+
+function makeFailingSubmission() {
+    var submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercises/build_error/BubbleSort.txt' }] };
+    makeSubmissionAndVerifyResults(submission, () => {
+        editorPage.getResultPanel().contains('Build Failed').should(beVisible);
+        editorPage.getResultPanel().contains('0%').should(beVisible);
+        editorPage.getInstructionSymbols().each(($el) => {
+            cy.wrap($el).find('[data-icon="question"]').should(beVisible);
+        });
+        editorPage.getBuildOutput().contains('[ERROR] COMPILATION ERROR').should(beVisible);
+    });
+}
+
+function makePartiallySuccessfulSubmission() {
+    editorPage.createFileInRootPackage('SortStrategy.java');
+    makeSubmissionAndVerifyResults(partiallySuccessful, () => {
+        editorPage.getResultPanel().contains('46%').should(beVisible);
+        editorPage.getResultPanel().contains('6 of 13 passed').should(beVisible);
+        editorPage.getBuildOutput().contains('No build results available').should(beVisible);
+        editorPage.getInstructionSymbols().each(($el, $index) => {
+            if ($index < 3) {
+                cy.wrap($el).find('[data-icon="check"]').should(beVisible);
+            } else {
+                cy.wrap($el).find('[data-icon="times"]').should(beVisible);
+            }
+        });
+    });
+}
+
+function makeSuccessfulSubmission() {
+    editorPage.createFileInRootPackage('Context.java');
+    editorPage.createFileInRootPackage('Policy.java');
+    editorPage.createFileInRootPackage('Client.java');
+    makeSubmissionAndVerifyResults(allSuccessful, () => {
+        editorPage.getResultPanel().contains('100%').should(beVisible);
+        editorPage.getResultPanel().contains('13 of 13 passed').should(beVisible);
+        editorPage.getBuildOutput().contains('No build results available').should(beVisible);
+        editorPage.getInstructionSymbols().each(($el) => {
+            cy.wrap($el).find('[data-icon="check"]').should(beVisible);
+        });
+    });
+}
+
+function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
+    editorPage.typeSubmission(submission, packageName);
+    editorPage.save();
+    editorPage.submit();
+    editorPage.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should(beVisible);
+    editorPage.getBuildOutput().contains(buildingAndTesting).should(beVisible);
+    editorPage.getResultPanel().contains('GRADED', { timeout: longTimeout }).should(beVisible);
+    verifyOutput();
+}
+
+function registerQueries() {
+    cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
+    cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
+    cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
+    cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
+    cy.intercept('POST', '/api/courses').as('createCourseQuery');
+    cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExerciseQuery');
+    cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
+}
+
+function setupCourseAndProgrammingExercise() {
+    cy.login(adminUsername, adminPassword, '/');
+    createTestCourse();
+    // We sleep for 80 seconds to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
+    cy.log('Created course. Sleeping before adding a programming exercise...');
+    // cy.wait(80000);
+    openExercisesFromCourseManagement();
+    createProgrammingExercise();
+    addStudentToCourse();
+}
+
+function cleanupProgrammingExerciseAndCourse() {
+    // Login is admin again
+    cy.login(adminUsername, adminPassword, '/');
+    deleteProgrammingExercise();
+    deleteCourse();
+}
 
 /**
  * Navigates to the course management and deletes the test course.
@@ -90,31 +168,6 @@ function deleteProgrammingExercise() {
         });
     cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
     cy.wait('@deleteProgrammingExerciseQuery');
-}
-
-/**
- * Makes an empty submission in the programming exercise and checks the result.
- */
-function makeCodeSubmissionAndCheckResults() {
-    // Asserts that every sub-task in the programming exercise is marked with a question mark
-    cy.get('.stepwizard-row', { timeout: 10000 })
-        .find('.stepwizard-step')
-        .each(($el) => {
-            cy.wrap($el).find('[data-icon="question"]').should(beVisible);
-        });
-
-    cy.log('Submitting default exercise for grading...');
-    cy.get('#submit_button').click();
-    // CI build is triggered here, so it will take quite some time
-    cy.get('jhi-updating-result').contains('0 of 13 passed', { timeout: longTimeout }).should(beVisible);
-    // Make sure that all sub-tasks are not marked with question marks, but with an indication that they failed
-    cy.get('.stepwizard-row')
-        .find('.stepwizard-step')
-        .each(($el) => {
-            cy.wrap($el).find('[data-icon="question"]').should('not.exist');
-            cy.wrap($el).find('[data-icon="times"]').should(beVisible);
-        });
-    cy.log('Artemis graded our submission, so we are done here...');
 }
 
 /**
@@ -156,7 +209,7 @@ function createProgrammingExercise() {
     cy.log('Filling out programming exercise info...');
     cy.get(fieldTitle).type(programmingExerciseName);
     cy.get(shortName).type(programmingExerciseShortName);
-    cy.get('#field_packageName').type('com.cypress.test');
+    cy.get('#field_packageName').type(packageName);
     cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should(beVisible).click();
     cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
 
