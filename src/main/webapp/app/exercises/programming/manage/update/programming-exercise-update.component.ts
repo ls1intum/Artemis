@@ -49,6 +49,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     invalidRepositoryNamePattern: RegExp;
     invalidDirectoryNamePattern: RegExp;
     invalidWarnings: Warning[];
+    numberOfExistingAuxiliaryRepositories: number;
     submitButtonTitle: string;
     isImport: boolean;
     isEdit: boolean;
@@ -334,6 +335,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.setInvalidRepoNamePattern();
         this.setInvalidDirectoryNamePattern();
         this.invalidWarnings = [];
+        this.numberOfExistingAuxiliaryRepositories = this.programmingExercise.auxiliaryRepositories?.length || 0;
     }
 
     /**
