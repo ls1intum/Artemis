@@ -28,7 +28,7 @@
                     <div *ngIf="programmingExercise.auxiliaryRepositories != undefined && programmingExercise.auxiliaryRepositories.length > 0">
                         <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <li>
-                                <code class="text-white badge btn-success label-preview">
+                                <code class="text-white badge bg-success label-preview">
                                     {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
                                 </code>
                                 <jhi-help-icon-without-translation
