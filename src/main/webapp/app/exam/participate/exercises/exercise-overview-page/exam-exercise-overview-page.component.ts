@@ -41,6 +41,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     openExercise(exercise: Exercise) {
+        console.log('Open Exercise', exercise);
         this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
     }
 

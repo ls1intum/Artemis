@@ -18,7 +18,7 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() endDate: Moment;
     @Input() overviewPageOpen: boolean;
 
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
+    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
@@ -58,6 +58,7 @@ export class ExamNavigationBarComponent implements OnInit {
         @param forceSave: true if forceSave shall be used.
      */
     changePage(overviewPage: boolean, exerciseIndex?: number, forceSave?: boolean) {
+        console.log('OverviewPage:', overviewPage, 'exerciseIndex:', exerciseIndex);
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex! > this.exercises.length - 1 || exerciseIndex! < 0) {
@@ -68,9 +69,9 @@ export class ExamNavigationBarComponent implements OnInit {
             this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
         } else if (overviewPage) {
             // set index and emit event
-            this.exerciseIndex = 0;
+            this.exerciseIndex = -1;
             // save current exercise
-            this.onPageChanged.emit({ overViewChange: true, exercise: this.exercises[this.exerciseIndex], forceSave: false });
+            this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
         this.setExerciseButtonStatus(this.exerciseIndex);
     }

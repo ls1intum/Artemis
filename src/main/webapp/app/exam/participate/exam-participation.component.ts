@@ -472,8 +472,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * update the current exercise from the navigation
      * @param exerciseChange
      */
-    onPageChange(exerciseChange: { overViewChange: boolean; exercise: Exercise; forceSave: boolean }): void {
+    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
         const activeComponent = this.activePageComponent;
+        console.log('OnPageChange Method: Exercise:', exerciseChange.exercise, ', ', exerciseChange.overViewChange, ', Active Component: ', activeComponent);
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
@@ -484,7 +485,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             Sentry.captureException(error);
         }
         if (!exerciseChange.overViewChange) {
-            this.initializeExercise(exerciseChange.exercise);
+            this.initializeExercise(exerciseChange.exercise!);
         } else {
             this.initializeOverviewPage();
         }
@@ -524,6 +525,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private initializeOverviewPage() {
         this.activeExamPage.isOverviewPage = true;
         this.activeExamPage.exercise = undefined;
+        this.exerciseIndex = -1;
     }
 
     /**
@@ -535,6 +537,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (activeComponent) {
             activeComponent.onActivate();
         }
+        console.log('activate Active component,', this.pageComponentVisited, this.activePageComponent);
     }
 
     /**
