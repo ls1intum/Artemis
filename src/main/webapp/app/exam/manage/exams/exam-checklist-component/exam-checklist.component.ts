@@ -62,11 +62,11 @@ export class ExamChecklistComponent implements OnInit {
         if (this.pointsExercisesEqual) {
             this.exam.exerciseGroups!.forEach((exerciseGroup) => {
                 if (exerciseGroup.isMandatory) {
-                    if (exerciseGroup!.exercises && exerciseGroup.exercises.length != 0) {
+                    if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
                         sumPointsExerciseGroupsMandatory += exerciseGroup!.exercises![0]!.maxPoints!;
                     }
                 } else {
-                    if (exerciseGroup!.exercises && exerciseGroup.exercises.length != 0) {
+                    if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
                         sumPointsExerciseGroupsOptional += exerciseGroup!.exercises![0]!.maxPoints!;
                     }
                 }
@@ -88,7 +88,7 @@ export class ExamChecklistComponent implements OnInit {
         this.pointsExercisesEqual = true;
         this.exam.exerciseGroups!.forEach((exerciseGroup) => {
             let maxPoints: number | undefined = 0;
-            if (exerciseGroup.exercises && exerciseGroup.exercises[0]) {
+            if (exerciseGroup.exercises && exerciseGroup.exercises!.length !== 0) {
                 maxPoints = exerciseGroup.exercises?.[0].maxPoints;
             }
             return exerciseGroup.exercises?.some((exercise) => {
