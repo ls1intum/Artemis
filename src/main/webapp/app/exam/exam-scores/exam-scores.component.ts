@@ -20,7 +20,7 @@ import { round } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as SimpleStatistics from 'simple-statistics';
-import { ChartDataset, ChartOptions, ChartType, registerables } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
@@ -29,11 +29,8 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({
@@ -236,7 +233,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         precision: 0,
                         min: 0,
                         max: this.calculateTickMax(),
-                    } as Chart.LinearTickOptions,
+                    } as any,
                 },
                 x: {
                     title: {

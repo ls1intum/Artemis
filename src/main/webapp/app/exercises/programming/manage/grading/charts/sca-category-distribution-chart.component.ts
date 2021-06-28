@@ -2,15 +2,12 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
-import { ChartDataset, registerables } from 'chart.js';
+import { ChartDataset } from 'chart.js';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({

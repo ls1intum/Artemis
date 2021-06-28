@@ -8,7 +8,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
-import { ChartOptions, ChartType, registerables } from 'chart.js';
+import { ChartOptions, ChartType } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
@@ -16,11 +16,8 @@ import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 import { BaseChartDirective, Color } from 'ng2-charts';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 export const redColor = '#d9534f';

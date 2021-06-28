@@ -1,13 +1,10 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
-import { ChartData, registerables } from 'chart.js';
+import { ChartData } from 'chart.js';
 import { Label } from 'ng2-charts';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 export class HorizontalStackedBarChartPreset implements ChartPreset {
@@ -33,10 +30,10 @@ export class HorizontalStackedBarChartPreset implements ChartPreset {
                 mode: 'dataset',
                 position: 'nearest',
                 callbacks: {
-                    title(items: Chart.ChartTooltipItem[], data: ChartData) {
+                    title(items: any[], data: ChartData) {
                         return data.datasets![items[0].datasetIndex!].label!;
                     },
-                    label(item: Chart.ChartTooltipItem, data: ChartData) {
+                    label(item: any, data: ChartData) {
                         return item.yLabel + ': ' + (data.datasets![item.datasetIndex!].data![item.index!] as number).toFixed(2) + '% of ' + preset.totalText[item.index!] + '.';
                     },
                 },

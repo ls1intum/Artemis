@@ -3,14 +3,11 @@ import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programmin
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { HorizontalStackedBarChartPreset } from 'app/shared/chart/presets/horizontalStackedBarChartPreset';
-import { ChartDataset, registerables } from 'chart.js';
+import { ChartDataset } from 'chart.js';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({

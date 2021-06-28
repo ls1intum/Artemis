@@ -1,15 +1,12 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { ChartDataset, ChartOptions, ChartType, registerables } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { BaseChartDirective, Label } from 'ng2-charts';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({

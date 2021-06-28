@@ -8,6 +8,11 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseStatisticsDataSet } from 'app/overview/course-statistics/course-statistics.component';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+Chart.register(ChartDataLabels);
+Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({
     selector: 'jhi-overview-course-card',

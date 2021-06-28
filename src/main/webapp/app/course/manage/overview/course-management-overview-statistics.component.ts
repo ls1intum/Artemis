@@ -1,16 +1,13 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
-import { ChartDataset, ChartOptions, ChartType, registerables } from 'chart.js';
+import { ChartDataset, ChartOptions, ChartType } from 'chart.js';
 import { Label } from 'ng2-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({

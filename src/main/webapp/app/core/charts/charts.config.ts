@@ -1,7 +1,7 @@
 import { registerables } from 'chart.js';
-import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { Chart } from 'chart.js';
 
 /**
  * Globally registering chart.js dependencies.

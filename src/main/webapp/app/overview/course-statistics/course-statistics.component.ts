@@ -19,14 +19,11 @@ import {
 } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
-import { ChartOptions, ChartType, registerables } from 'chart.js';
+import { ChartOptions, ChartType } from 'chart.js';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import annotationPlugin from 'chartjs-plugin-annotation';
 
-Chart.register(...registerables);
 Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
 Chart.defaults.plugins.datalabels!.display = false;
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
