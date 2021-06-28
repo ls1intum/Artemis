@@ -45,7 +45,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'notSynced' {
-        item.icon = 'edit';
         if (!item?.submission) {
             return 'synced';
         }
@@ -55,8 +54,10 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         if (item.submission.isSynced) {
             // make status blue
             return 'synced';
+        } else {
+            // make status yellow
+            item.icon = 'edit';
+            return 'notSynced';
         }
-        // make status yellow
-        return 'notSynced';
     }
 }
