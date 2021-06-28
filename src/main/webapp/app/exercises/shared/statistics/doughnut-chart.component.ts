@@ -8,9 +8,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',

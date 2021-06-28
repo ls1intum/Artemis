@@ -30,9 +30,6 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',

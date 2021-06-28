@@ -18,9 +18,6 @@ import { BaseChartDirective, Color } from 'ng2-charts';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',

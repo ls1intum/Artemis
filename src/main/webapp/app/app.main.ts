@@ -5,7 +5,7 @@ import { ArtemisAppModule } from './app.module';
 import { ChartConfig } from 'app/core/charts/charts.config';
 
 ProdConfig();
-// ChartConfig();
+ChartConfig();
 
 if (module['hot']) {
     module['hot'].accept();

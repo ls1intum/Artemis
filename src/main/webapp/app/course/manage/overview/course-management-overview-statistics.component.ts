@@ -7,9 +7,6 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',

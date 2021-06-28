@@ -13,9 +13,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 // this exercise information is needed for tooltip generation and to navigate to an exercise page
 export class CustomChartPoint {
     y: number;

@@ -17,9 +17,6 @@ import { BaseChartDirective, Color } from 'ng2-charts';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';
 export const blueColor = '#428bca';

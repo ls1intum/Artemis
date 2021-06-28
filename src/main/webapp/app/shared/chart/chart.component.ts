@@ -4,9 +4,6 @@ import { BaseChartDirective, Label } from 'ng2-charts';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 export interface ChartPreset {
     applyTo(chart: ChartComponent): void;
 }

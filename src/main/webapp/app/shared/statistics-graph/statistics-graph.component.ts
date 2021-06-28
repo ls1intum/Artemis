@@ -8,9 +8,6 @@ import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/stat
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',

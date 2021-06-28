@@ -6,9 +6,6 @@ import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss'],

@@ -7,9 +7,6 @@ import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-s
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
     template: `

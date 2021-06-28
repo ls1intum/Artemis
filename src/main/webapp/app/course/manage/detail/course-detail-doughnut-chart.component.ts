@@ -7,9 +7,6 @@ import { Router } from '@angular/router';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',

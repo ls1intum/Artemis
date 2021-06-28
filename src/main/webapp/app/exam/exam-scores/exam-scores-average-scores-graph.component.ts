@@ -10,9 +10,6 @@ import { round } from 'app/shared/util/utils';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 const BAR_HEIGHT = 25;
 
 @Component({

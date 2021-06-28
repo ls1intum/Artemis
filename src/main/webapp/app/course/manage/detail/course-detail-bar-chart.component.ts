@@ -7,9 +7,6 @@ import { CourseManagementService } from '../course-management.service';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-course-detail-bar-chart',
     templateUrl: './course-detail-bar-chart.component.html',

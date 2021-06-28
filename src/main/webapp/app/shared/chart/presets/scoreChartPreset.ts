@@ -3,9 +3,6 @@ import { ChartDataset } from 'chart.js';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
     private datasets: ChartDataset[] = [];

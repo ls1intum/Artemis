@@ -9,9 +9,9 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.register(annotationPlugin);
-Chart.defaults.plugins.datalabels!.display = false;
+// Chart.register(ChartDataLabels);
+// Chart.register(annotationPlugin);
+// Chart.defaults.plugins.datalabels!.display = false;
 
 @Component({
     selector: 'jhi-statistics-average-score-graph',

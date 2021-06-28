@@ -8,9 +8,6 @@ import { round } from 'app/shared/util/utils';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.plugins.datalabels!.display = false;
-
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
