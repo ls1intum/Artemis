@@ -79,7 +79,7 @@ function setupCourseAndProgrammingExercise() {
     createTestCourse();
     // We sleep for 80 seconds to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
     cy.log('Created course. Sleeping before adding a programming exercise...');
-    // cy.wait(80000);
+    cy.wait(80000);
     openExercisesFromCourseManagement();
     createProgrammingExercise();
     addStudentToCourse();
