@@ -209,8 +209,14 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
+    /**
+     * Sets the title of the exercise
+     * all consecutive, trailing or preceding whitespaces are replaced with a single space.
+     *
+     * @param title the new (unsanitized) title to be set
+     */
     public void setTitle(String title) {
-        this.title = title != null ? title.strip() : null;
+        this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
     }
 
     public String getShortName() {
@@ -934,14 +940,6 @@ public abstract class Exercise extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
-    }
-
-    /**
-     * This Method removes douplicated whitespaces, tabs etc from exercise titles and replaces them with a single space.
-     */
-    public void validateTitle() {
-        // replace all consecutive whitespaces with a single space.
-        setTitle(getTitle().trim().replaceAll("\\s+", " "));
     }
 
     /**
