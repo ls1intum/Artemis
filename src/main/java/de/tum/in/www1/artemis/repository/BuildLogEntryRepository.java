@@ -15,10 +15,9 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 public interface BuildLogEntryRepository extends JpaRepository<BuildLogEntry, Long> {
 
     /**
-     * Returns the title of the hint with the given id
+     * deletes all BuildLogEntry s of a ProgrammingSubmission
      *
-     * @param hintId the id of the hint
-     * @return the name/title of the hint or null if the hint does not exist
+     * @param programmingSubmissionId the id of the submission
      */
     @Modifying
     @Query("""
