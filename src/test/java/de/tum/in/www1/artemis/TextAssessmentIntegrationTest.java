@@ -303,9 +303,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(updatedResult).as("updated result found").isNotNull();
     }
 
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void saveTextAssessment_studentHidden() throws Exception {
+    public TextSubmission prepareSubmission() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
@@ -315,6 +313,13 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
+        return submissionWithoutAssessment;
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void saveTextAssessment_studentHidden() throws Exception {
+        TextSubmission submissionWithoutAssessment = prepareSubmission();
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
@@ -329,15 +334,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void saveTextAssessment_wrongParticipationId() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, "student1");
-        exerciseDueDatePassed();
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmission submissionWithoutAssessment = prepareSubmission();
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
@@ -352,16 +350,8 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void submitTextAssessment_studentHidden() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, "student1");
-        exerciseDueDatePassed();
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
-
+        TextSubmission submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());
         Result result = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
@@ -374,15 +364,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void submitTextAssessment_wrongParticipationId() throws Exception {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, "student1");
-        exerciseDueDatePassed();
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmission submissionWithoutAssessment = prepareSubmission();
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(new ArrayList<>());

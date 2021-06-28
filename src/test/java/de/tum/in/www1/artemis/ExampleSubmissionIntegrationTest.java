@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -215,10 +216,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
                 HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
-        List<Feedback> feedbacks = new ArrayList<>();
-        final Iterator<TextBlock> textBlockIterator = blocks.iterator();
-        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1").reference(textBlockIterator.next().getId()));
-        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2").reference(textBlockIterator.next().getId()));
+        List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
         long randomId = 1233;
@@ -236,10 +234,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
                 HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
-        List<Feedback> feedbacks = new ArrayList<>();
-        final Iterator<TextBlock> textBlockIterator = blocks.iterator();
-        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1").reference(textBlockIterator.next().getId()));
-        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2").reference(textBlockIterator.next().getId()));
+        List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
         long randomId_nonExistent = 1233;
