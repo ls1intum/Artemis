@@ -54,7 +54,7 @@
     </div>
     <div class="col">
         <div class="row justify-content-end align-items-start pe-2">
-            <div *ngIf="!overviewPageOpen" class="d-flex mb-2">
+            <div *ngIf="!overviewPageOpen" class="d-flex mb-2 justify-content-end">
                 <button [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                 </button>
