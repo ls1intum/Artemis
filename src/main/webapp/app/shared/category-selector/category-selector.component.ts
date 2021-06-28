@@ -74,7 +74,7 @@ export class CategorySelectorComponent implements OnChanges {
             const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
             exerciseCategory.color = this.categoryColors[randomIndex];
         }
-        this.exerciseCategories.push(exerciseCategory);
+        this.exerciseCategories ? this.exerciseCategories.push(exerciseCategory) : (this.exerciseCategories = [exerciseCategory]);
         this.selectedCategories.emit(this.exerciseCategories);
     }
 
