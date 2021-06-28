@@ -28,7 +28,7 @@
         {
             "id": "035638ac-9bb1-4bfb-a2c1-028310ae4c3e",
             "name": "Component",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "d821e11d-6cf1-497b-8462-6533047cb0e8",
             "bounds": {
                 "x": 60,
@@ -40,7 +40,7 @@
         {
             "id": "29d85bcc-a5c4-4f40-96df-61d3ff99d296",
             "name": "Component",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "035638ac-9bb1-4bfb-a2c1-028310ae4c3e",
             "bounds": {
                 "x": 80,
@@ -88,7 +88,7 @@
         {
             "id": "2b163764-7c83-46e4-9682-fff3e1f5b457",
             "name": "Component",
-            "type": "Component",
+            "type": "DeploymentComponent",
             "owner": "d821e11d-6cf1-497b-8462-6533047cb0e8",
             "bounds": {
                 "x": 360,

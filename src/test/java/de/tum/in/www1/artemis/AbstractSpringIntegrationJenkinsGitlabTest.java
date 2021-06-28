@@ -83,6 +83,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", exercise.getVcsTemplateRepositoryUrl());
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise, failToCreateCiProject);
         jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName());
@@ -127,6 +128,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTemplateRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetSolutionRepoName);
         gitlabRequestMockProvider.mockCreateRepository(exerciseToBeImported, targetTestsRepoName);
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", exerciseToBeImported.getVcsTemplateRepositoryUrl());
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
@@ -198,6 +200,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         // Step 2b)
         jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
         // Note: Step 2c) is not needed in the Jenkins setup
+
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", exercise.getVcsTemplateRepositoryUrl());
     }
 
     @Override
@@ -423,6 +427,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Override
     public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
         gitlabRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
+    }
+
+    @Override
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws GitLabApiException {
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", programmingExercise.getVcsTemplateRepositoryUrl());
     }
 
     @Override

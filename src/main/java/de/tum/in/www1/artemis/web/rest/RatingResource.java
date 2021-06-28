@@ -145,7 +145,7 @@ public class RatingResource {
      */
     private boolean checkIfUserIsOwnerOfSubmission(Long resultId) {
         User user = userRepository.getUser();
-        Result result = resultRepository.findOne(resultId);
+        Result result = resultRepository.findOneElseThrow(resultId);
         return authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation(), user);
     }
 }

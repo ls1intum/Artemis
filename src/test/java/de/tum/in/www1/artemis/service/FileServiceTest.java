@@ -2,14 +2,20 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,5 +145,48 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         assertThat(fileContent).doesNotContain("${exerciseName}");
         assertThat(fileContent).contains("SomeCoolExerciseName");
+    }
+
+    @Test
+    public void testMergePdf_nullInput_shouldReturnEmptyOptional() {
+        Optional<byte[]> result = fileService.mergePdfFiles(null);
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    public void testMergePdf_emptyList_shouldReturnEmptyOptional() {
+        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<>());
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    public void testMergePdf() throws IOException {
+        List<String> paths = new ArrayList<>();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PDDocument doc1 = new PDDocument();
+        doc1.addPage(new PDPage());
+        doc1.addPage(new PDPage());
+        doc1.addPage(new PDPage());
+        doc1.save(outputStream);
+        doc1.close();
+
+        writeFile("testfile1.pdf", outputStream.toString());
+
+        PDDocument doc2 = new PDDocument();
+        doc2.addPage(new PDPage());
+        doc2.addPage(new PDPage());
+        doc2.save(outputStream);
+        doc2.close();
+
+        writeFile("testfile2.pdf", outputStream.toString());
+
+        paths.add("./exportTest/testfile1.pdf");
+        paths.add("./exportTest/testfile2.pdf");
+
+        Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths);
+        assertThat(mergedFile.isPresent()).isTrue();
+        assertThat(mergedFile.get()).isNotEmpty();
+        PDDocument mergedDoc = PDDocument.load(mergedFile.get());
+        assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);
     }
 }
