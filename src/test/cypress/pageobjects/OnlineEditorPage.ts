@@ -1,17 +1,31 @@
+/**
+ * A class which encapsulates UI selectors and actions for the Online Editor Page.
+ */
 export class OnlineEditorPage {
     constructor() {
         cy.intercept('POST', '/api/repository/*/**').as('createFile');
         cy.intercept('PUT', '/api/repository/*/files*').as('saveFiles');
     }
 
+    /**
+     * @returns the root element of the file browser. Useful for further querying.
+     */
     findFileBrowser() {
         return cy.get('#cardFiles');
     }
 
+    /**
+     * Focuses the code editor content to allow typing into it.
+     */
     focusCodeEditor() {
         return cy.get('#ace-code-editor').find('.ace_content').click();
     }
 
+    /**
+     * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non existing files. It only opens existing files and writes the content there!
+     * @param submission object which contains the information about which files need to be edited with what content
+     * @param packageName the package name of the project to overwrite it in the submission templates
+     */
     typeSubmission(submission: ProgrammingExerciseSubmission, packageName: string) {
         for (let newFile of submission.files) {
             cy.log(`Entering content for file ${newFile.name}`);
@@ -32,19 +46,33 @@ export class OnlineEditorPage {
         return input.replace(/\${packageName}/g, packageName).replace(/{/g, '{{}');
     }
 
+    /**
+     * Opens a file in the file browser by clicking on it.
+     * @param name the name of the file in the file browser
+     */
     openFileWithName(name: string) {
         return this.findFileBrowser().contains(name).click();
     }
 
+    /**
+     * Submits the currently saved files by clicking on the submit button.
+     */
     submit() {
         return cy.get('#submit_button').click();
     }
 
+    /**
+     * Saves all edited files by clicking on the save button.
+     */
     save() {
         cy.get('#save_button').click();
         return cy.wait('@saveFiles');
     }
 
+    /**
+     * Creates a file at root level (in the main package) in the file browser.
+     * @param fileName the name of the new file
+     */
     createFileInRootPackage(fileName: string) {
         cy.get('.file-icons').children('button').first().click();
         cy.get('jhi-code-editor-file-browser-create-node').type(fileName).type('{enter}');
@@ -52,18 +80,30 @@ export class OnlineEditorPage {
         this.findFileBrowser().contains(fileName).should('be.visible').wait(500);
     }
 
+    /**
+     * @returns the root element of the result panel. This can be used for further querying inside this panel
+     */
     getResultPanel() {
         return cy.get('jhi-updating-result');
     }
 
+    /**
+     * @returns the root element of the panel on the right, which shows all instructions
+     */
     getInstructionsPanel() {
         return cy.get('#cardInstructions');
     }
 
+    /**
+     * @returns returns all instruction symbols. Each test has one instruction symbol with its state (questionmark, cross or checkmark)
+     */
     getInstructionSymbols() {
         return this.getInstructionsPanel().get('.stepwizard-row').find('.stepwizard-step');
     }
 
+    /**
+     * @returns the root element of the panel, which shows the CI build output.
+     */
     getBuildOutput() {
         return cy.get('#cardBuildOutput');
     }

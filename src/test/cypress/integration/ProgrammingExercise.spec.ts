@@ -58,6 +58,36 @@ describe('Programming exercise', () => {
     });
 });
 
+/**
+ * Sets all the necessary cypress request hooks up.
+ */
+function registerQueries() {
+    cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
+    cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
+    cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
+    cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
+    cy.intercept('POST', '/api/courses').as('createCourseQuery');
+    cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExerciseQuery');
+    cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
+}
+
+/**
+ * Creates a course and a programming exercise inside that course.
+ */
+function setupCourseAndProgrammingExercise() {
+    cy.login(adminUsername, adminPassword, '/');
+    createTestCourse();
+    // We sleep for 80 seconds to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
+    cy.log('Created course. Sleeping before adding a programming exercise...');
+    // cy.wait(80000);
+    openExercisesFromCourseManagement();
+    createProgrammingExercise();
+    addStudentToCourse();
+}
+
+/**
+ * Makes a submission, which fails the CI build and asserts that this is highlighted in the UI.
+ */
 function makeFailingSubmission() {
     var submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercises/build_error/BubbleSort.txt' }] };
     makeSubmissionAndVerifyResults(submission, () => {
@@ -70,6 +100,9 @@ function makeFailingSubmission() {
     });
 }
 
+/**
+ * Makes a submission, which passes and fails some tests, and asserts the outcome in the UI.
+ */
 function makePartiallySuccessfulSubmission() {
     editorPage.createFileInRootPackage('SortStrategy.java');
     makeSubmissionAndVerifyResults(partiallySuccessful, () => {
@@ -86,6 +119,9 @@ function makePartiallySuccessfulSubmission() {
     });
 }
 
+/**
+ * Makes a submission, which passes all tests, and asserts the outcome in the UI.
+ */
 function makeSuccessfulSubmission() {
     editorPage.createFileInRootPackage('Context.java');
     editorPage.createFileInRootPackage('Policy.java');
@@ -100,6 +136,9 @@ function makeSuccessfulSubmission() {
     });
 }
 
+/**
+ * General method for entering, submitting and verifying something in the online editor.
+ */
 function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
     editorPage.typeSubmission(submission, packageName);
     editorPage.save();
@@ -108,66 +147,6 @@ function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmissio
     editorPage.getBuildOutput().contains(buildingAndTesting).should(beVisible);
     editorPage.getResultPanel().contains('GRADED', { timeout: longTimeout }).should(beVisible);
     verifyOutput();
-}
-
-function registerQueries() {
-    cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
-    cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
-    cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
-    cy.intercept('DELETE', '/api/programming-exercises/*').as('deleteProgrammingExerciseQuery');
-    cy.intercept('POST', '/api/courses').as('createCourseQuery');
-    cy.intercept('POST', '/api/programming-exercises/setup').as('createProgrammingExerciseQuery');
-    cy.intercept('POST', '/api/courses/*/exercises/*/participations').as('participateInExerciseQuery');
-}
-
-function setupCourseAndProgrammingExercise() {
-    cy.login(adminUsername, adminPassword, '/');
-    createTestCourse();
-    // We sleep for 80 seconds to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
-    cy.log('Created course. Sleeping before adding a programming exercise...');
-    // cy.wait(80000);
-    openExercisesFromCourseManagement();
-    createProgrammingExercise();
-    addStudentToCourse();
-}
-
-function cleanupProgrammingExerciseAndCourse() {
-    // Login is admin again
-    cy.login(adminUsername, adminPassword, '/');
-    deleteProgrammingExercise();
-    deleteCourse();
-}
-
-/**
- * Navigates to the course management and deletes the test course.
- */
-function deleteCourse() {
-    cy.log('Deleting the test course');
-    openCourseManagement();
-    cy.contains(`${courseName} (${courseShortName})`).parent().parent().click();
-    cy.get('.btn-danger').click();
-    cy.get(modalDeleteButton).should('be.disabled');
-    cy.get('[name="confirmExerciseName"]').type(courseName);
-    cy.get(modalDeleteButton).should('not.be.disabled').click();
-    cy.contains(`${courseName} (${courseShortName})`).should('not.exist');
-}
-
-/**
- * Navigates to the course management and deletes the programming exercise from the test course.
- */
-function deleteProgrammingExercise() {
-    openCourseManagement();
-    openExercisesFromCourseManagement();
-    cy.log('Deleting programming exercise...');
-    cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
-    // Check all checkboxes to get rid of the git repositories and build plans
-    cy.get('.modal-body')
-        .find('[type="checkbox"]')
-        .each(($el) => {
-            cy.wrap($el).check();
-        });
-    cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
-    cy.wait('@deleteProgrammingExerciseQuery');
 }
 
 /**
@@ -198,33 +177,6 @@ function addStudentToCourse() {
         .click();
     cy.wait('@addStudentQuery');
     cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should('be.visible');
-}
-
-/**
- * Creates a new programming exercise.
- */
-function createProgrammingExercise() {
-    cy.get('#jh-create-entity').click();
-    cy.url().should('include', '/programming-exercises/new');
-    cy.log('Filling out programming exercise info...');
-    cy.get(fieldTitle).type(programmingExerciseName);
-    cy.get(shortName).type(programmingExerciseShortName);
-    cy.get('#field_packageName').type(packageName);
-    cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should(beVisible).click();
-    cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
-
-    cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
-    cy.get('.owl-dt-control-arrow-button').eq(1).click();
-    cy.get('.owl-dt-day-3').eq(2).click();
-    cy.get(datepickerButtons).eq(1).should(beVisible).click();
-    cy.get('#field_points').type('100');
-    cy.get('#field_allowOnlineEditor').check();
-
-    cy.get(saveEntity).click();
-    cy.wait('@createProgrammingExerciseQuery');
-    // Creating a programming exercise takes a lot of time, so we increase the timeout here
-    cy.url().should('include', exercisePath);
-    cy.log('Successfully created a new programming exercise!');
 }
 
 /**
@@ -266,4 +218,73 @@ function openExercisesFromCourseManagement() {
  */
 function getCourseCard() {
     return cy.contains(`${courseName} (${courseShortName})`).parent().parent().parent();
+}
+
+/**
+ * Creates a new programming exercise.
+ */
+function createProgrammingExercise() {
+    cy.get('#jh-create-entity').click();
+    cy.url().should('include', '/programming-exercises/new');
+    cy.log('Filling out programming exercise info...');
+    cy.get(fieldTitle).type(programmingExerciseName);
+    cy.get(shortName).type(programmingExerciseShortName);
+    cy.get('#field_packageName').type(packageName);
+    cy.get('[label="artemisApp.exercise.releaseDate"] > :nth-child(1) > .btn').should(beVisible).click();
+    cy.get(datepickerButtons).wait(500).eq(1).should(beVisible).click();
+
+    cy.get('.test-schedule-date.ng-pristine > :nth-child(1) > .btn').click();
+    cy.get('.owl-dt-control-arrow-button').eq(1).click();
+    cy.get('.owl-dt-day-3').eq(2).click();
+    cy.get(datepickerButtons).eq(1).should(beVisible).click();
+    cy.get('#field_points').type('100');
+    cy.get('#field_allowOnlineEditor').check();
+
+    cy.get(saveEntity).click();
+    cy.wait('@createProgrammingExerciseQuery');
+    // Creating a programming exercise takes a lot of time, so we increase the timeout here
+    cy.url().should('include', exercisePath);
+    cy.log('Successfully created a new programming exercise!');
+}
+
+/**
+ * Deletes the previously created programming exercise and course.
+ */
+function cleanupProgrammingExerciseAndCourse() {
+    // Login is admin again
+    cy.login(adminUsername, adminPassword, '/');
+    deleteProgrammingExercise();
+    deleteCourse();
+}
+
+/**
+ * Navigates to the course management and deletes the test course.
+ */
+function deleteCourse() {
+    cy.log('Deleting the test course');
+    openCourseManagement();
+    cy.contains(`${courseName} (${courseShortName})`).parent().parent().click();
+    cy.get('.btn-danger').click();
+    cy.get(modalDeleteButton).should('be.disabled');
+    cy.get('[name="confirmExerciseName"]').type(courseName);
+    cy.get(modalDeleteButton).should('not.be.disabled').click();
+    cy.contains(`${courseName} (${courseShortName})`).should('not.exist');
+}
+
+/**
+ * Navigates to the course management and deletes the programming exercise from the test course.
+ */
+function deleteProgrammingExercise() {
+    openCourseManagement();
+    openExercisesFromCourseManagement();
+    cy.log('Deleting programming exercise...');
+    cy.get('[deletequestion="artemisApp.programmingExercise.delete.question"]').click();
+    // Check all checkboxes to get rid of the git repositories and build plans
+    cy.get('.modal-body')
+        .find('[type="checkbox"]')
+        .each(($el) => {
+            cy.wrap($el).check();
+        });
+    cy.get('[type="text"], [name="confirmExerciseName"]').type(programmingExerciseName).type('{enter}');
+    cy.wait('@deleteProgrammingExerciseQuery');
 }
