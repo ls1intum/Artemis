@@ -35,6 +35,8 @@ public class ParticipationService {
 
     private final GitService gitService;
 
+    private final BuildLogEntryRepository buildLogEntryRepository;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
@@ -67,12 +69,13 @@ public class ParticipationService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    public ParticipationService(UrlService urlService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
-            ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
-            ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository) {
+    public ParticipationService(BuildLogEntryRepository buildLogEntryRepository, UrlService urlService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+                                StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+                                ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
+                                ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
+                                ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository) {
+        this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -626,6 +629,10 @@ public class ParticipationService {
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
             resultsToBeDeleted.addAll(Objects.requireNonNull(submission.getResults()));
+            // delete buildLogEntries for programming submissions
+            if (submission instanceof ProgrammingSubmission) {
+                buildLogEntryRepository.deleteAllByProgrammingSubmissionId(submission.getId());
+            }
             submissionRepository.deleteById(submission.getId());
         });
         resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
