@@ -55,9 +55,8 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         if (item.submission.isSynced) {
             // make status blue
             return 'synced';
-        } else {
-            // make status yellow
-            return 'notSynced';
         }
+        // make status yellow
+        return 'notSynced';
     }
 }
