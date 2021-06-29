@@ -10,7 +10,7 @@ import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-fil
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
 import { MockComponent } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockDirective } from 'ng-mocks/dist/lib/mock-directive/mock-directive';
+import { MockDirective } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { RouterTestingModule } from '@angular/router/testing';

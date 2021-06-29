@@ -325,7 +325,7 @@ public class ProgrammingPlagiarismDetectionService {
                 plagiarismWebsocketService.notifyUserAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
 
                 Repository repo = gitService.getOrCheckoutRepositoryForJPlag(participation, targetPath);
-                gitService.resetToOriginMaster(repo); // start with clean state
+                gitService.resetToOriginHead(repo); // start with clean state
                 downloadedRepositories.add(repo);
             }
             catch (GitException | GitAPIException | InterruptedException | InvalidPathException ex) {
@@ -337,7 +337,7 @@ public class ProgrammingPlagiarismDetectionService {
         // clone the template repo
         try {
             Repository templateRepo = gitService.getOrCheckoutRepository(programmingExercise.getTemplateParticipation(), targetPath);
-            gitService.resetToOriginMaster(templateRepo); // start with clean state
+            gitService.resetToOriginHead(templateRepo); // start with clean state
             downloadedRepositories.add(templateRepo);
         }
         catch (GitException | GitAPIException | InterruptedException ex) {
