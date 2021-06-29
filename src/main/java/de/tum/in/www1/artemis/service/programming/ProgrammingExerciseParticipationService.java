@@ -168,7 +168,7 @@ public class ProgrammingExerciseParticipationService {
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             participation.setProgrammingExercise(solutionParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
         }
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), null);
     }
 
     private boolean canAccessParticipation(@NotNull TemplateProgrammingExerciseParticipation participation) {
@@ -177,7 +177,7 @@ public class ProgrammingExerciseParticipationService {
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             participation.setProgrammingExercise(templateParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
         }
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), null);
     }
 
     /**
