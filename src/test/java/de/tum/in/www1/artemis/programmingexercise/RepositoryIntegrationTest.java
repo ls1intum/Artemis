@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
@@ -759,6 +760,24 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         responseSolution = programmingExerciseParticipationService.canAccessParticipation(null, principal);
         assertThat(responseSolution).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_null() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // Check with exercise null
+        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
+        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
+
+        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution).isTrue();
+
+        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate).isTrue();
     }
 
     @Test
