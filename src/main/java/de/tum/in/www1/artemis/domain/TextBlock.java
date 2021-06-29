@@ -65,6 +65,10 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private Double addedDistance;
 
+    @OneToOne
+    @JsonIgnore
+    private Feedback feedback;
+
     @ManyToOne
     @JsonIgnore
     private TextSubmission submission;
@@ -168,6 +172,10 @@ public class TextBlock implements Serializable {
         this.submission = textSubmission;
         return this;
     }
+
+    public Feedback getFeedbackId() {return feedback;}
+
+    public void setFeedbackId(Feedback feedback) {this.feedback = feedback;}
 
     public void setSubmission(TextSubmission textSubmission) {
         this.submission = textSubmission;
