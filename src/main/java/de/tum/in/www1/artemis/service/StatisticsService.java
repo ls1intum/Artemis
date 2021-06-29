@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
+import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.*;
@@ -132,9 +133,8 @@ public class StatisticsService {
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        var sortedIncludedExercises = new ArrayList<>(includedExercises);
-        sortAfterReleaseDate(sortedIncludedExercises);
-        var averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(sortedIncludedExercises);
+        List<CourseStatisticsAverageScore> averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
+        sortAfterReleaseDate(averageScoreForExercises);
         averageScoreForExercises.forEach(exercise -> {
             var roundedAverageScore = round(exercise.getAverageScore());
             exercise.setAverageScore(roundedAverageScore);
@@ -222,24 +222,29 @@ public class StatisticsService {
         return exerciseManagementStatisticsDTO;
     }
 
-    private void sortAfterReleaseDate(List<Exercise> exercises) {
+    /**
+     * Sorting averageScores for release dates
+     * @param exercises the exercises which we want to sort
+     */
+    private void sortAfterReleaseDate(List<CourseStatisticsAverageScore> exercises) {
         exercises.sort((exerciseA, exerciseB) -> {
             var releaseDateA = exerciseA.getReleaseDate();
             var releaseDateB = exerciseB.getReleaseDate();
             if (releaseDateA == null) {
-                if (releaseDateB == null) {
-                    return 0;
-                }
+                // If A has no release date, sort B first
                 return 1;
             }
-            if (releaseDateB == null) {
-                return 1;
+            else if (releaseDateB == null) {
+                // If B has no release date, sort A first
+                return -1;
             }
-            if (releaseDateA.equals(releaseDateB)) {
+            else if (releaseDateA.isEqual(releaseDateB)) {
                 return 0;
             }
-
-            return releaseDateA.isBefore(releaseDateB) ? 1 : -1;
+            else {
+                // Sort the one with the earlier release date first
+                return releaseDateA.isBefore(releaseDateB) ? -1 : 1;
+            }
         });
     }
 }
