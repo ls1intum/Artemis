@@ -239,32 +239,34 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam.exercises!.forEach((exercise) => {
                 // We do not support hints at the moment. Setting an empty array here disables the hint requests
                 exercise.exerciseHints = [];
-                exercise.studentParticipations!.forEach((participation) => {
-                    if (participation.submissions && participation.submissions.length > 0) {
-                        participation.submissions.forEach((submission) => {
-                            submission.isSynced = true;
-                            if (submission.submitted == undefined) {
-                                // only set submitted to false it the value was not specified before
-                                submission.submitted = false;
+                if (exercise.studentParticipations) {
+                    exercise.studentParticipations!.forEach((participation) => {
+                        if (participation.submissions && participation.submissions.length > 0) {
+                            participation.submissions.forEach((submission) => {
+                                submission.isSynced = true;
+                                if (submission.submitted == undefined) {
+                                    // only set submitted to false it the value was not specified before
+                                    submission.submitted = false;
+                                }
+                            });
+                        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+                            // We need to provide a submission to update the navigation bar status indicator
+                            // This is important otherwise the save mechanisms would not work properly
+                            if (!participation.submissions || participation.submissions.length === 0) {
+                                participation.submissions = [];
+                                participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                             }
-                        });
-                    } else if (exercise.type === ExerciseType.PROGRAMMING) {
-                        // We need to provide a submission to update the navigation bar status indicator
-                        // This is important otherwise the save mechanisms would not work properly
-                        if (!participation.submissions || participation.submissions.length === 0) {
-                            participation.submissions = [];
-                            participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                         }
-                    }
-                    // reconnect the participation with the exercise, in case this relationship was deleted before (e.g. due to breaking circular dependencies)
-                    participation.exercise = exercise;
+                        // reconnect the participation with the exercise, in case this relationship was deleted before (e.g. due to breaking circular dependencies)
+                        participation.exercise = exercise;
 
-                    // setup subscription for programming exercises
-                    if (exercise.type === ExerciseType.PROGRAMMING) {
-                        const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
-                        this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
-                    }
-                });
+                        // setup subscription for programming exercises
+                        if (exercise.type === ExerciseType.PROGRAMMING) {
+                            const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
+                            this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
+                        }
+                    });
+                }
             });
             const initialExercise = this.studentExam.exercises![0];
             this.initializeExercise(initialExercise);
