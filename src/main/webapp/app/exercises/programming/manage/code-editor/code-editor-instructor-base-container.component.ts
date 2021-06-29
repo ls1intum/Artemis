@@ -109,7 +109,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     // Set selected participation
                     tap(() => {
                         if (this.router.url.endsWith('/test')) {
-                            this.domainService.setDomain([DomainType.TEST_REPOSITORY, this.exercise]);
+                            this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise]);
                         } else {
                             const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
                             if (nextAvailableParticipation) {
@@ -195,8 +195,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     protected applyDomainChange(domainType: any, domainValue: any) {
         if (this.codeEditorContainer != undefined) {
-            // Save modified files before we replace the editor content
-            this.codeEditorContainer.actions.onSave();
             this.codeEditorContainer.initializeProperties();
         }
         if (domainType === DomainType.PARTICIPATION) {
@@ -263,16 +261,29 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     selectParticipationDomainById(participationId: number) {
         if (participationId === this.exercise.templateParticipation!.id) {
             this.exercise.templateParticipation!.programmingExercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, this.exercise.templateParticipation!]);
         } else if (participationId === this.exercise.solutionParticipation!.id) {
             this.exercise.solutionParticipation!.programmingExercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation!]);
         } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.exercise.studentParticipations[0].exercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.studentParticipations[0]]);
+            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, this.exercise.studentParticipations[0]]);
         } else {
             this.onError('participationNotFound');
         }
+    }
+
+    /**
+     * Saves unsaved changes and then selects a domain.
+     *
+     * Always use this method for changing the editor content to save file modifications.
+     */
+    saveChangesAndSelectDomain(domain: DomainChange) {
+        if (this.codeEditorContainer != undefined) {
+            // Save modified files before we replace the editor content
+            this.codeEditorContainer.actions.onSave();
+        }
+        this.domainService.setDomain(domain);
     }
 
     /**
