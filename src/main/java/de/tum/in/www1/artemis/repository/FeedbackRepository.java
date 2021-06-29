@@ -80,6 +80,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     default Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
         final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).collect(toList());
         final TextExercise exercise = cluster.getExercise();
+        var test = findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise);
+
         return findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream().collect(toMap(Feedback::getReference, feedback -> feedback));
     }
 

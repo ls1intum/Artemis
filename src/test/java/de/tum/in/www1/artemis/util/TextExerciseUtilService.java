@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -55,8 +57,11 @@ public class TextExerciseUtilService {
         String text = "TextBlock" + random.nextInt();
 
         for (int i = 0; i < count; i++) {
+            String id = sha1Hex("id" + i + text);
             textBlock = new TextBlock();
             textBlock.setText(text);
+            textBlock.setId(id);
+            textBlock.automatic();
             textBlocks.add(textBlock);
         }
         return textBlocks;
