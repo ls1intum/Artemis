@@ -107,7 +107,6 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
-        debugger;
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
         this.addNotifications(this.filterLoadedNotifiactions(notifications));
         this.page += 1;
