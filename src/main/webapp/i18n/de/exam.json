@@ -134,7 +134,7 @@
             "progressSmall": "{{ current }}/{{ all }}",
             "exerciseType": "Typ",
             "examOverview": "Klausur Übersicht",
-            "examStatus": "Aufgaben Status",
+            "examStatus": "Status",
             "examExercises": "Klausur Aufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
