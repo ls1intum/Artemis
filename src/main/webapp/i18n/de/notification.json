@@ -10,7 +10,7 @@
             "loadedNotificationCount": "{{loaded}} von {{total}} Mitteilungen geladen",
             "by": "von",
             "allLoaded": "Keine weiteren Mitteilungen vorhanden.",
-            "liveExamExerciseUpdateNotification": "Eine Klausuraufgabe wurde aktualisiert!",
+            "liveExamExerciseUpdateNotification": "Aktualisierte Klausuraufgabenstellung!",
             "target": {
                 "newAnswerPost": "Antwort ansehen",
                 "newPost": "Beitrag ansehen",
