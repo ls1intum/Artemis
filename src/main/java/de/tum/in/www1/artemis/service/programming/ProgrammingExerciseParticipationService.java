@@ -9,6 +9,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -145,39 +146,39 @@ public class ProgrammingExerciseParticipationService {
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
     public boolean canAccessParticipation(ProgrammingExerciseParticipation participation) {
-        if (participation instanceof ProgrammingExerciseStudentParticipation) {
-            return canAccessParticipation((ProgrammingExerciseStudentParticipation) participation);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            // If the current user is owner of the participation, they are allowed to access it
+            if (studentParticipation.isOwnedBy(user)) {
+                return true;
+            }
+            return canAccessParticipation(studentParticipation, studentParticipationRepository, user);
         }
-        else if (participation instanceof SolutionProgrammingExerciseParticipation) {
-            return canAccessParticipation((SolutionProgrammingExerciseParticipation) participation);
+        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
+            return canAccessParticipation(solutionParticipation, solutionParticipationRepository, user);
         }
-        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
-            return canAccessParticipation((TemplateProgrammingExerciseParticipation) participation);
+        else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
+            return canAccessParticipation(templateParticipation, templateParticipationRepository, user);
         }
         return false;
     }
 
-    private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
-    }
-
-    private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
+    /**
+     * Returns whether a user is allowed to access a given participation.
+     *
+     * @param <T>           The {@link ProgrammingExerciseParticipation} sub-class
+     * @param participation A participation of type <code>T</code>, must not be null
+     * @param repository    The database repository where participations of type <code>T</code> reside in
+     * @param user          The user, may be null, in which case the current user is fetched and used.
+     * @return <code>true</code> if the current user is allowed to access the given participation, <code>false</code> otherwise
+     */
+    private <T extends ProgrammingExerciseParticipation> boolean canAccessParticipation(@NotNull T participation, JpaRepository<T, Long> repository, User user) {
         // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
-        // To prevent null pointer exceptions, we therefore retrieve it again as concrete solution programming exercise participation
+        // To prevent null pointer exceptions, we therefore retrieve it again as concrete sub-class instance by using the provided repository
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            participation.setProgrammingExercise(solutionParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
+            participation.setProgrammingExercise(repository.findById(participation.getId()).get().getProgrammingExercise());
         }
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
-    }
-
-    private boolean canAccessParticipation(@NotNull TemplateProgrammingExerciseParticipation participation) {
-        // Note: if this participation was retrieved as Participation (abstract super class) from the database, the programming exercise might not be correctly initialized
-        // To prevent null pointer exceptions, we therefore retrieve it again as concrete template programming exercise participation
-        if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-            participation.setProgrammingExercise(templateParticipationRepository.findById(participation.getId()).get().getProgrammingExercise());
-        }
-        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), null);
+        return authCheckService.isAtLeastTeachingAssistantForExercise(participation.getProgrammingExercise(), user);
     }
 
     /**
@@ -185,6 +186,8 @@ public class ProgrammingExerciseParticipationService {
      * The method will treat the participation types differently:
      * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) and the courses instructor/tas.
      * - Template/SolutionParticipations should only be accessible by the courses instructor/tas.
+     *
+     * TODO: why is this different to {@link #canAccessParticipation(ProgrammingExerciseParticipation)}?
      *
      * @param participation to check permissions for.
      * @param principal object to check permissions of the user with.
