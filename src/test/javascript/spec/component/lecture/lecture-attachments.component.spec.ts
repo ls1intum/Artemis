@@ -18,6 +18,7 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockPipe } from 'ng-mocks';
+import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -141,19 +142,7 @@ describe('LectureAttachmentsComponent', () => {
                         },
                     },
                 },
-                {
-                    provide: FileService,
-                    useValue: {
-                        downloadFileWithAccessToken() {
-                            return {
-                                subscribe: (fn: (value: any) => void) =>
-                                    fn({
-                                        body: new Window(),
-                                    }),
-                            };
-                        },
-                    },
-                },
+                { provide: FileService, useClass: MockFileService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

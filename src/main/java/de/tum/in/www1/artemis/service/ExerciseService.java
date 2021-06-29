@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
@@ -62,6 +63,8 @@ public class ExerciseService {
     private final QuizScheduleService quizScheduleService;
 
     private final ExampleSubmissionService exampleSubmissionService;
+
+    private final ProgrammingAssessmentService programmingAssessmentService;
 
     private final TeamRepository teamRepository;
 
@@ -99,6 +102,10 @@ public class ExerciseService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
+    private final FeedbackRepository feedbackRepository;
+
     private final PlagiarismResultRepository plagiarismResultRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
@@ -109,7 +116,8 @@ public class ExerciseService {
             LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
-            PlagiarismResultRepository plagiarismResultRepository) {
+            PlagiarismResultRepository plagiarismResultRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
+            ProgrammingAssessmentService programmingAssessmentService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
@@ -135,6 +143,9 @@ public class ExerciseService {
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.programmingAssessmentService = programmingAssessmentService;
         this.plagiarismResultRepository = plagiarismResultRepository;
     }
 
@@ -792,5 +803,117 @@ public class ExerciseService {
         if (!exercise.getIncludedInOverallScore().validateBonusPoints(exercise.getBonusPoints())) {
             throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
+    }
+
+    /**
+     * Checks the exercise structured grading instructions if any of them is associated with the feedback
+     * then, sets the corresponding exercise field
+     *
+     * @param gradingCriteria grading criteria list of exercise
+     * @param exercise exercise to update     *
+     */
+    public void checkExerciseIfStructuredGradingInstructionFeedbackUsed(List<GradingCriterion> gradingCriteria, Exercise exercise) {
+        List<Feedback> feedback = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
+
+        if (!feedback.isEmpty()) {
+            exercise.setGradingInstructionFeedbackUsed(true);
+        }
+    }
+
+    /**
+     * Re-evaluates the exercise before saving
+     * 1. The feedback associated with the exercise grading instruction needs to be updated
+     * 2. After updating feedback, result needs to be re-calculated
+     *
+     * @param exercise exercise to re-evaluate
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not     *
+     */
+    public void reEvaluateExercise(Exercise exercise, boolean deleteFeedbackAfterGradingInstructionUpdate) {
+
+        List<GradingCriterion> gradingCriteria = exercise.getGradingCriteria();
+        // retrieve the feedback associated with the structured grading instructions
+        List<Feedback> feedbackToBeUpdated = feedbackRepository.findFeedbackByExerciseGradingCriteria(gradingCriteria);
+
+        // collect all structured grading instructions into the list
+        List<GradingInstruction> gradingInstructions = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).toList();
+
+        // update the related fields for feedback
+        for (GradingInstruction instruction : gradingInstructions) {
+            for (Feedback feedback : feedbackToBeUpdated) {
+                if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
+                    feedback.setCredits(instruction.getCredits());
+                    feedback.setPositive(feedback.getCredits() >= 0);
+                    feedback.setDetailText(instruction.getFeedback());
+                }
+            }
+        }
+        feedbackRepository.saveAll(feedbackToBeUpdated);
+
+        List<Feedback> feedbackToBeDeleted = getFeedbackToBeDeletedAfterGradingInstructionUpdate(deleteFeedbackAfterGradingInstructionUpdate, gradingInstructions, exercise);
+
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+
+        // add example submission results that belong exercise
+        if (!exercise.getExampleSubmissions().isEmpty()) {
+            results.addAll(resultRepository.getResultForExampleSubmissions(exercise.getExampleSubmissions()));
+        }
+
+        // re-calculate the results after updating the feedback
+        for (Result result : results) {
+            if (!feedbackToBeDeleted.isEmpty()) {
+                List<Feedback> existingFeedback = result.getFeedbacks();
+                if (!existingFeedback.isEmpty()) {
+                    existingFeedback.removeAll(feedbackToBeDeleted);
+                }
+                // first save the feedback (that is not yet in the database) to prevent null index exception
+                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(existingFeedback);
+                result.updateAllFeedbackItems(savedFeedback, exercise instanceof ProgrammingExercise);
+            }
+
+            if (!(exercise instanceof ProgrammingExercise)) {
+                resultRepository.submitResult(result, exercise);
+            }
+            else {
+                double totalScore = programmingAssessmentService.calculateTotalScore(result);
+                result.setScore(totalScore, exercise.getMaxPoints());
+                /*
+                 * Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated, as the points the
+                 * student has achieved have changed
+                 */
+                String[] resultStringParts = result.getResultString().split(", ");
+                resultStringParts[resultStringParts.length - 1] = result.createResultString(totalScore, exercise.getMaxPoints());
+                result.setResultString(String.join(", ", resultStringParts));
+                resultRepository.save(result);
+            }
+        }
+    }
+
+    /**
+     * Gets the list of feedback that is associated with deleted grading instructions
+     *
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     * @param gradingInstructions grading instruction list to update
+     * @param exercise exercise for which the grading instructions have to be updated
+     * @return list including Feedback entries that have to be deleted due to updated grading instructions
+     */
+    public List<Feedback> getFeedbackToBeDeletedAfterGradingInstructionUpdate(boolean deleteFeedbackAfterGradingInstructionUpdate, List<GradingInstruction> gradingInstructions,
+            Exercise exercise) {
+        List<Feedback> feedbackToBeDeleted = new ArrayList<>();
+        // check if the user decided to remove the feedback after deleting the associated grading instructions
+        if (deleteFeedbackAfterGradingInstructionUpdate) {
+            List<Long> updatedInstructionIds = gradingInstructions.stream().map(GradingInstruction::getId).toList();
+            // retrieve the grading instructions from database for backup
+            List<GradingCriterion> backupGradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            List<Long> backupInstructionIds = backupGradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
+                    .map(GradingInstruction::getId).toList();
+
+            // collect deleted grading instruction ids into the list
+            List<Long> gradingInstructionIdsToBeDeleted = backupInstructionIds.stream().filter(backupinstructionId -> !updatedInstructionIds.contains(backupinstructionId))
+                    .toList();
+
+            // determine the feedback to be deleted
+            feedbackToBeDeleted = feedbackRepository.findFeedbackByGradingInstructionIds(gradingInstructionIdsToBeDeleted);
+        }
+        return feedbackToBeDeleted;
     }
 }

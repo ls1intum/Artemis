@@ -10,6 +10,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
@@ -20,6 +21,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -802,8 +805,38 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * Deletes all specified files.
+     * Merge the PDF files located in the given paths.
      *
+     * @param paths list of paths to merge
+     * @return byte array of the merged file
+     */
+    public Optional<byte[]> mergePdfFiles(List<String> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return Optional.empty();
+        }
+        PDFMergerUtility pdfMerger = new PDFMergerUtility();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            for (String path : paths) {
+                File file = new File(path);
+                if (file.exists()) {
+                    pdfMerger.addSource(new File(path));
+                }
+            }
+            pdfMerger.setDestinationStream(outputStream);
+            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+        }
+        catch (IOException e) {
+            log.warn("Could not merge files");
+            return Optional.empty();
+        }
+
+        return Optional.of(outputStream.toByteArray());
+    }
+
+    /**
+     * Deletes all specified files.
      * @param filePaths A list of all paths to the files that should be deleted
      */
     public void deleteFiles(List<Path> filePaths) {

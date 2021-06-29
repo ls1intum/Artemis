@@ -47,7 +47,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findAllByResult_Submission_Participation_ExerciseIdIn(List<Long> exerciseIds);
 
     @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
-    List<Feedback> findFeedbacksByStructuredGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
+    List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 
     /**
      * Delete all feedbacks that belong to the given result
@@ -164,15 +164,15 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     /**
      * Given the grading criteria, collects each sub grading instructions in a list.
-     * Then, find all feedbacks that matches with the grading instructions ids
+     * Then, find all feedback that matches with the grading instructions ids
      *
      * @param gradingCriteria The grading criteria belongs to exercise in a specific course
-     * @return Feedback list which are associated with the grading instructions
+     * @return list including feedback entries which are associated with the grading instructions
      */
-    default List<Feedback> findFeedbackByStructuredGradingInstructionId(List<GradingCriterion> gradingCriteria) {
+    default List<Feedback> findFeedbackByExerciseGradingCriteria(List<GradingCriterion> gradingCriteria) {
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
                 .map(GradingInstruction::getId).collect(toList());
-        return findFeedbacksByStructuredGradingInstructionIds(gradingInstructionsIds);
+        return findFeedbackByGradingInstructionIds(gradingInstructionsIds);
     }
 
     /**

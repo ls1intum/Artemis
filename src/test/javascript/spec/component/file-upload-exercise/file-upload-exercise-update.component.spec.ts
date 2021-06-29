@@ -42,52 +42,57 @@ describe('FileUploadExercise Management Update Component', () => {
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new FileUploadExercise(undefined, undefined);
-            entity.id = 123;
-            spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.fileUploadExercise = entity;
-            comp.fileUploadExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+        describe('new exercise', () => {
+            const course = { id: 1 } as Course;
+            const fileUploadExercise = new FileUploadExercise(course, undefined);
 
-            // THEN
-            expect(service.update).toHaveBeenCalledWith(entity, 123);
-            expect(comp.isSaving).toEqual(false);
-        }));
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ fileUploadExercise });
+            });
 
-        it('Should call create service on save for new entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new FileUploadExercise(undefined, undefined);
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.fileUploadExercise = entity;
-            comp.fileUploadExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+            it('Should call create service on save for new entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
-        }));
+                const entity = { ...fileUploadExercise };
+                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
 
-        it('Should trim the exercise title before saving', fakeAsync(() => {
-            // GIVEN
-            const entity = new FileUploadExercise(undefined, undefined);
-            entity.title = 'My Exercise   ';
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.fileUploadExercise = entity;
-            comp.fileUploadExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+                // WHEN
+                comp.save();
+                tick(); // simulate async
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(entity.title).toEqual('My Exercise');
-        }));
+                // THEN
+                expect(service.create).toHaveBeenCalledWith(entity);
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
+
+        describe('existing exercise', () => {
+            const course = { id: 1 } as Course;
+            const fileUploadExercise = new FileUploadExercise(course, undefined);
+            fileUploadExercise.id = 123;
+
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ fileUploadExercise });
+            });
+
+            it('Should call update service on save for existing entity', fakeAsync(() => {
+                // GIVEN
+                const entity = { ...fileUploadExercise };
+                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+                comp.ngOnInit();
+
+                // WHEN
+                comp.save();
+                tick(); // simulate async
+
+                // THEN
+                expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
     });
 
     describe('ngOnInit with given exerciseGroup', () => {

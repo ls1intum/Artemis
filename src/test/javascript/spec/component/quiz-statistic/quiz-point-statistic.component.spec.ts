@@ -18,6 +18,7 @@ import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistic
 import * as moment from 'moment';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { SinonStub, stub } from 'sinon';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -88,7 +89,7 @@ describe('QuizExercise Point Statistic Component', () => {
             // call
             comp.ngOnInit();
             tick(); // simulate async
-            jest.advanceTimersByTime(201); // simulate setInterval time passing
+            jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
             expect(accountSpy).toHaveBeenCalled();
