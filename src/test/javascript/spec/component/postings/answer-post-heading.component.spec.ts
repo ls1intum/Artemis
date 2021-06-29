@@ -17,9 +17,9 @@ import { AnswerPostHeaderComponent } from 'app/overview/postings/answer-post/ans
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('AnswerPostComponent', () => {
-    let component: AnswerPostComponent;
-    let componentFixture: ComponentFixture<AnswerPostComponent>;
+describe('AnswerPostHeaderComponent', () => {
+    let component: AnswerPostHeaderComponent;
+    let componentFixture: ComponentFixture<AnswerPostHeaderComponent>;
 
     const user1 = {
         id: 1,
@@ -48,45 +48,26 @@ describe('AnswerPostComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule],
-            declarations: [AnswerPostComponent, MockDirective(AnswerPostHeaderComponent), MockDirective(PostingsButtonComponent), MockDirective(PostingsMarkdownEditorComponent)],
+            declarations: [AnswerPostComponent, AnswerPostHeaderComponent, MockDirective(PostingsButtonComponent), MockDirective(PostingsMarkdownEditorComponent)],
             providers: [{ provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects }],
         })
             .overrideTemplate(AnswerPostComponent, '')
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(AnswerPostComponent);
+                componentFixture = TestBed.createComponent(AnswerPostHeaderComponent);
                 component = componentFixture.componentInstance;
             });
     });
 
-    it('should approve answer', () => {
-        component.answerPost = unApprovedAnswerPost;
-        component.toggleAnswerPostTutorApproved();
-        expect(component.answerPost.tutorApproved).to.be.true;
+    it('should be author of answer', () => {
+        component.answerPost = approvedAnswerPost;
+        component.user = user2;
+        expect(component.isAuthorOfAnswerPost).to.be.true;
     });
 
-    it('should unapprove answer', () => {
+    it('should not be author of answer', () => {
         component.answerPost = approvedAnswerPost;
-        component.toggleAnswerPostTutorApproved();
-        expect(component.answerPost.tutorApproved).to.be.false;
-    });
-
-    it('should toggle edit mode and reset editor Text', () => {
-        component.answerPost = approvedAnswerPost;
-        component.isEditMode = true;
-        component.content = 'test';
-        component.toggleEditMode();
-        expect(component.content).to.deep.equal('approved');
-        expect(component.isEditMode).to.be.false;
-        component.toggleEditMode();
-        expect(component.isEditMode).to.be.true;
-    });
-
-    it('should update answerText', () => {
-        component.answerPost = approvedAnswerPost;
-        component.isEditMode = true;
-        component.content = 'test';
-        component.saveAnswerPost();
-        expect(component.answerPost.content).to.deep.equal('test');
+        component.user = user2;
+        expect(component.isAuthorOfAnswerPost).to.be.false;
     });
 });
