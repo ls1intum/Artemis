@@ -6,13 +6,14 @@ import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { PostRowComponent } from 'app/overview/postings/post-row/post-row.component';
 import { PostComponent } from 'app/overview/postings/post/post.component';
 import { AnswerPostComponent } from 'app/overview/postings/answer-post/answer-post.component';
-import { PostVotesComponent } from 'app/overview/postings/post-votes/post-votes.component';
+import { PostVotesComponent } from 'app/overview/postings/post/post-votes/post-votes.component';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { PostingsButtonComponent } from 'app/overview/postings/postings-button/postings-button.component';
 import { PostingsMarkdownEditorComponent } from 'app/overview/postings/postings-markdown-editor/postings-markdown-editor.component';
-import { PostingsHeaderComponent } from 'app/overview/postings/postings-header/postings-header.component';
+import { PostHeaderComponent } from 'app/overview/postings/post/post-header/post-header.component';
+import { AnswerPostHeaderComponent } from 'app/overview/postings/answer-post/answer-post-header/answer-post-header.component';
 
 const routes: Routes = [
     {
@@ -28,12 +29,13 @@ const routes: Routes = [
         PostingsComponent,
         PostRowComponent,
         PostComponent,
-        AnswerPostComponent,
+        PostHeaderComponent,
         PostVotesComponent,
+        AnswerPostComponent,
+        AnswerPostHeaderComponent,
         PostingsButtonComponent,
         PostingsMarkdownEditorComponent,
-        PostingsHeaderComponent,
     ],
-    exports: [PostingsComponent, PostingsButtonComponent, PostingsMarkdownEditorComponent, PostingsHeaderComponent],
+    exports: [PostingsComponent, PostingsButtonComponent, PostingsMarkdownEditorComponent],
 })
 export class ArtemisPostingsModule {}

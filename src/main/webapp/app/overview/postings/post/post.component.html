@@ -1,54 +1,32 @@
+<jhi-post-header [post]="post" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" (editModeChange)="toggleEditMode()" (interactPost)="onInteractPost($event)"></jhi-post-header>
 <!-- post not in edit mode -->
 <ng-container *ngIf="!isEditMode">
-    <div class="row ps-2 mt-1 pe-1 justify-content-between">
-        <jhi-postings-header [posting]="post"></jhi-postings-header>
-        <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfPost(post)">
-            <fa-icon
-                size="xs"
-                class="me-0.5 clickable action-icon"
-                [ngbTooltip]="'artemisApp.metis.sidebar.editPost' | artemisTranslate"
-                container="body"
-                [icon]="'pencil-alt'"
-                (click)="toggleEditMode()"
-            ></fa-icon>
-            <jhi-confirm-icon
-                iconSize="xs"
-                (confirmEvent)="deletePost()"
-                [ngClass]="'me-1 clickable action-icon'"
-                [initialTooltip]="'artemisApp.metis.sidebar.deletePost' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.metis.sidebar.confirmDeletePost' | artemisTranslate"
-            ></jhi-confirm-icon>
-        </div>
-    </div>
     <div class="row align-items-center">
         <jhi-post-votes class="col-auto" [postId]="post.id!" [votes]="post.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
-        <div
-            id="content"
-            class="col posting-content markdown-preview"
-            [innerHTML]="post.content ? (post.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
-        ></div>
+        <div class="col posting-content markdown-preview" [innerHTML]="post.content ? (post.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
     </div>
 </ng-container>
 <!-- post in edit mode -->
 <ng-container *ngIf="isEditMode">
-    <jhi-postings-header [posting]="post"></jhi-postings-header>
-    <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
-    <div class="row mt-2 d-flex align-items-sm-center">
-        <div class="col">
-            <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
-                {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
-            </button>
-            <button
-                class="btn btn-sm btn-outline-secondary"
-                jhi-postings-button
-                [buttonLoading]="isLoading"
-                [disabled]="!content || content.length === 0"
-                [buttonLabel]="'artemisApp.metis.sidebar.savePost' | artemisTranslate"
-                (click)="savePost()"
-            ></button>
-        </div>
-        <div class="col text-end">
-            <p class="small my-0 ms-2">{{ postEditContent?.length }} / {{ maxPostContentLength }}</p>
+    <div class="row mb-2">
+        <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
+        <div class="row d-flex align-items-sm-center">
+            <div class="col">
+                <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
+                    {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
+                </button>
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    jhi-postings-button
+                    [buttonLoading]="isLoading"
+                    [disabled]="!content || content.length === 0"
+                    [buttonLabel]="'artemisApp.metis.sidebar.savePost' | artemisTranslate"
+                    (click)="savePost()"
+                ></button>
+            </div>
+            <div class="col text-end">
+                <p class="small my-0 ms-2">{{ content?.length }} / {{ maxPostContentLength }}</p>
+            </div>
         </div>
     </div>
 </ng-container>

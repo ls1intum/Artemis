@@ -3,13 +3,13 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingService } from 'app/overview/postings/posting.service';
+import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
 
 const expect = chai.expect;
 
 describe('AnswerPost Service', () => {
     let injector: TestBed;
-    let service: PostingService;
+    let service: AnswerPostService;
     let httpMock: HttpTestingController;
     let elemDefault: AnswerPost;
 
@@ -18,7 +18,7 @@ describe('AnswerPost Service', () => {
             imports: [HttpClientTestingModule],
         });
         injector = getTestBed();
-        service = injector.get(PostingService);
+        service = injector.get(AnswerPostService);
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new AnswerPost();

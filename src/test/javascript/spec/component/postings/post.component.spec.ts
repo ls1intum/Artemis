@@ -11,7 +11,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { PostVotesComponent } from 'app/overview/postings/post-votes/post-votes.component';
+import { PostVotesComponent } from 'app/overview/postings/post/post-votes/post-votes.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

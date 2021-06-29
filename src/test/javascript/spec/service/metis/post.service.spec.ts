@@ -6,13 +6,13 @@ import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { PostingService } from 'app/overview/postings/posting.service';
+import { PostService } from 'app/overview/postings/post/post.service';
 
 const expect = chai.expect;
 
 describe('Post Service', () => {
     let injector: TestBed;
-    let service: PostingService;
+    let service: PostService;
     let httpMock: HttpTestingController;
     let elemDefault: Post;
     let elem2: Post;
@@ -26,7 +26,7 @@ describe('Post Service', () => {
             imports: [HttpClientTestingModule],
         });
         injector = getTestBed();
-        service = injector.get(PostingService);
+        service = injector.get(PostService);
         httpMock = injector.get(HttpTestingController);
 
         elemDefault = new Post();

@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PostVotesAction, PostVotesActionName } from 'app/overview/postings/post-votes/post-votes.component';
-import { PostingService } from 'app/overview/postings/posting.service';
+import { PostVotesAction, PostVotesActionName } from 'app/overview/postings/post/post-votes/post-votes.component';
+import { PostService } from 'app/overview/postings/post/post.service';
 
 export interface PostAction {
     name: PostActionName;
@@ -25,7 +25,7 @@ export class PostComponent implements OnInit {
     @Input() post: Post;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
-    @Output() interactPost = new EventEmitter<PostAction>();
+    @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
     content?: string;
     maxPostContentLength = 1000;
     isEditMode: boolean;
@@ -36,7 +36,7 @@ export class PostComponent implements OnInit {
     allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
     allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
 
-    constructor(private postingService: PostingService, private route: ActivatedRoute) {}
+    constructor(private postService: PostService, private route: ActivatedRoute) {}
 
     /**
      * checks if the user is the author of the post
@@ -48,22 +48,12 @@ export class PostComponent implements OnInit {
     }
 
     /**
-     * pass the post to the row to delete
-     */
-    deletePost(): void {
-        this.interactPost.emit({
-            name: PostActionName.DELETE,
-            post: this.post,
-        });
-    }
-
-    /**
      * Changes the post content
      */
     savePost(): void {
         this.isLoading = true;
         this.post.content = this.content;
-        this.postingService.update(this.courseId, this.post).subscribe({
+        this.postService.update(this.courseId, this.post).subscribe({
             next: () => {
                 this.isEditMode = false;
             },
@@ -80,6 +70,10 @@ export class PostComponent implements OnInit {
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
         this.content = this.post.content;
+    }
+
+    onInteractPost($event: PostAction) {
+        this.interactPost.emit($event);
     }
 
     /**
@@ -99,21 +93,12 @@ export class PostComponent implements OnInit {
      * @param {number} voteChange
      */
     updateVotes(voteChange: number): void {
-        this.postingService.updateVotes(this.courseId, this.post.id!, voteChange).subscribe((res) => {
+        this.postService.updateVotes(this.courseId, this.post.id!, voteChange).subscribe((res) => {
             this.post = res.body!;
             this.interactPost.emit({
                 name: PostActionName.VOTE_CHANGE,
                 post: this.post,
             });
         });
-    }
-
-    /**
-     * Takes a post and determines if the user is the author of it
-     * @param {Post} post
-     * @returns {boolean}
-     */
-    isAuthorOfPost(post: Post): boolean {
-        return this.user ? post.author!.id === this.user.id : false;
     }
 }

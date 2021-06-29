@@ -8,7 +8,8 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AnswerPostAction, AnswerPostActionName } from 'app/overview/postings/answer-post/answer-post.component';
 import { PostAction, PostActionName } from 'app/overview/postings/post/post.component';
-import { PostingService } from 'app/overview/postings/posting.service';
+import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
+import { PostService } from 'app/overview/postings/post/post.service';
 
 export interface PostRowAction {
     name: PostRowActionName;
@@ -39,7 +40,7 @@ export class PostRowComponent implements OnInit {
     approvedAnswerPosts: AnswerPost[];
     courseId: number;
 
-    constructor(private postingService: PostingService, private localStorage: LocalStorageService, private route: ActivatedRoute) {}
+    constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService, private route: ActivatedRoute) {}
 
     /**
      * sort answers when component is initialized
@@ -119,7 +120,7 @@ export class PostRowComponent implements OnInit {
      * deletes the post
      */
     deletePost(): void {
-        this.postingService.delete(this.courseId, this.post.id!).subscribe(() => {
+        this.postService.delete(this.courseId, this.post.id!).subscribe(() => {
             this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
             this.interactPostRow.emit({
                 name: PostRowActionName.DELETE,
@@ -138,7 +139,7 @@ export class PostRowComponent implements OnInit {
         answerPost.post = this.post;
         answerPost.tutorApproved = false;
         answerPost.creationDate = moment();
-        this.postingService.create(this.courseId, answerPost).subscribe({
+        this.answerPostService.create(this.courseId, answerPost).subscribe({
             next: (postResponse: HttpResponse<AnswerPost>) => {
                 if (!this.post.answers) {
                     this.post.answers = [];

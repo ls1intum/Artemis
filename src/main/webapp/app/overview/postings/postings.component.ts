@@ -11,7 +11,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import interact from 'interactjs';
 import { ActivatedRoute } from '@angular/router';
-import { PostingService } from 'app/overview/postings/posting.service';
+import { PostService } from 'app/overview/postings/post/post.service';
 
 @Component({
     selector: 'jhi-postings',
@@ -34,7 +34,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
     EditorMode = EditorMode;
     courseId: number;
 
-    constructor(private route: ActivatedRoute, private accountService: AccountService, private exerciseService: ExerciseService, private postingService: PostingService) {}
+    constructor(private route: ActivatedRoute, private accountService: AccountService, private exerciseService: ExerciseService, private postService: PostService) {}
 
     /**
      * get the current user and check if he/she is at least a tutor for this course
@@ -127,7 +127,7 @@ export class PostingsComponent implements OnInit, AfterViewInit {
             delete post.lecture.lectureUnits;
         }
         post.creationDate = moment();
-        this.postingService.create(this.courseId, post).subscribe({
+        this.postService.create(this.courseId, post).subscribe({
             next: (postResponse: HttpResponse<Post>) => {
                 this.posts.push(postResponse.body!);
                 this.postContent = undefined;

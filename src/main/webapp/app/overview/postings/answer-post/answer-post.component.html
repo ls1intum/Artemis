@@ -1,12 +1,16 @@
 <div class="row mb-0.5 py-1 px-2 mx-1 mb-2 answer-post" [class.answer-approved]="answerPost.tutorApproved">
     <div class="col-12">
+        <jhi-answer-post-header
+            [answerPost]="answerPost"
+            [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+            (editModeChange)="toggleEditMode()"
+            (interactAnswerPost)="onInteractAnswerPost($event)"
+        ></jhi-answer-post-header>
         <!-- answer-post not in edit mode -->
         <ng-container *ngIf="!isEditMode">
-            <jhi-postings-header (editModeChange)="toggleEditMode()"></jhi-postings-header>
-
             <div class="row">
                 <div
-                    class="col mt-1 posting-content markdown-preview"
+                    class="col posting-content markdown-preview"
                     [innerHTML]="answerPost.content ? (answerPost.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
                     [ngbTooltip]="answerPost.tutorApproved ? ('artemisApp.metis.sidebar.approvedLabel' | artemisTranslate) : ''"
                 ></div>
@@ -15,16 +19,6 @@
         <!-- answer-post in edit mode -->
         <ng-container *ngIf="isEditMode">
             <div class="row mb-2">
-                <div class="col-12">
-                    <div class="row">
-                        <div class="col-auto px-0">
-                            <fa-icon [icon]="'comments'" class="labels"></fa-icon>
-                        </div>
-                        <div class="col-auto">
-                            <span class="text-black-50 posting-subtitle"> {{ answerPost.author!.name }} • {{ answerPost.creationDate | artemisDate: 'short' }} </span>
-                        </div>
-                    </div>
-                </div>
                 <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
                 <div class="col-12 mt-1 d-flex">
                     <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
