@@ -133,6 +133,9 @@ export class PostingsComponent implements OnInit, AfterViewInit {
                 this.postContent = undefined;
                 this.isEditMode = false;
             },
+            error: () => {
+                this.isLoading = false;
+            },
             complete: () => {
                 this.isLoading = false;
             },

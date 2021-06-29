@@ -53,7 +53,7 @@ public class Post extends Posting {
     // To be used with introduction of Metis
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "tag")
+    @Column(name = "text")
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne

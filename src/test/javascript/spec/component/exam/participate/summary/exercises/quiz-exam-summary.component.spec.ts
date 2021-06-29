@@ -28,7 +28,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { MockModule, MockProvider } from 'ng-mocks';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { MockPipe } from 'ng-mocks';
 import * as sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
