@@ -58,7 +58,6 @@ export class ExamNavigationBarComponent implements OnInit {
         @param forceSave: true if forceSave shall be used.
      */
     changePage(overviewPage: boolean, exerciseIndex?: number, forceSave?: boolean) {
-        console.log('OverviewPage:', overviewPage, 'exerciseIndex:', exerciseIndex);
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex! > this.exercises.length - 1 || exerciseIndex! < 0) {

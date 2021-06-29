@@ -474,7 +474,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
         const activeComponent = this.activePageComponent;
-        console.log('OnPageChange Method: Exercise:', exerciseChange.exercise, ', ', exerciseChange.overViewChange, ', Active Component: ', activeComponent);
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
@@ -537,7 +536,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (activeComponent) {
             activeComponent.onActivate();
         }
-        console.log('activate Active component,', this.pageComponentVisited, this.activePageComponent);
     }
 
     /**
