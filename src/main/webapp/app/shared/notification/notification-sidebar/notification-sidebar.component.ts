@@ -107,10 +107,17 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
+        debugger;
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
-        this.addNotifications(notifications);
+        this.addNotifications(this.filterLoadedNotifiactions(notifications));
         this.page += 1;
         this.loading = false;
+    }
+
+    // filter out every exam related notification
+    private filterLoadedNotifiactions(notifications: Notification[]): Notification[] {
+        // tslint:disable-next-line:triple-equals
+        return notifications.filter((notification) => notification.title != LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE);
     }
 
     private subscribeToNotificationUpdates(): void {
