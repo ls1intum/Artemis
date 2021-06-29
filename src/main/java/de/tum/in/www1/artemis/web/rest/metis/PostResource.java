@@ -127,7 +127,6 @@ public class PostResource {
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
-        existingPost.setReactions(post.getReactions());
         Post result = postRepository.save(existingPost);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, post.getId().toString())).body(result);
     }
