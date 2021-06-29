@@ -136,7 +136,7 @@ public class ReactionResource {
         else if (reaction.getAnswerPost() != null) {
             entity = "answer post with id: " + reaction.getAnswerPost().getId();
         }
-        log.info("Reaction deleted by " + user.getLogin() + ". Reaction: " + reaction.getEmojiId() + " for " + entity);
+        log.debug("Reaction deleted by " + user.getLogin() + ". Reaction: " + reaction.getEmojiId() + " for " + entity);
         reactionRepository.deleteById(reactionId);
 
         return ResponseEntity.ok().build();
