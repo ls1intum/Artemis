@@ -18,7 +18,6 @@ const routes: Routes = [
             repositoryCache: {},
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: 'ide/test',
@@ -31,7 +30,6 @@ const routes: Routes = [
             repositoryCache: {},
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: 'ide/:participationId',
@@ -44,7 +42,6 @@ const routes: Routes = [
             repositoryCache: {},
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: ':participationId',
@@ -57,7 +54,6 @@ const routes: Routes = [
             repositoryCache: {},
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
 ];
 

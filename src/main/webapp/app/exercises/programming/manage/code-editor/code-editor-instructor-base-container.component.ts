@@ -195,6 +195,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     protected applyDomainChange(domainType: any, domainValue: any) {
         if (this.codeEditorContainer != undefined) {
+            // Save modified files before we replace the editor content
+            this.codeEditorContainer.actions.onSave();
             this.codeEditorContainer.initializeProperties();
         }
         if (domainType === DomainType.PARTICIPATION) {
