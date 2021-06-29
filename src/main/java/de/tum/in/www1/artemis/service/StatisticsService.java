@@ -128,11 +128,13 @@ public class StatisticsService {
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
-        var exercises = statisticsRepository.findExercisesByCourseId(courseId);
+        Set<Exercise> exercises = statisticsRepository.findExercisesByCourseId(courseId);
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        var averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        var averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
+        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        var sortedIncludedExercises = new ArrayList<>(includedExercises);
+        sortAfterReleaseDate(sortedIncludedExercises);
+        var averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(sortedIncludedExercises);
         averageScoreForExercises.forEach(exercise -> {
             var roundedAverageScore = round(exercise.getAverageScore());
             exercise.setAverageScore(roundedAverageScore);
@@ -218,5 +220,26 @@ public class StatisticsService {
         exerciseManagementStatisticsDTO.setNumberOfExerciseScores(scores.size());
 
         return exerciseManagementStatisticsDTO;
+    }
+
+    private void sortAfterReleaseDate(List<Exercise> exercises) {
+        exercises.sort((exerciseA, exerciseB) -> {
+            var releaseDateA = exerciseA.getReleaseDate();
+            var releaseDateB = exerciseB.getReleaseDate();
+            if (releaseDateA == null) {
+                if (releaseDateB == null) {
+                    return 0;
+                }
+                return 1;
+            }
+            if (releaseDateB == null) {
+                return 1;
+            }
+            if (releaseDateA.equals(releaseDateB)) {
+                return 0;
+            }
+
+            return releaseDateA.isBefore(releaseDateB) ? 1 : -1;
+        });
     }
 }

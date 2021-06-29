@@ -431,7 +431,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             where p.exercise IN :exercises
             group by p.exercise.id
             """)
-    List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
+    List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") List<Exercise> exercises);
 
     /**
      * Gets the number of entries for the specific graphType and the span. First we distribute into the different types of graphs.
