@@ -280,7 +280,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     saveChangesAndSelectDomain(domain: DomainChange) {
         if (this.codeEditorContainer != undefined) {
-            // Save modified files before we replace the editor content
             this.codeEditorContainer.actions.onSave();
         }
         this.domainService.setDomain(domain);
