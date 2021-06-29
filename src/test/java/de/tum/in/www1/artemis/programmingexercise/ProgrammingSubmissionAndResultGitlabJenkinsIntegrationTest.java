@@ -92,7 +92,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
         notification.setLogs(logs);
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
         assertThat(submissionWithLogsOptional).isPresent();
@@ -121,13 +121,31 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(receivedLogs.size()).isGreaterThan(0);
     }
 
-    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
         return Arrays.stream(ProgrammingLanguage.values())
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldReturnBadRequestWhenPlanKeyDoesntExist(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        // Call programming-exercises/new-result which do not include build log entries yet
+        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());
+        postResult(notification, HttpStatus.BAD_REQUEST);
+
+        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results.size()).isEqualTo(0);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
@@ -139,18 +157,18 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         var result = assertBuildError(participation.getId(), userLogin, false);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Call again and assert that no new submissions have been created
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
         assertNoNewSubmissions(submission);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
@@ -161,7 +179,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         assertBuildError(participation.getId(), userLogin, true);
     }
@@ -225,14 +243,14 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
     }
 
-    private void postResult(TestResultsDTO requestBodyMap) throws Exception {
+    private void postResult(TestResultsDTO requestBodyMap, HttpStatus status) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
+        request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, status, httpHeaders);
     }
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests) {
