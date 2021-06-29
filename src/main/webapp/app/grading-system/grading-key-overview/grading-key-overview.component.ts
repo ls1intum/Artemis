@@ -36,8 +36,9 @@ export class GradingKeyOverviewComponent implements OnInit {
                 this.examId = Number(params['examId']);
                 this.isExam = true;
             }
-            this.gradingSystemService.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
-                if (gradeSteps) {
+            this.gradingSystemService.findGradeSteps(this.courseId, this.examId)
+            .pipe(filter(gradeSteps => gradeSteps != undefined))
+            .subscribe((gradeSteps) => {
                     this.title = gradeSteps.title;
                     this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
                     this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
