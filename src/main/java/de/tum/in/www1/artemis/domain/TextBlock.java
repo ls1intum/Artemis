@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
  */
 @Entity
 @Table(name = "text_block")
-@SecondaryTable(name = "text_assessment_knowledge")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextBlock implements Serializable {
@@ -74,7 +73,7 @@ public class TextBlock implements Serializable {
     private TextSubmission submission;
 
     @ManyToOne
-    @JoinColumn(table = "text_assessment_knowledge")
+    @JoinColumn
     @JsonIgnoreProperties("textBlocks")
     private TextAssessmentKnowledge knowledge;
 
@@ -173,9 +172,13 @@ public class TextBlock implements Serializable {
         return this;
     }
 
-    public Feedback getFeedbackId() {return feedback;}
+    public Feedback getFeedbackId() {
+        return feedback;
+    }
 
-    public void setFeedbackId(Feedback feedback) {this.feedback = feedback;}
+    public void setFeedbackId(Feedback feedback) {
+        this.feedback = feedback;
+    }
 
     public void setSubmission(TextSubmission textSubmission) {
         this.submission = textSubmission;
