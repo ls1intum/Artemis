@@ -34,6 +34,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as Sentry from '@sentry/browser';
 import { round } from 'app/shared/util/utils';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-quiz',
@@ -157,7 +158,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
-        }, 100);
+        }, UI_RELOAD_TIME);
     }
 
     ngOnDestroy() {

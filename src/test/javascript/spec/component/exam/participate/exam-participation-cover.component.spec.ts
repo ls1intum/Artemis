@@ -21,9 +21,9 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { JhiTranslateDirective } from 'ng-jhipster';
-import { MockComponent } from 'ng-mocks/dist/lib/mock-component/mock-component';
-import { MockDirective } from 'ng-mocks/dist/lib/mock-directive/mock-directive';
-import { MockPipe } from 'ng-mocks/dist/lib/mock-pipe/mock-pipe';
+import { MockComponent } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import * as sinon from 'sinon';
@@ -32,6 +32,7 @@ import * as sinonChai from 'sinon-chai';
 import { MockRouter } from '../../../helpers/mocks/service/mock-route.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -158,7 +159,7 @@ describe('ExamParticipationCoverComponent', () => {
         spyOn(artemisServerDateService, 'now').and.returnValue(now);
         component.startExam();
         tick();
-        jest.advanceTimersByTime(101); // simulate setInterval time passing
+        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).to.be.true;
         const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
         expect(component.timeUntilStart).to.equal(difference + ' min');
@@ -166,7 +167,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.exam.startDate = undefined;
         component.startExam();
         tick();
-        jest.advanceTimersByTime(101); // simulate setInterval time passing
+        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).to.be.true;
         expect(component.timeUntilStart).to.equal('');
     }));
