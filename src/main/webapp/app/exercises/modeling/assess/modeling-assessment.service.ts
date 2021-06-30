@@ -80,7 +80,7 @@ export class ModelingAssessmentService {
      * @param resultId     id of the result which is deleted
      */
     deleteAssessment(participationId: number, submissionId: number, resultId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/modeling-submissions/${submissionId}/delete/${resultId}`);
+        return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/modeling-submissions/${submissionId}/results/${resultId}`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
