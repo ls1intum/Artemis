@@ -59,7 +59,7 @@
                             <!-- approved answers -->
                             <jhi-answer-post
                                 *ngFor="let answerPost of approvedAnswerPosts"
-                                [answerPost]="answerPost"
+                                [posting]="answerPost"
                                 [user]="user"
                                 [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
                                 (interactAnswerPost)="interactAnswerPost($event)"
@@ -67,7 +67,7 @@
                             <!-- other answers -->
                             <jhi-answer-post
                                 *ngFor="let answerPost of sortedAnswerPosts"
-                                [answerPost]="answerPost"
+                                [posting]="answerPost"
                                 [user]="user"
                                 [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
                                 (interactAnswerPost)="interactAnswerPost($event)"

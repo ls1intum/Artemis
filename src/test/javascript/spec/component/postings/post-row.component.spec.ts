@@ -74,14 +74,14 @@ describe('PostRowComponent', () => {
         expect(component.sortedAnswerPosts).to.deep.equal([unApprovedAnswerPost]);
     });
 
-    it('should delete answerPost from list', () => {
+    it('should delete posting from list', () => {
         component.post = post;
         component.sortAnswerPosts();
         component.deleteAnswerFromList(unApprovedAnswerPost);
         expect(component.post.answers).to.deep.equal([approvedAnswerPost]);
     });
 
-    it('should add answerPost to list', () => {
+    it('should add posting to list', () => {
         component.post = post;
         component.sortAnswerPosts();
         component.post.answers = [approvedAnswerPost];

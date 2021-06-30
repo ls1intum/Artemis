@@ -60,19 +60,19 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should approve answer', () => {
-        component.answerPost = unApprovedAnswerPost;
+        component.posting = unApprovedAnswerPost;
         component.toggleAnswerPostTutorApproved();
-        expect(component.answerPost.tutorApproved).to.be.true;
+        expect(component.posting.tutorApproved).to.be.true;
     });
 
     it('should unapprove answer', () => {
-        component.answerPost = approvedAnswerPost;
+        component.posting = approvedAnswerPost;
         component.toggleAnswerPostTutorApproved();
-        expect(component.answerPost.tutorApproved).to.be.false;
+        expect(component.posting.tutorApproved).to.be.false;
     });
 
     it('should toggle edit mode and reset editor Text', () => {
-        component.answerPost = approvedAnswerPost;
+        component.posting = approvedAnswerPost;
         component.isEditMode = true;
         component.content = 'test';
         component.toggleEditMode();
@@ -83,10 +83,10 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should update answerText', () => {
-        component.answerPost = approvedAnswerPost;
+        component.posting = approvedAnswerPost;
         component.isEditMode = true;
         component.content = 'test';
         component.saveAnswerPost();
-        expect(component.answerPost.content).to.deep.equal('test');
+        expect(component.posting.content).to.deep.equal('test');
     });
 });

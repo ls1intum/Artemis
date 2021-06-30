@@ -22,7 +22,6 @@ export enum AnswerPostActionName {
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class AnswerPostComponent extends PostingComponent<AnswerPost> {
-    @Input() answerPost: AnswerPost;
     @Output() interactAnswerPost: EventEmitter<AnswerPostAction> = new EventEmitter<AnswerPostAction>();
 
     constructor(protected answerPostService: AnswerPostService, protected route: ActivatedRoute) {
@@ -30,12 +29,12 @@ export class AnswerPostComponent extends PostingComponent<AnswerPost> {
     }
 
     /**
-     * Updates the text of the selected answerPost
+     * Updates the text of the selected posting
      */
     saveAnswerPost(): void {
         this.isLoading = true;
-        this.answerPost.content = this.content;
-        this.answerPostService.update(this.courseId, this.answerPost).subscribe({
+        this.posting.content = this.content;
+        this.answerPostService.update(this.courseId, this.posting).subscribe({
             next: () => {
                 this.isEditMode = false;
             },
@@ -49,14 +48,14 @@ export class AnswerPostComponent extends PostingComponent<AnswerPost> {
     }
 
     /**
-     * Toggles the tutorApproved field for this answerPost
+     * Toggles the tutorApproved field for this posting
      */
     toggleAnswerPostTutorApproved(): void {
-        this.answerPost.tutorApproved = !this.answerPost.tutorApproved;
-        this.answerPostService.update(this.courseId, this.answerPost).subscribe(() => {
+        this.posting.tutorApproved = !this.posting.tutorApproved;
+        this.answerPostService.update(this.courseId, this.posting).subscribe(() => {
             this.interactAnswerPost.emit({
                 name: AnswerPostActionName.APPROVE,
-                answerPost: this.answerPost,
+                answerPost: this.posting,
             });
         });
     }
@@ -67,7 +66,7 @@ export class AnswerPostComponent extends PostingComponent<AnswerPost> {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.content = this.answerPost.content;
+        this.content = this.posting.content;
     }
 
     onInteractAnswerPost($event: AnswerPostAction) {
