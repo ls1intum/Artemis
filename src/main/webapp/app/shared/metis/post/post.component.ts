@@ -4,6 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { PostService } from 'app/shared/metis/post/post.service';
+import { PostingComponent } from 'app/shared/metis/posting.component';
 
 export interface PostAction {
     name: PostActionName;
@@ -21,30 +22,12 @@ export enum PostActionName {
     templateUrl: './post.component.html',
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class PostComponent implements OnInit {
+export class PostComponent extends PostingComponent<Post> {
     @Input() post: Post;
-    @Input() user: User;
-    @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
-    content?: string;
-    maxPostContentLength = 1000;
-    isEditMode: boolean;
-    isLoading = false;
-    courseId: number;
 
-    // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
-    allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
-
-    constructor(private postService: PostService, private route: ActivatedRoute) {}
-
-    /**
-     * checks if the user is the author of the post
-     * sets the post content as the editor text
-     */
-    ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.content = this.post.content;
+    constructor(protected postService: PostService, protected route: ActivatedRoute) {
+        super(postService, route);
     }
 
     /**

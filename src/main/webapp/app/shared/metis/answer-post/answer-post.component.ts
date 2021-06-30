@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { PostingComponent } from '../posting.component';
 
 export interface AnswerPostAction {
     name: AnswerPostActionName;
@@ -20,28 +21,12 @@ export enum AnswerPostActionName {
     templateUrl: './answer-post.component.html',
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class AnswerPostComponent implements OnInit {
+export class AnswerPostComponent extends PostingComponent<AnswerPost> {
     @Input() answerPost: AnswerPost;
-    @Input() user: User;
-    @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswerPost: EventEmitter<AnswerPostAction> = new EventEmitter<AnswerPostAction>();
-    content?: string;
-    isLoading = false;
-    isEditMode: boolean;
-    courseId: number;
 
-    // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
-    allowedHtmlAttributes: string[] = ['href', 'class', 'id'];
-
-    constructor(private answerPostService: AnswerPostService, private route: ActivatedRoute) {}
-
-    /**
-     * Sets the text of the answerPost as the editor text
-     */
-    ngOnInit(): void {
-        this.content = this.answerPost.content;
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+    constructor(protected answerPostService: AnswerPostService, protected route: ActivatedRoute) {
+        super(answerPostService, route);
     }
 
     /**
