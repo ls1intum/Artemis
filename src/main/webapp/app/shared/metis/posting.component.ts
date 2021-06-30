@@ -25,4 +25,23 @@ export abstract class PostingComponent<T extends Posting> implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.content = this.posting.content;
     }
+
+    /**
+     * Updates the text of the selected posting
+     */
+    updatePosting(): void {
+        this.isLoading = true;
+        this.posting.content = this.content;
+        this.postingService.update(this.courseId, this.posting).subscribe({
+            next: () => {
+                this.isEditMode = false;
+            },
+            error: () => {
+                this.isLoading = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            },
+        });
+    }
 }

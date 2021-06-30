@@ -86,7 +86,7 @@ describe('AnswerPostComponent', () => {
         component.posting = approvedAnswerPost;
         component.isEditMode = true;
         component.content = 'test';
-        component.saveAnswerPost();
+        component.updatePosting();
         expect(component.posting.content).to.deep.equal('test');
     });
 });

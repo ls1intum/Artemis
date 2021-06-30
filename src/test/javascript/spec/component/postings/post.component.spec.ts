@@ -105,7 +105,7 @@ describe('PostComponent', () => {
     });
 
     it('should toggle edit mode and reset editor Text', () => {
-        component.post = post;
+        component.posting = post;
         component.isEditMode = true;
         component.content = 'test';
         component.toggleEditMode();
@@ -116,15 +116,15 @@ describe('PostComponent', () => {
     });
 
     it('should update content', () => {
-        component.post = post;
+        component.posting = post;
         component.isEditMode = true;
         component.content = 'test';
-        component.savePost();
-        expect(component.post.content).to.deep.equal('test');
+        component.updatePosting();
+        expect(component.posting.content).to.deep.equal('test');
     });
 
     it('should not display malicious html in post texts', () => {
-        component.post = maliciousPost;
+        component.posting = maliciousPost;
         componentFixture.detectChanges();
 
         const text = componentFixture.debugElement.nativeElement.querySelector('#content');

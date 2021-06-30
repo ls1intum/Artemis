@@ -29,25 +29,6 @@ export class AnswerPostComponent extends PostingComponent<AnswerPost> {
     }
 
     /**
-     * Updates the text of the selected posting
-     */
-    saveAnswerPost(): void {
-        this.isLoading = true;
-        this.posting.content = this.content;
-        this.answerPostService.update(this.courseId, this.posting).subscribe({
-            next: () => {
-                this.isEditMode = false;
-            },
-            error: () => {
-                this.isLoading = false;
-            },
-            complete: () => {
-                this.isLoading = false;
-            },
-        });
-    }
-
-    /**
      * Toggles the tutorApproved field for this posting
      */
     toggleAnswerPostTutorApproved(): void {

@@ -23,30 +23,10 @@ export enum PostActionName {
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class PostComponent extends PostingComponent<Post> {
-    @Input() post: Post;
     @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
 
     constructor(protected postService: PostService, protected route: ActivatedRoute) {
         super(postService, route);
-    }
-
-    /**
-     * Changes the post content
-     */
-    savePost(): void {
-        this.isLoading = true;
-        this.post.content = this.content;
-        this.postService.update(this.courseId, this.post).subscribe({
-            next: () => {
-                this.isEditMode = false;
-            },
-            error: () => {
-                this.isLoading = false;
-            },
-            complete: () => {
-                this.isLoading = false;
-            },
-        });
     }
 
     /**
@@ -55,7 +35,7 @@ export class PostComponent extends PostingComponent<Post> {
      */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
-        this.content = this.post.content;
+        this.content = this.posting.content;
     }
 
     onInteractPost($event: PostAction) {
@@ -79,11 +59,11 @@ export class PostComponent extends PostingComponent<Post> {
      * @param {number} voteChange
      */
     updateVotes(voteChange: number): void {
-        this.postService.updateVotes(this.courseId, this.post.id!, voteChange).subscribe((res) => {
-            this.post = res.body!;
+        this.postService.updateVotes(this.courseId, this.posting.id!, voteChange).subscribe((res) => {
+            this.posting = res.body!;
             this.interactPost.emit({
                 name: PostActionName.VOTE_CHANGE,
-                post: this.post,
+                post: this.posting,
             });
         });
     }
