@@ -10,7 +10,7 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 @Component({
     selector: 'jhi-postings-markdown-editor',
     templateUrl: './postings-markdown-editor.component.html',
-    styleUrls: ['../postings.scss'],
+    styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class PostingsMarkdownEditorComponent implements OnInit {
     @Input() content?: string;

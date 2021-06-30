@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { PostingsComponent } from 'app/overview/postings/postings.component';
+import { DiscussionComponent } from 'app/overview/discussion/discussion.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -18,8 +18,8 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('PostRowComponent', () => {
-    let component: PostingsComponent;
-    let componentFixture: ComponentFixture<PostingsComponent>;
+    let component: DiscussionComponent;
+    let componentFixture: ComponentFixture<DiscussionComponent>;
 
     const course = {
         id: 1,
@@ -69,12 +69,12 @@ describe('PostRowComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
             ],
-            declarations: [PostingsComponent],
+            declarations: [DiscussionComponent],
         })
-            .overrideTemplate(PostingsComponent, '')
+            .overrideTemplate(DiscussionComponent, '')
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(PostingsComponent);
+                componentFixture = TestBed.createComponent(DiscussionComponent);
                 component = componentFixture.componentInstance;
             });
     });

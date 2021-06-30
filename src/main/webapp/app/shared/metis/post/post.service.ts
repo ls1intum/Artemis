@@ -1,19 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Post } from 'app/entities/metis/post.model';
+import { PostingsService } from 'app/shared/metis/postings.service';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
 
 @Injectable({ providedIn: 'root' })
-export class PostService {
+export class PostService extends PostingsService<Post> {
     public resourceUrl = SERVER_API_URL + 'api/courses/';
 
-    constructor(protected http: HttpClient) {}
+    constructor(protected http: HttpClient) {
+        super();
+    }
 
     /**
      * create a post
@@ -60,49 +62,12 @@ export class PostService {
     }
 
     /**
-     * delete post by id
+     * delete post
      * @param {number} courseId
-     * @param {number} postId
+     * @param {Post} post
      * @return {Observable<HttpResponse<any>>}
      */
-    delete(courseId: number, postId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}${courseId}/posts/${postId}`, { observe: 'response' });
-    }
-
-    /**
-     * Takes a post and converts the date from the client
-     * @param   {Post} post
-     * @return  {Post}
-     */
-    protected convertDateFromClient(post: Post): Post {
-        return Object.assign({}, post, {
-            creationDate: post.creationDate && moment(post.creationDate).isValid() ? moment(post.creationDate).toJSON() : undefined,
-        });
-    }
-
-    /**
-     * Takes a post and converts the date from the server
-     * @param   {EntityResponseType} res
-     * @return  {Post}
-     */
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            res.body.creationDate = res.body.creationDate ? moment(res.body.creationDate) : undefined;
-        }
-        return res;
-    }
-
-    /**
-     * Takes an array of posts and converts the date from the server
-     * @param   {EntityArrayResponseType} res
-     * @return  {EntityArrayResponseType}
-     */
-    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((post: Post) => {
-                post.creationDate = post.creationDate ? moment(post.creationDate) : undefined;
-            });
-        }
-        return res;
+    delete(courseId: number, post: Post): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
     }
 }

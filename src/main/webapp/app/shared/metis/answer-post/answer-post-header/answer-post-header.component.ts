@@ -2,13 +2,13 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import { ActivatedRoute } from '@angular/router';
-import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
-import { AnswerPostAction, AnswerPostActionName } from 'app/overview/postings/answer-post/answer-post.component';
+import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { AnswerPostAction, AnswerPostActionName } from 'app/shared/metis/answer-post/answer-post.component';
 
 @Component({
     selector: 'jhi-answer-post-header',
     templateUrl: './answer-post-header.component.html',
-    styleUrls: ['../../postings.scss'],
+    styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class AnswerPostHeaderComponent implements OnInit {
     @Input() answerPost: AnswerPost;
@@ -34,9 +34,11 @@ export class AnswerPostHeaderComponent implements OnInit {
      * pass the answer post to be deleted
      */
     deleteAnswerPost(): void {
-        this.interactAnswerPost.emit({
-            name: AnswerPostActionName.DELETE,
-            answerPost: this.answerPost,
+        this.answerPostService.delete(this.courseId, this.answerPost).subscribe(() => {
+            this.interactAnswerPost.emit({
+                name: AnswerPostActionName.DELETE,
+                answerPost: this.answerPost,
+            });
         });
     }
 

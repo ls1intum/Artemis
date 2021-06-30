@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
-import { PostRowActionName, PostRowAction } from 'app/overview/postings/post-row/post-row.component';
+import { PostRowActionName, PostRowAction } from 'app/shared/metis/postings-thread/postings-thread.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -11,14 +11,14 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import interact from 'interactjs';
 import { ActivatedRoute } from '@angular/router';
-import { PostService } from 'app/overview/postings/post/post.service';
+import { PostService } from 'app/shared/metis/post/post.service';
 
 @Component({
-    selector: 'jhi-postings',
-    templateUrl: './postings.component.html',
-    styleUrls: ['./postings.scss'],
+    selector: 'jhi-discussion',
+    templateUrl: './discussion.component.html',
+    styleUrls: ['./discussion.scss'],
 })
-export class PostingsComponent implements OnInit, AfterViewInit {
+export class DiscussionComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() lecture: Lecture;
 
@@ -49,12 +49,12 @@ export class PostingsComponent implements OnInit, AfterViewInit {
     loadPosts() {
         if (this.exercise) {
             // in this case the posts are preloaded
-            this.posts = PostingsComponent.sortPostsByVote(this.exercise.posts!);
+            this.posts = DiscussionComponent.sortPostsByVote(this.exercise.posts!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
             this.courseId = this.exercise.course!.id!;
         } else if (this.lecture) {
             // in this case the posts are preloaded
-            this.posts = PostingsComponent.sortPostsByVote(this.lecture.posts!);
+            this.posts = DiscussionComponent.sortPostsByVote(this.lecture.posts!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course!);
             this.courseId = this.lecture.course!.id!;
         }
@@ -153,6 +153,6 @@ export class PostingsComponent implements OnInit, AfterViewInit {
             return post.id === upvotedPost.id;
         });
         this.posts[indexToUpdate] = upvotedPost;
-        this.posts = PostingsComponent.sortPostsByVote(this.posts);
+        this.posts = DiscussionComponent.sortPostsByVote(this.posts);
     }
 }

@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PostVotesAction, PostVotesActionName } from 'app/overview/postings/post/post-votes/post-votes.component';
-import { PostService } from 'app/overview/postings/post/post.service';
+import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
+import { PostService } from 'app/shared/metis/post/post.service';
 
 export interface PostAction {
     name: PostActionName;
@@ -19,7 +19,7 @@ export enum PostActionName {
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
-    styleUrls: ['../postings.scss'],
+    styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class PostComponent implements OnInit {
     @Input() post: Post;

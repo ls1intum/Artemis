@@ -23,7 +23,7 @@ export enum PostVotesActionName {
 @Component({
     selector: 'jhi-post-votes',
     templateUrl: './post-votes.component.html',
-    styleUrls: ['../../postings.scss'],
+    styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class PostVotesComponent implements OnInit {
     @Input() postId: number;

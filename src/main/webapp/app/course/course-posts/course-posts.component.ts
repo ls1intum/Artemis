@@ -5,7 +5,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Moment } from 'moment';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { PostService } from 'app/overview/postings/post/post.service';
+import { PostService } from 'app/shared/metis/post/post.service';
 
 export type PostForOverview = {
     id: number;

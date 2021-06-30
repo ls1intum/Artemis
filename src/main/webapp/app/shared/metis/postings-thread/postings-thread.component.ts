@@ -6,10 +6,10 @@ import { HttpResponse } from '@angular/common/http';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { LocalStorageService } from 'ngx-webstorage';
-import { AnswerPostAction, AnswerPostActionName } from 'app/overview/postings/answer-post/answer-post.component';
-import { PostAction, PostActionName } from 'app/overview/postings/post/post.component';
-import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
-import { PostService } from 'app/overview/postings/post/post.service';
+import { AnswerPostAction, AnswerPostActionName } from 'app/shared/metis/answer-post/answer-post.component';
+import { PostAction, PostActionName } from 'app/shared/metis/post/post.component';
+import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
+import { PostService } from 'app/shared/metis/post/post.service';
 
 export interface PostRowAction {
     name: PostRowActionName;
@@ -22,11 +22,11 @@ export enum PostRowActionName {
 }
 
 @Component({
-    selector: 'jhi-post-row',
-    templateUrl: './post-row.component.html',
-    styleUrls: ['../postings.scss'],
+    selector: 'jhi-postings-thread',
+    templateUrl: './postings-thread.component.html',
+    styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class PostRowComponent implements OnInit {
+export class PostingsThreadComponent implements OnInit {
     @Input() post: Post;
     @Input() selectedPost: Post;
     @Input() user: User;
@@ -120,7 +120,7 @@ export class PostRowComponent implements OnInit {
      * deletes the post
      */
     deletePost(): void {
-        this.postService.delete(this.courseId, this.post.id!).subscribe(() => {
+        this.postService.delete(this.courseId, this.post).subscribe(() => {
             this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
             this.interactPostRow.emit({
                 name: PostRowActionName.DELETE,

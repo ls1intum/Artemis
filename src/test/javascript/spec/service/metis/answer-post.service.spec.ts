@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 
 const expect = chai.expect;
 
@@ -65,7 +65,7 @@ describe('AnswerPost Service', () => {
         }));
 
         it('should delete a AnswerPost', fakeAsync(() => {
-            service.delete(1, 123).subscribe((resp) => expect(resp.ok).to.be.true);
+            service.delete(1, elemDefault).subscribe((resp) => expect(resp.ok).to.be.true);
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });

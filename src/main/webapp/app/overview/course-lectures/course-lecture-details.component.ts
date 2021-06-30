@@ -8,7 +8,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { PostingsComponent } from 'app/overview/postings/postings.component';
+import { DiscussionComponent } from 'app/overview/discussion/discussion.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
@@ -24,7 +24,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     lecture?: Lecture;
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
-    postings?: PostingsComponent;
+    postings?: DiscussionComponent;
     hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
@@ -98,10 +98,10 @@ export class CourseLectureDetailsComponent implements OnInit {
 
     /**
      * This function gets called if the router outlet gets activated. This is
-     * used only for the PostingsComponent
+     * used only for the DiscussionComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: PostingsComponent) {
+    onChildActivate(instance: DiscussionComponent) {
         this.postings = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;

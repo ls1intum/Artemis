@@ -16,14 +16,14 @@
         <!-- body -->
         <div class="card-body py-2">
             <!-- post with answer posts -->
-            <jhi-post-row
+            <jhi-postings-thread
                 [post]="post"
                 [user]="currentUser"
                 [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
                 [selectedPost]="selectedPost!"
                 (interactPostRow)="interactPost($event)"
                 *ngFor="let post of posts"
-            ></jhi-post-row>
+            ></jhi-postings-thread>
             <!-- new post editor -->
             <div *ngIf="isEditMode">
                 <div class="row ps-2">

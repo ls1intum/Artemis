@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { AnswerPostService } from 'app/overview/postings/answer-post/answer-post.service';
+import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 
 export interface AnswerPostAction {
     name: AnswerPostActionName;
@@ -18,7 +18,7 @@ export enum AnswerPostActionName {
 @Component({
     selector: 'jhi-answer-post',
     templateUrl: './answer-post.component.html',
-    styleUrls: ['../postings.scss'],
+    styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class AnswerPostComponent implements OnInit {
     @Input() answerPost: AnswerPost;

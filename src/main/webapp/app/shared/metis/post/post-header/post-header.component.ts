@@ -2,13 +2,13 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
 import { ActivatedRoute } from '@angular/router';
-import { PostService } from 'app/overview/postings/post/post.service';
-import { PostAction, PostActionName } from 'app/overview/postings/post/post.component';
+import { PostService } from 'app/shared/metis/post/post.service';
+import { PostAction, PostActionName } from 'app/shared/metis/post/post.component';
 
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
-    styleUrls: ['../../postings.scss'],
+    styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class PostHeaderComponent implements OnInit {
     @Input() post: Post;

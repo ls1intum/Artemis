@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { ActivatedRoute } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { PostRowComponent } from 'app/overview/postings/post-row/post-row.component';
+import { PostingsThreadComponent } from 'app/shared/metis/postings-thread/postings-thread.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
@@ -17,8 +17,8 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('PostRowComponent', () => {
-    let component: PostRowComponent;
-    let componentFixture: ComponentFixture<PostRowComponent>;
+    let component: PostingsThreadComponent;
+    let componentFixture: ComponentFixture<PostingsThreadComponent>;
 
     const user1 = {
         id: 1,
@@ -57,12 +57,12 @@ describe('PostRowComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
             ],
-            declarations: [PostRowComponent],
+            declarations: [PostingsThreadComponent],
         })
-            .overrideTemplate(PostRowComponent, '')
+            .overrideTemplate(PostingsThreadComponent, '')
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(PostRowComponent);
+                componentFixture = TestBed.createComponent(PostingsThreadComponent);
                 component = componentFixture.componentInstance;
             });
     });
