@@ -118,7 +118,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
         // For every 100 submissions, we increase the expected time by 1 minute.
         this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA + Math.floor(buildingSubmissionCount / 100) * 4000 * 60;
-        this.resultEtaSubject.next(this.currentExpectedResultETA);
+        this.resultEtaSubject?.next(this.currentExpectedResultETA);
     }
 
     /**
@@ -450,7 +450,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
-                this.exerciseBuildStateSubjects.get(exerciseId)!.next(exerciseBuildState);
+                this.exerciseBuildStateSubjects.get(exerciseId)?.next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects
             .get(exerciseId)!

@@ -36,19 +36,31 @@ public class UMLObjectDiagram extends UMLDiagram {
         return null;
     }
 
-    public List<UMLObject> getObjectList() {
-        return objectList;
-    }
-
-    public List<UMLObjectLink> getObjectLinkList() {
-        return objectLinkList;
-    }
-
     @Override
     protected List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(objectList);
         modelElements.addAll(objectLinkList);
         return modelElements;
+    }
+
+    @Override
+    public List<UMLElement> getAllModelElements() {
+        List<UMLElement> modelElements = super.getAllModelElements();
+
+        for (UMLObject umlObject : objectList) {
+            modelElements.addAll(umlObject.getAttributes());
+            modelElements.addAll(umlObject.getMethods());
+        }
+
+        return modelElements;
+    }
+
+    public List<UMLObject> getObjectList() {
+        return objectList;
+    }
+
+    public List<UMLObjectLink> getObjectLinkList() {
+        return objectLinkList;
     }
 }

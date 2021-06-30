@@ -124,7 +124,7 @@ public class ProgrammingExerciseService {
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
-        final var user = userRepository.getUser();
+        final User user = userRepository.getUser();
 
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
@@ -323,8 +323,10 @@ public class ProgrammingExerciseService {
 
         try {
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise, user);
-            // The template repo can be re-written so we can unprotect the master branch.
-            versionControlService.get().unprotectBranch(programmingExercise.getVcsTemplateRepositoryUrl(), "master");
+            // The template repo can be re-written so we can unprotect the default branch.
+            var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
+            String templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
+            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise, user);
             setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, user);
@@ -349,7 +351,7 @@ public class ProgrammingExerciseService {
     }
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
-        final var projectKey = programmingExercise.getProjectKey();
+        final String projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
@@ -690,11 +692,11 @@ public class ProgrammingExerciseService {
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
 
-        gitService.resetToOriginMaster(solutionRepository);
+        gitService.resetToOriginHead(solutionRepository);
         gitService.pullIgnoreConflicts(solutionRepository);
-        gitService.resetToOriginMaster(exerciseRepository);
+        gitService.resetToOriginHead(exerciseRepository);
         gitService.pullIgnoreConflicts(exerciseRepository);
-        gitService.resetToOriginMaster(testRepository);
+        gitService.resetToOriginHead(testRepository);
         gitService.pullIgnoreConflicts(testRepository);
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();

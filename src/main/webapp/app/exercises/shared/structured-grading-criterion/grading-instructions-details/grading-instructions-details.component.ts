@@ -338,8 +338,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param {GradingCriterion} criteria
      */
     onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction): void {
-        this.instructions = [];
-        this.instructions.push(instruction);
+        this.instructions = [instruction];
         this.setInstructionParameters(domainCommands);
     }
 
