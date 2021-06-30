@@ -1,7 +1,6 @@
 import { RouterModule, Routes } from '@angular/router';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-orion-container.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
