@@ -82,7 +82,7 @@ export class ExamChecklistComponent implements OnInit {
      */
     checkPointsExercisesEqual() {
         this.pointsExercisesEqual = true;
-        this.exam.exerciseGroups!.forEach((exerciseGroup) => {
+        this.exam.exerciseGroups?.forEach((exerciseGroup) => {
             const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
             return exerciseGroup.exercises?.some((exercise) => {
                 if (exercise.maxPoints !== maxPoints) {
