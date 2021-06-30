@@ -16,7 +16,7 @@
     <ng-template #popContent style="max-width: 660px">
         <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | artemisTranslate }}</p>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
-        <div class="row" style="margin: 0; max-width: 100%">
+        <div class="d-flex" style="margin: 0; max-width: 100%">
             <pre
                 style="flex: 1"
                 [ngStyle]="sshEnabled ? { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' } : {}"
