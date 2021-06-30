@@ -121,21 +121,20 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(value = "instructor1", roles = "TA")
-    public void testPrepareSubmissionForAssessmentAutomaticLabel1() throws Exception {
+    public void testPrepareSubmissionForAssessmentAutomaticLabel() {
         // create two text blocks
         int submissionCount = 2;
         int submissionSize = 1;
         int numberOfBlocksTotally = submissionCount * submissionSize;
         var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-        //
-        // textBlockRepository.saveAll(textBlocks);
 
+        // Create Exercise to save blocks & submissions
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
         textExercise.setMaxPoints(1000D);
         exerciseRepository.save(textExercise);
 
+        // Create a cluster and set minimal distance to < Threshold = 1
         int[] clusterSizes = new int[] { 2 };
-
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         double[][] minimalDistanceMatrix = new double[numberOfBlocksTotally][numberOfBlocksTotally];
         // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
@@ -144,140 +143,43 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         clusters.get(0).blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
         textClusterRepository.saveAll(clusters);
 
+        // save textBLocks
         textBlockRepository.saveAll(textBlocks);
 
-        // TextSubmission submission2 = new TextSubmission();
-        // submission2 = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission2, "student1", "tutor1");
-        //
-        // database.saveTextSubmission(textExercise, submission, "student1");
+        var listOfSubmissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId());
+        TextSubmission firstSubmission = listOfSubmissions.get(0);
+        TextSubmission secondSubmission = listOfSubmissions.get(1);
 
-        var test = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId());
-        TextSubmission submission = test.get(0);
+        // Create and set a sample result for submissions
+        Result firstResult = createSampleResultForSubmission(firstSubmission);
+        Result secondResult = createSampleResultForSubmission(secondSubmission);
+
+        // Create a manual feedback and attach first block to it as reference
+        Feedback feedback = new Feedback().credits(10.0).type(FeedbackType.MANUAL).detailText("gj");
+        feedback.setReference(textBlocks.stream().toList().get(0).getId());
+
+        // Set feedback to result
+        firstResult.setFeedbacks(Collections.singletonList(feedback));
+        resultRepo.save(firstResult);
+        feedback.setResult(firstResult);
+        feedbackRepository.save(feedback);
+
+        automaticTextFeedbackService.suggestFeedback(secondResult);
+
+        assertThat(secondResult).as("saved result found").isNotNull();
+        assertThat(secondResult.getFeedbacks().get(0).getReference()).isEqualTo(textBlocks.stream().toList().get(1).getId());
+        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackOriginSubmissionReference()).isEqualTo(firstSubmission.getId());
+        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackParticipationReference()).isEqualTo(firstSubmission.getParticipation().getId());
+        assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackReference()).isEqualTo(feedback.getReference());
+    }
+
+    public Result createSampleResultForSubmission(Submission submission) {
         Result result = new Result();
         result.setAssessor(database.getUserByLogin("tutor1"));
         result.setCompletionDate(ZonedDateTime.now());
-
         result.setSubmission(submission);
-        List<Result> results = new ArrayList<>();
-        results.add(result);
-        submission.setResults(results);
-        // submission.getParticipation().setResults(new HashSet<Result>(results));
-        // submission = textSubmissionRepository.save(submission);
-        // studentParticipationRepository.save((StudentParticipation) submission.getParticipation());
-
-        // submission = (TextSubmission) database.addSubmissionWithFinishedResultsWithAssessor((StudentParticipation) submission.getParticipation(), textExercise, submission,
-        // "student1", "instructor1");
-        // textSubmissionRepository.save(submission);
-
-        // submission.setParticipation(database.createAndSaveParticipationForExercise(textExercise,"student1"));
-        exerciseRepository.save(textExercise);
-        var test2 = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId());
-
-        // final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        // List<Feedback> feedbacks = new ArrayList<>();
-        // submission.setResults();
-
-        Feedback feedback = new Feedback().credits(10.0).type(FeedbackType.MANUAL).detailText("gj");
-        feedback.setReference(textBlocks.stream().toList().get(0).getId());
-        // Result result = addManualAssessmentFeedbackAndGetResult(submission, textAssessmentDTO, feedbacks, 100, 10);
-
-        result.setFeedbacks(Collections.singletonList(feedback));
-        resultRepo.save(result);
-        feedback.setResult(result);
-        feedbackRepository.saveFeedbacks(result.getFeedbacks());
-        var all = feedbackRepository.findAll();
-        textBlockRepository.saveAll(textBlocks);
-        var saved = feedbackRepository.getFeedbackForTextExerciseInCluster(clusters.get(0));
-
-        automaticTextFeedbackService.suggestFeedback(result);
-        // textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);
-
-        assertThat(result).as("saved result found").isNotNull();
-        assertThat(submission.getBlocks().size()).isEqualTo(1);
-        // assertThat(submissionWithoutAssessment.getBlocks().stream().toList().get(0).getNumberOfAffectedSubmissions()).isEqualTo(numberOfBlocksTotally - 1);
-        //
-    }
-
-    public StudentParticipation createSavedParticipation(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
-        if (storedParticipation.isEmpty()) {
-            User user = database.getUserByLogin(login);
-            StudentParticipation participation = new StudentParticipation();
-            participation.setInitializationDate(ZonedDateTime.now());
-            participation.setParticipant(user);
-            participation.setExercise(exercise);
-            studentParticipationRepository.save(participation);
-            storedParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
-            assertThat(storedParticipation).isPresent();
-        }
-        return studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "TA")
-    public void testPrepareSubmissionForAssessmentAutomaticLabel() throws Exception {
-        // int submissionCount = 11;
-        // int submissionSize = 1;
-        // int numberOfBlocksTotally = submissionCount * submissionSize;
-        // // int[] clusterSizes = new int[] { 11 };
-        // //
-        // var textBlocks = textExerciseUtilService.generateTextBlocksWithIdenticalTexts(numberOfBlocksTotally);
-        // // TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
-        // // textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        // textBlocks.forEach(TextBlock::computeId);
-        // // // TODO - ADD FEEDBACKS to One of them for it to work!!!
-        // final TextCluster cluster = new TextCluster().exercise(textExercise);
-        // //
-        // double[][] minimalDistanceMatrix = new double[numberOfBlocksTotally][numberOfBlocksTotally];
-        // //
-        // // // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
-        // for (double[] row : minimalDistanceMatrix)
-        // Arrays.fill(row, 0.1);
-        // cluster.blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
-        // //
-        // textClusterRepository.save(cluster);
-        // textBlockRepository.saveAll(cluster.getBlocks());
-        // //
-        // List<Feedback> feedbacks = new ArrayList<>();
-        // feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1"));
-        // // feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
-        // // textAssessmentDTO.setFeedbacks(feedbacks);
-        //
-        // feedbackRepository.saveFeedbacks(feedbacks);
-        // // textSubmissionRepository.saveAll();
-        // // final TextSubmission submission = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(textExercise.getId()).get(0);
-        // //
-        // // final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        // // List<Feedback> feedbacks = new ArrayList<>();
-        //
-        // TextSubmission submission = ModelFactory.generateTextSubmission("asdf", Language.ENGLISH, true);
-        // submission.setBlocks(textBlocks);
-        // submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
-        // Result storedResult = submission.getResultForCorrectionRound(1);
-        // var params = new LinkedMultiValueMap<String, String>();
-        // // storedResult.getSubmission().getParticipation();
-        // params.add("resultId", String.valueOf(storedResult.getId()));
-        // StudentParticipation participation = request.get(
-        // "/api/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/for-text-assessment", HttpStatus.OK,
-        // StudentParticipation.class, params);
-        //
-        // final Result result = participation.getResults().iterator().next();
-        //
-        // // result.setSubmission(submission);
-        // // TextSubmission textSubmissionResult = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        // // textSubmissionResult.setParticipation();
-        // // // textSubmissionResult = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmissionResult, "student2", "tutor2");
-        // // Result result = textSubmissionResult.getLatestResult();
-        //
-        // // TextSubmission textSubmission = ModelFactory.generateTextSubmission(submission.getText(), Language.ENGLISH, false);
-        // // textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
-        // //
-        // // System.out.println(textExercise.getStudentParticipations() + "" + database.getAllSubmissionsOfExercise(textExercise));
-        // // addAssessmentFeedbackAndCheckScore(textSubmissionResult, textAssessmentDTO, feedbacks, 4.0, 10L);
-        //
-        // textAssessmentService.prepareSubmissionForAssessment(submission, result);
-        // var result2 = resultRepo.findByIdWithEagerSubmissionAndFeedbacks(submission.getId());
-        // assertThat(result2).isPresent();
+        submission.setResults(Collections.singletonList(result));
+        return result;
     }
 
     @Test
