@@ -52,7 +52,7 @@
             "resetGradingCriterionTitle": "Titel des Benotungskriteriums zurücksetzen",
             "resetGradingInstruction": "Benotungshinweis zurücksetzen",
             "deleteGradingInstruction": "Benotungshinweis löschen",
-            "addGradingInstruction": "Benotungshinweis hier hinzufügen",
+            "addGradingInstruction": "Benotungshinweis hinzufügen",
             "usageCount": "Maximale Zählung in der Bewertung",
             "DragDropInstruction": "Drag & Drop Benotungshinweis zum Feedback-Element",
             "gradingScale": "Benotungsskala",
