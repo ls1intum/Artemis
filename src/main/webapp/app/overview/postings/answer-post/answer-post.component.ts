@@ -77,6 +77,9 @@ export class AnswerPostComponent implements OnInit {
             next: () => {
                 this.isEditMode = false;
             },
+            error: () => {
+                this.isLoading = false;
+            },
             complete: () => {
                 this.isLoading = false;
             },
