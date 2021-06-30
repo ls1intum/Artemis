@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.domain.metis;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -34,7 +38,7 @@ public abstract class Posting extends DomainObject {
     @Column(name = "content")
     private String content;
 
-    // To be used with introduction of METIS
+    // To be used with introduction of Metis
     @Lob
     @Column(name = "tokenized_content")
     private String tokenizedContent;
@@ -74,4 +78,9 @@ public abstract class Posting extends DomainObject {
 
     public abstract Course getCourse();
 
+    public abstract Set<Reaction> getReactions();
+
+    public abstract void setReactions(Set<Reaction> reactions);
+
+    public abstract void addReaction(Reaction reaction);
 }
