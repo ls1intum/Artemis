@@ -45,8 +45,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
         this.orionConnectorService.state().subscribe((state) => {
             this.orionState = state;
         });
-
-        this.isOrionAndProgramming = this.exercise.type === ExerciseType.PROGRAMMING;
     }
 
     calculateSubmissionStatus(submission: Submission, correctionRound?: number): 'DONE' | 'DRAFT' {
