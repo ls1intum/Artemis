@@ -217,14 +217,14 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <setup.rst#client-setup>`__).
+* **Artemis (Client):** Will execute ``yarn install`` and ``yarn start``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
 
 * **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
-* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <setup.rst#athene-service>`__).
+* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <#athene-service>`__).
 
 
 Typical problems with Liquibase checksums
@@ -315,8 +315,7 @@ Using the command line
 
 You should be able to run the following
 command to install development tools and dependencies. You will only
-need to run this command when dependencies change in
-`package.json <package.json>`__.
+need to run this command when dependencies change in ``package.json``.
 
 ::
 
