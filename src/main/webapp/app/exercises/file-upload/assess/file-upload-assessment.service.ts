@@ -47,11 +47,12 @@ export class FileUploadAssessmentService {
 
     /**
      * Deletes an assessment.
+     * @param participationId id of the participation, to which the assessment and the submission belong to
      * @param submissionId id of the submission, to which the assessment belongs to
      * @param resultId     id of the result which is deleted
      */
-    deleteAssessment(submissionId: number, resultId: number): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/delete/${resultId}`);
+    deleteAssessment(participationId: number, submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/file-upload-submissions/${submissionId}/results/${resultId}`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

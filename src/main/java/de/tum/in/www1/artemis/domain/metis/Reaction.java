@@ -32,6 +32,9 @@ public class Reaction extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate;
 
+    /**
+     * Unique, identifying name of the emoji, such as "smiley"
+     */
     @Column(name = "emoji_id")
     private String emojiId;
 
