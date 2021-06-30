@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -53,57 +53,61 @@ describe('TextSubmission Service', () => {
         };
     });
 
-    it('should create a TextSubmission', async () => {
-        const returnedFromService = Object.assign(
-            {
-                id: 0,
-            },
-            elemDefault,
-        );
-        const expected = Object.assign({}, returnedFromService);
+    it('should create a TextSubmission', fakeAsync(() => {
+        const returnedFromService = {
+            id: 1,
+            ...elemDefault,
+        };
+
+        const expected = { ...returnedFromService };
         service
             .create(new TextSubmission(), 1)
             .pipe(take(1))
-            .subscribe((resp: any) => expect(resp).to.deep.equal({ body: expected }));
+            .subscribe((resp: any) => {
+                expect(resp.body).to.deep.equal(expected);
+            });
         const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should update a TextSubmission', async () => {
-        const returnedFromService = Object.assign(
-            {
-                text: 'BBBBBB',
-            },
-            elemDefault,
-        );
+    it('should update a TextSubmission', fakeAsync(() => {
+        const returnedFromService = {
+            text: 'BBBBBB',
+            ...elemDefault,
+        };
 
-        const expected = Object.assign({}, returnedFromService);
+        const expected = { ...returnedFromService };
         service
             .update(expected, 1)
             .pipe(take(1))
-            .subscribe((resp: any) => expect(resp).to.deep.equal({ body: expected }));
+            .subscribe((resp: any) => expect(resp.body).to.deep.equal(expected));
         const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should not parse jwt from header', async () => {
+    it('should not parse jwt from header', fakeAsync(() => {
         service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).to.be.null;
+            expect(textSubmission.atheneTextAssessmentTrackingToken).to.be.undefined;
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
         mockRequest.flush(mockResponse);
-    });
+        tick();
+    }));
 
-    it('should parse jwt from header', async () => {
+    it('should parse jwt from header', fakeAsync(() => {
         service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
             expect(textSubmission.atheneTextAssessmentTrackingToken).to.equal('12345');
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
         mockRequest.flush(mockResponse, { headers: { 'x-athene-tracking-authorization': '12345' } });
-    });
-    it('should get textSubmission for exercise', async () => {
+        tick();
+    }));
+
+    it('should get textSubmission for exercise', fakeAsync(() => {
         const exerciseId = 1;
         elemDefault = new TextSubmission();
         elemDefault.latestResult = undefined;
@@ -116,9 +120,10 @@ describe('TextSubmission Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(mockResponse.body).to.deep.equal(expected);
-    });
+        tick();
+    }));
 
-    it('should get textSubmission', async () => {
+    it('should get textSubmission', fakeAsync(() => {
         const exerciseId = 1;
         elemDefault = new TextSubmission();
         const returnedFromService = { body: elemDefault };
@@ -130,7 +135,8 @@ describe('TextSubmission Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(mockResponse.body).to.deep.equal(expected);
-    });
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

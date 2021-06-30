@@ -32,6 +32,8 @@ import { cloneDeep } from 'lodash';
 import { Course } from 'app/entities/course.model';
 import * as Sentry from '@sentry/browser';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ExamPage } from 'app/entities/exam-page.model';
+import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
@@ -43,7 +45,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChildren(ExamSubmissionComponent)
-    currentSubmissionComponents: QueryList<ExamSubmissionComponent>;
+    currentPageComponents: QueryList<ExamSubmissionComponent>;
 
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -57,7 +59,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     testRunStartTime?: Moment;
 
     // determines if component was once drawn visited
-    submissionComponentVisited: boolean[];
+    pageComponentVisited: boolean[];
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
@@ -67,7 +69,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     individualStudentEndDate: Moment;
     individualStudentEndDateWithGracePeriod: Moment;
 
-    activeExercise: Exercise;
+    activeExamPage = new ExamPage();
     unsavedChanges = false;
     disconnected = false;
     loggedOut = false;
@@ -81,15 +83,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     errorSubscription: Subscription;
 
     isProgrammingExercise() {
-        return this.activeExercise.type === ExerciseType.PROGRAMMING;
+        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
     }
 
     isProgrammingExerciseWithCodeEditor(): boolean {
-        return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOnlineEditor === true;
+        return this.isProgrammingExercise() && (this.activeExamPage.exercise as ProgrammingExercise).allowOnlineEditor === true;
     }
 
     isProgrammingExerciseWithOfflineIDE(): boolean {
-        return this.isProgrammingExercise() && (this.activeExercise as ProgrammingExercise).allowOfflineIde === true;
+        return this.isProgrammingExercise() && (this.activeExamPage.exercise as ProgrammingExercise).allowOfflineIde === true;
     }
 
     examStartConfirmed = false;
@@ -207,16 +209,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
-    get activeExerciseIndex(): number {
-        if (!this.activeExercise) {
-            return 0;
+    get activePageIndex(): number {
+        if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
+            return -1;
         }
-        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExercise.id);
+        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise!.id);
     }
 
-    get activeSubmissionComponent(): ExamSubmissionComponent | undefined {
+    get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-        return this.currentSubmissionComponents.find((submissionComponent) => submissionComponent.getExercise().id === this.activeExercise.id);
+        return this.currentPageComponents.find(
+            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise!.id,
+        );
     }
 
     /**
@@ -232,42 +236,43 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else {
                 this.individualStudentEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
             }
-            // initializes array which manages submission component initialization
-            this.submissionComponentVisited = new Array(studentExam.exercises!.length).fill(false);
+            // initializes array which manages submission component and exam overview initialization
+            this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
                 // We do not support hints at the moment. Setting an empty array here disables the hint requests
                 exercise.exerciseHints = [];
-                exercise.studentParticipations!.forEach((participation) => {
-                    if (participation.submissions && participation.submissions.length > 0) {
-                        participation.submissions.forEach((submission) => {
-                            submission.isSynced = true;
-                            if (submission.submitted == undefined) {
-                                // only set submitted to false it the value was not specified before
-                                submission.submitted = false;
+                if (exercise.studentParticipations) {
+                    exercise.studentParticipations!.forEach((participation) => {
+                        if (participation.submissions && participation.submissions.length > 0) {
+                            participation.submissions.forEach((submission) => {
+                                submission.isSynced = true;
+                                if (submission.submitted == undefined) {
+                                    // only set submitted to false it the value was not specified before
+                                    submission.submitted = false;
+                                }
+                            });
+                        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+                            // We need to provide a submission to update the navigation bar status indicator
+                            // This is important otherwise the save mechanisms would not work properly
+                            if (!participation.submissions || participation.submissions.length === 0) {
+                                participation.submissions = [];
+                                participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                             }
-                        });
-                    } else if (exercise.type === ExerciseType.PROGRAMMING) {
-                        // We need to provide a submission to update the navigation bar status indicator
-                        // This is important otherwise the save mechanisms would not work properly
-                        if (!participation.submissions || participation.submissions.length === 0) {
-                            participation.submissions = [];
-                            participation.submissions.push(ProgrammingSubmission.createInitialCleanSubmissionForExam());
                         }
-                    }
-                    // reconnect the participation with the exercise, in case this relationship was deleted before (e.g. due to breaking circular dependencies)
-                    participation.exercise = exercise;
+                        // reconnect the participation with the exercise, in case this relationship was deleted before (e.g. due to breaking circular dependencies)
+                        participation.exercise = exercise;
 
-                    // setup subscription for programming exercises
-                    if (exercise.type === ExerciseType.PROGRAMMING) {
-                        const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
-                        this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
-                    }
-                });
+                        // setup subscription for programming exercises
+                        if (exercise.type === ExerciseType.PROGRAMMING) {
+                            const programmingSubmissionSubscription = this.createProgrammingExerciseSubmission(exercise.id!, participation.id!);
+                            this.programmingSubmissionSubscriptions.push(programmingSubmissionSubscription);
+                        }
+                    });
+                }
             });
-            const initialExercise = this.studentExam.exercises![0];
-            this.initializeExercise(initialExercise);
+            this.initializeOverviewPage();
         }
         this.examStartConfirmed = true;
         this.startAutoSaveTimer();
@@ -382,8 +387,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
-        } else if (this.studentExam?.exercises && this.activeExercise) {
-            const index = this.studentExam.exercises.findIndex((exercise) => exercise.id === this.activeExercise.id);
+        } else if (this.studentExam?.exercises && this.activeExamPage) {
+            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
         }
     }
@@ -469,8 +474,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * update the current exercise from the navigation
      * @param exerciseChange
      */
-    onExerciseChange(exerciseChange: { exercise: Exercise; forceSave: boolean }): void {
-        const activeComponent = this.activeSubmissionComponent;
+    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+        const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
@@ -480,7 +485,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // an error here should never lead to the wrong exercise being shown
             Sentry.captureException(error);
         }
-        this.initializeExercise(exerciseChange.exercise);
+        if (!exerciseChange.overViewChange) {
+            this.initializeExercise(exerciseChange.exercise!);
+        } else {
+            this.initializeOverviewPage();
+        }
     }
 
     /**
@@ -489,7 +498,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to initialize
      */
     private initializeExercise(exercise: Exercise) {
-        this.activeExercise = exercise;
+        this.activeExamPage.isOverviewPage = false;
+        this.activeExamPage.exercise = exercise;
+        // set current exercise Index
+        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
+
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
             // TODO: after client is online again, subscribe is not executed, might be a problem of the Observable in createParticipationForExercise
@@ -510,12 +523,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
+    private initializeOverviewPage() {
+        this.activeExamPage.isOverviewPage = true;
+        this.activeExamPage.exercise = undefined;
+        this.exerciseIndex = -1;
+    }
+
     /**
      * this will make sure that the component is displayed in the user interface
      */
     private activateActiveComponent() {
-        this.submissionComponentVisited[this.activeExerciseIndex] = true;
-        const activeComponent = this.activeSubmissionComponent;
+        this.pageComponentVisited[this.activePageIndex] = true;
+        const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();
         }
@@ -560,16 +579,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
 
-        const activeComponent = this.activeSubmissionComponent;
+        const activeComponent = this.activePageComponent;
 
         // in the case saving is forced, we mark the current exercise as not synced, so it will definitely be saved
-        if ((activeComponent && forceSave) || activeComponent?.hasUnsavedChanges()) {
-            const activeSubmission = activeComponent?.getSubmission();
+        if ((activeComponent && forceSave) || (activeComponent as ExamSubmissionComponent)?.hasUnsavedChanges()) {
+            const activeSubmission = (activeComponent as ExamSubmissionComponent)?.getSubmission();
             if (activeSubmission) {
                 // this will lead to a save below, because isSynced will be set to false
                 activeSubmission.isSynced = false;
             }
-            activeComponent.updateSubmissionFromView();
+            (activeComponent as ExamSubmissionComponent).updateSubmissionFromView();
         }
 
         // go through ALL student exam exercises and check if there are unsynced submissions
@@ -627,7 +646,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
-        this.currentSubmissionComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+        this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
