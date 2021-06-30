@@ -160,7 +160,7 @@ public class ProgrammingExerciseResultTestService {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
+        request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
     private ProgrammingExerciseTestCase createTest(String testName, long testId) {

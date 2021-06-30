@@ -6,7 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 
@@ -14,7 +14,7 @@ export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
 @Injectable({ providedIn: 'root' })
-export class TextExerciseService {
+export class TextExerciseService implements ExerciseServicable<TextExercise> {
     private resourceUrl = SERVER_API_URL + 'api/text-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
