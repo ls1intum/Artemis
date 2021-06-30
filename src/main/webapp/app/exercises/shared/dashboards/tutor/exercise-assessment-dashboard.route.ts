@@ -8,7 +8,7 @@ import { OrionExerciseAssessmentDashboardComponent } from 'app/exercises/shared/
 export const exerciseAssessmentDashboardRoute: Routes = [
     {
         path: ':courseId/assessment-dashboard/:exerciseId',
-        component: isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
+        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',

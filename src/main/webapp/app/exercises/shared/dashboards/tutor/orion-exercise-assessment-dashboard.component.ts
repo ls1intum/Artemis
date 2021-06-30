@@ -33,14 +33,15 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
         private orionConnectorService: OrionConnectorService,
         private jhiAlertService: JhiAlertService,
     ) {
-        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        this.exerciseService.getForTutors(this.exerciseId).subscribe(
-            (res) => this.exercise = res.body!,
-            (error) => onError(jhiAlertService, error, false)
-        );
     }
 
     ngOnInit(): void {
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.exerciseService.getForTutors(this.exerciseId).subscribe(
+            (res) => this.exercise = res.body!,
+            (error) => onError(this.jhiAlertService, error, false)
+        );
+
         this.orionConnectorService.state().subscribe((state) => {
             this.orionState = state;
         });
