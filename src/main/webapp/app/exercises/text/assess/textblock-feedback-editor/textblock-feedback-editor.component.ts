@@ -7,8 +7,7 @@ import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Observable, lastValueFrom } from 'rxjs';
-import { text } from '@fortawesome/fontawesome-svg-core';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
