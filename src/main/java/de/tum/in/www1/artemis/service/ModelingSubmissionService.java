@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.modeling.SimilarElementCount;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -208,6 +210,11 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     public void setNumberOfAffectedSubmissionsPerElement(@NotNull ModelingSubmission submission) {
         List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submission.getId());
-        submission.setElements(new HashSet<>(elementCounts));
+        submission.setElements(elementCounts.stream().map(modelElementCount -> {
+            SimilarElementCount similarElementCount = new SimilarElementCount();
+            similarElementCount.setElementId(modelElementCount.getElementId());
+            similarElementCount.setNumberOfOtherElements(modelElementCount.getNumberOfOtherElements());
+            return similarElementCount;
+        }).collect(Collectors.toSet()));
     }
 }

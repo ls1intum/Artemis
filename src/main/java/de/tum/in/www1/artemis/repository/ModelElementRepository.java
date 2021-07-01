@@ -25,7 +25,7 @@ public interface ModelElementRepository extends JpaRepository<ModelElement, Long
     List<ModelElement> findByModelElementIdIn(List<String> elementIds);
 
     /**
-     * Interface used to define return type for `countOtherBlocksInClusterBySubmissionId`
+     * Interface used to define return type for `countOtherElementsInClusterBySubmissionId`
      */
     interface ModelElementCount {
 

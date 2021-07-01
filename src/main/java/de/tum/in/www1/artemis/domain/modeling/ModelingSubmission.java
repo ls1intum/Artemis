@@ -13,7 +13,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.repository.ModelElementRepository;
 
 /**
  * A ModelingSubmission.
@@ -33,7 +32,7 @@ public class ModelingSubmission extends Submission {
 
     @Transient
     @JsonSerialize
-    private Set<ModelElementRepository.ModelElementCount> elementCounts = new HashSet<>();
+    private Set<SimilarElementCount> elementCounts = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -95,15 +94,15 @@ public class ModelingSubmission extends Submission {
         }
     }
 
-    public Set<ModelElementRepository.ModelElementCount> getElements() {
+    public Set<SimilarElementCount> getElements() {
         return elementCounts;
     }
 
-    public void addElement(ModelElementRepository.ModelElementCount element) {
+    public void addElement(SimilarElementCount element) {
         this.elementCounts.add(element);
     }
 
-    public void setElements(Set<ModelElementRepository.ModelElementCount> elementCounts) {
+    public void setElements(Set<SimilarElementCount> elementCounts) {
         this.elementCounts = elementCounts;
     }
 }
