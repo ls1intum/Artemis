@@ -155,15 +155,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
             if (rows[idxLineFrom]) {
                 rows[idxLineFrom] = this.insertToken(rows[idxLineFrom], this.tokenStart, idxColumnFrom);
+                offsets[idxLineFrom] += this.tokenStart.length;
             }
-            offsets[idxLineFrom] += this.tokenStart.length;
 
             const idxColumnTo = to.column + to.length - 1 + offsets[idxLineTo];
 
             if (rows[idxLineTo]) {
                 rows[idxLineTo] = this.insertToken(rows[idxLineTo], this.tokenEnd, idxColumnTo);
+                offsets[idxLineTo] += this.tokenEnd.length;
             }
-            offsets[idxLineTo] += this.tokenEnd.length;
         });
 
         return rows.join('\n');
