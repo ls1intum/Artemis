@@ -209,8 +209,14 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
+    /**
+     * Sets the title of the exercise
+     * all consecutive, trailing or preceding whitespaces are replaced with a single space.
+     *
+     * @param title the new (unsanitized) title to be set
+     */
     public void setTitle(String title) {
-        this.title = title != null ? title.strip() : null;
+        this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
     }
 
     public String getShortName() {

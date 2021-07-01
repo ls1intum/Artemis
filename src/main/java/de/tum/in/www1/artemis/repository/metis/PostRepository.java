@@ -17,16 +17,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    @Query("select post from Post post where post.author.login = :#{#login}")
-    List<Post> findByAuthorWithLogin(@Param("login") String login);
+    List<Post> findPostsByAuthor_Login(String login);
 
-    @Query("select post from Post post where post.exercise.id = :#{#exerciseId}")
-    List<Post> findPostsForExercise(@Param("exerciseId") Long exerciseId);
+    List<Post> findPostsByExercise_Id(Long exerciseId);
 
-    @Query("select post from Post post where post.lecture.id = :#{#lectureId}")
-    List<Post> findPostsForLecture(@Param("lectureId") Long lectureId);
+    List<Post> findPostsByLecture_Id(Long lectureId);
 
-    @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} )")
+    @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
     List<Post> findPostsForCourse(@Param("courseId") Long courseId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
