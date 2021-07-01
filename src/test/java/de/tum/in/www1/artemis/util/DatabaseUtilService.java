@@ -2529,8 +2529,6 @@ public class DatabaseUtilService {
 
     public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Exercise exercise, Submission submission, String login,
             String assessorLogin) {
-        // participation.addSubmission(submission);
-        // submission = saveSubmissionToRepo(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
