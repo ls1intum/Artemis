@@ -21,14 +21,13 @@ describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
     let fixture: ComponentFixture<TextblockFeedbackEditorComponent>;
     let compiled: any;
-    let modalService: NgbModal;
 
     const textBlock = { id: 'f6773c4b3c2d057fd3ac11f02df31c0a3e75f800' } as TextBlock;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule, ArtemisGradingInstructionLinkIconModule],
-            declarations: [TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent, MockDirective(NgbCollapse)],
+            declarations: [TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [MockProvider(ChangeDetectorRef), { provide: NgbModal, useClass: MockNgbModalService }],
         })
             .overrideModule(ArtemisTestModule, {
@@ -38,7 +37,6 @@ describe('TextblockFeedbackEditorComponent', () => {
                 },
             })
             .compileComponents();
-        modalService = TestBed.inject(NgbModal);
     });
 
     beforeEach(() => {
@@ -182,6 +180,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should open modal when open origin of feedback function is called', () => {
+        const modalService: NgbModal = TestBed.inject(NgbModal);
         const content = {};
         const modalServiceSpy = sinon.spy(modalService, 'open');
 
