@@ -1365,24 +1365,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(response.getScore()).isEqualTo(expectedScore);
     }
 
-    public void addManualAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks,
-            double pointsAwarded, long expectedScore) throws Exception {
-        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL).detailText("gj"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        Result response = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(expectedScore);
-    }
-
-    public Result addManualAssessmentFeedbackAndGetResult(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks,
-            double pointsAwarded, long expectedScore) throws Exception {
-        feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL).detailText("gj"));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        Result response = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
-        return response;
-    }
-
     @Test
     @WithMockUser(value = "admin", roles = "ADMIN")
     public void testdeleteResult() throws Exception {
