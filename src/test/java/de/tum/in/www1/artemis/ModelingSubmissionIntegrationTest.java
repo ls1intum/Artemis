@@ -454,6 +454,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getModelSubmissionWithoutAssessment() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
+
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
@@ -465,6 +466,27 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getModelSubmissionWithSimilarElements() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(classExercise, submission2, "student2");
+
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        compassService.build(classExercise);
+
+        ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
+                ModelingSubmission.class);
+
+        assertThat(storedSubmission).as("submission was found").isNotNull();
+        assertThat(storedSubmission.getElements()).as("similarity count is set").isNotNull();
+        assertThat(storedSubmission.getElements().size()).as("similarity count is set").isEqualTo(4);
+
     }
 
     @Test
