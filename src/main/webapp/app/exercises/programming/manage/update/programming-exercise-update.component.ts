@@ -1,4 +1,4 @@
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -19,7 +19,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
@@ -121,7 +121,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -364,13 +364,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exercise
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise groups page if we are in exam mode
+     * Return to the previous page or a default if no previous page exists
      */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.programmingExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.programmingExercise);
     }
 
     /**
