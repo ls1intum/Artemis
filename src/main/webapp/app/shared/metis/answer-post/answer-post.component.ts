@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { User } from 'app/core/user/user.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
-import { PostingComponent } from '../posting.component';
+import { PostingDirective } from '../posting.directive';
 
 export interface AnswerPostAction {
     name: AnswerPostActionName;
@@ -21,7 +20,7 @@ export enum AnswerPostActionName {
     templateUrl: './answer-post.component.html',
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class AnswerPostComponent extends PostingComponent<AnswerPost> {
+export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Output() interactAnswerPost: EventEmitter<AnswerPostAction> = new EventEmitter<AnswerPostAction>();
 
     constructor(protected answerPostService: AnswerPostService, protected route: ActivatedRoute) {

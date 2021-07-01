@@ -5,7 +5,7 @@ import { User } from 'app/core/user/user.model';
 import { ActivatedRoute } from '@angular/router';
 
 @Directive()
-export abstract class PostingComponent<T extends Posting> implements OnInit {
+export abstract class PostingDirective<T extends Posting> implements OnInit {
     @Input() posting: T;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;

@@ -1,10 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { PostService } from 'app/shared/metis/post/post.service';
-import { PostingComponent } from 'app/shared/metis/posting.component';
+import { PostingDirective } from 'app/shared/metis/posting.directive';
 
 export interface PostAction {
     name: PostActionName;
@@ -22,7 +21,7 @@ export enum PostActionName {
     templateUrl: './post.component.html',
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class PostComponent extends PostingComponent<Post> {
+export class PostComponent extends PostingDirective<Post> {
     @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
 
     constructor(protected postService: PostService, protected route: ActivatedRoute) {
