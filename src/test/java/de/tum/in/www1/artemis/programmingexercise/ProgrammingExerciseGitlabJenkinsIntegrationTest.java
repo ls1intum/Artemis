@@ -255,6 +255,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void configureRepository_testBadRequestError() throws Exception {
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", programmingExerciseTestService.exercise.getVcsTemplateRepositoryUrl());
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 

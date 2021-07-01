@@ -41,6 +41,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
+    List<Result> findWithEagerSubmissionAndFeedbackByParticipationExerciseId(Long exerciseId);
+
     /**
      * Get the latest results for each participation in an exercise from the database together with the list of feedback items.
      *
@@ -516,8 +519,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         double maxPoints = exercise.getMaxPoints();
         double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
 
-        // Exam results and manual results of programming exercises are always to rated
-        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
+        // Exam results and manual results of programming exercises and example submissions are always to rated
+        if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise
+                || (result.getSubmission().isExampleSubmission() != null && result.getSubmission().isExampleSubmission())) {
             result.setRated(true);
         }
         else {
@@ -591,14 +595,29 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         }
     }
 
+    default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
+        return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
+    }
+
     /**
-     * Get a result from the database by its id,
+     * Get a result from the database by its id, else throws an EntityNotFoundException
      *
      * @param resultId the id of the result to load from the database
      * @return the result
      */
-    default Result findOne(long resultId) {
+    default Result findOneElseThrow(long resultId) {
         return findById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    }
+
+    /**
+     * Get a distinct result from the database by its submissionId, else throws an EntityNotFoundException
+     *
+     * @param submissionId the id of the result to load from the database
+     * @return the result, else throws an EntityNotFoundException
+     */
+    default Result findDistinctBySubmissionIdElseThrow(Long submissionId) {
+        return findDistinctBySubmissionId(submissionId).orElseThrow(() -> new EntityNotFoundException("Result with submissionId", submissionId));
     }
 
     /**
@@ -620,5 +639,23 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return findByIdWithEagerFeedbacks(resultId).orElseThrow(() -> new EntityNotFoundException("Submission", +resultId));
+    }
+
+    /**
+     * Given the example submission list, it returns the results of the linked submission, if any
+     *
+     * @param exampleSubmissions list of the example submission we want to retrieve
+     * @return list of result for example submissions
+     */
+    default List<Result> getResultForExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+        List<Result> results = new ArrayList<>();
+        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
+            Submission submission = exampleSubmission.getSubmission();
+            if (!submission.isEmpty()) {
+                Result result = findOneWithEagerSubmissionAndFeedback(submission.getLatestResult().getId());
+                results.add(result);
+            }
+        }
+        return results;
     }
 }
