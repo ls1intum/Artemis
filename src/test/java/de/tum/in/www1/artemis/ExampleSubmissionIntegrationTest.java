@@ -237,11 +237,10 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
-        long randomId_nonExistent = 1233;
-        request.putWithResponseBody(
-                "/api/exercises/" + randomId_nonExistent + "/example-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-text-assessment", dto,
+        long randomId = 1233;
+        request.putWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-text-assessment", dto,
                 Result.class, HttpStatus.BAD_REQUEST);
-        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId_nonExistent)).isEmpty();
+        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
 }

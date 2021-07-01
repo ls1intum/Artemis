@@ -398,22 +398,21 @@ public class ResultResource {
     }
 
     /**
-     * POST participations/:participationId/submissions/:submissionId/example-result : Creates a new example result for the provided example submission ID.
+     * POST exercises/:exerciseId/submissions/:submissionId/example-results : Creates a new example result for the provided example submission ID.
      *
-     * @param participationId participation to the submission
+     * @param exerciseId id of the exercise to the submission
      * @param submissionId The submission ID for which an example result should get created
      * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
      * @return The newly created result
      */
-    @PostMapping("participations/{participationId}/submissions/{submissionId}/example-result")
+    @PostMapping("exercises/{exerciseId}/submissions/{submissionId}/example-results")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Result> createExampleResult(@PathVariable long participationId, @PathVariable long submissionId,
+    public ResponseEntity<Result> createExampleResult(@PathVariable long exerciseId, @PathVariable long submissionId,
             @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
         log.debug("REST request to create a new example result for submission: {}", submissionId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        if (!submission.getParticipation().getId().equals(participationId)) {
-            return badRequest("participationId", "400",
-                    "participationId of the path doesnt match the participationId of the participation corresponding to the submission " + submissionId + " !");
+        if (!submission.getParticipation().getExercise().getId().equals(exerciseId)) {
+            return badRequest("exerciseId", "400", "exerciseId of the path doesnt match the exerciseId of the exercise corresponding to the submission " + submissionId + " !");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
         final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);

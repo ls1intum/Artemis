@@ -311,9 +311,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
-        return submissionWithoutAssessment;
+        return request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, params);
     }
 
     @Test

@@ -161,7 +161,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         this.resetComponent();
         this.loadingInitialSubmission = false;
-
         if (studentParticipation == undefined) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
