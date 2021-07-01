@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -80,7 +81,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     }
 
     private Document createEmptyDOMDocument() throws ParserConfigurationException {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory dbf = getDocumentBuilderFactory();
         DocumentBuilder builder = dbf.newDocumentBuilder();
         return builder.newDocument();
     }
