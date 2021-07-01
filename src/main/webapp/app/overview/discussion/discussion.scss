@@ -10,7 +10,7 @@ $inactive-icon: rgba(0, 0, 0, 0.4);
 }
 
 .labels {
-    color: $background-color;
+    color: $inactive-icon;
 
     &.answer-approved {
         color: green;
@@ -99,7 +99,7 @@ $inactive-icon: rgba(0, 0, 0, 0.4);
     border-radius: 3px;
 }
 
-.posting-subtitle {
+.posting-header {
     font-size: 12px;
 }
 

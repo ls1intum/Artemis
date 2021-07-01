@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
@@ -31,22 +30,17 @@ export class PostingsThreadComponent implements OnInit {
     @Input() selectedPost: Post;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
+    @Input() courseId: number;
     @Output() interactPostRow = new EventEmitter<PostRowAction>();
-    isExpanded = true;
-    isAnswerMode: boolean;
-    isLoading = false;
-    answerPostContent?: string;
     sortedAnswerPosts: AnswerPost[];
     approvedAnswerPosts: AnswerPost[];
-    courseId: number;
 
-    constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService, private route: ActivatedRoute) {}
+    constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService) {}
 
     /**
      * sort answers when component is initialized
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.sortAnswerPosts();
     }
 
@@ -76,9 +70,6 @@ export class PostingsThreadComponent implements OnInit {
         switch (action.name) {
             case PostActionName.DELETE:
                 this.deletePost();
-                break;
-            case PostActionName.EXPAND:
-                this.isExpanded = !this.isExpanded;
                 break;
             case PostActionName.VOTE_CHANGE:
                 this.interactPostRow.emit({
@@ -132,32 +123,17 @@ export class PostingsThreadComponent implements OnInit {
     /**
      * Creates a new answerPost
      */
-    addAnswerPost(): void {
-        this.isLoading = true;
-        const answerPost = new AnswerPost();
-        answerPost.content = this.answerPostContent;
-        answerPost.post = this.post;
-        answerPost.tutorApproved = false;
-        answerPost.creationDate = moment();
-        this.answerPostService.create(this.courseId, answerPost).subscribe({
-            next: (postResponse: HttpResponse<AnswerPost>) => {
-                if (!this.post.answers) {
-                    this.post.answers = [];
-                }
-                this.post.answers.push(postResponse.body!);
-                this.sortAnswerPosts();
-                this.answerPostContent = undefined;
-                this.isAnswerMode = false;
-            },
-            complete: () => {
-                this.isLoading = false;
-            },
-        });
+    onCreateAnswerPost(answerPost: AnswerPost): void {
+        if (!this.post.answers) {
+            this.post.answers = [];
+        }
+        this.post.answers.push(answerPost);
+        this.sortAnswerPosts();
     }
 
     /**
      * Takes a answerPost and deletes it
-     * @param   {answerPost} answerPost
+     * @param   {posting} answerPost
      */
     deleteAnswerFromList(answerPost: AnswerPost): void {
         this.post.answers = this.post.answers?.filter((el: AnswerPost) => el.id !== answerPost.id);
@@ -171,5 +147,13 @@ export class PostingsThreadComponent implements OnInit {
     addAnswerPostToList(answerPost: AnswerPost): void {
         this.post.answers!.push(answerPost);
         this.sortAnswerPosts();
+    }
+
+    createEmptyAnswerPost(): AnswerPost {
+        const answerPost = new AnswerPost();
+        answerPost.content = '';
+        answerPost.post = this.post;
+        answerPost.tutorApproved = false;
+        return answerPost;
     }
 }

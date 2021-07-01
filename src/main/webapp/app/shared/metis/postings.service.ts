@@ -6,7 +6,9 @@ import { Observable } from 'rxjs';
 
 export abstract class PostingsService<T extends Posting> {
     abstract create(courseId: number, posting: T): Observable<HttpResponse<T>>;
+
     abstract delete(courseId: number, posting: T): Observable<HttpResponse<any>>;
+
     abstract update(courseId: number, posting: T): Observable<HttpResponse<T>>;
 
     /**

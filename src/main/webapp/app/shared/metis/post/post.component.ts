@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { PostService } from 'app/shared/metis/post/post.service';
@@ -24,21 +25,8 @@ export enum PostActionName {
 export class PostComponent extends PostingDirective<Post> {
     @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
 
-    constructor(protected postService: PostService, protected route: ActivatedRoute) {
-        super(postService, route);
-    }
-
-    /**
-     * toggles the edit Mode
-     * set the editor text to the post content
-     */
-    toggleEditMode(): void {
-        this.isEditMode = !this.isEditMode;
-        this.content = this.posting.content;
-    }
-
-    onInteractPost($event: PostAction) {
-        this.interactPost.emit($event);
+    constructor(protected postService: PostService) {
+        super(postService);
     }
 
     /**

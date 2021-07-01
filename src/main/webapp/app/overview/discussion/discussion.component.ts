@@ -1,14 +1,11 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import * as moment from 'moment';
-import { HttpResponse } from '@angular/common/http';
 import { PostRowActionName, PostRowAction } from 'app/shared/metis/postings-thread/postings-thread.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import interact from 'interactjs';
 import { ActivatedRoute } from '@angular/router';
 import { PostService } from 'app/shared/metis/post/post.service';
@@ -23,15 +20,10 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
     @Input() lecture: Lecture;
 
     posts: Post[];
-    isEditMode: boolean;
-    isLoading = false;
     collapsed = false;
-    postContent?: string;
-    maxPostContentLength = 1000;
     selectedPost?: Post;
-    currentUser: User;
+    user: User;
     isAtLeastTutorInCourse: boolean;
-    EditorMode = EditorMode;
     courseId: number;
 
     constructor(private route: ActivatedRoute, private accountService: AccountService, private exerciseService: ExerciseService, private postService: PostService) {}
@@ -41,19 +33,17 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
      */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
-            this.currentUser = user;
+            this.user = user;
         });
         this.loadPosts();
     }
 
     loadPosts() {
         if (this.exercise) {
-            // in this case the posts are preloaded
             this.posts = DiscussionComponent.sortPostsByVote(this.exercise.posts!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
             this.courseId = this.exercise.course!.id!;
         } else if (this.lecture) {
-            // in this case the posts are preloaded
             this.posts = DiscussionComponent.sortPostsByVote(this.lecture.posts!);
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course!);
             this.courseId = this.lecture.course!.id!;
@@ -61,7 +51,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * Configures interact to make instructions expandable
+     * Configures interact to make discussion expandable
      */
     ngAfterViewInit(): void {
         interact('.expanded-posts')
@@ -111,37 +101,6 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
         this.posts = this.posts.filter((el) => el.id !== post.id);
     }
 
-    /**
-     * create a new post
-     */
-    addPost(): void {
-        this.isLoading = true;
-        const post = new Post();
-        post.content = this.postContent;
-        post.visibleForStudents = true;
-        if (this.exercise) {
-            post.exercise = Object.assign({}, this.exerciseService.convertExerciseForServer(this.exercise), {});
-        } else {
-            post.lecture = Object.assign({}, this.lecture, {});
-            delete post.lecture.attachments;
-            delete post.lecture.lectureUnits;
-        }
-        post.creationDate = moment();
-        this.postService.create(this.courseId, post).subscribe({
-            next: (postResponse: HttpResponse<Post>) => {
-                this.posts.push(postResponse.body!);
-                this.postContent = undefined;
-                this.isEditMode = false;
-            },
-            error: () => {
-                this.isLoading = false;
-            },
-            complete: () => {
-                this.isLoading = false;
-            },
-        });
-    }
-
     private static sortPostsByVote(posts: Post[]): Post[] {
         return posts.sort((a, b) => {
             return b.votes! - a.votes!;
@@ -154,5 +113,25 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
         });
         this.posts[indexToUpdate] = upvotedPost;
         this.posts = DiscussionComponent.sortPostsByVote(this.posts);
+    }
+
+    onCreatePost(post: Post): void {
+        this.posts.push(post);
+    }
+
+    createEmptyPost(): Post {
+        const post = new Post();
+        post.content = '';
+        post.visibleForStudents = true;
+        if (this.exercise) {
+            post.exercise = {
+                ...this.exerciseService.convertExerciseForServer(this.exercise),
+            };
+        } else {
+            post.lecture = {
+                id: this.lecture.id,
+            };
+        }
+        return post;
     }
 }

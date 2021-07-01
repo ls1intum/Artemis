@@ -8,6 +8,5 @@ export abstract class Posting implements BaseEntity {
     public author?: User;
     public creationDate?: Moment;
     public content?: string;
-    public tokenizedContent?: string;
     public reactions?: Reaction[];
 }

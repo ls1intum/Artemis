@@ -1,0 +1,25 @@
+<ng-template #postingEditor let-c="close">
+    <div class="modal-header">
+        <h4 class="modal-title">{{ 'artemisApp.metis.sidebar.editPosting' | artemisTranslate }}</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row mb-2">
+            <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
+        </div>
+        <div class="col text-end">
+            <p class="small my-0 ms-2">{{ content?.length }} / {{ maxContentLength }}</p>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button
+            jhi-postings-button
+            [buttonLoading]="isLoading"
+            [disabled]="content.length === 0 || content.length > maxContentLength"
+            [buttonLabel]="'artemisApp.metis.sidebar.savePosting' | artemisTranslate"
+            class="btn btn-sm btn-outline-secondary"
+            (click)="confirm()"
+        ></button>
+        <button type="button" class="btn btn-outline" (click)="c()">Close</button>
+    </div>
+</ng-template>

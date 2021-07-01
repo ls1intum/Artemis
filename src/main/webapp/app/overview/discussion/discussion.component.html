@@ -17,44 +17,22 @@
         <div class="card-body py-2">
             <!-- post with answer posts -->
             <jhi-postings-thread
-                [post]="post"
-                [user]="currentUser"
-                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-                [selectedPost]="selectedPost!"
-                (interactPostRow)="interactPost($event)"
                 *ngFor="let post of posts"
+                [post]="post"
+                [selectedPost]="selectedPost!"
+                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+                [user]="user"
+                [courseId]="courseId"
+                (interactPostRow)="interactPost($event)"
             ></jhi-postings-thread>
-            <!-- new post editor -->
-            <div *ngIf="isEditMode">
-                <div class="row ps-2">
-                    <jhi-postings-markdown-editor [(content)]="postContent"></jhi-postings-markdown-editor>
-                    <div class="row mt-2 d-flex align-items-sm-center">
-                        <div class="col">
-                            <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isEditMode = false">
-                                {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
-                            </button>
-                            <button
-                                class="btn btn-sm btn-outline-secondary"
-                                jhi-postings-button
-                                [buttonLoading]="isLoading"
-                                [disabled]="!postContent || postContent.length === 0 || postContent.length > maxPostContentLength"
-                                [buttonLabel]="'artemisApp.metis.sidebar.addPost' | artemisTranslate"
-                                (click)="addPost()"
-                            ></button>
-                        </div>
-                        <div class="col text-end">
-                            <p class="small my-0 ms-2">{{ postContent?.length }} / {{ maxPostContentLength }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <!-- new post button -->
-            <div class="row" *ngIf="!isEditMode">
+            <div class="row">
                 <div class="col-12">
-                    <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = true">
+                    <button class="btn btn-sm btn-outline-secondary" (click)="createEditModal.open()">
                         <fa-icon [icon]="'plus'"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.metis.sidebar.addNewPost' | artemisTranslate }}</span>
                     </button>
+                    <jhi-post-create-edit-modal #createEditModal [posting]="createEmptyPost()" [courseId]="courseId" (onCreate)="onCreatePost($event)"></jhi-post-create-edit-modal>
                 </div>
             </div>
             <!-- no posts -->

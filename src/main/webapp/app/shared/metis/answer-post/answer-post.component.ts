@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { PostingDirective } from '../posting.directive';
@@ -23,8 +24,8 @@ export enum AnswerPostActionName {
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Output() interactAnswerPost: EventEmitter<AnswerPostAction> = new EventEmitter<AnswerPostAction>();
 
-    constructor(protected answerPostService: AnswerPostService, protected route: ActivatedRoute) {
-        super(answerPostService, route);
+    constructor(protected answerPostService: AnswerPostService) {
+        super(answerPostService);
     }
 
     /**
@@ -38,18 +39,5 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
                 answerPost: this.posting,
             });
         });
-    }
-
-    /**
-     * toggles the edit Mode
-     * set the editor text to the answer text
-     */
-    toggleEditMode(): void {
-        this.isEditMode = !this.isEditMode;
-        this.content = this.posting.content;
-    }
-
-    onInteractAnswerPost($event: AnswerPostAction) {
-        this.interactAnswerPost.emit($event);
     }
 }

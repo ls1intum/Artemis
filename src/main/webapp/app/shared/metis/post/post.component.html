@@ -1,4 +1,4 @@
-<jhi-post-header [post]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" (editModeChange)="toggleEditMode()" (interactPost)="onInteractPost($event)"></jhi-post-header>
+<jhi-post-header [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" [user]="user"></jhi-post-header>
 <!-- post not in edit mode -->
 <ng-container *ngIf="!isEditMode">
     <div class="row align-items-center">

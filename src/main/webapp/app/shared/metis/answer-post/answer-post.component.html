@@ -1,11 +1,6 @@
 <div class="row mb-0.5 py-1 px-2 mx-1 mb-2 answer-post" [class.answer-approved]="posting.tutorApproved">
     <div class="col-12">
-        <jhi-answer-post-header
-            [answerPost]="posting"
-            [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-            (editModeChange)="toggleEditMode()"
-            (interactAnswerPost)="onInteractAnswerPost($event)"
-        ></jhi-answer-post-header>
+        <jhi-answer-post-header [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" [user]="user"></jhi-answer-post-header>
         <!-- answer-post not in edit mode -->
         <ng-container *ngIf="!isEditMode">
             <div class="row">

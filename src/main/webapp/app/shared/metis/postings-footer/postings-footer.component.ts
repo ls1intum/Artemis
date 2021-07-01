@@ -6,40 +6,23 @@ import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.serv
 import { AnswerPostAction, AnswerPostActionName } from 'app/shared/metis/answer-post/answer-post.component';
 
 @Component({
-    selector: 'jhi-answer-post-header',
-    templateUrl: './answer-post-header.component.html',
-    styleUrls: ['../../../../overview/discussion/discussion.scss'],
+    selector: 'jhi-posting-footer',
+    templateUrl: './postings-footer.component.html',
+    styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
-export class AnswerPostHeaderComponent implements OnInit {
+export class PostingsFooterComponent implements OnInit {
     @Input() answerPost: AnswerPost;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
+    @Input() courseId: number;
     @Output() editModeChange: EventEmitter<void> = new EventEmitter();
     @Output() interactAnswerPost: EventEmitter<AnswerPostAction> = new EventEmitter<AnswerPostAction>();
     isAuthorOfAnswerPost: boolean;
-    courseId: number;
 
-    constructor(private answerPostService: AnswerPostService, private route: ActivatedRoute) {}
+    constructor(private answerPostService: AnswerPostService) {}
 
     ngOnInit(): void {
         this.isAuthorOfAnswerPost = this.user ? this.answerPost?.author!.id === this.user.id : false;
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-    }
-
-    toggleEditMode() {
-        this.editModeChange.emit();
-    }
-
-    /**
-     * pass the answer post to be deleted
-     */
-    deleteAnswerPost(): void {
-        this.answerPostService.delete(this.courseId, this.answerPost).subscribe(() => {
-            this.interactAnswerPost.emit({
-                name: AnswerPostActionName.DELETE,
-                answerPost: this.answerPost,
-            });
-        });
     }
 
     approveAnswer() {
