@@ -612,20 +612,20 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(true);
         submissionRepository.save(modelingSubmission);
-        request.postWithResponseBody("/api/participations/" + modelingSubmission.getParticipation().getId() + "/submissions/" + modelingSubmission.getId() + "/example-result",
-                exampleSubmission, Result.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
+                Result.class, HttpStatus.CREATED);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void createExampleResult_wrongParticipationId() throws Exception {
+    public void createExampleResult_wrongExerciseId() throws Exception {
         var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(true);
         submissionRepository.save(modelingSubmission);
         long randomId = 1874;
-        request.postWithResponseBody("/api/participations/" + randomId + "/submissions/" + modelingSubmission.getId() + "/example-result", exampleSubmission, Result.class,
+        request.postWithResponseBody("/api/exercises/" + randomId + "/submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
     }
 
