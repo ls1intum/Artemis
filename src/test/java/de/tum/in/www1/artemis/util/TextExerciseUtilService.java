@@ -57,10 +57,10 @@ public class TextExerciseUtilService {
         String text = "TextBlock" + random.nextInt();
 
         for (int i = 0; i < count; i++) {
-            String id = sha1Hex("id" + i + text);
+            String blockId = sha1Hex("id" + i + text);
             textBlock = new TextBlock();
             textBlock.setText(text);
-            textBlock.setId(id);
+            textBlock.setId(blockId);
             textBlock.automatic();
             textBlocks.add(textBlock);
         }

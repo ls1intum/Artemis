@@ -134,12 +134,13 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         exerciseRepository.save(textExercise);
 
         // Create a cluster and set minimal distance to < Threshold = 1
-        int[] clusterSizes = new int[] { 2 };
+        int[] clusterSizes = { 2 };
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         double[][] minimalDistanceMatrix = new double[numberOfBlocksTotally][numberOfBlocksTotally];
         // Fill each row with an arbitrary fixed value < 1 to stimulate a simple case of 10 automatic feedback suggestions
-        for (double[] row : minimalDistanceMatrix)
+        for (double[] row : minimalDistanceMatrix) {
             Arrays.fill(row, 0.1);
+        }
         clusters.get(0).blocks(textBlocks.stream().toList()).distanceMatrix(minimalDistanceMatrix);
         textClusterRepository.saveAll(clusters);
 
@@ -176,7 +177,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     public Result createSampleResultForSubmission(Submission submission) {
         Result result = new Result();
         result.setAssessor(database.getUserByLogin("tutor1"));
-        result.setCompletionDate(ZonedDateTime.now());
+        result.setCompletionDate(now());
         result.setSubmission(submission);
         submission.setResults(Collections.singletonList(result));
         return result;
