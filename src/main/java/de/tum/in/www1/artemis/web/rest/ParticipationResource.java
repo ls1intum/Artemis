@@ -214,6 +214,7 @@ public class ParticipationResource {
     /**
      * PUT /participations : Updates an existing participation.
      *
+     * @param exerciseId the id of the exercise to which the participation belongs
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
