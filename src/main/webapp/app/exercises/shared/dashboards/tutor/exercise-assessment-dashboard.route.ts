@@ -3,7 +3,7 @@ import { ExerciseAssessmentDashboardComponent } from './exercise-assessment-dash
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { isOrion } from 'app/orion/orion';
-import { OrionExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/orion-exercise-assessment-dashboard.component';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 
 export const exerciseAssessmentDashboardRoute: Routes = [
     {
