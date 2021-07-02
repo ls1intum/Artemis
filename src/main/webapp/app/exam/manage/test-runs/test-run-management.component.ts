@@ -53,7 +53,7 @@ export class TestRunManagementComponent implements OnInit {
                     (res: HttpResponse<StudentExam[]>) => {
                         this.testRuns = res.body!;
                     },
-                    (err: HttpErrorResponse) => onError(this.jhiAlertService, err),
+                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                 );
             },
             (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
@@ -74,9 +74,9 @@ export class TestRunManagementComponent implements OnInit {
         modalRef.result
             .then((testRunConfiguration: StudentExam) => {
                 this.examManagementService.createTestRun(this.course.id!, this.exam.id!, testRunConfiguration).subscribe(
-                    (res: HttpResponse<StudentExam>) => {
-                        if (res.body != undefined) {
-                            this.testRuns.push(res.body!);
+                    (response: HttpResponse<StudentExam>) => {
+                        if (response.body != undefined) {
+                            this.testRuns.push(response.body!);
                         }
                     },
                     (error: HttpErrorResponse) => {

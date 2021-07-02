@@ -244,10 +244,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.isExamMode) {
             this.exerciseCategories = this.quizExercise.categories || [];
             this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id!).subscribe(
-                (res: HttpResponse<string[]>) => {
-                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
+                (response: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
                 },
-                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         }
         this.updateDuration();
