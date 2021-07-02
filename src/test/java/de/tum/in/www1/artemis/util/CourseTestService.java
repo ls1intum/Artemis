@@ -550,7 +550,7 @@ public class CourseTestService {
                             assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
                         }
                         // Test that the correct modeling submission was filtered.
-                        if (submission instanceof ModelingSubmission modelingSubmission) {
+                        else if (submission instanceof ModelingSubmission modelingSubmission) {
                             assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
                         }
                     }
@@ -589,7 +589,7 @@ public class CourseTestService {
                             assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
                         }
                         // Test that the correct modeling submission was filtered.
-                        if (submission instanceof ModelingSubmission modelingSubmission) {
+                        else if (submission instanceof ModelingSubmission modelingSubmission) {
                             assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
                         }
                     }

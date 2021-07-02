@@ -130,7 +130,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
             }
-            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+            else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(3);
                 assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
@@ -153,7 +153,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
                 assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
-            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
+            else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(2);
                 assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(2);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
@@ -202,7 +202,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
                 answerOptions.get(1).getQuestion();
             }
-            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+            else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(3);
                 assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
@@ -223,7 +223,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D1");
                 assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
-            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
+            else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(2);
                 assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(2);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
@@ -331,7 +331,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(2).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E4");
                 assertThat(answerOptions.get(2).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
             }
-            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+            else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
                 assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
@@ -347,7 +347,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
-            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
+            else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(1);
                 assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(1);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
@@ -408,7 +408,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(2).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E4");
                 assertThat(answerOptions.get(2).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
             }
-            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+            else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
                 assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
@@ -424,7 +424,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
-            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
+            else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(1);
                 assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(1);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
@@ -1380,14 +1380,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                     System.out.println("MultipleChoiceQuestionStatistic: " + counter.getMultipleChoiceQuestionStatistic());
                 }
             }
-            if (statistic instanceof DragAndDropQuestionStatistic dndStatistic) {
+            else if (statistic instanceof DragAndDropQuestionStatistic dndStatistic) {
                 assertThat(dndStatistic.getDropLocationCounters()).isNotEmpty();
                 for (var counter : dndStatistic.getDropLocationCounters()) {
                     System.out.println("DropLocationCounters: " + counter.toString());
                     System.out.println("DragAndDropQuestionStatistic: " + counter.getDragAndDropQuestionStatistic());
                 }
             }
-            if (statistic instanceof ShortAnswerQuestionStatistic saStatistic) {
+            else if (statistic instanceof ShortAnswerQuestionStatistic saStatistic) {
                 assertThat(saStatistic.getShortAnswerSpotCounters()).isNotEmpty();
                 for (var counter : saStatistic.getShortAnswerSpotCounters()) {
                     System.out.println("ShortAnswerSpotCounters: " + counter.toString());
