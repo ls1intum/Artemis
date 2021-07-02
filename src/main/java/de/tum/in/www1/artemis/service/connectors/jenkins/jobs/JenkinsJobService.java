@@ -99,6 +99,9 @@ public class JenkinsJobService {
             }
 
             var xmlString = jenkinsServer.getJobXml(folder, jobName);
+
+            xmlString = xmlString.replace("*/master", "**");
+
             return XmlFileUtils.readFromString(xmlString);
         }
         catch (IOException e) {
