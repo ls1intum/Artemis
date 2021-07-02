@@ -9,9 +9,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
-import { OrionState } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
+import { OrionState } from 'app/orion/orion';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({

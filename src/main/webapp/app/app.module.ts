@@ -22,7 +22,7 @@ import { ArtemisCoreModule } from 'app/core/core.module';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHomeModule } from 'app/home/home.module';
-import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
+import { OrionOutdatedComponent } from 'app/orion/shared/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';

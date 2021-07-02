@@ -8,7 +8,7 @@ import { MomentModule } from 'ngx-moment';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { OrionModule } from 'app/shared/orion/orion.module';
+import { OrionModule } from 'app/orion/orion.module';
 
 @NgModule({
     imports: [

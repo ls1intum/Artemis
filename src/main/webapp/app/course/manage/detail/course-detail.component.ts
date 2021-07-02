@@ -6,7 +6,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { isOrion } from 'app/shared/orion/orion';
+import { isOrion } from 'app/orion/orion';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';

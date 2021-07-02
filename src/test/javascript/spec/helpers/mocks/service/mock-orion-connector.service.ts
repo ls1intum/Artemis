@@ -1,4 +1,4 @@
-import { OrionState, ArtemisOrionConnector } from 'app/shared/orion/orion';
+import { OrionState, ArtemisOrionConnector } from 'app/orion/orion';
 import { of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';

@@ -1,11 +1,11 @@
-import { Component, Injectable, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseView, OrionState } from 'app/shared/orion/orion';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { ExerciseView, OrionState } from 'app/orion/orion';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -20,7 +20,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     readonly ExerciseView = ExerciseView;
     readonly ExerciseType = ExerciseType;
     orionState: OrionState;
-    isOrionAndProgramming = false;
 
     exerciseId: number;
     exercise: Exercise;

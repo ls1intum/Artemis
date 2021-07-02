@@ -8,7 +8,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 

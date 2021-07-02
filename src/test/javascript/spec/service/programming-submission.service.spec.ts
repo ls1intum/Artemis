@@ -28,7 +28,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

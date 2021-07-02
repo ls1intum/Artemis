@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { isOrion } from 'app/shared/orion/orion';
+import { isOrion } from 'app/orion/orion';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';

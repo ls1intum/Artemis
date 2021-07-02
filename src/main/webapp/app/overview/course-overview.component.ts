@@ -4,7 +4,7 @@ import { CourseExerciseService, CourseManagementService } from '../course/manage
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { isOrion } from 'app/shared/orion/orion';
+import { isOrion } from 'app/orion/orion';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';

@@ -60,9 +60,9 @@ import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
-import { OrionModule } from 'app/shared/orion/orion.module';
+import { OrionModule } from 'app/orion/orion.module';
 import { MockOrionConnectorService } from '../../helpers/mocks/service/mock-orion-connector.service';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);

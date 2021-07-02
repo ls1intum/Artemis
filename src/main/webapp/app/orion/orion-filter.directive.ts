@@ -1,5 +1,5 @@
 import { Directive, ElementRef, Input, OnInit } from '@angular/core';
-import { isOrion } from 'app/shared/orion/orion';
+import { isOrion } from 'app/orion/orion';
 
 @Directive({
     selector: '[jhiOrionFilter]',

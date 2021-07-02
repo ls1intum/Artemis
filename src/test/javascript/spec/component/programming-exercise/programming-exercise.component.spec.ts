@@ -12,7 +12,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { MockOrionConnectorService } from '../../helpers/mocks/service/mock-orion-connector.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';

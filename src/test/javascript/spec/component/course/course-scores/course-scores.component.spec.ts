@@ -12,7 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { OrionFilterDirective } from 'app/orion/orion-filter.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
