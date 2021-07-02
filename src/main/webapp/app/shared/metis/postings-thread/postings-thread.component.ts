@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
-import { HttpResponse } from '@angular/common/http';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -27,13 +26,12 @@ export enum PostRowActionName {
 })
 export class PostingsThreadComponent implements OnInit {
     @Input() post: Post;
-    @Input() selectedPost: Post;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Input() courseId: number;
     @Output() interactPostRow = new EventEmitter<PostRowAction>();
+    toggledAnswers = false;
     sortedAnswerPosts: AnswerPost[];
-    approvedAnswerPosts: AnswerPost[];
 
     constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService) {}
 
@@ -86,25 +84,12 @@ export class PostingsThreadComponent implements OnInit {
     sortAnswerPosts(): void {
         if (!this.post.answers) {
             this.sortedAnswerPosts = [];
-            this.approvedAnswerPosts = [];
             return;
         }
-        this.approvedAnswerPosts = this.post.answers
-            .filter((ans) => ans.tutorApproved)
-            .sort((a, b) => {
-                const aValue = moment(a.creationDate!).valueOf();
-                const bValue = moment(b.creationDate!).valueOf();
-
-                return aValue - bValue;
-            });
-        this.sortedAnswerPosts = this.post.answers
-            .filter((ans) => !ans.tutorApproved)
-            .sort((a, b) => {
-                const aValue = moment(a.creationDate!).valueOf();
-                const bValue = moment(b.creationDate!).valueOf();
-
-                return aValue - bValue;
-            });
+        this.sortedAnswerPosts = this.post.answers.sort(
+            (answerPostA, answerPostB) =>
+                Number(answerPostB.tutorApproved) - Number(answerPostA.tutorApproved) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
+        );
     }
 
     /**
@@ -155,5 +140,9 @@ export class PostingsThreadComponent implements OnInit {
         answerPost.post = this.post;
         answerPost.tutorApproved = false;
         return answerPost;
+    }
+
+    toggleAnswers() {
+        this.toggledAnswers = !this.toggledAnswers;
     }
 }

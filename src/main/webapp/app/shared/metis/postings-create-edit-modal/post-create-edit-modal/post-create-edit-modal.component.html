@@ -1,6 +1,6 @@
 <ng-template #postingEditor let-c="close">
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.metis.sidebar.editPosting' | artemisTranslate }}</h4>
+        <h4 class="modal-title">{{ 'artemisApp.metis.editPosting' | artemisTranslate }}</h4>
     </div>
     <div class="modal-body">
         <div class="row mb-2">
@@ -15,7 +15,7 @@
             jhi-postings-button
             [buttonLoading]="isLoading"
             [disabled]="content.length === 0 || content.length > maxContentLength"
-            [buttonLabel]="'artemisApp.metis.sidebar.savePosting' | artemisTranslate"
+            [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
             class="btn btn-sm btn-outline-secondary"
             (click)="confirm()"
         ></button>

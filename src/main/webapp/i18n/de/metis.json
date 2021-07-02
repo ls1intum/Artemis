@@ -1,32 +1,28 @@
 {
     "artemisApp": {
         "metis": {
-            "sidebar": {
+            "noPosts": "Es gibt noch keine Beiträge.",
+            "addNewPost": "Neuer Beitrag",
+            "answerNow": "Jetzt beantworten",
+            "cancel": "Abbrechen",
+            "savePosting": "Speichern",
+            "toggleThread": "Klicke, um den Thread ein-/auszuklappen",
+            "deletePost": "Möchtest du deinen Beitrag löschen?",
+            "confirmDeletePost": "Bitte bestätige, dass du deinen Beitrag löschen möchtest!",
+            "deleteAnswer": "Möchtest du deine Antwort löschen?",
+            "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
+            "editPosting": "Inhalt bearbeiten",
+            "approvedLabel": "Von Tutor:in bestätigt",
+            "approveAnswer": "Antwort bestätigen",
+            "unapproveAnswer": "Bestätigung aufheben",
+            "discussion": {
                 "header": "Diskussion",
                 "show": "Diskussion anzeigen",
-                "hide": "Diskussion einklappen",
-                "noPosts": "Es gibt keine Beiträge.",
-                "addNewPost": "Einen neuen Beitrag erstellen",
-                "approvedLabel": "Von Tutor:in bestätigt",
-                "answerNow": "Jetzt beantworten",
-                "answerCount": "Zeige Antworten ({{count}})",
-                "cancel": "Abbrechen",
-                "addPost": "Beitrag hinzufügen",
-                "addAnswer": "Antwort hinzufügen",
-                "savePosting": "Speichern",
-                "deletePost": "Möchtest du deinen Beitrag löschen?",
-                "confirmDeletePost": "Bitte bestätige, dass du deinen Beitrag löschen möchtest!",
-                "deleteAnswer": "Möchtest du deine Antwort löschen?",
-                "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
-                "editPosting": "Inhalt bearbeiten",
-                "approveAnswer": "Antwort bestätigen",
-                "unapproveAnswer": "Antwort nicht bestätigen",
-                "hideAnswers": "Weniger Antworten anzeigen",
-                "showAnswers": "Weitere Antworten anzeigen ({{count}})"
+                "hide": "Diskussion einklappen"
             },
             "overview": {
                 "title": "Beiträge",
-                "noPosts": "Es gibt keine Beiträge in diesem Kurs",
+                "noPosts": "Es gibt noch keine Beiträge in diesem Kurs.",
                 "showApproved": "Zeige Beiträge mit bestätigten Antworten an",
                 "hideApproved": "Ignoriere Beiträge mit bestätigten Antworten"
             },

@@ -5,7 +5,7 @@
             class="clickable action-icon"
             *ngIf="isAtLeastTutorInCourse"
             [class.answer-approved]="answerPost.tutorApproved"
-            [ngbTooltip]="(answerPost.tutorApproved ? 'artemisApp.metis.sidebar.unapproveAnswer' : 'artemisApp.metis.sidebar.approveAnswer') | artemisTranslate"
+            [ngbTooltip]="(answerPost.tutorApproved ? 'artemisApp.metis.unapproveAnswer' : 'artemisApp.metis.approveAnswer') | artemisTranslate"
             container="body"
             [icon]="'check'"
             (click)="approveAnswer()"

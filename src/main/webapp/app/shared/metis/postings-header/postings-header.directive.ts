@@ -9,10 +9,10 @@ export abstract class PostingsHeaderDirective<T extends Posting> implements OnIn
     @Input() posting: T;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
-    @Input() isAuthorOfPosting: boolean;
     @Input() courseId: number;
     @Output() onDelete: EventEmitter<T> = new EventEmitter<T>();
     @Output() onUpdate: EventEmitter<T> = new EventEmitter<T>();
+    isAuthorOfPosting: boolean;
 
     protected constructor(protected postingService: PostingsService<T>, protected route: ActivatedRoute) {}
 

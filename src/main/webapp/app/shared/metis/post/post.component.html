@@ -13,14 +13,14 @@
         <div class="row d-flex align-items-sm-center">
             <div class="col">
                 <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
-                    {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
+                    {{ 'artemisApp.metis.cancel' | artemisTranslate }}
                 </button>
                 <button
                     class="btn btn-sm btn-outline-secondary"
                     jhi-postings-button
                     [buttonLoading]="isLoading"
                     [disabled]="!content || content.length === 0"
-                    [buttonLabel]="'artemisApp.metis.sidebar.savePost' | artemisTranslate"
+                    [buttonLabel]="'artemisApp.metis.savePost' | artemisTranslate"
                     (click)="updatePosting()"
                 ></button>
             </div>

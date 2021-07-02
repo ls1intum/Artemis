@@ -1,9 +1,7 @@
 import { Directive, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { PostingsService } from 'app/shared/metis/postings.service';
-import { Post } from 'app/entities/metis/post.model';
 import moment from 'moment';
 
 const MAX_CONTENT_LENGTH = 1000;

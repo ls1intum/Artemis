@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import { PostRowActionName, PostRowAction } from 'app/shared/metis/postings-thread/postings-thread.component';
+import { PostRowAction, PostRowActionName } from 'app/shared/metis/postings-thread/postings-thread.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -18,10 +18,8 @@ import { PostService } from 'app/shared/metis/post/post.service';
 export class DiscussionComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() lecture: Lecture;
-
     posts: Post[];
     collapsed = false;
-    selectedPost?: Post;
     user: User;
     isAtLeastTutorInCourse: boolean;
     courseId: number;
@@ -33,7 +31,7 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
      */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
-            this.user = user;
+            this.user = user!;
         });
         this.loadPosts();
     }

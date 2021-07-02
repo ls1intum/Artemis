@@ -1,46 +1,41 @@
-<!-- expanded answers -->
-<div class="row mb-2">
-    <div class="col-12 post-row">
-        <jhi-post [posting]="post" [user]="user" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" (interactPost)="interactPost($event)"></jhi-post>
+<div class="row mb-2 me-1">
+    <div class="col-12">
+        <jhi-post
+            (click)="toggleAnswers()"
+            [ngClass]="sortedAnswerPosts.length > 0 ? 'clickable' : ''"
+            [posting]="post"
+            [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
+            [disableTooltip]="sortedAnswerPosts.length === 0"
+            [user]="user"
+            [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+            [courseId]="courseId"
+            (interactPost)="interactPost($event)"
+        ></jhi-post>
         <div class="row">
-            <div class="col">
-                <div class="row m-0">
+            <div class="col-12">
+                <ng-container *ngIf="toggledAnswers">
+                    <jhi-answer-post
+                        *ngFor="let answerPost of sortedAnswerPosts"
+                        [posting]="answerPost"
+                        [user]="user"
+                        [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+                        [courseId]="courseId"
+                        (interactAnswerPost)="interactAnswerPost($event)"
+                    ></jhi-answer-post>
+                </ng-container>
+                <!-- new answer -->
+                <div class="row mx-1 my-2" *ngIf="toggledAnswers || sortedAnswerPosts.length === 0">
                     <div class="col-12 px-0">
-                        <ng-container>
-                            <!-- approved answers -->
-                            <jhi-answer-post
-                                *ngFor="let answerPost of approvedAnswerPosts"
-                                [posting]="answerPost"
-                                [user]="user"
-                                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-                                [courseId]="courseId"
-                                (interactAnswerPost)="interactAnswerPost($event)"
-                            ></jhi-answer-post>
-                            <!-- other answers -->
-                            <jhi-answer-post
-                                *ngFor="let answerPost of sortedAnswerPosts"
-                                [posting]="answerPost"
-                                [user]="user"
-                                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-                                [courseId]="courseId"
-                                (interactAnswerPost)="interactAnswerPost($event)"
-                            ></jhi-answer-post>
-                        </ng-container>
-                        <!-- new answer -->
-                        <div class="row mx-1 my-2">
-                            <div class="col-12 px-0">
-                                <button class="btn btn-sm btn-outline-secondary" (click)="createEditModal.open()">
-                                    {{ 'artemisApp.metis.sidebar.answerNow' | artemisTranslate }}
-                                </button>
-                            </div>
-                            <jhi-answer-post-create-edit-modal
-                                #createEditModal
-                                [posting]="createEmptyAnswerPost()"
-                                [courseId]="courseId"
-                                (onCreate)="onCreateAnswerPost($event)"
-                            ></jhi-answer-post-create-edit-modal>
-                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" (click)="createEditModal.open()">
+                            {{ 'artemisApp.metis.answerNow' | artemisTranslate }}
+                        </button>
                     </div>
+                    <jhi-answer-post-create-edit-modal
+                        #createEditModal
+                        [posting]="createEmptyAnswerPost()"
+                        [courseId]="courseId"
+                        (onCreate)="onCreateAnswerPost($event)"
+                    ></jhi-answer-post-create-edit-modal>
                 </div>
             </div>
         </div>

@@ -1,6 +1,4 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { PostingDirective } from '../posting.directive';

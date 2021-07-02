@@ -3,7 +3,6 @@ import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-crea
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostService } from 'app/shared/metis/post/post.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-post-create-edit-modal',

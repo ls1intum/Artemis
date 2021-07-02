@@ -5,7 +5,7 @@
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             size="xs"
             class="me-0.5 clickable action-icon"
-            [ngbTooltip]="'artemisApp.metis.sidebar.editPosting' | artemisTranslate"
+            [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
             [icon]="'pencil-alt'"
             (click)="createEditModal.open()"
@@ -16,8 +16,8 @@
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'me-1 clickable action-icon'"
-            [initialTooltip]="'artemisApp.metis.sidebar.deleteAnswer' | artemisTranslate"
-            [confirmTooltip]="'artemisApp.metis.sidebar.confirmDeleteAnswer' | artemisTranslate"
+            [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
+            [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
         ></jhi-confirm-icon>
     </div>
 </div>
