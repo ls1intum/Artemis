@@ -10,10 +10,11 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { PostingsButtonComponent } from 'app/shared/metis/postings-button/postings-button.component';
 import { PostingsMarkdownEditorComponent } from 'app/shared/metis/postings-markdown-editor/postings-markdown-editor.component';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/postings-header/answer-post-header/answer-post-header.component';
-import { PostingsFooterComponent } from 'app/shared/metis/postings-footer/postings-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/postings-header/post-header/post-header.component';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
+import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisConfirmIconModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule],
@@ -22,8 +23,9 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-e
         PostHeaderComponent,
         AnswerPostHeaderComponent,
         PostCreateEditModalComponent,
+        PostFooterComponent,
         AnswerPostCreateEditModalComponent,
-        PostingsFooterComponent,
+        AnswerPostFooterComponent,
         PostingsButtonComponent,
         PostingsMarkdownEditorComponent,
         PostComponent,
@@ -36,7 +38,8 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-e
         AnswerPostHeaderComponent,
         PostCreateEditModalComponent,
         AnswerPostCreateEditModalComponent,
-        PostingsFooterComponent,
+        PostFooterComponent,
+        AnswerPostFooterComponent,
         PostingsButtonComponent,
         PostingsMarkdownEditorComponent,
         PostComponent,

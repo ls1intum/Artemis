@@ -1,0 +1,13 @@
+<ng-template #notApproved>
+    <div *ngIf="isAtLeastTutorInCourse" class="not-approved-badge badge">
+        <span>Approve</span>
+    </div>
+</ng-template>
+<div class="row justify-content-between my-1">
+    <div class="col-auto" [ngClass]="isAtLeastTutorInCourse ? 'clickable' : ''" (click)="toggleApprove()">
+        <div *ngIf="posting.tutorApproved; else notApproved" class="approved-badge text-white badge">
+            <fa-icon [icon]="'check'"></fa-icon>
+            <span>Approved</span>
+        </div>
+    </div>
+</div>

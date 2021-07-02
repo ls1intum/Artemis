@@ -3,7 +3,6 @@ import { User } from 'app/core/user/user.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { LocalStorageService } from 'ngx-webstorage';
-import { AnswerPostAction, AnswerPostActionName } from 'app/shared/metis/answer-post/answer-post.component';
 import { PostAction, PostActionName } from 'app/shared/metis/post/post.component';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { PostService } from 'app/shared/metis/post/post.service';
@@ -39,18 +38,6 @@ export class PostingsThreadComponent implements OnInit {
      */
     ngOnInit(): void {
         this.sortAnswerPosts();
-    }
-
-    /**
-     * interact with answerPost component
-     * @param {AnswerPostAction} action
-     */
-    interactAnswerPost(action: AnswerPostAction) {
-        switch (action.name) {
-            case AnswerPostActionName.APPROVE:
-                this.sortAnswerPosts();
-                break;
-        }
     }
 
     /**
@@ -105,11 +92,17 @@ export class PostingsThreadComponent implements OnInit {
         const answerPost = new AnswerPost();
         answerPost.content = '';
         answerPost.post = this.post;
-        answerPost.tutorApproved = false;
+        answerPost.tutorApproved = this.isAtLeastTutorInCourse;
         return answerPost;
     }
 
     toggleAnswers() {
         this.toggledAnswers = !this.toggledAnswers;
+    }
+
+    toggleApprove(changedAnswerPost: AnswerPost): void {
+        const updatedAnswerPost = this.post.answers?.find((answerPost: AnswerPost) => answerPost.id === changedAnswerPost.id)!;
+        updatedAnswerPost.tutorApproved = changedAnswerPost.tutorApproved;
+        this.sortAnswerPosts();
     }
 }

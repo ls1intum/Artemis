@@ -51,6 +51,20 @@ $label-color: #6a737d;
     }
 }
 
+.approved-badge {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: green;
+}
+
+.not-approved-badge {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: lightgray;
+}
+
 .collapsed-postings {
     width: 50px;
     justify-content: space-between;
@@ -62,6 +76,12 @@ $label-color: #6a737d;
     span {
         writing-mode: vertical-rl;
         margin: auto;
+    }
+
+    fa-icon {
+        display: flex;
+        justify-content: center;
+        padding: 15px 0;
     }
 }
 

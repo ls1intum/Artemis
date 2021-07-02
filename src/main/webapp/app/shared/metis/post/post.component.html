@@ -11,3 +11,4 @@
     <jhi-post-votes class="col-auto" [postId]="posting.id!" [votes]="posting.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
     <div class="col markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
 </div>
+<jhi-post-footer [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId"> </jhi-post-footer>

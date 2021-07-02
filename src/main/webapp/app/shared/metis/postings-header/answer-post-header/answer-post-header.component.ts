@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postings-header.directive';
@@ -10,7 +9,7 @@ import { PostingsHeaderDirective } from 'app/shared/metis/postings-header/postin
     styleUrls: ['../../../../overview/discussion/discussion.scss'],
 })
 export class AnswerPostHeaderComponent extends PostingsHeaderDirective<AnswerPost> {
-    constructor(protected answerPostService: AnswerPostService, protected route: ActivatedRoute) {
-        super(answerPostService, route);
+    constructor(protected answerPostService: AnswerPostService) {
+        super(answerPostService);
     }
 }

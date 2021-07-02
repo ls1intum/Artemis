@@ -1,33 +1,19 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { User } from 'app/core/user/user.model';
-import { AnswerPostService } from 'app/shared/metis/answer-post/answer-post.service';
-import { AnswerPostAction, AnswerPostActionName } from 'app/shared/metis/answer-post/answer-post.component';
+import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Posting } from 'app/entities/metis/posting.model';
+import { PostingsService } from 'app/shared/metis/postings.service';
+import { Reaction } from 'app/entities/metis/reaction.model';
 
-@Component({
-    selector: 'jhi-posting-footer',
-    templateUrl: './postings-footer.component.html',
-    styleUrls: ['../../../overview/discussion/discussion.scss'],
-})
-export class PostingsFooterComponent implements OnInit {
-    @Input() answerPost: AnswerPost;
-    @Input() user: User;
+@Directive()
+export abstract class PostingsFooterDirective<T extends Posting> implements OnInit {
+    @Input() posting: T;
     @Input() isAtLeastTutorInCourse: boolean;
     @Input() courseId: number;
-    @Output() editModeChange: EventEmitter<void> = new EventEmitter();
-    @Output() interactAnswerPost: EventEmitter<AnswerPostAction> = new EventEmitter<AnswerPostAction>();
-    isAuthorOfAnswerPost: boolean;
+    @Output() onApprove: EventEmitter<T> = new EventEmitter<T>();
+    @Output() onReaction: EventEmitter<Reaction> = new EventEmitter<Reaction>();
 
-    constructor(private answerPostService: AnswerPostService) {}
+    protected constructor(protected postingService: PostingsService<T>) {}
 
-    ngOnInit(): void {
-        this.isAuthorOfAnswerPost = this.user ? this.answerPost?.author!.id === this.user.id : false;
-    }
+    ngOnInit(): void {}
 
-    approveAnswer() {
-        this.interactAnswerPost.emit({
-            name: AnswerPostActionName.APPROVE,
-            answerPost: this.answerPost,
-        });
-    }
+    reactOnPosting(): void {}
 }
