@@ -49,16 +49,6 @@ label {
     cursor: pointer;
 }
 
-.feedback-icon {
-    &.positive-feedback {
-        color: #3d9970;
-    }
-
-    &.negative-feedback {
-        color: #ff4136;
-    }
-}
-
 .text-with-feedback {
     text-decoration-line: underline;
     padding: 2px 4px;

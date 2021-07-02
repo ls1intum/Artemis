@@ -120,7 +120,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "TA")
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void testPrepareSubmissionForAssessmentAutomaticLabel() {
         // create two text blocks
         int submissionCount = 2;
@@ -160,7 +160,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         feedback.setReference(textBlocks.stream().toList().get(0).getId());
 
         // Set feedback to result
-        firstResult.setFeedbacks(Collections.singletonList(feedback));
+        firstResult.addFeedback(feedback);
         resultRepo.save(firstResult);
         feedback.setResult(firstResult);
         feedbackRepository.save(feedback);
