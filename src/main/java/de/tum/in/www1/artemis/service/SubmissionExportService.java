@@ -226,7 +226,7 @@ public abstract class SubmissionExportService {
         }).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
 
         // Add report entry
-        reportData.add(new ArchivalReportEntry(exercise.getId(), fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),
+        reportData.add(new ArchivalReportEntry(exercise, fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),
                 skippedEntries.intValue()));
 
         if (submissionFilePaths.isEmpty()) {

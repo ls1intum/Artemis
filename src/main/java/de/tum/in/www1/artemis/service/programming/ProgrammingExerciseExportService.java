@@ -208,7 +208,7 @@ public class ProgrammingExerciseExportService {
 
         String cleanProjectName = fileService.removeIllegalCharacters(exercise.getProjectName());
         // Add report entry, programming repositories cannot be skipped
-        reportData.add(new ArchivalReportEntry(exercise.getId(), cleanProjectName, pathsToBeZipped.size(), includedFilePathsNotNull.size(), 0));
+        reportData.add(new ArchivalReportEntry(exercise, cleanProjectName, pathsToBeZipped.size(), includedFilePathsNotNull.size(), 0));
 
         try {
             // Only create zip file if there's files to zip
