@@ -262,7 +262,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                     },
-                                    (categoryRes: HttpErrorResponse) => onError(this.jhiAlertService, categoryRes),
+                                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                                 );
                             });
                         }
@@ -436,7 +436,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe(
             () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
+            (error: HttpErrorResponse) => this.onSaveError(error),
         );
     }
 

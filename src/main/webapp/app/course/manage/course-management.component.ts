@@ -66,7 +66,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 // Load the user group numbers lastly
                 this.fetchUserStats();
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -144,7 +144,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
                 });
             },
-            (result: HttpErrorResponse) => onError(this.jhiAlertService, result),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -160,7 +160,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
                 });
             },
-            (result: HttpErrorResponse) => onError(this.jhiAlertService, result),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -177,7 +177,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
                 });
             },
-            (result: HttpErrorResponse) => onError(this.jhiAlertService, result),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

@@ -109,7 +109,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => onError(this.jhiAlertService, categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         }
                     } else {
@@ -174,7 +174,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         this.saveCommand.save(this.textExercise, this.notificationText).subscribe(
             (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
-            (res: HttpErrorResponse) => this.onSaveError(res),
+            (error: HttpErrorResponse) => this.onSaveError(error),
             () => {
                 this.isSaving = false;
             },

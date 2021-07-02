@@ -454,7 +454,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -474,7 +474,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

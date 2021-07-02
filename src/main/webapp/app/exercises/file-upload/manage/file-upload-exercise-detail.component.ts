@@ -60,7 +60,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                 },
-                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;

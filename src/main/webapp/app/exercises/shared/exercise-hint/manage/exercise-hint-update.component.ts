@@ -63,9 +63,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                         tap((res: Exercise) => {
                             this.exerciseHint.exercise = res;
                         }),
-                        catchError((res: HttpErrorResponse) => {
+                        catchError((error: HttpErrorResponse) => {
                             this.exerciseNotFound = true;
-                            onError(this.jhiAlertService, res);
+                            onError(this.jhiAlertService, error);
                             return of(null);
                         }),
                     )

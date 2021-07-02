@@ -119,14 +119,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => onError(this.jhiAlertService, categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         } else {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.exerciseGroup!.exam!.course!.id!).subscribe(
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => onError(this.jhiAlertService, categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         }
                     } else {
@@ -187,7 +187,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
         this.saveCommand.save(this.modelingExercise, this.notificationText).subscribe(
             (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
-            (res: HttpErrorResponse) => this.onSaveError(res),
+            (error: HttpErrorResponse) => this.onSaveError(error),
             () => {
                 this.isSaving = false;
             },

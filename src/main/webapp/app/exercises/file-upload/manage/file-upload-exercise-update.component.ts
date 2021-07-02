@@ -75,7 +75,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     (categoryRes: HttpResponse<string[]>) => {
                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                     },
-                    (categoryRes: HttpErrorResponse) => onError(this.jhiAlertService, categoryRes),
+                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                 );
             }
 

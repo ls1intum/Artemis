@@ -69,7 +69,7 @@ export class QuizExerciseExportComponent implements OnInit {
                         });
                     }
                 },
-                (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         });
     }

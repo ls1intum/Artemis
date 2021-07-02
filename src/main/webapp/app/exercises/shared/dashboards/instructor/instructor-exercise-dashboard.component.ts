@@ -81,17 +81,17 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
     private loadExercise(exerciseId: number) {
         this.exerciseService.find(exerciseId).subscribe(
-            (res: HttpResponse<Exercise>) => (this.exercise = res.body!),
-            (response: HttpErrorResponse) => onError(this.jhiAlertService, response),
+            (response: HttpResponse<Exercise>) => (this.exercise = response.body!),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
-            (res: HttpResponse<StatsForDashboard>) => {
-                this.stats = StatsForDashboard.from(Object.assign({}, this.stats, res.body));
+            (response: HttpResponse<StatsForDashboard>) => {
+                this.stats = StatsForDashboard.from(Object.assign({}, this.stats, response.body));
                 this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
                 this.setStatistics();
             },
-            (response: string) => this.onError(response),
+            (errorMessage: string) => this.onError(errorMessage),
         );
     }
 

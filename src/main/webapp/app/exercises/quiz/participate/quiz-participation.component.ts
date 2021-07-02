@@ -232,7 +232,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -248,7 +248,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -260,7 +260,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body!);
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -271,7 +271,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
