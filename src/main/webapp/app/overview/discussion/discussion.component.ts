@@ -82,20 +82,13 @@ export class DiscussionComponent implements OnInit, AfterViewInit {
      */
     interactPost(action: PostRowAction) {
         switch (action.name) {
-            case PostRowActionName.DELETE:
-                this.deletePostFromList(action.post);
-                break;
             case PostRowActionName.VOTE_CHANGE:
                 this.updatePostAfterVoteChange(action.post);
                 break;
         }
     }
 
-    /**
-     * takes a post and removes it from the list
-     * @param {Post} post
-     */
-    deletePostFromList(post: Post): void {
+    deletePost(post: Post): void {
         this.posts = this.posts.filter((el) => el.id !== post.id);
     }
 

@@ -2,7 +2,7 @@
     <div class="col-auto px-0">
         <fa-icon
             size="xs"
-            class="clickable action-icon"
+            class="clickable icon"
             *ngIf="isAtLeastTutorInCourse"
             [class.answer-approved]="answerPost.tutorApproved"
             [ngbTooltip]="(answerPost.tutorApproved ? 'artemisApp.metis.unapproveAnswer' : 'artemisApp.metis.approveAnswer') | artemisTranslate"

@@ -88,7 +88,7 @@ describe('PostRowComponent', () => {
     it('should delete post from list', () => {
         component.lecture = lectureDefault;
         component.ngOnInit();
-        component.deletePostFromList(post1);
+        component.deletePost(post1);
         expect(component.posts).to.deep.equal([post2]);
     });
 });

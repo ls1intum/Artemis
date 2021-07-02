@@ -1,10 +1,10 @@
-<div class="row justify-content-between">
-    <div class="col-auto mb-1">
+<div class="row justify-content-between my-1">
+    <div class="col-auto">
         <span class="posting-header">{{ posting.author!.name }} • {{ posting.creationDate | artemisDate: 'short' }}</span>
         <fa-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             size="xs"
-            class="me-0.5 clickable action-icon"
+            class="me-0.5 clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
             [icon]="'pencil-alt'"
@@ -15,7 +15,7 @@
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
-            [ngClass]="'me-1 clickable action-icon'"
+            [ngClass]="'me-1 clickable icon'"
             [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
             [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
         ></jhi-confirm-icon>

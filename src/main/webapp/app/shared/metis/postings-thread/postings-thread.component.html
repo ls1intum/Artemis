@@ -1,14 +1,12 @@
-<div class="row mb-2 me-1">
+<div class="row mb-2">
     <div class="col-12">
         <jhi-post
-            (click)="toggleAnswers()"
-            [ngClass]="sortedAnswerPosts.length > 0 ? 'clickable' : ''"
             [posting]="post"
-            [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
-            [disableTooltip]="sortedAnswerPosts.length === 0"
             [user]="user"
             [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
             [courseId]="courseId"
+            (onDelete)="onDelete.emit($event)"
+            (toggledAnswersChange)="toggleAnswers()"
             (interactPost)="interactPost($event)"
         ></jhi-post>
         <div class="row">
@@ -20,23 +18,21 @@
                         [user]="user"
                         [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
                         [courseId]="courseId"
+                        (onDelete)="deleteAnswerPost($event)"
                         (interactAnswerPost)="interactAnswerPost($event)"
                     ></jhi-answer-post>
                 </ng-container>
                 <!-- new answer -->
-                <div class="row mx-1 my-2" *ngIf="toggledAnswers || sortedAnswerPosts.length === 0">
-                    <div class="col-12 px-0">
-                        <button class="btn btn-sm btn-outline-secondary" (click)="createEditModal.open()">
-                            {{ 'artemisApp.metis.answerNow' | artemisTranslate }}
-                        </button>
-                    </div>
-                    <jhi-answer-post-create-edit-modal
-                        #createEditModal
-                        [posting]="createEmptyAnswerPost()"
-                        [courseId]="courseId"
-                        (onCreate)="onCreateAnswerPost($event)"
-                    ></jhi-answer-post-create-edit-modal>
-                </div>
+                <button *ngIf="toggledAnswers || sortedAnswerPosts.length === 0" class="btn btn-sm btn-outline-secondary m-1" (click)="createEditModal.open()">
+                    <fa-icon [icon]="'comments'"></fa-icon>
+                    <span class="d-none d-md-inline">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
+                </button>
+                <jhi-answer-post-create-edit-modal
+                    #createEditModal
+                    [posting]="createEmptyAnswerPost()"
+                    [courseId]="courseId"
+                    (onCreate)="onCreateAnswerPost($event)"
+                ></jhi-answer-post-create-edit-modal>
             </div>
         </div>
     </div>

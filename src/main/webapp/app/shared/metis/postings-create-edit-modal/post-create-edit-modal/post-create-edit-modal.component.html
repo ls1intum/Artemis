@@ -19,6 +19,8 @@
             class="btn btn-sm btn-outline-secondary"
             (click)="confirm()"
         ></button>
-        <button type="button" class="btn btn-outline" (click)="c()">Close</button>
+        <button class="btn btn-sm me-1 btn-outline-secondary" (click)="c()">
+            {{ 'artemisApp.metis.cancel' | artemisTranslate }}
+        </button>
     </div>
 </ng-template>

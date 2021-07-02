@@ -1,10 +1,10 @@
-<div class="row justify-content-between">
-    <div class="col-auto mb-1">
+<div class="row justify-content-between my-1">
+    <div class="col-auto">
         <span class="posting-header">{{ posting.author!.name }} • {{ posting.creationDate | artemisDate: 'short' }}</span>
         <fa-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             size="xs"
-            class="me-0.5 clickable action-icon"
+            class="me-0.5 clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
             [icon]="'pencil-alt'"
@@ -15,13 +15,19 @@
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
-            [ngClass]="'me-1 clickable action-icon'"
+            [ngClass]="'me-1 clickable icon'"
             [initialTooltip]="'artemisApp.metis.deletePost' | artemisTranslate"
             [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
         ></jhi-confirm-icon>
     </div>
-    <div class="col-auto px-0">
+    <div
+        class="col-auto px-1"
+        (click)="toggleAnswers()"
+        [ngClass]="getNumberOfAnswerPosts() > 0 ? 'clickable' : ''"
+        [ngbTooltip]="'artemisApp.metis.toggleThread' | artemisTranslate"
+        [disableTooltip]="getNumberOfAnswerPosts() === 0"
+    >
         <span class="posting-header">{{ getNumberOfAnswerPosts() }}</span>
-        <fa-icon [icon]="'comments'" class="labels"></fa-icon>
+        <fa-icon [icon]="'comments'" class="icon"> </fa-icon>
     </div>
 </div>

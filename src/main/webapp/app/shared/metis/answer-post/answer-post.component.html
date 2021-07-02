@@ -1,34 +1,5 @@
-<div class="row mb-0.5 py-1 px-2 mx-1 mb-2 answer-post" [class.answer-approved]="posting.tutorApproved">
-    <div class="col-12">
-        <jhi-answer-post-header [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" [user]="user"></jhi-answer-post-header>
-        <!-- answer-post not in edit mode -->
-        <ng-container *ngIf="!isEditMode">
-            <div class="row">
-                <div
-                    class="col posting-content markdown-preview"
-                    [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
-                    [ngbTooltip]="posting.tutorApproved ? ('artemisApp.metis.approvedLabel' | artemisTranslate) : ''"
-                ></div>
-            </div>
-        </ng-container>
-        <!-- answer-post in edit mode -->
-        <ng-container *ngIf="isEditMode">
-            <div class="row mb-2">
-                <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
-                <div class="col-12 mt-1 d-flex">
-                    <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
-                        {{ 'artemisApp.metis.cancel' | artemisTranslate }}
-                    </button>
-                    <button
-                        jhi-postings-button
-                        [buttonLoading]="isLoading"
-                        [disabled]="!content || content.length === 0"
-                        [buttonLabel]="'artemisApp.metis.saveAnswer' | artemisTranslate"
-                        class="btn btn-sm btn-outline-secondary"
-                        (click)="updatePosting()"
-                    ></button>
-                </div>
-            </div>
-        </ng-container>
-    </div>
+<div class="row m-1 answer-post">
+    <jhi-answer-post-header [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" [user]="user" (onDelete)="onDelete.emit($event)">
+    </jhi-answer-post-header>
+    <div class="col markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
 </div>

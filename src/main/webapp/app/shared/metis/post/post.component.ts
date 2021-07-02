@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { PostService } from 'app/shared/metis/post/post.service';
@@ -10,7 +10,6 @@ export interface PostAction {
 }
 
 export enum PostActionName {
-    DELETE,
     VOTE_CHANGE,
 }
 
@@ -20,10 +19,12 @@ export enum PostActionName {
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class PostComponent extends PostingDirective<Post> {
+    @Output() onDelete: EventEmitter<Post> = new EventEmitter<Post>();
+    @Output() toggledAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
 
     constructor(protected postService: PostService) {
-        super(postService);
+        super();
     }
 
     /**

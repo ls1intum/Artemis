@@ -1,32 +1,13 @@
-<jhi-post-header [posting]="posting" [isAtLeastTutorInCourse]="isAtLeastTutorInCourse" [courseId]="courseId" [user]="user"></jhi-post-header>
-<!-- post not in edit mode -->
-<ng-container *ngIf="!isEditMode">
-    <div class="row align-items-center">
-        <jhi-post-votes class="col-auto" [postId]="posting.id!" [votes]="posting.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
-        <div class="col posting-content markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
-    </div>
-</ng-container>
-<!-- post in edit mode -->
-<ng-container *ngIf="isEditMode">
-    <div class="row mb-2">
-        <jhi-postings-markdown-editor [(content)]="content"></jhi-postings-markdown-editor>
-        <div class="row d-flex align-items-sm-center">
-            <div class="col">
-                <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
-                    {{ 'artemisApp.metis.cancel' | artemisTranslate }}
-                </button>
-                <button
-                    class="btn btn-sm btn-outline-secondary"
-                    jhi-postings-button
-                    [buttonLoading]="isLoading"
-                    [disabled]="!content || content.length === 0"
-                    [buttonLabel]="'artemisApp.metis.savePost' | artemisTranslate"
-                    (click)="updatePosting()"
-                ></button>
-            </div>
-            <div class="col text-end">
-                <p class="small my-0 ms-2">{{ content?.length }} / {{ maxContentLength }}</p>
-            </div>
-        </div>
-    </div>
-</ng-container>
+<jhi-post-header
+    [posting]="posting"
+    [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+    [courseId]="courseId"
+    [user]="user"
+    (onDelete)="onDelete.emit($event)"
+    (toggledAnswersChange)="toggledAnswersChange.emit($event)"
+>
+</jhi-post-header>
+<div class="row align-items-center">
+    <jhi-post-votes class="col-auto" [postId]="posting.id!" [votes]="posting.votes!" (interactVotes)="interactVotes($event)"></jhi-post-votes>
+    <div class="col markdown-preview" [innerHTML]="posting.content ? (posting.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"></div>
+</div>

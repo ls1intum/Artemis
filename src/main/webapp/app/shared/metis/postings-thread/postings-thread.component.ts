@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import * as moment from 'moment';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -15,7 +14,6 @@ export interface PostRowAction {
 }
 
 export enum PostRowActionName {
-    DELETE,
     VOTE_CHANGE,
 }
 
@@ -29,8 +27,9 @@ export class PostingsThreadComponent implements OnInit {
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Input() courseId: number;
-    @Output() interactPostRow = new EventEmitter<PostRowAction>();
-    toggledAnswers = false;
+    @Output() onDelete: EventEmitter<Post> = new EventEmitter<Post>();
+    @Output() interactPostRow: EventEmitter<PostRowAction> = new EventEmitter<PostRowAction>();
+    toggledAnswers: boolean;
     sortedAnswerPosts: AnswerPost[];
 
     constructor(private answerPostService: AnswerPostService, private postService: PostService, private localStorage: LocalStorageService) {}
@@ -48,12 +47,6 @@ export class PostingsThreadComponent implements OnInit {
      */
     interactAnswerPost(action: AnswerPostAction) {
         switch (action.name) {
-            case AnswerPostActionName.DELETE:
-                this.deleteAnswerFromList(action.answerPost);
-                break;
-            case AnswerPostActionName.ADD:
-                this.addAnswerPostToList(action.answerPost);
-                break;
             case AnswerPostActionName.APPROVE:
                 this.sortAnswerPosts();
                 break;
@@ -66,9 +59,6 @@ export class PostingsThreadComponent implements OnInit {
      */
     interactPost(action: PostAction): void {
         switch (action.name) {
-            case PostActionName.DELETE:
-                this.deletePost();
-                break;
             case PostActionName.VOTE_CHANGE:
                 this.interactPostRow.emit({
                     name: PostRowActionName.VOTE_CHANGE,
@@ -92,22 +82,12 @@ export class PostingsThreadComponent implements OnInit {
         );
     }
 
-    /**
-     * deletes the post
-     */
     deletePost(): void {
-        this.postService.delete(this.courseId, this.post).subscribe(() => {
-            this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
-            this.interactPostRow.emit({
-                name: PostRowActionName.DELETE,
-                post: this.post,
-            });
-        });
+        this.onDelete.emit(this.post);
+        // TODO why?
+        this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
     }
 
-    /**
-     * Creates a new answerPost
-     */
     onCreateAnswerPost(answerPost: AnswerPost): void {
         if (!this.post.answers) {
             this.post.answers = [];
@@ -116,21 +96,8 @@ export class PostingsThreadComponent implements OnInit {
         this.sortAnswerPosts();
     }
 
-    /**
-     * Takes a answerPost and deletes it
-     * @param   {posting} answerPost
-     */
-    deleteAnswerFromList(answerPost: AnswerPost): void {
+    deleteAnswerPost(answerPost: AnswerPost): void {
         this.post.answers = this.post.answers?.filter((el: AnswerPost) => el.id !== answerPost.id);
-        this.sortAnswerPosts();
-    }
-
-    /**
-     * Takes a answerPost and adds it to the others
-     * @param   {AnswerPost} answerPost
-     */
-    addAnswerPostToList(answerPost: AnswerPost): void {
-        this.post.answers!.push(answerPost);
         this.sortAnswerPosts();
     }
 

@@ -9,8 +9,6 @@ export interface AnswerPostAction {
 }
 
 export enum AnswerPostActionName {
-    DELETE,
-    ADD,
     APPROVE,
 }
 
@@ -20,10 +18,11 @@ export enum AnswerPostActionName {
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {
+    @Output() onDelete: EventEmitter<AnswerPost> = new EventEmitter<AnswerPost>();
     @Output() interactAnswerPost: EventEmitter<AnswerPostAction> = new EventEmitter<AnswerPostAction>();
 
     constructor(protected answerPostService: AnswerPostService) {
-        super(answerPostService);
+        super();
     }
 
     /**
