@@ -54,7 +54,7 @@
                 "impactWarningTooltip": "Die Anzahl, wie oft dein Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
                 "automaticFeedbackInformationModal": {
                     "heading": "Automatische Feedbackverfolgung",
-                    "introduction": "Dieser automatische Vorschlag stammt von einer zuvor bewerteten Vorlage, die unten gezeigt wird. .<br/> Das  <span style='background-color: #d8e8f5'>hervorgehobene Feedback</span> wurde wiederverwendet:",
+                    "introduction": "Dieser automatische Vorschlag stammt von einer zuvor bewerteten Vorlage, die unten gezeigt wird. <br/> Das  <span style='background-color: #d8e8f5'>hervorgehobene Feedback</span> wurde wiederverwendet:<br/><br/>",
                     "trace": "Herkunft des automatischen Feedbacks verfolgen",
                     "points": "Punkte",
                     "reused": "{{reusedCount}} mal wiederverwendet"

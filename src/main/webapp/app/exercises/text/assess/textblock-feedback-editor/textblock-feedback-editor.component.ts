@@ -172,7 +172,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
 
             // connect the feedback with its respective block if any.
-            const blocks: any[] = participation.submissions?.values().next().value.blocks;
+            let blocks: any[] = participation.submissions?.values().next().value.blocks;
+            // Sort blocks to show them in order.
+            blocks = blocks.sort((a, b) => a!.startIndex! - b!.startIndex!);
             const feedbacks: any[] = participation.submissions?.values().next().value.latestResult.feedbacks;
 
             // set list of blocks to be shown in the modal
