@@ -1,1 +1,7 @@
-<div class="row justify-content-between my-1"></div>
+<div class="row mx-1">
+    <div *ngFor="let tag of tags" class="col-auto px-0 me-1">
+        <div class="post-tag text-white badge">
+            <span>{{ tag }}</span>
+        </div>
+    </div>
+</div>

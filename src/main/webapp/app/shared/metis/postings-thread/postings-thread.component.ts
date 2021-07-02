@@ -71,7 +71,6 @@ export class PostingsThreadComponent implements OnInit {
 
     deletePost(): void {
         this.onDelete.emit(this.post);
-        // TODO why?
         this.localStorage.clear(`q${this.post.id}u${this.user.id}`);
     }
 

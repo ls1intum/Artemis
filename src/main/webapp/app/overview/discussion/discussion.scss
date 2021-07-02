@@ -51,6 +51,13 @@ $label-color: #6a737d;
     }
 }
 
+.post-tag {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: darkblue;
+}
+
 .approved-badge {
     max-width: 130px;
     overflow: hidden;

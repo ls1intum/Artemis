@@ -16,7 +16,7 @@ export class Post extends Posting {
     public visibleForStudents?: boolean;
     public votes?: number;
     public answers?: AnswerPost[];
-    public tags?: PostTag[];
+    public tags?: string[];
     public exercise?: Exercise;
     public lecture?: Lecture;
     public course?: Course;
