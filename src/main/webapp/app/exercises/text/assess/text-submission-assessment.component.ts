@@ -199,7 +199,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.submission!.id!, this.examId, this.exerciseGroupId))
+                .createUrlTree(
+                    getLinkToSubmissionAssessment(
+                        ExerciseType.TEXT,
+                        this.courseId,
+                        this.exerciseId,
+                        this.participation!.id!,
+                        this.submission!.id!,
+                        this.examId,
+                        this.exerciseGroupId,
+                    ),
+                )
                 .toString();
             this.location.go(newUrl);
         }
@@ -284,7 +294,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Go to next submission
      */
     async nextSubmission(): Promise<void> {
-        const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, 'new', this.examId, this.exerciseGroupId);
+        const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id!, 'new', this.examId, this.exerciseGroupId);
         this.nextSubmissionBusy = true;
         await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
