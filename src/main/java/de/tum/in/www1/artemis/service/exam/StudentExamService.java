@@ -236,7 +236,7 @@ public class StudentExamService {
     }
 
     /**
-     * Assess the modeling-, text and file upload exercises of student exams of an exam which are not submitted with 0 points.
+     * Assess all exercises, except quiz exercises, of student exams of an exam which are not submitted with 0 points.
      *
      * @param exam the exam
      * @param assessor the assessor should be the instructor making the call.
@@ -248,11 +248,14 @@ public class StudentExamService {
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
                 .collect(Collectors.toMap(StudentExam::getUser,
                         studentExam -> studentExam.getExercises().stream()
-                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
+                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                 .collect(Collectors.toList())));
+
         for (final var user : exercisesOfUser.keySet()) {
+            // fetch all studentParticipations of a user, with sumbissions and results eagerly loaded
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
+
             for (final var studentParticipation : studentParticipations) {
                 final var latestSubmission = studentParticipation.findLatestSubmission();
                 if (latestSubmission.isPresent()) {
