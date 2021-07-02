@@ -1,4 +1,4 @@
-<jhi-exercise-assessment-dashboard *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else withOrionButtons"> </jhi-exercise-assessment-dashboard>
+<jhi-exercise-assessment-dashboard *ngIf="!exercise || exercise.type !== ExerciseType.PROGRAMMING; else withOrionButtons"> </jhi-exercise-assessment-dashboard>
 
 <ng-template #withOrionButtons>
     <jhi-exercise-assessment-dashboard *ngIf="orionState.opened !== exerciseId || orionState.view !== ExerciseView.TUTOR; else withTable">

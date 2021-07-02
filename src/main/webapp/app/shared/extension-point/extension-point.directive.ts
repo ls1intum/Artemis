@@ -29,24 +29,24 @@ import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRe
 export class ExtensionPointDirective implements OnChanges {
     private _viewRef: EmbeddedViewRef<any> | undefined = undefined;
 
-    @Input() public extensionPointContext: Object | undefined = undefined;
-    @Input() public extensionPoint: TemplateRef<any> | undefined = undefined;
+    @Input() public jhiExtensionPoint: TemplateRef<any> | undefined = undefined;
+    @Input() public jhiExtensionPointContext: Object | undefined = undefined;
 
     constructor(private _viewContainerRef: ViewContainerRef, private _templateRef: TemplateRef<any>) {}
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes['extensionPoint']) {
+        if (changes['jhiExtensionPoint']) {
             const viewContainerRef = this._viewContainerRef;
 
             if (this._viewRef) {
                 viewContainerRef.remove(viewContainerRef.indexOf(this._viewRef));
             }
 
-            this._viewRef = this.extensionPoint
-                ? viewContainerRef.createEmbeddedView(this.extensionPoint, this.extensionPointContext)
-                : viewContainerRef.createEmbeddedView(this._templateRef, this.extensionPointContext);
-        } else if (this._viewRef && changes['extensionPointContext'] && this.extensionPointContext) {
-            this._viewRef.context = this.extensionPointContext;
+            this._viewRef = this.jhiExtensionPoint
+                ? viewContainerRef.createEmbeddedView(this.jhiExtensionPoint, this.jhiExtensionPointContext)
+                : viewContainerRef.createEmbeddedView(this._templateRef, this.jhiExtensionPointContext);
+        } else if (this._viewRef && changes['jhiExtensionPointContext'] && this.jhiExtensionPointContext) {
+            this._viewRef.context = this.jhiExtensionPointContext;
         }
     }
 }
