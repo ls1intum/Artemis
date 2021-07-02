@@ -14,10 +14,7 @@ public class ScoringStrategyMultipleChoiceProportionalWithoutPenalty implements 
             return quizQuestion.getPoints();
         }
 
-        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && quizQuestion instanceof MultipleChoiceQuestion) {
-            MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-            MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizQuestion;
-
+        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcAnswer && quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
             double totalOptions = mcQuestion.getAnswerOptions().size();
             double correctSelections = 0;
 
