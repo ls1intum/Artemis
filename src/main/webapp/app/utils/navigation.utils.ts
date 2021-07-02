@@ -94,6 +94,7 @@ export const getLinkToSubmissionAssessment = (
     exerciseType: ExerciseType,
     courseId: number,
     exerciseId: number,
+    participationId: number,
     submissionId: number | 'new',
     examId: number,
     exerciseGroupId: number,
@@ -119,7 +120,11 @@ export const getLinkToSubmissionAssessment = (
         }
         return route;
     } else {
-        return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
+        if (exerciseType === ExerciseType.TEXT) {
+            return ['/course-management', courseId.toString(), 'participations', participationId.toString(), 'submissions', submissionId.toString(), 'for-text-assessment'];
+        } else {
+            return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
+        }
     }
 };
 
