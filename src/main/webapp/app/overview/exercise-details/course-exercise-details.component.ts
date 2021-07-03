@@ -1,45 +1,45 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {Location} from '@angular/common';
-import {HttpErrorResponse, HttpResponse} from '@angular/common/http';
-import {CourseManagementService} from 'app/course/manage/course-management.service';
-import {ActivatedRoute} from '@angular/router';
-import {Subscription} from 'rxjs';
-import {filter} from 'rxjs/operators';
-import {Result} from 'app/entities/result.model';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
-import {User} from 'app/core/user/user.model';
-import {ParticipationService} from 'app/exercises/shared/participation/participation.service';
-import {ParticipationWebsocketService} from 'app/overview/participation-websocket.service';
-import {AccountService} from 'app/core/auth/account.service';
-import {GuidedTourService} from 'app/guided-tour/guided-tour.service';
-import {programmingExerciseFail, programmingExerciseSuccess} from 'app/guided-tour/tours/course-exercise-detail-tour';
-import {SourceTreeService} from 'app/exercises/programming/shared/service/sourceTree.service';
-import {ProfileService} from 'app/shared/layouts/profiles/profile.service';
-import {CourseScoreCalculationService} from 'app/overview/course-score-calculation.service';
-import {InitializationState, Participation} from 'app/entities/participation/participation.model';
-import {Exercise, ExerciseType, ParticipationStatus} from 'app/entities/exercise.model';
-import {StudentParticipation} from 'app/entities/participation/student-participation.model';
-import {ExerciseService} from 'app/exercises/shared/exercise/exercise.service';
-import {AssessmentType} from 'app/entities/assessment-type.model';
-import {participationStatus} from 'app/exercises/shared/exercise/exercise-utils';
-import {ProgrammingExercise} from 'app/entities/programming-exercise.model';
-import {ProgrammingExerciseStudentParticipation} from 'app/entities/participation/programming-exercise-student-participation.model';
-import {JhiWebsocketService} from 'app/core/websocket/websocket.service';
-import {GradingCriterion} from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import {CourseExerciseSubmissionResultSimulationService} from 'app/course/manage/course-exercise-submission-result-simulation.service';
-import {ProgrammingExerciseSimulationUtils} from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
-import {JhiAlertService} from 'ng-jhipster';
-import {ProgrammingExerciseSimulationService} from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
-import {TeamAssignmentPayload} from 'app/entities/team.model';
-import {TeamService} from 'app/exercises/shared/team/team.service';
-import {QuizExercise, QuizStatus} from 'app/entities/quiz/quiz-exercise.model';
-import {QuizExerciseService} from 'app/exercises/quiz/manage/quiz-exercise.service';
-import {PostingsComponent} from 'app/overview/postings/postings.component';
-import {ProgrammingSubmissionService} from 'app/exercises/programming/participate/programming-submission.service';
-import {ExerciseCategory} from 'app/entities/exercise-category.model';
-import {getFirstResultWithComplaintFromResults} from 'app/entities/submission.model';
-import {ComplaintService} from 'app/complaints/complaint.service';
-import {Complaint} from 'app/entities/complaint.model';
+import { User } from 'app/core/user/user.model';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { JhiAlertService } from 'ng-jhipster';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
+import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { TeamService } from 'app/exercises/shared/team/team.service';
+import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { PostingsComponent } from 'app/overview/postings/postings.component';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { Complaint } from 'app/entities/complaint.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -478,9 +478,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.jhiAlertService.error('artemisApp.exercise.resultCreationUnsuccessful');
             },
         );
-    }
-    onClick() {
-        console.log("asdfadsfdsf");
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
