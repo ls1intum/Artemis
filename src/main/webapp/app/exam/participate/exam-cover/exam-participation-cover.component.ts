@@ -14,6 +14,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
@@ -142,7 +143,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                     this.waitingForExamStart = true;
                     this.interval = window.setInterval(() => {
                         this.updateDisplayedTimes(studentExam);
-                    }, 100);
+                    }, UI_RELOAD_TIME);
                 }
             });
         }

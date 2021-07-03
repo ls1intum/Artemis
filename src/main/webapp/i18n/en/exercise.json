@@ -49,6 +49,10 @@
             "structuredGradingInstructions": "Structured Grading Instructions",
             "addGradingCriterion": "Add Grading Criterion",
             "deleteGradingCriterion": "Delete This Criterion",
+            "resetGradingCriterionTitle": "Reset the grading criterion title",
+            "resetGradingInstruction": "Reset grading instruction",
+            "deleteGradingInstruction": "Delete grading instruction",
+            "addGradingInstruction": "Add new grading instruction",
             "usageCount": "Max Count in Score",
             "usageCountHint": "This number specifies how many times points for this instruction may be added to the final score",
             "DragDropInstruction": "Drag & Drop instruction to feedback element",
@@ -182,13 +186,16 @@
             "isTeamExercise": "This is a team exercise.",
             "update": {
                 "warning": {
-                    "warning": "Warning!",
-                    "confirm": "Confirm changes",
-                    "problems": "The following problems may occur:",
-                    "instructionDeleted": "Grading Instruction deleted:",
-                    "scoringChange": "Scoring changed:",
-                    "results": "The existing results must be recalculated!",
-                    "confirmtext": "Do you really want to perform these changes?"
+                    "warning": "Warning: These changes will possibly cause problems",
+                    "saveExerciseWithoutReevaluation": "Do not re-evaluate",
+                    "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
+                    "instructionDeleted": "Grading instruction deleted",
+                    "creditChanged": "Grading instruction credit changed",
+                    "usageCountChanged": "Grading instruction usage count changed",
+                    "confirmText": "Do you want to perform these changes with or without the re-evaluation of the exercise?",
+                    "reevaluateExercise": "Re-evaluate",
+                    "deleteFeedback": "Additionally delete all corresponding feedback that is associated with the deleted Grading Instruction.",
+                    "information": "If you do not want to trigger a re-evaluation, we can not guarantee the consistency of feedback associated to this grading instruction."
                 }
             },
             "isUsedForTutorial": "Tutor needs to review"

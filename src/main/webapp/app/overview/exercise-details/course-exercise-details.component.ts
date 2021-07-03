@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -40,6 +39,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -87,7 +87,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public wasSubmissionSimulated = false;
 
     constructor(
-        private $location: Location,
         private exerciseService: ExerciseService,
         private courseService: CourseManagementService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -108,6 +107,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private quizExerciseService: QuizExerciseService,
         private submissionService: ProgrammingSubmissionService,
         private complaintService: ComplaintService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit() {
@@ -319,8 +319,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Navigates to the previous page or, if no previous navigation happened, to the courses exercise overview
+     */
     backToCourse() {
-        this.$location.back();
+        this.navigationUtilService.navigateBack(['courses', this.courseId.toString(), 'exercises']);
     }
 
     exerciseRatedBadge(result: Result): string {
