@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -94,11 +94,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
-            if(!this.isExamExercise) {
-                this.baseResource =  `/course-management/${this.courseId}/programming-exercises/${programmingExercise.id}/`;
+            if (!this.isExamExercise) {
+                this.baseResource = `/course-management/${this.courseId}/programming-exercises/${programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/`;
             } else {
-                this.baseResource =  `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                this.baseResource =
+                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
