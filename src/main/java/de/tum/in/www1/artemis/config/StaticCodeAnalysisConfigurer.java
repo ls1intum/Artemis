@@ -68,7 +68,9 @@ public class StaticCodeAnalysisConfigurer {
                 new StaticCodeAnalysisDefaultCategory("Naming & Formatting", 0D, 0D, CategoryState.INACTIVE,
                         List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "imports"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "indentation"),
                                 createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "naming"), createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "whitespace"))),
-                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "miscellaneous"))));
+                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.CHECKSTYLE, "miscellaneous"), createMapping(StaticCodeAnalysisTool.PMD, "miscellaneous"),
+                                createMapping(StaticCodeAnalysisTool.SPOTBUGS, "miscellaneous"), createMapping(StaticCodeAnalysisTool.PMD_CPD, "miscellaneous"))));
     }
 
     /**

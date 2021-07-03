@@ -560,8 +560,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
-        if (submission.getParticipation() instanceof StudentParticipation) {
-            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             // no need to send all exercise details here
             submission.getParticipation().setExercise(null);
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
@@ -574,8 +573,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        if (submission.getParticipation() instanceof StudentParticipation) {
-            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
         }
 

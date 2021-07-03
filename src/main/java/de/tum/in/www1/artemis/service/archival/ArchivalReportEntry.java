@@ -1,37 +1,41 @@
 package de.tum.in.www1.artemis.service.archival;
 
-import java.util.OptionalLong;
+import javax.annotation.Nullable;
+
+import de.tum.in.www1.artemis.domain.Exercise;
 
 public class ArchivalReportEntry {
 
-    private final OptionalLong exerciseId;
+    @Nullable
+    private final Exercise exercise;
 
     private final String exerciseName;
 
-    private final int totalEntries;
+    private final int participants;
 
-    private final int successfulEntries;
+    private final int successfulExports;
 
-    private final int failedEntries;
+    private final int participantsWithoutSubmission;
+
+    private final int failedExports;
 
     /**
      * Generates a new entry with the given data
-     *
-     * @param exerciseId the id or a negative number if no id is applicable
      */
-    public ArchivalReportEntry(long exerciseId, String exerciseName, int totalEntries, int successfulEntries, int failedEntries) {
-        this.exerciseId = exerciseId >= 0 ? OptionalLong.of(exerciseId) : OptionalLong.empty();
+    public ArchivalReportEntry(@Nullable Exercise exercise, String exerciseName, int participants, int successfulExports, int participantsWithoutSubmission, int failedExports) {
+        this.exercise = exercise;
         this.exerciseName = exerciseName;
-        this.totalEntries = totalEntries;
-        this.successfulEntries = successfulEntries;
-        this.failedEntries = failedEntries;
+        this.participants = participants;
+        this.successfulExports = successfulExports;
+        this.participantsWithoutSubmission = participantsWithoutSubmission;
+        this.failedExports = failedExports;
     }
 
     /**
-     * Shortcut for {@link ArchivalReportEntry} but calculates the missing value
+     * Shortcut for {@link ArchivalReportEntry} but calculates the amount of fails
      */
-    public ArchivalReportEntry(long exerciseId, String exerciseName, int totalEntries, int successfulEntries) {
-        this(exerciseId, exerciseName, totalEntries, successfulEntries, totalEntries - successfulEntries);
+    public ArchivalReportEntry(Exercise exercise, String exerciseName, int participants, int successfulExports, int participantsWithoutSubmission) {
+        this(exercise, exerciseName, participants, successfulExports, participantsWithoutSubmission, participants - successfulExports - participantsWithoutSubmission);
     }
 
     /**
@@ -39,13 +43,14 @@ public class ArchivalReportEntry {
      */
     @Override
     public String toString() {
-        return (exerciseId.isPresent() ? exerciseId.getAsLong() : "") + "," + exerciseName + "," + totalEntries + "," + successfulEntries + "," + failedEntries;
+        return (exercise != null ? exercise.getId() + "," + exercise.getClass().getSimpleName() : ",") + "," + exerciseName + "," + participants + "," + successfulExports + ","
+                + participantsWithoutSubmission + "," + failedExports;
     }
 
     /**
      * @return the headline of a csv file containing entries of this class
      */
     public static String getHeadline() {
-        return "exerciseId,exerciseName,totalEntries,successfulEntries,failedEntries";
+        return "id,type,name,participants,successful exports,participants without submission,failed exports";
     }
 }
