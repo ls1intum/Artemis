@@ -19,7 +19,6 @@ const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
 const courseShortName = 'cy' + uid;
 
-// FIXME: Enable tests again
 describe('Modeling Exercise Spec', () => {
     before('Log in as instructor and create a course', () => {
         cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
@@ -91,10 +90,28 @@ describe('Modeling Exercise Spec', () => {
             cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(5)').click();
             cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
             cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3)').type('Unnecessary');
-            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(13)').click();
+            cy.get('.card-body').click('top');
             cy.get('.sc-fubCfw > :nth-child(1) > :nth-child(1) > :nth-child(2) > :nth-child(1)').should('exist');
             cy.get('.col-lg-4 > :nth-child(1)').click();
-            cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
+        });
+
+        it('Edit Existing Modeling Exercise', () => {
+            cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            cy.get('#field_title')
+                .clear()
+                .type('Cypress EDITED ME' + uid);
+            cy.get('#field_categories >>>>>>>:nth-child(2)>').click();
+            cy.get('jhi-difficulty-picker > :nth-child(1) > :nth-child(4)').click({ force: true });
+            cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('01.01.2030', { force: true });
+            cy.get('.ml-3 > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('02.01.2030', { force: true });
+            cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').type('03.01.2030', { force: true });
+            cy.get('jhi-included-in-overall-score-picker > .btn-group > :nth-child(3)').click({ force: true });
+            cy.get('#field_points').clear().type('100');
+            cy.get(':nth-child(3) > .btn-primary').click();
+            cy.visit(`/course-management/${testCourse.id}/exercises`);
+            cy.get('tbody > tr > :nth-child(2)').should('contain.text', 'Cypress EDITED ME');
+            cy.get('tbody > tr > :nth-child(3)').should('contain.text', 'Jan 1, 2030');
+            cy.get('tbody > tr > :nth-child(6)').should('contain.text', '100');
         });
     });
 });
