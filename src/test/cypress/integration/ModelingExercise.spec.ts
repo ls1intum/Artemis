@@ -5,21 +5,22 @@ import { generateUUID } from '../support/utils';
 // environmental variables
 const username = Cypress.env('username');
 const password = Cypress.env('password');
+let instructorUsername = Cypress.env('instructorUsername');
+let instructorPassword = Cypress.env('instructorPassword');
 if (Cypress.env('isCi')) {
-    Cypress.env('instructorUsername', username.replace('USERID', '11'));
-    Cypress.env('instructorPassword', password.replace('USERID', '11'));
+    instructorUsername = username.replace('USERID', '11');
+    instructorPassword = password.replace('USERID', '11');
 }
-const instructorUsername = Cypress.env('instructorUsername');
-const instructorPassword = Cypress.env('instructorPassword');
+
 let testCourse: any;
 
 //
-const uid = generateUUID;
+const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
-const courseShortName = 'cypress' + uid;
+const courseShortName = 'cy' + uid;
 
 // FIXME: Enable tests again
-describe.skip('Modeling Exercise Spec', () => {
+describe('Modeling Exercise Spec', () => {
     before('Log in as instructor and create a course', () => {
         cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
         cy.login(instructorUsername, instructorPassword);
@@ -54,6 +55,8 @@ describe.skip('Modeling Exercise Spec', () => {
             cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1)').move({ x: -400, y: 100, force: true });
             cy.get('.card-body').contains('Save Example Solution').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
+            cy.get('.col-lg-1 > .btn').click();
+            cy.get('.card-body').contains('ul > .ng-star-inserted').should('contain.text', 'Example Submission').and('have.attr', 'href');
         });
     });
 });
