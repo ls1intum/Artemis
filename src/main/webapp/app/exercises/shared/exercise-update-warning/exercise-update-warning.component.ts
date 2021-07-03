@@ -18,12 +18,15 @@ export class ExerciseUpdateWarningComponent {
     @Output()
     reEvaluated = new EventEmitter<object>();
 
+    canceled = new EventEmitter<void>();
+
     constructor(public activeModal: NgbActiveModal) {}
 
     /**
      * Closes the modal
      */
     clear(): void {
+        this.canceled.emit();
         this.activeModal.close();
     }
 

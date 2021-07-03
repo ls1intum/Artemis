@@ -32,6 +32,7 @@ import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut
 import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -53,6 +54,7 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
         OrganizationSelectorComponent,
         CustomMinDirective,
         CustomMaxDirective,
+        CustomPatternValidatorDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
@@ -86,6 +88,7 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
         ChartComponent,
         CustomMinDirective,
         CustomMaxDirective,
+        CustomPatternValidatorDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,

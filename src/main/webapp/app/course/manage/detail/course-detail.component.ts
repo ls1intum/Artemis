@@ -99,7 +99,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 this.courseDTO = courseResponse.body!;
                 this.activeStudents = courseResponse.body!.activeStudents;
             },
-            (error: HttpErrorResponse) => onError(this.jhiAlertService, error, false),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
