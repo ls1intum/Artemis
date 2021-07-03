@@ -12,7 +12,7 @@ import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/p
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { OrionFilterDirective } from 'app/orion/orion-filter.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';

@@ -33,7 +33,7 @@ import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/d
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { AlertComponent } from 'app/shared/alert/alert.component';
-import { OrionFilterDirective } from 'app/orion/orion-filter.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { TeamService } from 'app/exercises/shared/team/team.service';

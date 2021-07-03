@@ -1,6 +1,6 @@
 import { Injectable, Injector } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ArtemisOrionConnector, ExerciseView, OrionState } from 'app/orion/orion';
+import { ArtemisOrionConnector, ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { stringifyCircular } from 'app/shared/util/utils';

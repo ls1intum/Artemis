@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { OrionVersionValidator } from 'app/orion/shared/outdated-plugin-warning/orion-version-validator.service';
+import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
 import { first, switchMap } from 'rxjs/operators';
 import { from, lastValueFrom, of } from 'rxjs';
 

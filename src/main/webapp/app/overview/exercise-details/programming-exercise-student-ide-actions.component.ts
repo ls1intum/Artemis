@@ -9,9 +9,9 @@ import { ParticipationStatus } from 'app/entities/exercise.model';
 import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ExerciseView, OrionState } from 'app/orion/orion';
-import { OrionConnectorService } from 'app/orion/orion-connector.service';
-import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
+import { ExerciseView, OrionState } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { catchError, filter, finalize, tap } from 'rxjs/operators';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 

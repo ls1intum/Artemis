@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { OrionFilterDirective } from 'app/orion/orion-filter.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';

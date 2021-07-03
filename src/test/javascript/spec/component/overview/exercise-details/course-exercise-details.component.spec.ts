@@ -39,7 +39,7 @@ import { SubmissionResultStatusComponent } from 'app/overview/submission-result-
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { OrionFilterDirective } from 'app/orion/orion-filter.directive';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
