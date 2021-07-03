@@ -179,8 +179,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
                     @NotNull Map<String, Object> attributes) {
-                if (request instanceof ServletServerHttpRequest) {
-                    ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
+                if (request instanceof ServletServerHttpRequest servletRequest) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
                 }
                 return true;

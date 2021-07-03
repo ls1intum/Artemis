@@ -14,6 +14,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
@@ -74,7 +75,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     (categoryRes: HttpResponse<string[]>) => {
                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                     },
-                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                 );
             }
 
@@ -128,9 +129,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
     }
 
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
-    }
     /**
      * gets the flag of the structured grading instructions slide toggle
      */

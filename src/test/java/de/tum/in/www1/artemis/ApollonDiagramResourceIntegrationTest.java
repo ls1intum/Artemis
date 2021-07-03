@@ -114,21 +114,6 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetAllApollonDiagram_OK() throws Exception {
-        apollonDiagramRepository.save(apollonDiagram);
-        List<ApollonDiagram> response = request.getList("/api/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
-        assertThat(response.isEmpty()).as("response is not empty").isFalse();
-        assertThat(response.size()).as("response has length 1 ").isEqualTo(1);
-
-        ApollonDiagram newApollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.CommunicationDiagram, "new title");
-        apollonDiagramRepository.save(newApollonDiagram);
-        List<ApollonDiagram> updatedResponse = request.getList("/api/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
-        assertThat(updatedResponse.isEmpty()).as("updated response is not empty").isFalse();
-        assertThat(updatedResponse.size()).as("updated response has length 2").isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetDiagramsByCourse() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
