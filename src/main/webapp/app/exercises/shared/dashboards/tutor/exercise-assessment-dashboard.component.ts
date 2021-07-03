@@ -39,6 +39,7 @@ import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
+import { onError } from 'app/shared/util/global.utils';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -268,12 +269,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
                 },
-                (error: HttpErrorResponse) => this.onError(error.message),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
 
             this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-                (error: HttpErrorResponse) => this.onError(error.message),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
 
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
@@ -324,7 +325,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         } else {
             this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-                (error: HttpErrorResponse) => this.onError(error.message),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         }
     }

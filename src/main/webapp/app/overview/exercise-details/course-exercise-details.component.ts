@@ -31,7 +31,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { QuizStatus, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
@@ -76,6 +76,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
     private postings?: PostingsComponent;
+    baseResource: string;
+    isExamExercise: boolean;
 
     /**
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
@@ -188,6 +190,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.postings.exercise = this.exercise;
             this.postings.loadPosts(); // reload the posts
         }
+        this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
     }
 
     /**
@@ -332,14 +335,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return false;
         }
         return this.studentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
-    }
-
-    get exerciseRouterLink(): string | null {
-        if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type!)) {
-            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/submissions`;
-        }
-
-        return null;
     }
 
     get showResults(): boolean {

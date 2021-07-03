@@ -21,7 +21,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         return nextHandler.handle(request).pipe(
             tap((response) => {
                 if (response instanceof HttpResponse) {
-                    let isTranslationStringsRequest = response.url?.includes('/i18n/');
+                    const isTranslationStringsRequest = response.url?.includes('/i18n/');
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
                     if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
                         this.showAlert.next();

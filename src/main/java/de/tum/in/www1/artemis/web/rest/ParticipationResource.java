@@ -214,11 +214,11 @@ public class ParticipationResource {
     /**
      * PUT /participations : Updates an existing participation.
      *
+     * @param exerciseId the id of the exercise, the participation belongs to
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
      */
-    // TODO we should not use this global resource here, instead we should use /exercises/:exerciseId/participations
     @PutMapping("/exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Participation> updateParticipation(@PathVariable long exerciseId, @RequestBody StudentParticipation participation) {
