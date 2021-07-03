@@ -83,6 +83,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     private String validModel;
 
+    private String validSameModel;
+
     private TextExercise textExercise;
 
     private Course course;
@@ -101,6 +103,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        validSameModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727-copy.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
@@ -473,7 +476,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getModelSubmissionWithSimilarElements() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmission(classExercise, submission, "student1");
-        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validModel, true);
+        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validSameModel, true);
         database.addModelingSubmission(classExercise, submission2, "student2");
 
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -485,7 +488,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         assertThat(storedSubmission).as("submission was found").isNotNull();
         assertThat(storedSubmission.getElements()).as("similarity count is set").isNotNull();
-        assertThat(storedSubmission.getElements().size()).as("similarity count is set").isEqualTo(4);
+        assertThat(storedSubmission.getElements().size()).as("similarity count is set").isEqualTo(10);
 
     }
 
@@ -509,7 +512,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "elementCounts");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
