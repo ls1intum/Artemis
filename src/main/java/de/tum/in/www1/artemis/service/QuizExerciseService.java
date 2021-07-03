@@ -64,8 +64,7 @@ public class QuizExerciseService {
 
         // fix references in all questions (step 1/2)
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion instanceof MultipleChoiceQuestion) {
-                var mcQuestion = (MultipleChoiceQuestion) quizQuestion;
+            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
                 var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
                 if (quizQuestionStatistic == null) {
                     quizQuestionStatistic = new MultipleChoiceQuestionStatistic();
@@ -89,8 +88,7 @@ public class QuizExerciseService {
                 }
                 quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
             }
-            else if (quizQuestion instanceof DragAndDropQuestion) {
-                var dndQuestion = (DragAndDropQuestion) quizQuestion;
+            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
                 var quizQuestionStatistic = (DragAndDropQuestionStatistic) dndQuestion.getQuizQuestionStatistic();
                 if (quizQuestionStatistic == null) {
                     quizQuestionStatistic = new DragAndDropQuestionStatistic();
@@ -117,8 +115,7 @@ public class QuizExerciseService {
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndices(dndQuestion);
             }
-            else if (quizQuestion instanceof ShortAnswerQuestion) {
-                var saQuestion = (ShortAnswerQuestion) quizQuestion;
+            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
                 var quizQuestionStatistic = (ShortAnswerQuestionStatistic) saQuestion.getQuizQuestionStatistic();
                 if (quizQuestionStatistic == null) {
                     quizQuestionStatistic = new ShortAnswerQuestionStatistic();
@@ -155,13 +152,11 @@ public class QuizExerciseService {
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-            if (quizQuestion instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+            if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 // restore references from index after save
                 restoreCorrectMappingsFromIndices(dragAndDropQuestion);
             }
-            else if (quizQuestion instanceof ShortAnswerQuestion) {
-                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 // restore references from index after save
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }

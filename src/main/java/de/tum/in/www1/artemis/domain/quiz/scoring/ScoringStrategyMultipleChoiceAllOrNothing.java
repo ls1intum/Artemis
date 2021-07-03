@@ -14,9 +14,7 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
             return quizQuestion.getPoints();
         }
 
-        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && quizQuestion instanceof MultipleChoiceQuestion) {
-            MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-            MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizQuestion;
+        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcAnswer && quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
             // iterate through each answer option and compare its correctness with the answer's selection
             for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                 boolean isSelected = mcAnswer.isSelected(answerOption);
