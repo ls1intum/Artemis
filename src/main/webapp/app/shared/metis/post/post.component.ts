@@ -19,7 +19,6 @@ export enum PostActionName {
     styleUrls: ['../../../overview/discussion/discussion.scss'],
 })
 export class PostComponent extends PostingDirective<Post> {
-    @Output() onDelete: EventEmitter<Post> = new EventEmitter<Post>();
     @Output() toggledAnswersChange: EventEmitter<void> = new EventEmitter<void>();
     @Output() interactPost: EventEmitter<PostAction> = new EventEmitter<PostAction>();
 

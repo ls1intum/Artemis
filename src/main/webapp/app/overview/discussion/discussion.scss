@@ -51,11 +51,27 @@ $label-color: #6a737d;
     }
 }
 
+.reaction {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+
+    .plus {
+        font-size: 0.5em;
+    }
+}
+
 .post-tag {
     max-width: 130px;
     overflow: hidden;
     text-overflow: ellipsis;
     background-color: darkblue;
+}
+
+.line {
+    width: auto;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    content: ' ';
 }
 
 .approved-badge {

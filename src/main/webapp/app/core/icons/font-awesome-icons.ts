@@ -137,6 +137,7 @@ import {
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
     faSave as farSave,
+    faSmile as farSmile,
     faSquare as farSquare,
     faTimesCircle as farTimeCircle,
 } from '@fortawesome/free-regular-svg-icons';
@@ -265,6 +266,7 @@ export const fontAwesomeIcons = [
     farFileCode,
     farCircle,
     farSave,
+    farSmile,
     faGripLinesVertical,
     faGripLines,
     faPaperclip,
