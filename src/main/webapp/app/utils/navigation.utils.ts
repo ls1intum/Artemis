@@ -121,7 +121,7 @@ export const getLinkToSubmissionAssessment = (
         return route;
     } else {
         if (exerciseType === ExerciseType.TEXT) {
-            return ['/course-management', courseId.toString(), 'participations', participationId.toString(), 'submissions', submissionId.toString(), 'for-text-assessment'];
+            return ['/participations', participationId.toString(), 'submissions', submissionId.toString(), 'for-text-assessment'];
         } else {
             return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
         }
