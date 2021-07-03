@@ -1,8 +1,8 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
-[![Build Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
-[![Test Status](https://github.com/ls1intum/Artemis/workflows/Test/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ATest)
-[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg)](https://docs.artemis.ase.in.tum.de)
+[![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml)
+[![Test](https://github.com/ls1intum/Artemis/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/test.yml)
+[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.ase.in.tum.de)
 [![Dependency Status](https://img.shields.io/david/ls1intum/Artemis)](package.json)
 [![Dev Dependency Status](https://img.shields.io/david/dev/ls1intum/Artemis)](package.json)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
@@ -35,7 +35,7 @@ Artemis also supports an exam mode now. You can find more information on [Exam m
 
 ### Documentation
 
-[Read the Docs](https://readthedocs.org) hosts the [Artemis documentation](https://artemis-platform.readthedocs.io).
+The Artemis documentation is available [here](https://docs.artemis.ase.in.tum.de/).
 You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup

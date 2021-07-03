@@ -378,4 +378,21 @@ export class ProgrammingExerciseService {
             responseType: 'blob',
         });
     }
+
+    /**
+     * Re-evaluates and updates an existing programming exercise.
+     *
+     * @param programmingExercise that should be updated of type {ProgrammingExercise}
+     * @param req optional request options
+     */
+    reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        let copy = this.convertDataFromClient(programmingExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        return this.http.put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
+    }
 }
