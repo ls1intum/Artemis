@@ -11,6 +11,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -59,7 +60,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
@@ -79,9 +80,5 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id!));
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 }
