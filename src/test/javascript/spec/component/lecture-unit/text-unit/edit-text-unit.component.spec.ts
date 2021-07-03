@@ -11,7 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { JhiAlertService } from 'ng-jhipster';
+import { JhiAlert, JhiAlertService } from 'ng-jhipster';
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
@@ -71,6 +71,8 @@ describe('EditTextUnitComponent', () => {
             .then(() => {
                 editTextUnitComponentFixture = TestBed.createComponent(EditTextUnitComponent);
                 editTextUnitComponent = editTextUnitComponentFixture.componentInstance;
+                const jhiAlertService = TestBed.inject(JhiAlertService);
+                sinon.stub(jhiAlertService, 'error').returns({ msg: '' } as JhiAlert);
             });
     });
 
