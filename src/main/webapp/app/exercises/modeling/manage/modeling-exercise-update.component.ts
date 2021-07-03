@@ -18,6 +18,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
+import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from '../shared/modeling-editor.component';
@@ -118,14 +119,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         } else {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.exerciseGroup!.exam!.course!.id!).subscribe(
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         }
                     } else {
@@ -186,7 +187,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
         this.saveCommand.save(this.modelingExercise, this.notificationText).subscribe(
             (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
-            (res: HttpErrorResponse) => this.onSaveError(res),
+            (error: HttpErrorResponse) => this.onSaveError(error),
             () => {
                 this.isSaving = false;
             },
@@ -217,12 +218,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse): void {
-        this.jhiAlertService.error(error.message);
+        onError(this.jhiAlertService, error);
         this.isSaving = false;
-    }
-
-    private onError(error: HttpErrorResponse): void {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

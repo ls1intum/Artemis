@@ -13,6 +13,7 @@ import { getIcon, getIconTooltip, ExerciseType, Exercise } from 'app/entities/ex
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getExerciseSubmissionsLink } from 'app/utils/navigation.utils';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -71,8 +72,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
             tap((course: Course) => {
                 this.course = Course.from(course);
             }),
-            catchError((response: HttpErrorResponse) => {
-                this.onError(response.message);
+            catchError((error: HttpErrorResponse) => {
+                onError(this.jhiAlertService, error);
                 return of(null);
             }),
         );
