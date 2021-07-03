@@ -95,9 +95,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Exam exam2;
 
+    private Exam exam3;
+
     private Exam testRunExam;
 
     private StudentExam studentExam1;
+
+    private StudentExam studentExam2;
+
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
@@ -110,11 +115,19 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam1.addRegisteredUser(users.get(0));
         exam1 = examRepository.save(exam1);
         Exam exam2 = database.addExam(course1);
+        exam3 = database.addExam(course1);
         studentExam1 = database.addStudentExam(exam1);
         studentExam1.setWorkingTime(7200);
         studentExam1.setUser(users.get(0));
         studentExamRepository.save(studentExam1);
         database.addStudentExam(exam2);
+
+        studentExam2 = database.addStudentExam(exam3);
+        studentExam2.setWorkingTime(7200);
+        studentExam2.setUser(users.get(0));
+        studentExamRepository.save(studentExam2);
+        database.addStudentExam(exam3);
+
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
     }
@@ -269,6 +282,79 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         return studentExams;
     }
+
+    private List<StudentExam> prepareStudentExamsForConductionWithProgrammingExercise(boolean early) throws Exception {
+        ZonedDateTime examVisibleDate;
+        ZonedDateTime examStartDate;
+        ZonedDateTime examEndDate;
+        if (early) {
+            examStartDate = ZonedDateTime.now().plusHours(1);
+            examEndDate = ZonedDateTime.now().plusHours(3);
+        }
+        else {
+            examStartDate = ZonedDateTime.now().plusMinutes(1);
+            examEndDate = ZonedDateTime.now().plusMinutes(3);
+        }
+
+        examVisibleDate = ZonedDateTime.now().minusMinutes(10);
+        // --> 2 min = 120s working time
+
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+
+        course1 = database.addEmptyCourse();
+        exam3 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+        exam3 = database.addExerciseGroupsAndExercisesToExam(exam3, true);
+
+        // register users
+        Set<User> registeredStudents = users.stream().filter(user -> user.getLogin().contains("student")).collect(Collectors.toSet());
+        exam3.setRegisteredUsers(registeredStudents);
+        exam3.setRandomizeExerciseOrder(false);
+        exam3 = examRepository.save(exam3);
+
+        // generate individual student exams
+        List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/generate-student-exams",
+            Optional.empty(), StudentExam.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam2.getRegisteredUsers().size());
+        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 3); // we generate three additional student exams in the @Before method
+
+        // start exercises
+
+        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
+        for (var exercise : exam2.getExerciseGroups().get(6).getExercises()) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            programmingExercises.add(programmingExercise);
+
+            programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+            for (var user : exam2.getRegisteredUsers()) {
+                var repo = new LocalRepository();
+                repo.configureRepos("studentRepo", "studentOriginRepo");
+                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+                studentRepos.add(repo);
+            }
+        }
+
+        for (var programmingExercise : programmingExercises) {
+            for (var user : users) {
+                mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
+            }
+        }
+
+        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
+            Optional.empty(), Integer.class, HttpStatus.OK);
+
+        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam2.getExerciseGroups().size());
+
+        if (!early) {
+            // simulate "wait" for exam to start
+            exam2.setStartDate(ZonedDateTime.now());
+            exam2.setEndDate(ZonedDateTime.now().plusMinutes(2));
+            examRepository.save(exam2);
+        }
+
+        return studentExams;
+    }
+
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -643,6 +729,40 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
+            for (final var studentParticipation : studentParticipations) {
+                if (studentParticipation.findLatestSubmission().isPresent()) {
+                    var result = studentParticipation.findLatestSubmission().get().getLatestResult();
+                    assertThat(result).isNotNull();
+                    assertThat(result.getScore()).isEqualTo(0);
+                    assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                    result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
+                    assertThat(result.getFeedbacks()).isNotEmpty();
+                    assertThat(result.getFeedbacks().get(0).getDetailText()).isEqualTo("You did not submit your exam");
+                }
+                else {
+                    fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAssessUnsubmittedStudentExamsWithProgrammingExercises() throws Exception {
+        prepareStudentExamsForConduction(false);
+        exam3.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        exam3.setEndDate(ZonedDateTime.now().minusMinutes(8));
+        exam2 = examRepository.save(exam2);
+
+        request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
+            HttpStatus.OK, null);
+        database.changeUser("instructor1");
+        Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
+        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
+            .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise).collect(Collectors.toList())));
+        for (final var user : exercisesOfUser.keySet()) {
+            final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
+                exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
                     var result = studentParticipation.findLatestSubmission().get().getLatestResult();

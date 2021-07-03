@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import net.sourceforge.plantuml.preproc.Sub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -417,6 +418,17 @@ public class SubmissionService {
                 resultRepository.save(result);
             }
         }
+    }
+
+    public void addEmptyProgrammingSubmissionToParticipation(StudentParticipation studentParticipation) {
+        if (studentParticipation.getExercise().isExamExercise() && studentParticipation.getExercise() instanceof ProgrammingExercise) {
+            Submission submission = new ProgrammingSubmission();
+            submission = submissionRepository.save(submission);
+            studentParticipation.setSubmissions(Set.of(submission));
+            submission.setParticipation(studentParticipation);
+            participationRepository.save(studentParticipation);
+        }
+
     }
 
     /**

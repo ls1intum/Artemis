@@ -280,14 +280,13 @@ public class StudentExamService {
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
-        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment: when the participation does not have any submissions
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
                 .collect(Collectors.toMap(StudentExam::getUser,
                         studentExam -> studentExam.getExercises().stream()
-                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise)
+                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                 .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
@@ -306,6 +305,9 @@ public class StudentExamService {
                         latestSubmission.get().submitted(true);
                         submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0D, "Empty submission", correctionRound);
                     }
+                } else {
+                    // in this case new submissions for the programming participations need to be created
+                    submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
                 }
             }
         }
