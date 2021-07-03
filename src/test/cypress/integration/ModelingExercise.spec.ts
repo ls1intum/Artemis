@@ -13,7 +13,7 @@ if (Cypress.env('isCi')) {
 }
 
 let testCourse: any;
-
+let modelingExercise: any;
 //
 const uid = generateUUID();
 const courseName = 'Cypress course' + uid;
@@ -44,35 +44,57 @@ describe('Modeling Exercise Spec', () => {
 
     describe('Create/Edit Modeling Exercise', () => {
         it('Create a new modeling exercise', () => {
-            createNewModelingExercise();
+            cy.visit(`/course-management/${testCourse.id}/exercises`);
+            cy.get('#modeling-exercise-create-button').click();
+            cy.get('#field_title').type('Cypress Modeling Exercise');
+            cy.get('#field_categories').type('e2e-testing');
+            cy.get('#field_points').type('10');
+            cy.get(':nth-child(3) > .btn-primary').click();
+            cy.wait('@createModelingExercise').then((interception) => {
+                modelingExercise = interception?.response?.body;
+            });
             cy.contains('Cypress Modeling Exercise').should('exist');
         });
 
         it('Create Example Solution', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
-            createExampleSolutionModelingExercise();
-            // TODO: right now the item gets dragged to the correct position but after mouse up it doesnt stay in the diagram
-            cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1)').move({ x: -400, y: 100, force: true });
+            cy.contains('Cypress Modeling Exercise').click();
+            cy.get('.card-body').contains('Edit').click();
+            cy.get('.card-body').contains('Create Example Solution').click();
+            cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
             cy.get('.card-body').contains('Save Example Solution').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
             cy.get('.col-lg-1 > .btn').click();
-            cy.get('.card-body').contains('ul > .ng-star-inserted').should('contain.text', 'Example Submission').and('have.attr', 'href');
+            cy.get('ul > .ng-star-inserted > .btn').should('contain.text', 'Example Solution');
+        });
+
+        it('Creates Example Submission', () => {
+            cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            cy.get('.card-body').contains('Create Example Submission').click();
+            cy.get('.sc-kstrdz > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.sc-kstrdz > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.card-body').contains('Create new Example Submission').click();
+            cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
+            cy.get('.col-lg-1 > .btn').click();
+            cy.get(':nth-child(2) > :nth-child(18)').should('contain.text', 'Example Submission 1');
+            cy.log('Assess Example Submission');
+            cy.get(':nth-child(2) > :nth-child(18)').contains('Example Submission 1').click();
+            cy.get('.col-lg-4 > :nth-child(2) > :nth-child(1)').click();
+            cy.wait(500);
+            cy.get('.sc-fubCfw > :nth-child(1) > :nth-child(1) > :nth-child(1)').dblclick('top');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) ').type('Wrong');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(13)').click();
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) ').type('Good');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(5)').click();
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3)').type('Unnecessary');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(13)').click();
+            cy.get('.sc-fubCfw > :nth-child(1) > :nth-child(1) > :nth-child(2) > :nth-child(1)').should('exist');
+            cy.get('.col-lg-4 > :nth-child(1)').click();
+            cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
         });
     });
 });
-
-function createNewModelingExercise() {
-    cy.visit(`/course-management/${testCourse.id}/exercises`);
-    cy.get('#modeling-exercise-create-button').click();
-    cy.get('#field_title').type('Cypress Modeling Exercise');
-    cy.get('#field_categories').type('e2e-testing');
-    cy.get('#field_points').type('10');
-    cy.get(':nth-child(3) > .btn-primary').click();
-    cy.wait('@createModelingExercise');
-}
-
-function createExampleSolutionModelingExercise() {
-    cy.contains('Cypress Modeling Exercise').click();
-    cy.get('.card-body').contains('Edit').click();
-    cy.get('.card-body').contains('Create Example Solution').click();
-}
