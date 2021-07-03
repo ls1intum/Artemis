@@ -5,7 +5,7 @@
     </span>
 
     <span
-        class="badge bg-info findOrigin"
+        class="badge btn-primary findOrigin"
         *ngIf="feedback.type === FeedbackType.AUTOMATIC"
         (click)="openOriginOfFeedbackModal(toggleMore)"
         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace' | artemisTranslate"
