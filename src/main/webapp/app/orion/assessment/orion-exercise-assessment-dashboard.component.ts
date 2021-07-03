@@ -1,4 +1,4 @@
-import { Component, Injectable, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { Submission } from 'app/entities/submission.model';

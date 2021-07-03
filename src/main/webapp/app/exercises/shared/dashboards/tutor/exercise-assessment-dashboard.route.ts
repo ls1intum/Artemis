@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { ExerciseAssessmentDashboardComponent } from './exercise-assessment-dashboard.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { isOrion } from 'app/orion/orion';
+import { isOrion } from 'app/shared/orion/orion';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 
 export const exerciseAssessmentDashboardRoute: Routes = [

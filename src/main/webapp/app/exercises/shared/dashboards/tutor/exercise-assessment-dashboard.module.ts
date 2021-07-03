@@ -19,7 +19,7 @@ import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tuto
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
-import { OrionModule } from 'app/orion/orion.module';
+import { OrionModule } from 'app/shared/orion/orion.module';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 
 const ENTITY_STATES = [...exerciseAssessmentDashboardRoute];
