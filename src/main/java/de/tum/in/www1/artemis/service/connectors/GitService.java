@@ -222,8 +222,7 @@ public class GitService {
         }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
 
         sshCallback = transport -> {
-            if (transport instanceof SshTransport) {
-                SshTransport sshTransport = (SshTransport) transport;
+            if (transport instanceof SshTransport sshTransport) {
                 transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
                 sshTransport.setSshSessionFactory(sshSessionFactory);
             }
