@@ -9,12 +9,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import {
-    getLatestSubmissionResult,
-    setLatestSubmissionResult,
-    Submission,
-    SubmissionType,
-} from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';

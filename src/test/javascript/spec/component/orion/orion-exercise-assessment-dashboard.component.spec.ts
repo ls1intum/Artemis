@@ -40,15 +40,8 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                OrionModule,
-            ],
-            declarations: [
-                OrionExerciseAssessmentDashboardComponent,
-                MockComponent(ExerciseAssessmentDashboardComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            imports: [ArtemisTestModule, OrionModule],
+            declarations: [OrionExerciseAssessmentDashboardComponent, MockComponent(ExerciseAssessmentDashboardComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(OrionConnectorService),
@@ -56,13 +49,14 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents().then(() => {
+        })
+            .compileComponents()
+            .then(() => {
                 comp = TestBed.createComponent(OrionExerciseAssessmentDashboardComponent).componentInstance;
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
                 orionConnectorService = TestBed.inject(OrionConnectorService);
                 programmingAssessmentExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
-            },
-        );
+            });
     });
 
     it('openAssessmentInOrion should call connector', () => {
