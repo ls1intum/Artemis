@@ -24,6 +24,12 @@ export enum ProjectType {
     ECLIPSE = 'ECLIPSE',
 }
 
+export enum SubmissionPolicyType {
+    NONE = 'NONE',
+    LOCK_REPOSITORY = 'LOCK_REPOSITORY',
+    SUBMISSION_PENALTY = 'SUBMISSION_PENALTY',
+}
+
 export class ProgrammingExercise extends Exercise {
     public projectKey?: string;
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
@@ -33,6 +39,9 @@ export class ProgrammingExercise extends Exercise {
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
     public maxStaticCodeAnalysisPenalty?: number;
+    public submissionPolicyType?: SubmissionPolicyType;
+    public allowedSubmissions?: number;
+    public submissionLimitExceededPenalty?: number;
     public allowOfflineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
     public packageName?: string;
@@ -71,5 +80,6 @@ export class ProgrammingExercise extends Exercise {
         this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.ECLIPSE; // default value
         this.showTestNamesToStudents = false; // default value
+        this.submissionPolicyType = SubmissionPolicyType.NONE; // default value
     }
 }

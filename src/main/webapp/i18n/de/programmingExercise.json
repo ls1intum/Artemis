@@ -287,6 +287,14 @@
                 "invalidDirectoryName": "Ein bestehendes Repository wird bereits in das angegebene Verzeichnis ausgecheckt!",
                 "noModificationPossibleWarning": "Es ist nicht möglich, die angegebenen Daten (Name des Repositories, Checkout-Verzeichnis und Beschreibung) nach der Generierung des Hilfs-Repositories zu ändern.",
                 "warning": "Hilfs-Repositories, die nach der Erstellung einer Aufgabe hinzugefügt werden, müssen manuell im VCS erstellt und zum Build Plan hinzugefügt werden."
+            },
+            "submissionPolicy": {
+                "title": "Abgaberegel",
+                "none": "Keine Regel",
+                "lockRepository": "Repository sperren",
+                "submissionPenalty": "Strafpunkte nach Abgabelimit",
+                "submissionLimitTitle": "Abgabelimit",
+                "submissionPenaltyTitle": "Prozentuelle Strafe nach Überschreitung des Abgabelimits"
             }
         },
         "error": {

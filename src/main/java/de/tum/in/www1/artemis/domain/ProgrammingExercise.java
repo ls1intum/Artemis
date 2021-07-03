@@ -116,6 +116,14 @@ public class ProgrammingExercise extends Exercise {
     private Integer maxNumberOfSubmissions;
 
     /**
+     * Value between 0.0 and 1.0. Represents the percentage that is deducted from
+     * the max score of this exercise for each submission that exceeds the
+     * maxNumberOfSubmissions limit set for this exercise.
+     */
+    @Column(name = "submission_limit_exceeded_penalty", table = "programming_exercise_details")
+    private Double submissionLimitExceededPenalty;
+
+    /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
      * It is not persisted as this setting can not be changed afterwards.
@@ -602,6 +610,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setMaxNumberOfSubmissions(Integer maxNumberOfSubmissions) {
         this.maxNumberOfSubmissions = maxNumberOfSubmissions;
+    }
+
+    public Double getSubmissionLimitExceededPenalty() {
+        return this.submissionLimitExceededPenalty;
+    }
+
+    public void setSubmissionLimitExceededPenalty(Double submissionLimitExceededPenalty) {
+        this.submissionLimitExceededPenalty = submissionLimitExceededPenalty;
     }
 
     /**

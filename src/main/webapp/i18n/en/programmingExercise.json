@@ -287,6 +287,30 @@
                 "invalidDirectoryName": "An existing repository is already checked out into that directory!",
                 "noModificationPossibleWarning": "It will not be possible to modify these details (repository name, checkout directory, description) after generating the auxiliary repository!",
                 "warning": "Auxiliary repositories that are added after the creation of the exercise need to be manually added to the VCS and the build plan!"
+            },
+            "submissionPolicy": {
+                "title": "Submission Policy",
+                "none": {
+                    "optionLabel": "None"
+                },
+                "lockRepository": {
+                    "optionLabel": "Lock Repository"
+                },
+                "submissionPenalty": {
+                    "optionLabel": "Submission Limit Exceeded Penalty",
+                    "penaltyInputFieldTitle": "Penalty after Exceeding Submission Limit",
+                    "penaltyInputFieldValidationWarning": {
+                        "min": "The penalty must be between 0 and 100 percent!",
+                        "max": "The penalty must be between 0 and 100 percent!"
+                    },
+                    "penaltyInputFieldDescription": "No description available atm"
+                },
+                "submissionLimitTitle": "Submission Limit",
+                "submissionLimitDescription": "No description available atm",
+                "submissionLimitWarning": {
+                    "min": "The amount of allowed submissions must be between 0 and 500!",
+                    "max": "The amount of allowed submissions must be between 0 and 500!"
+                }
             }
         },
         "error": {

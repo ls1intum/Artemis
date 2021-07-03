@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionPolicyType;
+import de.tum.in.www1.artemis.domain.participation.*;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +23,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
@@ -67,12 +65,15 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingAssessmentService programmingAssessmentService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService) {
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -87,6 +88,7 @@ public class ProgrammingExerciseGradingService {
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
         this.resultService = resultService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -129,6 +131,10 @@ public class ProgrammingExerciseGradingService {
             if (isSolutionParticipation) {
                 // This method will return without triggering the build if the submission is not of type TEST.
                 triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
+            }
+
+            if (!isSolutionParticipation && !isTemplateParticipation) {
+                enforceSubmissionPolicy((ProgrammingExerciseStudentParticipation) participation, newResult);
             }
 
             if (!isSolutionParticipation && !isTemplateParticipation && programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
@@ -776,6 +782,42 @@ public class ProgrammingExerciseGradingService {
             else {
                 testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
             }
+        }
+    }
+
+    public void enforceSubmissionPolicy(ProgrammingExerciseStudentParticipation participation, Result result) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise.getSubmissionPolicyType() == SubmissionPolicyType.NONE) {
+            return;
+        }
+        Integer allowedSubmissions = exercise.getMaxNumberOfSubmissions();
+        Integer presentSubmissions = (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId()).stream()
+            .filter(submission -> submission.getType() == SubmissionType.MANUAL).map(ProgrammingSubmission::getCommitHash).distinct().count();
+        switch (exercise.getSubmissionPolicyType()) {
+            case LOCK_REPOSITORY -> enforceLockRepositoryPolicy(exercise, participation, result, allowedSubmissions, presentSubmissions);
+            case SUBMISSION_PENALTY -> enforceSubmissionPenaltyPolicy(exercise, result, allowedSubmissions, presentSubmissions);
+        }
+    }
+
+    private void enforceLockRepositoryPolicy(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
+            Result result, Integer allowedSubmissions, Integer presentSubmissions) {
+        System.out.printf("%d von %d Submissions!\n", presentSubmissions, allowedSubmissions);
+        if (Objects.equals(presentSubmissions, allowedSubmissions)) {
+            System.out.println("Will lock student repository now...");
+            programmingExerciseParticipationService.lockStudentRepository(exercise, participation);
+        } else if (presentSubmissions > allowedSubmissions) {
+            System.out.println("Setting rated to false...");
+            result.setRated(false);
+        }
+    }
+
+    private void enforceSubmissionPenaltyPolicy(ProgrammingExercise exercise, Result result,
+            Integer allowedSubmissions, Integer presentSubmissions) {
+        Double submissionExceededPenalty = exercise.getSubmissionLimitExceededPenalty();
+        if (presentSubmissions > allowedSubmissions) {
+            double maxAchievableScore = (presentSubmissions - allowedSubmissions) * submissionExceededPenalty;
+            maxAchievableScore = 100 - Math.max(0, maxAchievableScore);
+            result.setScore(Math.min(result.getScore(), maxAchievableScore));
         }
     }
 }
