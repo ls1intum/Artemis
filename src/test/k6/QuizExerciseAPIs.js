@@ -24,6 +24,8 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
 let waitQuizStart = __ENV.WAIT_QUIZ_START === 'true';
+// Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+const userIDoffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -78,7 +80,7 @@ export default function (data) {
 
     group('Artemis Quiz Exercise Participation Websocket Stresstest', function () {
         // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
-        const userId = parseInt(__VU) + userOffset + 99;
+        const userId = parseInt(__VU) + userOffset + userIDoffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);

@@ -75,10 +75,12 @@ export function updateUserWithGroup(artemis, i, baseUsername, course, asTutor) {
 export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset, asTutor) {
     const shouldCreateUsers = __ENV.CREATE_USERS === true || __ENV.CREATE_USERS === 'true';
     const iterations = parseInt(__ENV.ITERATIONS);
+    // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+    const userIDoffset = 99;
 
     if (shouldCreateUsers) {
         console.log('Try to create ' + iterations + ' users');
-        for (let i = 100; i <= iterations + 99; i++) {
+        for (let i = 100; i <= iterations + userIDoffset; i++) {
             let userId;
             if (asTutor) {
                 userId = newUser(artemis, i + userOffset, baseUsername, basePassword, course.teachingAssistantGroupName, course.instructorGroupName, asTutor);
@@ -93,13 +95,13 @@ export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUs
     } else {
         console.log('Do not create users, assume the user exists in the external system, will update their groups');
         // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
-        for (let i = 100; i <= iterations + 99; i++) {
+        for (let i = 100; i <= iterations + userIDoffset; i++) {
             // we need to login once with the user, so that the user is synced and available for the update with the groups
             login(baseUsername.replace('USERID', i + userOffset), basePassword.replace('USERID', i + userOffset));
         }
         artemis = login(adminUsername, adminPassword);
         // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
-        for (let i = 100; i <= iterations + 99; i++) {
+        for (let i = 100; i <= iterations + userIDoffset; i++) {
             updateUserWithGroup(artemis, i + userOffset, baseUsername, course, asTutor);
         }
     }

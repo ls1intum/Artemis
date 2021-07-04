@@ -25,6 +25,8 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
 const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
+// Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+const userIDoffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -84,7 +86,7 @@ export function setup() {
     }
 
     // Use users with ID >= 100 to avoid manual testers entering the password wrong too many times interfering with tests
-    for (let i = 100; i <= iterations + 99; i++) {
+    for (let i = 100; i <= iterations + userIDoffset; i++) {
         console.log(userOffset);
         const userId = parseInt(__VU) + userOffset + i;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -122,7 +124,7 @@ export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
     const iterations = parseInt(__ENV.ITERATIONS);
     // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
-    const userId = parseInt(__VU) + userOffset + iterations + 99;
+    const userId = parseInt(__VU) + userOffset + iterations + userIDoffset;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
 
