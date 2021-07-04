@@ -9,7 +9,6 @@ import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/ma
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
