@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,7 +10,8 @@ import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/mar
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { navigateBack } from 'app/utils/navigation.utils';
+import { onError } from 'app/shared/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -34,10 +35,10 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private router: Router,
         protected jhiAlertService: JhiAlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -62,9 +63,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                         tap((res: Exercise) => {
                             this.exerciseHint.exercise = res;
                         }),
-                        catchError((res: HttpErrorResponse) => {
+                        catchError((error: HttpErrorResponse) => {
                             this.exerciseNotFound = true;
-                            this.onError(res.message);
+                            onError(this.jhiAlertService, error);
                             return of(null);
                         }),
                     )
@@ -100,18 +101,10 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
      * Returns to the overview page if there is no previous state and we created a new hint
      */
     previousState() {
-        if (this.exerciseHint.id) {
-            navigateBack(this.router, [
-                'course-management',
-                this.courseId.toString(),
-                'programming-exercises',
-                this.exerciseId.toString(),
-                'hints',
-                this.exerciseHint.id!.toString(),
-            ]);
-        } else {
-            navigateBack(this.router, ['course-management', this.courseId.toString(), 'programming-exercises', this.exerciseId.toString(), 'hints']);
-        }
+        this.navigationUtilService.navigateBackWithOptional(
+            ['course-management', this.courseId.toString(), 'programming-exercises', this.exerciseId.toString(), 'hints'],
+            this.exerciseHint.id?.toString(),
+        );
     }
 
     /**
@@ -140,8 +133,5 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     protected onSaveError() {
         this.isSaving = false;
-    }
-    protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage);
     }
 }

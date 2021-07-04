@@ -1,4 +1,4 @@
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -19,12 +19,13 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { navigateBackFromExerciseUpdate } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 @Component({
@@ -121,7 +122,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -261,7 +262,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                     },
-                                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                                 );
                             });
                         }
@@ -364,13 +365,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exercise
-     * Returns to the overview page if there is no previous state and we created a new exercise
-     * Returns to the exercise groups page if we are in exam mode
+     * Return to the previous page or a default if no previous page exists
      */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.programmingExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.programmingExercise);
     }
 
     /**
@@ -438,7 +436,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe(
             () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
+            (error: HttpErrorResponse) => this.onSaveError(error),
         );
     }
 
@@ -454,10 +452,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         jhiAlert.msg = errorMessage;
         this.isSaving = false;
         window.scrollTo(0, 0);
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

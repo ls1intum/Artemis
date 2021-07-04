@@ -4,7 +4,7 @@ import { assessModelingSubmission, newModelingExercise, submitRandomModelingAnsw
 import { startExercise, getExercise, startTutorParticipation, deleteExercise, getAndLockSubmission } from './requests/exercises.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { MODELING_EXERCISE, MODELING_SUBMISSION_WITHOUT_ASSESSMENT } from './requests/endpoints';
+import { MODELING_EXERCISE, MODELING_SUBMISSION_WITHOUT_ASSESSMENT } from './requests/endpoints.js';
 
 // Version: 1.1
 // Creator: Firefox

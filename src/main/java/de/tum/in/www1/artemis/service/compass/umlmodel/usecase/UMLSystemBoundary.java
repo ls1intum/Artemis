@@ -20,8 +20,7 @@ public class UMLSystemBoundary extends UMLContainerElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (reference instanceof UMLSystemBoundary) {
-            UMLSystemBoundary referencePackage = (UMLSystemBoundary) reference;
+        if (reference instanceof UMLSystemBoundary referencePackage) {
             similarity += NameSimilarity.levenshteinSimilarity(getName(), referencePackage.getName());
         }
 

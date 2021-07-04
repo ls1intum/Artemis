@@ -13,7 +13,7 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -244,6 +244,42 @@ export class ExamParticipationService {
                     });
                 }
             });
+        }
+    }
+
+    public static getSubmissionForExercise(exercise: Exercise) {
+        if (
+            exercise &&
+            exercise.studentParticipations &&
+            exercise.studentParticipations.length > 0 &&
+            exercise.studentParticipations[0].submissions &&
+            exercise.studentParticipations[0].submissions.length > 0
+        ) {
+            return exercise.studentParticipations[0].submissions[0];
+        } else {
+            return undefined;
+        }
+    }
+
+    getExerciseButtonTooltip(
+        exercise: Exercise,
+        submission = ExamParticipationService.getSubmissionForExercise(exercise),
+    ): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
+        // submission does not yet exist for this exercise.
+        // When the participant navigates to the exercise the submissions are created.
+        // Until then show, that the exercise is synced
+        if (!submission) {
+            return 'synced';
+        }
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
+            return submission.isSynced ? 'synced' : 'notSynced';
+        }
+        if (submission.submitted && submission.isSynced) {
+            return 'submitted'; // You have submitted an exercise. You can submit again
+        } else if (!submission.submitted && submission.isSynced) {
+            return 'notSubmitted'; // starting point
+        } else {
+            return 'notSavedOrSubmitted';
         }
     }
 }
