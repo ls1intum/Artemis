@@ -874,9 +874,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         for (var exercise : studentExamResponse.getExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
-            if (exercise instanceof ProgrammingExercise) {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 studentProgrammingParticipations.add((ProgrammingExerciseStudentParticipation) participation);
-                var programmingExercise = (ProgrammingExercise) exercise;
                 exercisesToBeLocked.add(programmingExercise);
                 final var repositorySlug = (programmingExercise.getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase();
                 bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, programmingExercise.getProjectKey(), participation.getStudents());
@@ -1090,23 +1089,20 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
         quizExercise.getQuizQuestions().forEach(quizQuestion -> {
             SubmittedAnswer submittedAnswer = savedQuizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
-            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                var answer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
+            if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer answer) {
                 assertThat(answer.getSelectedOptions()).isNotNull();
                 assertThat(answer.getSelectedOptions().size()).isGreaterThan(0);
                 assertThat(answer.getSelectedOptions().iterator().next()).isNotNull();
                 assertThat(answer.getSelectedOptions().iterator().next()).isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(mcSelectedOptionIndex));
             }
-            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                var answer = (ShortAnswerSubmittedAnswer) submittedAnswer;
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer answer) {
                 assertThat(answer.getSubmittedTexts()).isNotNull();
                 assertThat(answer.getSubmittedTexts().size()).isGreaterThan(0);
                 assertThat(answer.getSubmittedTexts().iterator().next()).isNotNull();
                 assertThat(answer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
                 assertThat(answer.getSubmittedTexts().iterator().next().getSpot()).isEqualTo(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
             }
-            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                var answer = (DragAndDropSubmittedAnswer) submittedAnswer;
+            else if (submittedAnswer instanceof DragAndDropSubmittedAnswer answer) {
                 assertThat(answer.getMappings()).isNotNull();
                 assertThat(answer.getMappings().size()).isGreaterThan(0);
                 assertThat(answer.getMappings().iterator().next()).isNotNull();
@@ -1124,8 +1120,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         if (submission instanceof TextSubmission) {
             assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
         }
-        else if (submission instanceof ModelingSubmission) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+        else if (submission instanceof ModelingSubmission modelingSubmission) {
             assertThat("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof FileUploadSubmission) {

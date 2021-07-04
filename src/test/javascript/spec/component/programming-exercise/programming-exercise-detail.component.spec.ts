@@ -16,6 +16,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { SinonStub } from 'sinon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { Exam } from 'app/entities/exam.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -86,7 +87,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
     });
 
     describe('OnInit for exam exercise', () => {
-        const exerciseGroup = new ExerciseGroup();
+        const exam = { id: 4, course: { id: 6 } as Course } as Exam;
+        const exerciseGroup = { id: 9, exam: exam };
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.id = 123;
         programmingExercise.exerciseGroup = exerciseGroup;
