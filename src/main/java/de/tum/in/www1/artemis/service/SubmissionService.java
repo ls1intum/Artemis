@@ -420,6 +420,11 @@ public class SubmissionService {
         }
     }
 
+    /**
+     * Adds a new and empty programmingSubmission to the provided studentParticipation.
+     *
+     * @param studentParticipation the studentParticipation a new empty programming submission is created for
+     */
     public void addEmptyProgrammingSubmissionToParticipation(StudentParticipation studentParticipation) {
         if (studentParticipation.getExercise().isExamExercise()) {
             Submission submission = new ProgrammingSubmission();
