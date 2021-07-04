@@ -87,8 +87,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
     });
 
     describe('OnInit for exam exercise', () => {
-        const exam = { id: 4, course: {id: 6} as Course } as Exam;
-        const exerciseGroup = {id: 9, exam: exam}
+        const exam = { id: 4, course: { id: 6 } as Course } as Exam;
+        const exerciseGroup = { id: 9, exam: exam };
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.id = 123;
         programmingExercise.exerciseGroup = exerciseGroup;
