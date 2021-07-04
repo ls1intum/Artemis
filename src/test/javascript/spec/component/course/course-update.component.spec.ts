@@ -27,7 +27,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { stub } from 'sinon';
+import { SinonStub, stub } from 'sinon';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
@@ -53,6 +53,7 @@ describe('Course Management Update Component', () => {
     let organizationService: OrganizationManagementService;
     let course: Course;
     let fileUploaderService: FileUploaderService;
+    let uploadStub: SinonStub;
 
     beforeEach(() => {
         course = new Course();
@@ -115,6 +116,7 @@ describe('Course Management Update Component', () => {
         profileService = fixture.debugElement.injector.get(ProfileService);
         organizationService = fixture.debugElement.injector.get(OrganizationManagementService);
         fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
+        uploadStub = stub(fileUploaderService, 'uploadFile');
     });
 
     afterEach(() => {
@@ -265,17 +267,15 @@ describe('Course Management Update Component', () => {
 
     describe('uploadCourseImage', () => {
         let croppedImage: string;
-        let uploadStub: sinon.SinonStub;
         beforeEach(() => {
             croppedImage = 'testCroppedImage';
             comp.croppedImage = 'data:image/png;base64,' + comp.croppedImage;
             comp.courseImageFileName = 'testFilename';
             comp.showCropper = true;
-            fixture.detectChanges();
-            uploadStub = stub(fileUploaderService, 'uploadFile');
+            comp.ngOnInit();
         });
         it('should upload new image and update form', () => {
-            uploadStub.returns(Promise.resolve({ path: 'testPath' } as FileUploadResponse));
+            uploadStub.resolves({ path: 'testPath' } as FileUploadResponse);
             comp.uploadCourseImage();
             const file = base64StringToBlob(croppedImage, 'image/*');
             file['name'] = comp.courseImageFileName;
@@ -283,7 +283,7 @@ describe('Course Management Update Component', () => {
             expect(comp.showCropper).to.equal(false);
         });
         it('should set image name to course icon if upload fails', () => {
-            uploadStub.returns(Promise.reject({} as FileUploadResponse));
+            uploadStub.rejects({} as FileUploadResponse);
             comp.course = new Course();
             comp.course.courseIcon = 'testCourseIcon';
             comp.uploadCourseImage();

@@ -79,8 +79,7 @@ public class SubmissionVersionService {
     }
 
     private String getSubmissionContent(Submission submission) {
-        if (submission instanceof ModelingSubmission) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+        if (submission instanceof ModelingSubmission modelingSubmission) {
             return ("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText());
         }
         else if (submission instanceof TextSubmission) {

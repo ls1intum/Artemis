@@ -4,7 +4,7 @@ import { startExercise, getExercise, deleteExercise, startTutorParticipation, ge
 import { assessTextSubmission, newTextExercise, submitRandomTextAnswerExam } from './requests/text.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { TEXT_SUBMISSION_WITHOUT_ASSESSMENT, TEXT_EXERCISE } from './requests/endpoints';
+import { TEXT_SUBMISSION_WITHOUT_ASSESSMENT, TEXT_EXERCISE } from './requests/endpoints.js';
 
 export let options = {
     maxRedirects: 0,
