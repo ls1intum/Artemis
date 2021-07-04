@@ -86,7 +86,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Gets the xml config of the job that is inside a folder
+     * Gets the xml config of the job that is inside a folder and replaces the old reference to the master branch by a reference to the default branch
      * @param folderName the name of the folder
      * @param jobName the name of the job
      * @return the xml document
@@ -98,7 +98,10 @@ public class JenkinsJobService {
                 throw new JenkinsException("The folder " + folderName + "does not exist.");
             }
 
-            var xmlString = jenkinsServer.getJobXml(folder, jobName);
+            String xmlString = jenkinsServer.getJobXml(folder, jobName);
+            // Replace the old reference to the master branch by a reference to the default branch
+            xmlString = xmlString.replace("*/master", "**");
+
             return XmlFileUtils.readFromString(xmlString);
         }
         catch (IOException e) {
