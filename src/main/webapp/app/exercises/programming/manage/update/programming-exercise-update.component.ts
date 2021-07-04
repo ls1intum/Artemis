@@ -25,6 +25,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 @Component({
@@ -273,7 +274,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     (categoryRes: HttpResponse<string[]>) => {
                                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                     },
-                                    (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                                 );
                             });
                         }
@@ -447,7 +448,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe(
             () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
+            (error: HttpErrorResponse) => this.onSaveError(error),
         );
     }
 
@@ -463,10 +464,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         jhiAlert.msg = errorMessage;
         this.isSaving = false;
         window.scrollTo(0, 0);
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

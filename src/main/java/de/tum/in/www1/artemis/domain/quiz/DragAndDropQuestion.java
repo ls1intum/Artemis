@@ -249,9 +249,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      */
     public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-
-        if (originalQuizQuestion instanceof DragAndDropQuestion) {
-            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuizQuestion;
+        if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
             // undo unallowed dragItemChanges
             undoUnallowedDragItemChanges(dndOriginalQuestion);
             // undo unallowed dragItemChanges
@@ -328,8 +326,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return a boolean which is true if the dragItem and dropLocation-changes make an update necessary and false if not
      */
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof DragAndDropQuestion) {
-            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuizQuestion;
+        if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
                     || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
         }
