@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import net.sourceforge.plantuml.preproc.Sub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -421,14 +422,15 @@ public class SubmissionService {
     }
 
     public void addEmptyProgrammingSubmissionToParticipation(StudentParticipation studentParticipation) {
-        if (studentParticipation.getExercise().isExamExercise() && studentParticipation.getExercise() instanceof ProgrammingExercise) {
+        if (studentParticipation.getExercise().isExamExercise()) {
             Submission submission = new ProgrammingSubmission();
+            submission.setSubmissionDate(ZonedDateTime.now());
+            submission.setType(SubmissionType.INSTRUCTOR);
             submission = submissionRepository.save(submission);
             studentParticipation.setSubmissions(Set.of(submission));
             submission.setParticipation(studentParticipation);
             participationRepository.save(studentParticipation);
         }
-
     }
 
     /**

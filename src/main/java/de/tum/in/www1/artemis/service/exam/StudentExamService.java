@@ -257,7 +257,14 @@ public class StudentExamService {
                     exercisesOfUser.get(user));
 
             for (final var studentParticipation : studentParticipations) {
-                final var latestSubmission = studentParticipation.findLatestSubmission();
+                var latestSubmission = studentParticipation.findLatestSubmission();
+                if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
+                    && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+                    // when it is the participation of a programming exercise and manual assessment is enabled, but there is no submission,
+                    // a new submission for the programming participation needs to be created
+                    submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
+                    latestSubmission = studentParticipation.findLatestSubmission();
+                }
                 if (latestSubmission.isPresent()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
@@ -300,14 +307,12 @@ public class StudentExamService {
                 }
                 final var latestSubmission = studentParticipation.findLatestSubmission();
                 if (latestSubmission.isPresent() && latestSubmission.get().isEmpty()) {
+                    // this case never occurs for ProgrammingSubmissions, as isEmpty() always returns false
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
                         submissionService.addResultWithFeedbackByCorrectionRound(studentParticipation, assessor, 0D, "Empty submission", correctionRound);
                     }
-                } else {
-                    // in this case new submissions for the programming participations need to be created
-                    submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
                 }
             }
         }
