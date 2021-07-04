@@ -20,7 +20,7 @@ const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
-const userIDoffset = 99;
+const userIdOffset = 99;
 
 export function setup() {
     // Create course as admin
@@ -48,7 +48,7 @@ export default function (data) {
 
     group('Artemis Programming Exercise Participation Loadtest', function () {
         // The user is randomly selected
-        const userId = __VU + userIDoffset;
+        const userId = __VU + userIdOffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);

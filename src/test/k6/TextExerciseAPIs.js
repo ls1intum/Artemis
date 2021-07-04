@@ -22,7 +22,7 @@ let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
 const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
 // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
-const userIDoffset = 99;
+const userIdOffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -82,7 +82,7 @@ export function setup() {
         exercise = getExercise(artemis, exerciseId, TEXT_EXERCISE(exerciseId));
     }
 
-    for (let i = 1 + userIDoffset; i <= iterations + userIDoffset; i++) {
+    for (let i = 1 + userIdOffset; i <= iterations + userIdOffset; i++) {
         console.log(userOffset);
         const userId = parseInt(__VU) + userOffset + i;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -112,7 +112,7 @@ export function setup() {
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
     const iterations = parseInt(__ENV.ITERATIONS);
-    const userId = parseInt(__VU) + userOffset + iterations + userIDoffset;
+    const userId = parseInt(__VU) + userOffset + iterations + userIdOffset;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
 

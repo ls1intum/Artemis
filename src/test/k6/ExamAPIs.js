@@ -40,7 +40,7 @@ let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
 const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
 // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
-const userIDoffset = 99;
+const userIdOffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -93,7 +93,7 @@ export function setup() {
 
         createProgrammingExercise(artemis, undefined, exerciseGroup4, 'JAVA', false);
 
-        for (let i = 1 + userIDoffset; i <= iterations + userIDoffset; i++) {
+        for (let i = 1 + userIdOffset; i <= iterations + userIdOffset; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
         }
 
@@ -134,7 +134,7 @@ export default function (data) {
     sleep(delay);
 
     group('Artemis Exam Stresstest', function () {
-        const userId = parseInt(__VU) + userOffset + userIDoffset;
+        const userId = parseInt(__VU) + userOffset + userIdOffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
