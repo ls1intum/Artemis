@@ -243,13 +243,14 @@ public class StudentExamService {
      * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
      */
     public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
-        // TODO Simon Entholzer: we should also do this for programming exercises with manual assessment
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam.getId());
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
-                        studentExam -> studentExam.getExercises().stream()
-                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
-                                .collect(Collectors.toList())));
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
 
         for (final var user : exercisesOfUser.keySet()) {
             // fetch all studentParticipations of a user, with sumbissions and results eagerly loaded
@@ -259,7 +260,7 @@ public class StudentExamService {
             for (final var studentParticipation : studentParticipations) {
                 var latestSubmission = studentParticipation.findLatestSubmission();
                 if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                    && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+                        && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
                     // when it is the participation of a programming exercise and manual assessment is enabled, but there is no submission,
                     // a new submission for the programming participation needs to be created
                     submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
@@ -291,10 +292,12 @@ public class StudentExamService {
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
-                        studentExam -> studentExam.getExercises().stream()
-                                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
-                                .collect(Collectors.toList())));
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -307,7 +310,7 @@ public class StudentExamService {
                 }
                 var latestSubmission = studentParticipation.findLatestSubmission();
                 if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                    && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+                        && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
                     // when it is the participation of a programming exercise and manual assessment is enabled, but there is no submission,
                     // a new submission for the programming participation needs to be created
                     submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);

@@ -635,11 +635,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2 = examRepository.save(exam2);
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
-            HttpStatus.OK, null);
+                HttpStatus.OK, null);
         database.changeUser("instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
-        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
-            .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise).collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
+                .collect(Collectors.toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -673,8 +676,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 HttpStatus.OK, null);
         database.changeUser("instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
-        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises()
-                .stream().filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise).collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
+                .collect(Collectors.toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -715,8 +721,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
         database.changeUser("instructor1");
-        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
-                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise).collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
+                .collect(Collectors.toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -756,8 +765,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
                 HttpStatus.OK, null);
         database.changeUser("instructor1");
-        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream().collect(Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream()
-                .filter(exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise).collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
+                .collect(Collectors.toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
