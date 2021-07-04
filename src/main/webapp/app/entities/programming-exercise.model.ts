@@ -40,7 +40,7 @@ export class ProgrammingExercise extends Exercise {
     public staticCodeAnalysisEnabled?: boolean;
     public maxStaticCodeAnalysisPenalty?: number;
     public submissionPolicyType?: SubmissionPolicyType;
-    public allowedSubmissions?: number;
+    public maxNumberOfSubmissions?: number;
     public submissionLimitExceededPenalty?: number;
     public allowOfflineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;

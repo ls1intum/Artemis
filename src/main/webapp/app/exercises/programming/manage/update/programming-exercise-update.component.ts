@@ -304,6 +304,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // Select the correct pattern
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
+        this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicyType!);
+
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
@@ -473,6 +475,21 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         window.scrollTo(0, 0);
     }
 
+    private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {
+        this.isSubmissionPolicyNone = this.isSubmissionPolicyLockRepository = this.isSubmissionPolicySubmissionPenalty = false;
+        switch (submissionPolicyType) {
+            case SubmissionPolicyType.NONE:
+                this.isSubmissionPolicyNone = true;
+                break;
+            case SubmissionPolicyType.LOCK_REPOSITORY:
+                this.isSubmissionPolicyLockRepository = true;
+                break;
+            case SubmissionPolicyType.SUBMISSION_PENALTY:
+                this.isSubmissionPolicySubmissionPenalty = true;
+                break;
+        }
+    }
+
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }
@@ -545,7 +562,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
         this.isSubmissionPolicyNone = this.isSubmissionPolicyLockRepository = this.isSubmissionPolicySubmissionPenalty = false;
         if (submissionPolicyType === SubmissionPolicyType.NONE) {
-            this.programmingExercise.allowedSubmissions = undefined;
+            this.programmingExercise.maxNumberOfSubmissions = undefined;
             this.programmingExercise.submissionLimitExceededPenalty = undefined;
             this.isSubmissionPolicyNone = true;
         } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {

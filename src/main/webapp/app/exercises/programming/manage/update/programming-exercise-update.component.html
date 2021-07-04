@@ -390,7 +390,8 @@
                                     max="500"
                                     name="submissionLimit"
                                     id="field_submissionLimit"
-                                    [(ngModel)]="programmingExercise.allowedSubmissions"
+                                    [disabled]="isEdit || isImport"
+                                    [(ngModel)]="programmingExercise.maxNumberOfSubmissions"
                                     #penalty="ngModel"
                                 />
                             </div>
@@ -422,6 +423,7 @@
                                     max="100"
                                     name="submissionLimitExceededPenalty"
                                     id="field_submissionLimitExceededPenalty"
+                                    [disabled]="isEdit || isImport"
                                     [(ngModel)]="programmingExercise.submissionLimitExceededPenalty"
                                     #penalty="ngModel"
                                 />
