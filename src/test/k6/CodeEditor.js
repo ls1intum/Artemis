@@ -48,7 +48,6 @@ export default function (data) {
 
     group('Artemis Programming Exercise Participation Loadtest', function () {
         // The user is randomly selected
-        // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
         const userId = __VU + userIDoffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);

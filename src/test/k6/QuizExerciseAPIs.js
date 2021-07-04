@@ -79,7 +79,6 @@ export default function (data) {
     sleep(delay);
 
     group('Artemis Quiz Exercise Participation Websocket Stresstest', function () {
-        // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
         const userId = parseInt(__VU) + userOffset + userIDoffset;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
