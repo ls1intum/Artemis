@@ -117,7 +117,6 @@ describe('Course Management Update Component', () => {
         organizationService = fixture.debugElement.injector.get(OrganizationManagementService);
         fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
         uploadStub = stub(fileUploaderService, 'uploadFile');
-
     });
 
     afterEach(() => {
