@@ -96,6 +96,7 @@ describe('Modeling Exercise Spec', () => {
         });
 
         it('Edit Existing Modeling Exercise', () => {
+            cy.intercept('PUT', '/api/modeling-exercises').as('editModelingExercise');
             cy.visit(`/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
             cy.get('#field_title')
                 .clear()
@@ -108,6 +109,7 @@ describe('Modeling Exercise Spec', () => {
             cy.get('jhi-included-in-overall-score-picker > .btn-group > :nth-child(3)').click({ force: true });
             cy.get('#field_points').clear().type('100');
             cy.get(':nth-child(3) > .btn-primary').click();
+            cy.wait('@editModelingExercise');
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.get('tbody > tr > :nth-child(2)').should('contain.text', 'Cypress EDITED ME');
             cy.get('tbody > tr > :nth-child(3)').should('contain.text', 'Jan 1, 2030');
