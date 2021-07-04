@@ -639,7 +639,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.changeUser("instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
                                         studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
                                                 || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                                 .collect(Collectors.toList())));
@@ -677,7 +679,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.changeUser("instructor1");
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam2.getId());
         Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
                                         studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
                                                 || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                                 .collect(Collectors.toList())));
@@ -722,7 +726,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 HttpStatus.OK, null);
         database.changeUser("instructor1");
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
                                         studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
                                                 || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                                 .collect(Collectors.toList())));
@@ -766,7 +772,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 HttpStatus.OK, null);
         database.changeUser("instructor1");
         Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
-                .collect(Collectors.toMap(StudentExam::getUser,
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
                                         studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
                                                 || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                                 .collect(Collectors.toList())));
