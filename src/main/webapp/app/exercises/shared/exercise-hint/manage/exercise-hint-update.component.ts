@@ -10,6 +10,7 @@ import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/mar
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
@@ -62,9 +63,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                         tap((res: Exercise) => {
                             this.exerciseHint.exercise = res;
                         }),
-                        catchError((res: HttpErrorResponse) => {
+                        catchError((error: HttpErrorResponse) => {
                             this.exerciseNotFound = true;
-                            this.onError(res.message);
+                            onError(this.jhiAlertService, error);
                             return of(null);
                         }),
                     )
@@ -132,8 +133,5 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     protected onSaveError() {
         this.isSaving = false;
-    }
-    protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage);
     }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { LectureService } from './lecture.service';
@@ -9,6 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
@@ -81,7 +82,7 @@ export class LectureUpdateComponent implements OnInit {
     protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
         result.subscribe(
             () => this.onSaveSuccess(),
-            () => this.onSaveError(),
+            (error: HttpErrorResponse) => this.onSaveError(error),
         );
     }
 
@@ -95,13 +96,10 @@ export class LectureUpdateComponent implements OnInit {
 
     /**
      * Action on unsuccessful lecture creation or edit
+     * @param error the error handed to the alert service
      */
-    protected onSaveError() {
+    protected onSaveError(error: HttpErrorResponse) {
         this.isSaving = false;
-        // TODO: No feedback given to user
-    }
-
-    protected onError(errorMessage: string) {
-        this.jhiAlertService.error(errorMessage);
+        onError(this.jhiAlertService, error);
     }
 }
