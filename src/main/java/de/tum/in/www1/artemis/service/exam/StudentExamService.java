@@ -305,9 +305,15 @@ public class StudentExamService {
                     studentParticipation.setInitializationState(InitializationState.FINISHED);
                     studentParticipationRepository.save(studentParticipation);
                 }
-                final var latestSubmission = studentParticipation.findLatestSubmission();
-                if (latestSubmission.isPresent() && latestSubmission.get().isEmpty()) {
-                    // this case never occurs for ProgrammingSubmissions, as isEmpty() always returns false
+                var latestSubmission = studentParticipation.findLatestSubmission();
+                if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
+                    && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+                    // when it is the participation of a programming exercise and manual assessment is enabled, but there is no submission,
+                    // a new submission for the programming participation needs to be created
+                    submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
+                    latestSubmission = studentParticipation.findLatestSubmission();
+                }
+                if (latestSubmission.isPresent() && (latestSubmission.get().isEmpty() || studentParticipation.getExercise() instanceof ProgrammingExercise)) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
                         latestSubmission.get().submitted(true);
