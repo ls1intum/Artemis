@@ -50,8 +50,8 @@ export function setup() {
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset + iterations, true);
 
         // Create course instructor
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
+        const instructorUsername = baseUsername.replace('USERID', '11');
+        const instructorPassword = basePassword.replace('USERID', '11');
 
         console.log('Assigning ' + instructorUsername + 'to course ' + course.id + ' as the instructor');
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
@@ -80,7 +80,8 @@ export function setup() {
         exercise = getExercise(artemis, exerciseId, TEXT_EXERCISE(exerciseId));
     }
 
-    for (let i = 1; i <= iterations; i++) {
+    // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
+    for (let i = 10; i <= iterations + 9; i++) {
         console.log(userOffset);
         const userId = parseInt(__VU) + userOffset + i;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -110,7 +111,8 @@ export function setup() {
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
     const iterations = parseInt(__ENV.ITERATIONS);
-    const userId = parseInt(__VU) + userOffset + iterations;
+    // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
+    const userId = parseInt(__VU) + userOffset + iterations + 9;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
 

@@ -51,8 +51,8 @@ export function setup() {
 
         createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
+        const instructorUsername = baseUsername.replace('USERID', '11');
+        const instructorPassword = basePassword.replace('USERID', '11');
 
         // Login to Artemis
         artemis = login(instructorUsername, instructorPassword);
@@ -88,7 +88,8 @@ export function setup() {
 
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
-    const userId = parseInt(__VU) + userOffset;
+    // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
+    const userId = parseInt(__VU) + userOffset + 9;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
     const artemis = login(currentUsername, currentPassword);

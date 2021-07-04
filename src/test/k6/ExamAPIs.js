@@ -60,8 +60,8 @@ export function setup() {
 
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
+        const instructorUsername = baseUsername.replace('USERID', '11');
+        const instructorPassword = basePassword.replace('USERID', '11');
 
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
 
@@ -91,7 +91,8 @@ export function setup() {
 
         createProgrammingExercise(artemis, undefined, exerciseGroup4, 'JAVA', false);
 
-        for (let i = 1; i <= iterations; i++) {
+        // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
+        for (let i = 10; i <= iterations + 9; i++) {
             addUserToStudentsInExam(artemis, baseUsername.replace('USERID', i + userOffset), exam);
         }
 
@@ -132,7 +133,8 @@ export default function (data) {
     sleep(delay);
 
     group('Artemis Exam Stresstest', function () {
-        const userId = parseInt(__VU) + userOffset;
+        // Use users with ID >= 10 to avoid manual testers entering the password wrong too many times interfering with tests
+        const userId = parseInt(__VU) + userOffset + 9;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
@@ -240,8 +242,8 @@ export function teardown(data) {
     if (onlyPrepare) {
         return;
     }
-    const instructorUsername = baseUsername.replace('USERID', '1');
-    const instructorPassword = basePassword.replace('USERID', '1');
+    const instructorUsername = baseUsername.replace('USERID', '11');
+    const instructorPassword = basePassword.replace('USERID', '11');
 
     const artemis = login(instructorUsername, instructorPassword);
 
