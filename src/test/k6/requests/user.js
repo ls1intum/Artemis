@@ -78,7 +78,7 @@ export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUs
 
     if (shouldCreateUsers) {
         console.log('Try to create ' + iterations + ' users');
-        for (let i = 10; i <= iterations + 9; i++) {
+        for (let i = 100; i <= iterations + 99; i++) {
             let userId;
             if (asTutor) {
                 userId = newUser(artemis, i + userOffset, baseUsername, basePassword, course.teachingAssistantGroupName, course.instructorGroupName, asTutor);
@@ -92,14 +92,14 @@ export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUs
         }
     } else {
         console.log('Do not create users, assume the user exists in the external system, will update their groups');
-        // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
-        for (let i = 10; i <= iterations + 9; i++) {
+        // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+        for (let i = 100; i <= iterations + 99; i++) {
             // we need to login once with the user, so that the user is synced and available for the update with the groups
             login(baseUsername.replace('USERID', i + userOffset), basePassword.replace('USERID', i + userOffset));
         }
         artemis = login(adminUsername, adminPassword);
-        // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
-        for (let i = 10; i <= iterations + 9; i++) {
+        // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+        for (let i = 100; i <= iterations + 99; i++) {
             updateUserWithGroup(artemis, i + userOffset, baseUsername, course, asTutor);
         }
     }

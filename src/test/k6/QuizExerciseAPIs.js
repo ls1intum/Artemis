@@ -44,8 +44,8 @@ export function setup() {
 
         createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset);
 
-        const instructorUsername = baseUsername.replace('USERID', '11');
-        const instructorPassword = basePassword.replace('USERID', '11');
+        const instructorUsername = baseUsername.replace('USERID', '101');
+        const instructorPassword = basePassword.replace('USERID', '101');
 
         // Login to Artemis
         artemis = login(instructorUsername, instructorPassword);
@@ -78,7 +78,7 @@ export default function (data) {
 
     group('Artemis Quiz Exercise Participation Websocket Stresstest', function () {
         // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
-        const userId = parseInt(__VU) + userOffset + 9;
+        const userId = parseInt(__VU) + userOffset + 99;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);

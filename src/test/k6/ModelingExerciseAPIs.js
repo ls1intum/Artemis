@@ -40,8 +40,8 @@ export function setup() {
     let exercise;
     const iterations = parseInt(__ENV.ITERATIONS);
     // Create course
-    const instructorUsername = baseUsername.replace('USERID', '11');
-    const instructorPassword = basePassword.replace('USERID', '11');
+    const instructorUsername = baseUsername.replace('USERID', '101');
+    const instructorPassword = basePassword.replace('USERID', '101');
     if (parseInt(__ENV.COURSE_ID) === 0 || parseInt(__ENV.EXERCISE_ID) === 0) {
         console.log('Creating new exercise as no parameters are given');
 
@@ -83,8 +83,8 @@ export function setup() {
         exercise = getExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
     }
 
-    // Use users with ID >= 10 to avoid manual testers entering the password wrong too many times interfering with tests
-    for (let i = 10; i <= iterations + 9; i++) {
+    // Use users with ID >= 100 to avoid manual testers entering the password wrong too many times interfering with tests
+    for (let i = 100; i <= iterations + 99; i++) {
         console.log(userOffset);
         const userId = parseInt(__VU) + userOffset + i;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -121,8 +121,8 @@ export function setup() {
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
     const iterations = parseInt(__ENV.ITERATIONS);
-    // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
-    const userId = parseInt(__VU) + userOffset + iterations + 9;
+    // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+    const userId = parseInt(__VU) + userOffset + iterations + 99;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
 

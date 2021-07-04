@@ -25,8 +25,8 @@ export function setup() {
     const artemisAdmin = login(adminUsername, adminPassword);
     const courseId = newCourse(artemisAdmin).id;
 
-    const instructorUsername = baseUsername.replace('USERID', '11');
-    const instructorPassword = basePassword.replace('USERID', '11');
+    const instructorUsername = baseUsername.replace('USERID', '101');
+    const instructorPassword = basePassword.replace('USERID', '101');
 
     // Login to Artemis
     const artemisInstructor = login(instructorUsername, instructorPassword);
@@ -46,8 +46,8 @@ export default function (data) {
 
     group('Artemis Programming Exercise Participation Loadtest', function () {
         // The user is randomly selected
-        // Use users with ID >= 10 to avoid manual testers entering the wrong password too many times interfering with tests
-        const userId = __VU + 9;
+        // Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+        const userId = __VU + 99;
         const currentUsername = baseUsername.replace('USERID', userId);
         const currentPassword = basePassword.replace('USERID', userId);
         const artemis = login(currentUsername, currentPassword);
