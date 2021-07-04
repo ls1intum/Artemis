@@ -22,6 +22,8 @@
             "exampleSolutionExplanation": "Beispiellösungserklärung",
             "close": "Schließen",
             "readAndUnderstood": "Ich habe die Anleitung gelesen und verstanden.",
+            "toRead": "zum Lesen",
+            "toReview": "zur Überprüfung",
             "totalExampleSubmissions": "Es gibt {{total}} Beispielabgaben: {{toReview}} zur Überprüfung und {{toAssess}} zur Bewertung.",
             "reviewSubmissions": "Überprüfung von Beispielabgaben",
             "start": "",

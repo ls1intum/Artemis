@@ -22,6 +22,8 @@
             "exampleSolutionExplanation": "Example solution explanation",
             "close": "Close",
             "readAndUnderstood": "I have read and understood the instructions",
+            "toRead": "to read",
+            "toReview": "to review",
             "totalExampleSubmissions": "There are {{total}} example submissions: {{toReview}} to review and {{toAssess}} to assess.",
             "reviewSubmissions": "Review submissions",
             "start": "Start",

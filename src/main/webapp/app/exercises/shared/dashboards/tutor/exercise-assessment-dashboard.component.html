@@ -7,20 +7,10 @@
 
 <div *ngIf="exercise">
     <div class="row my-3 justify-content-around">
-        <div class="col-lg-5 col-md-6 col-sm-6 text-center" *ngIf="!isTestRun">
-            <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:</p>
-            <jhi-tutor-participation-graph
-                [exercise]="exercise"
-                [tutorParticipation]="tutorParticipation"
-                [numberOfSubmissions]="numberOfSubmissions"
-                [totalNumberOfAssessments]="totalNumberOfAssessments"
-                [numberOfComplaints]="numberOfComplaints"
-                [numberOfOpenComplaints]="numberOfOpenComplaints"
-                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
-                [numberOfOpenMoreFeedbackRequests]="numberOfOpenMoreFeedbackRequests"
-                [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-            >
-            </jhi-tutor-participation-graph>
+        <div class="col-lg-5 col-md-6 col-sm-6" *ngIf="!isTestRun">
+            <jhi-side-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate">
+                <jhi-tutor-participation-table [tutorParticipationViewModel]="tutorParticipationViewModel"> </jhi-tutor-participation-table>
+            </jhi-side-panel>
         </div>
         <div
             class="col-lg-3 col-md-6 col-sm-6 align-self-center"
