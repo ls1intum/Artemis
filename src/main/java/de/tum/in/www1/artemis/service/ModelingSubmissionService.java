@@ -200,17 +200,17 @@ public class ModelingSubmissionService extends SubmissionService {
     }
 
     /**
-     * Sets number of potential automatic Feedback's for each block belonging to the `Result`'s submission.
-     * This number determines how many other submissions would be affected if the user were to submit a certain block feedback.
-     * For each TextBlock of the submission, this method finds how many other TextBlocks exist in the same cluster.
+     * Sets number of potential automatic Feedback's for each model element belonging to the `Result`'s submission.
+     * This number determines how many other submissions would be affected if the user were to submit a certain element feedback.
+     * For each ModelElement of the submission, this method finds how many other ModelElements exist in the same cluster.
      * This number is represented with the `numberOfAffectedSubmissions` field which is set here for each
-     * TextBlock of this submission
+     * ModelElement of this submission
      *
-     * @param submission Result for the Submission acting as a reference for the text submission to be searched.
+     * @param submission Result for the Submission acting as a reference for the modeling submission to be searched.
      */
     public void setNumberOfAffectedSubmissionsPerElement(@NotNull ModelingSubmission submission) {
         List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submission.getId());
-        submission.setElements(elementCounts.stream().map(modelElementCount -> {
+        submission.setSimilarElements(elementCounts.stream().map(modelElementCount -> {
             SimilarElementCount similarElementCount = new SimilarElementCount();
             similarElementCount.setElementId(modelElementCount.getElementId());
             similarElementCount.setNumberOfOtherElements(modelElementCount.getNumberOfOtherElements());

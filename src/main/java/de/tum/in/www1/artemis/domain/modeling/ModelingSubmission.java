@@ -32,7 +32,7 @@ public class ModelingSubmission extends Submission {
 
     @Transient
     @JsonSerialize
-    private Set<SimilarElementCount> elementCounts = new HashSet<>();
+    private Set<SimilarElementCount> similarElementCounts = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -94,15 +94,15 @@ public class ModelingSubmission extends Submission {
         }
     }
 
-    public Set<SimilarElementCount> getElements() {
-        return elementCounts;
+    public Set<SimilarElementCount> getSimilarElements() {
+        return similarElementCounts;
     }
 
-    public void addElement(SimilarElementCount element) {
-        this.elementCounts.add(element);
+    public void addSimilarElement(SimilarElementCount element) {
+        this.similarElementCounts.add(element);
     }
 
-    public void setElements(Set<SimilarElementCount> elementCounts) {
-        this.elementCounts = elementCounts;
+    public void setSimilarElements(Set<SimilarElementCount> elementCounts) {
+        this.similarElementCounts = elementCounts;
     }
 }

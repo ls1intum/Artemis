@@ -487,9 +487,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
                 ModelingSubmission.class);
 
         assertThat(storedSubmission).as("submission was found").isNotNull();
-        assertThat(storedSubmission.getElements()).as("similarity count is set").isNotNull();
-        assertThat(storedSubmission.getElements().size()).as("similarity count is set").isEqualTo(10);
-
+        assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").isNotNull();
+        assertThat(storedSubmission.getSimilarElements().size()).as("similarity count is set").isEqualTo(10);
     }
 
     @Test
@@ -512,7 +511,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         storedSubmission.setSubmissionDate(ZonedDateTime.ofInstant(storedSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "elementCounts");
+        assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "results", "similarElementCounts");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
