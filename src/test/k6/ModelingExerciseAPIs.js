@@ -85,7 +85,7 @@ export function setup() {
         exercise = getExercise(artemis, exerciseId, MODELING_EXERCISE(exerciseId));
     }
 
-    for (let i = 100; i <= iterations + userIDoffset; i++) {
+    for (let i = 1 + userIDoffset; i <= iterations + userIDoffset; i++) {
         console.log(userOffset);
         const userId = parseInt(__VU) + userOffset + i;
         const currentUsername = baseUsername.replace('USERID', userId);
