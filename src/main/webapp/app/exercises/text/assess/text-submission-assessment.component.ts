@@ -67,8 +67,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     highlightDifferences = false;
 
     /*
-     * Non-resetted properties:
-     * These properties are not resetted on purpose, as they cannot change between assessments.
+     * Non-reset properties:
+     * These properties are not reset on purpose, as they cannot change between assessments.
      */
     private cancelConfirmationText: string;
 
