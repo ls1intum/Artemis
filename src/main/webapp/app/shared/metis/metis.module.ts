@@ -15,14 +15,18 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/postings-cr
 import { PostCreateEditModalComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { AnswerPostFooterComponent } from 'app/shared/metis/postings-footer/answer-post-footer/answer-post-footer.component';
 import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-footer/post-footer.component';
+import { PostTagSelectorComponent } from 'app/shared/metis/postings-create-edit-modal/post-create-edit-modal/post-tag-selector.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TagInputModule } from 'ngx-chips';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisConfirmIconModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule],
+    imports: [ArtemisSharedModule, ArtemisConfirmIconModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, ReactiveFormsModule, FormsModule, TagInputModule],
     declarations: [
         PostingsThreadComponent,
         PostHeaderComponent,
         AnswerPostHeaderComponent,
         PostCreateEditModalComponent,
+        PostTagSelectorComponent,
         PostFooterComponent,
         AnswerPostCreateEditModalComponent,
         AnswerPostFooterComponent,
@@ -37,6 +41,7 @@ import { PostFooterComponent } from 'app/shared/metis/postings-footer/post-foote
         PostHeaderComponent,
         AnswerPostHeaderComponent,
         PostCreateEditModalComponent,
+        PostTagSelectorComponent,
         AnswerPostCreateEditModalComponent,
         PostFooterComponent,
         AnswerPostFooterComponent,

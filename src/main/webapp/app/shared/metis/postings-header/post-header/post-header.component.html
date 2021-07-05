@@ -18,7 +18,8 @@
             [ngClass]="'me-1 clickable icon'"
             [initialTooltip]="'artemisApp.metis.deletePost' | artemisTranslate"
             [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
-        ></jhi-confirm-icon>
+        >
+        </jhi-confirm-icon>
     </div>
     <div
         class="col-auto px-1"
@@ -28,6 +29,6 @@
         [disableTooltip]="getNumberOfAnswerPosts() === 0"
     >
         <span class="posting-header">{{ getNumberOfAnswerPosts() }}</span>
-        <fa-icon [icon]="'comments'" class="icon"> </fa-icon>
+        <fa-icon [icon]="'comments'" class="icon"></fa-icon>
     </div>
 </div>

@@ -206,6 +206,22 @@ public class PostResource {
     }
 
     /**
+     * GET /courses/{courseId}/posts/tags : get all tags for posts in a certain course.
+     *
+     * @param courseId course the postTags belongs to
+     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course
+     */
+    @GetMapping("courses/{courseId}/posts/tags")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        List<String> tags = postRepository.findPostTagsForCourse(courseId);
+        return new ResponseEntity<>(tags, null, HttpStatus.OK);
+    }
+
+    /**
      *
      * GET /courses/{courseId}/posts : get all posts for course
      * @param courseId the course that the posts belong to

@@ -70,4 +70,8 @@ export class PostService extends PostingsService<Post> {
     delete(courseId: number, post: Post): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
     }
+
+    getAllPostTags(courseId: number): Observable<HttpResponse<String[]>> {
+        return this.http.get<String[]>(`api/courses/${courseId}/posts/tags`, { observe: 'response' });
+    }
 }
