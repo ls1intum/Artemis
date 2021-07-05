@@ -377,7 +377,7 @@ public class ExerciseService {
 
     /**
      * Resets an Exercise by deleting all its participations, plagiarism results
-     * and anonymizing its Posts
+     * and anonymizing its Postings
      * @param exercise which should be reset
      */
     public void reset(Exercise exercise) {
@@ -389,7 +389,7 @@ public class ExerciseService {
         // delete all participations for this exercise
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
 
-        // anonymize Posts
+        // anonymize Postings
         exercise = exerciseRepository.findByIdWithDetailsForStudent(exercise.getId()).orElseThrow();
         Optional<User> anonymousUser = userRepository.findOneByLogin("anonymous");
         if (anonymousUser.isPresent()) {
