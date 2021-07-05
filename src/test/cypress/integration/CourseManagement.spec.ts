@@ -31,9 +31,10 @@ var courseShortName: string;
 const fieldTitle = '#field_title';
 const shortName = '#field_shortName';
 const saveEntity = '#save-entity';
+const modalDeleteButton = '.modal-footer > .btn-danger';
 
 describe('Course management', () => {
-    before(() => {
+    beforeEach(() => {
         courseManagementPage = new CourseManagementPage();
         navigationBar = new NavigationBar();
         registerQueries();
@@ -45,14 +46,12 @@ describe('Course management', () => {
         cy.login(adminUsername, adminPassword, '/');
     });
 
-    describe('Creates a new course', () => {
+    describe('Course creation', () => {
         var courseId: number;
 
         it('Creates a new course', function () {
             navigationBar.openCourseManagement();
             courseManagementPage.openCourseCreation();
-            // Fill in the course-form
-            cy.log('Filling out course information...');
             cy.get(fieldTitle).type(courseName);
             cy.get(shortName).type(courseShortName);
             cy.get('#field_testCourse').check();
@@ -68,15 +67,29 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (courseId != null) artemisRequests.course_management.deleteCourse(courseId).its('status').should('eq', 200);
+            if (courseId != null) artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
         });
     });
 
-    after(() => {});
+    describe('Course deletion', () => {
+        beforeEach(() => {
+            artemisRequests.courseManagement.createCourse(courseName, courseShortName).its('status').should('eq', 201);
+        });
+
+        it('Deletes an existing course', function () {
+            navigationBar.openCourseManagement();
+            courseManagementPage.openCourse(courseName, courseShortName);
+            cy.get('.btn-danger').click();
+            cy.get(modalDeleteButton).should('be.disabled');
+            cy.get('[name="confirmExerciseName"]').type(courseName);
+            cy.get(modalDeleteButton).should('not.be.disabled').click();
+            cy.contains(courseManagementPage.courseSelector(courseName, courseShortName)).should('not.exist');
+        });
+    });
 });
 
 /**
- * Sets all the necessary cypress request hooks up.
+ * Sets all the necessary cypress request hooks.
  */
 function registerQueries() {
     cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
