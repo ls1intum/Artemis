@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 
 public enum ExerciseLifecycle implements IExerciseLifecycle {
     RELEASE {
@@ -35,6 +36,16 @@ public enum ExerciseLifecycle implements IExerciseLifecycle {
                 throw new IllegalStateException("Unexpected Exercise Lifecycle State " + this.toString() + "for exercise: " + exercise);
             }
             return ((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate();
+        }
+    },
+    BUILD_COMPASS_CLUSTERS_AFTER_EXAM {
+
+        @Override
+        public ZonedDateTime getDateFromExercise(Exercise exercise) {
+            if (!(exercise instanceof ModelingExercise)) {
+                throw new IllegalStateException("Unexpected Exercise Lifecycle State " + this.toString() + "for exercise: " + exercise);
+            }
+            return ((ModelingExercise) exercise).getClusterBuildDate();
         }
     }
 }

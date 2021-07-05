@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
 import static java.time.Instant.now;
 
 import java.time.ZonedDateTime;
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -41,14 +43,16 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     private final TaskScheduler scheduler;
 
+    private final ExamDateService examDateService;
+
     public ModelingExerciseScheduleService(ScheduleService scheduleService, ModelingExerciseRepository modelingExerciseRepository, Environment env, CompassService compassService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            ExamDateService examDateService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.env = env;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.compassService = compassService;
         this.scheduler = scheduler;
-
+        this.examDateService = examDateService;
     }
 
     @PostConstruct
@@ -84,15 +88,28 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
     }
 
     private static boolean needsToBeScheduled(ModelingExercise exercise) {
+
+        if (exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            return false;
+        }
+
+        // Exam exercises need to be scheduled
+        if (exercise.isExamExercise()) {
+            return true;
+        }
+
         final ZonedDateTime now = ZonedDateTime.now();
         // Semi automatically assessed modeling exercises as well
         // Has a regular due date in the future
-        return exercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC && exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
+        return exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
     }
 
     private void scheduleExercise(ModelingExercise exercise) {
         try {
-            if (!exercise.isExamExercise()) {
+            if (exercise.isExamExercise()) {
+                scheduleExamExercise(exercise);
+            }
+            else {
                 scheduleCourseExercise(exercise);
             }
         }
@@ -116,6 +133,23 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.DUE);
         }
+    }
+
+    private void scheduleExamExercise(ModelingExercise exercise) {
+        var exam = exercise.getExerciseGroup().getExam();
+        var endDate = examDateService.getLatestIndividualExamEndDate(exam);
+        if (endDate == null) {
+            log.error("Modeling exercise {} for exam {} cannot be scheduled properly, end date is {}", exercise.getId(), exam.getId(), endDate);
+            return;
+        }
+        if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+            var buildDate = endDate.plusMinutes(EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES);
+            exercise.setClusterBuildDate(buildDate);
+            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> {
+                buildModelingClusters(exercise).run();
+            });
+        }
+        log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
     /**
