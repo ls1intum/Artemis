@@ -189,7 +189,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
                         type: this.feedback.suggestedFeedbackReference === block.id ? 'AUTOMATIC' : 'MANUAL',
                     };
                 })
-                .filter((item) => item != undefined);
+                .filter((item) => item.text);
         }
     }
 }
