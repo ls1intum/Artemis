@@ -17,10 +17,7 @@ public class ScoringStrategyDragAndDropProportionalWithPenalty implements Scorin
             return quizQuestion.getPoints();
         }
 
-        if (submittedAnswer instanceof DragAndDropSubmittedAnswer && quizQuestion instanceof DragAndDropQuestion) {
-            DragAndDropSubmittedAnswer dndAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
-            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizQuestion;
-
+        if (submittedAnswer instanceof DragAndDropSubmittedAnswer dndAnswer && quizQuestion instanceof DragAndDropQuestion dndQuestion) {
             double mappedDropLocations = 0;
             double correctMappings = 0;
             double incorrectMappings = 0;

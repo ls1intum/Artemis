@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -19,7 +18,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
@@ -38,21 +36,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private static final String POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON = "Assessment has been updated after complaint";
 
-    private final CompassService compassService;
-
     private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, CompassService compassService,
-            ModelingExerciseRepository modelingExerciseRepository, AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository,
-            ResultRepository resultRepository, ExamService examService, SubmissionRepository submissionRepository) {
+    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ModelingExerciseRepository modelingExerciseRepository,
+            AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+            WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
+            SubmissionRepository submissionRepository) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository);
-        this.compassService = compassService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
@@ -101,13 +96,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
-        ModelingExercise exercise = (ModelingExercise) submission.getParticipation().getExercise();
-
         ResponseEntity<Result> response = super.saveAssessment(submission, submit, feedbacks, resultId);
-
-        if (response.getStatusCode().is2xxSuccessful() && submit && compassService.isSupported(exercise)) {
-            compassService.addAssessment(exercise.getId(), submissionId, Objects.requireNonNull(response.getBody()).getFeedbacks());
-        }
 
         return response;
     }
@@ -152,10 +141,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);
 
-        if (compassService.isSupported(modelingExercise)) {
-            compassService.addAssessment(exerciseId, submissionId, result.getFeedbacks());
-        }
-
         var participation = result.getParticipation();
         // remove circular dependencies if the results of the participation are there
         if (participation != null && Hibernate.isInitialized(participation.getResults()) && participation.getResults() != null) {
@@ -185,14 +170,15 @@ public class ModelingAssessmentResource extends AssessmentResource {
     /**
      * Delete an assessment of a given submission.
      *
+     * @param participationId - the id of the participation to the submission
      * @param submissionId - the id of the submission for which the current assessment should be deleted
      * @param resultId     - the id of the result which should get deleted
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not an instructor of the course or an admin
      */
-    @DeleteMapping("/modeling-submissions/{submissionId}/delete/{resultId}")
+    @DeleteMapping("/participations/{participationId}/modeling-submissions/{submissionId}/results/{resultId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteAssessment(@PathVariable Long submissionId, @PathVariable Long resultId) {
-        return super.deleteAssessment(submissionId, resultId);
+    public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
+        return super.deleteAssessment(participationId, submissionId, resultId);
     }
 
     @Override

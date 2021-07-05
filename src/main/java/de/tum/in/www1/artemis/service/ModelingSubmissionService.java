@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.modeling.SimilarElementCount;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -33,15 +37,19 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ModelElementRepository modelElementRepository;
+
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
-            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository) {
+            ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ModelElementRepository modelElementRepository,
+            ComplaintRepository complaintRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository, participationRepository);
+                courseRepository, participationRepository, complaintRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;
+        this.modelElementRepository = modelElementRepository;
     }
 
     /**
@@ -61,57 +69,16 @@ public class ModelingSubmissionService extends SubmissionService {
         if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
-                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission);
+                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
             }
         }
 
-        lockSubmission(modelingSubmission, modelingExercise, correctionRound);
+        lockSubmission(modelingSubmission, correctionRound);
         return modelingSubmission;
     }
 
     /**
-     * Given an exercise, find a modeling submission for that exercise which still doesn't have a manual result. If the diagram type is supported by Compass we get the next optimal
-     * submission from Compass, i.e. the submission for which an assessment means the most knowledge gain for the automatic assessment mechanism. If it's not supported by Compass
-     * we just get a random submission without assessment. If there is no submission without manual result we return an empty optional. Note, that we cannot use a readonly
-     * transaction here as it is making problems when initially loading the calculation engine and assessing all submissions automatically: we would get an sql exception
-     * "Connection is read-only" from hibernate when saving the result in CompassService#assessAutomatically.
-     *
-     * @param modelingExercise the modeling exercise for which we want to get a modeling submission without result
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a modeling submission without any result
-     */
-    private Optional<ModelingSubmission> getRandomModelingSubmissionEligibleForNewAssessment(ModelingExercise modelingExercise, boolean examMode, int correctionRound) {
-        // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
-        // NOTE: compass only makes sense for the first correction round (i.e. correctionRound == 0)
-        if (compassService.isSupported(modelingExercise) && correctionRound == 0) {
-            List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
-
-            // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
-            Collections.shuffle(modelsWaitingForAssessment);
-
-            for (Long submissionId : modelsWaitingForAssessment) {
-                Optional<ModelingSubmission> submission = modelingSubmissionRepository.findWithResultsFeedbacksAssessorAndParticipationResultsById(submissionId);
-                if (submission.isPresent()) {
-                    return submission;
-                }
-                else {
-                    compassService.removeModelWaitingForAssessment(modelingExercise.getId(), submissionId);
-                }
-            }
-        }
-
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(modelingExercise, examMode, correctionRound);
-        if (submissionWithoutResult.isPresent()) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult.get();
-            return Optional.of(modelingSubmission);
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Saves the given submission and the corresponding model and creates the result if necessary. This method used for creating and updating modeling submissions. If it is used
-     * for a submit action, Compass is notified about the new model. Rolls back if inserting fails - occurs for concurrent createModelingSubmission() calls.
+     * Saves the given submission and the corresponding model and creates the result if necessary. This method used for creating and updating modeling submissions.
      *
      * @param modelingSubmission the submission that should be saved
      * @param modelingExercise   the exercise the submission belongs to
@@ -182,13 +149,15 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return a random modeling submission (potentially based on compass)
      */
     public ModelingSubmission findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
-        var modelingSubmission = getRandomModelingSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
+        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
+        ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult;
         if (lockSubmission) {
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
-                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission);
+                modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
+                setNumberOfAffectedSubmissionsPerElement(modelingSubmission);
             }
-            lockSubmission(modelingSubmission, modelingExercise, correctionRound);
+            lockSubmission(modelingSubmission, correctionRound);
         }
         return modelingSubmission;
     }
@@ -199,13 +168,9 @@ public class ModelingSubmissionService extends SubmissionService {
      * tutors to assess a model when an assessor is already assigned. If no result exists for this submission we create one first.
      *
      * @param modelingSubmission the submission to lock
-     * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
-    private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, int correctionRound) {
-        var result = super.lockSubmission(modelingSubmission, correctionRound);
-        if (result.getAssessor() == null && compassService.isSupported(modelingExercise)) {
-            compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
-        }
+    private void lockSubmission(ModelingSubmission modelingSubmission, int correctionRound) {
+        super.lockSubmission(modelingSubmission, correctionRound);
     }
 
     /**
@@ -213,16 +178,15 @@ public class ModelingSubmissionService extends SubmissionService {
      * a manual result, it will not get updated with the automatic result.
      *
      * @param modelingSubmission the modeling submission that should be updated with an automatic result generated by Compass
+     * @param modelingExercise the modeling exercise to which the submission belongs
      * @return the updated modeling submission
      */
-    private ModelingSubmission assignResultWithFeedbackSuggestionsToSubmission(ModelingSubmission modelingSubmission) {
+    private ModelingSubmission assignResultWithFeedbackSuggestionsToSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         var existingResult = modelingSubmission.getLatestResult();
         if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType().equals(AssessmentType.MANUAL)) {
             return modelingSubmission;
         }
-        var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        Result automaticResult = compassService.getResultWithFeedbackSuggestionsForSubmission(modelingSubmission.getId());
+        Result automaticResult = compassService.getSuggestionResult(modelingSubmission, modelingExercise);
         if (automaticResult != null) {
             automaticResult.setSubmission(null);
             automaticResult.setParticipation(modelingSubmission.getParticipation());
@@ -231,10 +195,26 @@ public class ModelingSubmissionService extends SubmissionService {
             automaticResult.setSubmission(modelingSubmission);
             modelingSubmission.addResult(automaticResult);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-
-            compassService.removeSemiAutomaticResultForSubmission(modelingSubmission.getId(), exerciseId);
         }
-
         return modelingSubmission;
+    }
+
+    /**
+     * Sets number of potential automatic Feedback's for each model element belonging to the `Result`'s submission.
+     * This number determines how many other submissions would be affected if the user were to submit a certain element feedback.
+     * For each ModelElement of the submission, this method finds how many other ModelElements exist in the same cluster.
+     * This number is represented with the `numberOfAffectedSubmissions` field which is set here for each
+     * ModelElement of this submission
+     *
+     * @param submission Result for the Submission acting as a reference for the modeling submission to be searched.
+     */
+    public void setNumberOfAffectedSubmissionsPerElement(@NotNull ModelingSubmission submission) {
+        List<ModelElementRepository.ModelElementCount> elementCounts = modelElementRepository.countOtherElementsInSameClusterForSubmissionId(submission.getId());
+        submission.setSimilarElements(elementCounts.stream().map(modelElementCount -> {
+            SimilarElementCount similarElementCount = new SimilarElementCount();
+            similarElementCount.setElementId(modelElementCount.getElementId());
+            similarElementCount.setNumberOfOtherElements(modelElementCount.getNumberOfOtherElements());
+            return similarElementCount;
+        }).collect(Collectors.toSet()));
     }
 }

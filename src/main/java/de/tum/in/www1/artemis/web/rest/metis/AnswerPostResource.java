@@ -34,7 +34,7 @@ public class AnswerPostResource {
 
     private final Logger log = LoggerFactory.getLogger(AnswerPostResource.class);
 
-    private static final String ENTITY_NAME = "answerPost";
+    private static final String ENTITY_NAME = "metis.answerPost";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -84,13 +84,13 @@ public class AnswerPostResource {
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
-        if (!post.getCourse().getId().equals(courseId)) {
+        if (!answerPost.getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body that should be added");
         }
         // answer post is automatically approved if written by an instructor
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
-        // use question from database rather than user input
+        // use post from database rather than user input
+        Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);

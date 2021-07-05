@@ -55,6 +55,8 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
     private final LocalRepository solutionRepo = new LocalRepository();
 
+    private final LocalRepository auxRepo = new LocalRepository();
+
     @BeforeAll
     public static void detectMavenHome() {
         /*
@@ -94,14 +96,15 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo);
+        programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
     @AfterEach
@@ -114,6 +117,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
+        auxRepo.resetLocalRepo();
     }
 
     /**

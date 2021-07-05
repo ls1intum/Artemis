@@ -16,9 +16,24 @@
                   "main": "src/main/webapp/app/app.main.ts",
                   "polyfills": "src/main/webapp/app/polyfills.ts",
                   "tsConfig": "tsconfig.json",
+                  "inlineStyleLanguage": "scss",
                   "assets": [
-                      "./src/main/resources/public/images/favicon.ico",
-                      "./src/main/webapp/content"
+                      "./src/main/webapp/favicon.svg",
+                      "./src/main/webapp/content",
+                      "./src/main/webapp/android-chrome-192x192.png",
+                      ",./src/main/webapp/android-chrome-512x512.png",
+                      "./src/main/webapp/apple-touch-icon.png",
+                      "./src/main/webapp/browserconfig.xml",
+                      "./src/main/webapp/favicon.ico",
+                      "./src/main/webapp/favicon-16x16.png",
+                      "./src/main/webapp/favicon-32x32.png",
+                      "./src/main/webapp/mstile-70x70.png",
+                      "./src/main/webapp/mstile-144x144.png",
+                      "./src/main/webapp/mstile-150x150.png",
+                      "./src/main/webapp/mstile-310x150.png",
+                      "./src/main/webapp/mstile-310x310.png",
+                      "./src/main/webapp/safari-pinned-tab.svg",
+                      "./src/main/webapp/manifest.webapp"
                   ],
                   "styles": [
                       "src/main/webapp/content/scss/global.scss"
@@ -53,22 +68,16 @@
     "@schematics/angular:component": {
       "inlineStyle": true,
       "inlineTemplate": false,
-      "spec": false,
-      "prefix": "jhi",
-      "styleExt": "scss"
+      "prefix": "jhi"
     },
     "@schematics/angular:directive": {
-      "spec": false,
       "prefix": "jhi"
     },
     "@schematics/angular:guard": {
-      "spec": false
     },
     "@schematics/angular:pipe": {
-      "spec": false
     },
     "@schematics/angular:service": {
-      "spec": false
     }
   }
 }

@@ -50,7 +50,7 @@ describe('TeamUpdateDialogComponent', () => {
     });
 
     it('Team Update Dialog can be closed and canceled', fakeAsync(() => {
-        const closeButton = debugElement.query(By.css('button.close'));
+        const closeButton = debugElement.query(By.css('button.btn-close'));
         expect(closeButton).to.exist;
         closeButton.nativeElement.click();
         expect(ngbActiveModal.dismiss).to.have.been.called;

@@ -7,8 +7,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -17,7 +15,6 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service for managing complaints.
@@ -64,10 +61,13 @@ public class ComplaintService {
     public Complaint createComplaint(Complaint complaint, OptionalLong examId, Principal principal) {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
+
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         Participant participant = studentParticipation.getParticipant(); // Team or Student
+
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
 
+        // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
             final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
             final List<User> instructors = userRepository.getInstructors(exam.getCourse());
@@ -104,14 +104,6 @@ public class ComplaintService {
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setParticipant(participant);
         complaint.setResult(originalResult);
-        try {
-            // Store the original result with the complaint
-            complaint.setResultBeforeComplaint(resultService.getOriginalResultAsString(originalResult));
-        }
-        catch (JsonProcessingException exception) {
-            throw new InternalServerErrorException("Failed to store original result");
-        }
-
         resultRepository.save(originalResult);
 
         return complaintRepository.save(complaint);

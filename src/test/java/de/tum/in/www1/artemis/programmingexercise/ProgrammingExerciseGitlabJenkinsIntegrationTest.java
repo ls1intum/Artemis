@@ -101,7 +101,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @MethodSource("generateArgumentsForImportExercise")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
-        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans);
+        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, false);
     }
 
     @Test
@@ -255,6 +255,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void configureRepository_testBadRequestError() throws Exception {
+        gitlabRequestMockProvider.mockGetDefaultBranch("master", programmingExerciseTestService.exercise.getVcsTemplateRepositoryUrl());
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 

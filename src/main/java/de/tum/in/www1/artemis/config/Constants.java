@@ -7,6 +7,15 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
+    // NOTE: those 4 values have to be the same as in app.constants.ts
+    public static final int USERNAME_MIN_LENGTH = 4;
+
+    public static final int USERNAME_MAX_LENGTH = 50;
+
+    public static final int PASSWORD_MIN_LENGTH = 4;
+
+    public static final int PASSWORD_MAX_LENGTH = 50;
+
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 1440; // 24h
 
     public static int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
@@ -28,9 +37,9 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_PATH = "programming-exercises/new-result";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api" + NEW_RESULT_RESOURCE_PATH;
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/" + NEW_RESULT_RESOURCE_PATH;
 
     public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed/";
 
@@ -136,6 +145,9 @@ public final class Constants {
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
 
     public static final String REMOVE_ALL_USERS_FROM_EXAM = "REMOVE_ALL_USERS_FROM_EXAM";
+
+    // same constant as in the client
+    public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
 
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 

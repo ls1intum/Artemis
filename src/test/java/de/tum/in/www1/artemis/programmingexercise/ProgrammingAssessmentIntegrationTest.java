@@ -887,17 +887,21 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         params.add("submit", "true");
         Result overwrittenResult = request.putWithResponseBodyAndParams("/api/participations/" + programmingSubmission.getParticipation().getId() + "/manual-results",
                 resultAfterComplaint, Result.class, HttpStatus.OK, params);
+        initialResult = resultRepository.findById(initialResult.getId()).orElseThrow();
 
-        assertThat(initialResult.getScore()).isEqualTo(50D); // first result was instantiated with a score of 50%
-        assertThat(resultAfterComplaintScore).isEqualTo(100D); // score after complaint evaluation got changed to 100%
+        assertThat(overwrittenResult).isEqualTo(resultAfterComplaint); // check if the Id is identical
+        assertThat(initialResult.getScore()).isEqualTo(50D); // first result has a score of 50%
+        assertThat(resultAfterComplaintScore).isEqualTo(100D); // score after complaint evaluation got changed to 100% (which is in a new result now)
         assertThat(overwrittenResult.getScore()).isEqualTo(10D); // the instructor overwrote the score to 10%
-        assertThat(overwrittenResult.hasComplaint()).isEqualTo(true); // Very important: It must not be overwritten whether the result actually had a complaint
+        assertThat(overwrittenResult.hasComplaint()).isEqualTo(false); // The result has no complaint, as it is the answer for one
+        assertThat(initialResult.hasComplaint()).isEqualTo(true); // Very important: It must not be overwritten whether the result actually had a complaint
 
         // Also check that its correctly saved in the database
         ProgrammingSubmission savedSubmission = programmingSubmissionRepository.findWithEagerResultsById(programmingSubmission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10D);
-        assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(true);
+        assertThat(savedSubmission.getFirstManualResult().hasComplaint()).isEqualTo(true);
+        assertThat(savedSubmission.getLatestResult().hasComplaint()).isEqualTo(false);
 
     }
 
@@ -921,8 +925,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result firstSemiAutomaticResult = submission.getResults().get(3);
 
         Result lastResult = submission.getLatestResult();
-        // we will only delte the middle automatic result at index 2
-        request.delete("/api/programming-submissions/" + submission.getId() + "/delete/" + midResult.getId(), HttpStatus.OK);
+        // we will only delete the middle automatic result at index 2
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + midResult.getId(),
+                HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(4);
         assertThat(submission.getResults().get(0)).isEqualTo(firstResult);

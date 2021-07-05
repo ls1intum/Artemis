@@ -223,21 +223,21 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetCourseStatistics() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        TextExercise firstTextExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        TextExercise secondTextExercise = database.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1), pastTimestamp.minusDays(1));
+        TextExercise laterTextExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        TextExercise earlierTextExercise = database.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1), pastTimestamp.minusDays(1));
 
-        var firstTextExerciseId = firstTextExercise.getId();
-        var secondTextExerciseId = secondTextExercise.getId();
+        var laterTextExerciseId = laterTextExercise.getId();
+        var earlierTextExerciseId = earlierTextExercise.getId();
         User student1 = userRepository.findOneByLogin("student1").orElseThrow();
         User student2 = userRepository.findOneByLogin("student2").orElseThrow();
 
-        // Creating result for student1 and student2 for firstExercise
-        database.createParticipationSubmissionAndResult(firstTextExerciseId, student1, 10.0, 0.0, 50, true);
-        database.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
+        // Creating result for student1 and student2 for the later exercise
+        database.createParticipationSubmissionAndResult(laterTextExerciseId, student1, 10.0, 0.0, 50, true);
+        database.createParticipationSubmissionAndResult(laterTextExerciseId, student2, 10.0, 0.0, 100, true);
 
-        // Creating result for student1 and student2 for secondExercise
-        database.createParticipationSubmissionAndResult(secondTextExerciseId, student1, 10.0, 0.0, 0, true);
-        database.createParticipationSubmissionAndResult(secondTextExerciseId, student2, 10.0, 0.0, 80, true);
+        // Creating result for student1 and student2 for the earlier exercise
+        database.createParticipationSubmissionAndResult(earlierTextExerciseId, student1, 10.0, 0.0, 0, true);
+        database.createParticipationSubmissionAndResult(earlierTextExerciseId, student2, 10.0, 0.0, 80, true);
 
         Long courseId = course.getId();
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -247,15 +247,17 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(result.getAverageScoreOfCourse()).isEqualTo(57.5);
         assertThat(result.getAverageScoresOfExercises().size()).isEqualTo(2);
 
-        var firstTextExerciseStatistics = result.getAverageScoresOfExercises().get(0);
+        // take the second entry as the results are getting sorted for release dates
+        var firstTextExerciseStatistics = result.getAverageScoresOfExercises().get(1);
         assertThat(firstTextExerciseStatistics.getAverageScore()).isEqualTo(75.0);
-        assertThat(firstTextExerciseStatistics.getExerciseId()).isEqualTo(firstTextExerciseId);
-        assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(firstTextExercise.getTitle());
+        assertThat(firstTextExerciseStatistics.getExerciseId()).isEqualTo(laterTextExerciseId);
+        assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(laterTextExercise.getTitle());
 
-        var secondTextExerciseStatistics = result.getAverageScoresOfExercises().get(1);
+        // take the first entry as the results are getting sorted for release dates
+        var secondTextExerciseStatistics = result.getAverageScoresOfExercises().get(0);
         assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
-        assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(secondTextExerciseId);
-        assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(secondTextExercise.getTitle());
+        assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(earlierTextExerciseId);
+        assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(earlierTextExercise.getTitle());
     }
 
     @Test
@@ -296,7 +298,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(result.getMaxPointsOfExercise()).isEqualTo(10);
         assertThat(result.getNumberOfExerciseScores()).isEqualTo(2);
         assertThat(result.getNumberOfParticipations()).isEqualTo(2);
-        assertThat(result.getNumberOfStudentsInCourse()).isEqualTo(12);
+        assertThat(result.getNumberOfStudentsOrTeamsInCourse()).isEqualTo(12);
         assertThat(result.getNumberOfQuestions()).isEqualTo(1);
         assertThat(result.getNumberOfAnsweredQuestions()).isEqualTo(1);
         var expectedScoresResult = new int[10];

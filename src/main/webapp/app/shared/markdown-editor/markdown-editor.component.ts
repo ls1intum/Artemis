@@ -153,6 +153,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
+    @Input()
+    shouldDisplayAlert = true;
+
     constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private jhiAlertService: JhiAlertService) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
@@ -372,51 +375,51 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /**
      * @function onFileUpload
      * @desc handle file upload for input
-     * @param $event
+     * @param event
      */
-    onFileUpload($event: any): void {
-        if ($event.target.files.length >= 1) {
-            this.embedFiles(Array.from($event.target.files));
+    onFileUpload(event: any): void {
+        if (event.target.files.length >= 1) {
+            this.embedFiles(Array.from(event.target.files));
         }
     }
 
     /**
      * @function onFileDrop
      * @desc handle drop of files
-     * @param {DragEvent} $event
+     * @param {DragEvent} event
      */
-    onFileDrop($event: DragEvent): void {
-        $event.preventDefault();
-        if ($event.dataTransfer?.items) {
+    onFileDrop(event: DragEvent): void {
+        event.preventDefault();
+        if (event.dataTransfer?.items) {
             // Use DataTransferItemList interface to access the file(s)
             const files = new Array<File>();
-            for (let i = 0; i < $event.dataTransfer.items.length; i++) {
+            for (let i = 0; i < event.dataTransfer.items.length; i++) {
                 // If dropped items aren't files, reject them
-                if ($event.dataTransfer.items[i].kind === 'file') {
-                    const file = $event.dataTransfer.items[i].getAsFile();
+                if (event.dataTransfer.items[i].kind === 'file') {
+                    const file = event.dataTransfer.items[i].getAsFile();
                     if (file) {
                         files.push(file);
                     }
                 }
             }
             this.embedFiles(files);
-        } else if ($event.dataTransfer?.files) {
+        } else if (event.dataTransfer?.files) {
             // Use DataTransfer interface to access the file(s)
-            this.embedFiles(Array.from($event.dataTransfer.files));
+            this.embedFiles(Array.from(event.dataTransfer.files));
         }
     }
 
     /**
      * @function onFilePaste
      * @desc handle paste of files
-     * @param {ClipboardEvent} $event
+     * @param {ClipboardEvent} event
      */
-    onFilePaste($event: ClipboardEvent): void {
-        if ($event.clipboardData?.items) {
+    onFilePaste(event: ClipboardEvent): void {
+        if (event.clipboardData?.items) {
             const images = new Array<File>();
-            for (let i = 0; i < $event.clipboardData.items.length; i++) {
-                if ($event.clipboardData.items[i].kind === 'file') {
-                    const file = $event.clipboardData.items[i].getAsFile();
+            for (let i = 0; i < event.clipboardData.items.length; i++) {
+                if (event.clipboardData.items[i].kind === 'file') {
+                    const file = event.clipboardData.items[i].getAsFile();
                     if (file) {
                         images.push(file);
                     }

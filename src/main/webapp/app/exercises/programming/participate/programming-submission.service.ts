@@ -13,6 +13,9 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } 
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -46,6 +49,7 @@ export interface IProgrammingSubmissionService {
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
     unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
+    downloadSubmissionInOrion: (exerciseId: number, submissionId: number, correctionRound: number) => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -80,6 +84,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         private http: HttpClient,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ProgrammingExerciseParticipationService,
+        private orionConnectorService: OrionConnectorService,
+        private repositoryExportService: ProgrammingAssessmentRepoExportService,
+        private jhiAlertService: JhiAlertService,
     ) {}
 
     ngOnDestroy(): void {
@@ -111,7 +118,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
         // For every 100 submissions, we increase the expected time by 1 minute.
         this.currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA + Math.floor(buildingSubmissionCount / 100) * 4000 * 60;
-        this.resultEtaSubject.next(this.currentExpectedResultETA);
+        this.resultEtaSubject?.next(this.currentExpectedResultETA);
     }
 
     /**
@@ -443,7 +450,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
-                this.exerciseBuildStateSubjects.get(exerciseId)!.next(exerciseBuildState);
+                this.exerciseBuildStateSubjects.get(exerciseId)?.next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects
             .get(exerciseId)!
@@ -590,7 +597,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Locks the submission of the participation for the user
-     * @param participationId
+     * @param submissionId
      * @param correctionRound
      */
     lockAndGetProgrammingSubmissionParticipation(submissionId: number, correctionRound = 0): Observable<ProgrammingSubmission> {
@@ -651,5 +658,40 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.websocketService.unsubscribe(submissionTopic);
             }
         }
+    }
+
+    /**
+     * Locks the given submission, exports it, transforms it to base64, and sends it to Orion
+     *
+     * @param exerciseId id of the exercise the submission belongs to
+     * @param submissionId id of the submission to send to Orion
+     * @param correctionRound correction round
+     */
+    downloadSubmissionInOrion(exerciseId: number, submissionId: number, correctionRound = 0) {
+        this.orionConnectorService.isCloning(true);
+        const exportOptions: RepositoryExportOptions = {
+            exportAllParticipants: false,
+            filterLateSubmissions: false,
+            addParticipantName: false,
+            combineStudentCommits: false,
+            anonymizeStudentCommits: true,
+            normalizeCodeStyle: false,
+            hideStudentNameInZippedFolder: true,
+        };
+        this.lockAndGetProgrammingSubmissionParticipation(submissionId, correctionRound).subscribe((programmingSubmission) => {
+            this.repositoryExportService.exportReposByParticipations(exerciseId, [programmingSubmission.participation!.id!], exportOptions).subscribe((response) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    // remove prefix
+                    const base64data = result.substr(result.indexOf(',') + 1);
+                    this.orionConnectorService.downloadSubmission(submissionId, correctionRound, base64data);
+                };
+                reader.onerror = () => {
+                    this.jhiAlertService.error('artemisApp.assessmentDashboard.orion.downloadFailed');
+                };
+                reader.readAsDataURL(response.body!);
+            });
+        });
     }
 }

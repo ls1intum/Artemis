@@ -32,11 +32,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -82,8 +82,21 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
+        var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
+                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl())))
+                .collect(Collectors.toList());
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL));
+                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
+    }
+
+    @Override
+    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
+        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
+        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
+                exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Override
@@ -451,7 +464,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
             final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, optionalTriggeredByRepositories);
+            String defaultBranchName = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newRepoUrl));
+            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, defaultBranchName,
+                    optionalTriggeredByRepositories);
         }
         catch (MalformedURLException e) {
             throw new BambooException(e.getMessage(), e);
@@ -474,7 +489,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         catch (Exception e) {
             // TODO: Not sure when this is triggered, the method would return null if the planMap does not have a 'key'.
             log.error("Error when getting plan key");
-            throw new BitbucketException("Could not get plan key", e);
+            throw new BambooException("Could not get plan key", e);
         }
     }
 

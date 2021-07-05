@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -11,7 +14,9 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,7 +34,10 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -37,6 +45,9 @@ import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 
 @Service
 public class CourseTestService {
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     @Autowired
     private DatabaseUtilService database;
@@ -79,6 +90,24 @@ public class CourseTestService {
 
     @Autowired
     private ComplaintRepository complaintRepo;
+
+    @Autowired
+    private CourseExamExportService courseExamExportService;
+
+    @Autowired
+    private ZipFileService zipFileService;
+
+    @Autowired
+    private FileService fileService;
+
+    @Autowired
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseRepository modelingExerciseRepository;
 
     private final static int numberOfStudents = 8;
 
@@ -292,8 +321,7 @@ public class CourseTestService {
                 mockDelegate.mockDeleteGroupInUserManagement(course.getInstructorGroupName());
             }
             for (Exercise exercise : course.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
-                    final var programmingExercise = (ProgrammingExercise) exercise;
+                if (exercise instanceof final ProgrammingExercise programmingExercise) {
                     final String projectKey = programmingExercise.getProjectKey();
                     final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
                     final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
@@ -362,6 +390,12 @@ public class CourseTestService {
         request.put("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
+    }
+
+    // Test
+    public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -512,13 +546,11 @@ public class CourseTestService {
                     Submission submission = participation.getSubmissions().iterator().next();
                     if (submission != null) {
                         // Test that the correct text submission was filtered.
-                        if (submission instanceof TextSubmission) {
-                            TextSubmission textSubmission = (TextSubmission) submission;
+                        if (submission instanceof TextSubmission textSubmission) {
                             assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
                         }
                         // Test that the correct modeling submission was filtered.
-                        if (submission instanceof ModelingSubmission) {
-                            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                        else if (submission instanceof ModelingSubmission modelingSubmission) {
                             assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
                         }
                     }
@@ -553,13 +585,11 @@ public class CourseTestService {
                     Submission submission = participation.getSubmissions().iterator().next();
                     if (submission != null) {
                         // Test that the correct text submission was filtered.
-                        if (submission instanceof TextSubmission) {
-                            TextSubmission textSubmission = (TextSubmission) submission;
+                        if (submission instanceof TextSubmission textSubmission) {
                             assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
                         }
                         // Test that the correct modeling submission was filtered.
-                        if (submission instanceof ModelingSubmission) {
-                            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                        else if (submission instanceof ModelingSubmission modelingSubmission) {
                             assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
                         }
                     }
@@ -1229,6 +1259,74 @@ public class CourseTestService {
     }
 
     // Test
+    public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        assertThat(modelingExercise).isPresent();
+
+        archiveCourseAndAssertExerciseDoesntExist(course, modelingExercise.get());
+    }
+
+    // Test
+    public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+
+        Optional<TextExercise> textExercise = textExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        assertThat(textExercise).isPresent();
+
+        archiveCourseAndAssertExerciseDoesntExist(course, textExercise.get());
+    }
+
+    // Test
+    public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
+        Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
+
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findByCourseId(course.getId()).stream().findFirst();
+        assertThat(fileUploadExercise).isPresent();
+
+        archiveCourseAndAssertExerciseDoesntExist(course, fileUploadExercise.get());
+    }
+
+    private void archiveCourseAndAssertExerciseDoesntExist(Course course, Exercise exercise) throws Exception {
+        Files.createDirectories(Path.of(courseArchivesDirPath));
+
+        String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
+        String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
+        doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)),
+                any(List.class), any(Path.class));
+
+        List<Path> files = archiveCourseAndExtractFiles(course);
+        assertThat(files.size()).isEqualTo(4);
+
+        String exerciseType = "";
+        if (exercise instanceof FileUploadExercise) {
+            exerciseType = "FileUpload";
+        }
+        else if (exercise instanceof ModelingExercise) {
+            exerciseType = "Modeling";
+        }
+        else if (exercise instanceof TextExercise) {
+            exerciseType = "Text";
+        }
+        assertThat(files).doesNotContain(Path.of(exerciseType + "-student1"));
+    }
+
+    private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
+        List<String> exportErrors = new ArrayList<>();
+        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        assertThat(exportedCourse).isNotEmpty();
+
+        // Extract the archive
+        Path archivePath = exportedCourse.get();
+        zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
+        String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
+
+        return Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip"))
+                .collect(Collectors.toList());
+    }
+
+    // Test
     public void testDownloadCourseArchiveAsStudent_forbidden() throws Exception {
         request.get("/api/courses/" + 1 + "/download-archive", HttpStatus.FORBIDDEN, String.class);
     }
@@ -1642,8 +1740,8 @@ public class CourseTestService {
         assessmentUpdate.feedbacks(feedbackListForComplaint).complaintResponse(complaintResponse);
         assessmentUpdate.setTextBlocks(new HashSet<>());
 
-        request.putWithResponseBody("/api/text-assessments/text-submissions/" + result1.getSubmission().getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
+                + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
 
         // Feedback request
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
@@ -1661,8 +1759,8 @@ public class CourseTestService {
         feedbackUpdate.feedbacks(feedbackListForMoreFeedback).complaintResponse(feedbackResponse);
         feedbackUpdate.setTextBlocks(new HashSet<>());
 
-        request.putWithResponseBody("/api/text-assessments/text-submissions/" + result2.getSubmission().getId() + "/assessment-after-complaint", feedbackUpdate, Result.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
+                + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
         // API call
         var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
@@ -1677,9 +1775,10 @@ public class CourseTestService {
         assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
         assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(1);
 
-        // Assessments
-        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(66.7);
-        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(2);
+        // Assessments - 133 because each we have only 2 submissions which have assessments, but as they have complaints which got accepted
+        // they now have 2 results each.
+        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(133.3);
+        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(4);
         assertThat(courseDTO.getCurrentMaxAssessments()).isEqualTo(3);
 
         // Complaints

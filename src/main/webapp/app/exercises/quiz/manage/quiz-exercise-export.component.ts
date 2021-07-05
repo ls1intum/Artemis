@@ -6,9 +6,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
@@ -68,17 +69,9 @@ export class QuizExerciseExportComponent implements OnInit {
                         });
                     }
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         });
-    }
-
-    /**
-     * Handles when error is received
-     * @param error Error
-     */
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -192,6 +191,10 @@ public class StudentExamResource {
         if (accessFailure.isPresent()) {
             return accessFailure.get();
         }
+        // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
+        if (!Objects.equals(studentExam.getUser().getId(), currentUser.getId())) {
+            return forbidden();
+        }
 
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId());
         if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
@@ -237,6 +240,11 @@ public class StudentExamResource {
         Optional<ResponseEntity<StudentExam>> courseAndExamAccessFailure = studentExamAccessService.checkCourseAndExamAccess(courseId, examId, user, studentExam.isTestRun());
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure.get();
+        }
+
+        // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
+        if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
+            return forbidden();
         }
 
         prepareStudentExamForConduction(request, user, studentExam);
@@ -596,6 +604,11 @@ public class StudentExamResource {
                 latestResult.setSubmission(lastSubmission);
                 // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
                 // lastResult -> lastSubmission
+                var resultWithComplaint = lastSubmission.getResultWithComplaint();
+                if (resultWithComplaint != null) {
+                    latestResult.setHasComplaint(true);
+                    latestResult.setId(resultWithComplaint.getId());
+                }
                 participation.setResults(Set.of(latestResult));
             }
             lastSubmission.setResults(null);

@@ -1,12 +1,12 @@
 <!-- uncollapsed posts -->
-<div *ngIf="!collapsed; else collapsedPosts" class="posts-container expanded-posts">
+<div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-posts">
     <div class="draggable-left"><fa-icon [icon]="'grip-lines-vertical'"></fa-icon></div>
     <div class="card">
         <!-- header -->
-        <div class="card-header text-white" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | artemisTranslate" (click)="collapsed = true">
+        <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.sidebar.hide' | artemisTranslate" (click)="collapsed = true">
             <div class="row flex-grow-1">
                 <div class="col">
-                    <h4 class="mb-0" jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</h4>
+                    <h5 class="mb-0" jhiTranslate="artemisApp.metis.sidebar.header">Discussion</h5>
                 </div>
                 <div class="col-auto">
                     <fa-icon [icon]="'chevron-right'"></fa-icon>
@@ -26,13 +26,7 @@
             ></jhi-post-row>
             <!-- new post editor -->
             <div *ngIf="isEditMode">
-                <div class="row pl-2">
-                    <div class="col-auto px-0">
-                        <fa-icon [icon]="'comment'"></fa-icon>
-                    </div>
-                    <div class="col">
-                        <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newPostLabel' | artemisTranslate }}</span>
-                    </div>
+                <div class="row ps-2">
                     <div class="col-12 px-0">
                         <jhi-markdown-editor
                             class="markdown-editor background-editor-color w-100"
@@ -44,13 +38,18 @@
                             [enableFileUpload]="false"
                         ></jhi-markdown-editor>
                     </div>
-                    <div class="col-12 d-flex justify-content-around">
-                        <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = false">
-                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | artemisTranslate }}
+                    <div class="col-12 d-flex">
+                        <button class="btn btn-sm me-1 btn-outline-secondary" (click)="isEditMode = false">
+                            {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" *ngIf="!selectedPost" (click)="addPost()">
-                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.addPost' | artemisTranslate }}
-                        </button>
+                        <button
+                            jhi-postings-button
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="addPost()"
+                            [disabled]="!postContent || postContent.length === 0"
+                            [buttonLoading]="isLoading"
+                            [buttonLabel]="'artemisApp.metis.sidebar.addPost' | artemisTranslate"
+                        ></button>
                     </div>
                 </div>
             </div>
@@ -59,22 +58,22 @@
                 <div class="col-12">
                     <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = true">
                         <fa-icon [icon]="'plus'"></fa-icon>
-                        <span class="d-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewPost' | artemisTranslate }}</span>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.metis.sidebar.addNewPost' | artemisTranslate }}</span>
                     </button>
                 </div>
             </div>
             <!-- no posts -->
             <div class="row mt-2" *ngIf="!posts || posts.length === 0">
-                <div class="col-12">{{ 'artemisApp.courseOverview.exerciseDetails.faq.noPosts' | artemisTranslate }}</div>
+                <div class="col-12">{{ 'artemisApp.metis.sidebar.noPosts' | artemisTranslate }}</div>
             </div>
         </div>
     </div>
 </div>
 <!-- collapsed posts -->
 <ng-template #collapsedPosts>
-    <div class="posts-container collapsed-posts text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | artemisTranslate">
+    <div class="postings-container collapsed-postings text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.sidebar.show' | artemisTranslate">
         <fa-icon [icon]="'chevron-left'"></fa-icon>
-        <span jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</span>
+        <span class="h5" jhiTranslate="artemisApp.metis.sidebar.header"></span>
         <fa-icon [icon]="'chevron-left'"></fa-icon>
     </div>
 </ng-template>

@@ -147,6 +147,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) participationRepository.findById(participationId).orElseThrow().getExercise();
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
         return postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
     }
 
@@ -189,6 +191,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
@@ -229,6 +232,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @MethodSource("participationTypeAndAdditionalCommitProvider")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
         final long submissionId = submission.getId();
@@ -269,6 +274,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
         var submission = postSubmission(participationId, HttpStatus.OK);
@@ -308,6 +315,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
@@ -585,6 +594,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Add a participation for the programming exercise
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
+
+        // mock request for fetchCommitInfo()
+        final String projectKey = "test201904bprogrammingexercise6";
+        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
+        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
+        // ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
         // Mock result from bamboo
@@ -620,6 +637,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Add a participation for the programming exercise
         ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
+
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 
         // set the author name to "Artemis"
@@ -767,7 +785,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
+        request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
     }
 
     private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO() throws Exception {

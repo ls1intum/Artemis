@@ -154,7 +154,7 @@ describe('CodeEditorStudentIntegration', () => {
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         expect(getStudentParticipationWithLatestResultStub).to.have.been.calledOnceWithExactly(participation.id);
-        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
+        expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(participation.id, result.id);
         expect(container.loadingParticipation).to.be.false;
         expect(container.participationCouldNotBeFetched).to.be.false;
         expect(container.participation).to.deep.equal({ ...participation, results: [{ ...result, feedbacks }] });

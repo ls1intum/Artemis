@@ -87,9 +87,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository,
             ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository, participationRepository);
+                courseRepository, participationRepository, complaintRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -136,10 +136,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
-        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase("master")) {
-            // if the commit was made in a branch different than master, ignore this
+        String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(programmingExerciseParticipation.getVcsRepositoryUrl());
+        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(defaultBranch)) {
+            // if the commit was made in a branch different than the default, ignore this
             throw new IllegalStateException(
-                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the master branch is considered");
+                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
         }
         if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
                 && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
@@ -559,8 +560,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
-        if (submission.getParticipation() instanceof StudentParticipation) {
-            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             // no need to send all exercise details here
             submission.getParticipation().setExercise(null);
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
@@ -573,8 +573,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        if (submission.getParticipation() instanceof StudentParticipation) {
-            StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
         }
 

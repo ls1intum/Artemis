@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -54,21 +55,11 @@ public class AttachmentUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
-        Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
-        if (optionalAttachmentUnit.isEmpty()) {
-            return notFound();
-        }
-        AttachmentUnit attachmentUnit = optionalAttachmentUnit.get();
-        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
-        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
-        }
-
-        if (!authorizationCheckService.isAtLeastEditorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(attachmentUnit);
     }
 
@@ -78,27 +69,18 @@ public class AttachmentUnitResource {
      * @param lectureId      the id of the lecture to which the attachment unit belongs to update
      * @param attachmentUnit the attachment unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures/{lectureId}/attachment-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
+    public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         if (attachmentUnit.getId() == null) {
             return badRequest();
         }
-
-        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
             return conflict();
         }
-
-        if (!authorizationCheckService.isAtLeastEditorInCourse(attachmentUnit.getLecture().getCourse(), null)) {
-            return forbidden();
-        }
-
-        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
 
         // Make sure that the original references are preserved.
         AttachmentUnit originalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).get();
@@ -131,9 +113,7 @@ public class AttachmentUnitResource {
         if (lecture.getCourse() == null) {
             return conflict();
         }
-        if (!authorizationCheckService.isAtLeastEditorInCourse(lecture.getCourse(), null)) {
-            return forbidden();
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentUnit.setLecture(null);
@@ -146,7 +126,5 @@ public class AttachmentUnitResource {
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + persistedAttachmentUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedAttachmentUnit);
-
     }
-
 }

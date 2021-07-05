@@ -7,9 +7,6 @@
                 "editLabel": "Edit Text Exercise",
                 "importLabel": "Import a Text Exercise"
             },
-            "import": {
-                "exampleSubmissionsRequireExercise": "To edit the example submissions, you first need to finish importing the text exercise."
-            },
             "submitButton": {
                 "create": "Create",
                 "import": "Import",
@@ -17,9 +14,9 @@
             },
             "wordCount": "Number of words: {{ count }}",
             "characterCount": "Number of characters: {{ count }}",
-            "created": "A new Text Exercise is created with identifier {{ param }}",
-            "updated": "A Text Exercise is updated with identifier {{ param }}",
-            "deleted": "A Text Exercise is deleted with identifier {{ param }}",
+            "created": "Created new Text Exercise with identifier {{ param }}",
+            "updated": "Updated Text Exercise with identifier {{ param }}",
+            "deleted": "Deleted Text Exercise with identifier {{ param }}",
             "detail": {
                 "title": "Text Exercise"
             },
@@ -30,7 +27,7 @@
             "createExampleSubmissions": "Create example submission",
             "automaticAssessmentEnabled": "Automatic assessment suggestions enabled",
             "checkPlagiarism": "Check Plagiarism",
-            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise.",
+            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise. You will be redirected automatically.",
             "saveSuccessful": "Your answer was saved successfully!",
             "error": "An error occurred. Please try again later."
         }

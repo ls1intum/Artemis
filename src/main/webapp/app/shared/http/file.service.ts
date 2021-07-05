@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
@@ -35,17 +36,33 @@ export class FileService {
         const restOfUrl = downloadUrlComponents.join('/');
         const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(fileName);
         const newWindow = window.open('about:blank');
-        this.http
-            .get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })
-            .toPromise()
-            .then(
-                (result: HttpResponse<String>) => {
-                    newWindow!.location.href = `${normalizedDownloadUrl}?access_token=${result.body}`;
-                },
-                () => {
-                    newWindow!.close();
-                },
-            );
+        lastValueFrom(this.http.get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })).then(
+            (result: HttpResponse<String>) => {
+                newWindow!.location.href = `${normalizedDownloadUrl}?access_token=${result.body}`;
+            },
+            () => {
+                newWindow!.close();
+            },
+        );
+        return newWindow;
+    }
+
+    /**
+     * Requests an access token from the server to download the file. If the access token was generated successfully, the merged PDF file is then downloaded.
+     *
+     * @param courseId: the id of the course
+     * @param lectureId: the id of the lecture
+     */
+    downloadMergedFileWithAccessToken(courseId: number, lectureId: number) {
+        const newWindow = window.open('about:blank');
+        lastValueFrom(this.http.get(`api/files/attachments/course/${courseId}/access-token`, { observe: 'response', responseType: 'text' })).then(
+            (result: HttpResponse<String>) => {
+                newWindow!.location.href = `api/files/attachments/lecture/${lectureId}/merge-pdf?access_token=${result.body}`;
+            },
+            () => {
+                newWindow!.close();
+            },
+        );
         return newWindow;
     }
 }

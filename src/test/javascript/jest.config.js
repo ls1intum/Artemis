@@ -4,9 +4,6 @@ module.exports = {
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',
-            astTransformers: {
-                before: [require.resolve('./InlineHtmlStripStylesTransformer')],
-            },
             diagnostics: {
                 ignoreCodes: [151001],
             },
@@ -16,10 +13,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 80%
-            statements: 76.5,
-            branches: 57.5,
-            functions: 66.1,
-            lines: 75.9,
+            statements: 77.1,
+            branches: 58.1,
+            functions: 66.6,
+            lines: 76.5,
         },
     },
     preset: 'jest-preset-angular',

@@ -31,7 +31,11 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
-    public static final String DOWNLOAD_FILE_AUTHORITY = "FILE_DOWNLOAD";
+    private static final String FILENAME_KEY = "filename";
+
+    private static final String COURSE_ID_KEY = "courseId";
+
+    public static final String DOWNLOAD_FILE = "FILE_DOWNLOAD";
 
     private Key key;
 
@@ -94,13 +98,32 @@ public class TokenProvider {
      * @param fileName The name of the file, which the token belongs to
      * @return File access token as a JWT token
      */
-    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, String fileName) {
-        String authorities = DOWNLOAD_FILE_AUTHORITY + fileName;
+    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, String fileName) throws IllegalAccessException {
+        // Note: we want to prevent issues with authentication here. Filenames should never contain commas!
+        if (fileName.contains(",")) {
+            throw new IllegalAccessException("File names cannot include commas");
+        }
+        String fileNameValue = DOWNLOAD_FILE + fileName;
 
         long now = (new Date()).getTime();
         Date validity = new Date(now + durationValidityInSeconds * 1000);
 
-        return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
+        return Jwts.builder().setSubject(authentication.getName()).claim(FILENAME_KEY, fileNameValue).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
+    }
+
+    /**
+     * Generates an access token that allows a user to download a file of a course. This token is only valid for the given validity period.
+     *
+     * @param authentication Currently active authentication mostly the currently logged in user
+     * @param durationValidityInSeconds The duration how long the access token should be valid
+     * @param courseId The id of the course, which the token belongs to
+     * @return File access token as a JWT token
+     */
+    public String createFileTokenForCourseWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Long courseId) throws IllegalAccessException {
+        long now = (new Date()).getTime();
+        Date validity = new Date(now + durationValidityInSeconds * 1000);
+
+        return Jwts.builder().setSubject(authentication.getName()).claim(COURSE_ID_KEY, courseId).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
     /**
@@ -110,9 +133,12 @@ public class TokenProvider {
      */
     public Authentication getAuthentication(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-
-        Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(",")).map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+        var authorityClaim = claims.get(AUTHORITIES_KEY);
+        if (authorityClaim == null) {
+            // leads to a 401 unauthorized error
+            return null;
+        }
+        Collection<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
 
         User principal = new User(claims.getSubject(), "", authorities);
 
@@ -120,23 +146,44 @@ public class TokenProvider {
     }
 
     /**
-     * Checks if a certain authority and filename is inside the JWT token. Also validates the JWT token if it is still valid.
+     * Checks if a certain downloadFileKey and filename is inside the JWT token. Also validates the JWT token if it is still valid.
      *
      * @param authToken The token that has to be checked
-     * @param authority What authority should be included in the token
+     * @param downloadFileKey What downloadFileKey should be included in the token
      * @param fileName The name of the file the token belongs to
      * @return true if everything matches
      */
-    public boolean validateTokenForAuthorityAndFile(String authToken, String authority, String fileName) {
-        if (!validateToken(authToken)) {
+    public boolean validateTokenForAuthorityAndFile(String authToken, String downloadFileKey, String fileName) {
+        if (!validateJwsToken(authToken)) {
             return false;
         }
         try {
-            String tokenAuthorities = (String) Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody().get("auth");
-            return tokenAuthorities.contains(authority + fileName);
+            String fileNameToken = (String) Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody().get(FILENAME_KEY);
+            return fileNameToken.contains(downloadFileKey + fileName);
         }
         catch (Exception e) {
             log.warn("Invalid action validateTokenForAuthorityAndFile: ", e);
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a certain course id is inside the JWT token. Also validates the JWT token if it is still valid.
+     *
+     * @param authToken The token that has to be checked
+     * @param courseId  The course id the token belongs to
+     * @return true if everything matches
+     */
+    public boolean validateTokenForAuthorityAndCourse(String authToken, Long courseId) {
+        if (!validateJwsToken(authToken)) {
+            return false;
+        }
+        try {
+            Long courseIdToken = ((Integer) Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody().get(COURSE_ID_KEY)).longValue();
+            return courseIdToken.equals(courseId);
+        }
+        catch (Exception e) {
+            log.warn("Invalid action validateTokenForAuthorityAndCourse: ", e);
         }
         return false;
     }
@@ -146,13 +193,22 @@ public class TokenProvider {
      * @param authToken JWT Authorization Token
      * @return boolean indicating if token is valid
      */
-    public boolean validateToken(String authToken) {
+    public boolean validateTokenForAuthority(String authToken) {
+        return validateJwsToken(authToken);
+    }
+
+    /**
+     * Validate an JWT Authorization Token
+     * @param authToken JWT Authorization Token
+     * @return boolean indicating if token is valid
+     */
+    private boolean validateJwsToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;
         }
         catch (JwtException | IllegalArgumentException e) {
-            log.info("Invalid JWT token.");
+            log.info("Invalid JWT token: " + e.getMessage());
             log.trace("Invalid JWT token trace.", e);
         }
         return false;

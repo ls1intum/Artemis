@@ -1,48 +1,66 @@
-<div class="row mb-1 pl-2 answer-post" [class.answer-approved]="answerPost.tutorApproved">
+<div class="row mb-0.5 py-1 px-2 mx-1 mb-2 answer-post" [class.answer-approved]="answerPost.tutorApproved">
     <div class="col-12">
-        <!-- edit Mode on -->
+        <!-- answer-post not in edit mode -->
+        <ng-container *ngIf="!isEditMode">
+            <div class="row justify-content-between">
+                <div class="col-auto px-0">
+                    <fa-icon [icon]="'comments'" class="labels"></fa-icon>
+                    <fa-icon
+                        size="xs"
+                        class="clickable action-icon"
+                        [class.answer-approved]="answerPost.tutorApproved"
+                        *ngIf="isAtLeastTutorInCourse"
+                        [ngbTooltip]="(answerPost.tutorApproved ? 'artemisApp.metis.sidebar.unapproveAnswer' : 'artemisApp.metis.sidebar.approveAnswer') | artemisTranslate"
+                        container="body"
+                        [icon]="'check'"
+                        (click)="toggleAnswerPostTutorApproved()"
+                    ></fa-icon>
+                </div>
+                <div class="col-auto">
+                    <span class="text-black-50 posting-subtitle"> {{ answerPost.author!.name }} • {{ answerPost.creationDate | artemisDate: 'short' }} </span>
+                </div>
+                <div class="col-auto px-0">
+                    <fa-icon
+                        size="xs"
+                        class="me-0.5 clickable action-icon"
+                        [ngbTooltip]="'artemisApp.metis.sidebar.editAnswer' | artemisTranslate"
+                        *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)"
+                        container="body"
+                        [icon]="'pencil-alt'"
+                        (click)="toggleEditMode()"
+                    ></fa-icon>
+                    <jhi-confirm-icon
+                        iconSize="xs"
+                        (confirmEvent)="deleteAnswerPost()"
+                        [ngClass]="'me-0.5 clickable action-icon'"
+                        *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)"
+                        [initialTooltip]="'artemisApp.metis.sidebar.deleteAnswer' | artemisTranslate"
+                        [confirmTooltip]="'artemisApp.metis.sidebar.confirmDeleteAnswer' | artemisTranslate"
+                    ></jhi-confirm-icon>
+                </div>
+            </div>
+            <div class="row">
+                <div
+                    class="col mt-1 posting-content markdown-preview"
+                    [innerHTML]="answerPost.content ? (answerPost.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
+                    [ngbTooltip]="answerPost.tutorApproved ? ('artemisApp.metis.sidebar.approvedLabel' | artemisTranslate) : ''"
+                ></div>
+            </div>
+        </ng-container>
+        <!-- answer-post in edit mode -->
         <ng-container *ngIf="isEditMode">
             <div class="row mb-2">
                 <div class="col-12">
-                    <div class="row mb-1">
+                    <div class="row">
                         <div class="col-auto px-0">
-                            <fa-icon [icon]="'comment'"></fa-icon>
+                            <fa-icon [icon]="'comments'" class="labels"></fa-icon>
                         </div>
-                        <div class="col">
-                            <span class="form-control-label posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate }}</span>
-                        </div>
-                        <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)">
-                            <fa-icon
-                                class="mr-1 clickable"
-                                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
-                                container="body"
-                                [icon]="'pencil-alt'"
-                                (click)="toggleEditMode()"
-                            ></fa-icon>
-                            <jhi-confirm-icon
-                                class="mr-1 clickable"
-                                (confirmEvent)="deleteAnswerPost()"
-                                [ngClass]="'mr-1 clickable'"
-                                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
-                                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
-                            ></jhi-confirm-icon>
-                            <fa-icon
-                                class="mr-1 clickable"
-                                *ngIf="isAtLeastTutorInCourse"
-                                [ngbTooltip]="
-                                    (answerPost.tutorApproved
-                                        ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer'
-                                        : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer'
-                                    ) | artemisTranslate
-                                "
-                                container="body"
-                                [icon]="'check'"
-                                (click)="toggleAnswerPostTutorApproved()"
-                            ></fa-icon>
+                        <div class="col-auto">
+                            <span class="text-black-50 posting-subtitle"> {{ answerPost.author!.name }} • {{ answerPost.creationDate | artemisDate: 'short' }} </span>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 px-0">
+                <div class="col-12 px-2">
                     <jhi-markdown-editor
                         class="markdown-editor background-editor-color w-100"
                         [(markdown)]="editText"
@@ -52,64 +70,19 @@
                         [enableFileUpload]="false"
                     ></jhi-markdown-editor>
                 </div>
-                <div class="col-12 mt-1 d-flex justify-content-around">
-                    <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | artemisTranslate }}
+                <div class="col-12 mt-1 d-flex">
+                    <button class="btn btn-sm me-1 btn-outline-secondary" (click)="toggleEditMode()">
+                        {{ 'artemisApp.metis.sidebar.cancel' | artemisTranslate }}
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary" (click)="saveAnswerPost()">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | artemisTranslate }}
-                    </button>
+                    <button
+                        jhi-postings-button
+                        [buttonLoading]="isLoading"
+                        [disabled]="!editText || editText.length === 0"
+                        [buttonLabel]="'artemisApp.metis.sidebar.saveAnswer' | artemisTranslate"
+                        class="btn btn-sm btn-outline-secondary"
+                        (click)="saveAnswerPost()"
+                    ></button>
                 </div>
-            </div>
-        </ng-container>
-        <!-- edit Mode off -->
-        <ng-container *ngIf="!isEditMode">
-            <div class="row">
-                <div class="col-auto px-0">
-                    <fa-icon [icon]="'comment'"></fa-icon>
-                </div>
-                <div class="col">
-                    <span class="posting-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | artemisTranslate }}</span>
-                </div>
-                <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswerPost(answerPost)">
-                    <fa-icon
-                        class="mr-1 clickable"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | artemisTranslate"
-                        container="body"
-                        [icon]="'pencil-alt'"
-                        (click)="toggleEditMode()"
-                    ></fa-icon>
-                    <jhi-confirm-icon
-                        class="mr-1 clickable"
-                        (confirmEvent)="deleteAnswerPost()"
-                        [ngClass]="'mr-1 clickable'"
-                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | artemisTranslate"
-                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | artemisTranslate"
-                    ></jhi-confirm-icon>
-                    <fa-icon
-                        class="mr-1 clickable"
-                        *ngIf="isAtLeastTutorInCourse"
-                        [ngbTooltip]="
-                            (answerPost.tutorApproved
-                                ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer'
-                                : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer'
-                            ) | artemisTranslate
-                        "
-                        container="body"
-                        [icon]="'check'"
-                        (click)="toggleAnswerPostTutorApproved()"
-                    ></fa-icon>
-                </div>
-            </div>
-            <div class="row">
-                <div
-                    class="col mt-1 posting-content markdown-preview"
-                    [innerHTML]="answerPost.content ? (answerPost.content | htmlForMarkdown: []:allowedHtmlTags:allowedHtmlAttributes) : ''"
-                    [ngbTooltip]="answerPost.tutorApproved ? ('artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | artemisTranslate) : ''"
-                ></div>
-            </div>
-            <div class="row mb-2 mt-1">
-                <span class="text-black-50 posting-subtitle"> {{ answerPost.author!.name }} - {{ answerPost.creationDate | artemisDate: 'short' }} </span>
             </div>
         </ng-container>
     </div>

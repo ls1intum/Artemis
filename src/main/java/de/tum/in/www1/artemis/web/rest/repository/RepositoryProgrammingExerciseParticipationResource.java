@@ -115,7 +115,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
-        return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
+
+        // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
+        // Retrieving the default branch is not necessary if the repository is already cached.
+        if (gitService.isRepositoryCached(repositoryUrl)) {
+            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        }
+        else {
+            String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(repositoryUrl);
+            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, defaultBranch);
+        }
     }
 
     @Override

@@ -23,7 +23,7 @@
                         </div>
                     </div>
                     <div class="col-2">
-                        <div class="form-group">
+                        <div class="form-group" style="position: relative">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.color" for="field_title">Color</label>
                             <div
                                 class="color-preview form-control"
@@ -50,7 +50,6 @@
                     <div class="input-group background-file">
                         <div class="custom-file">
                             <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
-                            <label class="custom-file-label text-truncate" for="courseImageInput{{ course.id }}">{{ courseImageFileName }}</label>
                         </div>
                     </div>
                 </div>
@@ -88,7 +87,7 @@
                     <div class="btn-group d-flex flex-wrap">
                         <div *ngFor="let organization of courseOrganizations">
                             <h5>
-                                <span class="badge badge-primary font-weight-normal m-1 pl-3"
+                                <span class="badge bg-primary font-weight-normal m-1 ps-3"
                                     >{{ organization.name
                                     }}<button type="button" class="btn text-light" (click)="removeOrganizationFromCourse(organization)">
                                         <fa-icon [icon]="'times'"></fa-icon></button
@@ -102,7 +101,7 @@
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}" formControlName="startDate"></jhi-date-time-picker>
                     </div>
-                    <div class="form-group flex-grow-1 ml-3">
+                    <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}" formControlName="endDate"></jhi-date-time-picker>
                     </div>
                 </div>
@@ -130,7 +129,16 @@
                         <option *ngFor="let semester of getSemesters()" [value]="semester">{{ semester }}</option>
                     </select>
                 </div>
-
+                <div class="form-group">
+                    <label class="form-control-label" for="field_maxPoints" jhiTranslate="artemisApp.course.maxPoints.title"> Maximum number of points for course </label>
+                    <fa-icon
+                        [icon]="'exclamation-triangle'"
+                        class="text-warning"
+                        placement="top"
+                        ngbTooltip="{{ 'artemisApp.course.maxPoints.warning' | artemisTranslate }}"
+                    ></fa-icon>
+                    <input type="number" class="form-control" name="maxPoints" id="field_maxPoints" min="1" formControlName="maxPoints" />
+                </div>
                 <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
                     <div *ngIf="!course.id" class="form-check">
                         <input
@@ -352,7 +360,7 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving" class="btn btn-primary ml-2">
+                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving" class="btn btn-primary ms-2">
                         <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </ng-template>

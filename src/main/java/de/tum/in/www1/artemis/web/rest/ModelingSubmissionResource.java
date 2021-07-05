@@ -226,7 +226,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-
+        modelingSubmissionService.setNumberOfAffectedSubmissionsPerElement(modelingSubmission);
         // prepare modelingSubmission for response
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         // Don't remove results when they were not requested in the first place
@@ -300,35 +300,20 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
+        // the
+        // corresponding submission yet.
+        var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
 
-        if (compassService.isSupported(modelingExercise)) {
-            // ask Compass for optimal submission to assess if diagram type is supported
-            final List<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
-
-            if (optimalModelSubmissions.isEmpty()) {
-                return ResponseEntity.ok(new Long[] {}); // empty
-            }
-
-            // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
-            Collections.shuffle(optimalModelSubmissions);
-            return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[] {}));
+        if (submissionsWithoutResult.isEmpty()) {
+            return ResponseEntity.ok(new Long[] {}); // empty
         }
-        else {
-            // otherwise get a random (non-optimal) submission that is not assessed
-            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
-            // the
-            // corresponding submission yet.
-            var participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(modelingExercise.getId());
-            var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                    .collect(Collectors.toList());
 
-            if (submissionsWithoutResult.isEmpty()) {
-                return ResponseEntity.ok(new Long[] {}); // empty
-            }
+        Random random = new Random();
+        return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())).getId() });
 
-            Random random = new Random();
-            return ResponseEntity.ok(new Long[] { submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size())).getId() });
-        }
     }
 
     /**
@@ -343,9 +328,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
-        if (compassService.isSupported(modelingExercise)) {
-            compassService.resetModelsWaitingForAssessment(exerciseId);
-        }
         return ResponseEntity.noContent().build();
     }
 

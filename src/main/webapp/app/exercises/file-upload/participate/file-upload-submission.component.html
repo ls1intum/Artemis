@@ -26,12 +26,11 @@
                     <div class="input-group background-file">
                         <div class="custom-file overflow-ellipsis">
                             <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
-                            <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{ submissionFile ? submissionFile!.name : '' }}</label>
                         </div>
                     </div>
                     <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
                     <div class="d-inline-block" *ngFor="let extension of fileUploadExercise.filePattern!.split(',')">
-                        <span class="ml-1 badge badge-info">
+                        <span class="ms-1 badge bg-info">
                             {{ extension | uppercase }}
                         </span>
                     </div>
@@ -45,7 +44,7 @@
                 <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
             </h6>
             <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
-            <span class="ml-2 badge badge-info" *ngIf="submittedFileExtension">
+            <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
                 {{ submittedFileExtension | uppercase }}
             </span>
         </div>
@@ -67,7 +66,7 @@
         </div>
         <jhi-complaint-interactions
             *ngIf="fileUploadExercise && result && participation && isAfterAssessmentDueDate"
-            [result]="result"
+            [result]="resultWithComplaint ? resultWithComplaint : result"
             [participation]="participation"
             [exercise]="fileUploadExercise"
         >

@@ -7,6 +7,7 @@ import { CourseManagementStatisticsDTO } from 'app/course/manage/course-manageme
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
+import moment from 'moment';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -43,7 +44,9 @@ export class StatisticsService {
      */
     getCourseStatistics(courseId: number): Observable<CourseManagementStatisticsDTO> {
         const params = new HttpParams().set('courseId', '' + courseId);
-        return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params });
+        return this.http
+            .get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params })
+            .pipe(map((res: CourseManagementStatisticsDTO) => StatisticsService.convertDatesFromServer(res)));
     }
 
     /**
@@ -57,9 +60,16 @@ export class StatisticsService {
     }
 
     private static calculatePercentagesForExerciseStatistics(stats: ExerciseManagementStatisticsDto): ExerciseManagementStatisticsDto {
-        stats.participationsInPercent = stats.numberOfStudentsInCourse > 0 ? round((stats.numberOfParticipations / stats.numberOfStudentsInCourse) * 100, 1) : 0;
+        stats.participationsInPercent = stats.numberOfStudentsOrTeamsInCourse > 0 ? round((stats.numberOfParticipations / stats.numberOfStudentsOrTeamsInCourse) * 100, 1) : 0;
         stats.questionsAnsweredInPercent = stats.numberOfQuestions > 0 ? round((stats.numberOfAnsweredQuestions / stats.numberOfQuestions) * 100, 1) : 0;
         stats.absoluteAveragePoints = round((stats.averageScoreOfExercise * stats.maxPointsOfExercise) / 100, 1);
         return stats;
+    }
+
+    private static convertDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
+        dto.averageScoresOfExercises.forEach((averageScores) => {
+            averageScores.releaseDate = averageScores.releaseDate !== null ? moment(averageScores.releaseDate) : undefined;
+        });
+        return dto;
     }
 }

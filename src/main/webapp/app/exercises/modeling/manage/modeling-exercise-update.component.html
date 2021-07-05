@@ -40,7 +40,7 @@
                     name="releaseDate"
                 ></jhi-date-time-picker>
             </div>
-            <div class="form-group-narrow flex-grow-1 ml-3">
+            <div class="form-group-narrow flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     name="dueDate"
                     [error]="!!modelingExercise.dueDateError"
@@ -135,14 +135,7 @@
                 <option value="Flowchart">{{ 'artemisApp.DiagramType.Flowchart' | artemisTranslate }}</option>
             </select>
         </div>
-        <div
-            class="form-group"
-            *ngIf="
-                semiAutomaticAssessmentAvailable &&
-                !isExamMode &&
-                (this.modelingExercise.diagramType === UMLDiagramType.ClassDiagram || this.modelingExercise.diagramType === UMLDiagramType.ActivityDiagram)
-            "
-        >
+        <div class="form-group" *ngIf="semiAutomaticAssessmentAvailable && !isExamMode">
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
@@ -164,6 +157,7 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="modelingExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
@@ -174,42 +168,13 @@
                 [domainCommands]="domainCommandsGradingInstructions"
                 [(markdown)]="modelingExercise.gradingInstructions"
                 [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
             ></jhi-markdown-editor>
             <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="modelingExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group">
             <span jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</span>
-            <ul>
-                <li *ngIf="modelingExercise.sampleSolutionModel">
-                    <button
-                        [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
-                        class="btn btn-link"
-                        type="button"
-                        jhiTranslate="artemisApp.modelingExercise.exampleSolution"
-                    >
-                        Example Solution
-                    </button>
-                </li>
-            </ul>
-            <button
-                *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel && !isImport && !isExamMode"
-                class="btn btn-primary"
-                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
-                jhiTranslate="artemisApp.modelingExercise.createExampleSolution"
-            >
-                Create example solution
-            </button>
-            <button
-                *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel && !isImport && isExamMode"
-                class="btn btn-primary"
-                [routerLink]="['/course-management', modelingExercise.exerciseGroup!.exam!.course!.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
-                jhiTranslate="artemisApp.modelingExercise.createExampleSolution"
-            >
-                Create example solution
-            </button>
-            <div class="alert alert-info" *ngIf="!modelingExercise.id || isImport" jhiTranslate="artemisApp.modelingExercise.exampleSolutionRequiresExercise">
-                To create an example solution, you first need to finish creating the modeling exercise
-            </div>
+            <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="exampleSolution" [withExplanation]="false"></jhi-modeling-editor>
         </div>
         <div *ngIf="!isImport" class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
@@ -220,19 +185,19 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="modelingExercise.sampleSolutionExplanation"
                 [editorMode]="EditorMode.LATEX"
+                [shouldDisplayAlert]="false"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group" *ngIf="!modelingExercise.id || isImport">
             <span jhiTranslate="artemisApp.modelingExercise.exampleSubmissions">Example submissions</span>
-            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id || isImport" jhiTranslate="artemisApp.modelingExercise.exampleSubmissionsRequireExercise">
-                To create an example submission, you first need to finish creating the modeling exercise
-            </div>
+            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id || isImport" jhiTranslate="artemisApp.modelingExercise.exampleSubmissionsRequireExercise"></div>
         </div>
         <div class="form-group" *ngIf="modelingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationtText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
+    <jhi-alert></jhi-alert>
     <div>
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

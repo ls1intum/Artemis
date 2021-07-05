@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.security;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -10,6 +12,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.StringUtils;
+
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
  * Utility class for Spring Security.
@@ -17,6 +22,26 @@ import org.springframework.security.core.userdetails.UserDetails;
 public final class SecurityUtils {
 
     private SecurityUtils() {
+    }
+
+    /**
+     * check that the username and password are not null and have the correct length
+     * @param username the username which should be validated
+     * @param password the password which should be validated
+     */
+    public static void checkUsernameAndPasswordValidity(String username, String password) {
+        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
+            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
+        }
+        else if (username.length() > USERNAME_MAX_LENGTH) {
+            throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
+        }
+        if (!StringUtils.hasLength(password) || password.length() < PASSWORD_MIN_LENGTH) {
+            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
+        else if (password.length() > PASSWORD_MAX_LENGTH) {
+            throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+        }
     }
 
     /**
@@ -33,8 +58,7 @@ public final class SecurityUtils {
         if (authentication == null) {
             return null;
         }
-        else if (authentication.getPrincipal() instanceof UserDetails) {
-            UserDetails springSecurityUser = (UserDetails) authentication.getPrincipal();
+        else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {
             return springSecurityUser.getUsername();
         }
         else if (authentication.getPrincipal() instanceof String) {
