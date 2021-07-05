@@ -612,7 +612,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(true);
         submissionRepository.save(modelingSubmission);
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
+        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
                 Result.class, HttpStatus.CREATED);
     }
 
@@ -625,7 +625,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         modelingSubmission.setExampleSubmission(true);
         submissionRepository.save(modelingSubmission);
         long randomId = 1874;
-        request.postWithResponseBody("/api/exercises/" + randomId + "/submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission, Result.class,
+        request.postWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
     }
 
