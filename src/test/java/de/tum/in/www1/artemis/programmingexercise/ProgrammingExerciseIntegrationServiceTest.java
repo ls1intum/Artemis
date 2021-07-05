@@ -898,6 +898,16 @@ public class ProgrammingExerciseIntegrationServiceTest {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
+    public void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.SWIFT);
+        programmingExercise.setProjectType(ProjectType.XCODE);
+        programmingExercise.setAllowOnlineEditor(true);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
     public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");

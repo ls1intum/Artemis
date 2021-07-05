@@ -284,7 +284,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!result.participation) {
             result.participation = this.participation;
         }
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'xl' });
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.result = result;
         const exercise = getExercise(this.participation);

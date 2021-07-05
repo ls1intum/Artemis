@@ -29,7 +29,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+--------+---------+
   | Assembler            | yes    | no      |
   +----------------------+--------+---------+
-  | Swift                | yes    | no      |
+  | Swift                | yes    | yes     |
   +----------------------+--------+---------+
   | OCaml                | yes    | no      |
   +----------------------+--------+---------+
