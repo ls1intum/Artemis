@@ -311,9 +311,6 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
         component: GradingKeyOverviewComponent,
-        resolve: {
-            studentExam: StudentExamResolve,
-        },
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
