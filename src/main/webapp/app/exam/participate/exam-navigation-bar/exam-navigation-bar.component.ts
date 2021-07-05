@@ -38,7 +38,7 @@ export class ExamNavigationBarComponent implements OnInit {
             if (update.problemStatement === '') {
                 this.changeExerciseById(update.exerciseId);
             } else {
-                this.updateExerciseById(update.exerciseId, update.problemStatement);
+                this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
             }
         });
 
@@ -61,6 +61,11 @@ export class ExamNavigationBarComponent implements OnInit {
         this.examAboutToEnd.emit();
     }
 
+    /**
+     * Changes the currently visible exercise
+     * @param exerciseIndex of the student exam to navigate to / to display
+     * @param forceSave whether to save the exercise before displaying another or not
+     */
     changeExercise(exerciseIndex: number, forceSave: boolean) {
         // out of index -> do nothing
         if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
@@ -72,12 +77,25 @@ export class ExamNavigationBarComponent implements OnInit {
         this.setExerciseButtonStatus(exerciseIndex);
     }
 
+    /**
+     * Auxiliary method to call changeExercise based on the unique id of the exercise (e.g. exerciseA.id -> 7)
+     * The exercises in a student exam can be ordered randomly and be from different exercise groups
+     * this means that the identical exercise A can have a different position/index inside two different student exams
+     * i.e. exercise A can be the second exercise in student exam 1 but the third in student exam 2
+     * @param exerciseId the unique identifier of an exercise that stays the same regardless of student exam ordering
+     */
     changeExerciseById(exerciseId: number) {
         const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
         this.changeExercise(foundIndex, true);
     }
 
-    updateExerciseById(exerciseId: number, problemStatement: string) {
+    /**
+     * Updates the problem statement of an exam exercise during an ongoing exam in real time,
+     * i.e. the student will see the change immediately without the need to reload the page
+     * @param exerciseId the unique exercise that needs to be updated
+     * @param problemStatement the updated problem statement
+     */
+    updateExerciseProblemStatementById(exerciseId: number, problemStatement: string) {
         if (exerciseId !== -1 && problemStatement != undefined) {
             const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
             this.exercises[foundIndex].problemStatement = problemStatement;
