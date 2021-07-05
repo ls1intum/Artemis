@@ -2,7 +2,7 @@
     <div class="row justify-content-between">
         <div class="col-6">
             <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="back()" class="guided-tour-back back-button mr-2"></fa-icon>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="guided-tour-back back-button mr-2 clickable"></fa-icon>
                 <span *ngIf="isNewSubmission">{{ 'artemisApp.exampleSubmission.createNew' | artemisTranslate }} </span
                 >{{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
