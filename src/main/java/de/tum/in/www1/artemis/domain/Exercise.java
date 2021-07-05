@@ -445,7 +445,7 @@ public abstract class Exercise extends DomainObject {
     /**
      * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwiese return null.
      *
-     * @return the exam the exercise is part of
+     * @return exam, to which the exercise belongs
      */
     @JsonIgnore
     public Exam getExamIdViaExerciseGroupOrCourseMember() {
