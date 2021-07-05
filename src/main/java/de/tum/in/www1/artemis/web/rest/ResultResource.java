@@ -59,8 +59,6 @@ public class ResultResource {
 
     private final ParticipationService participationService;
 
-    private final SubmissionRepository submissionRepository;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final ResultService resultService;
@@ -96,9 +94,9 @@ public class ResultResource {
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            SubmissionRepository submissionRepository, ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseService exerciseService,
-            ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            LtiService ltiService, ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseService exerciseService, ExerciseRepository exerciseRepository,
+            AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -106,7 +104,6 @@ public class ResultResource {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
-        this.submissionRepository = submissionRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;

@@ -430,7 +430,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     ExerciseType.MODELING,
                     this.courseId,
                     this.exerciseId,
-                    unassessedSubmission.participation!.id!,
+                    undefined,
                     unassessedSubmission.id!,
                     this.examId,
                     this.exerciseGroupId,

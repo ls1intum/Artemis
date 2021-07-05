@@ -311,7 +311,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         latestSubmissionResult.participation = undefined;
 
         const url = !this.isExamMode
-            ? ['/course-management', this.courseId, 'text-exercises', this.exerciseId, 'submissions', this.submission!.id, 'text-feedback-conflict', feedbackId]
+            ? [
+                  '/course-management',
+                  this.courseId,
+                  'text-exercises',
+                  this.exerciseId,
+                  'participations',
+                  tempSubmission.participation!.id,
+                  'submissions',
+                  this.submission!.id,
+                  'text-feedback-conflict',
+                  feedbackId,
+              ]
             : [
                   '/course-management',
                   this.courseId,
@@ -321,6 +332,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                   this.exerciseGroupId,
                   'text-exercises',
                   this.exerciseId,
+                  'participations',
+                  tempSubmission.participation!.id,
                   'submissions',
                   this.submission!.id,
                   'text-feedback-conflict',

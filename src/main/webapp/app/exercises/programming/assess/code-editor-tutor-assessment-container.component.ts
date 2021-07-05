@@ -339,6 +339,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     response.id!,
                     this.examId,
                     this.exerciseGroupId,
+                    undefined,
                 );
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },

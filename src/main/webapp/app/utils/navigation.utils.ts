@@ -94,33 +94,52 @@ export const getLinkToSubmissionAssessment = (
     exerciseType: ExerciseType,
     courseId: number,
     exerciseId: number,
-    participationId: number,
+    participationId: number | undefined,
     submissionId: number | 'new',
     examId: number,
     exerciseGroupId: number,
     resultId?: number,
 ): string[] => {
     if (examId > 0) {
-        const route = [
-            '/course-management',
-            courseId.toString(),
-            'exams',
-            examId.toString(),
-            'exercise-groups',
-            exerciseGroupId.toString(),
-            exerciseType + '-exercises',
-            exerciseId.toString(),
-            'submissions',
-            submissionId.toString(),
-            'assessment',
-        ];
+        let route;
+        if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
+            route = [
+                '/course-management',
+                courseId.toString(),
+                'exams',
+                examId.toString(),
+                'exercise-groups',
+                exerciseGroupId.toString(),
+                exerciseType + '-exercises',
+                'participations',
+                participationId.toString(),
+                exerciseId.toString(),
+                'submissions',
+                submissionId.toString(),
+                'assessment',
+            ];
+        } else {
+            route = [
+                '/course-management',
+                courseId.toString(),
+                'exams',
+                examId.toString(),
+                'exercise-groups',
+                exerciseGroupId.toString(),
+                exerciseType + '-exercises',
+                exerciseId.toString(),
+                'submissions',
+                submissionId.toString(),
+                'assessment',
+            ];
+        }
         if (resultId) {
             route[route.length - 1] += 's';
             route.push(resultId.toString());
         }
         return route;
     } else {
-        if (exerciseType === ExerciseType.TEXT && submissionId !== 'new') {
+        if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
             return [
                 '/course-management',
                 courseId.toString(),
