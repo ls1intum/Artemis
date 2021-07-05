@@ -50,8 +50,8 @@ export class ExamNavigationBarComponent implements OnInit {
         });
 
         this.subscriptionToLiveExamExerciseUpdates = this.liveExamExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
-            this.exerciseIdToUpdate = update['exerciseId'];
-            this.exerciseProblemStatement = update['problemStatement'];
+            this.exerciseIdToUpdate = update.exerciseId;
+            this.exerciseProblemStatement = update.problemStatement;
             this.updateExerciseById(this.exerciseIdToUpdate, this.exerciseProblemStatement);
         });
 
