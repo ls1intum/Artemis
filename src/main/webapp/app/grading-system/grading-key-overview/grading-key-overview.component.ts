@@ -5,6 +5,7 @@ import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { round } from 'app/shared/util/utils';
 import { CourseScoreCalculationService, REACHABLE_POINTS } from 'app/overview/course-score-calculation.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -17,6 +18,7 @@ export class GradingKeyOverviewComponent implements OnInit {
         private router: Router,
         private gradingSystemService: GradingSystemService,
         private courseCalculationService: CourseScoreCalculationService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     isExam = false;
@@ -61,14 +63,10 @@ export class GradingKeyOverviewComponent implements OnInit {
     }
 
     /**
-     * Navigates to the exam summary page
+     * Navigates to the previous page (back button on the browser)
      */
     previousState() {
-        if (this.isExam) {
-            this.router.navigate(['courses', this.courseId!.toString(), 'exams', this.examId!.toString()]);
-        } else {
-            this.router.navigate(['courses', this.courseId!.toString(), 'statistics']);
-        }
+        this.navigationUtilService.navigateBack(['courses', this.courseId!.toString(), 'statistics']);
     }
 
     /**

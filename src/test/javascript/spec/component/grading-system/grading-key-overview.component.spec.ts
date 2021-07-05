@@ -12,6 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -51,6 +52,7 @@ describe('GradeKeyOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
+                MockProvider(ArtemisNavigationUtilService),
             ],
         })
             .compileComponents()
@@ -83,26 +85,6 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.isExam).toEqual(true);
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
         expect(gradePointsSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], 100);
-    });
-
-    it('should navigate to previous state for course', () => {
-        const routerSpy = spyOn(router, 'navigate').and.callFake(() => {});
-        comp.courseId = 123;
-
-        comp.previousState();
-
-        expect(routerSpy).toHaveBeenCalledWith(['courses', '123', 'statistics']);
-    });
-
-    it('should navigate to previous state for exam', () => {
-        const routerSpy = spyOn(router, 'navigate').and.callFake(() => {});
-        comp.courseId = 345;
-        comp.examId = 123;
-        comp.isExam = true;
-
-        comp.previousState();
-
-        expect(routerSpy).toHaveBeenCalledWith(['courses', '345', 'exams', '123']);
     });
 
     it('should print PDF', fakeAsync(() => {
