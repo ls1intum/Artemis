@@ -123,14 +123,14 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     private addExamUpdateNotification(notification: Notification): void {
-        if (notification.target) {
-            const target = JSON.parse(notification.target);
-            this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
+        if (!notification.target) return;
 
-            // only show pop-up if explicit notification text was set and only inside exam mode
-            if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
-                this.notifications.unshift(notification);
-            }
+        const target = JSON.parse(notification.target);
+        this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
+
+        // only show pop-up if explicit notification text was set and only inside exam mode
+        if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
+            this.notifications.unshift(notification);
         }
     }
 
