@@ -3,8 +3,17 @@
  */
 export class OnlineEditorPage {
     constructor() {
+        cy.intercept('POST', '/api/repository/*/commit').as('submit');
         cy.intercept('POST', '/api/repository/*/**').as('createFile');
-        cy.intercept('PUT', '/api/repository/*/files*').as('saveFiles');
+        cy.intercept('PUT', '/api/repository/*/files?commit=yes').as('submitWithSave');
+        cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
+    }
+
+    /**
+     * Waits for the first query (student participation) on the online editor page to improve test stability.
+     */
+    waitForPageLoad() {
+        return cy.wait('@initialQuery');
     }
 
     /**
@@ -56,17 +65,15 @@ export class OnlineEditorPage {
 
     /**
      * Submits the currently saved files by clicking on the submit button.
+     * @param changedFiles true if there are unsaved files, false otherwise
      */
-    submit() {
-        return cy.get('#submit_button').click();
-    }
-
-    /**
-     * Saves all edited files by clicking on the save button.
-     */
-    save() {
-        cy.get('#save_button').click();
-        return cy.wait('@saveFiles');
+    submit(changedFiles: boolean = false) {
+        cy.get('#submit_button').click();
+        if (changedFiles) {
+            cy.wait('@submitWithSave');
+        } else {
+            cy.wait('@submit');
+        }
     }
 
     /**

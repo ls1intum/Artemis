@@ -125,7 +125,6 @@ function makePartiallySuccessfulSubmission() {
 function makeSuccessfulSubmission() {
     editorPage.createFileInRootPackage('Context.java');
     editorPage.createFileInRootPackage('Policy.java');
-    editorPage.createFileInRootPackage('Client.java');
     makeSubmissionAndVerifyResults(allSuccessful, () => {
         editorPage.getResultPanel().contains('100%').should(beVisible);
         editorPage.getResultPanel().contains('13 of 13 passed').should(beVisible);
@@ -141,8 +140,7 @@ function makeSuccessfulSubmission() {
  */
 function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
     editorPage.typeSubmission(submission, packageName);
-    editorPage.save();
-    editorPage.submit();
+    editorPage.submit(true);
     editorPage.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should(beVisible);
     editorPage.getBuildOutput().contains(buildingAndTesting).should(beVisible);
     editorPage.getResultPanel().contains('GRADED', { timeout: longTimeout }).should(beVisible);
@@ -161,6 +159,7 @@ function startParticipationInProgrammingExercise() {
     cy.get(exerciseRow).find('.start-exercise').click();
     cy.wait('@participateInExerciseQuery');
     cy.get(exerciseRow).find('[buttonicon="folder-open"]').click();
+    editorPage.waitForPageLoad();
 }
 
 /**
