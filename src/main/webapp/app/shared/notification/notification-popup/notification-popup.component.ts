@@ -6,7 +6,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
-import { ExamExerciseNavigationService } from 'app/exam/exam-exercise-navigation.service';
 import { LiveExamExerciseUpdateService } from 'app/exam/live-exam-exercise-update.service';
 
 @Component({
@@ -21,7 +20,6 @@ export class NotificationPopupComponent implements OnInit {
         private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
-        private examExercisesNavigationService: ExamExerciseNavigationService,
         private liveExamExerciseUpdateService: LiveExamExerciseUpdateService,
     ) {}
 
@@ -52,7 +50,7 @@ export class NotificationPopupComponent implements OnInit {
         // tslint:disable-next-line:triple-equals
         if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             const target = JSON.parse(notification.target!);
-            this.examExercisesNavigationService.navigateToExamExercise(target.exercise);
+            this.liveExamExerciseUpdateService.navigateToExamExercise(target.exercise);
         } else {
             this.router.navigateByUrl(this.notificationTargetRoute(notification));
         }

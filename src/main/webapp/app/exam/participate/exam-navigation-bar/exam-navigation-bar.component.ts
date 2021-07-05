@@ -5,7 +5,6 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ExamExerciseNavigationService } from 'app/exam/exam-exercise-navigation.service';
 import { LiveExamExerciseUpdateService } from 'app/exam/live-exam-exercise-update.service';
 import { Subscription } from 'rxjs';
 
@@ -30,29 +29,17 @@ export class ExamNavigationBarComponent implements OnInit {
 
     icon: IconProp;
 
-    exerciseIdToNavigateTo: number;
-    subscriptionToExerciseNavigation: Subscription;
-
-    exerciseIdToUpdate: number;
-    exerciseProblemStatement: string;
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
-    constructor(
-        private layoutService: LayoutService,
-        private examExercisesNavigationService: ExamExerciseNavigationService,
-        private liveExamExerciseUpdateService: LiveExamExerciseUpdateService,
-    ) {}
+    constructor(private layoutService: LayoutService, private liveExamExerciseUpdateService: LiveExamExerciseUpdateService) {}
 
     ngOnInit(): void {
-        this.subscriptionToExerciseNavigation = this.examExercisesNavigationService.currentExerciseIdToNavigateTo.subscribe((exerciseId) => {
-            this.exerciseIdToNavigateTo = exerciseId;
-            this.changeExerciseById(exerciseId);
-        });
-
         this.subscriptionToLiveExamExerciseUpdates = this.liveExamExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
-            this.exerciseIdToUpdate = update.exerciseId;
-            this.exerciseProblemStatement = update.problemStatement;
-            this.updateExerciseById(this.exerciseIdToUpdate, this.exerciseProblemStatement);
+            if (update.problemStatement === '') {
+                this.changeExerciseById(update.exerciseId);
+            } else {
+                this.updateExerciseById(update.exerciseId, update.problemStatement);
+            }
         });
 
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {

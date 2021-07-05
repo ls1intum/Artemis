@@ -13,6 +13,10 @@ export class LiveExamExerciseUpdateService {
 
     constructor() {}
 
+    navigateToExamExercise(exerciseId: number) {
+        this.examExerciseIdAndProblemStatementSource.next({ exerciseId, problemStatement: '' });
+    }
+
     updateLiveExamExercise(exerciseId: number, problemStatement: string) {
         this.examExerciseIdAndProblemStatementSource.next({ exerciseId, problemStatement });
     }
