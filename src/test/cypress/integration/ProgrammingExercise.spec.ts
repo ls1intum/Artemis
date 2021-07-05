@@ -52,7 +52,7 @@ describe('Programming Exercise Management', () => {
         artemisRequests = new ArtemisRequests();
         cy.login(adminUsername, adminPassword, '/');
         artemisRequests.courseManagement
-            .createCourse(courseName, courseShortName)
+            .createCourse(courseName, courseShortName, uid)
             .its('body')
             .then((body) => {
                 expect(body).property('id').to.be.a('number');

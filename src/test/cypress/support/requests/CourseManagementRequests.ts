@@ -1,5 +1,5 @@
 import { BASE_API, DELETE } from '../constants';
-import courseTemplate from '../../fixtures/course.json';
+import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 
 const COURSE_BASE = BASE_API + 'courses/';
@@ -23,12 +23,17 @@ export class CourseManagementRequests {
      * Creates a course with the specified title and short name.
      * @param courseName the title of the course
      * @param courseShortName the short name
+     * @param uid the unique id of the course to construct unique group names for the different roles
      * @returns the cypress chainable from the request
      */
-    createCourse(courseName: string, courseShortName: string) {
+    createCourse(courseName: string, courseShortName: string, uid: string) {
         const course = courseTemplate;
         course.title = courseName;
         course.shortName = courseShortName;
+        course.studentGroupName = 'e2e-student-' + uid;
+        course.teachingAssistantGroupName = 'e2e-ta-' + uid;
+        course.editorGroupName = 'e2e-editor-' + uid;
+        course.instructorGroupName = 'e2e-instructor-' + uid;
         return cy.request({
             url: BASE_API + 'courses',
             method: 'POST',
