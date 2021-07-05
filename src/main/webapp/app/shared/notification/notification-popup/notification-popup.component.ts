@@ -16,6 +16,8 @@ import { LiveExamExerciseUpdateService } from 'app/exam/live-exam-exercise-updat
 export class NotificationPopupComponent implements OnInit {
     notifications: Notification[] = [];
 
+    LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+
     constructor(
         private accountService: AccountService,
         private notificationService: NotificationService,

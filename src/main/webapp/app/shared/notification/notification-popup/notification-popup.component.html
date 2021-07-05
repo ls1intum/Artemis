@@ -1,7 +1,7 @@
 <div class="notification-popup-container">
     <div *ngFor="let notification of notifications; let i = index" (click)="removeNotification(i); navigateToTarget(notification)">
         <div class="icon-container d-flex flex-column justify-content-center p-4">
-            <div *ngIf="notification.title == 'Live Exam Exercise Update'; else displayQuizIcon">
+            <div *ngIf="notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst; else displayQuizIcon">
                 <fa-icon [icon]="'exclamation-triangle'"></fa-icon>
             </div>
             <ng-template #displayQuizIcon>
@@ -12,7 +12,7 @@
             <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
                 <fa-icon [icon]="'times'"></fa-icon>
             </button>
-            <div *ngIf="notification.title == 'Live Exam Exercise Update'; else displayNormalNotificationTitle">
+            <div *ngIf="notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst; else displayNormalNotificationTitle">
                 <h5 class="pe-4">{{ 'artemisApp.notification.liveExamExerciseUpdateNotification' | artemisTranslate }}</h5>
             </div>
             <ng-template #displayNormalNotificationTitle>
