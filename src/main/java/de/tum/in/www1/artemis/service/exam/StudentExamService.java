@@ -321,7 +321,7 @@ public class StudentExamService {
      * @param studentExams the student exams of the users containing the exercises
      * @return a map of the User as key, and a list of the users exercises as value
      */
-    private Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
+    public Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
         return studentExams.stream()
                 .collect(
                         Collectors
