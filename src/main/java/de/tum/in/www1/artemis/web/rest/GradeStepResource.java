@@ -155,9 +155,12 @@ public class GradeStepResource {
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+        if (gradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
         return ResponseEntity.ok(gradeDTO);
     }
@@ -177,13 +180,16 @@ public class GradeStepResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examRepository.findByIdElseThrow(examId);
-        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (!isInstructor && !exam.resultsPublished()) {
             return forbidden();
         }
-        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+        else if (gradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
         return ResponseEntity.ok(gradeDTO);
     }

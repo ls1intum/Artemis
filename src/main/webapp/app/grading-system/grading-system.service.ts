@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { catchError, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 
@@ -127,9 +127,6 @@ export class GradingSystemService {
             gradeStepsObservable = this.findGradeStepsForCourse(courseId);
         }
         return gradeStepsObservable.pipe(
-            catchError(() => {
-                return of(undefined);
-            }),
             map((gradeStepsDTO) => {
                 if (gradeStepsDTO && gradeStepsDTO.body) {
                     return gradeStepsDTO.body;
@@ -174,12 +171,6 @@ export class GradingSystemService {
             responseObservable = this.matchPercentageToGradeStepForCourse(courseId, percentage);
         }
         return responseObservable.pipe(
-            catchError((error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    return of(undefined);
-                }
-                return throwError(error);
-            }),
             map((response) => {
                 if (response && response.body) {
                     return response.body;
