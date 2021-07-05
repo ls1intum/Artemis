@@ -244,14 +244,7 @@ public class StudentExamService {
      */
     public Set<StudentExam> assessUnsubmittedStudentExams(final Exam exam, final User assessor) {
         Set<StudentExam> unsubmittedStudentExams = studentExamRepository.findAllUnsubmittedWithExercisesByExamId(exam.getId());
-        Map<User, List<Exercise>> exercisesOfUser = unsubmittedStudentExams.stream()
-                .collect(
-                        Collectors
-                                .toMap(StudentExam::getUser,
-                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
-                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
-                                                .collect(Collectors.toList())));
-
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(unsubmittedStudentExams);
         for (final var user : exercisesOfUser.keySet()) {
             // fetch all studentParticipations of a user, with sumbissions and results eagerly loaded
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
@@ -291,13 +284,7 @@ public class StudentExamService {
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
-        Map<User, List<Exercise>> exercisesOfUser = studentExams.stream()
-                .collect(
-                        Collectors
-                                .toMap(StudentExam::getUser,
-                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
-                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
-                                                .collect(Collectors.toList())));
+        Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(studentExams);
         for (final var user : exercisesOfUser.keySet()) {
             final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(),
                     exercisesOfUser.get(user));
@@ -326,6 +313,22 @@ public class StudentExamService {
             }
         }
         return studentExams;
+    }
+
+    /**
+     * Helper method to return a map for each user to their exercises
+     *
+     * @param studentExams the student exams of the users containing the exercises
+     * @return a map of the User as key, and a list of the users exercises as value
+     */
+    private Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
+        return studentExams.stream()
+                .collect(
+                        Collectors
+                                .toMap(StudentExam::getUser,
+                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
+                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+                                                .collect(Collectors.toList())));
     }
 
     private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
