@@ -5,8 +5,8 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ExamExercisesNavigationService } from 'app/exam/examExercisesNavigationService';
-import { LiveExamExerciseUpdateService } from 'app/exam/liveExamExerciseUpdateService';
+import { ExamExerciseNavigationService } from 'app/exam/exam-exercise-navigation.service';
+import { LiveExamExerciseUpdateService } from 'app/exam/live-exam-exercise-update.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -39,7 +39,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     constructor(
         private layoutService: LayoutService,
-        private examExercisesNavigationService: ExamExercisesNavigationService,
+        private examExercisesNavigationService: ExamExerciseNavigationService,
         private liveExamExerciseUpdateService: LiveExamExerciseUpdateService,
     ) {}
 

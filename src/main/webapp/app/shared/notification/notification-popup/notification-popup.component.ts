@@ -6,8 +6,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
-import { ExamExercisesNavigationService } from 'app/exam/examExercisesNavigationService';
-import { LiveExamExerciseUpdateService } from 'app/exam/liveExamExerciseUpdateService';
+import { ExamExerciseNavigationService } from 'app/exam/exam-exercise-navigation.service';
+import { LiveExamExerciseUpdateService } from 'app/exam/live-exam-exercise-update.service';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -21,7 +21,7 @@ export class NotificationPopupComponent implements OnInit {
         private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
-        private examExercisesNavigationService: ExamExercisesNavigationService,
+        private examExercisesNavigationService: ExamExerciseNavigationService,
         private liveExamExerciseUpdateService: LiveExamExerciseUpdateService,
     ) {}
 
