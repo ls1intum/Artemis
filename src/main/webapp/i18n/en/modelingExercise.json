@@ -30,7 +30,7 @@
             "showExampleSubmission": "Show Submission",
             "showExampleAssessment": "Show Assessment",
             "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the modelling exercise. You will be redirected automatically.",
-            "exampleSubmissionForModelingExercise": "Example Submission for Modelling Exercise {{ exerciseTitle }}",
+            "exampleSubmissionForModelingExercise": "Example Submission for Modelling Exercise",
             "usedForTutorial": "Used for Tutorial",
             "apollonConversion": {
                 "error": "Apollon conversion is not available"
