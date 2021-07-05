@@ -41,6 +41,25 @@ declare global {
 }
 
 /**
+ * Overwrite the normal cypress request to always add the authorization token.
+ */
+Cypress.Commands.overwrite('request', (originalFn, options) => {
+    const token = Cypress.env(authTokenKey);
+
+    if (!!token) {
+        const authHeader = 'Bearer ' + token;
+        if (options.headers != null) {
+            options.headers.Authorization = authHeader;
+        } else {
+            options.headers = { Authorization: authHeader };
+        }
+        return originalFn(options);
+    }
+
+    return originalFn(options);
+});
+
+/**
  * Logs in using API and sets authToken in Cypress.env
  * */
 Cypress.Commands.add('login', (username, password, url) => {
