@@ -92,7 +92,6 @@ describe('Course management', () => {
  * Sets all the necessary cypress request hooks.
  */
 function registerQueries() {
-    cy.intercept('GET', '/api/courses/course-management-overview*').as('courseManagementQuery');
     cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
     cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
     cy.intercept('POST', '/api/courses').as('createCourseQuery');
