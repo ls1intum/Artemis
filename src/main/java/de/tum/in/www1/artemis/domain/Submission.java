@@ -65,7 +65,7 @@ public abstract class Submission extends DomainObject {
      * CacheStrategy.NONSTRICT_READ_WRITE leads to problems with the deletion of a submission, because first the results
      * are deleted in a @Transactional method.
      */
-    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.MERGE, orphanRemoval = true)
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties({ "submission", "participation" })
     private List<Result> results = new ArrayList<>();

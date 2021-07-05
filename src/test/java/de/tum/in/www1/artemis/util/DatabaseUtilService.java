@@ -2557,13 +2557,11 @@ public class DatabaseUtilService {
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
-        result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
         submission.getParticipation().addResult(result);
         submission = saveSubmissionToRepo(submission);
-        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return submission;
     }
