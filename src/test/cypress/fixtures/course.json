@@ -7,7 +7,7 @@
     "teachingAssistantGroupName": "e2e-ta",
     "editorGroupName": "e2e-editor",
     "instructorGroupName": "e2e-instructor",
-    "description": "This course is created and deleted in the course of cypress e2e testing. If you see this outside of an e2e test someone messed up.",
+    "description": "This course is created and deleted as part of cypress e2e testing. If you see this outside of an e2e test the cleanup failed, so you can safely delete this course.",
     "semester": null,
     "testCourse": true,
     "onlineCourse": false,
