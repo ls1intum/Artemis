@@ -252,7 +252,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeDTO.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -289,7 +289,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeDTO.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
     /**

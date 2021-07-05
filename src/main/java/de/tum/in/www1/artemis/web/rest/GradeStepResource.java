@@ -183,11 +183,11 @@ public class GradeStepResource {
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
-        if (!isInstructor && !exam.resultsPublished()) {
-            return forbidden();
-        }
-        else if (gradingScale.isEmpty()) {
+        if (gradingScale.isEmpty()) {
             return ResponseEntity.ok(null);
+        }
+        else if (!isInstructor && !exam.resultsPublished()) {
+            return forbidden();
         }
         GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
