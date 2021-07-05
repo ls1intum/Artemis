@@ -607,8 +607,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const participationId: number | 0 = submission === 'new' ? 0 : submission.participation!.id!;
         const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
+        let participationId = undefined;
+        if (submission !== 'new' && submission.participation !== undefined) {
+            participationId = submission.participation!.id;
+        }
         const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
         if (this.isTestRun) {
             await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });

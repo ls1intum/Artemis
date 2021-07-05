@@ -330,12 +330,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
-
+                let participationId;
+                if (response.participation !== undefined) {
+                    participationId = response.participation!.id;
+                } else {
+                    participationId = undefined;
+                }
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.PROGRAMMING,
                     this.courseId,
                     this.exerciseId,
-                    response.participation!.id!,
+                    participationId,
                     response.id!,
                     this.examId,
                     this.exerciseGroupId,

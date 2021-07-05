@@ -389,7 +389,15 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
         comp.nextSubmission();
 
-        const url = ['/course-management', courseId.toString(), 'programming-exercises', exercise.id!.toString(), 'submissions', unassessedSubmission.id!.toString(), 'assessment'];
+        const url = [
+            '/course-management',
+            courseId!.toString(),
+            'programming-exercises',
+            exercise.id!.toString(),
+            'submissions',
+            unassessedSubmission.id!.toString(),
+            'assessment',
+        ];
         const queryParams = { queryParams: { 'correction-round': 0 } };
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).to.be.calledOnce;
         expect(routerStub).to.have.been.calledWith(url, queryParams);
