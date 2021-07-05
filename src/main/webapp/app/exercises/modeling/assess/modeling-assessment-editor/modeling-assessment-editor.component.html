@@ -45,6 +45,7 @@
             (feedbackChanged)="onFeedbackChanged($event)"
             [explanation]="submission?.explanationText || ''"
             [highlightDifferences]="highlightDifferences"
+            [elementCounts]="submission && submission.similarElements"
         ></jhi-modeling-assessment>
         <jhi-collapsable-assessment-instructions
             *ngIf="modelingExercise"
