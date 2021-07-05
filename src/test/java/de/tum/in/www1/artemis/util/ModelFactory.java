@@ -127,15 +127,13 @@ public class ModelFactory {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.ECLIPSE);
         }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setProjectType(ProjectType.PLAIN);
+        }
         else {
             programmingExercise.setProjectType(null);
         }
-        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.setPackageName("swiftTest");
-        }
-        else {
-            programmingExercise.setPackageName("de.test");
-        }
+        programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
