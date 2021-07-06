@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -71,13 +72,13 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
-    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -92,7 +93,7 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
-        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -442,7 +443,7 @@ public class StudentExamService {
                     // Unlock Repositories if the exam starts within 5 minutes
                     if (exercise instanceof ProgrammingExercise programmingExercise
                             && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
-                        programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
+                        instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
                     }
                 }
                 catch (Exception ex) {
