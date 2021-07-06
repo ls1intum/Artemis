@@ -43,3 +43,49 @@ label {
 .impactWarningLabel {
     font-size: small;
 }
+
+.findOrigin {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.text-with-feedback {
+    text-decoration-line: underline;
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-top: 7px;
+    margin-bottom: 4px;
+    display: table;
+
+    &.positive-feedback {
+        text-decoration-style: double;
+        text-decoration-color: #25537a;
+        color: #25537a;
+        background-color: #d8e8f5;
+    }
+
+    &.neutral-feedback {
+        text-decoration-style: solid;
+        text-decoration-color: #1a1a1a;
+        background-color: #f2f2f2;
+        color: #1a1a1a;
+    }
+
+    b {
+        font-weight: 600;
+    }
+}
+
+.white-space {
+    margin-top: 5px;
+}
+
+.text-inline {
+    display: inline;
+}
+
+.reused-feedback-preview {
+    border: 2px solid rgba(228, 228, 228, 0.87);
+    border-radius: 2px;
+    padding: 10px;
+}
