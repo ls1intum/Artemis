@@ -431,20 +431,19 @@ public class StudentExamService {
             if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
-                    if (exercise instanceof ProgrammingExercise programmingExercise) {
-                        // Load lazy property
-                        if (!Hibernate.isInitialized((programmingExercise).getTemplateParticipation())) {
-                            final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                            (programmingExercise).setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
-                        }
-
-                        if (ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
-                            programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
-                        }
+                    // Load lazy property
+                    if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                        final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
                     var participation = participationService.startExercise(exercise, student, true);
                     generatedParticipations.add(participation);
+                    // Unlock Repositories if the exam starts within 5 minutes
+                    if (exercise instanceof ProgrammingExercise programmingExercise
+                            && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
+                        programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
+                    }
                 }
                 catch (Exception ex) {
                     log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
