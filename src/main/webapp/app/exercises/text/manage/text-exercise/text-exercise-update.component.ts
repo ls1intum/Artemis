@@ -50,8 +50,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
 
-    saveCommand: SaveExerciseCommand<TextExercise>;
-
     constructor(
         private jhiAlertService: JhiAlertService,
         private textExerciseService: TextExerciseService,
@@ -61,7 +59,6 @@ export class TextExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
         private eventManager: JhiEventManager,
-        private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -90,8 +87,6 @@ export class TextExerciseUpdateComponent implements OnInit {
             this.textExercise = textExercise;
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
-
-            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType);
         });
 
         this.activatedRoute.url
@@ -172,13 +167,15 @@ export class TextExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.textExercise, this.notificationText).subscribe(
-            (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
-            (error: HttpErrorResponse) => this.onSaveError(error),
-            () => {
-                this.isSaving = false;
-            },
-        );
+        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)
+            .save(this.textExercise, this.notificationText)
+            .subscribe(
+                (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
+                (error: HttpErrorResponse) => this.onSaveError(error),
+                () => {
+                    this.isSaving = false;
+                },
+            );
     }
 
     private onSaveSuccess(exerciseId: number) {

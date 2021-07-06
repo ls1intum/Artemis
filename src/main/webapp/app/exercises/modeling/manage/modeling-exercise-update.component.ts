@@ -55,8 +55,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
 
-    saveCommand: SaveExerciseCommand<ModelingExercise>;
-
     constructor(
         private jhiAlertService: JhiAlertService,
         private modelingExerciseService: ModelingExerciseService,
@@ -66,7 +64,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         private exerciseService: ExerciseService,
         private exerciseGroupService: ExerciseGroupService,
         private eventManager: JhiEventManager,
-        private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -100,8 +97,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
             this.backupExercise = cloneDeep(this.modelingExercise);
             this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
-
-            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType);
         });
 
         this.activatedRoute.url
@@ -185,13 +180,15 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.modelingExercise.sampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
 
-        this.saveCommand.save(this.modelingExercise, this.notificationText).subscribe(
-            (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
-            (error: HttpErrorResponse) => this.onSaveError(error),
-            () => {
-                this.isSaving = false;
-            },
-        );
+        new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)
+            .save(this.modelingExercise, this.notificationText)
+            .subscribe(
+                (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
+                (error: HttpErrorResponse) => this.onSaveError(error),
+                () => {
+                    this.isSaving = false;
+                },
+            );
     }
 
     /**
