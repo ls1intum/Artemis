@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -51,6 +52,9 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
+
+    @Value("${artemis.version-control.default-branch:master}")
+    private String defaultBranch;
 
     private final PasswordService passwordService;
 
@@ -341,6 +345,56 @@ public class BitbucketService extends AbstractVersionControlService {
         users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY));
     }
 
+    /**
+     * Get the default branch of the repository
+     *
+     * @param repositoryUrl The repository url to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     */
+    @Override
+    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws BitbucketException {
+        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/default-branch";
+
+        try {
+            var response = restTemplate.exchange(getDefaultBranchUrl, HttpMethod.GET, null, BitbucketDefaultBranchDTO.class);
+            var body = response.getBody();
+
+            if (body == null) {
+                log.error("Unable to get default branch for repository " + repositorySlug);
+                throw new BitbucketException("Unable to get default branch for repository " + repositorySlug);
+            }
+
+            return body.getDisplayId();
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Unable to get default branch for repository " + repositorySlug, e);
+            throw new BitbucketException("Unable to get default branch for repository " + repositorySlug, e);
+        }
+    }
+
+    /**
+     * Set the default branch of the repository
+     *
+     * @param repositoryUrl The repository url to set the default branch for.
+     * @param branchName The name of the branch to set as default, e.g. 'main'
+     */
+    public void setDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl, String branchName) throws BitbucketException {
+        var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/branches/default";
+
+        try {
+            var payload = new BitbucketDefaultBranchDTO("refs/heads/" + branchName);
+            restTemplate.exchange(getDefaultBranchUrl, HttpMethod.PUT, new HttpEntity<>(payload), Void.class);
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Unable to set default branch for repository " + repositorySlug, e);
+            throw new BitbucketException("Unable to set default branch for repository " + repositorySlug, e);
+        }
+    }
+
     @Override
     public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
         // Not implemented because it's not needed in Bitbucket for the current use case, because the master branch is not protected by default
@@ -446,16 +500,16 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects", HttpMethod.POST, entity, Void.class);
             grantGroupPermissionToProject(projectKey, adminGroupName, BitbucketPermission.PROJECT_ADMIN); // admins get administrative permissions
 
-            if (course.getInstructorGroupName() != null && !course.getInstructorGroupName().isEmpty()) {
+            if (StringUtils.hasText(course.getInstructorGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), BitbucketPermission.PROJECT_ADMIN); // instructors get administrative permissions
             }
 
             // editors get write permissions
-            if (course.getEditorGroupName() != null && !course.getEditorGroupName().isEmpty()) {
+            if (StringUtils.hasText(course.getEditorGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getEditorGroupName(), BitbucketPermission.PROJECT_WRITE);
             }
             // tutors get read permissions
-            if (course.getTeachingAssistantGroupName() != null && !course.getTeachingAssistantGroupName().isEmpty()) {
+            if (StringUtils.hasText(course.getTeachingAssistantGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getTeachingAssistantGroupName(), BitbucketPermission.PROJECT_READ);
             }
         }
@@ -489,6 +543,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private void createRepository(String projectKey, String repoName) throws BitbucketException {
         final var body = new BitbucketRepositoryDTO(repoName.toLowerCase());
+        body.setDefaultBranch(defaultBranch);
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);

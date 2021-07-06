@@ -14,7 +14,7 @@ public interface VcsUserManagementService {
      *
      * @param user The local Artemis user, which will be available in the VCS after invoking this method
      */
-    void createVcsUser(User user);
+    void createVcsUser(User user) throws VersionControlException;
 
     /**
      * Updates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user management.
@@ -38,6 +38,22 @@ public interface VcsUserManagementService {
      * @param login The login of the user that should get deleted
      */
     void deleteVcsUser(String login) throws VersionControlException;
+
+    /**
+     * Activates the VCS user.
+     *
+     * @param login The username of the user in the VCS
+     * @throws VersionControlException if an exception occurred
+     */
+    void activateUser(String login) throws VersionControlException;
+
+    /**
+     * Deactivates the VCS user.
+     *
+     * @param login The username of the user in the VCS
+     * @throws VersionControlException if an exception occurred
+     */
+    void deactivateUser(String login) throws VersionControlException;
 
     /**
      * Updates all exercises in a course based on the new instructors, editors and teaching assistant groups. This entails removing

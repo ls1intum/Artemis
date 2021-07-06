@@ -13,7 +13,7 @@ import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
-import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component.ts';
+import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { RouterModule } from '@angular/router';
@@ -21,6 +21,7 @@ import { assessmentLocksRoute } from 'app/assessment/assessment-locks/assessment
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 const ENTITY_STATES = [...assessmentLocksRoute];
 
@@ -33,6 +34,7 @@ const ENTITY_STATES = [...assessmentLocksRoute];
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisMarkdownModule,
+        ArtemisGradingInstructionLinkIconModule,
     ],
     declarations: [
         AssessmentHeaderComponent,

@@ -2,7 +2,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/modeling-exercise-detail.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -14,6 +13,8 @@ import { JhiEventManager } from 'ng-jhipster';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -23,10 +24,24 @@ describe('ModelingExercise Management Detail Component', () => {
     let fixture: ComponentFixture<ModelingExerciseDetailComponent>;
     let modelingExerciseService: ModelingExerciseService;
     let eventManager: JhiEventManager;
+    let statisticsService: StatisticsService;
 
     const model = { element: { id: '33' } };
     const modelingExercise = { id: 123, sampleSolutionModel: JSON.stringify(model) } as ModelingExercise;
-    const route = ({ params: of({ exerciseId: modelingExercise.id }) } as any) as ActivatedRoute;
+    const route = { params: of({ exerciseId: modelingExercise.id }) } as any as ActivatedRoute;
+    const modelingExerciseStatistics = {
+        averageScoreOfExercise: 50,
+        maxPointsOfExercise: 10,
+        absoluteAveragePoints: 5,
+        scoreDistribution: [5, 0, 0, 0, 0, 0, 0, 0, 0, 5],
+        numberOfExerciseScores: 10,
+        numberOfParticipations: 10,
+        numberOfStudentsOrTeamsInCourse: 10,
+        participationsInPercent: 100,
+        numberOfQuestions: 4,
+        numberOfAnsweredQuestions: 2,
+        questionsAnsweredInPercent: 50,
+    } as ExerciseManagementStatisticsDto;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -39,6 +54,7 @@ describe('ModelingExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(ModelingExerciseDetailComponent);
         comp = fixture.componentInstance;
         modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
+        statisticsService = fixture.debugElement.injector.get(StatisticsService);
         eventManager = fixture.debugElement.injector.get(JhiEventManager);
         fixture.detectChanges();
     });
@@ -54,13 +70,18 @@ describe('ModelingExercise Management Detail Component', () => {
                 }),
             ),
         );
+        const statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(modelingExerciseStatistics));
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
         expect(findStub).to.have.been.called;
+        expect(statisticsServiceStub).to.have.been.called;
         expect(comp.modelingExercise).to.deep.equal(modelingExercise);
+        expect(comp.doughnutStats.participationsInPercent).to.equal(100);
+        expect(comp.doughnutStats.questionsAnsweredInPercent).to.equal(50);
+        expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
         expect(eventManager.subscribe).to.have.been.calledWith('modelingExerciseListModification');
         tick();
         expect(comp.sampleSolutionUML).to.deep.equal(model);

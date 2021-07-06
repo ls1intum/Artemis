@@ -6,13 +6,13 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
 
 @Injectable({ providedIn: 'root' })
-export class FileUploadExerciseService {
+export class FileUploadExerciseService implements ExerciseServicable<FileUploadExercise> {
     private resourceUrl = SERVER_API_URL + 'api/file-upload-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
@@ -26,32 +26,27 @@ export class FileUploadExerciseService {
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     /**
      * Sends request to update file upload exercise on the server
      * @param fileUploadExercise that we want to update to
-     * @param exerciseId id of the exercise that will be updated
      * @param req request options passed to the server
      */
-    update(fileUploadExercise: FileUploadExercise, exerciseId: number, req?: any): Observable<EntityResponseType> {
+    update(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, copy, { params: options, observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     /**
@@ -59,12 +54,11 @@ export class FileUploadExerciseService {
      * @param exerciseId id of the exercise
      */
     find(exerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
-            .pipe(
-                map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-                map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-            );
+        return this.http.get<FileUploadExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.checkPermission(res)),
+        );
     }
 
     /**
@@ -73,12 +67,10 @@ export class FileUploadExerciseService {
      */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http
-            .get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(
-                map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
-                map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
-            );
+        return this.http.get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
+            map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
+        );
     }
 
     /**
@@ -87,6 +79,23 @@ export class FileUploadExerciseService {
      */
     delete(exerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
+    }
+
+    /**
+     * Re-evaluates and updates an file upload exercise.
+     *
+     * @param fileUploadExercise that should be updated of type {FileUploadExercise}
+     * @param req optional request options
+     */
+    reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
+        let copy = this.exerciseService.convertDateFromClient(fileUploadExercise);
+        copy = this.exerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        return this.http.put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
+            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
+        );
     }
 
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {

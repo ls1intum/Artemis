@@ -231,13 +231,13 @@ export class ResultComponent implements OnInit, OnChanges {
      * Gets the build result string.
      */
     buildResultString() {
-        if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
-            const isManualResult = this.result?.assessmentType !== AssessmentType.AUTOMATIC;
-            return isManualResult ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
+        if (this.isBuildFailed(this.submission)) {
+            return this.isManualResult(this.result) ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         }
 
-        const resultStringCompiledMessage = this.result!.resultString!.replace('0 of 0 passed', this.translate.instant('artemisApp.editor.buildSuccessful'));
+        const buildSuccessful = this.translate.instant('artemisApp.editor.buildSuccessful');
+        const resultStringCompiledMessage = this.result!.resultString?.replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
 
         if (
             this.participation &&
@@ -284,7 +284,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!result.participation) {
             result.participation = this.participation;
         }
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'xl' });
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.result = result;
         const exercise = getExercise(this.participation);
@@ -329,7 +329,8 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      */
     getOnlyShowSuccessfulCompileStatus(): boolean {
-        return this.templateStatus !== ResultTemplateStatus.NO_RESULT && this.templateStatus !== ResultTemplateStatus.IS_BUILDING && this.result?.resultString === '0 of 0 passed';
+        const zeroTestsPassed = this.result?.resultString?.includes('0 of 0 passed') ?? false;
+        return this.templateStatus !== ResultTemplateStatus.NO_RESULT && this.templateStatus !== ResultTemplateStatus.IS_BUILDING && zeroTestsPassed;
     }
 
     /**
@@ -341,19 +342,30 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             return 'result--late';
         }
+
         const result = this.result!;
-        if (result.score == undefined) {
-            if (result.successful) {
-                return 'text-success';
-            }
+
+        // Build failure so return red text.
+        if (this.isBuildFailedAndResultIsAutomatic(result)) {
             return 'text-danger';
         }
+
+        if (this.resultIsPreliminary(result)) {
+            return 'text-secondary';
+        }
+
+        if (result.score == undefined) {
+            return result.successful ? 'text-success' : 'text-danger';
+        }
+
         if (result.score > MIN_SCORE_GREEN) {
             return 'text-success';
         }
+
         if (result.score > MIN_SCORE_ORANGE) {
             return 'result-orange';
         }
+
         return 'text-danger';
     }
 
@@ -363,9 +375,20 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     getResultIconClass(): IconProp {
         const result = this.result!;
+
+        // Build failure so return times icon.
+        if (this.isBuildFailedAndResultIsAutomatic(result)) {
+            return ['far', 'times-circle'];
+        }
+
+        if (this.resultIsPreliminary(result)) {
+            return ['far', 'question-circle'];
+        }
+
         if (this.onlyShowSuccessfulCompileStatus) {
             return ['far', 'check-circle'];
         }
+
         if (result.score == undefined) {
             if (result.successful) {
                 return ['far', 'check-circle'];
@@ -376,5 +399,44 @@ export class ResultComponent implements OnInit, OnChanges {
             return ['far', 'check-circle'];
         }
         return ['far', 'times-circle'];
+    }
+
+    /**
+     * Returns true if the specified result is preliminary.
+     * @param result the result. It must include a participation and exercise.
+     */
+    resultIsPreliminary(result: Result) {
+        return (
+            result.participation &&
+            isProgrammingExerciseStudentParticipation(result.participation) &&
+            isResultPreliminary(result, result.participation.exercise as ProgrammingExercise)
+        );
+    }
+
+    /**
+     * Returns true if the submission of the result is of type programming, is automatic, and
+     * its build has failed.
+     * @param result
+     */
+    isBuildFailedAndResultIsAutomatic(result: Result) {
+        return this.isBuildFailed(result.submission) && !this.isManualResult(result);
+    }
+
+    /**
+     * Returns true if the specified submission is a programming submissions that has a failed
+     * build.
+     * @param submission the submission
+     */
+    isBuildFailed(submission: Submission | undefined) {
+        const isProgrammingSubmission = submission && submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING;
+        return isProgrammingSubmission && (submission as ProgrammingSubmission).buildFailed;
+    }
+
+    /**
+     * Returns true if the specified result is not automatic.
+     * @param result the result.
+     */
+    isManualResult(result: Result | undefined) {
+        return result?.assessmentType !== AssessmentType.AUTOMATIC;
     }
 }

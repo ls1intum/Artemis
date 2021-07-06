@@ -177,7 +177,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         teamTextExerciseUnit = exerciseUnitRepository.save(teamTextExerciseUnit);
 
         List<LectureUnit> lectureUnitsOfLectureOne = List.of(textUnit, textExerciseUnit, modelingExerciseUnit, teamTextExerciseUnit);
-        Lecture lectureOne = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(idOfLectureOne).get();
+        Lecture lectureOne = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(idOfLectureOne).get();
         for (LectureUnit lectureUnit : lectureUnitsOfLectureOne) {
             lectureOne.addLectureUnit(lectureUnit);
         }
@@ -204,7 +204,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         idOfExerciseUnitModelingOfLectureTwo = modelingExerciseUnit.getId();
 
         List<LectureUnit> lectureUnitsOfLectureTwo = List.of(textUnit, textExerciseUnit, modelingExerciseUnit);
-        Lecture lectureTwo = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(idOfLectureTwo).get();
+        Lecture lectureTwo = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(idOfLectureTwo).get();
         for (LectureUnit lectureUnit : lectureUnitsOfLectureTwo) {
             lectureTwo.addLectureUnit(lectureUnit);
         }

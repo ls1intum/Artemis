@@ -16,6 +16,10 @@ import jplag.JPlagResult;
 @Entity
 public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement> {
 
+    /**
+     * converts the given JPlagResult into a TextPlagiarismResult, only uses the 500 most interesting comparisons based on the highest similarity
+     * @param result the JPlagResult contains comparisons
+     */
     public void convertJPlagResult(JPlagResult result) {
         // sort and limit the number of comparisons to 500
         var comparisons = result.getComparisons().stream().sorted(Comparator.comparingDouble(JPlagComparison::percent).reversed()).limit(500).collect(Collectors.toList());

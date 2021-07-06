@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -33,8 +35,8 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @NotNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
-    @Size(min = 1, max = 50)
-    @Column(length = 50, unique = true, nullable = false)
+    @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
+    @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
     private String login;
 
     @JsonIgnore

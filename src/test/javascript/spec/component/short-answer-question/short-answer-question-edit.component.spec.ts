@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse, NgbModal, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -335,12 +335,12 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         const node = {} as Node;
 
-        const returnValue = ({
+        const returnValue = {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             contains(other: Node | null): boolean {
                 return true;
             },
-        } as unknown) as HTMLElement;
+        } as unknown as HTMLElement;
         stub(document, 'getElementById').returns(returnValue);
 
         const range = {
@@ -357,7 +357,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             endOffset: 0,
         } as Range;
 
-        const nodeValue = ({
+        const nodeValue = {
             anchorNode: node,
             focusNode: {
                 parentNode: {
@@ -374,16 +374,16 @@ describe('ShortAnswerQuestionEditComponent', () => {
             toString() {
                 return [];
             },
-        } as unknown) as Selection;
+        } as unknown as Selection;
         stub(window, 'getSelection').returns(nodeValue);
 
-        const returnHTMLDivElement = ({
+        const returnHTMLDivElement = {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             appendChild(param: DocumentFragment) {
                 return {} as DocumentFragment;
             },
             innerHTML: 'innerHTML',
-        } as unknown) as HTMLDivElement;
+        } as unknown as HTMLDivElement;
         stub(document, 'createElement').returns(returnHTMLDivElement);
 
         const markdownHelper = {
@@ -483,7 +483,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should set question text', () => {
         const text = 'This is a text for a test';
-        const returnValue = ({ value: text } as unknown) as HTMLElement;
+        const returnValue = { value: text } as unknown as HTMLElement;
         const getNavigationStub = stub(document, 'getElementById').returns(returnValue);
         const array = ['0'];
         component.textParts = [array, array];

@@ -14,7 +14,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -25,9 +25,9 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe.ts';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { stub } from 'sinon';
+import { SinonStub, stub } from 'sinon';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
@@ -53,6 +53,7 @@ describe('Course Management Update Component', () => {
     let organizationService: OrganizationManagementService;
     let course: Course;
     let fileUploaderService: FileUploaderService;
+    let uploadStub: SinonStub;
 
     beforeEach(() => {
         course = new Course();
@@ -71,17 +72,17 @@ describe('Course Management Update Component', () => {
         course.maxTeamComplaints = 13;
         course.maxComplaintTimeDays = 14;
         course.maxRequestMoreFeedbackTimeDays = 15;
-        course.studentQuestionsEnabled = true;
+        course.postsEnabled = true;
         course.registrationEnabled = true;
         course.registrationConfirmationMessage = 'testRegistrationConfirmationMessage';
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
 
-        const parentRoute = ({
+        const parentRoute = {
             data: of({ course }),
-        } as any) as ActivatedRoute;
-        const route = ({ parent: parentRoute } as any) as ActivatedRoute;
+        } as any as ActivatedRoute;
+        const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, ImageCropperModule],
             providers: [
@@ -115,6 +116,7 @@ describe('Course Management Update Component', () => {
         profileService = fixture.debugElement.injector.get(ProfileService);
         organizationService = fixture.debugElement.injector.get(OrganizationManagementService);
         fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
+        uploadStub = stub(fileUploaderService, 'uploadFile');
     });
 
     afterEach(() => {
@@ -124,7 +126,7 @@ describe('Course Management Update Component', () => {
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
             const profileInfo = { inProduction: false } as ProfileInfo;
-            const profileInfoSubject = new BehaviorSubject<ProfileInfo | undefined>(profileInfo);
+            const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
             const getProfileStub = stub(profileService, 'getProfileInfo').returns(profileInfoSubject);
             const organization = new Organization();
             organization.id = 12344;
@@ -159,7 +161,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxTeamComplaints'])?.value).to.equal(course.maxTeamComplaints);
             expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).to.equal(course.maxComplaintTimeDays);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).to.equal(course.maxRequestMoreFeedbackTimeDays);
-            expect(comp.courseForm.get(['studentQuestionsEnabled'])?.value).to.equal(course.studentQuestionsEnabled);
+            expect(comp.courseForm.get(['postsEnabled'])?.value).to.equal(course.postsEnabled);
             expect(comp.courseForm.get(['registrationEnabled'])?.value).to.equal(course.registrationEnabled);
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).to.equal(course.registrationConfirmationMessage);
             expect(comp.courseForm.get(['presentationScore'])?.value).to.equal(course.presentationScore);
@@ -184,7 +186,7 @@ describe('Course Management Update Component', () => {
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
+                postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
@@ -213,7 +215,7 @@ describe('Course Management Update Component', () => {
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
-                studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
+                postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
                 maxRequestMoreFeedbackTimeDays: new FormControl(entity.maxRequestMoreFeedbackTimeDays),
                 isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
@@ -242,11 +244,11 @@ describe('Course Management Update Component', () => {
     describe('setCourseImage', () => {
         it('should change course image', () => {
             const file = new File([''], 'testFilename');
-            const fileList = ({
+            const fileList = {
                 0: file,
                 length: 1,
                 item: () => file,
-            } as unknown) as FileList;
+            } as unknown as FileList;
             const event = { target: { files: fileList } };
             comp.setCourseImage(event);
             expect(comp.courseImageFile).to.equal(file);
@@ -265,17 +267,15 @@ describe('Course Management Update Component', () => {
 
     describe('uploadCourseImage', () => {
         let croppedImage: string;
-        let uploadStub: sinon.SinonStub;
         beforeEach(() => {
             croppedImage = 'testCroppedImage';
             comp.croppedImage = 'data:image/png;base64,' + comp.croppedImage;
             comp.courseImageFileName = 'testFilename';
             comp.showCropper = true;
-            fixture.detectChanges();
-            uploadStub = stub(fileUploaderService, 'uploadFile');
+            comp.ngOnInit();
         });
         it('should upload new image and update form', () => {
-            uploadStub.returns(Promise.resolve({ path: 'testPath' } as FileUploadResponse));
+            uploadStub.resolves({ path: 'testPath' } as FileUploadResponse);
             comp.uploadCourseImage();
             const file = base64StringToBlob(croppedImage, 'image/*');
             file['name'] = comp.courseImageFileName;
@@ -283,7 +283,7 @@ describe('Course Management Update Component', () => {
             expect(comp.showCropper).to.equal(false);
         });
         it('should set image name to course icon if upload fails', () => {
-            uploadStub.returns(Promise.reject({} as FileUploadResponse));
+            uploadStub.rejects({} as FileUploadResponse);
             comp.course = new Course();
             comp.course.courseIcon = 'testCourseIcon';
             comp.uploadCourseImage();

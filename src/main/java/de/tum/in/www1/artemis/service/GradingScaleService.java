@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -11,42 +10,16 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class GradingScaleService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    private final GradeStepRepository gradeStepRepository;
-
-    public GradingScaleService(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository) {
-        this.gradeStepRepository = gradeStepRepository;
+    public GradingScaleService(GradingScaleRepository gradingScaleRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
-    }
-
-    /**
-     * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
-     *
-     * @param percentage the grade percentage to be mapped
-     * @param gradingScaleId the identifier for the grading scale
-     * @return grade step corresponding to the given percentage
-     */
-    public GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
-        if (percentage < 0 || percentage > 100) {
-            throw new BadRequestAlertException("Grade percentages must be between 0 and 100", "gradeStep", "invalidGradePercentage");
-        }
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScaleId);
-        Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
-        if (matchingGradeStep.isPresent()) {
-            return matchingGradeStep.get();
-        }
-        else {
-            throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
-        }
     }
 
     /**

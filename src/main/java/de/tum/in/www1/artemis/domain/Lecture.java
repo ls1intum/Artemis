@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.metis.Post;
 
 /**
  * A Lecture.
@@ -48,10 +49,10 @@ public class Lecture extends DomainObject {
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("lecture")
-    private Set<StudentQuestion> studentQuestions = new HashSet<>();
+    private Set<Post> posts = new HashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties("lectures")
+    @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
 
     public String getTitle() {
@@ -122,12 +123,12 @@ public class Lecture extends DomainObject {
         lectureUnit.setLecture(this);
     }
 
-    public Set<StudentQuestion> getStudentQuestions() {
-        return studentQuestions;
+    public Set<Post> getPosts() {
+        return posts;
     }
 
-    public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {
-        this.studentQuestions = studentQuestions;
+    public void setPosts(Set<Post> posts) {
+        this.posts = posts;
     }
 
     public Course getCourse() {

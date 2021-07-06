@@ -15,23 +15,23 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+--------+---------+
   | Programming Language | Bamboo | Jenkins |
   +======================+========+=========+
-  | Java                 | yes   | yes      |
+  | Java                 | yes    | yes     |
   +----------------------+--------+---------+
-  | Python               | yes   | yes      |
+  | Python               | yes    | yes     |
   +----------------------+--------+---------+
-  | C                    | yes   | yes      |
+  | C                    | yes    | yes     |
   +----------------------+--------+---------+
-  | Haskell              | yes   | yes      |
+  | Haskell              | yes    | yes     |
   +----------------------+--------+---------+
-  | Kotlin               | yes   | no       |
+  | Kotlin               | yes    | no      |
   +----------------------+--------+---------+
-  | VHDL                 | yes   | no       |
+  | VHDL                 | yes    | no      |
   +----------------------+--------+---------+
-  | Assembler            | yes   | no       |
+  | Assembler            | yes    | no      |
   +----------------------+--------+---------+
-  | Swift                | yes   | no       |
+  | Swift                | yes    | yes     |
   +----------------------+--------+---------+
-  | OCaml                | yes   | no       |
+  | OCaml                | yes    | no      |
   +----------------------+--------+---------+
 
 - Not all ``templates`` support the same feature set.
@@ -106,6 +106,20 @@ Exercise Creation
       creation of the exercise.
     - **Preview**: Given the short name of the exercise and the short name of the course, Artemis displays a preview of the
       generated repositories and build plans.
+
+    |
+
+    .. figure:: programming/programming-options-auxiliary-repositories.png
+              :align: center
+
+    - **Auxiliary Repositories:** Instructors can add auxiliary repositories with a name, checkout directory and description.
+      These repositories are created and added to the build plan when the exercise is created. Auxiliary repositories
+      cannot be changed after the creation of the exercise.
+
+      .. note::
+              Auxiliary repositories are checked out to the specified checkout directory during the automatic testing
+              of a student submission in case the checkout directory is set. This can be used e.g. for providing
+              additional resources or overwriting template source code in testing exercises.
 
     |
 

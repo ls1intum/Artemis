@@ -31,13 +31,16 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input()
     repositoryType: ProgrammingExerciseInstructorRepositoryType;
 
+    @Input()
+    auxiliaryRepositoryId: number;
+
     constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: JhiAlertService) {}
 
     exportRepository() {
         if (this.exerciseId && this.repositoryType) {
-            this.programmingExerciseService.exportInstructorRepository(this.exerciseId, this.repositoryType).subscribe((response) => {
+            this.programmingExerciseService.exportInstructorRepository(this.exerciseId, this.repositoryType, this.auxiliaryRepositoryId).subscribe((response) => {
                 downloadZipFileFromResponse(response);
-                this.alertService.success('artemisApp.programmingExercise.export.successMessage');
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });
         }
     }

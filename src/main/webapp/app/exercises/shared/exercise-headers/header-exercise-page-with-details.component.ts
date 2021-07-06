@@ -1,7 +1,6 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -10,7 +9,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
 })
-export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges {
+export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input() public exercise: Exercise;
@@ -20,30 +19,22 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     @Input() public isTestRun = false;
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
 
-    public exerciseStatusBadge = 'badge-success';
+    public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
     public isExamMode = false;
 
     icon: IconProp;
-
-    constructor(private exerciseService: ExerciseService) {}
-
-    /**
-     * Sets the status badge and categories of the exercise on init
-     */
-    ngOnInit(): void {
-        this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise.categories || [];
-        this.setIcon(this.exercise.type);
-    }
 
     /**
      * Sets the status badge and categories of the exercise on changes
      */
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise.categories || [];
-        this.setIcon(this.exercise.type);
+        this.exerciseCategories = this.exercise?.categories || [];
+
+        if (this.exercise) {
+            this.setIcon(this.exercise.type);
+        }
 
         if (this.exam) {
             this.isExamMode = true;
@@ -53,9 +44,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
             if (this.isExamMode) {
-                this.exerciseStatusBadge = moment(this.exam?.endDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                this.exerciseStatusBadge = moment(this.exam?.endDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
             } else {
-                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+                this.exerciseStatusBadge = moment(this.exercise.dueDate!).isBefore(moment()) ? 'bg-danger' : 'bg-success';
             }
         }
     }

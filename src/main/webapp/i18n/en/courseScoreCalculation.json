@@ -7,12 +7,14 @@
             "maxScore": "Max Points",
             "forQuizzes": "Points for quizzes",
             "forProgramming": "Points for programming exercises",
-            "forModeling": "Points for modeling exercises",
+            "forModeling": "Points for modelling exercises",
             "total": "Total points for this course",
             "eist": {
                 "forHomework": "Points for homework",
                 "forInClass": "Points for in-class exercises"
-            }
+            },
+            "gradingSystemGrade": "Grades",
+            "gradingSystemBonus": "Bonus Points"
         }
     }
 }

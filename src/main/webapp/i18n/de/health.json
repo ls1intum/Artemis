@@ -24,10 +24,11 @@
             "readinessState": "Bereitschaft",
             "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
             "versionControlServer": "Versionskontrollserver",
-            "userManagement": "Nutzerverwaltung",
+            "userManagement": "Verwaltung von Nutzer:innen",
             "hazelcast": "Hazelcast",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
-            "athene": "Athene"
+            "athene": "Athene",
+            "apollon": "Apollon Conversion Server"
         },
         "table": {
             "service": "Dienst Name",

@@ -6,9 +6,9 @@
                 "createLabel": "Create a new Answer Option",
                 "createOrEditLabel": "Create or edit a Answer Option"
             },
-            "created": "A new Answer Option is created with identifier {{ param }}",
-            "updated": "A Answer Option is updated with identifier {{ param }}",
-            "deleted": "A Answer Option is deleted with identifier {{ param }}",
+            "created": "Created new Answer Option with identifier {{ param }}",
+            "updated": "Updated Answer Option with identifier {{ param }}",
+            "deleted": "Deleted Answer Option with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Answer Option {{ id }}?"
             },

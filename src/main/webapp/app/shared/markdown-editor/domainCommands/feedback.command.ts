@@ -3,7 +3,7 @@ import { addTextAtCursor } from 'app/shared/util/markdown-util';
 
 export class FeedbackCommand extends DomainTagCommand {
     public static readonly identifier = '[feedback]';
-    public static readonly text = ' Add feedback for students here (visible for students)';
+    public static readonly text = 'Add feedback for students here (visible for students)';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addFeedback';
     displayCommandButton = false;

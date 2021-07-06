@@ -7,7 +7,8 @@ import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { StudentQuestionsComponent } from 'app/overview/student-questions/student-questions.component';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { PostingsComponent } from 'app/overview/postings/postings.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
@@ -23,7 +24,8 @@ export class CourseLectureDetailsComponent implements OnInit {
     lecture?: Lecture;
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
-    studentQuestions?: StudentQuestionsComponent;
+    postings?: PostingsComponent;
+    hasPdfLectureUnit: boolean;
 
     readonly LectureUnitType = LectureUnitType;
 
@@ -52,11 +54,17 @@ export class CourseLectureDetailsComponent implements OnInit {
                     this.lecture = findLectureResult.body!;
                     if (this.lecture?.lectureUnits) {
                         this.lectureUnits = this.lecture.lectureUnits;
+
+                        // Check if PDF attachments exist in lecture units
+                        this.hasPdfLectureUnit =
+                            (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
+                            ).length > 0;
                     }
-                    if (this.studentQuestions) {
+                    if (this.postings) {
                         // We need to manually update the lecture property of the student questions component
-                        this.studentQuestions.lecture = this.lecture;
-                        this.studentQuestions.loadQuestions(); // reload the student questions
+                        this.postings.lecture = this.lecture;
+                        this.postings.loadPosts(); // reload the student questions
                     }
                 },
                 (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -82,16 +90,22 @@ export class CourseLectureDetailsComponent implements OnInit {
         }
     }
 
+    downloadMergedFiles(): void {
+        if (this.lecture?.course?.id && this.lectureId) {
+            this.fileService.downloadMergedFileWithAccessToken(this.lecture.course.id, this.lectureId);
+        }
+    }
+
     /**
      * This function gets called if the router outlet gets activated. This is
-     * used only for the StudentQuestionsComponent
+     * used only for the PostingsComponent
      * @param instance The component instance
      */
-    onChildActivate(instance: StudentQuestionsComponent) {
-        this.studentQuestions = instance; // save the reference to the component instance
+    onChildActivate(instance: PostingsComponent) {
+        this.postings = instance; // save the reference to the component instance
         if (this.lecture) {
             instance.lecture = this.lecture;
-            instance.loadQuestions(); // reload the student questions
+            instance.loadPosts(); // reload the student questions
         }
     }
 }

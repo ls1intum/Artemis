@@ -17,7 +17,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -121,8 +121,9 @@ describe('EditLearningGoalComponent', () => {
         const findAllByCourseStub = sinon.stub(lectureService, 'findAllByCourseId').returns(of(lecturesResponse));
 
         editLearningGoalComponentFixture.detectChanges();
-        const learningGoalFormStubComponent: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(By.directive(LearningGoalFormStubComponent))
-            .componentInstance;
+        const learningGoalFormStubComponent: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(
+            By.directive(LearningGoalFormStubComponent),
+        ).componentInstance;
         expect(findByIdStub).to.have.been.calledOnce;
         expect(findAllByCourseStub).to.have.been.calledOnce;
 

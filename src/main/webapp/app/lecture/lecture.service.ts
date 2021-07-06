@@ -21,16 +21,12 @@ export class LectureService {
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(lecture);
-        return this.http
-            .post<Lecture>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(lecture);
-        return this.http
-            .put<Lecture>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(lectureId: number): Observable<EntityResponseType> {
@@ -40,8 +36,8 @@ export class LectureService {
                 map((res: EntityResponseType) => {
                     if (res.body) {
                         // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                        if (res.body.studentQuestions === undefined) {
-                            res.body.studentQuestions = [];
+                        if (res.body.posts === undefined) {
+                            res.body.posts = [];
                         }
                     }
                     return res;

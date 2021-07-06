@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { Course } from 'app/entities/course.model';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component.ts';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -26,7 +26,9 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
 import { Component } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,7 +42,9 @@ describe('Exam Update Component', function () {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
-    const exam = { id: 1 } as Exam;
+    const exam = new Exam();
+    exam.id = 1;
+
     const course = { id: 1 } as Course;
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
@@ -92,6 +96,16 @@ describe('Exam Update Component', function () {
                         return of(
                             new HttpResponse({
                                 body: course,
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
+                MockProvider(GradingSystemService, {
+                    findGradingScaleForExam: () => {
+                        return of(
+                            new HttpResponse({
+                                body: new GradingScale(),
                                 status: 200,
                             }),
                         );

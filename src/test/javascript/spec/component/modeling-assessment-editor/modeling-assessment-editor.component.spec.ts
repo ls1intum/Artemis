@@ -79,7 +79,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 complaintService = TestBed.inject(ComplaintService);
                 router = TestBed.inject(Router);
                 submissionService = TestBed.inject(SubmissionService);
-                mockAuth = (fixture.debugElement.injector.get(AccountService) as any) as MockAccountService;
+                mockAuth = fixture.debugElement.injector.get(AccountService) as any as MockAccountService;
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();
                 fixture.detectChanges();
@@ -93,28 +93,28 @@ describe('ModelingAssessmentEditorComponent', () => {
         it('ngOnInit', fakeAsync(() => {
             modelingSubmissionStub = stub(modelingSubmissionService, 'getSubmission');
             complaintStub = stub(complaintService, 'findByResultId');
-            const submission = ({
+            const submission = {
                 id: 1,
                 submitted: true,
                 type: 'MANUAL',
                 text: 'Test\n\nTest\n\nTest',
-                participation: ({
+                participation: {
                     type: ParticipationType.SOLUTION,
-                    exercise: ({
+                    exercise: {
                         id: 1,
                         problemStatement: 'problemo',
                         gradingInstructions: 'grading',
                         title: 'title',
                         shortName: 'name',
-                        exerciseGroup: ({
-                            exam: ({
+                        exerciseGroup: {
+                            exam: {
                                 course: new Course(),
-                            } as unknown) as Exam,
-                        } as unknown) as ExerciseGroup,
-                    } as unknown) as Exercise,
-                } as unknown) as Participation,
+                            } as unknown as Exam,
+                        } as unknown as ExerciseGroup,
+                    } as unknown as Exercise,
+                } as unknown as Participation,
                 results: [
-                    ({
+                    {
                         id: 2374,
                         resultString: '1 of 12 points',
                         score: 8,
@@ -128,9 +128,9 @@ describe('ModelingAssessmentEditorComponent', () => {
                                 credits: 1,
                             } as Feedback,
                         ],
-                    } as unknown) as Result,
+                    } as unknown as Result,
                 ],
-            } as unknown) as ModelingSubmission;
+            } as unknown as ModelingSubmission;
 
             modelingSubmissionStub.returns(of(submission));
             const user = <User>{ id: 99, groups: ['instructorGroup'] };
@@ -214,7 +214,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.complaint = new Complaint();
             component.complaint.id = 0;
             component.complaint.complaintText = 'complaint';
-            component.complaint.resultBeforeComplaint = 'result';
             component.ngOnInit();
             tick(500);
             course.isAtLeastInstructor = false;
@@ -233,7 +232,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.complaint = new Complaint();
         component.complaint.id = 0;
         component.complaint.complaintText = 'complaint';
-        component.complaint.resultBeforeComplaint = 'result';
         component.isAssessor = true;
         expect(component.readOnly).to.be.true;
     }));
@@ -247,21 +245,21 @@ describe('ModelingAssessmentEditorComponent', () => {
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
         component.unreferencedFeedback = [feedback];
 
-        component.result = ({
+        component.result = {
             id: 2374,
             resultString: '1 of 12 points',
             score: 8,
             rated: true,
             hasFeedback: true,
             hasComplaint: false,
-        } as unknown) as Result;
+        } as unknown as Result;
 
-        component.submission = ({
+        component.submission = {
             id: 1,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown) as ModelingSubmission;
+        } as unknown as ModelingSubmission;
         component.submission.results = [component.result];
         getLatestSubmissionResult(component.submission)!.feedbacks = [
             {
@@ -293,21 +291,21 @@ describe('ModelingAssessmentEditorComponent', () => {
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
         component.unreferencedFeedback = [feedback];
 
-        component.submission = ({
+        component.submission = {
             id: 1,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown) as ModelingSubmission;
+        } as unknown as ModelingSubmission;
         component.submission.results = [
-            ({
+            {
                 id: 2374,
                 resultString: '1 of 12 points',
                 score: 8,
                 rated: true,
                 hasFeedback: true,
                 hasComplaint: false,
-            } as unknown) as Result,
+            } as unknown as Result,
         ];
         getLatestSubmissionResult(component.submission)!.feedbacks = [
             {
@@ -336,25 +334,25 @@ describe('ModelingAssessmentEditorComponent', () => {
         complaintResponse.id = 1;
         complaintResponse.responseText = 'response';
 
-        component.submission = ({
+        component.submission = {
             id: 1,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown) as ModelingSubmission;
+        } as unknown as ModelingSubmission;
 
-        const comp_result = ({
+        const comp_result = {
             id: 2374,
             resultString: '1 of 12 points',
             score: 8,
             rated: true,
             hasFeedback: true,
             hasComplaint: false,
-            participation: ({
+            participation: {
                 type: ParticipationType.SOLUTION,
                 results: [],
-            } as unknown) as Participation,
-        } as unknown) as Result;
+            } as unknown as Participation,
+        } as unknown as Result;
 
         const fake = sinon.fake.returns(of({ body: comp_result }));
         sinon.replace(service, 'updateAssessmentAfterComplaint', fake);
@@ -371,12 +369,12 @@ describe('ModelingAssessmentEditorComponent', () => {
         const windowFake = sinon.fake.returns(true);
         sinon.replace(window, 'confirm', windowFake);
 
-        component.submission = ({
+        component.submission = {
             id: 2,
             submitted: true,
             type: 'MANUAL',
             text: 'Test\n\nTest\n\nTest',
-        } as unknown) as ModelingSubmission;
+        } as unknown as ModelingSubmission;
 
         const fake = sinon.fake.returns(of());
         sinon.replace(service, 'cancelAssessment', fake);

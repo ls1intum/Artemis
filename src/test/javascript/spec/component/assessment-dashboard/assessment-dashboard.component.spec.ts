@@ -13,7 +13,6 @@ import { of } from 'rxjs';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
@@ -40,6 +39,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { TimeAgoPipe } from 'ngx-moment';
 import { Course } from 'app/entities/course.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -114,12 +114,12 @@ describe('AssessmentDashboardInformationComponent', () => {
         totalNumberOfAssessmentLocks: 2,
     } as StatsForDashboard;
 
-    const route = ({
+    const route = {
         snapshot: {
             paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
             url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
         },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -171,12 +171,12 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     describe('ngOnInit', () => {
         it('should loadAll for course', () => {
-            const newRoute = ({
+            const newRoute = {
                 snapshot: {
                     paramMap: convertToParamMap({ courseId: course.id }),
                     url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
                 },
-            } as any) as ActivatedRoute;
+            } as any as ActivatedRoute;
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.snapshot = newRoute.snapshot;
             TestBed.inject(ActivatedRoute);
@@ -207,7 +207,7 @@ describe('AssessmentDashboardInformationComponent', () => {
             expect(comp.finishedExercises.length).to.equal(1);
         });
     });
-    describe('toggle second correctoinRound', () => {
+    describe('toggle second correctionRound', () => {
         it('should toggle correctionRound for exercises', () => {
             comp.exercises = exercises;
             toggleSecondCorrectionStub.returns(of(true));

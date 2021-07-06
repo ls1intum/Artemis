@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, Subscription, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
@@ -12,7 +13,7 @@ import {
     ExerciseGroup,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { JhiAlertService } from 'ng-jhipster';
 import { round } from 'app/shared/util/utils';
@@ -26,6 +27,8 @@ import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/qui
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import * as Sentry from '@sentry/browser';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 
 @Component({
     selector: 'jhi-exam-scores',
@@ -62,6 +65,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public barChartLegend = true;
     public barChartData: ChartDataSets[] = [];
 
+    gradingScaleExists = false;
+    gradingScale?: GradingScale;
+    isBonus?: boolean;
+    hasSecondCorrectionAndStarted: boolean;
+
     @ViewChild(BaseChartDirective) chart: BaseChartDirective;
 
     private languageChangeSubscription?: Subscription;
@@ -75,6 +83,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private localeConversionService: LocaleConversionService,
         private translateService: TranslateService,
         private participantScoresService: ParticipantScoresService,
+        private gradingSystemService: GradingSystemService,
     ) {}
 
     ngOnInit() {
@@ -83,10 +92,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             // alternative exam scores calculation using participant scores table
             const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']);
 
-            forkJoin([getExamScoresObservable, findExamScoresObservable]).subscribe(
-                ([getExamScoresResponse, findExamScoresResponse]) => {
+            // find grading scale if one exists and handle case when it doesn't
+            const gradingScaleObservable = this.gradingSystemService
+                .findGradingScaleForExam(params['courseId'], params['examId'])
+                .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+
+            forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe(
+                ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
                     this.examScoreDTO = getExamScoresResponse!.body!;
                     if (this.examScoreDTO) {
+                        this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
                         this.studentResults = this.examScoreDTO.studentResults;
                         this.exerciseGroups = this.examScoreDTO.exerciseGroups;
 
@@ -108,6 +123,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                                 }
                             }
                         }
+                    }
+                    // set the grading scale if it exists for the exam
+                    if (gradingScaleResponse.body) {
+                        this.gradingScaleExists = true;
+                        this.gradingScale = gradingScaleResponse.body!;
+                        this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
+                        this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
                     if (this.studentResults && this.exerciseGroups) {
@@ -155,10 +177,18 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     private createChart() {
         const labels: string[] = [];
-        let i;
-        for (i = 0; i < this.histogramData.length; i++) {
-            labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-            labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
+        if (this.gradingScaleExists) {
+            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
+                labels[i] = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
+                labels[i] += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
+                labels[i] += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
+                labels[i] += ` {${gradeStep.gradeName}}`;
+            });
+        } else {
+            for (let i = 0; i < this.histogramData.length; i++) {
+                labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
+                labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
+            }
         }
         this.barChartLabels = labels;
 
@@ -231,11 +261,28 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Find the grade step index for the corresponding grade step to the given percentage
+     * @param percentage the percentage which will be mapped to a grade step
+     */
+    findGradeStepIndex(percentage: number): number {
+        let index = 0;
+        this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
+            if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
+                index = i;
+            }
+        });
+        return index;
+    }
+
+    /**
      * Calculates filter dependent exam statistics. Must be triggered if filter settings change.
      * 1. The average points and number of participants for each exercise group and exercise
      * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
+        if (this.gradingScaleExists) {
+            this.histogramData = Array(this.gradingScale!.gradeSteps.length);
+        }
         this.histogramData.fill(0);
 
         // Create data structures holding the statistics for all exercise groups and exercises
@@ -257,10 +304,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 continue;
             }
             // Update histogram data structure
-            let histogramIndex = Math.floor(studentResult.overallScoreAchieved! / this.binWidth);
-            if (histogramIndex >= 100 / this.binWidth) {
-                // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
-                histogramIndex = 100 / this.binWidth - 1;
+            let histogramIndex: number;
+            if (this.gradingScaleExists) {
+                histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
+            } else {
+                histogramIndex = Math.floor(studentResult.overallScoreAchieved! / this.binWidth);
+                if (histogramIndex >= 100 / this.binWidth) {
+                    // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
+                    histogramIndex = 100 / this.binWidth - 1;
+                }
             }
             this.histogramData[histogramIndex]++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
@@ -300,27 +352,93 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         if (this.chart) {
             this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
+            this.barChartData[0].data = this.histogramData;
             this.chart.update(0);
         }
     }
 
     /**
-     * Calculates statistics on exam granularity for submitted exams and for all exams.
+     * Calculates statistics on exam granularity for passed exams, submitted exams, and for all exams.
      */
     private calculateExamStatistics() {
+        const studentPointsPassed: number[] = [];
         const studentPointsSubmitted: number[] = [];
         const studentPointsTotal: number[] = [];
+
+        const studentPointsPassedInFirstCorrectionRound: number[] = [];
+        const studentPointsSubmittedInFirstCorrectionRound: number[] = [];
+        const studentPointsTotalInFirstCorrectionRound: number[] = [];
 
         // Collect student points independent from the filter settings
         for (const studentResult of this.studentResults) {
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
+            studentPointsTotalInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
             if (studentResult.submitted) {
                 studentPointsSubmitted.push(studentResult.overallPointsAchieved!);
+                studentPointsSubmittedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
+                if (studentResult.hasPassed) {
+                    studentPointsPassed.push(studentResult.overallPointsAchieved!);
+                    studentPointsPassedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
+                }
             }
         }
-
-        const examStatistics = new AggregatedExamResult();
+        // Calculate statistics for passed exams
+        let examStatistics = this.calculatePassedExamStatistics(new AggregatedExamResult(), studentPointsPassed, studentPointsPassedInFirstCorrectionRound);
         // Calculate statistics for submitted exams
+        examStatistics = this.calculateSubmittedExamStatistics(examStatistics, studentPointsSubmitted, studentPointsSubmittedInFirstCorrectionRound);
+        // Calculate total statistics
+        this.aggregatedExamResults = this.calculateTotalExamStatistics(examStatistics, studentPointsTotal, studentPointsTotalInFirstCorrectionRound);
+    }
+
+    /**
+     * Calculates statistics like mean, median and standard deviation specifically for passed exams
+     */
+    private calculatePassedExamStatistics(
+        examStatistics: AggregatedExamResult,
+        studentPointsPassed: number[],
+        studentPointsPassedInFirstCorrectionRound: number[],
+    ): AggregatedExamResult {
+        if (studentPointsPassed.length && this.gradingScaleExists && !this.isBonus) {
+            examStatistics.meanPointsPassed = SimpleStatistics.mean(studentPointsPassed);
+            examStatistics.medianPassed = SimpleStatistics.median(studentPointsPassed);
+            examStatistics.standardDeviationPassed = SimpleStatistics.standardDeviation(studentPointsPassed);
+            examStatistics.noOfExamsFilteredForPassed = studentPointsPassed.length;
+            if (this.examScoreDTO.maxPoints) {
+                examStatistics.meanPointsRelativePassed = (examStatistics.meanPointsPassed / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.medianRelativePassed = (examStatistics.medianPassed / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.meanGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
+                examStatistics.medianGradePassed = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
+            }
+            // Calculate statistics for the first assessments of passed exams if second correction exists
+            if (this.hasSecondCorrectionAndStarted) {
+                examStatistics.meanPointsPassedInFirstCorrection = SimpleStatistics.mean(studentPointsPassedInFirstCorrectionRound);
+                examStatistics.medianPassedInFirstCorrection = SimpleStatistics.median(studentPointsPassedInFirstCorrectionRound);
+                examStatistics.standardDeviationPassedInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsPassedInFirstCorrectionRound);
+                if (this.examScoreDTO.maxPoints) {
+                    examStatistics.meanPointsRelativePassedInFirstCorrection = (examStatistics.meanPointsPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.medianRelativePassedInFirstCorrection = (examStatistics.medianPassedInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.meanGradePassedInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.meanPointsRelativePassedInFirstCorrection,
+                    )!.gradeName;
+                    examStatistics.medianGradePassedInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.medianRelativePassedInFirstCorrection,
+                    )!.gradeName;
+                }
+            }
+        }
+        return examStatistics;
+    }
+
+    /**
+     * Calculates statistics like mean, median and standard deviation specifically for submitted exams
+     */
+    private calculateSubmittedExamStatistics(
+        examStatistics: AggregatedExamResult,
+        studentPointsSubmitted: number[],
+        studentPointsSubmittedInFirstCorrectionRound: number[],
+    ): AggregatedExamResult {
         if (studentPointsSubmitted.length) {
             examStatistics.meanPoints = SimpleStatistics.mean(studentPointsSubmitted);
             examStatistics.median = SimpleStatistics.median(studentPointsSubmitted);
@@ -329,9 +447,43 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (this.examScoreDTO.maxPoints) {
                 examStatistics.meanPointsRelative = (examStatistics.meanPoints / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.medianRelative = (examStatistics.median / this.examScoreDTO.maxPoints) * 100;
+                if (this.gradingScaleExists) {
+                    examStatistics.meanGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelative)!.gradeName;
+                    examStatistics.medianGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelative)!.gradeName;
+                }
+            }
+            // Calculate statistics for the first assessments of submitted exams if second correction exists
+            if (this.hasSecondCorrectionAndStarted) {
+                examStatistics.meanPointsInFirstCorrection = SimpleStatistics.mean(studentPointsSubmittedInFirstCorrectionRound);
+                examStatistics.medianInFirstCorrection = SimpleStatistics.median(studentPointsSubmittedInFirstCorrectionRound);
+                examStatistics.standardDeviationInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsSubmittedInFirstCorrectionRound);
+                if (this.examScoreDTO.maxPoints) {
+                    examStatistics.meanPointsRelativeInFirstCorrection = (examStatistics.meanPointsInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.medianRelativeInFirstCorrection = (examStatistics.medianInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    if (this.gradingScaleExists) {
+                        examStatistics.meanGradeInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.meanPointsRelativeInFirstCorrection,
+                        )!.gradeName;
+                        examStatistics.medianGradeInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.medianRelativeInFirstCorrection,
+                        )!.gradeName;
+                    }
+                }
             }
         }
-        // Calculate total statistics
+        return examStatistics;
+    }
+
+    /**
+     * Calculates statistics like mean, median and standard deviation for all exams
+     */
+    private calculateTotalExamStatistics(
+        examStatistics: AggregatedExamResult,
+        studentPointsTotal: number[],
+        studentPointsTotalInFirstCorrectionRound: number[],
+    ): AggregatedExamResult {
         if (studentPointsTotal.length) {
             examStatistics.meanPointsTotal = SimpleStatistics.mean(studentPointsTotal);
             examStatistics.medianTotal = SimpleStatistics.median(studentPointsTotal);
@@ -340,9 +492,36 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (this.examScoreDTO.maxPoints) {
                 examStatistics.meanPointsRelativeTotal = (examStatistics.meanPointsTotal / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.medianRelativeTotal = (examStatistics.medianTotal / this.examScoreDTO.maxPoints) * 100;
+                if (this.gradingScaleExists) {
+                    examStatistics.meanGradeTotal = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.meanPointsRelativeTotal,
+                    )!.gradeName;
+                    examStatistics.medianGradeTotal = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
+                }
+            }
+            // Calculate total statistics if second correction exists
+            if (this.hasSecondCorrectionAndStarted) {
+                examStatistics.meanPointsTotalInFirstCorrection = SimpleStatistics.mean(studentPointsTotalInFirstCorrectionRound);
+                examStatistics.medianTotalInFirstCorrection = SimpleStatistics.median(studentPointsTotalInFirstCorrectionRound);
+                examStatistics.standardDeviationTotalInFirstCorrection = SimpleStatistics.standardDeviation(studentPointsTotalInFirstCorrectionRound);
+                if (this.examScoreDTO.maxPoints) {
+                    examStatistics.meanPointsRelativeTotalInFirstCorrection = (examStatistics.meanPointsTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    examStatistics.medianRelativeTotalInFirstCorrection = (examStatistics.medianTotalInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    if (this.gradingScaleExists) {
+                        examStatistics.meanGradeTotalInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.meanPointsRelativeTotalInFirstCorrection,
+                        )!.gradeName;
+                        examStatistics.medianGradeTotalInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                            this.gradingScale!.gradeSteps,
+                            examStatistics.medianRelativeTotalInFirstCorrection,
+                        )!.gradeName;
+                    }
+                }
             }
         }
-        this.aggregatedExamResults = examStatistics;
+        return examStatistics;
     }
 
     /**
@@ -355,6 +534,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (groupResult.noOfParticipantsWithFilter) {
                 groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
                 groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
+                if (this.gradingScaleExists) {
+                    const gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, groupResult.averagePercentage);
+                    groupResult.averageGrade = gradeStep!.gradeName;
+                }
             }
             // Calculate average points for exercises
             groupResult.exerciseResults.forEach((exResult) => {
@@ -381,7 +564,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         });
         headers.push('Overall Points');
         headers.push('Overall Score (%)');
+        if (this.gradingScaleExists) {
+            headers.push(this.isBonus ? 'Overall Bonus Points' : 'Overall Grade');
+        }
         headers.push('Submitted');
+        if (this.gradingScaleExists && !this.isBonus) {
+            headers.push('Passed');
+        }
 
         const rows = this.studentResults.map((studentResult) => {
             return this.convertToCSVRow(studentResult);
@@ -441,7 +630,17 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         csvRow.overAllPoints = studentResult.overallPointsAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallPointsAchieved, 1));
         csvRow.overAllScore = studentResult.overallScoreAchieved == undefined ? '' : this.localeConversionService.toLocaleString(round(studentResult.overallScoreAchieved, 2), 2);
+        if (this.gradingScaleExists) {
+            if (this.isBonus) {
+                csvRow['Overall Bonus Points'] = studentResult.overallGrade;
+            } else {
+                csvRow['Overall Grade'] = studentResult.overallGrade;
+            }
+        }
         csvRow.submitted = studentResult.submitted ? 'yes' : 'no';
+        if (this.gradingScaleExists && !this.isBonus) {
+            csvRow['Passed'] = studentResult.hasPassed ? 'yes' : 'no';
+        }
         return csvRow;
     }
 

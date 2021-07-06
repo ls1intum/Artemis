@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
@@ -7,6 +7,12 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
 
 describe('Participation Service', () => {
     let injector: TestBed;
@@ -17,6 +23,12 @@ describe('Participation Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         });
         injector = getTestBed();
         service = injector.get(ParticipationService);
@@ -26,7 +38,7 @@ describe('Participation Service', () => {
         elemDefault = new StudentParticipation();
     });
 
-    it('should find an element', async () => {
+    it('should find an element', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 initializationDate: currentDate.toDate(),
@@ -39,10 +51,11 @@ describe('Participation Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should find an element with latest result', async () => {
+    it('should find an element with latest result', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
         returnedFromService.results = [{ id: 1 }];
         service
@@ -51,10 +64,11 @@ describe('Participation Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should find participation for the exercise', async () => {
+    it('should find participation for the exercise', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, initializationDate: currentDate.toDate() };
         returnedFromService.id = 123;
         service
@@ -63,19 +77,20 @@ describe('Participation Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should find no participation for the exercise', async () => {
+    it('should find no participation for the exercise', fakeAsync(() => {
         service
             .findParticipation(123)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toBeUndefined());
-
         httpMock.expectOne({ method: 'GET' });
-    });
+        tick();
+    }));
 
-    it('should delete for guided tour', async () => {
+    it('should delete for guided tour', fakeAsync(() => {
         service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok));
         let request = httpMock.expectOne({ method: 'DELETE' });
         expect(request.request.params.keys().length).toEqual(0);
@@ -84,14 +99,14 @@ describe('Participation Service', () => {
         request = httpMock.expectOne({ method: 'DELETE' });
         expect(request.request.params.keys().length).toEqual(1);
         expect(request.request.params.get('a')).toEqual('param');
-    });
+    }));
 
-    it('should cleanup build plan', async () => {
+    it('should cleanup build plan', fakeAsync(() => {
         service.cleanupBuildPlan(elemDefault).subscribe((resp) => expect(resp).toMatchObject(elemDefault));
         httpMock.expectOne({ method: 'PUT' });
-    });
+    }));
 
-    it('should merge student participations', async () => {
+    it('should merge student participations', fakeAsync(() => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             id: 1,
             type: ParticipationType.PROGRAMMING,
@@ -123,9 +138,9 @@ describe('Participation Service', () => {
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
-    });
+    }));
 
-    it('should merge student participations', async () => {
+    it('should merge student participations', fakeAsync(() => {
         const participation1: StudentParticipation = {
             id: 1,
             type: ParticipationType.STUDENT,
@@ -150,9 +165,9 @@ describe('Participation Service', () => {
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
         // eslint-disable-next-line chai-friendly/no-unused-expressions
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
-    });
+    }));
 
-    it('should merge no participations', async () => {
+    it('should merge no participations', fakeAsync(() => {
         const participation: StudentParticipation = {
             id: 1,
             type: ParticipationType.SOLUTION,
@@ -167,51 +182,44 @@ describe('Participation Service', () => {
         participation.type = ParticipationType.STUDENT;
         mergedParticipation = service.mergeStudentParticipations([participation]);
         expect(mergedParticipation?.id).toEqual(participation.id);
-    });
+    }));
 
-    it('should update a Participation', async () => {
+    it('should update a Participation', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 repositoryUrl: 'BBBBBB',
                 buildPlanId: 'BBBBBB',
                 initializationState: 'BBBBBB',
-                initializationDate: currentDate.toDate(),
+                initializationDate: currentDate,
                 presentationScore: 1,
             },
             elemDefault,
         );
 
-        const expected = Object.assign(
-            {
-                initializationDate: currentDate,
-            },
-            returnedFromService,
-        );
+        const expected = Object.assign({}, returnedFromService);
         service
-            .update(expected)
+            .update(1, expected)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(JSON.stringify(returnedFromService));
-    });
+        req.flush(returnedFromService);
+        tick();
+    }));
 
-    it('should return a list of Participation', async () => {
+    it('should return a list of Participation', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
                 repositoryUrl: 'BBBBBB',
                 buildPlanId: 'BBBBBB',
                 initializationState: 'BBBBBB',
-                initializationDate: currentDate.toDate(),
+                initializationDate: currentDate,
                 presentationScore: 1,
+                results: [],
+                submissions: [],
             },
             elemDefault,
         );
-        const expected = Object.assign(
-            {
-                initializationDate: currentDate,
-            },
-            returnedFromService,
-        );
+        const expected = Object.assign({}, returnedFromService);
         service
             .findAllParticipationsByExercise(1)
             .pipe(
@@ -220,16 +228,17 @@ describe('Participation Service', () => {
             )
             .subscribe((body) => expect(body).toContainEqual(expected));
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify([returnedFromService]));
-        httpMock.verify();
-    });
+        req.flush([returnedFromService]);
+        tick();
+    }));
 
-    it('should delete a Participation', async () => {
+    it('should delete a Participation', fakeAsync(() => {
         service.delete(123).subscribe((resp) => expect(resp.ok));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-    });
+        tick();
+    }));
 
     it.each<any>([
         ['attachment; filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],

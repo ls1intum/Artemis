@@ -110,7 +110,15 @@
     <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
     <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
 </ng-container>
-<jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria || []"></jhi-structured-grading-instructions-assessment-layout>
+<ng-container *ngIf="exercise.gradingCriteria">
+    <dt><span jhiTranslate="artemisApp.exercise.structuredGradingInstructions">Structured Grading Instructions</span></dt>
+    <dd>
+        <jhi-structured-grading-instructions-assessment-layout
+            [readonly]="true"
+            [criteria]="exercise.gradingCriteria || []"
+        ></jhi-structured-grading-instructions-assessment-layout>
+    </dd>
+</ng-container>
 <ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastEditor === true">
     <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
     <dd>

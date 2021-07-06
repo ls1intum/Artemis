@@ -26,10 +26,10 @@ Once the changes in your pull request are approved by one of our reviewers, they
 - **Small packages**: PRs should be as small as possible and ideally concentrate on a single topic. Features should be split up into multiple PRs if it makes sense.
 - **Until the PR is _ready-for-review_, the PR should be a [Draft PR](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests#draft-pull-requests)**
 - **Definition of done**: Before requesting a code review make sure that the PR is _ready-for-review_:
-   - The PR template is filled out completely, containing as much information as needed to understand the feature.
-   - All tasks from the template checklist are done and checked off (writing tests, adding screenshots, etc.).
-   - The branch of the PR is up-to-date with develop.
-   - The last build of the PR is successful.
+  - The PR template is filled out completely, containing as much information as needed to understand the feature.
+  - All tasks from the template checklist are done and checked off (writing tests, adding screenshots, etc.).
+  - The branch of the PR is up-to-date with develop.
+  - The last build of the PR is successful.
 
 ## Code review guidelines
 
@@ -60,7 +60,7 @@ We are using [Scss](https://sass-lang.com) to write modular, reusable css.
 We have a couple of global scss files in `webapp/content` but encourage [component dependent css with angular's styleUrls](https://angular.io/guide/component-styles).
 
 From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/introduction/).
-```
+```scss
 .my-container {
     // container styles
     &__content {
@@ -75,8 +75,7 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
 Within the component html files, we encourage the use of [bootstrap css](https://getbootstrap.com/).
 
 Encouraged html styling:
-`<div class="d-flex ml-2">some content</div>`
-
+`<div class="d-flex ms-2">some content</div>`
 
 ## Testing
 

@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -64,6 +65,8 @@ public class ProgrammingExerciseResource {
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
+
+    private static final String AUX_REPO_ENTITY_NAME = "programmingExercise";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -106,6 +109,8 @@ public class ProgrammingExerciseResource {
 
     private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     /**
      * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -116,11 +121,13 @@ public class ProgrammingExerciseResource {
      * Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
      * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
      */
-    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$";
+    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
+
+    private final Pattern allowedBambooCheckoutDirectory = Pattern.compile("[a-zA-Z0-9]+(/[a-zA-Z0-9]*)*$");
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -128,7 +135,9 @@ public class ProgrammingExerciseResource {
             PlagiarismResultRepository plagiarismResultRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService) {
+            CourseRepository courseRepository, GitService gitService, ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -148,6 +157,7 @@ public class ProgrammingExerciseResource {
         this.courseRepository = courseRepository;
         this.gitService = gitService;
         this.programmingPlagiarismDetectionService = programmingPlagiarismDetectionService;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -249,18 +259,20 @@ public class ProgrammingExerciseResource {
 
     /**
      * Validates general programming exercise settings
-     * 1. Validate score settings
-     * 2. Validates the participation mode
-     * 3. Validates the programming language
+     * 1. Validates the programming language
      *
      * @param programmingExercise exercise to validate
      */
-    private void validateGeneralSettings(ProgrammingExercise programmingExercise) {
-        exerciseService.validateScoreSettings(programmingExercise);
+    private void validateProgrammingSettings(ProgrammingExercise programmingExercise) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(programmingExercise.isAllowOfflineIde())) {
             throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
+        }
+
+        // Check if Xcode has no online code editor enabled
+        if (ProjectType.XCODE.equals(programmingExercise.getProjectType()) && Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor())) {
+            throw new BadRequestAlertException("The online editor is not allowed for Xcode programming exercises", "Exercise", "noParticipationModeAllowed");
         }
 
         // Check if programming language is set
@@ -297,6 +309,12 @@ public class ProgrammingExerciseResource {
             throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 
+        // Check that Xcode has no SCA enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+            throw new BadRequestAlertException("The static code analysis is not supported for Xcode programming exercises", "Exercise",
+                    "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
         // Static code analysis max penalty must only be set if static code analysis is enabled
         if (Boolean.FALSE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && programmingExercise.getMaxStaticCodeAnalysisPenalty() != null) {
             throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
@@ -328,7 +346,10 @@ public class ProgrammingExerciseResource {
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        validateGeneralSettings(programmingExercise);
+
+        exerciseService.validateGeneralSettings(programmingExercise);
+        validateProgrammingSettings(programmingExercise);
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories(), programmingExercise);
 
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
@@ -460,7 +481,8 @@ public class ProgrammingExerciseResource {
         newExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        validateGeneralSettings(newExercise);
+        exerciseService.validateGeneralSettings(newExercise);
+        validateProgrammingSettings(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -471,7 +493,7 @@ public class ProgrammingExerciseResource {
         validateCourseSettings(newExercise, course);
 
         final var optionalOriginalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(sourceExerciseId);
         if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
@@ -562,7 +584,7 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        var existingProgrammingExercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(existingProgrammingExercise.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
@@ -573,6 +595,15 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
+
+        if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
+            // make sure the default value is set properly
+            updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        }
+
+        List<AuxiliaryRepository> newAuxiliaryRepositories = updatedProgrammingExercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() == null).toList();
+
+        validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(existingProgrammingExercise, newAuxiliaryRepositories, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             // make sure the default value is set properly
@@ -624,7 +655,7 @@ public class ProgrammingExerciseResource {
      * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the user does not have permissions to access the programming exercise.
      */
-    @PatchMapping(value = Endpoints.PROBLEM)
+    @PatchMapping(Endpoints.PROBLEM)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
@@ -675,6 +706,8 @@ public class ProgrammingExerciseResource {
         // Fetch grading criterion into exercise of participation
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
+
+        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, programmingExercise);
         // If the exercise belongs to an exam, only instructors and admins are allowed to access it, otherwise also TA have access
         if (programmingExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -777,7 +810,36 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
+     * GET /programming-exercises/:exerciseId/export-instructor-exercise
+     * @param exerciseId The id of the programming exercise
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(Endpoints.EXPORT_INSTRUCTOR_EXERCISE)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+
+        long start = System.nanoTime();
+        var path = programmingExerciseExportService.exportProgrammingExerciseInstructorMaterial(programmingExercise, new ArrayList<>());
+        if (path == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the zip file could not be created.")).body(null);
+        }
+        var finalZipFile = path.toFile();
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(finalZipFile));
+
+        log.info("Export of the programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
+                formatDurationFrom(start));
+
+        return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
      * @param exerciseId The id of the programming exercise
      * @param repositoryType The type of repository to zip and send
      * @return ResponseEntity with status
@@ -791,18 +853,53 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         long start = System.nanoTime();
-        File zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
-        if (zipFile == null) {
+        Optional<File> zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, new ArrayList<>());
+
+        return returnZipFileForRepositoryExport(zipFile, repositoryType.getName(), programmingExercise, start);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-instructor-auxiliary-repository/:repositoryType : sends an auxiliary repository as a zip file
+     * @param exerciseId The id of the programming exercise
+     * @param repositoryId The id of the auxiliary repository
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(Endpoints.EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY)
+    @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+
+        Optional<AuxiliaryRepository> optionalAuxiliaryRepository = auxiliaryRepositoryRepository.findById(repositoryId);
+
+        if (optionalAuxiliaryRepository.isEmpty()) {
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
+                    "There was an error on the server and the URL of the auxiliary couldn't be retrieved.")).build();
+        }
+
+        AuxiliaryRepository auxiliaryRepository = optionalAuxiliaryRepository.get();
+
+        long start = System.nanoTime();
+        Optional<File> zipFile = programmingExerciseExportService.exportInstructorAuxiliaryRepositoryForExercise(programmingExercise.getId(), auxiliaryRepository,
+                new ArrayList<>());
+        return returnZipFileForRepositoryExport(zipFile, auxiliaryRepository.getName(), programmingExercise, start);
+    }
+
+    private ResponseEntity<Resource> returnZipFileForRepositoryExport(Optional<File> zipFile, String repositoryName, ProgrammingExercise exercise, long startTime)
+            throws IOException {
+        if (zipFile.isEmpty()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
 
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType.getName(), programmingExercise.getId(),
-                programmingExercise.getTitle(), formatDurationFrom(start));
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, exercise.getId(), exercise.getTitle(),
+                formatDurationFrom(startTime));
 
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().contentLength(zipFile.get().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.get().getName()).body(resource);
     }
 
     /**
@@ -865,6 +962,12 @@ public class ProgrammingExerciseResource {
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+
+        // Only instructors or higher may override the anonymization setting
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, null)) {
+            repositoryExportOptions.setAnonymizeStudentCommits(true);
+        }
+
         if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
@@ -1087,7 +1190,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PutMapping(value = Endpoints.UNLOCK_ALL_REPOSITORIES)
+    @PutMapping(Endpoints.UNLOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         log.info("REST request to unlock all repositories of programming exercise {}", exerciseId);
@@ -1104,7 +1207,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId of the exercise
      * @return The ResponseEntity with status 200 (OK) or with status 404 (Not Found) if the exerciseId is invalid
      */
-    @PutMapping(value = Endpoints.LOCK_ALL_REPOSITORIES)
+    @PutMapping(Endpoints.LOCK_ALL_REPOSITORIES)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         log.info("REST request to lock all repositories of programming exercise {}", exerciseId);
@@ -1113,6 +1216,201 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.lockAllRepositories(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Returns a list of auxiliary repositories for a given programming exercise.
+     *
+     * @param exerciseId of the exercise
+     * @return the ResponseEntity with status 200 (OK) and the list of auxiliary repositories for the
+     *          given programming exercise. 404 when the programming exercise was not found.
+     */
+    @GetMapping(Endpoints.AUXILIARY_REPOSITORY)
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<AuxiliaryRepository>> getAuxiliaryRepositories(@PathVariable Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        return ResponseEntity.ok(exercise.getAuxiliaryRepositories());
+    }
+
+    /**
+     * Deletes BASE and SOLUTION build plan of a programming exercise and creates those again.
+     * This reuses the build plan creation logic of the programming exercise creation service.
+     *
+     * @param exerciseId of the programming exercise
+     * @return the ResponseEntity with status 200 (OK) if the recreation was successful.
+     */
+    @PutMapping(Endpoints.RECREATE_BUILD_PLANS)
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Void> recreateBuildPlans(@PathVariable Long exerciseId) {
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        return ResponseEntity.ok().build();
+    }
+
+    private void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories,
+            ProgrammingExercise updatedExercise) {
+        final List<AuxiliaryRepository> auxiliaryRepositories = Objects.requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>())
+                .stream().filter(repo -> repo.getId() != null).collect(Collectors.toList());
+        for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
+            validateAuxiliaryRepository(repo, auxiliaryRepositories);
+            auxiliaryRepositories.add(repo);
+        }
+        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
+        auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
+    }
+
+    private void validateAuxiliaryRepositoryId(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getId() != null) {
+            throw new BadRequestAlertException("Auxiliary repositories must not have an id.", AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
+        }
+    }
+
+    private void validateAuxiliaryRepositoryNameExists(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getName() == null || auxiliaryRepository.getName().isEmpty()) {
+            throw new BadRequestAlertException("Cannot set empty name for auxiliary repositories!", AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+        }
+        auxiliaryRepository.setName(auxiliaryRepository.getName().toLowerCase());
+    }
+
+    private void validateAuxiliaryRepositoryNameLength(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getName().length() > AuxiliaryRepository.MAX_NAME_LENGTH) {
+            throw new BadRequestAlertException("The name of an auxiliary repository must not be longer than 100 characters!", AUX_REPO_ENTITY_NAME,
+                    ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+        }
+    }
+
+    private void validateAuxiliaryRepositoryNameDuplication(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
+        for (AuxiliaryRepository existingRepository : otherRepositories) {
+            if (existingRepository.getName().equals(auxiliaryRepository.getName())) {
+                throw new BadRequestAlertException("The name '" + auxiliaryRepository.getName() + "' is not allowed for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
+                        ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+            }
+        }
+    }
+
+    private void validateAuxiliaryRepositoryNameRestricted(AuxiliaryRepository auxiliaryRepository) {
+        for (RepositoryType repositoryType : RepositoryType.values()) {
+            String repositoryName = repositoryType.getName();
+            if (auxiliaryRepository.getName().equals(repositoryName)) {
+                throw new BadRequestAlertException("The name '" + repositoryName + "' is not allowed for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
+                        ErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+            }
+        }
+    }
+
+    private void validateAuxiliaryRepositoryCheckoutDirectoryValid(AuxiliaryRepository auxiliaryRepository) {
+        String checkoutDirectory = auxiliaryRepository.getCheckoutDirectory();
+        Matcher ciCheckoutDirectoryMatcher = allowedBambooCheckoutDirectory.matcher(checkoutDirectory);
+        if (!ciCheckoutDirectoryMatcher.matches() || checkoutDirectory.equals(ASSIGNMENT_CHECKOUT_PATH)) {
+            throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
+                    ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+        }
+    }
+
+    private void validateAuxiliaryRepositoryCheckoutDirectoryLength(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getCheckoutDirectory().length() > AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH) {
+            throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!", AUX_REPO_ENTITY_NAME,
+                    ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+        }
+    }
+
+    private void validateAuxiliaryRepositoryCheckoutDirectoryDuplication(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
+        for (AuxiliaryRepository repo : otherRepositories) {
+            if (repo.getCheckoutDirectory() != null && repo.getCheckoutDirectory().equals(auxiliaryRepository.getCheckoutDirectory())) {
+                throw new BadRequestAlertException("The checkout directory path is already defined for another additional repository!", AUX_REPO_ENTITY_NAME,
+                        ErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+            }
+        }
+    }
+
+    private void validateAuxiliaryRepositoryDescriptionLength(AuxiliaryRepository auxiliaryRepository) {
+        if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > AuxiliaryRepository.MAX_DESCRIPTION_LENGTH) {
+            throw new BadRequestAlertException("The provided description is too long!", AUX_REPO_ENTITY_NAME, ErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION);
+        }
+    }
+
+    private void validateAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository, List<AuxiliaryRepository> otherRepositories) {
+
+        // Id of the auxiliary repository must not be set, because the id is set
+        // by the database.
+        validateAuxiliaryRepositoryId(auxiliaryRepository);
+
+        // We want to force the user to set a name of the auxiliary repository, otherwise we
+        // cannot determine which name we should use for setting up the repo on the VCS.
+        validateAuxiliaryRepositoryNameExists(auxiliaryRepository);
+
+        // The name must not be longer than 100 characters, since the database column is
+        // limited to 100 characters.
+        validateAuxiliaryRepositoryNameLength(auxiliaryRepository);
+
+        // We want to avoid using the same auxiliary repository name multiple times
+        validateAuxiliaryRepositoryNameDuplication(auxiliaryRepository, otherRepositories);
+
+        // The name must not match any of the names of the already present repositories, otherwise
+        // we get an undefined state.
+        // Currently, the names "exercise", "solution", and "tests" are restricted.
+        validateAuxiliaryRepositoryNameRestricted(auxiliaryRepository);
+
+        if (auxiliaryRepository.getCheckoutDirectory() != null) {
+
+            if (auxiliaryRepository.getCheckoutDirectory().isBlank()) {
+                auxiliaryRepository.setCheckoutDirectory(null);
+            }
+            else {
+
+                // We want to make sure, that the checkout directory path is valid.
+                validateAuxiliaryRepositoryCheckoutDirectoryValid(auxiliaryRepository);
+
+                // The checkout directory path must not be longer than 100 characters, since the database column is
+                // limited to 100 characters.
+                validateAuxiliaryRepositoryCheckoutDirectoryLength(auxiliaryRepository);
+
+                // Multiple auxiliary repositories might not share one checkout directory, since
+                // Bamboo does not allow this.
+                validateAuxiliaryRepositoryCheckoutDirectoryDuplication(auxiliaryRepository, otherRepositories);
+            }
+        }
+
+        // The description must not be longer than 100 characters, since the database column is
+        // limited to 500 characters.
+        validateAuxiliaryRepositoryDescriptionLength(auxiliaryRepository);
+    }
+
+    /**
+     * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
+     *
+     * @param exerciseId                                   of the exercise
+     * @param programmingExercise                          the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or
+     * with status 400 (Bad Request) if the ProgrammingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the ProgrammingExercise couldn't be updated
+     */
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+        log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
+
+        // check that the exercise is exist for given id
+        programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, programmingExercise);
+
+        // fetch course from database to make sure client didn't change groups
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
+
+        return updateProgrammingExercise(programmingExercise, null);
     }
 
     public static final class Endpoints {
@@ -1143,7 +1441,11 @@ public class ProgrammingExerciseResource {
 
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
 
+        public static final String EXPORT_INSTRUCTOR_EXERCISE = PROGRAMMING_EXERCISE + "/export-instructor-exercise";
+
         public static final String EXPORT_INSTRUCTOR_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-repository/{repositoryType}";
+
+        public static final String EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/export-instructor-auxiliary-repository/{repositoryId}";
 
         public static final String GENERATE_TESTS = PROGRAMMING_EXERCISE + "/generate-tests";
 
@@ -1159,6 +1461,12 @@ public class ProgrammingExerciseResource {
 
         public static final String LOCK_ALL_REPOSITORIES = PROGRAMMING_EXERCISE + "/lock-all-repositories";
 
+        public static final String AUXILIARY_REPOSITORY = PROGRAMMING_EXERCISE + "/auxiliary-repository";
+
+        public static final String RECREATE_BUILD_PLANS = PROGRAMMING_EXERCISE + "/recreate-build-plans";
+
+        public static final String REEVALUATE_EXERCISE = PROGRAMMING_EXERCISE + "/re-evaluate";
+
         private Endpoints() {
         }
     }
@@ -1172,6 +1480,14 @@ public class ProgrammingExerciseResource {
         public static final String INVALID_TEMPLATE_BUILD_PLAN_ID = "invalid.template.build.plan.id";
 
         public static final String INVALID_SOLUTION_BUILD_PLAN_ID = "invalid.solution.build.plan.id";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_ID = "invalid.auxiliary.repository.id";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_NAME = "invalid.auxiliary.repository.name";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY = "invalid.auxiliary.repository.checkout.directory";
+
+        public static final String INVALID_AUXILIARY_REPOSITORY_DESCRIPTION = "invalid.auxiliary.repository.description";
 
         private ErrorKeys() {
         }

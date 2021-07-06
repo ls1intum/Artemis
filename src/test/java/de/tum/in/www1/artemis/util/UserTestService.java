@@ -56,7 +56,7 @@ public class UserTestService {
 
     private MockDelegate mockDelegate;
 
-    private User student;
+    public User student;
 
     private final static int numberOfStudents = 50;
 
@@ -188,7 +188,7 @@ public class UserTestService {
         student.setId(oldId + 1);
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
 
-        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
@@ -201,7 +201,7 @@ public class UserTestService {
         student.setEmail("newEmail@testing.user");
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
 
-        request.put("/api/users", new ManagedUserVM(student), HttpStatus.BAD_REQUEST);
+        request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
@@ -233,7 +233,7 @@ public class UserTestService {
         var updatedUser = student;
         updatedUser.setGroups(Set.of("tutor"));
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), updatedUser, student.getGroups());
-        request.put("/api/users", new ManagedUserVM(updatedUser), HttpStatus.OK);
+        request.put("/api/users", new ManagedUserVM(updatedUser, updatedUser.getPassword()), HttpStatus.OK);
 
         var updatedUserOrEmpty = userRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
         assertThat(updatedUserOrEmpty).isPresent();
@@ -412,13 +412,15 @@ public class UserTestService {
     public void createUserWithGroups() throws Exception {
         var course = database.addEmptyCourse();
         database.addProgrammingExerciseToCourse(course, false);
+        course = database.addEmptyCourse();
+        course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
 
         var newUser = student;
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor"));
+        newUser.setGroups(Set.of("tutor", "instructor2"));
 
         mockDelegate.mockCreateUserInUserManagement(newUser, false);
 
@@ -515,5 +517,9 @@ public class UserTestService {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
         User userInDB = userRepository.findOneByLogin("student1").get();
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
+    }
+
+    public UserRepository getUserRepository() {
+        return userRepository;
     }
 }

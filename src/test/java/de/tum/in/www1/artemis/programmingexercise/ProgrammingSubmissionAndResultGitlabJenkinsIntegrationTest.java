@@ -4,12 +4,14 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -23,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -73,13 +76,76 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         gitlabRequestMockProvider.reset();
     }
 
-    private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldReceiveBuildLogsOnNewStudentParticipationResult() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var submission = database.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,9] not a statement");
+        logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,10] ';' expected");
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
+        notification.setLogs(logs);
+        postResult(notification, HttpStatus.OK);
+
+        var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
+        assertThat(submissionWithLogsOptional).isPresent();
+
+        // Assert that the submission contains build log entries
+        ProgrammingSubmission submissionWithLogs = submissionWithLogsOptional.get();
+        List<BuildLogEntry> buildLogEntries = submissionWithLogs.getBuildLogEntries();
+        assertThat(buildLogEntries).hasSize(2);
+        assertThat(buildLogEntries.get(0).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
+        assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, true);
+
+        jenkinsRequestMockProvider.mockGetLegacyBuildLogs(participation);
+        database.changeUser(userLogin);
+        var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        assertThat(receivedLogs.size()).isGreaterThan(0);
+    }
+
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
         return Arrays.stream(ProgrammingLanguage.values())
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldReturnBadRequestWhenPlanKeyDoesntExist(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        // Call programming-exercises/new-result which do not include build log entries yet
+        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());
+        postResult(notification, HttpStatus.BAD_REQUEST);
+
+        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        assertThat(results.size()).isEqualTo(0);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
@@ -91,18 +157,18 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         var result = assertBuildError(participation.getId(), userLogin, false);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Call again and assert that no new submissions have been created
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
         assertNoNewSubmissions(submission);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
@@ -113,7 +179,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call programming-exercises/new-result which do not include build log entries yet
         var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
-        postResult(notification);
+        postResult(notification, HttpStatus.OK);
 
         assertBuildError(participation.getId(), userLogin, true);
     }
@@ -149,14 +215,24 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs.size()).isGreaterThan(0);
 
-        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        if (useLegacyBuildLogs) {
+            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        }
+        else {
+            verify(buildWithDetails, times(1)).getConsoleOutputText();
+        }
 
         // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
         receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs.size()).isGreaterThan(0);
 
-        verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        if (useLegacyBuildLogs) {
+            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
+        }
+        else {
+            verify(buildWithDetails, times(1)).getConsoleOutputText();
+        }
 
         return result;
     }
@@ -167,14 +243,14 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
     }
 
-    private void postResult(TestResultsDTO requestBodyMap) throws Exception {
+    private void postResult(TestResultsDTO requestBodyMap, HttpStatus status) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
+        request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, status, httpHeaders);
     }
 
     private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests) {
@@ -185,4 +261,5 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         notification.setFullName(fullName);
         return notification;
     }
+
 }

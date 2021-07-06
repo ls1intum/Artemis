@@ -3,11 +3,15 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
-
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
 import { JhiAlertService } from 'ng-jhipster';
+import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import * as moment from 'moment';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -19,11 +23,16 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
+    readonly ExerciseType = ExerciseType;
+    readonly moment = moment;
+    doughnutStats: ExerciseManagementStatisticsDto;
+
     constructor(
         private eventManager: JhiEventManager,
         private fileUploadExerciseService: FileUploadExerciseService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
+        private statisticsService: StatisticsService,
     ) {}
 
     /**
@@ -51,8 +60,11 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
+        this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats = statistics;
+        });
     }
 
     /**
@@ -68,9 +80,5 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load(this.fileUploadExercise.id!));
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 }

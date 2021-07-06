@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
 import { RatingModule as StarRatingComponent } from 'ng-starrating';
 
-import { of } from 'rxjs';
+import { lastValueFrom, of } from 'rxjs';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
@@ -22,8 +22,8 @@ describe('RatingListComponent', () => {
     let router: Router;
 
     const ratings = [{ id: 1 }, { id: 2 }, { id: 3 }];
-    const parentRoute = ({ params: of({ courseId: 123 }) } as any) as ActivatedRoute;
-    const route = ({ parent: parentRoute } as any) as ActivatedRoute;
+    const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;
+    const route = { parent: parentRoute } as any as ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -62,21 +62,21 @@ describe('RatingListComponent', () => {
 
     it('should not open exercise du to missing participation', () => {
         const rating = { id: 1, result: { id: 1 } as Result } as Rating;
-        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => of(true).toPromise());
+        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
         expect(routerNavigateSpy).not.toHaveBeenCalled();
     });
 
     it('should not open exercise du to missing exercise', () => {
         const rating = { id: 1, result: { id: 1, participation: { id: 1 } as Participation } as Result } as Rating;
-        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => of(true).toPromise());
+        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
         expect(routerNavigateSpy).not.toHaveBeenCalled();
     });
 
     it('should open exercise', () => {
         const rating = { id: 1, result: { id: 1, participation: { id: 1, exercise: { id: 1, type: ExerciseType.TEXT } as Exercise } as Participation } as Result } as Rating;
-        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => of(true).toPromise());
+        const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
         expect(routerNavigateSpy).toHaveBeenCalled();
     });

@@ -187,7 +187,7 @@ describe('Modeling Assessment Service', () => {
                     { id: 0, credits: 3, referenceId: '24', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
                     { id: 0, credits: 3, referenceId: '25', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
                 ];
-                const uml = ({
+                const uml = {
                     elements: [
                         { id: '6', name: 'Dominik', type: UMLElementType.Class },
                         { id: '7', name: 'Dominik', type: UMLElementType.Package },
@@ -212,7 +212,7 @@ describe('Modeling Assessment Service', () => {
                         { id: '24', type: UMLRelationshipType.ClassComposition, source: { element: '6' }, target: { element: '6' } },
                         { id: '25', type: UMLRelationshipType.ActivityControlFlow, source: { element: '6' }, target: { element: '6' } },
                     ],
-                } as unknown) as UMLModel;
+                } as unknown as UMLModel;
 
                 expectedResult = service.getNamesForAssessments(elemDefault, uml);
                 expect(expectedResult).to.deep.equal(expected);

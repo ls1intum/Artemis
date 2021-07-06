@@ -29,9 +29,7 @@ export class ProgrammingAssessmentManualResultService {
 
         const url = `${this.resourceUrl}/participations/${participationId}/manual-results`;
         const copy = this.resultService.convertDateFromClient(result);
-        return this.http
-            .put<Result>(url, copy, { params, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.resultService.convertDateFromServer(res)));
+        return this.http.put<Result>(url, copy, { params, observe: 'response' }).pipe(map((res: EntityResponseType) => this.resultService.convertDateFromServer(res)));
     }
 
     /**
@@ -53,5 +51,15 @@ export class ProgrammingAssessmentManualResultService {
 
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/programming-submissions/${submissionId}/cancel-assessment`, null);
+    }
+
+    /**
+     * Deletes an assessment.
+     * @param participationId id of the participation, to which the assessment and the submission belong to
+     * @param submissionId id of the submission, to which the assessment belongs to
+     * @param resultId     id of the result which is deleted
+     */
+    deleteAssessment(participationId: number, submissionId: number, resultId: number): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/programming-submissions/${submissionId}/results/${resultId}`);
     }
 }

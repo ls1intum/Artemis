@@ -12,9 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
@@ -27,6 +25,12 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -251,6 +255,22 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetFileUploadExercise_setGradingInstructionFeedbackUsed() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        Feedback feedback = new Feedback();
+        feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
+        feedbackRepository.save(feedback);
+
+        FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+
+        assertThat(receivedFileUploadExercise.isGradingInstructionFeedbackUsed()).isTrue();
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
@@ -305,6 +325,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
 
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification",
                 fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
@@ -320,6 +341,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
+        fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
@@ -408,4 +430,86 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
         assertThat(receivedFileUploadExercises).isNull();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateFileUploadExercise() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(fileUploadExercise, "instructor1");
+
+        // change grading instruction score
+        gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
+        gradingCriteria.remove(1);
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
+
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
+                "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
+        assertThat(updatedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
+        assertThat(updatedResults.get(0).getFeedbacks().get(0).getCredits()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateFileUploadExercise_shouldDeleteFeedbacks() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(fileUploadExercise, "instructor1");
+
+        // remove instruction which is associated with feedbacks
+        gradingCriteria.remove(1);
+        gradingCriteria.remove(0);
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
+
+        FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
+                "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+        List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
+        assertThat(updatedFileUploadExercise.getGradingCriteria().size()).isEqualTo(1);
+        assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
+        assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
+
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateFileUploadExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        course.setInstructorGroupName("test");
+        courseRepo.save(course);
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateFileUploadExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findOneByIdElseThrow(fileUploadExercise.getId());
+        fileUploadExerciseToBeConflicted.setId(123456789L);
+        fileUploadExerciseRepository.save(fileUploadExerciseToBeConflicted);
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
+                HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testReEvaluateAndUpdateFileUploadExercise_notFound() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+
+        request.putWithResponseBody("/api/file-upload-exercises/" + 123456789 + "/re-evaluate", fileUploadExercise, FileUploadExercise.class, HttpStatus.NOT_FOUND);
+    }
+
 }

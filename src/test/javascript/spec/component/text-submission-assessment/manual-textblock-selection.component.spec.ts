@@ -18,18 +18,19 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 
 describe('ManualTextblockSelectionComponent', () => {
     let component: ManualTextblockSelectionComponent;
     let fixture: ComponentFixture<ManualTextblockSelectionComponent>;
 
-    const submission = ({
+    const submission = {
         submissionExerciseType: SubmissionExerciseType.TEXT,
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
         text: 'First text. Second text. Third text. Fourth text. Fifth text.',
-    } as unknown) as TextSubmission;
+    } as unknown as TextSubmission;
     const blocks = [
         {
             text: 'First text.',
@@ -66,7 +67,7 @@ describe('ManualTextblockSelectionComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule, TextSharedModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisConfirmIconModule, TextSharedModule, ArtemisGradingInstructionLinkIconModule],
             declarations: [
                 TextblockAssessmentCardComponent,
                 TextblockFeedbackEditorComponent,

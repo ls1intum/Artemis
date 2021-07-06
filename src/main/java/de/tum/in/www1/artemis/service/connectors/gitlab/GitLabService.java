@@ -83,7 +83,7 @@ public class GitLabService extends AbstractVersionControlService {
             // Automatically created users
             if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
                 if (!userExists(username)) {
-                    gitLabUserManagementService.importUser(user);
+                    gitLabUserManagementService.createUser(user);
                 }
             }
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
@@ -93,7 +93,8 @@ public class GitLabService extends AbstractVersionControlService {
             }
         }
 
-        protectBranch(repositoryUrl, "master");
+        var defaultBranch = getDefaultBranchOfRepository(repositoryUrl);
+        protectBranch(repositoryUrl, defaultBranch);
     }
 
     @Override
@@ -135,6 +136,30 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     /**
+     * Get the default branch of the repository
+     *
+     * @param repositoryUrl The repository url to get the default branch for.
+     * @return the name of the default branch, e.g. 'main'
+     */
+    @Override
+    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws GitLabException {
+        var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+
+        try {
+            return gitlab.getProjectApi().getProject(repositoryId).getDefaultBranch();
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Unable to get default branch for repository " + repositoryId, e);
+        }
+    }
+
+    private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
+        final var namespaces = repositoryUrl.getURL().toString().split("/");
+        final var last = namespaces.length - 1;
+        return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
+    }
+
+    /**
      * Protects a branch from the repository, so that developers cannot change the history
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
@@ -162,7 +187,7 @@ public class GitLabService extends AbstractVersionControlService {
         scheduler.schedule(() -> {
             try {
                 log.info("Protecting branch {} for Gitlab repository {}", branch, repositoryPath);
-                gitlab.getProtectedBranchesApi().protectBranch(repositoryPath, branch, DEVELOPER, DEVELOPER, MAINTAINER, false);
+                gitlab.getProtectedBranchesApi().protectBranch(repositoryPath, branch, DEVELOPER, DEVELOPER, OWNER, false);
             }
             catch (GitLabApiException e) {
                 throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryPath, e);
@@ -311,10 +336,35 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws VersionControlException {
-        final var exercisePath = programmingExercise.getProjectKey();
-        final var exerciseName = exercisePath + " " + programmingExercise.getTitle();
+        createGitlabGroupForExercise(programmingExercise);
 
-        final var group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+        final Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        final var instructors = userRepository.getInstructors(course);
+        addUsersToExerciseGroup(instructors, programmingExercise, OWNER);
+
+        // Get editors that are not instructors at the same time
+        final var editors = userRepository.findAllInGroupContainingAndNotIn(course.getEditorGroupName(), new HashSet<>(instructors));
+        addUsersToExerciseGroup(editors, programmingExercise, MAINTAINER);
+
+        // Get teaching assistants that are not instructors nor editors
+        final HashSet<User> instructorsAndEditors = new HashSet<>();
+        instructorsAndEditors.addAll(instructors);
+        instructorsAndEditors.addAll(editors);
+        final var tutors = userRepository.findAllInGroupContainingAndNotIn(course.getTeachingAssistantGroupName(), instructorsAndEditors);
+        addUsersToExerciseGroup(tutors, programmingExercise, REPORTER);
+    }
+
+    /**
+     * Creates a new group in Gitlab for the specified programming exercise.
+     *
+     * @param programmingExercise the programming exercise
+     */
+    private void createGitlabGroupForExercise(ProgrammingExercise programmingExercise) {
+        final String exercisePath = programmingExercise.getProjectKey();
+        final String exerciseName = exercisePath + " " + programmingExercise.getTitle();
+        final Group group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
+
         try {
             gitlab.getGroupApi().addGroup(group);
         }
@@ -327,34 +377,25 @@ public class GitLabService extends AbstractVersionControlService {
                 throw new GitLabException("Unable to create new group for course " + exerciseName, e);
             }
         }
-        final var instructors = userRepository.getInstructors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        final var editors = userRepository.getEditors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        final var tutors = userRepository.getTutors(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        for (final var instructor : instructors) {
+    }
+
+    /**
+     * Adds the users to the exercise's group with the specified access level.
+     *
+     * @param users The users to add
+     * @param exercise the exercise
+     * @param accessLevel the access level to give
+     */
+    private void addUsersToExerciseGroup(List<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
+        for (final var user : users) {
             try {
-                final var userId = gitLabUserManagementService.getUserId(instructor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), MAINTAINER);
+                final var userId = gitLabUserManagementService.getUserId(user.getLogin());
+                gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(exercise), accessLevel);
             }
-            catch (GitLabException ignored) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
-            }
-        }
-        for (final var editor : editors) {
-            try {
-                final var userId = gitLabUserManagementService.getUserId(editor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), DEVELOPER);
-            }
-            catch (GitLabException ignored) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
-            }
-        }
-        for (final var tutor : tutors) {
-            try {
-                final var userId = gitLabUserManagementService.getUserId(tutor.getLogin());
-                gitLabUserManagementService.addUserToGroups(userId, List.of(programmingExercise), REPORTER);
-            }
-            catch (GitLabException ignored) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not prevent the creation of the whole programming exercise
+            catch (GitLabException e) {
+                // ignore the exception and continue with the next user, one non existing user or issue here should not
+                // prevent the creation of the whole programming exercise
+                log.warn("Skipped adding user {} to groups of exercise {}: {}", user.getLogin(), exercise, e.getMessage());
             }
         }
     }

@@ -10,13 +10,13 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
-import { TeamComponent } from 'app/exercises/shared/team/team.component.ts';
+import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe.ts';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,6 +26,7 @@ import { restore, SinonStub, spy, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { mockExercise, mockTeam, mockTeams, TeamRequestInterceptorMock } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,6 +61,7 @@ describe('TeamComponent', () => {
                 MockComponent(TeamParticipationTableComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(AlertComponent),
+                MockComponent(AssessmentWarningComponent),
             ],
             providers: [
                 MockProvider(SessionStorageService),

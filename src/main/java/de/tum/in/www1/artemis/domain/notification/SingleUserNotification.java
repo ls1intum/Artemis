@@ -9,8 +9,8 @@ import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 
 /**
  * A SingleUserNotification.
@@ -49,15 +49,15 @@ public class SingleUserNotification extends Notification {
     /**
      * Set the target JSON string for an exercise notification
      *
-     * @param studentQuestionAnswer a question that was posted for an exercise
+     * @param answerPost an answer for an exercise post
      * @return JSON string with all properties for the notification target field
      */
-    public String studentQuestionAnswerTargetForExercise(StudentQuestionAnswer studentQuestionAnswer) {
+    public String answerPostTargetForExercise(AnswerPost answerPost) {
         JsonObject target = new JsonObject();
         target.addProperty("message", "newAnswer");
-        target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
+        target.addProperty("id", answerPost.getPost().getExercise().getId());
         target.addProperty("entity", "exercises");
-        target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        target.addProperty("course", answerPost.getPost().getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
         target.addProperty("mainPage", "courses");
         return target.toString();
     }
@@ -65,15 +65,15 @@ public class SingleUserNotification extends Notification {
     /**
      * Set the target JSON string for a lecture notification
      *
-     * @param studentQuestionAnswer a question that was posted for a lecture
+     * @param answerPost an answer for a lecture post
      * @return JSON string with all properties for the notification target field
      */
-    public String studentQuestionAnswerTargetForLecture(StudentQuestionAnswer studentQuestionAnswer) {
+    public String answerPostTargetForLecture(AnswerPost answerPost) {
         JsonObject target = new JsonObject();
         target.addProperty("message", "newAnswer");
-        target.addProperty("id", studentQuestionAnswer.getQuestion().getLecture().getId());
+        target.addProperty("id", answerPost.getPost().getLecture().getId());
         target.addProperty("entity", "lectures");
-        target.addProperty("course", studentQuestionAnswer.getQuestion().getLecture().getCourse().getId());
+        target.addProperty("course", answerPost.getPost().getLecture().getCourse().getId());
         target.addProperty("mainPage", "courses");
         return target.toString();
     }

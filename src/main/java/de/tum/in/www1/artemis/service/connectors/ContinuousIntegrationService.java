@@ -43,6 +43,13 @@ public interface ContinuousIntegrationService {
             VcsRepositoryUrl solutionRepositoryURL);
 
     /**
+     * Recreates BASE and SOLUTION Build Plan for the given programming exercise
+     *
+     * @param exercise for which the build plans should be recreated
+     */
+    void recreateBuildPlansForExercise(ProgrammingExercise exercise);
+
+    /**
      * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
      *
      * @param sourceProjectKey The key of the source project, normally the key of the exercise -> courseShortName + exerciseShortName.
@@ -102,9 +109,9 @@ public interface ContinuousIntegrationService {
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
-     * @throws Exception if the Body could not be parsed
+     * @throws ContinuousIntegrationException if the Body could not be parsed
      */
-    String getPlanKey(Object requestBody) throws Exception;
+    String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
      * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
@@ -241,7 +248,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML -> Constants.ASSIGNMENT_CHECKOUT_PATH;
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY -> Constants.ASSIGNMENT_CHECKOUT_PATH;
                 };
             }
         },
@@ -250,7 +257,7 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, OCAML -> "";
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, OCAML, EMPTY -> "";
                     case C, VHDL, ASSEMBLER -> Constants.TESTS_CHECKOUT_PATH;
                 };
             }
@@ -287,7 +294,7 @@ public interface ContinuousIntegrationService {
      */
     static String getDockerImageName(ProgrammingLanguage language) {
         return switch (language) {
-            case JAVA, KOTLIN -> "ls1tum/artemis-maven-template:java16-2";
+            case JAVA, KOTLIN, EMPTY -> "ls1tum/artemis-maven-template:java16-3";
             case PYTHON -> "ls1tum/artemis-python-docker:latest";
             case C -> "ls1tum/artemis-c-docker:latest";
             case HASKELL -> "tumfpv/fpv-stack:8.8.4";

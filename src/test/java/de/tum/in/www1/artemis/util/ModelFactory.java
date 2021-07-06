@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -126,15 +127,13 @@ public class ModelFactory {
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.ECLIPSE);
         }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+            programmingExercise.setProjectType(ProjectType.PLAIN);
+        }
         else {
             programmingExercise.setProjectType(null);
         }
-        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            programmingExercise.setPackageName("swiftTest");
-        }
-        else {
-            programmingExercise.setPackageName("de.test");
-        }
+        programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
@@ -477,17 +476,17 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            boolean studentQuestionsEnabled, int requestMoreFeedbackTimeDays) {
+            boolean postsEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID().toString());
-        course.setDescription("Course description " + UUID.randomUUID().toString());
+
         // must start with a letter
         course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
         course.setMaxComplaints(maxComplaints);
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setStudentQuestionsEnabled(studentQuestionsEnabled);
+        course.setPostsEnabled(postsEnabled);
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
@@ -710,7 +709,7 @@ public class ModelFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
         toBeImported.setTutorParticipations(null);
-        toBeImported.setStudentQuestions(null);
+        toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
         toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
         toBeImported.setExampleSubmissions(null);
@@ -847,6 +846,7 @@ public class ModelFactory {
         notification.setSuccessful(successfulTestNames.size());
         notification.setFailures(failedTestNames.size());
         notification.setRunDate(ZonedDateTime.now());
+        notification.setLogs(List.of());
         return notification;
     }
 
@@ -1159,5 +1159,14 @@ public class ModelFactory {
         organization.setLogoUrl(logoUrl);
         organization.setEmailPattern(emailPattern);
         return organization;
+    }
+
+    public static AttachmentUnit generateAttachmentUnit(ZonedDateTime startDate, Lecture lecture) {
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setReleaseDate(startDate);
+        attachmentUnit.setName("TestAttachementUnit");
+        attachmentUnit.setLecture(lecture);
+        attachmentUnit.setDescription("Test description");
+        return attachmentUnit;
     }
 }

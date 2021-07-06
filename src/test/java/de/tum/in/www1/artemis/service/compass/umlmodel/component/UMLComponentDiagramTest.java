@@ -8,9 +8,9 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.service.compass.controller.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
@@ -23,7 +23,7 @@ public class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityComponentDiagram_DifferentModels() {
-        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), 0.0, 13.35);
+        compareSubmissions(modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_1), modelingSubmission(UMLComponentDiagrams.COMPONENT_MODEL_3), 0.0, 13.48);
     }
 
     @Test

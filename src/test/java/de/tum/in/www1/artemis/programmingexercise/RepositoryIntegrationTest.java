@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
@@ -41,7 +42,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
@@ -92,7 +92,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
                     + "while parsing file C:\\Users\\Stefan\\bamboo-home\\xml-data\\build-dir\\STCTESTPLUGINSCA-SOLUTION-JOB1\\assignment\\"
                     + "src\\www\\testPluginSCA\\BubbleSort.java. expecting EOF, found '}' -> [Help 1]");
 
-    private StudentParticipation participation;
+    private ProgrammingExerciseStudentParticipation participation;
 
     private ListAppender<ILoggingEvent> listAppender;
 
@@ -122,7 +122,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
         database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
-        participation = studentParticipationRepository.findAll().get(0);
+        participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findAll().get(0);
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo
@@ -144,16 +144,24 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(eq(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl()), eq(true), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl()), eq(true), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl()), eq(false), any());
 
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(), true);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), true);
-
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(), false);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
+
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.mockDefaultBranch("master", ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl());
+        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getVcsTemplateRepositoryUrl());
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -272,7 +280,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl(), true);
+                .getOrCheckoutRepository(eq(programmingExercise.getSolutionParticipation().getVcsRepositoryUrl()), eq(true), any());
 
         var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
 
@@ -684,7 +692,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
         // Try to stash changes
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
@@ -700,7 +708,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
 
         // Stash changes using service
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
         assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("initial commit");
     }
 
@@ -708,7 +716,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_throwError() {
         // Try to stash changes, but it will throw error as the HEAD is not initialized in the remote repo (this is done with the initial commit)
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
@@ -723,7 +731,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         // Check for canAccessParticipation(participation)
-        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        var response = programmingExerciseParticipationService.canAccessParticipation(participation);
         assertThat(response).isTrue();
 
         var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
@@ -739,7 +747,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         final var username = "instructor1";
         final Principal principal = () -> username;
 
-        response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, principal);
+        response = programmingExerciseParticipationService.canAccessParticipation(participation, principal);
         assertThat(response).isFalse();
 
         responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
@@ -753,6 +761,68 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCanAccessParticipation_asInstructor_edgeCase_exercise_null() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // Check with exercise null
+        participation.setExercise(null);
+        programmingExercise.getSolutionParticipation().setExercise(null);
+        programmingExercise.getTemplateParticipation().setExercise(null);
+
+        var response1 = programmingExerciseParticipationService.canAccessParticipation(participation);
+        assertThat(response1).isTrue();
+
+        var responseSolution1 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution1).isTrue();
+
+        var responseTemplate1 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate1).isTrue();
+
+        // Check with exercise and programmingExercise null (and set everything again)
+        participation.setExercise(null);
+        programmingExercise.getSolutionParticipation().setExercise(null);
+        programmingExercise.getTemplateParticipation().setExercise(null);
+        // Note that in the current implementation, setProgrammingExercise is equivalent to setExercise only for the ProgrammingExerciseStudentParticipation
+        participation.setProgrammingExercise(null);
+        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
+        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
+
+        var response2 = programmingExerciseParticipationService.canAccessParticipation(participation);
+        assertThat(response2).isTrue();
+
+        var responseSolution2 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution2).isTrue();
+
+        var responseTemplate2 = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate2).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_null() {
+        // Set solution and template participation
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // Check with programmingExercise only null
+        participation.setProgrammingExercise(null);
+        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
+        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
+
+        var response = programmingExerciseParticipationService.canAccessParticipation(participation);
+        assertThat(response).isTrue();
+
+        var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        assertThat(responseSolution).isTrue();
+
+        var responseTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        assertThat(responseTemplate).isTrue();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCanAccessParticipation_asStudent() {
         // Set solution and template participation
@@ -760,7 +830,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         // Check for canAccessParticipation(participation)
-        var response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+        var response = programmingExerciseParticipationService.canAccessParticipation(participation);
         assertThat(response).isTrue();
 
         var responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
@@ -775,7 +845,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         // Check for canAccessParticipation(participation, principal)
         final var username = "student1";
         final Principal principal = () -> username;
-        response = programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, principal);
+        response = programmingExerciseParticipationService.canAccessParticipation(participation, principal);
         assertThat(response).isTrue();
 
         responseSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), principal);
@@ -805,17 +875,17 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         }).when(versionControlService).configureRepository(programmingExercise, ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(),
                 participation.getStudents(), true);
 
-        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
-        assertThat(((ProgrammingExerciseStudentParticipation) participation).isLocked()).isFalse();
+        assertThat(participation.isLocked()).isFalse();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testUnlockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
@@ -832,15 +902,15 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         }).when(versionControlService).setRepositoryPermissionsToReadOnly(((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl(),
                 programmingExercise.getProjectKey(), participation.getStudents());
 
-        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-        assertThat(((ProgrammingExerciseStudentParticipation) participation).isLocked()).isTrue();
+        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+        assertThat(participation.isLocked()).isTrue();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testLockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;

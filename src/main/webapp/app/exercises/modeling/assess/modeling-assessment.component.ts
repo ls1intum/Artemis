@@ -1,9 +1,12 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
-import interact from 'interactjs';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import interact from 'interactjs';
 import * as $ from 'jquery';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -15,6 +18,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
+    firstCorrectionRoundColor = '#3e8acc';
+    secondCorrectionRoundColor = '#ffa561';
 
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
     @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
@@ -22,7 +27,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() explanation: string;
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() centeredElementId: string;
-    @Input() feedbacks: Feedback[] = [];
+    @Input() elementCounts?: OtherModelElementCount[];
+
+    feedbacks: Feedback[];
+    @Input() set resultFeedbacks(feedback: Feedback[]) {
+        this.feedbacks = feedback;
+        this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+        this.updateApollonAssessments(this.referencedFeedbacks);
+    }
+
     @Input() diagramType?: UMLDiagramType;
     @Input() maxScore: number;
     @Input() maxBonusPoints = 0;
@@ -37,7 +50,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
+    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {
@@ -49,6 +62,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         this.initializeApollonEditor();
         if (this.highlightedElements) {
             this.updateHighlightedElements(this.highlightedElements);
+        }
+        if (this.elementCounts) {
+            this.updateElementCounts(this.elementCounts);
         }
         this.applyStateConfiguration();
         if (this.resizeOptions) {
@@ -107,6 +123,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 this.scrollIntoView(this.centeredElementId);
             }
         }
+        if (changes.highlightDifferences) {
+            this.updateApollonAssessments(this.referencedFeedbacks);
+        }
     }
 
     /**
@@ -158,10 +177,20 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         for (const assessment of assessments) {
             const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
             if (existingFeedback) {
+                if (existingFeedback.credits !== assessment.score && existingFeedback.gradingInstruction) {
+                    existingFeedback.gradingInstruction = undefined;
+                }
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
+                if (assessment.dropInfo) {
+                    existingFeedback.gradingInstruction = new GradingInstruction();
+                    existingFeedback.gradingInstruction.id = assessment.dropInfo.instructionId;
+                }
             } else {
-                this.elementFeedback.set(assessment.modelElementId, Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType));
+                this.elementFeedback.set(
+                    assessment.modelElementId,
+                    Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo),
+                );
             }
         }
         return [...this.elementFeedback.values()];
@@ -226,13 +255,39 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             newElements = new Map<string, string>();
         }
 
-        if (this.apollonEditor !== null) {
+        if (this.apollonEditor != undefined) {
             const model: UMLModel = this.apollonEditor!.model;
             for (const element of model.elements) {
                 element.highlight = newElements.get(element.id);
             }
             for (const relationship of model.relationships) {
                 relationship.highlight = newElements.get(relationship.id);
+            }
+            this.apollonEditor!.model = model;
+        }
+    }
+
+    /**
+     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
+     *
+     * @param newElements a map of elementIds -> highlight color
+     */
+    private updateElementCounts(newElementCounts: OtherModelElementCount[]) {
+        if (!newElementCounts) {
+            return;
+        }
+
+        const elementCountMap = new Map<String, Number>();
+
+        newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
+
+        if (this.apollonEditor != undefined) {
+            const model: UMLModel = this.apollonEditor!.model;
+            for (const element of model.elements) {
+                element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
+            }
+            for (const relationship of model.relationships) {
+                relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
             }
             this.apollonEditor!.model = model;
         }
@@ -259,9 +314,35 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
             score: feedback.credits!,
             feedback: feedback.text || undefined,
+            label: this.calculateLabel(feedback),
+            labelColor: this.calculateLabelColor(feedback),
         }));
         if (this.apollonEditor) {
             this.apollonEditor!.model = this.model;
         }
+    }
+
+    private calculateLabel(feedback: any) {
+        const firstCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffFirst');
+        const secondCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffSecond');
+        if (this.highlightDifferences) {
+            return feedback.copiedFeedbackId ? firstCorrectionRoundText : secondCorrectionRoundText;
+        }
+        return undefined;
+    }
+
+    private calculateLabelColor(feedback: any) {
+        if (this.highlightDifferences) {
+            return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
+        }
+        return '';
+    }
+
+    private calculateNote(count: Number | undefined) {
+        if (count) {
+            return this.artemisTranslatePipe.transform('modelingAssessment.impactWarning', { affectedSubmissionsCount: count });
+        }
+
+        return undefined;
     }
 }

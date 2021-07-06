@@ -2,7 +2,8 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Beispiellösungs-Editor"
+                "title": "Beispielabgabe-Board",
+                "editor": "Beispielabgabe-Editor"
             },
             "assessScore": {
                 "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
@@ -14,10 +15,10 @@
             "readSuccessfully": "Du hast die Bewertungsanweisungen gelesen, du kannst nun mit der Überprüfung der Beispiel Abgabe beginnen.",
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
-            "usedForTutorial": "Die Tutoren müssen diese Einreichung bewerten.",
-            "createNewSubmission": "Neue Beispiellösung erstellen",
-            "editSampleSolution": "Beispiellösung bearbeiten",
-            "updateSampleSolution": "Beispiellösung aktualisieren",
+            "usedForTutorial": "Tutor:innen sollen diese Beispielabgabe bewerten.",
+            "createNewSubmission": "Neue Beispielabgabe erstellen",
+            "editExampleSubmission": "Beispielabgabe bearbeiten",
+            "updateExampleSubmission": "Beispielabgabe aktualisieren",
             "problemStatement": "Problemstellung",
             "sampleSolution": "Beispiellösung",
             "exampleAssessment": "Beispielbewertung",
@@ -29,6 +30,7 @@
             "submitAssessment": "Bewertung einreichen",
             "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden.",
             "exampleSubmission": "Beispielabgabe",
+            "exampleSubmissions": "Beispielabgaben",
             "assessmentInstruction": "Doppelklicke auf ein Element im Modell, um dessen Bewertung zu öffnen und zu bearbeiten.",
             "deleted": "Beispielabgabe gelöscht",
             "assessmentExplanation": "Erklärung",

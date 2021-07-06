@@ -17,6 +17,7 @@ public class BambooProgrammingLanguageFeatureService extends ProgrammingLanguage
 
     public BambooProgrammingLanguageFeatureService() {
         // Must be extended once a new programming language is added
+        programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of()));
         programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(ECLIPSE, MAVEN)));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, true, false, true, false, false, List.of()));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of()));
@@ -24,7 +25,7 @@ public class BambooProgrammingLanguageFeatureService extends ProgrammingLanguage
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, true, false, false, true, false, List.of()));
         programmingLanguageFeatures.put(VHDL, new ProgrammingLanguageFeature(VHDL, false, false, false, false, false, List.of()));
         programmingLanguageFeatures.put(ASSEMBLER, new ProgrammingLanguageFeature(ASSEMBLER, false, false, false, false, false, List.of()));
-        programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, true, false, true, false, List.of()));
+        programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, true, false, true, false, List.of(PLAIN, XCODE)));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, false, List.of()));
     }
 }

@@ -3,7 +3,7 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Installiere die notwendigen Tools",
-                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren.<ul><li>Installiere das neueste <a href='https://www.oracle.com/java/technologies/javase-downloads.html' target='_blank' rel='noopener noreferrer'>Java JDK</a> (mind. Java JDK 16). Stelle dabei sicher, dass du das JDK und <span class='red bold'>nicht</span> JRE auswählst.</li><li>Installiere die <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>Eclipse IDE für Java Entwickler</a> (2021-03 oder neuer)</li><li>Installiere die neueste Version von <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>SourceTree</a> mit git (4.1.0 oder neuer für macOS bzw. 3.4.1 oder neuer für Windows)</li></ul>",
+                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren.<ul><li>Installiere das neueste <a href='https://www.oracle.com/java/technologies/javase-downloads.html' target='_blank' rel='noopener noreferrer'>Java JDK</a> (mind. Java JDK 16). Stelle dabei sicher, dass du das JDK und <span class='red bold'>nicht</span> JRE auswählst.</li><li>Installiere die <a href='https://www.eclipse.org/downloads/packages/' target='_blank' rel='noopener noreferrer'>Eclipse IDE for Java Developers</a> (2021-03 oder neuer)</li><li>Installiere die neueste Version von <a href='https://www.sourcetreeapp.com' target='_blank' rel='noopener noreferrer'>SourceTree</a> mit git (4.1.0 oder neuer für macOS bzw. 3.4.1 oder neuer für Windows)</li></ul>",
                 "hint": "Bitte stelle sicher, dass du auch die git Kommandozeilen Tools installierst, während du SourceTree aufsetzt. Solltest du Linux nutzen, kannst du z.B. <a href='https://www.gitkraken.com/download' target='_blank' rel='noopener noreferrer'>Git Kraken</a> oder die <a href='https://git-scm.com' target='_blank' rel='noopener noreferrer'>Kommandozeile</a> verwenden.",
                 "sourceTreeSetup": {
                     "headline": "Konfiguriere SourceTree",
@@ -49,11 +49,11 @@
             },
             "startExercise": {
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",
-                "content": "Klicke auf den Button <tt>Aufgabe starten</tt> um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
+                "content": "Klicke auf den Button <tt>Aufgabe starten</tt>, um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
             },
             "cloneRepository": {
                 "headline": "Klone das Repository in SourceTree",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Account Menü aus fortsetzen.",
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Konto-Menü aus fortsetzen.",
                 "videoUrl": "https://www.youtube.com/embed/0YYxgs14S6A?rel=0"
             },
             "inspectSourceTree": {
@@ -78,7 +78,7 @@
             },
             "reviewResult": {
                 "headline": "Überprüfe dein Ergebnis",
-                "content": "Nachdem du deine Änderungen, wie im vorherigen Video demonstriert, eingereicht hast, wird das Ergebnis automatisch aktualisiert und hier angezeigt. Artemis nutzt Testfälle um deine Lösung automatisch zu bewerten. Klicke nun auf Aufgabenkachel, um auf die Detailseite der Aufgabe gelangen, in der du deine Testfälle überprüfen kannst."
+                "content": "Nachdem du deine Änderungen, wie im vorherigen Video demonstriert, eingereicht hast, wird das Ergebnis automatisch aktualisiert und hier angezeigt. Artemis nutzt Testfälle, um deine Lösung automatisch zu bewerten. Klicke nun auf Aufgabenkachel, um auf die Detailseite der Aufgabe gelangen, in der du deine Testfälle überprüfen kannst."
             }
         }
     }

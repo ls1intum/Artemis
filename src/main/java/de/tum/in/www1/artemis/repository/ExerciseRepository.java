@@ -106,7 +106,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT DISTINCT e from Exercise e
             LEFT JOIN FETCH e.exerciseHints
-            LEFT JOIN FETCH e.studentQuestions
+            LEFT JOIN FETCH e.posts
             LEFT JOIN FETCH e.categories
             WHERE e.id = :#{#exerciseId}
                 """)
@@ -139,25 +139,25 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE
             e.course.studentGroupName member of u.groups
             AND e.course.teachingAssistantGroupName not member of u.groups
-            AND e.course.editorGroupName not member of u.groups
+            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
             AND e.course.instructorGroupName not member of u.groups
             )
             FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
             WHERE e.id IN :exerciseIds
             AND e.course.studentGroupName member of p.student.groups
             AND e.course.teachingAssistantGroupName not member of p.student.groups
-            AND e.course.editorGroupName not member of p.student.groups
+            AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
             AND e.course.instructorGroupName not member of p.student.groups
             AND r.score IS NOT NULL AND r.completionDate IS NOT NULL
             AND
-            s.id = (
-                SELECT max(s2.id)
-                FROM Submission s2 JOIN s2.results r2
-                WHERE s2.participation.id = s.participation.id
-                AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
-                )
-            GROUP BY e.id
-            """)
+                s.id = (
+                    SELECT max(s2.id)
+                    FROM Submission s2 JOIN s2.results r2
+                    WHERE s2.participation.id = s.participation.id
+                    AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
+                    )
+                GROUP BY e.id
+                """)
     List<Object[]> calculateStatisticsForIndividualCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
     /**
@@ -177,7 +177,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             WHERE
             e.course.studentGroupName member of u.groups
             AND e.course.teachingAssistantGroupName not member of u.groups
-            AND e.course.editorGroupName not member of u.groups
+            AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
             AND e.course.instructorGroupName not member of u.groups
             )
 
@@ -186,7 +186,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             AND sc.exercise = e AND sc.user = p.student
             AND e.course.studentGroupName member of p.student.groups
             AND e.course.teachingAssistantGroupName not member of p.student.groups
-            AND e.course.editorGroupName not member of p.student.groups
+            AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of p.student.groups)
             AND e.course.instructorGroupName not member of p.student.groups
             GROUP BY e.id
             """)
@@ -200,8 +200,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
     @Query("""
-            SELECT
-            e.id,
+                SELECT
+                e.id,
             AVG(r.score),
                 Count(Distinct p.team.id),
                 (SELECT count(distinct t.id)
@@ -212,7 +212,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
-                AND e.course.editorGroupName not member of u.groups
+                AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
                 AND e.course.instructorGroupName not member of u.groups
              )
             )
@@ -226,7 +226,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
-                AND e.course.editorGroupName not member of u.groups
+                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
                 AND e.course.instructorGroupName not member of u.groups
              )
              AND
@@ -237,7 +237,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 AND r2.score IS NOT NULL AND r2.completionDate IS NOT NULL
                 )
             GROUP BY e.id
-            """)
+                """)
     List<Object[]> calculateStatisticsForTeamCourseExercises(@Param("exerciseIds") List<Long> exerciseIds);
 
     /**
@@ -248,8 +248,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return <code>Object[]</code> where each index corresponds to the column from the db (0 refers to exerciseId and so on)
      */
     @Query("""
-            SELECT
-            e.id,
+                SELECT
+                e.id,
             AVG(ts.lastScore),
             Count(Distinct p.team.id),
             (SELECT count(distinct t.id)
@@ -260,7 +260,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
-                AND e.course.editorGroupName not member of u.groups
+                AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
                 AND e.course.instructorGroupName not member of u.groups
              )
             )
@@ -274,7 +274,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                 WHERE
                 e.course.studentGroupName member of u.groups
                 AND e.course.teachingAssistantGroupName not member of u.groups
-                AND e.course.editorGroupName not member of u.groups
+                AND (e.course.editorGroupName IS NULL OR e.course.editorGroupName not member of u.groups)
                 AND e.course.instructorGroupName not member of u.groups
              )
             GROUP BY e.id

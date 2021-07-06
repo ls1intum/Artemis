@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -156,7 +157,7 @@ public abstract class Exercise extends DomainObject {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
-    private Set<StudentQuestion> studentQuestions = new HashSet<>();
+    private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
@@ -196,6 +197,9 @@ public abstract class Exercise extends DomainObject {
     @Transient
     private Boolean testRunParticipationsExistTransient;
 
+    @Transient
+    private boolean isGradingInstructionFeedbackUsedTransient = false;
+
     public String getTitle() {
         return title;
     }
@@ -205,8 +209,14 @@ public abstract class Exercise extends DomainObject {
         return this;
     }
 
+    /**
+     * Sets the title of the exercise
+     * all consecutive, trailing or preceding whitespaces are replaced with a single space.
+     *
+     * @param title the new (unsanitized) title to be set
+     */
     public void setTitle(String title) {
-        this.title = title != null ? title.strip() : null;
+        this.title = title != null ? title.strip().replaceAll("\\s+", " ") : null;
     }
 
     public String getShortName() {
@@ -464,12 +474,12 @@ public abstract class Exercise extends DomainObject {
         this.attachments = attachments;
     }
 
-    public Set<StudentQuestion> getStudentQuestions() {
-        return studentQuestions;
+    public Set<Post> getPosts() {
+        return posts;
     }
 
-    public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {
-        this.studentQuestions = studentQuestions;
+    public void setPosts(Set<Post> posts) {
+        this.posts = posts;
     }
 
     public Set<ExerciseHint> getExerciseHints() {
@@ -818,6 +828,14 @@ public abstract class Exercise extends DomainObject {
         this.studentAssignedTeamIdComputedTransient = studentAssignedTeamIdComputedTransient;
     }
 
+    public boolean isGradingInstructionFeedbackUsed() {
+        return isGradingInstructionFeedbackUsedTransient;
+    }
+
+    public void setGradingInstructionFeedbackUsed(boolean isGradingInstructionFeedbackUsedTransient) {
+        this.isGradingInstructionFeedbackUsedTransient = isGradingInstructionFeedbackUsedTransient;
+    }
+
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
     }
@@ -892,6 +910,20 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
+     * returns the number of correction rounds for an exercise. For course exercises this is 1, for exam exercises this must get fetched
+     * @return the number of correctionRounds
+     */
+    @JsonIgnore
+    public Integer getNumberOfCorrectionRounds() {
+        if (isExamExercise()) {
+            return getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+        }
+        else {
+            return 1;
+        }
+    }
+
+    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
@@ -908,6 +940,49 @@ public abstract class Exercise extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+    }
+
+    /**
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
+     * @throws BadRequestException if the dates are not valid
+     */
+    public void validateDates() {
+        // All fields are optional, so there is no error if none of them is set
+        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
+            return;
+        }
+        // at least one is set, so we have to check the two possible errors
+        boolean validDates = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
+
+        if (!validDates) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
+    }
+
+    /**
+     * This method is used to validate the assesmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assesmentDueDate is invalid without an according dueDate
+     * @return true if there is no assessmentDueDateError
+     */
+    private boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        if (assessmentDueDate == null) {
+            return true;
+        }
+        // There cannot be a assessmentDueDate without dueDate
+        if (dueDate == null) {
+            return false;
+        }
+        return isBeforeAndNotNull(dueDate, assessmentDueDate) && isBeforeAndNotNull(releaseDate, assessmentDueDate);
+    }
+
+    /**
+     * This method is used to validate if the previousDate is before the laterDate.
+     * @return true if the previousDate is valid
+     */
+    private boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+        if (previousDate == null || laterDate == null) {
+            return true;
+        }
+        return previousDate.isBefore(laterDate);
     }
 
 }

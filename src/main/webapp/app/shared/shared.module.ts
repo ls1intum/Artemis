@@ -26,9 +26,15 @@ import { ResizeableContainerComponent } from './resizeable-container/resizeable-
 import { TranslatePipe } from '@ngx-translate/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
+import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
+import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
+import { RouterModule } from '@angular/router';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
+    imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
         ArtemisDatePipe,
         CircularProgressBarComponent,
@@ -46,10 +52,15 @@ import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-grap
         OrganizationSelectorComponent,
         CustomMinDirective,
         CustomMaxDirective,
+        CustomPatternValidatorDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
         StatisticsAverageScoreGraphComponent,
+        StatisticsScoreDistributionGraphComponent,
+        ExerciseStatisticsComponent,
+        DoughnutChartComponent,
+        ExerciseDetailStatisticsComponent,
     ],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -74,10 +85,15 @@ import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-grap
         ChartComponent,
         CustomMinDirective,
         CustomMaxDirective,
+        CustomPatternValidatorDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
         StatisticsAverageScoreGraphComponent,
+        StatisticsScoreDistributionGraphComponent,
+        ExerciseStatisticsComponent,
+        DoughnutChartComponent,
+        ExerciseDetailStatisticsComponent,
     ],
     providers: [ArtemisDatePipe, TranslatePipe],
 })

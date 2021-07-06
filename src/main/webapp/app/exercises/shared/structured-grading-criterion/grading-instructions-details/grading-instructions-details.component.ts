@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, ViewChildren, QueryList, ChangeDetectorRef, AfterContentInit } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
@@ -11,19 +11,24 @@ import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainComm
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
+import { cloneDeep } from 'lodash';
+
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
+    styleUrls: ['./grading-instructions-details.component.scss'],
 })
-export class GradingInstructionsDetailsComponent implements OnInit {
+export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    @ViewChild('markdownEditor', { static: false })
-    private markdownEditor: MarkdownEditorComponent;
+    @ViewChildren('markdownEditor')
+    private markdownEditors: QueryList<MarkdownEditorComponent>;
     @Input()
     exercise: Exercise;
     private instructions: GradingInstruction[];
     private criteria: GradingCriterion[];
+
+    backupExercise: Exercise;
 
     gradingCriterionCommand = new GradingCriterionCommand();
     gradingInstructionCommand = new GradingInstructionCommand();
@@ -43,20 +48,46 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.gradingInstructionCommand,
     ];
 
-    constructor() {}
+    domainCommandsGradingInstructions: DomainCommand[] = [
+        this.creditsCommand,
+        this.gradingScaleCommand,
+        this.instructionDescriptionCommand,
+        this.feedbackCommand,
+        this.usageCountCommand,
+    ];
+
+    constructor(private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria || [];
+        this.backupExercise = cloneDeep(this.exercise);
         this.questionEditorText = this.generateMarkdown();
+    }
+
+    ngAfterContentInit() {
+        if (this.exercise.gradingInstructionFeedbackUsed) {
+            this.initializeMarkdown();
+        }
+    }
+
+    initializeMarkdown() {
+        let index = 0;
+        this.changeDetector.detectChanges();
+        this.criteria!.forEach((criterion) => {
+            criterion.structuredGradingInstructions.forEach((instruction) => {
+                this.markdownEditors.get(index)!.markdownTextChange(this.generateInstructionText(instruction));
+                index += 1;
+            });
+        });
     }
 
     generateMarkdown(): string {
         let markdownText = '';
-        if (this.criteria === undefined || this.criteria.length === 0) {
+        if (this.criteria == undefined || this.criteria.length === 0) {
             this.criteria = [];
             const dummyCriterion = new GradingCriterion();
             const exampleCriterion = new GradingCriterion();
-            exampleCriterion.title = 'This is an Example criterion';
+            exampleCriterion.title = 'This is an example criterion';
             const exampleInstr = new GradingInstruction();
             exampleCriterion.structuredGradingInstructions = [];
             exampleCriterion.structuredGradingInstructions.push(exampleInstr);
@@ -65,7 +96,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             this.criteria.push(exampleCriterion);
         }
         for (const criterion of this.criteria) {
-            if (criterion.title === null || criterion.title === undefined) {
+            if (criterion.title == undefined) {
                 // if it is a dummy criterion, leave out the command identifier
                 markdownText += this.generateInstructionsMarkdown(criterion);
             } else {
@@ -81,38 +112,44 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      */
     generateInstructionsMarkdown(criterion: GradingCriterion): string {
         let markdownText = '';
-        if (criterion.structuredGradingInstructions === undefined || criterion.structuredGradingInstructions.length === 0) {
+        if (criterion.structuredGradingInstructions == undefined || criterion.structuredGradingInstructions.length === 0) {
             this.instructions = [];
             const newInstruction = new GradingInstruction();
             this.instructions.push(newInstruction);
             criterion.structuredGradingInstructions = this.instructions;
         }
         for (const instruction of criterion.structuredGradingInstructions) {
-            markdownText +=
-                GradingInstructionCommand.identifier +
-                '\n' +
-                '\t' +
-                this.generateCreditsText(instruction) +
-                '\n' +
-                '\t' +
-                this.generateGradingScaleText(instruction) +
-                '\n' +
-                '\t' +
-                this.generateInstructionDescriptionText(instruction) +
-                '\n' +
-                '\t' +
-                this.generateInstructionFeedback(instruction) +
-                '\n' +
-                '\t' +
-                this.generateUsageCount(instruction) +
-                '\n' +
-                '\n';
+            markdownText += this.generateInstructionText(instruction);
         }
         return markdownText;
     }
 
+    generateInstructionText(instruction: GradingInstruction): string {
+        let markdownText = '';
+        markdownText =
+            GradingInstructionCommand.identifier +
+            '\n' +
+            '\t' +
+            this.generateCreditsText(instruction) +
+            '\n' +
+            '\t' +
+            this.generateGradingScaleText(instruction) +
+            '\n' +
+            '\t' +
+            this.generateInstructionDescriptionText(instruction) +
+            '\n' +
+            '\t' +
+            this.generateInstructionFeedback(instruction) +
+            '\n' +
+            '\t' +
+            this.generateUsageCount(instruction) +
+            '\n' +
+            '\n';
+        return markdownText;
+    }
+
     generateCreditsText(instruction: GradingInstruction): string {
-        if (instruction.credits === undefined) {
+        if (instruction.credits == undefined) {
             instruction.credits = parseFloat(CreditsCommand.text);
             return CreditsCommand.identifier + ' ' + CreditsCommand.text;
         }
@@ -120,7 +157,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     generateGradingScaleText(instruction: GradingInstruction): string {
-        if (instruction.gradingScale === undefined) {
+        if (instruction.gradingScale == undefined) {
             instruction.gradingScale = GradingScaleCommand.text;
             return GradingScaleCommand.identifier + ' ' + GradingScaleCommand.text;
         }
@@ -128,7 +165,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
-        if (instruction.instructionDescription === undefined) {
+        if (instruction.instructionDescription == undefined) {
             instruction.instructionDescription = InstructionDescriptionCommand.text;
             return InstructionDescriptionCommand.identifier + ' ' + InstructionDescriptionCommand.text;
         }
@@ -136,7 +173,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
-        if (instruction.feedback === undefined) {
+        if (instruction.feedback == undefined) {
             instruction.feedback = FeedbackCommand.text;
             return FeedbackCommand.identifier + ' ' + FeedbackCommand.text;
         }
@@ -144,7 +181,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
-        if (instruction.usageCount === undefined) {
+        if (instruction.usageCount == undefined) {
             instruction.usageCount = parseInt(UsageCountCommand.text, 10);
             return UsageCountCommand.identifier + ' ' + UsageCountCommand.text;
         }
@@ -152,7 +189,9 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     prepareForSave(): void {
-        this.markdownEditor.parse();
+        this.markdownEditors.forEach((component) => {
+            component.parse();
+        });
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand | null][]): boolean {
@@ -220,7 +259,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      */
     groupInstructionsToCriteria(domainCommands: [string, DomainCommand | null][]): void {
         const initialCriteriaCommands = domainCommands;
-        if (this.exercise.gradingCriteria === undefined) {
+        if (this.exercise.gradingCriteria == undefined) {
             this.exercise.gradingCriteria = [];
         }
         for (const [text, command] of domainCommands) {
@@ -255,9 +294,13 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      *       instruction objects must be created before the method gets triggered
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
+
     setInstructionParameters(domainCommands: [string, DomainCommand | null][]): void {
         let index = 0;
         for (const [text, command] of domainCommands) {
+            if (!this.instructions[index]) {
+                break;
+            }
             if (command instanceof CreditsCommand) {
                 this.instructions[index].credits = parseFloat(text);
             } else if (command instanceof GradingScaleCommand) {
@@ -284,5 +327,136 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.criteria = [];
         this.exercise.gradingCriteria = [];
         this.createSubInstructionCommands(domainCommands);
+    }
+
+    /**
+     * @function onInstructionChange
+     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
+     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * @param {GradingInstruction} instruction
+     * @param {GradingCriterion} criteria
+     */
+    onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction): void {
+        this.instructions = [instruction];
+        this.setInstructionParameters(domainCommands);
+    }
+
+    /**
+     * @function resetInstruction
+     * @desc Resets the whole instruction
+     * @param instruction {GradingInstruction} the instruction, which will be reset
+     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be reset
+     */
+    resetInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
+        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        let backupInstructionIndex = undefined;
+
+        if (backupCriterionIndex >= 0) {
+            backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
+
+            if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
+                this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
+                    this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions![backupInstructionIndex],
+                );
+            }
+        }
+        if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
+            this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = new GradingInstruction();
+        }
+        this.initializeMarkdown();
+    }
+
+    findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
+        return exercise.gradingCriteria!.findIndex((gradingCriteria) => {
+            return gradingCriteria.id === criterion.id;
+        });
+    }
+
+    findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criterionIndex: number) {
+        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((gradingInstruction) => {
+            return gradingInstruction.id === instruction.id;
+        });
+    }
+
+    /**
+     * @function deleteInstruction
+     * @desc Deletes selected instruction
+     * @param instruction {GradingInstruction} the instruction which should be deleted
+     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be deleted
+     */
+    deleteInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.splice(instructionIndex, 1);
+    }
+
+    addInstruction(criterion: GradingCriterion) {
+        this.addNewInstruction(criterion);
+        this.initializeMarkdown();
+    }
+
+    /**
+     * @function addNewInstruction
+     * @desc Adds new grading instruction for desired grading criteria
+     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be inserted
+     */
+    addNewInstruction(criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        const instruction = new GradingInstruction();
+        this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.push(instruction);
+    }
+
+    addGradingCriterion() {
+        this.addNewGradingCriterion();
+        this.initializeMarkdown();
+    }
+
+    /**
+     * @function addNewGradingCriteria
+     * @desc Adds new grading criteria for the exercise
+     */
+    addNewGradingCriterion() {
+        const criterion = new GradingCriterion();
+        criterion.structuredGradingInstructions = [];
+        criterion.structuredGradingInstructions.push(new GradingInstruction());
+        this.exercise.gradingCriteria!.push(criterion);
+    }
+
+    /**
+     * @function onCriteriaTitleChange
+     * @desc Detects changes for grading criteria title
+     * @param {GradingCriterion} criterion the criteria, which includes title that will be changed
+     */
+    onCriterionTitleChange($event: any, criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        this.exercise.gradingCriteria![criterionIndex].title = $event.target.value;
+    }
+
+    /**
+     * @function resetCriteriaTitle
+     * @desc Resets the whole grading criteria title
+     * @param criterion {GradingCriterion} the criteria, which includes title that will be reset
+     */
+    resetCriterionTitle(criterion: GradingCriterion) {
+        const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
+        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
+        if (backupCriterionIndex >= 0) {
+            this.exercise.gradingCriteria![criterionIndex].title = cloneDeep(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
+        } else {
+            criterion.title = '';
+        }
+    }
+
+    /**
+     * @function deleteGradingCriteria
+     * @desc Deletes the grading criteria with sub-grading instructions
+     * @param criterion {GradingCriterion} the criteria, which will be deleted
+     */
+    deleteGradingCriterion(criterion: GradingCriterion) {
+        const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
+        this.exercise.gradingCriteria!.splice(criterionIndex, 1);
     }
 }

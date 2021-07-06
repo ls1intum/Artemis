@@ -74,13 +74,11 @@ public class AuditEventConverter {
                 Object object = entry.getValue();
 
                 // Extract the data that will be saved.
-                if (object instanceof WebAuthenticationDetails) {
-                    WebAuthenticationDetails authenticationDetails = (WebAuthenticationDetails) object;
+                if (object instanceof WebAuthenticationDetails authenticationDetails) {
                     results.put("remoteAddress", authenticationDetails.getRemoteAddress());
                     results.put("sessionId", authenticationDetails.getSessionId());
                 }
-                else if (object instanceof Pair) {
-                    Pair authenticationPair = (Pair) object;
+                else if (object instanceof Pair authenticationPair) {
                     results.put(authenticationPair.getFirst().toString(), authenticationPair.getSecond().toString());
                 }
                 else {

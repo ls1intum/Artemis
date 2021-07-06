@@ -107,16 +107,15 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         this.attachment = attachmentRepository.findById(this.attachment.getId()).get();
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
         assertThat(this.attachment.getAttachmentUnit()).isEqualTo(this.attachmentUnit);
-
     }
 
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.save(this.attachmentUnit);
-        lecture1 = lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
+        lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithStudentQuestionsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream()
-                .findFirst().get();
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst()
+                .get();
     }
 
     @Test
@@ -148,8 +147,16 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     public void getAttachmentUnit_correctId_shouldReturnAttachmentUnit() throws Exception {
         persistAttachmentUnitWithLecture();
 
+        this.attachmentUnit.setAttachment(this.attachment);
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
+        this.attachmentUnit = this.attachmentUnitRepository.save(this.attachmentUnit);
+
+        // 1. check the database call directly
+        this.attachmentUnit = this.attachmentUnitRepository.findByIdElseThrow(this.attachmentUnit.getId());
+        assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
+
+        // 2. check the REST call
         this.attachmentUnit = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
     }
@@ -165,7 +172,5 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
-
     }
-
 }

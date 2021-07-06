@@ -17,7 +17,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortService } from 'app/shared/service/sort.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { stub } from 'sinon';
 
@@ -51,7 +51,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     let fixture: ComponentFixture<FileUploadAssessmentDashboardComponent>;
     let exerciseService: ExerciseService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
-    let fileUploadAssessmentsService: FileUploadAssessmentsService;
+    let fileUploadAssessmentService: FileUploadAssessmentService;
     let accountService: AccountService;
     let sortService: SortService;
 
@@ -86,7 +86,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                 component = fixture.componentInstance;
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
-                fileUploadAssessmentsService = fixture.debugElement.injector.get(FileUploadAssessmentsService);
+                fileUploadAssessmentService = fixture.debugElement.injector.get(FileUploadAssessmentService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 sortService = fixture.debugElement.injector.get(SortService);
             });
@@ -167,7 +167,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
         const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        const modelAssServiceCancelAssSpy = spyOn(fileUploadAssessmentsService, 'cancelAssessment').and.returnValue(of(1));
+        const modelAssServiceCancelAssSpy = spyOn(fileUploadAssessmentService, 'cancelAssessment').and.returnValue(of(1));
         component.exercise = fileUploadExercise2;
         // call
         component.cancelAssessment(fileUploadSubmission2);

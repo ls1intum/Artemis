@@ -28,7 +28,7 @@
                                 </a>
                             </div>
                         </label>
-                        <jhi-alert></jhi-alert>
+                        <jhi-alert *ngIf="shouldDisplayAlert"></jhi-alert>
                     </ng-container>
                     <!-- Required for resizing; don't remove empty span -->
                     <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
@@ -99,7 +99,7 @@
                         </ng-container>
                     </div>
 
-                    <div class="ml-auto">
+                    <div class="ms-auto">
                         <button
                             *ngFor="let command of metaCommands"
                             type="button"

@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import { JhiAlertService, JhiSortDirective } from 'ng-jhipster';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -65,22 +65,22 @@ describe('InstructorCourseDashboardComponent', () => {
         presentationScore: 0,
         registrationEnabled: false,
         requestMoreFeedbackEnabled: true,
-        studentQuestionsEnabled: true,
+        postsEnabled: true,
     } as Course;
     const course = { id: 10, exercises: [textExercise, modelingExercise] } as Course;
     const user = { id: 99, name: 'admin' } as User;
-    const stats = ({
+    const stats = {
         numberOfSubmissions: { inTime: 10, late: 5 } as DueDateStat,
         totalNumberOfAssessments: { inTime: 8, late: 1 } as DueDateStat,
         numberOfAutomaticAssistedAssessments: { inTime: 4, late: 0 } as DueDateStat,
-    } as unknown) as StatsForDashboard;
+    } as unknown as StatsForDashboard;
 
-    const route = ({
+    const route = {
         snapshot: {
             paramMap: convertToParamMap({ courseId: course.id }),
             url: { path: '/course-management/10/assessment-locks', parameterMap: {}, parameters: {} } as UrlSegment,
         },
-    } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
 
     const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
     const responseFakeStats = { body: stats as StatsForDashboard } as HttpResponse<StatsForDashboard>;

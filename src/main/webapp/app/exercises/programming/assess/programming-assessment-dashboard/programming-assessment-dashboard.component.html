@@ -115,7 +115,7 @@
                                     <a
                                         *ngIf="submission.results && submission.results.length == 0"
                                         [class.disabled]="busy"
-                                        [routerLink]="getAssessmentLink(submission.id!)"
+                                        [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                         class="btn btn-success btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{
@@ -126,17 +126,17 @@
                                     <a
                                         *ngIf="submission.results && submission.results.length == 1 && submission.latestResult && submission.latestResult.completionDate"
                                         [class.disabled]="busy"
-                                        [routerLink]="getAssessmentLink(submission.id!)"
+                                        [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
                                     </a>
-                                    <div class="btn-group-vertical mr-1 mb-10">
+                                    <div class="btn-group-vertical me-1 mb-10">
                                         <!-- Continue button -->
                                         <a
                                             *ngIf="submission.results && submission.results.length == 1 && submission.latestResult && !submission.latestResult.completionDate"
                                             [class.disabled]="busy"
-                                            [routerLink]="getAssessmentLink(submission.id!)"
+                                            [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                             class="btn btn-warning btn-sm mb-1"
                                         >
                                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;{{
@@ -168,7 +168,7 @@
                                             *ngIf="submission.results[correctionRound].completionDate"
                                             [class.disabled]="busy"
                                             [queryParams]="{ 'correction-round': correctionRound }"
-                                            [routerLink]="getAssessmentLink(submission.id!)"
+                                            [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                             class="btn btn-primary btn-sm mb-1"
                                         >
                                             <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>&nbsp;
@@ -177,11 +177,11 @@
                                             </span>
                                         </a>
                                         <!-- buttons for existing result with lock-->
-                                        <div class="btn-group-vertical mr-1 mb-10" *ngIf="submission.results && !submission.results[correctionRound].completionDate">
+                                        <div class="btn-group-vertical me-1 mb-10" *ngIf="submission.results && !submission.results[correctionRound].completionDate">
                                             <a
                                                 [class.disabled]="busy"
                                                 [queryParams]="{ 'correction-round': correctionRound }"
-                                                [routerLink]="getAssessmentLink(submission.id!)"
+                                                [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                                 class="btn btn-warning btn-sm mb-1"
                                             >
                                                 <fa-icon [fixedWidth]="true" [icon]="'edit'"></fa-icon>&nbsp;
@@ -216,7 +216,7 @@
                                         "
                                         [class.disabled]="busy"
                                         [queryParams]="{ 'correction-round': submission.results ? submission.results.length : 0 }"
-                                        [routerLink]="getAssessmentLink(submission.id!)"
+                                        [routerLink]="getAssessmentLink(submission.participation!.id!, submission.id!)"
                                         class="btn btn-success btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="'folder-open'"></fa-icon>

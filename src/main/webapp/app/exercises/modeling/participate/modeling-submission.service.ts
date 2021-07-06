@@ -82,9 +82,7 @@ export class ModelingSubmissionService {
         if (lock) {
             params = params.set('lock', 'true');
         }
-        return this.http
-            .get<ModelingSubmission>(url, { params })
-            .pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => ModelingSubmissionService.convertItemFromServer(res)));
     }
 
     /**
@@ -102,6 +100,17 @@ export class ModelingSubmissionService {
         if (resultId && resultId > 0) {
             params = params.set('resultId', resultId.toString());
         }
+        return this.http.get<ModelingSubmission>(url, { params });
+    }
+
+    /**
+     * Get a submission with given Id without locking it on artemis so plagiarism detection doesn't disrupt assessment
+     * @param {number} submissionId - Id of the submission
+     */
+    getSubmissionWithoutLock(submissionId: number): Observable<ModelingSubmission> {
+        const url = `api/modeling-submissions/${submissionId}`;
+        let params = new HttpParams();
+        params = params.set('withoutResults', 'true');
         return this.http.get<ModelingSubmission>(url, { params });
     }
 

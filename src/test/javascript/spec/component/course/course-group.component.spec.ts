@@ -16,7 +16,7 @@ import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-e
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as chai from 'chai';
 import * as moment from 'moment';
 import { JhiAlertService, JhiTranslateDirective } from 'ng-jhipster';
@@ -41,10 +41,10 @@ describe('Course Management Detail Component', () => {
     let userService: UserService;
     const courseGroup = CourseGroup.STUDENTS;
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
-    const parentRoute = ({
+    const parentRoute = {
         data: of({ course }),
-    } as any) as ActivatedRoute;
-    const route = ({ parent: parentRoute, params: of({ courseGroup }) } as any) as ActivatedRoute;
+    } as any as ActivatedRoute;
+    const route = { parent: parentRoute, params: of({ courseGroup }) } as any as ActivatedRoute;
     const courseGroupUser = new User(1, 'user');
     const courseGroupUser2 = new User(2, 'user2');
 

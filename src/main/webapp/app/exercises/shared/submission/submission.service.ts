@@ -9,23 +9,30 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { Complaint } from 'app/entities/complaint.model';
+import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
+
+export class SubmissionWithComplaintDTO {
+    public submission: Submission;
+    public complaint: Complaint;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
     public resourceUrl = SERVER_API_URL + 'api/submissions';
     public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
 
     /**
      * Delete an existing submission
      * @param submissionId - The id of the submission to be deleted
      * @param req - A request with additional options in it
      */
-    delete(submissionId: number, req?: any): Observable<HttpResponse<any>> {
+    delete(submissionId: number, req?: any): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${submissionId}`, { params: options, observe: 'response' });
     }
@@ -35,17 +42,49 @@ export class SubmissionService {
      * @param {number} participationId - The id of the participation to be searched for
      */
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' }).pipe(
+            map((res) => this.convertDateArrayFromServer(res)),
+            filter((res) => !!res.body),
+            tap((res) =>
+                res.body!.forEach((submission) => {
+                    this.reconnectSubmissionAndResult(submission);
+                }),
+            ),
+        );
+    }
+
+    /**
+     * Find the submissions with complaints for a tutor for a specified exercise (complaintType == 'COMPLAINT').
+     * @param exerciseId
+     */
+    getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
-            .pipe(
-                map((res) => this.convertDateArrayFromServer(res)),
-                filter((res) => !!res.body),
-                tap((res) =>
-                    res.body!.forEach((submission) => {
-                        this.reconnectSubmissionAndResult(submission);
-                    }),
-                ),
-            );
+            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .pipe(map((res) => this.convertDTOsFromServer(res)));
+    }
+
+    protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
+        if (res.body) {
+            res.body.forEach((dto) => {
+                dto.submission = this.convertSubmissionDateFromServer(dto.submission);
+                dto.complaint = this.convertDateFromServerComplaint(dto.complaint);
+            });
+        }
+        return res;
+    }
+
+    protected convertSubmissionDateFromServer(submission: Submission) {
+        submission.submissionDate = submission.submissionDate ? moment(submission.submissionDate) : undefined;
+        this.reconnectSubmissionAndResult(submission);
+        return submission;
+    }
+
+    convertDateFromServerComplaint(complaint: Complaint) {
+        complaint.submittedTime = complaint.submittedTime ? moment(complaint.submittedTime) : undefined;
+        if (complaint.complaintResponse) {
+            this.complaintResponseService.convertDatesToMoment(complaint.complaintResponse);
+        }
+        return complaint;
     }
 
     /**

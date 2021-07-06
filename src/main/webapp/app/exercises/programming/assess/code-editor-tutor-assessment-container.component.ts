@@ -31,14 +31,14 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { diff_match_patch } from 'diff-match-patch';
+import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise-utils';
 import { round } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Observable } from 'rxjs';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { addUserIndependentRepositoryUrl } from 'app/overview/participation-utils';
 
@@ -52,7 +52,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     PROGRAMMING = ExerciseType.PROGRAMMING;
     SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
-    readonly dmp = new diff_match_patch();
+    readonly diffMatchPatch = new DiffMatchPatch();
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     paramSub: Subscription;
@@ -217,10 +217,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         this.checkPermissions();
         this.handleFeedback();
-
-        if (this.manualResult?.hasComplaint) {
-            this.getComplaint();
-        }
+        this.getComplaint();
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -251,12 +248,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 );
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-                const diffArray = this.dmp.diff_linesToChars_(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
+                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
                 const lineText1 = diffArray.chars1;
                 const lineText2 = diffArray.chars2;
                 const lineArray = diffArray.lineArray;
-                const diffs = this.dmp.diff_main(lineText1, lineText2, false);
-                this.dmp.diff_charsToLines_(diffs, lineArray);
+                const diffs = this.diffMatchPatch.diff_main(lineText1, lineText2, false);
+                this.diffMatchPatch.diff_charsToLines(diffs, lineArray);
 
                 // Setup counter to know on which range to highlight in the code editor
                 let counter = 0;
@@ -333,8 +330,22 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
-
-                const url = getLinkToSubmissionAssessment(ExerciseType.PROGRAMMING, this.courseId, this.exerciseId, response.id!, this.examId, this.exerciseGroupId);
+                let participationId;
+                if (response.participation !== undefined) {
+                    participationId = response.participation!.id;
+                } else {
+                    participationId = undefined;
+                }
+                const url = getLinkToSubmissionAssessment(
+                    ExerciseType.PROGRAMMING,
+                    this.courseId,
+                    this.exerciseId,
+                    participationId,
+                    response.id!,
+                    this.examId,
+                    this.exerciseGroupId,
+                    undefined,
+                );
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
             (error: HttpErrorResponse) => {
@@ -480,7 +491,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private getComplaint(): void {
-        this.complaintService.findByResultId(this.manualResult!.id!).subscribe(
+        console.log(this.submission);
+        const resultWithComplaint = getFirstResultWithComplaint(this.submission);
+        if (!resultWithComplaint) {
+            return;
+        }
+        this.complaintService.findByResultId(resultWithComplaint!.id!).subscribe(
             (res) => {
                 if (!res.body) {
                     return;

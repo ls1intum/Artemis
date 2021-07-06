@@ -13,6 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
@@ -68,6 +69,27 @@ public class Feedback extends DomainObject {
 
     @ManyToOne
     private GradingInstruction gradingInstruction;
+
+    /**
+     * Represents the reference of the previously assessed block, whose feedback we are reusing
+     */
+    @Transient
+    @JsonSerialize
+    private String suggestedFeedbackReference;
+
+    /**
+     * Represents the submission of the previously assessed block, whose feedback we are reusing
+     */
+    @Transient
+    @JsonSerialize
+    private Long suggestedFeedbackOriginSubmissionReference;
+
+    /**
+     * Represents the participation reference of the submission to which the previously assessed block being reused belongs to
+     */
+    @Transient
+    @JsonSerialize
+    private Long suggestedFeedbackParticipationReference;
 
     // TODO: JP remove these two references as they are not really needed
     @OneToMany(mappedBy = "firstFeedback", orphanRemoval = true)
@@ -234,6 +256,45 @@ public class Feedback extends DomainObject {
 
     public void setGradingInstruction(GradingInstruction gradingInstruction) {
         this.gradingInstruction = gradingInstruction;
+    }
+
+    public String getSuggestedFeedbackReference() {
+        return suggestedFeedbackReference;
+    }
+
+    public void setSuggestedFeedbackOriginBlock(String suggestedFeedbackOriginBlockId) {
+        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockId;
+    }
+
+    public Long getSuggestedFeedbackOriginSubmissionReference() {
+        return suggestedFeedbackOriginSubmissionReference;
+    }
+
+    public void setSuggestedFeedbackOriginSubmission(Long suggestedFeedbackOriginSubmission) {
+        this.suggestedFeedbackOriginSubmissionReference = suggestedFeedbackOriginSubmission;
+    }
+
+    public Long getSuggestedFeedbackParticipationReference() {
+        return suggestedFeedbackParticipationReference;
+    }
+
+    public void setSuggestedFeedbackParticipationReference(Long suggestedFeedbackParticipationReference) {
+        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
+    }
+
+    /**
+     *  This function sets the described parameters and then returns the current instance with the updated references.
+     *
+     * @param suggestedFeedbackOriginBlockReference - Block reference of the suggested (automatic) feedback
+     * @param submissionReference - Submission reference where the suggested feedback was generated from
+     * @param suggestedFeedbackParticipationReference - respective participation reference
+     * @return updated Feedback
+     */
+    public Feedback suggestedFeedbackOrigin(String suggestedFeedbackOriginBlockReference, Long submissionReference, Long suggestedFeedbackParticipationReference) {
+        this.suggestedFeedbackReference = suggestedFeedbackOriginBlockReference;
+        this.suggestedFeedbackOriginSubmissionReference = submissionReference;
+        this.suggestedFeedbackParticipationReference = suggestedFeedbackParticipationReference;
+        return this;
     }
 
     public List<FeedbackConflict> getFirstConflicts() {

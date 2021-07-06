@@ -34,6 +34,8 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as Sentry from '@sentry/browser';
 import { round } from 'app/shared/util/utils';
+import { onError } from 'app/shared/util/global.utils';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
     selector: 'jhi-quiz',
@@ -157,7 +159,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
-        }, 100);
+        }, UI_RELOAD_TIME);
     }
 
     ngOnDestroy() {
@@ -230,12 +232,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**
@@ -250,7 +248,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -262,7 +260,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body!);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -273,7 +271,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 

@@ -307,6 +307,7 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - To assess a submission a second time go to the exercise assessment dashboard. When it is enabled, a |start_new_assessment| button will be visible in the second correction round.
 - The new second assessment will have all the feedback copied from the first assessment. Those can be overridden, and new feedback can be added as well. This does not override the original result, but saves a separate second result.
+- Within the second correction round review instructors and tutors can highlight which feedback was created for which correction round. This is displayed as a badge at the bottom of every feedback. This view can be enabled or disabled any time during the second correction round review by pressing the button at the top of the page. The feature is currently available for text, modeling and file-upload exercises.
 - You can access each assessment of both rounds by going to the exam's |exercise_groups| -> |submissions|
 
 .. figure:: instructor/submissions.png

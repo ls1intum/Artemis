@@ -4,8 +4,8 @@ import * as moment from 'moment';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
@@ -19,6 +19,12 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Result } from 'app/entities/result.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeDTO } from 'app/entities/grade-step.model';
+import { of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -117,24 +123,61 @@ const programmingExerciseTwo = {
 } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo, notIncludedTextExercise, bonusTextExercise];
 
+const gradeDto = {
+    gradeName: 'Name',
+    gradeType: GradeType.GRADE,
+    isPassingGrade: true,
+} as GradeDTO;
+
 describe('ExamPointsSummaryComponent', function () {
+    let gradingSystemService: GradingSystemService;
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
-            declarations: [ExamPointsSummaryComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExamPointsSummaryComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(ExerciseService)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamPointsSummaryComponent);
                 component = fixture.componentInstance;
+                component.courseId = 1;
                 component.exam = exam;
                 component.exercises = exercises;
+                component.gradingScaleExists = false;
+                gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
 
     afterEach(() => {
         sinon.restore();
+    });
+
+    it('should handle error correctly', () => {
+        const gradingSystemServiceMatchPercentageErrorStub = sinon.stub(gradingSystemService, 'matchPercentageToGradeStepForExam').returns(throwError({ status: 404 }));
+
+        fixture.detectChanges();
+
+        expect(fixture).to.be.ok;
+        expect(gradingSystemServiceMatchPercentageErrorStub).to.have.been.calledOnce;
+        expect(component.gradingScaleExists).to.be.false;
+    });
+
+    it('should calculate exam grade correctly', () => {
+        const gradingSystemServiceMatchPercentageStub = sinon
+            .stub(gradingSystemService, 'matchPercentageToGradeStepForExam')
+            .returns(of(new HttpResponse<GradeDTO>({ body: gradeDto })));
+        const achievedPointsRelative = (component.calculatePointsSum() / component.calculateMaxPointsSum()) * 100;
+
+        fixture.detectChanges();
+
+        expect(fixture).to.be.ok;
+        expect(gradingSystemServiceMatchPercentageStub).to.have.been.calledOnceWithExactly(1, 1, achievedPointsRelative);
+        expect(component.gradingScaleExists).to.be.true;
+        expect(component.isBonus).to.be.false;
+        expect(component.grade).to.equal(gradeDto.gradeName);
+        expect(component.hasPassed).to.equal(gradeDto.isPassingGrade);
     });
 
     it('should initialize and calculate scores correctly', function () {

@@ -25,17 +25,19 @@ export enum Graphs {
 
     // Course Statistics
     AVERAGE_SCORE = 'AVERAGE_SCORE',
-    QUESTIONS_ASKED = 'QUESTIONS_ASKED',
-    QUESTIONS_ANSWERED = 'QUESTIONS_ANSWERED',
+    POSTS = 'POSTS',
+    ANSWERED_POSTS = 'ANSWERED_POSTS',
 }
 
 export enum StatisticsView {
     ARTEMIS = 'ARTEMIS',
     COURSE = 'COURSE',
+    EXERCISE = 'EXERCISE',
+    EXAM = 'EXAM',
 }
 
 export enum GraphColors {
     DARK_BLUE = 'rgba(53,61,71,1)',
     BLUE = 'rgba(93,138,201,1)',
-    BLUE_TRANSPARENT = 'rgba(93,138,201,0)',
+    TRANSPARENT = 'rgba(93,138,201,0)',
 }

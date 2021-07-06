@@ -13,7 +13,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
@@ -34,12 +34,16 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { DueDateStat } from 'app/course/dashboards/instructor-course-dashboard/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
+import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
+import { onError } from 'app/shared/util/global.utils';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -54,6 +58,7 @@ export interface ExampleSubmissionQueryParams {
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly round = round;
+    readonly ExerciseView = ExerciseView;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     programmingExercise: ProgrammingExercise;
@@ -61,7 +66,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exam?: Exam;
     examId: number;
     exerciseGroupId: number;
-    // TODO fix tutorLeaderboard and side panel for exam exercises
     isExamMode = false;
     isTestRun = false;
     isAtLeastInstructor = false;
@@ -95,6 +99,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exampleSolutionModel: UMLModel;
     complaints: Complaint[] = [];
     moreFeedbackRequests: Complaint[] = [];
+    submissionsWithComplaints: SubmissionWithComplaintDTO[] = [];
     submissionLockLimitReached = false;
     openingAssessmentEditorForNewSubmission = false;
     secondCorrectionEnabled = false;
@@ -113,6 +118,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
+    orionState: OrionState;
+    isOrionAndProgramming = false;
+
     stats = {
         toReview: {
             done: 0,
@@ -130,7 +138,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
     tutor?: User;
-    toggelingSecondCorrectionButton = false;
+    togglingSecondCorrectionButton = false;
 
     exerciseForGuidedTour?: Exercise;
 
@@ -154,6 +162,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
+        private orionConnectorService: OrionConnectorService,
     ) {}
 
     /**
@@ -169,6 +178,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
+
+        this.orionConnectorService.state().subscribe((state) => {
+            this.orionState = state;
+        });
 
         this.loadAll();
         this.accountService.identity().then((user: User) => (this.tutor = user));
@@ -240,8 +253,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 // 3. Don't handle test run submissions here
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(Date.now())) && !this.exercise.teamMode && !this.isTestRun) {
-                    this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
+                    this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
+
+                this.isOrionAndProgramming = isOrion && this.exercise.type === ExerciseType.PROGRAMMING;
+
                 // load the guided tour step only after everything else on the page is loaded
                 this.guidedTourService.componentPageLoaded();
             },
@@ -249,13 +265,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         );
 
         if (!this.isTestRun) {
-            this.complaintService.getComplaintsForTutor(this.exerciseId).subscribe(
-                (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-                (error: HttpErrorResponse) => this.onError(error.message),
+            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe(
+                (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                    this.submissionsWithComplaints = res.body || [];
+                },
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
+
             this.complaintService.getMoreFeedbackRequestsForTutor(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.moreFeedbackRequests = res.body as Complaint[]),
-                (error: HttpErrorResponse) => this.onError(error.message),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
 
             this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
@@ -306,7 +325,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         } else {
             this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe(
                 (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
-                (error: HttpErrorResponse) => this.onError(error.message),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         }
     }
@@ -320,7 +339,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     /**
      * get all submissions for all correction rounds which the tutor has assessed.
-     * If not in examMode, correctionrounds defaults to 0, as more than 1 is currently not supported.
+     * If not in examMode, correction rounds defaults to 0, as more than 1 is currently not supported.
      * @private
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
@@ -334,7 +353,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * Get all the submissions from the server for which the current user is the assessor for the specified correctionround,
+     * Get all the submissions from the server for which the current user is the assessor for the specified correction round,
      * which is the case for started or completed assessments. All these submissions get listed
      * in the exercise dashboard.
      */
@@ -379,12 +398,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                const sub = submissions.map((submission) => {
-                    submission.participation!.submissions = [submission];
-                    submission.participation!.results = submission.results;
-                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    return submission;
-                });
+                const sub = submissions
+                    .filter((submission) => {
+                        return submission?.results && submission.results.length > correctionRound && submission.results[correctionRound];
+                    })
+                    .map((submission) => {
+                        submission.participation!.submissions = [submission];
+                        submission.participation!.results = submission.results;
+                        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+                        return submission;
+                    });
 
                 this.submissionsByCorrectionRound!.set(correctionRound, sub);
             });
@@ -408,30 +431,30 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     };
 
     /**
-     * Get all submissions that dont have an assessment for all correctionrounds
-     * If not in examMode correctionrounds defaults to 0.
+     * Get all submissions that dont have an assessment for all correction rounds
+     * If not in examMode correction rounds defaults to 0.
      * @private
      */
-    private getSubmissionWithoutAssessmentForAllCorrectionrounds(): void {
+    private getSubmissionWithoutAssessmentForAllCorrectionRounds(): void {
         if (this.isExamMode) {
             for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
                 if (i <= this.numberOfCorrectionRoundsEnabled) {
-                    this.getSubmissionWithoutAssessmentForCorrectionround(i);
+                    this.getSubmissionWithoutAssessmentForCorrectionRound(i);
                 }
             }
         } else {
-            this.getSubmissionWithoutAssessmentForCorrectionround(0);
+            this.getSubmissionWithoutAssessmentForCorrectionRound(0);
         }
     }
 
     /**
-     * Get a submission from the server that does not have an assessment for the given correctionround yet (if there is one).
+     * Get a submission from the server that does not have an assessment for the given correction round yet (if there is one).
      * The submission gets added to the end of the list of submissions in the exercise
      * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course.
      * If the user reached this limit,
      * the server will respond with a BAD REQUEST response here.
      */
-    private getSubmissionWithoutAssessmentForCorrectionround(correctionRound: number): void {
+    private getSubmissionWithoutAssessmentForCorrectionRound(correctionRound: number): void {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
@@ -585,7 +608,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
         this.openingAssessmentEditorForNewSubmission = true;
         const submissionId: number | 'new' = submission === 'new' ? 'new' : submission.id!;
-        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+        let participationId = undefined;
+        if (submission !== 'new' && submission.participation !== undefined) {
+            participationId = submission.participation!.id;
+        }
+        const url = getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
         if (this.isTestRun) {
             await this.router.navigate(url, { queryParams: { testRun: this.isTestRun, 'correction-round': correctionRound } });
         } else {
@@ -595,22 +622,56 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     /**
+     * Triggers downloading the test repository and opening it, allowing for submissions to be downloaded
+     */
+    openAssessmentInOrion() {
+        this.orionConnectorService.assessExercise(this.exercise);
+    }
+
+    /**
+     * Retrieves a new submission if necessary and then delegates to the
+     * {@link programmingSubmissionService} to download the submission
+     *
+     * @param submission submission to send to Orion or 'new' if a new one should be loaded
+     * @param correctionRound correction round
+     */
+    downloadSubmissionInOrion(submission: Submission | 'new', correctionRound = 0) {
+        if (submission === 'new') {
+            this.programmingSubmissionService
+                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, true, correctionRound)
+                .subscribe((newSubmission) => this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, newSubmission.id!, correctionRound));
+        } else {
+            this.programmingSubmissionService.downloadSubmissionInOrion(this.exerciseId, submission.id!, correctionRound);
+        }
+    }
+
+    /**
      * Show complaint depending on the exercise type
      * @param complaint that we want to show
      */
     viewComplaint(complaint: Complaint) {
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
-        this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+        if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
+            this.openAssessmentEditor(submission, this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+        }
+        const submissionToView = this.submissionsWithComplaints.filter((dto) => dto.submission.id === submission.id).pop()?.submission;
+        if (submissionToView) {
+            if (!submissionToView.results) {
+                submissionToView.results = [];
+            }
+            submissionToView.results = submissionToView.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
+            this.openAssessmentEditor(submissionToView, submissionToView.results!.length - 1);
+        }
     }
 
     toggleSecondCorrection() {
-        this.toggelingSecondCorrectionButton = true;
+        this.togglingSecondCorrectionButton = true;
         this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: Boolean) => {
             this.secondCorrectionEnabled = res as boolean;
             this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
-            this.getSubmissionWithoutAssessmentForAllCorrectionrounds();
-            this.toggelingSecondCorrectionButton = false;
+            this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
+            this.togglingSecondCorrectionButton = false;
         });
     }
 
@@ -631,7 +692,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
                 // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
                 // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
-                // lock-count from the remaining unassessed submisssions of the current correction round.
+                // lock-count from the remaining unassessed submissions of the current correction round.
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
         }

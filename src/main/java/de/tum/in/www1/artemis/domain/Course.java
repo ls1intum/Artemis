@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -101,9 +102,14 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays;
 
-    @Column(name = "student_questions_enabled")
+    @Column(name = "posts_enabled")
     @JsonView(QuizView.Before.class)
-    private boolean studentQuestionsEnabled;
+    private boolean postsEnabled;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
+    private Set<Post> posts = new HashSet<>();
 
     @Column(name = "max_request_more_feedback_time_days")
     @JsonView(QuizView.Before.class)
@@ -126,6 +132,9 @@ public class Course extends DomainObject {
 
     @Column(name = "course_archive_path")
     private String courseArchivePath;
+
+    @Column(name = "max_points")
+    private Integer maxPoints;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -326,12 +335,20 @@ public class Course extends DomainObject {
         return this.maxComplaintTimeDays > 0;
     }
 
-    public boolean getStudentQuestionsEnabled() {
-        return studentQuestionsEnabled;
+    public boolean getPostsEnabled() {
+        return postsEnabled;
     }
 
-    public void setStudentQuestionsEnabled(boolean studentQuestionsEnabled) {
-        this.studentQuestionsEnabled = studentQuestionsEnabled;
+    public void setPostsEnabled(boolean postsEnabled) {
+        this.postsEnabled = postsEnabled;
+    }
+
+    public Set<Post> getPosts() {
+        return posts;
+    }
+
+    public void setPosts(Set<Post> posts) {
+        this.posts = posts;
     }
 
     public boolean getRequestMoreFeedbackEnabled() {
@@ -560,5 +577,13 @@ public class Course extends DomainObject {
 
     public void setCourseArchivePath(String courseArchiveUrl) {
         this.courseArchivePath = courseArchiveUrl;
+    }
+
+    public Integer getMaxPoints() {
+        return maxPoints;
+    }
+
+    public void setMaxPoints(Integer maxPoints) {
+        this.maxPoints = maxPoints;
     }
 }

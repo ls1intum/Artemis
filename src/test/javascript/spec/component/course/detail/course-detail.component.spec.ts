@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe.ts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -43,7 +43,6 @@ describe('Course Management Detail Component', () => {
     const route = { params: of({ courseId: 1 }) };
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: moment().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const dtoMock = {
-        course,
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,
         numberOfEditorsInCourse: 5,
@@ -102,8 +101,10 @@ describe('Course Management Detail Component', () => {
     });
 
     beforeEach(fakeAsync(() => {
-        const getStub = sinon.stub(courseService, 'getCourseForDetailView');
-        getStub.returns(of(new HttpResponse({ body: dtoMock })));
+        const statsStub = sinon.stub(courseService, 'getCourseStatisticsForDetailView');
+        statsStub.returns(of(new HttpResponse({ body: dtoMock })));
+        const infoStub = sinon.stub(courseService, 'find');
+        infoStub.returns(of(new HttpResponse({ body: course })));
 
         component.ngOnInit();
         tick();
@@ -119,7 +120,7 @@ describe('Course Management Detail Component', () => {
         fixture.detectChanges();
         component.ngOnInit();
         expect(component.courseDTO).to.deep.equal(dtoMock);
-        expect(component.course).to.deep.equal(dtoMock.course);
+        expect(component.course).to.deep.equal(course);
         expect(registerSpy).to.have.been.called;
     });
 
@@ -130,7 +131,7 @@ describe('Course Management Detail Component', () => {
 
     it('should broadcast course modification on delete', () => {
         const deleteStub = sinon.stub(courseService, 'delete');
-        deleteStub.returns(of(new HttpResponse({})));
+        deleteStub.returns(of(new HttpResponse<void>()));
 
         const courseId = 444;
         component.deleteCourse(courseId);
