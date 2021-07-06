@@ -276,7 +276,9 @@
             "maxbytes": "Dieses Feld sollte nicht mehr als {{max}} bytes haben.",
             "pattern": "Dieses Feld muss das Muster {{pattern}} erfüllen.",
             "number": "Dieses Feld muss eine Zahl sein.",
-            "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten."
+            "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
+            "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
+            "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster."
         }
     },
     "error": {
