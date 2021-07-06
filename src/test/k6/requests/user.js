@@ -67,7 +67,7 @@ export function updateUserWithGroup(artemis, i, baseUsername, course, asTutor) {
         addUserToStudentsInCourse(artemis, username, course.id);
     }
 
-    if (i === 1) {
+    if (i === 101) {
         addUserToInstructorsInCourse(artemis, username, course.id);
     }
 }
