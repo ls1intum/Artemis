@@ -57,7 +57,7 @@ describe('Programming exercise', () => {
     });
 
     after(() => {
-        if (course !== null) {
+        if (!!course) {
             cy.login(adminUsername, adminPassword);
             artemisRequests.courseManagement.deleteCourse(course.id);
         }

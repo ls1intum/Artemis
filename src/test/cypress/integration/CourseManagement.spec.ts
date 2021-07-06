@@ -65,7 +65,7 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (courseId !== null) {
+            if (!!courseId) {
                 artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
             }
         });
@@ -114,7 +114,7 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (courseId !== null) {
+            if (!!courseId) {
                 artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
             }
         });
