@@ -73,7 +73,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
     // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
     packageNamePatternForSwift =
-        '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$';
+        '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
     packageNamePattern = '';
 
     readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
@@ -213,6 +213,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     set selectedProjectType(type: ProjectType) {
         this.selectedProjectTypeValue = type;
 
+        this.updateProjectTypeSettings(type);
+
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
@@ -223,6 +225,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     get selectedProjectType() {
         return this.selectedProjectTypeValue;
+    }
+
+    private updateProjectTypeSettings(type: ProjectType) {
+        if (ProjectType.XCODE === type) {
+            // Disable SCA for Xcode
+            this.programmingExercise.staticCodeAnalysisEnabled = false;
+            this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+            // Disable Online Editor
+            this.programmingExercise.allowOnlineEditor = false;
+        }
     }
 
     /**

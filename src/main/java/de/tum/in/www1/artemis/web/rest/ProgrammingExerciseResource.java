@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -120,7 +121,7 @@ public class ProgrammingExerciseResource {
      * Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
      * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
      */
-    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_)$)[A-Za-z][0-9A-Za-z]*$";
+    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
@@ -269,6 +270,11 @@ public class ProgrammingExerciseResource {
             throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", "Exercise", "noParticipationModeAllowed");
         }
 
+        // Check if Xcode has no online code editor enabled
+        if (ProjectType.XCODE.equals(programmingExercise.getProjectType()) && Boolean.TRUE.equals(programmingExercise.isAllowOnlineEditor())) {
+            throw new BadRequestAlertException("The online editor is not allowed for Xcode programming exercises", "Exercise", "noParticipationModeAllowed");
+        }
+
         // Check if programming language is set
         if (programmingExercise.getProgrammingLanguage() == null) {
             throw new BadRequestAlertException("No programming language was specified", "Exercise", "programmingLanguageNotSet");
@@ -301,6 +307,12 @@ public class ProgrammingExerciseResource {
         // Check if the programming language supports static code analysis
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
             throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
+        }
+
+        // Check that Xcode has no SCA enabled
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+            throw new BadRequestAlertException("The static code analysis is not supported for Xcode programming exercises", "Exercise",
+                    "staticCodeAnalysisNotSupportedForLanguage");
         }
 
         // Static code analysis max penalty must only be set if static code analysis is enabled
