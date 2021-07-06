@@ -166,7 +166,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
             this.location.go(newUrl);
 
-            this.resultService.createNewExampleResult(this.submission.participation!.id!, this.submission.id!).subscribe((response: HttpResponse<Result>) => {
+            this.resultService.createNewExampleResult(this.exerciseId!, this.submission.id!).subscribe((response: HttpResponse<Result>) => {
                 this.result = response.body!;
                 this.state.edit();
                 this.jhiAlertService.success('artemisApp.exampleSubmission.submitSuccessful');

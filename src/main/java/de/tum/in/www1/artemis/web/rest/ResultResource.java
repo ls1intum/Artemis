@@ -59,7 +59,7 @@ public class ResultResource {
 
     private final ParticipationService participationService;
 
-    private final SubmissionRepository submissionRepository;
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final ResultService resultService;
 
@@ -94,7 +94,7 @@ public class ResultResource {
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            SubmissionRepository submissionRepository, ResultService resultService, ExerciseService exerciseService, ExerciseRepository exerciseRepository,
+            ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseService exerciseService, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService,
             ResultRepository resultRepository, WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
@@ -104,7 +104,7 @@ public class ResultResource {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
-        this.submissionRepository = submissionRepository;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -282,7 +282,7 @@ public class ResultResource {
         Result result = resultRepository.findOneElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            badRequest("participationId", "400",
+            return badRequest("participationId", "400",
                     "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
         }
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
@@ -328,7 +328,7 @@ public class ResultResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            badRequest("participationId", "400",
+            return badRequest("participationId", "400",
                     "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
         }
 
@@ -388,7 +388,7 @@ public class ResultResource {
         Result result = resultRepository.findOneElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            badRequest("participationId", "400",
+            return badRequest("participationId", "400",
                     "participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !");
         }
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
@@ -398,25 +398,25 @@ public class ResultResource {
     }
 
     /**
-     * POST participations/:participationId/submissions/:submissionId/example-result : Creates a new example result for the provided example submission ID.
+     * POST exercises/:exerciseId/example-submissions/:submissionId/example-results : Creates a new example result for the provided example submission ID.
      *
-     * @param participationId participation to the submission
-     * @param submissionId The submission ID for which an example result should get created
+     * @param exerciseId id of the exercise to the submission
+     * @param exampleSubmissionId The example submission ID for which an example result should get created
      * @param isProgrammingExerciseWithFeedback Whether the related exercise is a programming exercise with feedback
      * @return The newly created result
      */
-    @PostMapping("participations/{participationId}/submissions/{submissionId}/example-result")
+    @PostMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-results")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Result> createExampleResult(@PathVariable long participationId, @PathVariable long submissionId,
+    public ResponseEntity<Result> createExampleResult(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId,
             @RequestParam(defaultValue = "false", required = false) boolean isProgrammingExerciseWithFeedback) {
-        log.debug("REST request to create a new example result for submission: {}", submissionId);
-        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        if (!submission.getParticipation().getId().equals(participationId)) {
-            badRequest("participationId", "400",
-                    "participationId of the path doesnt match the participationId of the participation corresponding to the submission " + submissionId + " !");
+        log.debug("REST request to create a new example result for submission: {}", exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(exampleSubmissionId);
+        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+            return badRequest("exerciseId", "400",
+                    "exerciseId of the path doesnt match the exerciseId of the exercise corresponding to the submission " + exampleSubmissionId + " !");
         }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
-        final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(submissionId, isProgrammingExerciseWithFeedback);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
+        final var result = resultService.createNewExampleResultForSubmissionWithExampleSubmission(exampleSubmissionId, isProgrammingExerciseWithFeedback);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
@@ -435,7 +435,7 @@ public class ResultResource {
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
         if (result.getParticipation() != null && result.getParticipation().getExercise() != null && !result.getParticipation().getExercise().getId().equals(exerciseId)) {
-            badRequest("exerciseId", "400", "exerciseId in RequestBody doesnt match exerciseId in path!");
+            return badRequest("exerciseId", "400", "exerciseId in RequestBody doesnt match exerciseId in path!");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
