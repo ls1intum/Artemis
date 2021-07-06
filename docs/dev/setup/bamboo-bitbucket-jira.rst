@@ -64,7 +64,7 @@ docker networks
 ``ERROR: Pool overlaps with other one on this address space``. Use the
 command ``docker network prune`` to resolve this issue.
 
-Make also sure that docker has enough memory (~ 6GB). To adapt it, go to ``Preferences -> Resources``
+Also make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Preferences -> Resources``
 
 Configure Bamboo, Bitbucket and Jira
 ------------------------------------
