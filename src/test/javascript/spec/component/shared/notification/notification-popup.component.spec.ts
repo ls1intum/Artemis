@@ -87,7 +87,7 @@ describe('Notification Popup Component', () => {
     });
 
     describe('Click', () => {
-        describe('General', () => {
+        describe('General & Quiz', () => {
             beforeEach(() => {
                 notificationPopupComponent.notifications.push(quizNotification);
                 notificationPopupComponentFixture.detectChanges();
@@ -111,13 +111,6 @@ describe('Notification Popup Component', () => {
                 expect(notificationPopupComponent.notifications).to.be.empty;
                 expect(notificationPopupComponent.navigateToTarget).to.have.been.calledOnce;
             });
-        });
-
-        describe('QuizNotification', () => {
-            beforeEach(() => {
-                notificationPopupComponent.notifications.push(quizNotification);
-                notificationPopupComponentFixture.detectChanges();
-            });
 
             it('should navigate to quiz target when quiz notification is clicked', () => {
                 sinon.spy(notificationPopupComponent, 'navigateToTarget');
@@ -129,27 +122,16 @@ describe('Notification Popup Component', () => {
             });
         });
 
-        describe('ExamExerciseUpdateNotification', () => {
-            beforeEach(() => {
-                notificationPopupComponent.notifications.push(examExerciseUpdateNotification);
-                notificationPopupComponentFixture.detectChanges();
-            });
+        it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {
+            notificationPopupComponent.notifications.push(examExerciseUpdateNotification);
+            notificationPopupComponentFixture.detectChanges();
 
-            it('should add exam update notification', () => {
-                //sinon.spy(notificationPopupComponent, 'addNotification');  //will nicht kp
-                const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
-                button.nativeElement.click();
-                //expect(notificationPopupComponent.addNo)
-            });
-
-            it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {
-                sinon.spy(notificationPopupComponent, 'navigateToTarget');
-                sinon.replace(examExerciseUpdateService, 'navigateToExamExercise', sinon.fake());
-                const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
-                button.nativeElement.click();
-                expect(notificationPopupComponent.navigateToTarget).to.have.been.calledOnce;
-                expect(examExerciseUpdateService.navigateToExamExercise).to.have.been.calledOnce;
-            });
+            sinon.spy(notificationPopupComponent, 'navigateToTarget');
+            sinon.replace(examExerciseUpdateService, 'navigateToExamExercise', sinon.fake());
+            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
+            button.nativeElement.click();
+            expect(notificationPopupComponent.navigateToTarget).to.have.been.calledOnce;
+            expect(examExerciseUpdateService.navigateToExamExercise).to.have.been.calledOnce;
         });
     });
 
