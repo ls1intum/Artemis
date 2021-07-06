@@ -244,8 +244,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    getAssessmentRouterLink(submissionId: number): string[] {
-        return getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+    getAssessmentRouterLink(participationId: number, submissionId: number): string[] {
+        return getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
     }
 
     private navigateToNextRandomOptimalSubmission(): void {
@@ -254,6 +254,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             ExerciseType.MODELING,
             this.courseId,
             this.exerciseId,
+            0, // this works for now, since modeling assessment doesnt yet use the participationId for forming the assessment path
             this.nextOptimalSubmissionIds[randomInt],
             this.examId,
             this.exerciseGroupId,
@@ -294,7 +295,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     /**
      * get the link for the assessment of a specific submission of the current exercise
      */
-    getAssessmentLink(submissionId: number): string[] {
-        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, submissionId, this.examId, this.exerciseGroupId);
+    getAssessmentLink(participationId: number, submissionId: number): string[] {
+        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
     }
 }
