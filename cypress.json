@@ -10,5 +10,5 @@
     "screenshotOnRunFailure": false,
     "viewportWidth": 1920,
     "viewportHeight": 1080,
-    "defaultCommandTimeout": 6000
+    "defaultCommandTimeout": 8000
 }

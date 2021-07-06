@@ -35,7 +35,7 @@ const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
 const programmingExerciseShortName = courseShortName;
 const exercisePath = '/exercises';
-const longTimeout = 60000;
+const longTimeout = 80000;
 const packageName = 'de.test';
 
 // Selectors
