@@ -130,7 +130,7 @@ public class ParticipationResource {
         Participant participant = user;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
+        // if the user is a student and the exercise has a release date, they cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
             if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
                 return forbidden();
