@@ -236,7 +236,8 @@ export class ResultComponent implements OnInit, OnChanges {
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         }
 
-        const resultStringCompiledMessage = this.result!.resultString!.replace('0 of 0 passed', this.translate.instant('artemisApp.editor.buildSuccessful'));
+        const buildSuccessful = this.translate.instant('artemisApp.editor.buildSuccessful');
+        const resultStringCompiledMessage = this.result!.resultString?.replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
 
         if (
             this.participation &&
@@ -283,7 +284,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!result.participation) {
             result.participation = this.participation;
         }
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'xl' });
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.result = result;
         const exercise = getExercise(this.participation);
