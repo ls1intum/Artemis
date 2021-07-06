@@ -426,7 +426,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.router.onSameUrlNavigation = 'reload';
 
                 // navigate to root and then to new assessment page to trigger re-initialization of the components
-                const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, unassessedSubmission.id!, this.examId, this.exerciseGroupId);
+                const url = getLinkToSubmissionAssessment(
+                    ExerciseType.MODELING,
+                    this.courseId,
+                    this.exerciseId,
+                    undefined,
+                    unassessedSubmission.id!,
+                    this.examId,
+                    this.exerciseGroupId,
+                );
                 this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } }));
             },
             (error: HttpErrorResponse) => {

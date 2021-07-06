@@ -210,10 +210,11 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     describe('shouldGetAssessmentLink', () => {
         it('should get assessment link for exam exercise', () => {
             const submissionId = 8;
+            const participationId = 2;
             component.exercise = programmingExercise1;
             component.exerciseId = programmingExercise1.id!;
             component.courseId = programmingExercise1.course!.id!;
-            expect(component.getAssessmentLink(submissionId)).toEqual([
+            expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
                 '/course-management',
                 component.exercise.course!.id!.toString(),
                 'programming-exercises',
@@ -226,12 +227,13 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
         it('should get assessment link for normal exercise', () => {
             const submissionId = 9;
+            const participationId = 2;
             component.exercise = programmingExercise2;
             component.exerciseId = programmingExercise2.id!;
             component.courseId = programmingExercise2.exerciseGroup!.exam!.course!.id!;
             component.examId = programmingExercise2.exerciseGroup!.exam!.id!;
             component.exerciseGroupId = programmingExercise2.exerciseGroup!.id!;
-            expect(component.getAssessmentLink(submissionId)).toEqual([
+            expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
                 '/course-management',
                 component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
                 'exams',
