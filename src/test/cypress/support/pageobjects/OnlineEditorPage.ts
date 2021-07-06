@@ -46,6 +46,7 @@ export class OnlineEditorPage {
                 this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName) + '{shift}{pagedown}{backspace}');
             });
         }
+        cy.wait(1000);
     }
 
     /**
