@@ -5,7 +5,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
