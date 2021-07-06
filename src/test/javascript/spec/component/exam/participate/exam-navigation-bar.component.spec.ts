@@ -9,15 +9,23 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { BehaviorSubject } from 'rxjs';
+import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
 
+    const examExerciseIdAndProblemStatementSubjectMock = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: '' });
+    const mockExamExerciseUpdateService = {
+        currentExerciseIdAndProblemStatement: examExerciseIdAndProblemStatementSubjectMock.asObservable(),
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
+            providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamNavigationBarComponent);
@@ -63,7 +71,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 1;
         const force = false;
 
-        comp.changeExercise(exerciseIndex, force);
+        comp.changeExerciseByIndex(exerciseIndex, force);
 
         expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onExerciseChanged.emit).toHaveBeenCalled();
@@ -79,7 +87,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 5;
         const force = false;
 
-        comp.changeExercise(exerciseIndex, force);
+        comp.changeExerciseByIndex(exerciseIndex, force);
 
         expect(comp.exerciseIndex).toEqual(0);
         expect(comp.onExerciseChanged.emit).not.toHaveBeenCalled();
@@ -105,21 +113,21 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise with changeExercise', () => {
-        spyOn(comp, 'changeExercise');
+        spyOn(comp, 'changeExerciseByIndex');
         const changeExercise = true;
 
         comp.saveExercise(changeExercise);
 
-        expect(comp.changeExercise).toHaveBeenCalled();
+        expect(comp.changeExerciseByIndex).toHaveBeenCalled();
     });
 
     it('save the exercise without changeExercise', () => {
-        spyOn(comp, 'changeExercise');
+        spyOn(comp, 'changeExerciseByIndex');
         const changeExercise = false;
 
         comp.saveExercise(changeExercise);
 
-        expect(comp.changeExercise).not.toHaveBeenCalled();
+        expect(comp.changeExerciseByIndex).not.toHaveBeenCalled();
     });
 
     it('should hand in the exam early', () => {
@@ -217,5 +225,25 @@ describe('Exam Navigation Bar Component', () => {
         const result = comp.getExerciseButtonTooltip(0);
 
         expect(result).toEqual('notSubmitted');
+    });
+
+    describe('Exam Exercise Update', () => {
+        const updatedExerciseId = 2;
+        const updatedProblemStatement = 'Updated Problem Statement';
+        const update = { exerciseId: updatedExerciseId, problemStatement: updatedProblemStatement };
+        const navigation = { exerciseId: updatedExerciseId, problemStatement: '' };
+
+        it('should update Exercise Problem Statement', () => {
+            examExerciseIdAndProblemStatementSubjectMock.next(update);
+            const foundIndex = comp.exercises.findIndex((ex) => ex.id === updatedExerciseId);
+            const result = comp.exercises[foundIndex].problemStatement;
+            expect(result).toEqual(updatedProblemStatement);
+        });
+
+        it('should navigate to other Exercise', () => {
+            spyOn(comp, 'changeExerciseById');
+            examExerciseIdAndProblemStatementSubjectMock.next(navigation);
+            expect(comp.changeExerciseById).toHaveBeenCalled();
+        });
     });
 });

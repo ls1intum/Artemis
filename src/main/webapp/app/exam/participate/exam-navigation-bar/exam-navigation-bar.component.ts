@@ -31,10 +31,10 @@ export class ExamNavigationBarComponent implements OnInit {
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
-    constructor(private layoutService: LayoutService, private liveExamExerciseUpdateService: ExamExerciseUpdateService) {}
+    constructor(private layoutService: LayoutService, private examExerciseUpdateService: ExamExerciseUpdateService) {}
 
     ngOnInit(): void {
-        this.subscriptionToLiveExamExerciseUpdates = this.liveExamExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
+        this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             if (update.problemStatement === '') {
                 // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
                 this.changeExerciseById(update.exerciseId);

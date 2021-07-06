@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-interface LiveExamExerciseUpdate {
+export interface ExamExerciseUpdate {
     exerciseId: number;
     problemStatement: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ExamExerciseUpdateService {
-    private examExerciseIdAndProblemStatementSource = new BehaviorSubject<LiveExamExerciseUpdate>({ exerciseId: -1, problemStatement: '' });
+    private examExerciseIdAndProblemStatementSource = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: '' });
     currentExerciseIdAndProblemStatement = this.examExerciseIdAndProblemStatementSource.asObservable();
 
     constructor() {}
