@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis;
 
-import org.junit.jupiter.api.Test;
-
 import static de.tum.in.www1.artemis.web.rest.util.StringUtil.ILLEGAL_CHARACTERS;
 import static de.tum.in.www1.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.Test;
+
 public class StringUtilTest {
+
     @Test
     public void testEmpty() {
         assertEquals("", stripIllegalCharacters(""));
