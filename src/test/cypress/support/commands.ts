@@ -48,7 +48,7 @@ Cypress.Commands.overwrite('request', (originalFn, options) => {
 
     if (!!token) {
         const authHeader = 'Bearer ' + token;
-        if (options.headers !== null) {
+        if (!!options.headers) {
             options.headers.Authorization = authHeader;
         } else {
             options.headers = { Authorization: authHeader };
