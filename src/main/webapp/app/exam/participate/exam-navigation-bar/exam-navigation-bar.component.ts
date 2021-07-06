@@ -5,7 +5,7 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { LiveExamExerciseUpdateService } from 'app/exam/live-exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -31,7 +31,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
-    constructor(private layoutService: LayoutService, private liveExamExerciseUpdateService: LiveExamExerciseUpdateService) {}
+    constructor(private layoutService: LayoutService, private liveExamExerciseUpdateService: ExamExerciseUpdateService) {}
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.liveExamExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
@@ -67,7 +67,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param exerciseIndex of the student exam to navigate to / to display
      * @param forceSave whether to save the exercise before displaying another or not
      */
-    changeExercise(exerciseIndex: number, forceSave: boolean) {
+    changeExerciseByIndex(exerciseIndex: number, forceSave: boolean) {
         // out of index -> do nothing
         if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
             return;
@@ -79,15 +79,12 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     /**
-     * Auxiliary method to call changeExercise based on the unique id of the exercise (e.g. exerciseA.id -> 7)
-     * The exercises in a student exam can be ordered randomly and be from different exercise groups
-     * this means that the identical exercise A can have a different position/index inside two different student exams
-     * i.e. exercise A can be the second exercise in student exam 1 but the third in student exam 2
+     * Auxiliary method to call changeExerciseByIndex based on the unique id of the exercise
      * @param exerciseId the unique identifier of an exercise that stays the same regardless of student exam ordering
      */
     changeExerciseById(exerciseId: number) {
         const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
-        this.changeExercise(foundIndex, true);
+        this.changeExerciseByIndex(foundIndex, true);
     }
 
     /**
@@ -117,9 +114,9 @@ export class ExamNavigationBarComponent implements OnInit {
         if (changeExercise) {
             if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changeExercise(this.exerciseIndex, true);
+                this.changeExerciseByIndex(this.exerciseIndex, true);
             } else {
-                this.changeExercise(newIndex, true);
+                this.changeExerciseByIndex(newIndex, true);
             }
         }
     }

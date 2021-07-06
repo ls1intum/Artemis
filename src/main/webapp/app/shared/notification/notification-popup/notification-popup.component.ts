@@ -6,7 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Notification } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
-import { LiveExamExerciseUpdateService } from 'app/exam/live-exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -22,7 +22,7 @@ export class NotificationPopupComponent implements OnInit {
         private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
-        private liveExamExerciseUpdateService: LiveExamExerciseUpdateService,
+        private liveExamExerciseUpdateService: ExamExerciseUpdateService,
     ) {}
 
     /**
@@ -49,8 +49,7 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     navigateToTarget(notification: Notification): void {
-        // tslint:disable-next-line:triple-equals
-        if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+        if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             const target = JSON.parse(notification.target!);
             this.liveExamExerciseUpdateService.navigateToExamExercise(target.exercise);
         } else {
@@ -61,8 +60,7 @@ export class NotificationPopupComponent implements OnInit {
     private notificationTargetRoute(notification: Notification): UrlTree | string {
         if (notification.target) {
             const target = JSON.parse(notification.target);
-            // tslint:disable-next-line:triple-equals
-            if (notification.title == LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
+            if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.exam]);
             } else if (notification.title === 'Quiz started' && target.status) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id, target.status]);
@@ -124,10 +122,12 @@ export class NotificationPopupComponent implements OnInit {
      */
     private addExamUpdateNotification(notification: Notification): void {
         if (!notification.target) return;
-
-        const target = JSON.parse(notification.target);
-        this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
-
+        try {
+            const target = JSON.parse(notification.target);
+            this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
+        } catch (error) {
+            throw new Error(error);
+        }
         // only show pop-up if explicit notification text was set and only inside exam mode
         if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
             this.notifications.unshift(notification);

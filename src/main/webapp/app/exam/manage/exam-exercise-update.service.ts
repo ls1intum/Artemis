@@ -7,7 +7,7 @@ interface LiveExamExerciseUpdate {
 }
 
 @Injectable({ providedIn: 'root' })
-export class LiveExamExerciseUpdateService {
+export class ExamExerciseUpdateService {
     private examExerciseIdAndProblemStatementSource = new BehaviorSubject<LiveExamExerciseUpdate>({ exerciseId: -1, problemStatement: '' });
     currentExerciseIdAndProblemStatement = this.examExerciseIdAndProblemStatementSource.asObservable();
 
