@@ -22,7 +22,7 @@ export class NotificationPopupComponent implements OnInit {
         private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
-        private liveExamExerciseUpdateService: ExamExerciseUpdateService,
+        private examExerciseUpdateService: ExamExerciseUpdateService,
     ) {}
 
     /**
@@ -51,7 +51,7 @@ export class NotificationPopupComponent implements OnInit {
     navigateToTarget(notification: Notification): void {
         if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             const target = JSON.parse(notification.target!);
-            this.liveExamExerciseUpdateService.navigateToExamExercise(target.exercise);
+            this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
         } else {
             this.router.navigateByUrl(this.notificationTargetRoute(notification));
         }
@@ -126,7 +126,7 @@ export class NotificationPopupComponent implements OnInit {
         }
         try {
             const target = JSON.parse(notification.target);
-            this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
+            this.examExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
         } catch (error) {
             throw new Error(error);
         }
