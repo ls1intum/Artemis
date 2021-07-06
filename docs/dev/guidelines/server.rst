@@ -55,9 +55,9 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 * Program for the interface and not for implementation, you should use interface type on variables, return types of a method or argument type of methods. Just like using SuperClass type to store object rather using SubClass.
 * The use of interface is to facilitate polymorphism, a client should not implement an interface method if its not needed.
 * Type inference of variables - var vs. actual type:
-    * Variables with primitive types like int, long or also String should be defined with the actual type by default.
+    * Variables with primitive types like int, long, or also String should be defined with the actual type by default.
     * Types which share similar functionality but require different handling should also be explicitly stated, e.g. Lists and Sets.
-    * Variable types which are untypically long and would decrease readability when writing can be shortened with ``var`` (e.g. DTOs).
+    * Variable types which are untypically long and would decrease readability when writing can be shortened with ``var`` (e.g. custom DTOs).
 
 6. Structure your code correctly
 ================================
