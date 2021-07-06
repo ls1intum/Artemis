@@ -12,8 +12,8 @@ const adminPassword = Cypress.env('adminPassword');
 let username = Cypress.env('username');
 let password = Cypress.env('password');
 if (Cypress.env('isCi')) {
-    username = username.replace('USERID', '1');
-    password = password.replace('USERID', '1');
+    username = username.replace('USERID', '5');
+    password = password.replace('USERID', '5');
 }
 
 // Requests
