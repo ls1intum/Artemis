@@ -1,11 +1,5 @@
-<div class="row my-1 me-0 justify-content-between align-items-center">
-    <div class="col-auto row">
-        <div *ngFor="let tag of tags">
-            <span class="align-items-center post-tag text-white badge">{{ tag }}</span>
-        </div>
-    </div>
-    <div class="col-auto px-1 reaction">
-        <fa-icon class="icon plus" [icon]="'plus'"></fa-icon>
-        <fa-icon class="icon" [icon]="['far', 'smile']"></fa-icon>
-    </div>
+<div class="my-1 me-0 justify-content-between align-items-center">
+    <span *ngFor="let tag of tags" class="align-items-center post-tag col-auto text-white badge px-1 me-1">
+        {{ tag }}
+    </span>
 </div>

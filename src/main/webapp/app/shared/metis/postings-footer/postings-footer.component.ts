@@ -14,6 +14,4 @@ export abstract class PostingsFooterDirective<T extends Posting> implements OnIn
     protected constructor(protected postingService: PostingsService<T>) {}
 
     ngOnInit(): void {}
-
-    reactOnPosting(): void {}
 }

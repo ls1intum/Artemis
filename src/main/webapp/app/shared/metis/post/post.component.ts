@@ -1,10 +1,9 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostVotesAction, PostVotesActionName } from 'app/shared/metis/post/post-votes/post-votes.component';
 import { PostService } from 'app/shared/metis/post/post.service';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
-import { onError } from 'app/shared/util/global.utils';
 
 export interface PostAction {
     name: PostActionName;
@@ -31,8 +30,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit {
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.postService.getAllPostTags(this.courseId).subscribe((tagRes: HttpResponse<string[]>) => {
-            this.existingPostTags = tagRes.body!;
+        this.postService.getAllPostTags(this.courseId).subscribe({
+            next: (tagRes: HttpResponse<string[]>) => {
+                this.existingPostTags = tagRes.body!;
+            },
+            error: () => {
+                console.log('error');
+            },
         });
     }
 

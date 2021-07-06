@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { PostingsCreateEditModalDirective } from 'app/shared/metis/postings-create-edit-modal/postings-create-edit-modal.directive';
 import { PostService } from 'app/shared/metis/post/post.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

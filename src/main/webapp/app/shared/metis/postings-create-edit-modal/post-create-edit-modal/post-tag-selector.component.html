@@ -22,7 +22,7 @@
         identifyBy="tag"
         displayBy="tag"
         [zIndex]="10000"
-        [autocompleteItems]="uniquePostTags"
+        [autocompleteItems]="existingPostTags"
     ></tag-input-dropdown>
     <ng-template let-item="item" let-index="index">
         <div class="custom-tag" [ngStyle]="{ backgroundColor: item.color }">
