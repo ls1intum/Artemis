@@ -102,14 +102,8 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        // Catches 3 different use cases.
-        // 1) A non-exam exercise update with a set notificationText
-        // Here the notificationText will be assigned to the text property that will be used to create the new GroupNotification.
-        // 2) A live exam exercise update with a set notificationText. (Similar workflow as with 1) (i.e. normal exam-notification workflow)
-        // 3) A hidden/silent live exam exercise update without a set notificationText.
-        // The text property will be null here because the instructor did not use the optional notification text.
-        // Here the problemStatement will still be updated but the notification will not be shown to the student. (filtered out in notification-popup.component
-        // addExamUpdateNotification)
+        // Catches 3 different use cases : notificationText exists for 1) non-exam exercise update & 2) live exam exercise update with a notification text
+        // 3) hidden/silent live exam exercise update without a set notificationText, thus no pop-up will be visible for the students
         if (notificationText != null || title.equals(Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE)) {
             text = notificationText;
         }
