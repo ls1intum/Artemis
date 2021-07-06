@@ -1,3 +1,4 @@
+import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -6,6 +7,7 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -13,6 +15,7 @@ import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/assessment-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisGradingInstructionLinkIconModule } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.module';
 import { ChangeDetectorRef } from '@angular/core';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -25,7 +28,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule, ArtemisGradingInstructionLinkIconModule],
             declarations: [TextblockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
-            providers: [MockProvider(ChangeDetectorRef)],
+            providers: [MockProvider(ChangeDetectorRef), { provide: NgbModal, useClass: MockNgbModalService }],
         })
             .overrideModule(ArtemisTestModule, {
                 remove: {
@@ -166,6 +169,24 @@ describe('TextblockFeedbackEditorComponent', () => {
 
         const text = compiled.querySelector('[jhiTranslate$=feedbackImpactWarning]');
         expect(text).toBeFalsy();
+    });
+
+    it('should show view origin icon when there is an automatic feedback label', () => {
+        component.feedback.type = FeedbackType.AUTOMATIC;
+        fixture.detectChanges();
+
+        const searchOriginIcon = compiled.querySelector('fa-icon[ng-reflect-icon="search"]');
+        expect(searchOriginIcon).toBeTruthy();
+    });
+
+    it('should open modal when open origin of feedback function is called', () => {
+        const modalService: NgbModal = TestBed.inject(NgbModal);
+        const content = {};
+        const modalServiceSpy = sinon.spy(modalService, 'open');
+
+        component.openOriginOfFeedbackModal(content).then(() => {
+            expect(modalServiceSpy).toHaveBeenCalledTimes(1);
+        });
     });
 
     it('should show link icon when feedback is associated with grading instruction', () => {
