@@ -52,11 +52,13 @@ describe('Programming Exercise Management', () => {
         artemisRequests = new ArtemisRequests();
         cy.login(adminUsername, adminPassword, '/');
         artemisRequests.courseManagement
-            .createCourse(courseName, courseShortName, uid)
+            .createCourse(courseName, courseShortName)
             .its('body')
             .then((body) => {
                 expect(body).property('id').to.be.a('number');
                 course = body;
+                // Wait for group synchronization
+                cy.wait(65000);
             });
     });
 

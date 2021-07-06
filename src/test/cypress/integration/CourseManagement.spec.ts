@@ -73,7 +73,7 @@ describe('Course management', () => {
 
     describe('Course deletion', () => {
         beforeEach(() => {
-            artemisRequests.courseManagement.createCourse(courseName, courseShortName, uid).its('status').should('eq', 201);
+            artemisRequests.courseManagement.createCourse(courseName, courseShortName).its('status').should('eq', 201);
         });
 
         it('Deletes an existing course', function () {
@@ -92,7 +92,7 @@ describe('Course management', () => {
 
         beforeEach(() => {
             artemisRequests.courseManagement
-                .createCourse(courseName, courseShortName, uid)
+                .createCourse(courseName, courseShortName)
                 .its('body')
                 .then((body) => {
                     expect(body).property('id').to.be.a('number');

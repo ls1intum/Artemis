@@ -2,15 +2,15 @@
     "files": [
         {
             "name": "BubbleSort.java",
-            "path": "programming_exercises/all_successful/BubbleSort.txt"
+            "path": "programming_exercise_submissions/all_successful/BubbleSort.txt"
         },
         {
             "name": "MergeSort.java",
-            "path": "programming_exercises/all_successful/MergeSort.txt"
+            "path": "programming_exercise_submissions/all_successful/MergeSort.txt"
         },
         {
             "name": "SortStrategy.java",
-            "path": "programming_exercises/all_successful/SortStrategy.txt"
+            "path": "programming_exercise_submissions/all_successful/SortStrategy.txt"
         }
     ]
 }

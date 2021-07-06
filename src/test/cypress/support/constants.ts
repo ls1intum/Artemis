@@ -2,6 +2,7 @@
 
 // Requests
 export const DELETE = 'DELETE';
+export const POST = 'POST';
 export const BASE_API = 'api/';
 
 // Authentication
