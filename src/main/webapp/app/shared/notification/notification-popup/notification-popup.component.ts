@@ -121,7 +121,9 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     private addExamUpdateNotification(notification: Notification): void {
-        if (!notification.target) return;
+        if (!notification.target) {
+            return;
+        }
         try {
             const target = JSON.parse(notification.target);
             this.liveExamExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);

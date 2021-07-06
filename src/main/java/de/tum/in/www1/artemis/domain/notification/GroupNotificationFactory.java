@@ -104,7 +104,7 @@ public class GroupNotificationFactory {
 
         // Catches 3 different use cases : notificationText exists for 1) non-exam exercise update & 2) live exam exercise update with a notification text
         // 3) hidden/silent live exam exercise update without a set notificationText, thus no pop-up will be visible for the students
-        if (notificationText != null || title.equals(Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE)) {
+        if (notificationText != null || Constants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(title)) {
             text = notificationText;
         }
 

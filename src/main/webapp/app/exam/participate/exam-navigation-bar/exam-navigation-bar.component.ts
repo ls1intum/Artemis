@@ -36,7 +36,7 @@ export class ExamNavigationBarComponent implements OnInit {
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.liveExamExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
             if (update.problemStatement === '') {
-                //another exercise will only be displayed if the student clicks on the corresponding pop-up notification
+                // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
                 this.changeExerciseById(update.exerciseId);
             } else {
                 this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
