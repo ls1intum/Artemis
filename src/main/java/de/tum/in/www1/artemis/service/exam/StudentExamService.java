@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -70,11 +71,13 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -89,6 +92,7 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
+        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
     }
 
     /**
@@ -427,10 +431,16 @@ public class StudentExamService {
             if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
-                    if (exercise instanceof ProgrammingExercise && !Hibernate.isInitialized(((ProgrammingExercise) exercise).getTemplateParticipation())) {
+                    if (exercise instanceof ProgrammingExercise programmingExercise) {
                         // Load lazy property
-                        final var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        ((ProgrammingExercise) exercise).setTemplateParticipation(programmingExercise.getTemplateParticipation());
+                        if (!Hibernate.isInitialized((programmingExercise).getTemplateParticipation())) {
+                            final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                            (programmingExercise).setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
+                        }
+
+                        if (ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
+                            programmingExerciseScheduleService.unlockAllStudentRepositories(programmingExercise).run();
+                        }
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
                     var participation = participationService.startExercise(exercise, student, true);

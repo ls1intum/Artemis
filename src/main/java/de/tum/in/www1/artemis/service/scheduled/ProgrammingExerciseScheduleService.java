@@ -257,9 +257,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         // BEFORE EXAM
-        if (now.isBefore(exam.getStartDate())) {
+        ZonedDateTime unlockDate = getExamProgrammingExerciseUnlockDate(exercise);
+        if (now.isBefore(unlockDate)) {
             // Use the custom date from the exam rather than the of the exercise's lifecycle
-            ZonedDateTime unlockDate = getExamProgrammingExerciseUnlockDate(exercise);
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, Set.of(new Tuple<>(unlockDate, unlockAllStudentRepositories(exercise))));
         }
         // DURING EXAM
@@ -489,7 +489,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, tasks);
     }
 
-    private static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
+    public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
         // using start date minus 5 minutes here because unlocking will take some time (it is invoked synchronously).
         return exercise.getExerciseGroup().getExam().getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);
     }
