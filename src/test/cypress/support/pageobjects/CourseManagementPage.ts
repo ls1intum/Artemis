@@ -1,5 +1,3 @@
-import { NavigationBar } from './NavigationBar';
-
 /**
  * A class which encapsulates UI selectors and actions for the course management page.
  */
@@ -9,7 +7,8 @@ export class CourseManagementPage {
     }
 
     /**
-     * @returns Returns the cypress chainable containing the root element of the course card of our created course. This can be used to find specific elements within this course card.
+     * @returns Returns the cypress chainable containing the root element of the course card of our created course.
+     * This can be used to find specific elements within this course card.
      */
     getCourseCard(courseName: string, courseShortName: string) {
         return cy.contains(this.courseSelector(courseName, courseShortName)).parent().parent().parent();

@@ -9,26 +9,20 @@ import { generateUUID } from '../support/utils';
 // Environmental variables
 const adminUsername = Cypress.env('adminUsername');
 const adminPassword = Cypress.env('adminPassword');
-let username = Cypress.env('username');
-let password = Cypress.env('password');
-if (Cypress.env('isCi')) {
-    username = username.replace('USERID', '5');
-    password = password.replace('USERID', '5');
-}
 
 // Requests
-var artemisRequests: ArtemisRequests;
+let artemisRequests: ArtemisRequests;
 
 // PagegObjects
-var courseManagementPage: CourseManagementPage;
-var navigationBar: NavigationBar;
+let courseManagementPage: CourseManagementPage;
+let navigationBar: NavigationBar;
 
 // Common primitives
-var uid: string;
-var courseName: string;
-var courseShortName: string;
-var programmingExerciseName: string;
-var programmingExerciseShortName: string;
+let uid: string;
+let courseName: string;
+let courseShortName: string;
+let programmingExerciseName: string;
+let programmingExerciseShortName: string;
 const packageName = 'de.test';
 
 // Selectors
@@ -38,7 +32,7 @@ const saveEntity = '#save-entity';
 const datepickerButtons = '.owl-dt-container-control-button';
 
 describe('Programming Exercise Management', () => {
-    var course: any;
+    let course: any;
 
     beforeEach(() => {
         courseManagementPage = new CourseManagementPage();
@@ -63,8 +57,6 @@ describe('Programming Exercise Management', () => {
     });
 
     describe('Programming exercise creation', () => {
-        var programmingExerciseId: number;
-
         it('Creates a new programming exercise', function () {
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(courseName, courseShortName);
@@ -83,12 +75,7 @@ describe('Programming Exercise Management', () => {
             cy.get('#field_points').type('100');
             cy.get('#field_allowOnlineEditor').check();
             cy.get(saveEntity).click();
-            cy.wait('@createProgrammingExerciseQuery')
-                .its('response.body')
-                .then((body) => {
-                    expect(body).property('id').to.be.a('number');
-                    programmingExerciseId = body.id;
-                });
+            cy.wait('@createProgrammingExerciseQuery');
             cy.url().should('include', '/exercises');
             cy.contains(programmingExerciseName).should(beVisible);
         });
@@ -116,7 +103,9 @@ describe('Programming Exercise Management', () => {
     });
 
     afterEach(() => {
-        if (course != null) artemisRequests.courseManagement.deleteCourse(course.id).its('status').should('eq', 200);
+        if (course !== null) {
+            artemisRequests.courseManagement.deleteCourse(course.id).its('status').should('eq', 200);
+        }
     });
 });
 

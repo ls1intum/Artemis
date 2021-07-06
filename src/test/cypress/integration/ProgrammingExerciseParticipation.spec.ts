@@ -4,8 +4,6 @@ import { generateUUID } from '../support/utils';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../support/pageobjects/OnlineEditorPage';
 import allSuccessful from '../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../fixtures/programming_exercise_submissions/partially_successful/submission.json';
-import { CourseManagementPage } from '../support/pageobjects/CourseManagementPage';
-import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { beVisible } from '../support/constants';
 import { ArtemisRequests } from './../support/requests/ArtemisRequests';
 
@@ -20,13 +18,13 @@ if (Cypress.env('isCi')) {
 }
 
 // Requests
-var artemisRequests: ArtemisRequests;
+let artemisRequests: ArtemisRequests;
 
 // PageObjects
-var editorPage: OnlineEditorPage;
-var courseManagementPage: CourseManagementPage;
-var navigationBar: NavigationBar;
-var course: any;
+let editorPage: OnlineEditorPage;
+
+// Container for a course dto
+let course: any;
 
 // Common primitives
 const uid = generateUUID();
@@ -45,8 +43,6 @@ const buildingAndTesting = 'Building and testing...';
 describe('Programming exercise', () => {
     before(() => {
         editorPage = new OnlineEditorPage();
-        courseManagementPage = new CourseManagementPage();
-        navigationBar = new NavigationBar();
         registerQueries();
         artemisRequests = new ArtemisRequests();
         setupCourseAndProgrammingExercise();
@@ -61,7 +57,7 @@ describe('Programming exercise', () => {
     });
 
     after(() => {
-        if (course != null) {
+        if (course !== null) {
             cy.login(adminUsername, adminPassword);
             artemisRequests.courseManagement.deleteCourse(course.id);
         }
@@ -94,7 +90,7 @@ function setupCourseAndProgrammingExercise() {
  * Makes a submission, which fails the CI build and asserts that this is highlighted in the UI.
  */
 function makeFailingSubmission() {
-    var submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
+    const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
     makeSubmissionAndVerifyResults(submission, () => {
         editorPage.getResultPanel().contains('Build Failed').should(beVisible);
         editorPage.getResultPanel().contains('0%').should(beVisible);

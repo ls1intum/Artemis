@@ -10,23 +10,21 @@ import { generateUUID } from '../support/utils';
 const adminUsername = Cypress.env('adminUsername');
 const adminPassword = Cypress.env('adminPassword');
 let username = Cypress.env('username');
-let password = Cypress.env('password');
 if (Cypress.env('isCi')) {
     username = username.replace('USERID', '5');
-    password = password.replace('USERID', '5');
 }
 
 // Requests
-var artemisRequests: ArtemisRequests;
+let artemisRequests: ArtemisRequests;
 
 // PagegObjects
-var courseManagementPage: CourseManagementPage;
-var navigationBar: NavigationBar;
+let courseManagementPage: CourseManagementPage;
+let navigationBar: NavigationBar;
 
 // Common primitives
-var uid: string;
-var courseName: string;
-var courseShortName: string;
+let uid: string;
+let courseName: string;
+let courseShortName: string;
 
 // Selectors
 const fieldTitle = '#field_title';
@@ -47,7 +45,7 @@ describe('Course management', () => {
     });
 
     describe('Course creation', () => {
-        var courseId: number;
+        let courseId: number;
 
         it('Creates a new course', function () {
             navigationBar.openCourseManagement();
@@ -67,7 +65,9 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (courseId != null) artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            if (courseId !== null) {
+                artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            }
         });
     });
 
@@ -88,7 +88,7 @@ describe('Course management', () => {
     });
 
     describe('Manual student selection', () => {
-        var courseId: number;
+        let courseId: number;
 
         beforeEach(() => {
             artemisRequests.courseManagement
@@ -114,7 +114,9 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (courseId != null) artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            if (courseId !== null) {
+                artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            }
         });
     });
 });

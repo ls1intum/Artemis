@@ -31,12 +31,13 @@ export class OnlineEditorPage {
     }
 
     /**
-     * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non existing files. It only opens existing files and writes the content there!
+     * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non existing files.
+     * It only opens existing files and writes the content there!
      * @param submission object which contains the information about which files need to be edited with what content
      * @param packageName the package name of the project to overwrite it in the submission templates
      */
     typeSubmission(submission: ProgrammingExerciseSubmission, packageName: string) {
-        for (let newFile of submission.files) {
+        for (const newFile of submission.files) {
             cy.log(`Entering content for file ${newFile.name}`);
             // This works for the current solutions because all files are in the
             this.openFileWithName(newFile.name);
@@ -48,7 +49,8 @@ export class OnlineEditorPage {
     }
 
     /**
-     * Makes sure that the input does not contain any characters, which might be recognized by cypress as special characters, and replaces all newlines with the cypress '{enter}' command.
+     * Makes sure that the input does not contain any characters, which might be recognized by cypress as special characters,
+     * and replaces all newlines with the cypress '{enter}' command.
      * Apparently this causes issues in the ace code editor if there is no space before a newline, so we add a space there as well.
      */
     private sanitizeInput(input: string, packageName: string) {
@@ -67,7 +69,7 @@ export class OnlineEditorPage {
      * Submits the currently saved files by clicking on the submit button.
      * @param changedFiles true if there are unsaved files, false otherwise
      */
-    submit(changedFiles: boolean = false) {
+    submit(changedFiles = false) {
         cy.get('#submit_button').click();
         if (changedFiles) {
             cy.wait('@submitWithSave');
