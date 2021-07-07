@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -61,14 +60,14 @@ public class GradeStepResource {
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/grading-scale/grade-steps")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<GradeStep>> getAllGradeStepsForCourse(@PathVariable Long courseId) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all grade steps for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        List<GradeStep> gradeSteps = gradeStepRepository.findByGradingScaleId(gradingScale.getId());
-        return ResponseEntity.ok(gradeSteps);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, course.getMaxPoints(), course.getTitle());
+        return ResponseEntity.ok(gradeStepsDTO);
     }
 
     /**
@@ -91,20 +90,20 @@ public class GradeStepResource {
         if (!isInstructor && !exam.resultsPublished()) {
             return forbidden();
         }
-        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints());
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints(), exam.getTitle());
         return ResponseEntity.ok(gradeStepsDTO);
     }
 
-    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale, int maxPoints) {
+    private GradeStepsDTO prepareGradeStepsDTO(GradingScale gradingScale, Integer maxPoints, String title) {
         GradeStep[] gradeSteps = new GradeStep[gradingScale.getGradeSteps().size()];
         gradingScale.getGradeSteps().toArray(gradeSteps);
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        if (maxPoints > 0) {
-            return new GradeStepsDTO(gradingScale.getExam().getTitle(), gradingScale.getGradeType(), gradeSteps, maxPoints);
+        if (maxPoints != null && maxPoints > 0) {
+            return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints);
         }
-        return new GradeStepsDTO(gradingScale.getExam().getTitle(), gradingScale.getGradeType(), gradeSteps);
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps);
     }
 
     /**
@@ -156,9 +155,12 @@ public class GradeStepResource {
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+        if (gradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
         return ResponseEntity.ok(gradeDTO);
     }
@@ -178,13 +180,16 @@ public class GradeStepResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examRepository.findByIdElseThrow(examId);
-        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
-        if (!isInstructor && !exam.resultsPublished()) {
+        if (gradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        else if (!isInstructor && !exam.resultsPublished()) {
             return forbidden();
         }
-        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
         return ResponseEntity.ok(gradeDTO);
     }

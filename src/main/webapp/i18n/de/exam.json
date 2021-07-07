@@ -29,7 +29,8 @@
                 "bonus": "Bonuspunkte für die Klausur",
                 "interval": "Intervall (%)",
                 "intervalPoints": "Intervall (Punkte)",
-                "gradeKeyButton": "Notenschlüssel ansehen"
+                "gradeKeyButton": "Notenschlüssel ansehen",
+                "gradeKeyButtonBonus": "Bonusregeln ansehen"
             },
             "title": "Klausur",
             "startExam": "Starten",
