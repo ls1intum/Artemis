@@ -71,4 +71,33 @@ describe('ExamInformationComponent', function () {
         expect(fixture).to.be.ok;
         expect(component.endTime()?.isSame(moment(exam.startDate).add(studentExam.workingTime, 'seconds'))).to.equal(true);
     });
+
+    it('should detect if the end date is on another day', function () {
+        component.exam = exam;
+        exam.endDate = moment(exam.startDate).add(2, 'days');
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.true;
+    });
+
+    it('should detect if the working time extends to another day', function () {
+        component.exam = exam;
+        component.studentExam = studentExam;
+        studentExam.workingTime = 24 * 60 * 60;
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.true;
+    });
+
+    it('should return false for exams that only last one day', function () {
+        component.exam = exam;
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.false;
+
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.false;
+    });
 });
