@@ -3,7 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { GradeKeyOverviewComponent } from 'app/exam/participate/summary/points-summary/grade-key-overview/grade-key-overview.component';
+import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 
 export const examParticipationRoute: Routes = [
     {
@@ -17,8 +17,8 @@ export const examParticipationRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'grade-key/overview',
-        component: GradeKeyOverviewComponent,
+        path: 'overview/grading-key',
+        component: GradingKeyOverviewComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',

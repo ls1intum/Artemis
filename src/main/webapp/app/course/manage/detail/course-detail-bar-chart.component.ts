@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { CourseManagementService } from '../course-management.service';
 import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-course-detail-bar-chart',
@@ -73,7 +74,7 @@ export class CourseDetailBarChartComponent implements OnChanges {
             this.absoluteData = array;
             this.data = [];
             for (const value of array) {
-                this.data.push(Math.round((value / this.numberOfStudentsInCourse) * 100));
+                this.data.push(round((value / this.numberOfStudentsInCourse) * 100));
             }
         } else {
             this.absoluteData = array;
