@@ -4,6 +4,7 @@ import { distinctUntilChanged, first, map, takeUntil } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { cloneDeep } from 'lodash';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exam-timer',
@@ -68,7 +69,7 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
             return '00 : 00';
         } else {
             return timeDiff.asMinutes() > 10
-                ? Math.round(timeDiff.asMinutes()) + ' min'
+                ? round(timeDiff.asMinutes()) + ' min'
                 : timeDiff.minutes().toString().padStart(2, '0') + ' : ' + timeDiff.seconds().toString().padStart(2, '0') + ' min';
         }
     }
