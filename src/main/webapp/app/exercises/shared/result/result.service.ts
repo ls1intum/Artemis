@@ -64,11 +64,12 @@ export class ResultService implements IResultService {
     /**
      * Create a new example result for the provided submission ID.
      *
+     * @param exerciseId The ID of the exercise for which an example result should get created
      * @param submissionId The ID of the example submission for which a result should get created
      * @return The newly created (and empty) example result
      */
-    createNewExampleResult(participationId: number, submissionId: number): Observable<HttpResponse<Result>> {
-        return this.http.post<Result>(`${this.participationResourceUrl}/${participationId}/submissions/${submissionId}/example-result`, null, { observe: 'response' });
+    createNewExampleResult(exerciseId: number, submissionId: number): Observable<HttpResponse<Result>> {
+        return this.http.post<Result>(`${this.exerciseResourceUrl}/${exerciseId}/example-submissions/${submissionId}/example-results`, null, { observe: 'response' });
     }
 
     public convertDateFromClient(result: Result): Result {

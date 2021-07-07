@@ -188,7 +188,7 @@ Thus, you can use the following Dockerfile:
 
 
 This dockerfile disables the mechanism that sets the password to expired state after changed via API.
-If you want to use this custom image, you have to build the image and replace all occurances of ``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
+If you want to use this custom image, you have to build the image and replace all occurrences of ``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
 
 
 1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
@@ -485,7 +485,7 @@ If you already have a Gitlab and Mysql instance running, you can comment out all
                 artemis-authentication-token-value: artemis_admin
                 secret-push-token: # generated in step 8
 
-10. Open the ``src/main/resources/config/appliciation-jenkins.yml`` and change the following:
+10. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
 
 .. code:: yaml
 
@@ -539,7 +539,7 @@ Manual Jenkins Server Setup
    ::
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
-5. The NGINX default timeout is pretty low. For plagarism check and unlocking student repos for the exam a higher timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
+5. The NGINX default timeout is pretty low. For plagiarism check and unlocking student repos for the exam a higher timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
 
 
    .. code:: nginx
@@ -883,7 +883,7 @@ the following steps:
            version-control:
                ci-token: $gitlab-push-token
            continuous-integration:
-               secret-push-token: $some-long-encrytped-value
+               secret-push-token: $some-long-encrypted-value
 
 12. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden.
     This is done by creating a groovy script inside the ``jenkins`` docker container at ``jenkins_home/init.groovy``

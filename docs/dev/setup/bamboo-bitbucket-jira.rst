@@ -5,14 +5,14 @@ This page describes how to set up a programming exercise environment
 based on Bamboo, Bitbucket and Jira.
 
 | Please note that this setup will create a deployment that is very
-  similiar to the one used in production but has one difference:
+  similar to the one used in production but has one difference:
 | In production, the builds are performed within Docker containers that
   are created by Bamboo (or its build agents). As we run Bamboo in a
   Docker container in this setup, creating new Docker containers within
   that container is not recommended (e.g. see `this
   article <https://itnext.io/docker-in-docker-521958d34efd>`__). There
   are some solution where one can pass the Docker socket to the Bamboo
-  container, but none of these approachs work quite well here as Bamboo
+  container, but none of these approaches work quite well here as Bamboo
   uses mounted directories that cause issues.
 
 Therefore, a check is included within the BambooBuildPlanService that
@@ -64,7 +64,7 @@ docker networks
 ``ERROR: Pool overlaps with other one on this address space``. Use the
 command ``docker network prune`` to resolve this issue.
 
-Make also sure that docker has enough memory (~ 6GB). To adapt it, go to ``Preferecences -> Resources``
+Also make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Preferences -> Resources``
 
 Configure Bamboo, Bitbucket and Jira
 ------------------------------------
@@ -96,8 +96,8 @@ under ``localhost:7990``.
 3. Execute the shell script ``atlassian-setup.sh`` in the
    ``src/main/docker`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
-   groups, users ([STRIKEOUT:and adds them to the created groups] NOT
-   YET) and disabled application links between the 3 applications. Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the script.
+   groups, users and disabled application links between the 3 applications.
+   Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the script.
 
 4. Enable the created `application
    links <https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html>`__
@@ -154,7 +154,7 @@ under ``localhost:7990``.
    test setup, users 1-5 are students, 6-10 are tutors, 11-15 are
    editors and 16-20 are instructors. The usernames are artemis_test_user_{1-20}
    and the password is again the username. When you create a course in artemis
-   you have to manually choose the created groups (students, tutors, editors
+   you have to manually choose the created groups (students, tutors, editors,
    instructors).
 
 6. Use the `user directories in
@@ -186,7 +186,7 @@ under ``localhost:7990``.
    ``artemis-authentication-token-value``.
 
 8. Download the
-   `bamboo-server-notifaction-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
+   `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
    and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
    the downloaded .jar file → Upload
 
@@ -204,7 +204,7 @@ under ``localhost:7990``.
    While username and password can still be used as a fallback, this option is already marked as deprecated and will
    be removed in the future.
 
-   9.1 Personal access token for Bamboo.
+   10.1 Personal access token for Bamboo.
 
       - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
@@ -221,7 +221,7 @@ under ``localhost:7990``.
                   password: <password>
                   token: #insert the token here
 
-   9.2 Personal access token for Bitbucket.
+   10.2 Personal access token for Bitbucket.
 
       - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
 
@@ -261,7 +261,7 @@ under ``localhost:7990``.
 
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
-    Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
+    Please note that the private key file **must** be named ``id_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
 
     You now have to extract the public key and add it to Bitbucket.
     Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
@@ -295,7 +295,7 @@ Configure Artemis
            version-control:
                url: http://localhost:7990
                user:  <bitbucket-admin-user>
-               password: <bitbuckt-admin-password>
+               password: <bitbucket-admin-password>
                token: <bitbucket-admin-token>
                ssh-private-key-folder-path: <ssh-private-key-folder-path>
                ssh-private-key-password: <ssh-private-key-password>
