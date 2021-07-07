@@ -13,6 +13,8 @@ export class ParticipantScoresAverageTableComponent {
     participantAverageScores: ParticipantScoreAverageDTO[] = [];
     @Input()
     isLoading = false;
+    @Input()
+    isBonus = false;
 
     extractParticipantName = (participantScoreAverageDTO: BaseEntity) => {
         const castedDTO = participantScoreAverageDTO as ParticipantScoreAverageDTO;

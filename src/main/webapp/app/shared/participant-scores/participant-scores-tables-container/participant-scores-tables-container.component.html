@@ -13,11 +13,16 @@
     >{{ 'artemisApp.participantScores.averageRatedScore' | artemisTranslate: { avg: round(avgRatedScore, 1) } }}
 </span>
 
+<span *ngIf="avgGrade" class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">Average {{ isBonus ? 'Bonus' : 'Grade' }}: {{ avgGrade }} </span>
+
+<span *ngIf="avgRatedGrade" class="badge rounded-pill bg-primary text-white" [ngbTooltip]="tipContent">Average Rated {{ isBonus ? 'Bonus' : 'Grade' }}: {{ avgRatedGrade }} </span>
+
 <div [ngSwitch]="mode">
     <jhi-participant-scores-table *ngSwitchCase="'individual'" [isLoading]="isLoading" [participantScores]="participantScores"></jhi-participant-scores-table>
     <jhi-participant-scores-average-table
         *ngSwitchCase="'average'"
         [isLoading]="isLoading"
         [participantAverageScores]="participantScoresAverage"
+        [isBonus]="isBonus"
     ></jhi-participant-scores-average-table>
 </div>

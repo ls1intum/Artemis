@@ -112,6 +112,38 @@
                     </span>
                 </ng-template>
             </ngx-datatable-column>
+            <ngx-datatable-column prop="averageGrade" [minWidth]="500">
+                <ng-template ngx-datatable-header-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
+                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageGrade')">
+                        <span class="datatable-header-cell-label bold sortable">
+                            {{ isBonus ? 'Average Bonus' : 'Average Grade' }}
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('averageGrade')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column prop="averageRatedGrade" [minWidth]="500">
+                <ng-template ngx-datatable-header-template>
+                    <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
+                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedGrade')">
+                        <span class="datatable-header-cell-label bold sortable">
+                            {{ isBonus ? 'Average Rated Bonus' : 'Average Rated Grade' }}
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('averageRatedGrade')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    <span>
+                        {{ value }}
+                    </span>
+                </ng-template>
+            </ngx-datatable-column>
         </ngx-datatable>
     </ng-template>
 </jhi-data-table>
