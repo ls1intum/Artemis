@@ -718,13 +718,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // this.jhiWebsocketService.disableReconnect();
 
             // assign user score (limit decimal places to 2)
-            this.userScore = this.submission.scoreInPoints ? Math.round(this.submission.scoreInPoints * 100) / 100 : 0;
+            this.userScore = this.submission.scoreInPoints ? round(this.submission.scoreInPoints, 2) : 0;
 
             // create dictionary with scores for each question
             this.questionScores = {};
             this.submission.submittedAnswers!.forEach((submittedAnswer) => {
                 // limit decimal places to 2
-                this.questionScores[submittedAnswer.quizQuestion!.id!] = Math.round(submittedAnswer.scoreInPoints! * 100) / 100;
+                this.questionScores[submittedAnswer.quizQuestion!.id!] = round(submittedAnswer.scoreInPoints!, 2);
             }, this);
         }
     }

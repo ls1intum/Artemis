@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { round } from 'app/shared/util/utils';
 
 // this exercise information is needed for tooltip generation and to navigate to an exercise page
 export class CustomChartPoint implements Chart.ChartPoint {
@@ -195,7 +196,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnDestroy {
                     if (label) {
                         label += ': ';
                     }
-                    label += Math.round((tooltipItem.yLabel as number) * 100) / 100;
+                    label += round(tooltipItem.yLabel as number, 2);
                     label += ' %';
                     return label;
                 },

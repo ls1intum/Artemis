@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-test-case-passed-builds-chart',
@@ -27,7 +28,7 @@ export class TestCasePassedBuildsChartComponent implements OnChanges {
         if (this.totalParticipations) {
             const passedPercent = this.totalParticipations > 0 ? ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100 : 0;
             const failedPercent = this.totalParticipations > 0 ? ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100 : 0;
-            const notExecutedPercent = Math.round(100 - passedPercent - failedPercent);
+            const notExecutedPercent = round(100 - passedPercent - failedPercent);
 
             setTimeout(() => {
                 this.passedPercent = passedPercent;

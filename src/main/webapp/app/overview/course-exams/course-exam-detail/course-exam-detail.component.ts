@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import * as moment from 'moment';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-course-exam-detail',
@@ -27,6 +28,6 @@ export class CourseExamDetailComponent {
      * calculate the duration in minutes between the start and end date of the exam
      */
     get examDuration(): number {
-        return Math.round(moment.duration(moment(this.exam.endDate).diff(moment(this.exam.startDate))).asMinutes());
+        return round(moment.duration(moment(this.exam.endDate).diff(moment(this.exam.startDate))).asMinutes());
     }
 }
