@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
@@ -1021,6 +1022,51 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
         assertThat(allResults.size()).isEqualTo(6);
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void shouldRecalculateScoreBasedOnTriggerAll() throws Exception {
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
+
+        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setWeight(2.);
+        testCaseRepository.saveAll(testCases.values());
+
+        Participation[] participations = createTestParticipations();
+
+        Participation studentParticipation = participations[1];
+        int amountOfResultsBeforeTriggerAll = studentParticipation.getResults().size();
+
+        Long participationId = studentParticipation.findLatestResult().getId();
+        Result result = resultRepository.findById(participationId).get();
+        double scoreBeforeTriggerAll = result.getScore();
+
+        double bonusPoints = 2;
+
+        // adding bonus points to the first test
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setBonusPoints(5.);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setBonusPoints(5.);
+        testCases.get("test3").active(true).visibility(Visibility.ALWAYS).setBonusPoints(5.);
+        testCaseRepository.saveAll(testCases.values());
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        // trigger all
+        final String endpoint = ProgrammingExerciseGradingResource.TRIGGER_ALL.replace("{exerciseId}", programmingExercise.getId().toString());
+        request.postWithoutLocation(ROOT + endpoint, null, HttpStatus.OK, new HttpHeaders());
+
+        int amountOfResultsAfterTriggerAll = studentParticipation.getResults().size();
+        result = resultRepository.findById(participationId).get(); // the score shall be retrieved in this way, since we want to make sure that it was written to the database
+        double scoreAfterTriggerAll = result.getScore();
+
+        assertThat(amountOfResultsAfterTriggerAll).isEqualTo(amountOfResultsBeforeTriggerAll);
+        assertThat(scoreAfterTriggerAll).isLessThan(scoreBeforeTriggerAll);
+    }
+
     private void activateAllTestCases(boolean withBonus) {
         var testCases = new ArrayList<>(testCaseService.findByExerciseId(programmingExerciseSCAEnabled.getId()));
         var bonusMultiplier = withBonus ? 2D : null;
@@ -1159,4 +1205,5 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         resultRepository.save(result);
     }
+
 }
