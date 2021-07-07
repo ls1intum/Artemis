@@ -341,7 +341,7 @@ In case you encounter any problems regarding JavaScript heap memory leaks when e
 
 ::
 
-   # This local change in `package.json` should not be comitted.
+   # This local change in `package.json` should not be committed.
    "webpack-ts": "cross-env NODE_OPTIONS=--max_old_space_size=5120 TS_NODE_PROJECT=\"tsconfig.webpack.json\" webpack" # possible higher values are 6144, 7168, and 8192
 
 
@@ -418,7 +418,7 @@ Enable the ``athene`` Spring profile:
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Athene service is running on a dedicated machine and is adressed via
+The Athene service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
