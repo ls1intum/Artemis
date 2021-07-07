@@ -39,11 +39,11 @@ public class Reaction extends DomainObject {
     private String emojiId;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "exercise", "lecture", "course" })
     private Post post;
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
+    @JsonIncludeProperties({ "id", "post" })
     private AnswerPost answerPost;
 
     public User getUser() {
