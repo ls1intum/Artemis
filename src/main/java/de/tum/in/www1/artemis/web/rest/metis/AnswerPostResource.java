@@ -98,6 +98,9 @@ public class AnswerPostResource {
         if (result.getPost().getExercise() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(result);
+
+            // Protect Sample Solution, Grading Instructions, etc.
+            result.getPost().getExercise().filterSensitiveInformation();
         }
         if (result.getPost().getLecture() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(result);
@@ -136,6 +139,12 @@ public class AnswerPostResource {
             existingAnswerPost.setTutorApproved(answerPost.isTutorApproved());
         }
         AnswerPost result = answerPostRepository.save(existingAnswerPost);
+
+        if (result.getPost().getExercise() != null) {
+            // Protect Sample Solution, Grading Instructions, etc.
+            result.getPost().getExercise().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, answerPost.getId().toString())).body(result);
     }
 
