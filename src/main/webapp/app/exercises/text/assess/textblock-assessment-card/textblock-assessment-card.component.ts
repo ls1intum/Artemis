@@ -4,6 +4,10 @@ import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/text
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { lastValueFrom } from 'rxjs';
+import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { FeedbackType } from 'app/entities/feedback.model';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -33,7 +37,7 @@ export class TextblockAssessmentCardComponent {
         return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, protected assessmentsService: TextAssessmentService) {}
 
     /**
      * Select a text block
@@ -56,6 +60,7 @@ export class TextblockAssessmentCardComponent {
         if (autofocus) {
             setTimeout(() => this.feedbackEditor.focus());
         }
+        this.sendAssessmentEventSelectTextBlockAutomatically();
     }
 
     /**
@@ -92,5 +97,18 @@ export class TextblockAssessmentCardComponent {
             }
         }
         this.feedbackDidChange();
+    }
+
+    sendAssessmentEventSelectTextBlockAutomatically() {
+        const assessmentEventToSend: TextAssessmentEvent = {
+            userId: 1,
+            eventType: TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK,
+            feedbackType: FeedbackType.AUTOMATIC,
+            segmentType: TextBlockType.AUTOMATIC,
+            courseId: 2,
+            textExerciseId: 3,
+            submissionId: 4,
+        };
+        lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
     }
 }

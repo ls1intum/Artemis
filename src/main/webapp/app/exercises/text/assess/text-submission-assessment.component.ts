@@ -32,9 +32,6 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
-import { TextBlockType } from 'app/entities/text-block.model';
-import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -344,20 +341,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
               ];
         const navigationExtras: NavigationExtras = { state: { submission: tempSubmission } };
         await this.router.navigate(url, navigationExtras);
-        await this.sendAssessmentEvent();
-    }
-
-    async sendAssessmentEvent() {
-        const assessmentEventToSend: TextAssessmentEvent = {
-            userId: 1,
-            eventType: TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT,
-            feedbackType: FeedbackType.AUTOMATIC,
-            segmentType: TextBlockType.AUTOMATIC,
-            courseId: 2,
-            textExerciseId: 3,
-            submissionId: 4,
-        };
-        await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
     }
 
     /**

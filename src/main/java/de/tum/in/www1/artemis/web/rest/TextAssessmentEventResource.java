@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.TextAssesmentEvent;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing TextAssessmentEventResource.
@@ -46,7 +44,7 @@ public class TextAssessmentEventResource {
 
     @PostMapping("/add-event")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<TextAssesmentEvent> addAssessmentEvent(@RequestBody TextAssesmentEvent event) throws URISyntaxException {
+    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssesmentEvent event) throws URISyntaxException {
         log.debug("REST request to save assessmentEvent : {}", event);
         if (event.getId() != null) {
             throw new BadRequestAlertException("A new assessmentEvent cannot already have an ID", ENTITY_NAME, "idexists");
@@ -55,7 +53,6 @@ public class TextAssessmentEventResource {
         // basic check if tutor in current course
 
         TextAssesmentEvent savedEvent = textAssessmentEventRepository.save(event);
-        return ResponseEntity.created(new URI("/api/text-assessment-event/add-event/" + savedEvent.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedEvent.getEventType().toString())).body(savedEvent);
+        return ResponseEntity.ok().build();
     }
 }

@@ -1,6 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { SelectionRectangle, TextSelectEvent } from 'app/exercises/text/shared/text-select.directive';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { lastValueFrom } from 'rxjs';
+import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { FeedbackType } from 'app/entities/feedback.model';
+import { TextBlockType } from 'app/entities/text-block.model';
 
 @Component({
     selector: 'jhi-manual-text-selection',
@@ -14,6 +19,7 @@ export class ManualTextSelectionComponent {
 
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
+    protected assessmentsService: TextAssessmentService;
 
     /**
      * Handle user's selection of solution text.
@@ -48,6 +54,21 @@ export class ManualTextSelectionComponent {
         if (this.selectedText) {
             this.assess.emit(this.selectedText);
             this.deselectText();
+            console.log('ASSESS CLICKE');
+            this.sendAssessmentEventSelectTextBlockManually();
         }
+    }
+
+    sendAssessmentEventSelectTextBlockManually() {
+        const assessmentEventToSend: TextAssessmentEvent = {
+            userId: 1,
+            eventType: TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK,
+            feedbackType: FeedbackType.AUTOMATIC,
+            segmentType: TextBlockType.AUTOMATIC,
+            courseId: 2,
+            textExerciseId: 3,
+            submissionId: 4,
+        };
+        lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
     }
 }

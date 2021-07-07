@@ -100,15 +100,14 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     inFocus(): void {
         this.onFocus.emit();
-        console.log('EMIT FOCUS TEXT');
     }
 
     /**
      * Dismiss changes in feedback editor
      */
-    async dismiss(): Promise<void> {
+    dismiss(): void {
         this.close.emit();
-        await this.sendAssessmentEventDelete();
+        this.sendAssessmentEventDelete();
     }
 
     /**
@@ -145,6 +144,8 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
+
+        // this.sendAssessmentEventEditFeedback();
     }
 
     connectFeedbackWithInstruction(event: Event) {
@@ -157,11 +158,16 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         this.didChange();
     }
 
+    onConflictClicked(feedbackId: number | undefined) {
+        !feedbackId && this.onConflictsClicked.emit(feedbackId);
+        this.sendAssessmentEventOnConflictClicked();
+    }
+
     // this method fires the modal service and shows a modal after connecting feedback with its respective blocks
     async openOriginOfFeedbackModal(content: any) {
         await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
         this.modalService.open(content, { size: 'lg' });
-        await this.sendAssessmentEvent();
+        this.sendAssessmentEvent();
     }
 
     /**
@@ -198,6 +204,10 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         }
     }
 
+    mouseEnteredWarningLabel() {
+        this.sendAssessmentEventOnHoverWarning();
+    }
+
     // Send Assessment Event for Viewing Automatic Suggestion origin
     async sendAssessmentEvent() {
         const assessmentEventToSend: TextAssessmentEvent = {
@@ -223,5 +233,44 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             submissionId: 4,
         };
         await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
+    }
+
+    async sendAssessmentEventEditFeedback() {
+        const assessmentEventToSend: TextAssessmentEvent = {
+            userId: 1,
+            eventType: TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK,
+            feedbackType: FeedbackType.AUTOMATIC,
+            segmentType: TextBlockType.AUTOMATIC,
+            courseId: 2,
+            textExerciseId: 3,
+            submissionId: 4,
+        };
+        await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
+    }
+
+    sendAssessmentEventOnHoverWarning() {
+        const assessmentEventToSend: TextAssessmentEvent = {
+            userId: 1,
+            eventType: TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING,
+            feedbackType: FeedbackType.AUTOMATIC,
+            segmentType: TextBlockType.AUTOMATIC,
+            courseId: 2,
+            textExerciseId: 3,
+            submissionId: 4,
+        };
+        lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
+    }
+
+    sendAssessmentEventOnConflictClicked() {
+        const assessmentEventToSend: TextAssessmentEvent = {
+            userId: 1,
+            eventType: TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT,
+            feedbackType: FeedbackType.AUTOMATIC,
+            segmentType: TextBlockType.AUTOMATIC,
+            courseId: 2,
+            textExerciseId: 3,
+            submissionId: 4,
+        };
+        lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
     }
 }
