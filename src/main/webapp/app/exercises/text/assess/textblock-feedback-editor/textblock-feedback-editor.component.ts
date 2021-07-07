@@ -8,6 +8,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { lastValueFrom } from 'rxjs';
+import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextBlockType } from 'app/entities/text-block.model';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -98,13 +100,15 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     inFocus(): void {
         this.onFocus.emit();
+        console.log('EMIT FOCUS TEXT');
     }
 
     /**
      * Dismiss changes in feedback editor
      */
-    dismiss(): void {
+    async dismiss(): Promise<void> {
         this.close.emit();
+        await this.sendAssessmentEventDelete();
     }
 
     /**
@@ -157,6 +161,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     async openOriginOfFeedbackModal(content: any) {
         await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
         this.modalService.open(content, { size: 'lg' });
+        await this.sendAssessmentEvent();
     }
 
     /**
@@ -191,5 +196,32 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
                 })
                 .filter((item) => item.text);
         }
+    }
+
+    // Send Assessment Event for Viewing Automatic Suggestion origin
+    async sendAssessmentEvent() {
+        const assessmentEventToSend: TextAssessmentEvent = {
+            userId: 1,
+            eventType: TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN,
+            feedbackType: FeedbackType.AUTOMATIC,
+            segmentType: TextBlockType.AUTOMATIC,
+            courseId: 2,
+            textExerciseId: 3,
+            submissionId: 4,
+        };
+        await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
+    }
+
+    async sendAssessmentEventDelete() {
+        const assessmentEventToSend: TextAssessmentEvent = {
+            userId: 1,
+            eventType: TextAssessmentEventType.DELETE_AUTOMATIC_FEEDBACK,
+            feedbackType: FeedbackType.AUTOMATIC,
+            segmentType: TextBlockType.AUTOMATIC,
+            courseId: 2,
+            textExerciseId: 3,
+            submissionId: 4,
+        };
+        await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
     }
 }
