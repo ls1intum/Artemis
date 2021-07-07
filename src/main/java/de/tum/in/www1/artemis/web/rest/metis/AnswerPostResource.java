@@ -4,12 +4,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -150,52 +148,6 @@ public class AnswerPostResource {
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, answerPost.getId().toString())).body(result);
-    }
-
-    /**
-     * GET /courses/{courseId}/{postId}/answer-posts : Get all answerPosts for one post by Id
-     *
-     * @param courseId the id of the course the answer post belongs to
-     * @param postId   the id of the post for which all answers are retrieved
-     * @return the ResponseEntity with status 200 (OK) and with body all answer posts for the given postId or 400 (Bad Request) if post courseId doesnt match
-     * the PathVariable courseId
-     */
-    @GetMapping("courses/{courseId}/{postId}/answer-posts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<AnswerPost>> getAllAnswerPostForPost(@PathVariable Long courseId, @PathVariable Long postId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        var existingPost = postRepository.findByIdElseThrow(postId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        if (!existingPost.getCourse().getId().equals(courseId)) {
-            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body");
-        }
-        List<AnswerPost> answerPosts = answerPostRepository.findAnswerPostsByPost_Id(postId);
-
-        return new ResponseEntity<>(answerPosts, null, HttpStatus.OK);
-    }
-
-    /**
-     * GET /courses/{courseId}/answer-posts/{answerPostId} : Get answerPost by Id
-     *
-     * @param courseId the id of the course the answer post belongs to
-     * @param answerId the id of the answerPost which should be retrieved
-     * @return the ResponseEntity with status 200 (OK) and with body including the answer post or 400 (Bad Request) if post courseId doesnt match
-     * the PathVariable courseId
-     */
-    @GetMapping("courses/{courseId}/answer-posts/{answerId}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<AnswerPost> getAnswerPostById(@PathVariable Long courseId, @PathVariable Long answerId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerId);
-        Post associatedPost = postRepository.findByIdElseThrow(answerPost.getPost().getId());
-        var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        if (!associatedPost.getCourse().getId().equals(courseId)) {
-            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body");
-        }
-
-        return new ResponseEntity<>(answerPost, null, HttpStatus.OK);
     }
 
     /**
