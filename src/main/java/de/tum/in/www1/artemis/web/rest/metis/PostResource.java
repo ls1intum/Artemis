@@ -5,6 +5,9 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
+
+import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,14 +18,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GroupNotificationService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -76,7 +77,7 @@ public class PostResource {
      */
     @PostMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Post> createPost(@PathVariable Long courseId, @RequestBody Post post) throws URISyntaxException {
+    public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         if (!post.getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesn't match the courseId of the sent Post in Body");
         }
@@ -87,11 +88,15 @@ public class PostResource {
         }
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
         // set author to current user
         post.setAuthor(user);
         Post savedPost = postRepository.save(post);
         if (savedPost.getExercise() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(savedPost);
+
+            // Protect Sample Solution, Grading Instructions, etc.
+            savedPost.getExercise().filterSensitiveInformation();
         }
         if (savedPost.getLecture() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(savedPost);
@@ -122,9 +127,17 @@ public class PostResource {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the Post that should be changed");
         }
         mayUpdateOrDeletePostElseThrow(existingPost, user);
+        existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
+        existingPost.setTags(post.getTags());
         Post result = postRepository.save(existingPost);
+
+        if (result.getExercise() != null) {
+            // Protect Sample Solution, Grading Instructions, etc.
+            result.getExercise().filterSensitiveInformation();
+        }
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, post.getId().toString())).body(result);
     }
 
@@ -153,6 +166,10 @@ public class PostResource {
         Integer newVotes = post.getVotes() + voteChange;
         post.setVotes(newVotes);
         Post result = postRepository.save(post);
+        if (result.getExercise() != null) {
+            // Protect Sample Solution, Grading Instructions, etc.
+            result.getExercise().filterSensitiveInformation();
+        }
         return ResponseEntity.ok().body(result);
     }
 
@@ -174,8 +191,9 @@ public class PostResource {
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the exercise that should be returned");
         }
-        List<Post> posts = postRepository.findPostsForExercise(exerciseId);
-        hideSensitiveInformation(posts);
+        List<Post> posts = postRepository.findPostsByExercise_Id(exerciseId);
+        // Protect Sample Solution, Grading Instructions, etc.
+        posts.forEach(post -> post.getExercise().filterSensitiveInformation());
         return new ResponseEntity<>(posts, null, HttpStatus.OK);
     }
 
@@ -195,8 +213,9 @@ public class PostResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         if (lecture.getCourse().getId().equals(courseId)) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
-            List<Post> posts = postRepository.findPostsForLecture(lectureId);
-            hideSensitiveInformation(posts);
+            List<Post> posts = postRepository.findPostsByLecture_Id(lectureId);
+            // Protect Sample Solution, Grading Instructions, etc.
+            posts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
             return new ResponseEntity<>(posts, null, HttpStatus.OK);
         }
         else {
@@ -216,22 +235,13 @@ public class PostResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<Post> posts = postRepository.findPostsForCourse(courseId);
+        // Protect Sample Solution, Grading Instructions, etc.
+        posts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
         return new ResponseEntity<>(posts, null, HttpStatus.OK);
     }
 
-    private void hideSensitiveInformation(List<Post> posts) {
-        for (Post post : posts) {
-            post.setExercise(null);
-            post.setLecture(null);
-            post.setAuthor(post.getAuthor().copyBasicUser());
-            for (AnswerPost answer : post.getAnswers()) {
-                answer.setAuthor(answer.getAuthor().copyBasicUser());
-            }
-        }
-    }
-
     /**
-     * DELETE /courses/{courseId}/posts/:id : delete the "id" post.
+     * DELETE /courses/{courseId}/posts/:id : delete the post with {id}.
      *
      * @param courseId course the post belongs to
      * @param postId the id of the post to delete
@@ -243,6 +253,7 @@ public class PostResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         courseRepository.findByIdElseThrow(courseId);
         Post post = postRepository.findByIdElseThrow(postId);
+        Course course = post.getCourse();
         String entity = "";
         if (post.getLecture() != null) {
             entity = "lecture with id: " + post.getLecture().getId();
@@ -252,6 +263,9 @@ public class PostResource {
         }
         if (post.getCourse() == null) {
             return ResponseEntity.badRequest().build();
+        }
+        if (!course.getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesnt match courseId of the AnswerPost that should be deleted");
         }
         mayUpdateOrDeletePostElseThrow(post, user);
         log.info("Post deleted by " + user.getLogin() + ". Post: " + post.getContent() + " for " + entity);
@@ -280,15 +294,8 @@ public class PostResource {
      */
     private void mayUpdatePostVotesElseThrow(Post post, User user) {
         Course course = post.getCourse();
-        Exercise exercise = post.getExercise();
         if (course != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        }
-        else if (exercise != null) {
-            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        }
-        else {
-            throw new AccessForbiddenException("Post", post.getId());
         }
     }
 }

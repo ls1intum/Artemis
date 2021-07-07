@@ -1494,7 +1494,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(submission.getResults().size()).isEqualTo(2);
         Result firstResult = submission.getResults().get(0);
         Result lastResult = submission.getLatestResult();
-        request.delete("/api/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/delete/" + firstResult.getId(),
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(1);

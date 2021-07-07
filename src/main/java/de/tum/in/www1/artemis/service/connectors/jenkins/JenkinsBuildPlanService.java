@@ -34,6 +34,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -100,7 +101,7 @@ public class JenkinsBuildPlanService {
         var statisCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
 
-        final var configBuilder = builderFor(programmingLanguage);
+        final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, statisCodeAnalysisEnabled, isSequentialTestRuns);
 
         var jobFolder = exercise.getProjectKey();
@@ -117,7 +118,10 @@ public class JenkinsBuildPlanService {
      * @return The configuration builder for the specified language
      * @see JenkinsBuildPlanCreator
      */
-    private JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
+    private JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        if (ProjectType.XCODE.equals(projectType)) {
+            throw new UnsupportedOperationException("Xcode templates are not available for Jenkins.");
+        }
         return switch (programmingLanguage) {
             case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY -> jenkinsBuildPlanCreator;
             case VHDL -> throw new UnsupportedOperationException("VHDL templates are not available for Jenkins.");
@@ -210,7 +214,7 @@ public class JenkinsBuildPlanService {
     }
 
     /**
-     * Copies a build plan to another.
+     * Copies a build plan to another. And replaces the old reference to the master branch by a reference to the default branch
      *
      * @param sourceProjectKey the source project key
      * @param sourcePlanName the source plan name

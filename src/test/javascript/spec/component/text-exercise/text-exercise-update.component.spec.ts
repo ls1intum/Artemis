@@ -42,69 +42,88 @@ describe('TextExercise Management Update Component', () => {
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new TextExercise(undefined, undefined);
-            entity.id = 123;
-            spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.textExercise = entity;
-            comp.textExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(); // simulate async
+        describe('existing exercise', () => {
+            const course = { id: 1 } as Course;
+            const textExercise = new TextExercise(course, undefined);
+            textExercise.id = 123;
 
-            // THEN
-            expect(service.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toEqual(false);
-        }));
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ textExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            });
 
-        it('Should call create service on save for new entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new TextExercise(undefined, undefined);
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.textExercise = entity;
-            comp.textExercise.course = { id: 1 } as Course;
-            // WHEN
-            comp.save();
-            tick(1000); // simulate async
+            it('Should call update service on save for existing entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
-        }));
+                const entity = { ...textExercise };
+                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
 
-        it('Should call import service on save for new entity', fakeAsync(() => {
-            // GIVEN
-            const entity = new TextExercise(undefined, undefined);
-            spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.textExercise = entity;
-            comp.textExercise.course = { id: 1 } as Course;
-            comp.isImport = true;
-            // WHEN
-            comp.save();
-            tick(1000); // simulate async
+                // WHEN
+                comp.save();
+                tick(); // simulate async
 
-            // THEN
-            expect(service.import).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toEqual(false);
-        }));
+                // THEN
+                expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
 
-        it('Should trim the exercise title before saving', fakeAsync(() => {
-            // GIVEN
-            const entity = new TextExercise(undefined, undefined);
-            entity.title = 'My Exercise   ';
-            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-            comp.textExercise = entity;
-            comp.textExercise.course = { id: 1 } as Course;
+        describe('new exercise', () => {
+            const course = { id: 1 } as Course;
+            const textExercise = new TextExercise(course, undefined);
 
-            // WHEN
-            comp.save();
-            tick(1000); // simulate async
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ textExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            });
 
-            // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
-            expect(entity.title).toEqual('My Exercise');
-        }));
+            it('Should call create service on save for new entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
+
+                const entity = { ...textExercise };
+                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+
+                // WHEN
+                comp.save();
+                tick(1000); // simulate async
+
+                // THEN
+                expect(service.create).toHaveBeenCalledWith(entity);
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
+
+        describe('imported exercise', () => {
+            const course = { id: 1 } as Course;
+            const textExercise = new TextExercise(course, undefined);
+
+            beforeEach(() => {
+                const route = TestBed.inject(ActivatedRoute);
+                route.data = of({ textExercise });
+                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            });
+
+            it('Should call import service on save for new entity', fakeAsync(() => {
+                // GIVEN
+                comp.ngOnInit();
+                comp.isImport = true;
+
+                const entity = { ...textExercise };
+                spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));
+
+                // WHEN
+                comp.save();
+                tick(1000); // simulate async
+
+                // THEN
+                expect(service.import).toHaveBeenCalledWith(entity);
+                expect(comp.isSaving).toEqual(false);
+            }));
+        });
     });
 
     describe('ngOnInit cl for exam exercise', () => {

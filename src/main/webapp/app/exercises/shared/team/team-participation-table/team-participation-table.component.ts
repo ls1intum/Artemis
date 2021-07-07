@@ -13,6 +13,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, Submi
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { onError } from 'app/shared/util/global.utils';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -172,7 +173,7 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        onError(this.jhiAlertService, error);
         this.isLoading = false;
     }
 }

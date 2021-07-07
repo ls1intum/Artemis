@@ -117,4 +117,6 @@ public interface MockDelegate {
     void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception;
 
     void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception;
+
+    void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
 }

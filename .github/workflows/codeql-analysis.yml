@@ -3,9 +3,27 @@ name: "CodeQL"
 on:
   push:
     branches: [develop, master]
+    paths-ignore:
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'SECURITY.md'
+    - 'docs/**'
+    - '.github/**'
+    - '!.github/workflows/codeql-analysis.yml'
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [develop]
+    paths-ignore:
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'SECURITY.md'
+    - 'docs/**'
+    - '.github/**'
+    - '!.github/workflows/codeql-analysis.yml'
   schedule:
     - cron: '0 16 * * 0'
 
@@ -24,7 +42,7 @@ jobs:
     steps:
     # Install Java 16
     - name: Setup Node.js
-      uses: actions/setup-node@v2.1.5
+      uses: actions/setup-node@v2.2.0
       with:
         node-version: '${{ env.node }}'
     - name: Setup Java

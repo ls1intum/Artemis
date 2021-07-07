@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -39,7 +38,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
@@ -130,12 +128,11 @@ public class ParticipationResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Participant participant = user;
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        // if the user is a student and the exercise has a release date, he cannot start the exercise before the release date
+        // if the user is a student and the exercise has a release date, they cannot start the exercise before the release date
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
-            if (authCheckService.isOnlyStudentInCourse(course, user)) {
+            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
                 return forbidden();
             }
         }
@@ -173,7 +170,7 @@ public class ParticipationResource {
      * @param principal  current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
-    @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-programming-participation")
+    @PutMapping("/courses/{courseId}/exercises/{exerciseId}/resume-programming-participation")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
@@ -217,23 +214,27 @@ public class ParticipationResource {
     /**
      * PUT /participations : Updates an existing participation.
      *
+     * @param exerciseId the id of the exercise, the participation belongs to
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
      *         500 (Internal Server Error) if the participation couldn't be updated
      */
-    // TODO we should not use this global resource here, instead we should use /courses/:courseId/exercises/:exerciseId/participations
-    @PutMapping("/participations")
+    @PutMapping("/exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) {
+    public ResponseEntity<Participation> updateParticipation(@PathVariable long exerciseId, @RequestBody StudentParticipation participation) {
         log.debug("REST request to update Participation : {}", participation);
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
         if (participation.getId() == null) {
             throw new BadRequestAlertException("The participation object needs to have an id to be changed", ENTITY_NAME, "idmissing");
         }
+        if (participation.getExercise() == null || participation.getExercise().getId() == null) {
+            throw new BadRequestAlertException("The participation needs to be connected to an exercise", ENTITY_NAME, "exerciseidmissing");
+        }
+        if (participation.getExercise().getId() != exerciseId) {
+            return conflict();
+        }
+        var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, originalParticipation.getExercise(), null);
         if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
             participation.setPresentationScore(0);
         }
@@ -242,12 +243,13 @@ public class ParticipationResource {
         }
         StudentParticipation currentParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
-            log.info("{} removed the presentation score of {} for exercise with participationId {}", user.getLogin(), participation.getParticipantIdentifier(),
-                    participation.getExercise().getId());
+            log.info("{} removed the presentation score of {} for exercise with participationId {}", user.getLogin(), originalParticipation.getParticipantIdentifier(),
+                    originalParticipation.getExercise().getId());
         }
 
-        Participation result = studentParticipationRepository.saveAndFlush(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(result);
+        Participation updatedParticipation = studentParticipationRepository.saveAndFlush(participation);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName()))
+                .body(updatedParticipation);
     }
 
     /**
@@ -257,7 +259,7 @@ public class ParticipationResource {
      * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
-    @GetMapping(value = "/exercises/{exerciseId}/participations")
+    @GetMapping("/exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean withLatestResult) {
@@ -291,16 +293,13 @@ public class ParticipationResource {
      * @param courseId The participationId of the course
      * @return A list of all participations for the given course
      */
-    @GetMapping(value = "/courses/{courseId}/participations")
+    @GetMapping("/courses/{courseId}/participations")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
@@ -320,8 +319,7 @@ public class ParticipationResource {
             exercise.setGradingInstructions(null);
             exercise.setDifficulty(null);
             exercise.setMode(null);
-            if (exercise instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 programmingExercise.setSolutionParticipation(null);
                 programmingExercise.setTemplateParticipation(null);
                 programmingExercise.setTestRepositoryUrl(null);
@@ -331,17 +329,14 @@ public class ParticipationResource {
                 programmingExercise.setPackageName(null);
                 programmingExercise.setAllowOnlineEditor(null);
             }
-            else if (exercise instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) exercise;
+            else if (exercise instanceof QuizExercise quizExercise) {
                 quizExercise.setQuizQuestions(null);
                 quizExercise.setQuizPointStatistic(null);
             }
-            else if (exercise instanceof TextExercise) {
-                TextExercise textExercise = (TextExercise) exercise;
+            else if (exercise instanceof TextExercise textExercise) {
                 textExercise.setSampleSolution(null);
             }
-            else if (exercise instanceof ModelingExercise) {
-                ModelingExercise modelingExercise = (ModelingExercise) exercise;
+            else if (exercise instanceof ModelingExercise modelingExercise) {
                 modelingExercise.setSampleSolutionModel(null);
                 modelingExercise.setSampleSolutionExplanation(null);
             }
@@ -395,7 +390,7 @@ public class ParticipationResource {
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation
      */
-    @GetMapping(value = "/participations/{participationId}/buildArtifact")
+    @GetMapping("/participations/{participationId}/buildArtifact")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
         log.debug("REST request to get Participation build artifact: {}", participationId);
@@ -414,7 +409,7 @@ public class ParticipationResource {
      * @param principal The principal in form of the user's identity
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/exercises/{exerciseId}/participation")
+    @GetMapping("/exercises/{exerciseId}/participation")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
@@ -496,13 +491,11 @@ public class ParticipationResource {
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)) {
             return forbidden();
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
         checkAccessPermissionAtLeastInstructor(participation, user);
 
         String name = participation.getParticipantName();
@@ -525,7 +518,7 @@ public class ParticipationResource {
      * @param principal The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
-    @DeleteMapping("guided-tour/participations/{participationId}")
+    @DeleteMapping("/guided-tour/participations/{participationId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
             @RequestParam(defaultValue = "false") boolean deleteRepository, Principal principal) {
@@ -608,7 +601,7 @@ public class ParticipationResource {
      * @param participationId the id of the participation
      * @return all submissions that belong to the participation
      */
-    @GetMapping(value = "/participations/{participationId}/submissions")
+    @GetMapping("/participations/{participationId}/submissions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);

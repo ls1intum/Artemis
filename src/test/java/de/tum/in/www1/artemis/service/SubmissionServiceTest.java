@@ -50,6 +50,8 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private ProgrammingExercise examProgrammingExercise;
 
+    private FileUploadExercise examFileUploadExercise;
+
     private Submission submission1;
 
     private Submission submission2;
@@ -95,6 +97,9 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         examProgrammingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise)
                 .findAny().orElse(null);
 
+        examFileUploadExercise = (FileUploadExercise) exam.getExerciseGroups().get(2).getExercises().stream().filter(exercise -> exercise instanceof FileUploadExercise).findAny()
+                .orElse(null);
+
     }
 
     @AfterEach
@@ -133,18 +138,19 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         examRepository.save(exam);
 
-        submission1.submitted(true);
-        submission2.submitted(true);
+        if (submission1 != null && submission2 != null) {
+            submission1.submitted(true);
+            submission2.submitted(true);
 
-        if (exercise instanceof ProgrammingExercise) {
-            database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission1, "student1");
-            database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission2, "student1");
+            if (exercise instanceof ProgrammingExercise) {
+                database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission1, "student1");
+                database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission2, "student1");
+            }
+            else {
+                database.addSubmission(exercise, submission1, "student1");
+                database.addSubmission(exercise, submission2, "student2");
+            }
         }
-        else {
-            database.addSubmission(exercise, submission1, "student1");
-            database.addSubmission(exercise, submission2, "student2");
-        }
-
     }
 
     private void getTutorSpecificCallsTutor1(Exercise exercise) {
@@ -185,6 +191,49 @@ public class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(unassessedSubmissionCorrectionRound0Tutor1.isPresent()).isTrue();
         assertThat(unassessedSubmissionCorrectionRound0Tutor1.get()).isIn(submission1, submission2);
         assertThat(unassessedSubmissionCorrectionRound1Tutor1.isPresent()).isFalse();
+
+        assertThat(submissionListTutor1CorrectionRound0.size()).isEqualTo(0);
+        assertThat(submissionListTutor2CorrectionRound0.size()).isEqualTo(0);
+        assertThat(submissionListTutor1CorrectionRound1.size()).isEqualTo(0);
+        assertThat(submissionListTutor2CorrectionRound1.size()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessment() {
+        submission1 = new FileUploadSubmission();
+        submission2 = new FileUploadSubmission();
+        // setup
+        queryTestingBasics(this.examFileUploadExercise);
+
+        getQueryResults(this.examFileUploadExercise);
+
+        assertThat(examFileUploadExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
+
+        assertThat(unassessedSubmissionCorrectionRound0Tutor1.isPresent()).isTrue();
+        assertThat(unassessedSubmissionCorrectionRound0Tutor1.get()).isIn(submission1, submission2);
+        assertThat(unassessedSubmissionCorrectionRound1Tutor1.isPresent()).isFalse();
+
+        assertThat(submissionListTutor1CorrectionRound0.size()).isEqualTo(0);
+        assertThat(submissionListTutor2CorrectionRound0.size()).isEqualTo(0);
+        assertThat(submissionListTutor1CorrectionRound1.size()).isEqualTo(0);
+        assertThat(submissionListTutor2CorrectionRound1.size()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testFileUploadExerciseGetRandomSubmissionEligibleForNewAssessmentWithoutSubmission() {
+        // setup
+        queryTestingBasics(this.examFileUploadExercise);
+
+        getQueryResults(this.examFileUploadExercise);
+
+        assertThat(examFileUploadExercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam()).isEqualTo(2L);
+
+        assertThat(unassessedSubmissionCorrectionRound0Tutor1.isPresent()).isFalse();
+        assertThat(unassessedSubmissionCorrectionRound1Tutor1.isPresent()).isFalse();
+        assertThat(unassessedSubmissionCorrectionRound0Tutor1).isEqualTo(Optional.empty());
+        assertThat(unassessedSubmissionCorrectionRound1Tutor1).isEqualTo(Optional.empty());
 
         assertThat(submissionListTutor1CorrectionRound0.size()).isEqualTo(0);
         assertThat(submissionListTutor2CorrectionRound0.size()).isEqualTo(0);

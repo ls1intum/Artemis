@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
@@ -8,7 +8,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import * as moment from 'moment';
-import { navigateBack } from 'app/utils/navigation.utils';
+import { onError } from 'app/shared/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -24,7 +25,7 @@ export class ExamUpdateComponent implements OnInit {
         private examManagementService: ExamManagementService,
         private jhiAlertService: JhiAlertService,
         private courseManagementService: CourseManagementService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit(): void {
@@ -35,7 +36,7 @@ export class ExamUpdateComponent implements OnInit {
                     this.exam.course = response.body!;
                     this.course = response.body!;
                 },
-                (err: HttpErrorResponse) => this.onError(err),
+                (err: HttpErrorResponse) => onError(this.jhiAlertService, err),
             );
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
@@ -52,11 +53,7 @@ export class ExamUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state and we created a new exam
      */
     previousState() {
-        if (this.exam.id) {
-            navigateBack(this.router, ['course-management', this.course.id!.toString(), 'exams', this.exam.id!.toString()]);
-        } else {
-            navigateBack(this.router, ['course-management', this.course.id!.toString(), 'exams']);
-        }
+        this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
     }
 
     save() {
@@ -81,12 +78,8 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        onError(this.jhiAlertService, error);
         this.isSaving = false;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     get isValidConfiguration(): boolean {
