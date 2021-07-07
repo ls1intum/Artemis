@@ -24,17 +24,20 @@ const user = { id: 1, name: 'Test User' } as User;
 const startDate = moment().subtract(5, 'hours');
 const endDate = moment().subtract(4, 'hours');
 
-const exam = {
+let exam = {
     id: 1,
     title: 'Test Exam',
     startDate,
     endDate,
 } as Exam;
 
-const studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
+let studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
 
 describe('ExamInformationComponent', function () {
     beforeEach(() => {
+        exam = { id: 1, title: 'Test Exam', startDate, endDate } as Exam;
+        studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
+
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
             declarations: [ExamInformationComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],

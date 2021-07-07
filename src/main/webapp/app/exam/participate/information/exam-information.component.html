@@ -28,18 +28,18 @@
         </span>
     </div>
     <div class="mb-2">
-        <span class="mx-2" *ngIf="exam.examStudentReviewStart && studentExam.ended">
+        <span class="mx-2" *ngIf="exam && exam.examStudentReviewStart && studentExam.ended">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewStart' | artemisTranslate }}:</strong>
             {{ exam.examStudentReviewStart | artemisDate }}
         </span>
     </div>
     <div class="mb-2">
-        <span class="mx-2" *ngIf="exam.examStudentReviewEnd && studentExam.ended">
+        <span class="mx-2" *ngIf="exam && exam.examStudentReviewEnd && studentExam.ended">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.examStudentReviewEnd' | artemisTranslate }}:</strong>
             {{ exam.examStudentReviewEnd | artemisDate }}
         </span>
     </div>
-    <div class="mb-2" *ngIf="exam.examiner || exam.moduleNumber || exam.courseName">
+    <div class="mb-2" *ngIf="exam && (exam.examiner || exam.moduleNumber || exam.courseName)">
         <span class="mx-2" *ngIf="exam.examiner">
             <strong class="font-weight-bold">{{ 'artemisApp.examManagement.examiner' | artemisTranslate }}:</strong>
             {{ exam.examiner }}
@@ -53,7 +53,7 @@
             {{ exam.courseName }}
         </span>
     </div>
-    <div *ngIf="exam.numberOfExercisesInExam || exam.maxPoints || exam.numberOfCorrectionRoundsInExam">
+    <div *ngIf="exam && (exam.numberOfExercisesInExam || exam.maxPoints || exam.numberOfCorrectionRoundsInExam)">
         <span class="mx-2" *ngIf="exam.numberOfExercisesInExam">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.exercises' | artemisTranslate }}:</strong>
             {{ exam.numberOfExercisesInExam }}
