@@ -9,8 +9,8 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -57,15 +57,15 @@ public class Post extends Posting {
     private Set<String> tags = new HashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties("posts")
+    @JsonIncludeProperties({ "id", "course" })
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIgnoreProperties("posts")
+    @JsonIncludeProperties({ "id", "course" })
     private Lecture lecture;
 
     @ManyToOne
-    @JsonIgnoreProperties({ "posts", "exercises", "lectures" })
+    @JsonIncludeProperties({ "id" })
     private Course course;
 
     @Enumerated(EnumType.STRING)

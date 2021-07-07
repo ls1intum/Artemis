@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import java.util.List;
+
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +16,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @SuppressWarnings("unused")
 @Repository
 public interface AnswerPostRepository extends JpaRepository<AnswerPost, Long> {
+
+    List<AnswerPost> findAnswerPostsByPost_Id(Long postId);
 
     @NotNull
     default AnswerPost findByIdElseThrow(Long answerPostId) {

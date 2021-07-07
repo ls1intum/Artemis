@@ -4,18 +4,22 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -32,12 +36,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class AnswerPostResource {
 
-    private final Logger log = LoggerFactory.getLogger(AnswerPostResource.class);
-
     private static final String ENTITY_NAME = "metis.answerPost";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
+    private final Logger log = LoggerFactory.getLogger(AnswerPostResource.class);
 
     private final AnswerPostRepository answerPostRepository;
 
@@ -52,6 +53,9 @@ public class AnswerPostResource {
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationService singleUserNotificationService;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     public AnswerPostResource(AnswerPostRepository answerPostRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
@@ -68,10 +72,10 @@ public class AnswerPostResource {
     /**
      * POST /courses/{courseId}/answer-posts : Create a new answerPost.
      *
-     * @param courseId the id of the course the answer post belongs to
+     * @param courseId   the id of the course the answer post belongs to
      * @param answerPost the answerPost to create
      * @return the ResponseEntity with status 201 (Created) and with body the new answerPost, or with status 400 (Bad Request) if the answerPost has already
-     *         an ID or there are inconsistencies within the data
+     * an ID or there are inconsistencies within the data
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/answer-posts")
@@ -113,10 +117,10 @@ public class AnswerPostResource {
     /**
      * PUT /courses/{courseId}/answer-posts : Updates an existing answerPost.
      *
-     * @param courseId the id of the course the answer post belongs to
+     * @param courseId   the id of the course the answer post belongs to
      * @param answerPost the answerPost to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated answerPost, or with status 400 (Bad Request) if the answerPost is not valid,
-     *         or with status 500 (Internal Server Error) if the answerPost couldn't be updated
+     * or with status 500 (Internal Server Error) if the answerPost couldn't be updated
      */
     @PutMapping("courses/{courseId}/answer-posts")
     @PreAuthorize("hasRole('USER')")
@@ -149,9 +153,55 @@ public class AnswerPostResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/answer-posts/:id : delete the "id" answerPost.
+     * GET /courses/{courseId}/{postId}/answer-posts : Get all answerPosts for one post by Id
      *
      * @param courseId the id of the course the answer post belongs to
+     * @param postId   the id of the post for which all answers are retrieved
+     * @return the ResponseEntity with status 200 (OK) and with body all answer posts for the given postId or 400 (Bad Request) if post courseId doesnt match
+     * the PathVariable courseId
+     */
+    @GetMapping("courses/{courseId}/{postId}/answer-posts")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<AnswerPost>> getAllAnswerPostForPost(@PathVariable Long courseId, @PathVariable Long postId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        var existingPost = postRepository.findByIdElseThrow(postId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        if (!existingPost.getCourse().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body");
+        }
+        List<AnswerPost> answerPosts = answerPostRepository.findAnswerPostsByPost_Id(postId);
+
+        return new ResponseEntity<>(answerPosts, null, HttpStatus.OK);
+    }
+
+    /**
+     * GET /courses/{courseId}/answer-posts/{answerPostId} : Get answerPost by Id
+     *
+     * @param courseId the id of the course the answer post belongs to
+     * @param answerId the id of the answerPost which should be retrieved
+     * @return the ResponseEntity with status 200 (OK) and with body including the answer post or 400 (Bad Request) if post courseId doesnt match
+     * the PathVariable courseId
+     */
+    @GetMapping("courses/{courseId}/answer-posts/{answerId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<AnswerPost> getAnswerPostById(@PathVariable Long courseId, @PathVariable Long answerId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerId);
+        Post associatedPost = postRepository.findByIdElseThrow(answerPost.getPost().getId());
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        if (!associatedPost.getCourse().getId().equals(courseId)) {
+            return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body");
+        }
+
+        return new ResponseEntity<>(answerPost, null, HttpStatus.OK);
+    }
+
+    /**
+     * DELETE /courses/{courseId}/answer-posts/:id : delete the "id" answerPost.
+     *
+     * @param courseId     the id of the course the answer post belongs to
      * @param answerPostId the id of the answerPost to delete
      * @return the ResponseEntity with status 200 (OK) or 400 (Bad Request) if theres inconsistencies within the data
      */
@@ -185,7 +235,7 @@ public class AnswerPostResource {
      * Check if user can update or delete AnswerPost, if not throws an AccessForbiddenException
      *
      * @param answerPost answerPost for which to check
-     * @param user user for which to check
+     * @param user       user for which to check
      */
     private void mayUpdateOrDeleteAnswerPostElseThrow(AnswerPost answerPost, User user) {
         Course course = answerPost.getPost().getCourse();

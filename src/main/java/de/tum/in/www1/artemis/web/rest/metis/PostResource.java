@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,9 +17,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -34,12 +40,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class PostResource {
 
-    private final Logger log = LoggerFactory.getLogger(PostResource.class);
-
     private static final String ENTITY_NAME = "metis.post";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
+    private final Logger log = LoggerFactory.getLogger(PostResource.class);
 
     private final PostRepository postRepository;
 
@@ -54,6 +57,9 @@ public class PostResource {
     private final UserRepository userRepository;
 
     private final GroupNotificationService groupNotificationService;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     public PostResource(PostRepository postRepository, GroupNotificationService groupNotificationService, LectureRepository lectureRepository,
             AuthorizationCheckService authorizationCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository) {
@@ -70,7 +76,7 @@ public class PostResource {
      * POST /courses/{courseId}/posts : Create a new post.
      *
      * @param courseId course the post belongs to
-     * @param post the post to create
+     * @param post     the post to create
      * @return the ResponseEntity with status 201 (Created) and with body the new post, or with status 400 (Bad Request) if the post
      * already has an ID or the courseId in the body doesn't match the PathVariable
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -109,9 +115,9 @@ public class PostResource {
      * PUT /courses/{courseId}/posts : Updates an existing post.
      *
      * @param courseId course the post belongs to
-     * @param post the post to update
+     * @param post     the post to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated post, or with status 400 (Bad Request) if the post is not valid, or with
-     *         status 500 (Internal Server Error) if the post couldn't be updated
+     * status 500 (Internal Server Error) if the post couldn't be updated
      */
     @PutMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
@@ -144,11 +150,11 @@ public class PostResource {
     /**
      * PUT /courses/{courseId}/posts/{postId}/votes : Updates votes for a post.
      *
-     * @param courseId course the post belongs to
-     * @param postId the ID of the post to update
+     * @param courseId   course the post belongs to
+     * @param postId     the ID of the post to update
      * @param voteChange value by which votes are increased / decreased
      * @return the ResponseEntity with status 200 (OK) and with body the updated post, or with status 400 (Bad Request) if the post or the voteChanges are invalid, or with
-     *         status 500 (Internal Server Error) if the post couldn't be updated
+     * status 500 (Internal Server Error) if the post couldn't be updated
      */
     @PutMapping("courses/{courseId}/posts/{postId}/votes")
     @PreAuthorize("hasRole('USER')")
@@ -176,9 +182,9 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/exercises/{exerciseId}/posts : get all posts for exercise.
      *
-     * @param courseId course the post belongs to
-     * @param exerciseId the exercise that the posts belong to
-     * @return the ResponseEntity with status 200 (OK) and with body all posts for exercise or 400 (Bad Request) if exercises courseId doesnt match
+     * @param courseId   course the post belongs to
+     * @param exerciseId the exercise for which the posts should be retrieved
+     * @return the ResponseEntity with status 200 (OK) and with body all posts for the given exerciseId or 400 (Bad Request) if exercises courseId doesnt match
      * the PathVariable courseId
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/posts")
@@ -200,7 +206,7 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/lectures/{lectureId}/posts : get all posts for lecture.
      *
-     * @param courseId course the post belongs to
+     * @param courseId  course the post belongs to
      * @param lectureId the lecture that the posts belong to
      * @return the ResponseEntity with status 200 (OK) and with body all posts for lecture or 400 (Bad Request) if the lectures courseId doesnt match
      * the PathVariable courseId
@@ -224,8 +230,8 @@ public class PostResource {
     }
 
     /**
-     *
      * GET /courses/{courseId}/posts : get all posts for course
+     *
      * @param courseId the course that the posts belong to
      * @return the ResponseEntity with status 200 (OK) and with body all posts for course
      */
@@ -244,7 +250,7 @@ public class PostResource {
      * DELETE /courses/{courseId}/posts/:id : delete the post with {id}.
      *
      * @param courseId course the post belongs to
-     * @param postId the id of the post to delete
+     * @param postId   the id of the post to delete
      * @return the ResponseEntity with status 200 (OK) or 400 (Bad Request) if the data is inconsistent
      */
     @DeleteMapping("courses/{courseId}/posts/{postId}")
