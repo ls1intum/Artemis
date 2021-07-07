@@ -137,7 +137,7 @@ public class ProgrammingExerciseGradingService {
                         programmingExercise);
                 // Adding back dropped submission
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                programmingSubmissionRepository.save(programmingSubmission);
+                resultRepository.save(updatedLatestSemiAutomaticResult);
                 return Optional.of(updatedLatestSemiAutomaticResult);
             }
 
