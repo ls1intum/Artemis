@@ -6,9 +6,9 @@
         </span>
         <span class="mx-2" *ngIf="exam && examOverMultipleDays()">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
-            {{ exam.startDate | artemisDate: 'time' }}{{ exam.startDate | artemisDate: 'short-date' }}
+            {{ exam.startDate | artemisDate: 'short-date' }} {{ exam.startDate | artemisDate: 'time' }}
             -
-            {{ endTime() | artemisDate: 'time' }}{{ endTime() | artemisDate: 'short-date' }}
+            {{ endTime() | artemisDate: 'short-date' }} {{ endTime() | artemisDate: 'time' }}
         </span>
         <span class="mx-2" *ngIf="exam && !examOverMultipleDays()">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
