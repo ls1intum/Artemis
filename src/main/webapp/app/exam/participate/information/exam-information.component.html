@@ -1,6 +1,6 @@
 <div class="mt-3 mb-4 text-center">
     <div class="mb-2">
-        <div *ngIf="examOverMultipleDays()">
+        <div *ngIf="examOverMultipleDays(); else examSingleDay">
             <span class="mx-2" *ngIf="exam">
                 <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
                 {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }}
@@ -8,7 +8,7 @@
                 {{ endTime() | artemisDate: 'long-date' }} {{ endTime() | artemisDate: 'time' }}
             </span>
         </div>
-        <div *ngIf="!examOverMultipleDays()">
+        <ng-template #examSingleDay>
             <span class="mx-2" *ngIf="exam && exam.startDate">
                 <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | artemisTranslate }}:</strong>
                 {{ exam.startDate | artemisDate: 'long-date' }}
@@ -19,7 +19,7 @@
                 -
                 {{ endTime() | artemisDate: 'time' }}
             </span>
-        </div>
+        </ng-template>
         <span class="mx-2" *ngIf="studentExam && studentExam.workingTime">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.durationWithFormat' | artemisTranslate }}:</strong>
             {{ studentExam.workingTime || 0 | artemisDurationFromSeconds }}
