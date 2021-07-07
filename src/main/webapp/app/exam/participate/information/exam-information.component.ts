@@ -23,4 +23,18 @@ export class ExamInformationComponent {
         }
         return this.exam.endDate;
     }
+
+    examOverMultipleDays() {
+        if (!this.exam || !this.exam.startDate || !this.exam.endDate) {
+            return false;
+        }
+        let endDate;
+        if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
+            endDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+        } else {
+            endDate = this.exam.endDate;
+        }
+
+        return endDate.dayOfYear() !== this.exam.startDate.dayOfYear();
+    }
 }
