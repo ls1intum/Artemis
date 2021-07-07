@@ -1215,7 +1215,7 @@ public class ProgrammingExerciseTestService {
         team.addStudents(newStudent);
 
         // Mock repository write permission give call
-        mockDelegate.mockRepositoryWritePermissions(team, newStudent, exercise, HttpStatus.OK);
+        mockDelegate.mockRepositoryWritePermissionsForTeam(team, newStudent, exercise, HttpStatus.OK);
 
         // Start participation with original team
         participationService.startExercise(exercise, team, false);
@@ -1305,7 +1305,7 @@ public class ProgrammingExerciseTestService {
 
         // test for internal server error
         mockDelegate.mockCopyRepositoryForParticipation(exercise, team.getParticipantIdentifier());
-        mockDelegate.mockRepositoryWritePermissions(team, student1, exercise, HttpStatus.BAD_REQUEST);
+        mockDelegate.mockRepositoryWritePermissionsForTeam(team, student1, exercise, HttpStatus.BAD_REQUEST);
         return team;
     }
 

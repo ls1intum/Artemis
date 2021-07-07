@@ -294,9 +294,15 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockRepositoryWritePermissions(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
         final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
         bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin(), status);
+    }
+
+    @Override
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws URISyntaxException {
+        final var repositorySlug = (exercise.getProjectKey() + "-" + student.getParticipantIdentifier()).toLowerCase();
+        bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, student.getLogin(), status);
     }
 
     @Override
