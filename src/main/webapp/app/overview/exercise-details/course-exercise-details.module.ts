@@ -22,11 +22,13 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/orion-course-exercise-details.component';
+import { isOrion } from 'app/shared/orion/orion';
 
 const routes: Routes = [
     {
         path: 'courses/:courseId/exercises/:exerciseId',
-        component: CourseExerciseDetailsComponent,
+        component: !isOrion ? CourseExerciseDetailsComponent : OrionCourseExerciseDetailsComponent,
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.exercise',
@@ -65,7 +67,7 @@ const routes: Routes = [
         RouterModule.forChild(routes),
         ArtemisMarkdownModule,
     ],
-    declarations: [CourseExerciseDetailsComponent],
-    exports: [CourseExerciseDetailsComponent],
+    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
+    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
 })
 export class CourseExerciseDetailsModule {}

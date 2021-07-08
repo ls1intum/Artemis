@@ -32,7 +32,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
+import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
@@ -107,7 +107,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockDirective(BuildPlanButtonDirective),
                 MockDirective(RouterOutlet),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
-                MockComponent(ProgrammingExerciseStudentIdeActionsComponent),
+                MockComponent(OrionExerciseDetailsStudentActionsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseActionButtonComponent),

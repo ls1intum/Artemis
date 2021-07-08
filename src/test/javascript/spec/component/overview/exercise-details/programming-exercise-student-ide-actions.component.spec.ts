@@ -13,7 +13,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockComponent } from 'ng-mocks';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
+import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
@@ -34,8 +34,8 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
-    let comp: ProgrammingExerciseStudentIdeActionsComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseStudentIdeActionsComponent>;
+    let comp: OrionExerciseDetailsStudentActionsComponent;
+    let fixture: ComponentFixture<OrionExerciseDetailsStudentActionsComponent>;
     let debugElement: DebugElement;
     let orionConnector: ArtemisOrionConnector;
     let courseExerciseService: CourseExerciseService;
@@ -53,7 +53,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, OrionModule, ArtemisSharedModule, FeatureToggleModule],
-            declarations: [ProgrammingExerciseStudentIdeActionsComponent, MockComponent(ExerciseActionButtonComponent)],
+            declarations: [OrionExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent)],
             providers: [
                 { provide: OrionBuildAndTestService, useClass: MockIdeBuildAndTestService },
                 { provide: OrionConnectorService, useClass: MockOrionConnectorService },
@@ -65,7 +65,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseStudentIdeActionsComponent);
+                fixture = TestBed.createComponent(OrionExerciseDetailsStudentActionsComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 orionConnector = debugElement.injector.get(OrionConnectorService);
@@ -94,7 +94,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.ideState.opened).to.not.equal(exercise.id);
+        expect(comp.orionState.opened).to.not.equal(exercise.id);
 
         fixture.destroy();
         flush();
@@ -109,7 +109,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.ideState.opened).to.equal(exercise.id);
+        expect(comp.orionState.opened).to.equal(exercise.id);
 
         fixture.destroy();
         flush();

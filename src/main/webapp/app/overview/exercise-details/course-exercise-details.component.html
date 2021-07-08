@@ -11,11 +11,8 @@
     <jhi-alert-error></jhi-alert-error>
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar tab-bar-exercise-details ps-2 pe-2 mb-2 justify-content-between">
-        <jhi-programming-exercise-student-ide-actions jhiOrionFilter [showInOrionWindow]="true" [courseId]="courseId" [exercise]="exercise">
-        </jhi-programming-exercise-student-ide-actions>
         <jhi-exercise-details-student-actions
-            jhiOrionFilter
-            [showInOrionWindow]="false"
+            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult != undefined }"
             [courseId]="courseId"
             [exercise]="exercise"
             [showResult]="showResults && latestRatedResult != undefined"

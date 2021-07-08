@@ -60,7 +60,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
-import { OrionModule } from 'app/shared/orion/orion.module';
 import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 
 chai.use(sinonChai);
@@ -195,7 +194,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 RouterModule,
                 TranslateModule.forRoot(),
                 ArtemisAssessmentSharedModule,
-                OrionModule,
             ],
             declarations: [
                 ExerciseAssessmentDashboardComponent,
