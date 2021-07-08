@@ -182,9 +182,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 }
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
-                if (assessment.dropInfo) {
-                    existingFeedback.gradingInstruction = new GradingInstruction();
-                    existingFeedback.gradingInstruction.id = assessment.dropInfo.instructionId;
+                if (assessment.dropInfo && assessment.dropInfo.instruction.id) {
+                    existingFeedback.gradingInstruction = assessment.dropInfo.instruction;
                 }
             } else {
                 this.elementFeedback.set(

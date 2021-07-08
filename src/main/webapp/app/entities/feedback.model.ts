@@ -22,7 +22,7 @@ export enum FeedbackType {
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 
 export interface DropInfo {
-    instructionId: number;
+    instruction: GradingInstruction;
 }
 
 export class Feedback implements BaseEntity {
@@ -99,9 +99,8 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo) {
-            that.gradingInstruction = new GradingInstruction();
-            that.gradingInstruction.id = dropInfo.instructionId;
+        if (dropInfo && dropInfo.instruction.id) {
+            that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {
             that.reference = referenceType + ':' + referenceId;
