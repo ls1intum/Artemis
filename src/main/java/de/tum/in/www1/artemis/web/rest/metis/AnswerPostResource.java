@@ -72,7 +72,7 @@ public class AnswerPostResource {
     @DeleteMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId) {
-        answerPostService.deleteAnswerPost(courseId, answerPostId);
+        answerPostService.deleteAnswerPostById(courseId, answerPostId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, answerPostService.getEntityName(), answerPostId.toString())).build();
     }
 }

@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -103,7 +104,7 @@ public class PostService extends PostingService {
         Post updatedPost = postRepository.save(existingPost);
 
         if (updatedPost.getExercise() != null) {
-            // protect Sample Solution, Grading Instructions, etc.
+            // protect sample solution, grading instructions, etc.
             updatedPost.getExercise().filterSensitiveInformation();
         }
 
@@ -142,6 +143,17 @@ public class PostService extends PostingService {
         }
 
         return updatedPost;
+    }
+
+    /**
+     * Add reaction to a post and persist the post
+     * @param post      post that is reacted on
+     * @param reaction  reaction that was added by a user
+     *
+     */
+    public void updateWithReaction(Post post, Reaction reaction) {
+        post.addReaction(reaction);
+        postRepository.save(post);
     }
 
     /**
@@ -286,11 +298,19 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Helper method to retrieve the entity name used in ResponseEntity
+     * Retrieve the entity name used in ResponseEntity
      */
     @Override
     public String getEntityName() {
         return METIS_POST_ENTITY_NAME;
     }
 
+    /**
+     * Retrieve post from database by id
+     * @param postId    id of requested post
+     * @return retrieved post
+     */
+    public Post findById(Long postId) {
+        return postRepository.findByIdElseThrow(postId);
+    }
 }

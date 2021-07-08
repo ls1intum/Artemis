@@ -6,6 +6,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
@@ -58,6 +59,7 @@ public class AnswerPostService extends PostingService {
         // check
         Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(answerPost.getPost(), courseId);
+        preCheckAnswerPostValidity(answerPost, courseId);
         if (answerPost.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
@@ -95,6 +97,7 @@ public class AnswerPostService extends PostingService {
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
         Course course = preCheckUserAndCourse(user, courseId);
         preCheckPostValidity(existingAnswerPost.getPost(), courseId);
+        preCheckAnswerPostValidity(answerPost, courseId);
         mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user);
 
         // update: allow overwriting of values only for depicted fields
@@ -114,18 +117,30 @@ public class AnswerPostService extends PostingService {
     }
 
     /**
+     * Add reaction to an answer post and persist the post
+     * @param answerPost    answer post that is reacted on
+     * @param reaction      reaction that was added by a user
+     *
+     */
+    public void updateWithReaction(AnswerPost answerPost, Reaction reaction) {
+        answerPost.addReaction(reaction);
+        answerPostRepository.save(answerPost);
+    }
+
+    /**
      * Checks course and user validity,
      * determines authority to delete post and deletes the post
      *
      * @param courseId     id of the course the post belongs to
      * @param answerPostId id of the answer post to delete
      */
-    public void deleteAnswerPost(Long courseId, Long answerPostId) {
+    public void deleteAnswerPostById(Long courseId, Long answerPostId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         preCheckUserAndCourse(user, courseId);
+        preCheckAnswerPostValidity(answerPost, courseId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user);
 
         // delete
@@ -154,10 +169,19 @@ public class AnswerPostService extends PostingService {
     }
 
     /**
-     * Helper method to retrieve the entity name used in ResponseEntity
+     * Retrieve the entity name used in ResponseEntity
      */
     @Override
     public String getEntityName() {
         return METIS_ANSWER_POST_ENTITY_NAME;
+    }
+
+    /**
+     * Retrieve answer post from database by id
+     * @param answerPostId    id of requested post
+     * @return retrieved answer post
+     */
+    public AnswerPost findById(Long answerPostId) {
+        return answerPostRepository.findByIdElseThrow(answerPostId);
     }
 }
