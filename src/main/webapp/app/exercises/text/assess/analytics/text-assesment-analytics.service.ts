@@ -18,9 +18,7 @@ export class TextAssessmentAnalytics {
     private INVALID_VALUE = -1;
     private route: ActivatedRoute;
 
-    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService) {
-        console.warn('Test Constructor');
-    }
+    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService) {}
 
     setComponentRoute(route: ActivatedRoute) {
         this.route = route;
@@ -33,17 +31,7 @@ export class TextAssessmentAnalytics {
     }
 
     subscribeToRouteParameters() {
-        console.log('Route=>', this.route.queryParams);
-
-        this.route.paramMap.subscribe((params) => {
-            console.log('1', params);
-        });
-        this.route.queryParams.subscribe((params) => {
-            console.log('2', params);
-        });
-
         this.route.params.subscribe((params) => {
-            console.log(params);
             this.userId = this.accountService.userIdentity ? Number(this.accountService.userIdentity.id) : this.INVALID_VALUE;
             this.courseId = Number(params['courseId']);
             this.textExerciseId = Number(params['exerciseId']);
