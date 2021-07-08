@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.ok;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -162,7 +163,11 @@ public class ComplaintResource {
     // TODO: the URL should rather be "participations/{participationId}/results/{resultId}/complaints"
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);
-        Complaint complaint = complaintRepository.findByResultIdElseThrow(resultId);
+        Optional<Complaint> optionalComplaint = complaintRepository.findByResultId(resultId);
+        if (optionalComplaint.isEmpty()) {
+            return ok();
+        }
+        Complaint complaint = optionalComplaint.get();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = (StudentParticipation) complaint.getResult().getParticipation();
         var exercise = participation.getExercise();
