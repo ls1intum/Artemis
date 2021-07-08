@@ -19,7 +19,8 @@ export class ManualTextSelectionComponent {
 
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
-    protected assessmentsService: TextAssessmentService;
+
+    constructor(protected assessmentsService: TextAssessmentService) {}
 
     /**
      * Handle user's selection of solution text.

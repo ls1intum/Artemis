@@ -59,8 +59,8 @@ export class TextblockAssessmentCardComponent {
 
         if (autofocus) {
             setTimeout(() => this.feedbackEditor.focus());
+            this.sendAssessmentEventSelectTextBlockAutomatically();
         }
-        this.sendAssessmentEventSelectTextBlockAutomatically();
     }
 
     /**

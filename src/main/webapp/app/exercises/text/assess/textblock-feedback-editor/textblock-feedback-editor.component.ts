@@ -10,6 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { lastValueFrom } from 'rxjs';
 import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextBlockType } from 'app/entities/text-block.model';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -64,6 +65,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         public structuredGradingCriterionService: StructuredGradingCriterionService,
         protected modalService: NgbModal,
         protected assessmentsService: TextAssessmentService,
+        protected assessmentAnalytics: TextAssessmentAnalytics,
     ) {}
 
     /**
@@ -107,7 +109,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     dismiss(): void {
         this.close.emit();
-        this.sendAssessmentEventDelete();
+        this.assessmentAnalytics.sendAssessmentEventDelete();
     }
 
     /**
@@ -142,10 +144,10 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      * Hook to indicate changes in the feedback editor
      */
     didChange(): void {
+        const feedbackTypeBefore = this.feedback.type;
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
-
-        // this.sendAssessmentEventEditFeedback();
+        feedbackTypeBefore !== this.feedback.type ? this.assessmentAnalytics.sendAssessmentEventEditFeedback() : '';
     }
 
     connectFeedbackWithInstruction(event: Event) {
@@ -160,14 +162,14 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
     onConflictClicked(feedbackId: number | undefined) {
         !feedbackId && this.onConflictsClicked.emit(feedbackId);
-        this.sendAssessmentEventOnConflictClicked();
+        this.assessmentAnalytics.sendAssessmentEventOnConflictClicked();
     }
 
     // this method fires the modal service and shows a modal after connecting feedback with its respective blocks
     async openOriginOfFeedbackModal(content: any) {
         await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
         this.modalService.open(content, { size: 'lg' });
-        this.sendAssessmentEvent();
+        this.assessmentAnalytics.sendAssessmentEvent();
     }
 
     /**
@@ -205,72 +207,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     mouseEnteredWarningLabel() {
-        this.sendAssessmentEventOnHoverWarning();
-    }
-
-    // Send Assessment Event for Viewing Automatic Suggestion origin
-    async sendAssessmentEvent() {
-        const assessmentEventToSend: TextAssessmentEvent = {
-            userId: 1,
-            eventType: TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN,
-            feedbackType: FeedbackType.AUTOMATIC,
-            segmentType: TextBlockType.AUTOMATIC,
-            courseId: 2,
-            textExerciseId: 3,
-            submissionId: 4,
-        };
-        await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    }
-
-    async sendAssessmentEventDelete() {
-        const assessmentEventToSend: TextAssessmentEvent = {
-            userId: 1,
-            eventType: TextAssessmentEventType.DELETE_AUTOMATIC_FEEDBACK,
-            feedbackType: FeedbackType.AUTOMATIC,
-            segmentType: TextBlockType.AUTOMATIC,
-            courseId: 2,
-            textExerciseId: 3,
-            submissionId: 4,
-        };
-        await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    }
-
-    async sendAssessmentEventEditFeedback() {
-        const assessmentEventToSend: TextAssessmentEvent = {
-            userId: 1,
-            eventType: TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK,
-            feedbackType: FeedbackType.AUTOMATIC,
-            segmentType: TextBlockType.AUTOMATIC,
-            courseId: 2,
-            textExerciseId: 3,
-            submissionId: 4,
-        };
-        await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    }
-
-    sendAssessmentEventOnHoverWarning() {
-        const assessmentEventToSend: TextAssessmentEvent = {
-            userId: 1,
-            eventType: TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING,
-            feedbackType: FeedbackType.AUTOMATIC,
-            segmentType: TextBlockType.AUTOMATIC,
-            courseId: 2,
-            textExerciseId: 3,
-            submissionId: 4,
-        };
-        lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    }
-
-    sendAssessmentEventOnConflictClicked() {
-        const assessmentEventToSend: TextAssessmentEvent = {
-            userId: 1,
-            eventType: TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT,
-            feedbackType: FeedbackType.AUTOMATIC,
-            segmentType: TextBlockType.AUTOMATIC,
-            courseId: 2,
-            textExerciseId: 3,
-            submissionId: 4,
-        };
-        lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
+        this.assessmentAnalytics.sendAssessmentEventOnHoverWarning();
     }
 }

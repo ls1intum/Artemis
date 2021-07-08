@@ -47,6 +47,9 @@ public class TextAssesmentEvent extends DomainObject {
     @Column(name = "text_exercise_id")
     private Long textExerciseId;
 
+    @Column(name = "participation_id")
+    private Long participationId;
+
     @Column(name = "submission_id")
     private Long submissionId;
 
@@ -110,10 +113,18 @@ public class TextAssesmentEvent extends DomainObject {
         this.submissionId = submissionId;
     }
 
+    public Long getParticipationId() {
+        return participationId;
+    }
+
+    public void setParticipationId(Long participationId) {
+        this.participationId = participationId;
+    }
+
     @Override
     public String toString() {
         return "TutorGroup{" + "id=" + getId() + ", userId='" + getUserId() + "'" + ", timestamp=" + getTimestamp() + ", event='" + getEventType() + "'" + ", feedbackType='"
                 + getFeedbackType() + "'" + ", segmentType='" + getSegmentType() + "'" + ", courseId='" + getCourseId() + "'" + ", textExerciseId='" + getTextExerciseId() + "'"
-                + ", submissionId='" + getSubmissionId() + "'" + "}";
+                + ", submissionId='" + getSubmissionId() + "'" + ", participationId='" + getParticipationId() + "'" + "}";
     }
 }
