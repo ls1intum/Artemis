@@ -29,7 +29,8 @@
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
-                "gradeKeyButton": "View Grade Key"
+                "gradeKeyButton": "View Grading Key",
+                "gradeKeyButtonBonus": "View Bonus Rules"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -264,7 +265,7 @@
             "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
-            "gradingSystem": "Grade Key",
+            "gradingSystem": "Grading Key",
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",
