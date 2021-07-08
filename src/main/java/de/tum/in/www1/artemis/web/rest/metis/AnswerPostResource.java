@@ -68,11 +68,11 @@ public class AnswerPostResource {
     }
 
     /**
-     * POST /courses/{courseId}/answer-posts : Create a new answerPost.
+     * POST /courses/{courseId}/answer-posts : Create a new answer post.
      *
-     * @param courseId   the id of the course the answer post belongs to
-     * @param answerPost the answerPost to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new answerPost, or with status 400 (Bad Request) if the answerPost has already
+     * @param courseId   id of the course the answer post belongs to
+     * @param answerPost answer post to create
+     * @return the ResponseEntity with status 201 (Created) containing the created answer post in response body, or with status 400 (Bad Request) if the answer post has already
      * an ID or there are inconsistencies within the data
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -80,15 +80,26 @@ public class AnswerPostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) throws URISyntaxException {
         log.debug("REST request to save AnswerPost : {}", answerPost);
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        if (answerPost.getId() != null) {
-            throw new BadRequestAlertException("A new answerPost cannot already have an ID", ENTITY_NAME, "idexists");
+
+        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        // check if course has posts enabled
+        if (!course.getPostsEnabled()) {
+            return badRequest("courseId", "400", "Course with this Id does not have Posts enabled");
         }
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // check if course id match
         if (!answerPost.getCourse().getId().equals(courseId)) {
             return badRequest("courseId", "400", "PathVariable courseId doesn't match courseId of the AnswerPost in the body that should be added");
         }
+
+        // check if answer post in request body does not already exist
+        if (answerPost.getId() != null) {
+            throw new BadRequestAlertException("A new answerPost cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+
         // answer post is automatically approved if written by an instructor
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         // use post from database rather than user input
@@ -97,13 +108,16 @@ public class AnswerPostResource {
         // set author to current user
         answerPost.setAuthor(user);
         AnswerPost result = answerPostRepository.save(answerPost);
+
+        // notify via exercise
         if (result.getPost().getExercise() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForExercise(result);
 
-            // Protect Sample Solution, Grading Instructions, etc.
+            // protect Sample Solution, Grading Instructions, etc.
             result.getPost().getExercise().filterSensitiveInformation();
         }
+        // notify via lecture
         if (result.getPost().getLecture() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(result);
             singleUserNotificationService.notifyUserAboutNewAnswerForLecture(result);
