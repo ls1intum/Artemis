@@ -166,7 +166,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     onConflictClicked(feedbackId: number | undefined) {
-        !feedbackId && this.onConflictsClicked.emit(feedbackId);
+        if (feedbackId) {
+            this.onConflictsClicked.emit(feedbackId);
+        }
         this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, this.feedback.type, this.textBlock.type);
     }
 

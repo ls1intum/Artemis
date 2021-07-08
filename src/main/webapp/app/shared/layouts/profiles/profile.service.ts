@@ -8,7 +8,6 @@ import { filter, map } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
-import { profile } from 'console';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
