@@ -30,6 +30,10 @@
             "searchForStudentsOrTeam": "Search for student or team",
             "averageScore": "Average Score: {{avg}}%",
             "averageRatedScore": "Average Rated Score: {{avg}}%",
+            "averageGrade": "Average Grade",
+            "averageRatedGrade": "Average Rated Grade",
+            "averageBonus": "Average Bonus",
+            "averageRatedBonus": "Average Rated Bonus",
             "notIncluded": "Optional exercises not included in calculation!"
         }
     }

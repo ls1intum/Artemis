@@ -117,7 +117,7 @@
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
                     <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageGrade')">
                         <span class="datatable-header-cell-label bold sortable">
-                            {{ isBonus ? 'Average Bonus' : 'Average Grade' }}
+                            {{ isBonus ? ('artemisApp.participantScores.averageBonus' | artemisTranslate) : ('artemisApp.participantScores.averageGrade' | artemisTranslate) }}
                         </span>
                         <fa-icon [icon]="controls.iconForSortPropField('averageGrade')"></fa-icon>
                     </span>
@@ -133,7 +133,11 @@
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
                     <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedGrade')">
                         <span class="datatable-header-cell-label bold sortable">
-                            {{ isBonus ? 'Average Rated Bonus' : 'Average Rated Grade' }}
+                            {{
+                                isBonus
+                                    ? ('artemisApp.participantScores.averageRatedBonus' | artemisTranslate)
+                                    : ('artemisApp.participantScores.averageRatedGrade' | artemisTranslate)
+                            }}
                         </span>
                         <fa-icon [icon]="controls.iconForSortPropField('averageRatedGrade')"></fa-icon>
                     </span>
