@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.analytics;
 
 import java.time.Instant;
 
@@ -10,6 +10,8 @@ import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.TextBlockType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentEventType;
 
@@ -20,7 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentEventType;
 @Table(name = "text_assessment_event")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class TextAssesmentEvent extends DomainObject {
+public class TextAssessmentEvent extends DomainObject {
 
     @Column(name = "user_id")
     private Long userId;

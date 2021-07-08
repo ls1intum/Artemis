@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.TextAssesmentEvent;
 import de.tum.in.www1.artemis.domain.TextBlockType;
+import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 
 /**
@@ -14,11 +14,11 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface TextAssessmentEventRepository extends JpaRepository<TextAssesmentEvent, Long> {
+public interface TextAssessmentEventRepository extends JpaRepository<TextAssessmentEvent, Long> {
 
-    List<TextAssesmentEvent> findAllByFeedbackType(FeedbackType type);
+    List<TextAssessmentEvent> findAllByFeedbackType(FeedbackType type);
 
-    List<TextAssesmentEvent> findAllByEventType(TextAssesmentEvent type);
+    List<TextAssessmentEvent> findAllByEventType(TextAssessmentEvent type);
 
-    List<TextAssesmentEvent> findAllBySegmentType(TextBlockType type);
+    List<TextAssessmentEvent> findAllBySegmentType(TextBlockType type);
 }

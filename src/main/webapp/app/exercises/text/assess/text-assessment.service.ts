@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
@@ -57,11 +57,14 @@ export class TextAssessmentService {
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
-    public submitAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
+    public submitAssessmentEvent(assessmentEvent: TextAssessmentEvent) {
         const body = Object.assign({}, assessmentEvent);
-        return this.http
+        this.http
             .post<TextAssessmentEvent>(`${this.resourceUrl}/text-assessment-event/add-event`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
+            .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)))
+            .subscribe({
+                error: (e) => console.error('Error sending statistics' + e.message),
+            });
     }
 
     /**
