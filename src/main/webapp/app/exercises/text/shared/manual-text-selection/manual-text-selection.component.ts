@@ -5,6 +5,7 @@ import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-manual-text-selection',
@@ -19,7 +20,9 @@ export class ManualTextSelectionComponent {
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
 
-    constructor(protected assessmentAnalytics: TextAssessmentAnalytics) {}
+    constructor(protected assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+        assessmentAnalytics.setComponentRoute(route);
+    }
 
     /**
      * Handle user's selection of solution text.

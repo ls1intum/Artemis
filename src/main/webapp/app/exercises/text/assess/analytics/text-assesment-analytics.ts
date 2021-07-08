@@ -14,7 +14,7 @@ export class TextAssessmentAnalytics {
     private textExerciseId: number;
     private participationId: number;
     private submissionId: number;
-    private eventToSend: TextAssessmentEvent;
+    private eventToSend: TextAssessmentEvent = new TextAssessmentEvent();
     private INVALID_VALUE = -1;
     private route: ActivatedRoute;
 
@@ -27,12 +27,21 @@ export class TextAssessmentAnalytics {
         this.subscribeToRouteParameters();
     }
 
-    sendAssessmentEvent(eventType: TextAssessmentEventType, feedbackType: FeedbackType | undefined, textBlockType: TextBlockType | undefined) {
+    sendAssessmentEvent(eventType: TextAssessmentEventType, feedbackType: FeedbackType | undefined = undefined, textBlockType: TextBlockType | undefined = undefined) {
         this.eventToSend.setEventType(eventType).setFeedbackType(feedbackType).setSegmentType(textBlockType);
         lastValueFrom(this.assessmentsService.submitAssessmentEvent(this.eventToSend));
     }
 
     subscribeToRouteParameters() {
+        console.log('Route=>', this.route.queryParams);
+
+        this.route.paramMap.subscribe((params) => {
+            console.log('1', params);
+        });
+        this.route.queryParams.subscribe((params) => {
+            console.log('2', params);
+        });
+
         this.route.params.subscribe((params) => {
             console.log(params);
             this.userId = this.accountService.userIdentity ? Number(this.accountService.userIdentity.id) : this.INVALID_VALUE;
@@ -43,64 +52,4 @@ export class TextAssessmentAnalytics {
             this.eventToSend = new TextAssessmentEvent(this.userId, this.courseId, this.textExerciseId, this.participationId, this.submissionId);
         });
     }
-
-    // sendAssessmentEvent(eventType: TextAssessmentEventType, feedbackType: FeedbackType, segmentType: TextBlockType) {
-    //     this.eventToSend
-    //         .setEventType(eventType)
-    //         .setFeedbackType(feedbackType)
-    //         .setSegmentType(segmentType);
-    //     lastValueFrom(this.assessmentsService.submitAssessmentEvent(this.eventToSend));
-    // }
-
-    // async sendAssessmentEventDelete() {
-    //     const assessmentEventToSend: TextAssessmentEvent = {
-    //         userId: this.userId,
-    //         eventType: TextAssessmentEventType.DELETE_AUTOMATIC_FEEDBACK,
-    //         feedbackType: FeedbackType.AUTOMATIC,
-    //         segmentType: TextBlockType.AUTOMATIC,
-    //         courseId: 2,
-    //         textExerciseId: 3,
-    //         submissionId: 4,
-    //     };
-    //     await lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    // }
-    //
-    // sendAssessmentEventEditFeedback() {
-    //     const assessmentEventToSend: TextAssessmentEvent = {
-    //         userId: this.userId,
-    //         eventType: TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK,
-    //         feedbackType: FeedbackType.AUTOMATIC,
-    //         segmentType: TextBlockType.AUTOMATIC,
-    //         courseId: 2,
-    //         textExerciseId: 3,
-    //         submissionId: 4,
-    //     };
-    //     lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    // }
-    //
-    // sendAssessmentEventOnHoverWarning() {
-    //     const assessmentEventToSend: TextAssessmentEvent = {
-    //         userId: this.userId,
-    //         eventType: TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING,
-    //         feedbackType: FeedbackType.AUTOMATIC,
-    //         segmentType: TextBlockType.AUTOMATIC,
-    //         courseId: 2,
-    //         textExerciseId: 3,
-    //         submissionId: 4,
-    //     };
-    //     lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    // }
-    //
-    // sendAssessmentEventOnConflictClicked() {
-    //     const assessmentEventToSend: TextAssessmentEvent = {
-    //         userId: this.userId,
-    //         eventType: TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT,
-    //         feedbackType: FeedbackType.AUTOMATIC,
-    //         segmentType: TextBlockType.AUTOMATIC,
-    //         courseId: 2,
-    //         textExerciseId: 3,
-    //         submissionId: 4,
-    //     };
-    //     lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
-    // }
 }

@@ -11,6 +11,8 @@ export enum TextAssessmentEventType {
     VIEW_AUTOMATIC_SUGGESTION_ORIGIN = 'VIEW_AUTOMATIC_SUGGESTION_ORIGIN',
     DELETE_FEEDBACK = 'DELETE_FEEDBACK',
     EDIT_AUTOMATIC_FEEDBACK = 'EDIT_AUTOMATIC_FEEDBACK',
+    SUBMIT_ASSESSMENT = 'SUBMIT_ASSESSMENT',
+    ASSESS_NEXT_SUBMISSION = 'ASSESS_NEXT_SUBMISSION',
 }
 
 export class TextAssessmentEvent implements BaseEntity {
@@ -25,7 +27,7 @@ export class TextAssessmentEvent implements BaseEntity {
     public participationId?: number;
     public submissionId?: number;
 
-    constructor(userId: number, courseId: number, textExerciseId: number, participationId: number, submissionId: number) {
+    constructor(userId?: number, courseId?: number, textExerciseId?: number, participationId?: number, submissionId?: number) {
         this.userId = userId;
         this.courseId = courseId;
         this.textExerciseId = textExerciseId;

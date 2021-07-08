@@ -7,6 +7,7 @@ import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
+import { ActivatedRoute } from '@angular/router';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -36,7 +37,13 @@ export class TextblockAssessmentCardComponent {
         return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, protected assessmentAnalytics: TextAssessmentAnalytics) {}
+    constructor(
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
+        protected assessmentAnalytics: TextAssessmentAnalytics,
+        protected route: ActivatedRoute,
+    ) {
+        assessmentAnalytics.setComponentRoute(route);
+    }
 
     /**
      * Select a text block

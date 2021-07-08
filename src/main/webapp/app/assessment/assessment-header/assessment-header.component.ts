@@ -1,7 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
-
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { ActivatedRoute } from '@angular/router';
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
@@ -51,6 +53,10 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
+    constructor(protected assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+        assessmentAnalytics.setComponentRoute(route);
+    }
+
     get highlightDifferences() {
         return this._highlightDifferences;
     }
@@ -62,5 +68,13 @@ export class AssessmentHeaderComponent {
     public toggleHighlightDifferences() {
         this.highlightDifferences = !this.highlightDifferences;
         this.highlightDifferencesChange.emit(this.highlightDifferences);
+    }
+
+    sendSubmitAssessmentToAnalytics() {
+        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
+    }
+
+    sendAssessNextEventToAnalytics() {
+        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
     }
 }
