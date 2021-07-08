@@ -34,7 +34,7 @@ public class AnswerPostService extends PostingService {
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, PostRepository postRepository, GroupNotificationService groupNotificationService1,
             SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, authorizationCheckService, groupNotificationService);
+        super(courseRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;

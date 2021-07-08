@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-public abstract class PostingService<T extends Posting> {
+public abstract class PostingService {
 
     final CourseRepository courseRepository;
 
@@ -76,5 +76,4 @@ public abstract class PostingService<T extends Posting> {
     }
 
     abstract String getEntityName();
-
 }

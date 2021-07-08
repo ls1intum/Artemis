@@ -89,7 +89,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExercise_Id(exerciseId).size());
+        assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
     }
 
     @Test
@@ -100,7 +100,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingLecturePosts.size() + 1).isEqualTo(postRepository.findPostsByLecture_Id(lectureId).size());
+        assertThat(existingLecturePosts.size() + 1).isEqualTo(postRepository.findPostsByLectureId(lectureId).size());
     }
 
     @Test

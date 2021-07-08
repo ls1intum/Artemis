@@ -39,7 +39,7 @@ public class PostService extends PostingService {
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             UserRepository userRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             GroupNotificationService groupNotificationService1) {
-        super(courseRepository, authorizationCheckService, groupNotificationService);
+        super(courseRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.exerciseRepository = exerciseRepository;
@@ -173,7 +173,7 @@ public class PostService extends PostingService {
         preCheckExercise(user, courseId, exerciseId);
 
         // retrieve posts
-        List<Post> exercisePosts = postRepository.findPostsByExercise_Id(exerciseId);
+        List<Post> exercisePosts = postRepository.findPostsByExerciseId(exerciseId);
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
 
@@ -197,7 +197,7 @@ public class PostService extends PostingService {
         preCheckLecture(user, courseId, lectureId);
 
         // retrieve posts
-        List<Post> lecturePosts = postRepository.findPostsByLecture_Id(lectureId);
+        List<Post> lecturePosts = postRepository.findPostsByLectureId(lectureId);
         // protect Sample Solution, Grading Instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 

@@ -15,9 +15,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 
-    List<Reaction> findReactionsByPost_Id(Long postId);
+    List<Reaction> findReactionsByPostId(Long postId);
 
-    List<Reaction> findReactionsByAnswerPost_Id(Long answerPostId);
+    List<Reaction> findReactionsByAnswerPostId(Long answerPostId);
 
     default Reaction findByIdElseThrow(Long reactionId) throws EntityNotFoundException {
         return findById(reactionId).orElseThrow(() -> new EntityNotFoundException("Reaction", reactionId));
