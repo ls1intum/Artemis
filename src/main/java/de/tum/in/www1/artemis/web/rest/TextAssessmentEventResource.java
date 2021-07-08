@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -34,7 +32,6 @@ public class TextAssessmentEventResource {
 
     @GetMapping("/get-events")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.ARTEMIS_ANALYTICS)
     public ResponseEntity<List<TextAssessmentEvent>> findAllEvents() {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAll();
         return ResponseEntity.ok().body(events);
@@ -42,7 +39,6 @@ public class TextAssessmentEventResource {
 
     @PostMapping("/add-event")
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.ARTEMIS_ANALYTICS)
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) throws URISyntaxException {
         log.debug("REST request to save assessmentEvent : {}", event);
         if (event.getId() != null) {

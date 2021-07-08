@@ -11,7 +11,6 @@ import { HttpClient } from '@angular/common/http';
  */
 export enum FeatureToggle {
     PROGRAMMING_EXERCISES = 'PROGRAMMING_EXERCISES',
-    ARTEMIS_ANALYTICS = 'ARTEMIS_ANALYTICS',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
