@@ -4,7 +4,7 @@ import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({

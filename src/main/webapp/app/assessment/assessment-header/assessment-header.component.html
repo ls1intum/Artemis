@@ -93,7 +93,7 @@
             </button>
             <button
                 class="btn ms-2 btn-success"
-                (click)="submit.emit(); sendSubmitAssessmentToAnalytics()"
+                (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
                 [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
             >
                 <fa-icon *ngIf="submitBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>

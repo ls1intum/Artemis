@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ActivatedRoute } from '@angular/router';
 /**
@@ -70,7 +70,7 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
-    sendSubmitAssessmentToAnalytics() {
+    sendSubmitAssessmentEventToAnalytics() {
         this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
     }
 
