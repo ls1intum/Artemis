@@ -22,6 +22,8 @@ import { MockPipe } from 'ng-mocks';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { MockExamExerciseUpdateService } from '../../../helpers/mocks/service/mock-exam-exercise-update.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -59,6 +61,7 @@ describe('Notification Popup Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ExamExerciseUpdateService, useClass: MockExamExerciseUpdateService },
+                { provide: ExamParticipationService, useClass: MockExamParticipationService },
             ],
         })
             .compileComponents()
