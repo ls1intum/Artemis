@@ -13,10 +13,7 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
         if (quizQuestion.isInvalid()) {
             return quizQuestion.getPoints();
         }
-        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && quizQuestion instanceof ShortAnswerQuestion) {
-            ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
-            ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
-
+        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerAnswer && quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
             int[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionCount(shortAnswerQuestion, shortAnswerAnswer);
             int correctSolutionsCount = values[0];
 

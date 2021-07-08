@@ -348,10 +348,11 @@ describe('ModelingAssessmentDashboardComponent', () => {
     describe('shouldGetAssessmentLink', () => {
         it('should get assessment link for exam exercise', () => {
             const submissionId = 7;
+            const participationId = 2;
             component.exercise = modelingExercise;
             component.exerciseId = modelingExercise.id!;
             component.courseId = modelingExercise.course!.id!;
-            expect(component.getAssessmentLink(submissionId)).toEqual([
+            expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
                 '/course-management',
                 component.exercise.course!.id!.toString(),
                 'modeling-exercises',
@@ -364,12 +365,13 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         it('should get assessment link for normal exercise', () => {
             const submissionId = 8;
+            const participationId = 3;
             component.exercise = modelingExerciseOfExam;
             component.exerciseId = modelingExerciseOfExam.id!;
             component.courseId = modelingExerciseOfExam.exerciseGroup!.exam!.course!.id!;
             component.examId = modelingExerciseOfExam.exerciseGroup!.exam!.id!;
             component.exerciseGroupId = modelingExerciseOfExam.exerciseGroup!.id!;
-            expect(component.getAssessmentLink(submissionId)).toEqual([
+            expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
                 '/course-management',
                 component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
                 'exams',

@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-circular-progress-bar',
@@ -24,7 +25,7 @@ export class CircularProgressBarComponent implements OnChanges {
             this.progressUsedForColorCalculation = 0;
         }
         // rounded to nearest integer
-        this.progressUsedForColorCalculation = Math.round(this.progressInPercent);
+        this.progressUsedForColorCalculation = round(this.progressInPercent);
         this.circleColor = this.calculateCircleColor();
     }
 
@@ -43,12 +44,12 @@ export class CircularProgressBarComponent implements OnChanges {
         if (value < 255) {
             redValue = 255;
             greenValue = Math.sqrt(value) * 16;
-            greenValue = Math.round(greenValue);
+            greenValue = round(greenValue);
         } else {
             greenValue = 255;
             value = value - 255;
             redValue = 255 - (value * value) / 255;
-            redValue = Math.round(redValue);
+            redValue = round(redValue);
         }
 
         return '#' + this.intToTwoDigitHex(redValue) + this.intToTwoDigitHex(greenValue) + '00';

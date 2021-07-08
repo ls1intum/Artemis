@@ -46,6 +46,8 @@ import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/m
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { round } from 'app/shared/util/utils';
+import { onError } from 'app/shared/util/global.utils';
 
 export interface Reason {
     translateKey: string;
@@ -243,10 +245,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.isExamMode) {
             this.exerciseCategories = this.quizExercise.categories || [];
             this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id!).subscribe(
-                (res: HttpResponse<string[]>) => {
-                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body!);
+                (response: HttpResponse<string[]>) => {
+                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
                 },
-                (res: HttpErrorResponse) => this.onError(res),
+                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
             );
         }
         this.updateDuration();
@@ -453,7 +455,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -473,7 +475,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.applyQuestionsAndFilter(quizExercisesResponse.body!);
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -490,10 +492,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 this.applyFilter();
             });
         }
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**
@@ -1279,7 +1277,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             this.cacheValidation();
         } else if (this.quizExercise.releaseDate && this.quizExercise.dueDate) {
             const duration = moment(this.quizExercise.dueDate).diff(this.quizExercise.releaseDate, 's');
-            this.quizExercise.duration = Math.round(duration);
+            this.quizExercise.duration = round(duration);
             this.updateDuration();
             this.cacheValidation();
         }

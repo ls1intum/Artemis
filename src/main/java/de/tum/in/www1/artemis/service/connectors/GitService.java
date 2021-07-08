@@ -222,8 +222,7 @@ public class GitService {
         }).setSshDirectory(new java.io.File(gitSshPrivateKeyPath.get())).setHomeDirectory(new java.io.File(System.getProperty("user.home"))).build(new JGitKeyCache());
 
         sshCallback = transport -> {
-            if (transport instanceof SshTransport) {
-                SshTransport sshTransport = (SshTransport) transport;
+            if (transport instanceof SshTransport sshTransport) {
                 transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
                 sshTransport.setSshSessionFactory(sshSessionFactory);
             }
@@ -1204,14 +1203,8 @@ public class GitService {
         var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
-        // The zip filename is either the student login, team name or some default string.
-        var studentTeamOrDefault = "-student-submission" + repo.getParticipation().getId();
-        if (participation.getStudent().isPresent()) {
-            studentTeamOrDefault = participation.getStudent().get().getLogin();
-        }
-        else if (participation.getTeam().isPresent()) {
-            studentTeamOrDefault = participation.getTeam().get().getName();
-        }
+        // The zip filename is either the student login, team short name or some default string.
+        var studentTeamOrDefault = Optional.ofNullable(participation.getParticipantIdentifier()).orElse("student-submission" + repo.getParticipation().getId());
 
         String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {

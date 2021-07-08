@@ -50,25 +50,25 @@ describe('Grading Instructions Management Component', () => {
             expect(component.backupExercise.id).to.equal(component.exercise.id);
             expect(component.questionEditorText).to.equal(
                 '[gradingInstruction]\n' +
-                    '\t[credits]  0\n' +
-                    '\t[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
-                    '\t[description]  Add grading instruction here (only visible for tutors)\n' +
-                    '\t[feedback]  Add feedback for students here (visible for students)\n' +
-                    '\t[maxCountInScore]  0\n' +
+                    '\t[credits] 0\n' +
+                    '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
+                    '\t[description] Add grading instruction here (only visible for tutors)\n' +
+                    '\t[feedback] Add feedback for students here (visible for students)\n' +
+                    '\t[maxCountInScore] 0\n' +
                     '\n' +
                     '[gradingCriterion]This is an example criterion\n' +
                     '\t[gradingInstruction]\n' +
-                    '\t[credits]  0\n' +
-                    '\t[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
-                    '\t[description]  Add grading instruction here (only visible for tutors)\n' +
-                    '\t[feedback]  Add feedback for students here (visible for students)\n' +
-                    '\t[maxCountInScore]  0\n' +
+                    '\t[credits] 0\n' +
+                    '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
+                    '\t[description] Add grading instruction here (only visible for tutors)\n' +
+                    '\t[feedback] Add feedback for students here (visible for students)\n' +
+                    '\t[maxCountInScore] 0\n' +
                     '\n' +
                     '[gradingInstruction]\n' +
                     '\t[credits] 0\n' +
-                    '\t[gradingScale]  Add instruction grading scale here (only visible for tutors)\n' +
-                    '\t[description]  Add grading instruction here (only visible for tutors)\n' +
-                    '\t[feedback]  Add feedback for students here (visible for students)\n' +
+                    '\t[gradingScale] Add instruction grading scale here (only visible for tutors)\n' +
+                    '\t[description] Add grading instruction here (only visible for tutors)\n' +
+                    '\t[feedback] Add feedback for students here (visible for students)\n' +
                     '\t[maxCountInScore] 0\n' +
                     '\n',
             );

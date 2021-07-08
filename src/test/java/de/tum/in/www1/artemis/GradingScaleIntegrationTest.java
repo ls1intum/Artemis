@@ -68,7 +68,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForCourseNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.NOT_FOUND, GradingScale.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -95,7 +95,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetGradingScaleForExamNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.NOT_FOUND, GradingScale.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
 
     /**

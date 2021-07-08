@@ -9,8 +9,14 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
 import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+//=======
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+//>>>>>>> develop
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -25,11 +31,16 @@ describe('Exam Navigation Bar Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
+//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
             providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
+//=======
+            providers: [ExamParticipationService, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
+//>>>>>>> develop
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamNavigationBarComponent);
         comp = fixture.componentInstance;
+        TestBed.inject(ExamParticipationService);
 
         comp.endDate = moment();
         comp.exercises = [
@@ -63,7 +74,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should change the exercise', () => {
-        spyOn(comp.onExerciseChanged, 'emit');
+        spyOn(comp.onPageChanged, 'emit');
         spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex).toEqual(0);
@@ -71,15 +82,19 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 1;
         const force = false;
 
+//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
         comp.changeExerciseByIndex(exerciseIndex, force);
+//=======
+        comp.changePage(false, exerciseIndex, force);
+//>>>>>>> develop
 
         expect(comp.exerciseIndex).toEqual(exerciseIndex);
-        expect(comp.onExerciseChanged.emit).toHaveBeenCalled();
+        expect(comp.onPageChanged.emit).toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should not change the exercise with invalid index', () => {
-        spyOn(comp.onExerciseChanged, 'emit');
+        spyOn(comp.onPageChanged, 'emit');
         spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex).toEqual(0);
@@ -87,10 +102,14 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 5;
         const force = false;
 
+//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
         comp.changeExerciseByIndex(exerciseIndex, force);
+//=======
+        comp.changePage(false, exerciseIndex, force);
+//>>>>>>> develop
 
         expect(comp.exerciseIndex).toEqual(0);
-        expect(comp.onExerciseChanged.emit).not.toHaveBeenCalled();
+        expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
@@ -113,21 +132,37 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise with changeExercise', () => {
+//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
         spyOn(comp, 'changeExerciseByIndex');
+//=======
+        spyOn(comp, 'changePage');
+//>>>>>>> develop
         const changeExercise = true;
 
         comp.saveExercise(changeExercise);
 
+//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
         expect(comp.changeExerciseByIndex).toHaveBeenCalled();
     });
 
     it('save the exercise without changeExercise', () => {
         spyOn(comp, 'changeExerciseByIndex');
+//=======
+        expect(comp.changePage).toHaveBeenCalled();
+    });
+
+    it('save the exercise without changeExercise', () => {
+        spyOn(comp, 'changePage');
+//>>>>>>> develop
         const changeExercise = false;
 
         comp.saveExercise(changeExercise);
 
+//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
         expect(comp.changeExerciseByIndex).not.toHaveBeenCalled();
+//=======
+        expect(comp.changePage).not.toHaveBeenCalled();
+//>>>>>>> develop
     });
 
     it('should hand in the exam early', () => {
@@ -141,17 +176,13 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should set the exercise button status for undefined submission', () => {
-        spyOn(comp, 'getSubmissionForExercise');
-
-        const result = comp.setExerciseButtonStatus(0);
+        const result = comp.setExerciseButtonStatus(1);
 
         expect(result).toEqual('synced');
     });
 
     it('should set the exercise button status for submitted submission', () => {
-        const submission = { submitted: true };
-
-        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
         const result = comp.setExerciseButtonStatus(0);
 
@@ -160,9 +191,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should set the exercise button status for submitted and synced submission active', () => {
-        const submission = { submitted: true, isSynced: true };
-
-        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(0);
 
@@ -170,9 +199,7 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should set the exercise button status for submitted and synced submission not active', () => {
-        const submission = { submitted: true, isSynced: true };
-
-        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(1);
 
@@ -180,49 +207,39 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should get the exercise button tooltip without submission', () => {
-        spyOn(comp, 'getSubmissionForExercise');
-
-        const result = comp.getExerciseButtonTooltip(0);
+        const result = comp.getExerciseButtonTooltip(comp.exercises[1]);
 
         expect(result).toEqual('synced');
     });
 
     it('should get the exercise button tooltip with submitted and synced submission', () => {
-        const submission = { submitted: true, isSynced: true };
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
-
-        const result = comp.getExerciseButtonTooltip(0);
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
         expect(result).toEqual('submitted');
     });
 
     it('should get the exercise button tooltip with submitted submission', () => {
-        const submission = { submitted: true };
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
-        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
-
-        const result = comp.getExerciseButtonTooltip(0);
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
         expect(result).toEqual('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with submission', () => {
-        const submission = {};
+        comp.exercises[0].studentParticipations![0].submissions![0] = {};
 
-        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
-
-        const result = comp.getExerciseButtonTooltip(0);
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
         expect(result).toEqual('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with synced submission', () => {
-        const submission = { isSynced: true };
+        comp.exercises[0].studentParticipations![0].submissions![0] = { isSynced: true };
 
-        spyOn(comp, 'getSubmissionForExercise').and.returnValue(submission);
-
-        const result = comp.getExerciseButtonTooltip(0);
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
         expect(result).toEqual('notSubmitted');
     });

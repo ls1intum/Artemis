@@ -4,6 +4,10 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -30,6 +34,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
     private textareaElement: HTMLTextAreaElement;
+    listOfBlocksWithFeedback: any[];
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
 
@@ -53,7 +58,11 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         return this.isSelectedConflict;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
+        protected modalService: NgbModal,
+        protected assessmentsService: TextAssessmentService,
+    ) {}
 
     /**
      * Life cycle hook to indicate component initialization is done
@@ -67,6 +76,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             this.disableEditScore = false;
         }
     }
+
     /**
      * Increase size of text area automatically
      */
@@ -141,5 +151,45 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
             this.disableEditScore = false;
         }
         this.didChange();
+    }
+
+    // this method fires the modal service and shows a modal after connecting feedback with its respective blocks
+    async openOriginOfFeedbackModal(content: any) {
+        await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
+        this.modalService.open(content, { size: 'lg' });
+    }
+
+    /**
+     * This method is used to find the submission used for making the current Automatic Feedback and retrieve its blocks.
+     * The blocks are then structured and set as a local property of this component to be shown in a modal
+     */
+    async connectAutomaticFeedbackOriginBlocksWithFeedback() {
+        // retrieve participation and submission references for the Automatic Feedback generated
+        const participationId = this.feedback.suggestedFeedbackParticipationReference ? this.feedback.suggestedFeedbackParticipationReference : -1;
+        const submissionId = this.feedback.suggestedFeedbackOriginSubmissionReference ? this.feedback.suggestedFeedbackOriginSubmissionReference : -1;
+        if (participationId >= 0 && submissionId >= 0) {
+            // finds the corresponding submission where the automatic feedback came from
+            const participation: StudentParticipation = await lastValueFrom(this.assessmentsService.getFeedbackDataForExerciseSubmission(participationId, submissionId));
+
+            // connect the feedback with its respective block if any.
+            let blocks: any[] = participation.submissions?.values().next().value.blocks;
+            // Sort blocks to show them in order.
+            blocks = blocks.sort((a, b) => a!.startIndex! - b!.startIndex!);
+            const feedbacks: any[] = participation.submissions?.values().next().value.latestResult.feedbacks;
+
+            // set list of blocks to be shown in the modal
+            this.listOfBlocksWithFeedback = blocks
+                .map((block) => {
+                    const blockFeedback = feedbacks.find((feedback) => feedback.reference === block.id);
+                    return {
+                        text: block.text,
+                        feedback: blockFeedback && blockFeedback.detailText,
+                        credits: blockFeedback ? blockFeedback.credits : 0,
+                        reusedCount: blockFeedback && block.numberOfAffectedSubmissions,
+                        type: this.feedback.suggestedFeedbackReference === block.id ? 'AUTOMATIC' : 'MANUAL',
+                    };
+                })
+                .filter((item) => item.text);
+        }
     }
 }

@@ -38,7 +38,7 @@
                     [ngbTooltip]="'artemisApp.plagiarism.similarity-threshold-tooltip' | artemisTranslate"
                     container="body"
                 ></fa-icon>
-                <input type="number" required class="form-control" min="50" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
+                <input type="number" required class="form-control" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
             </div>
 
             <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">

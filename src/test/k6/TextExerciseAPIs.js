@@ -4,7 +4,7 @@ import { startExercise, getExercise, deleteExercise, startTutorParticipation, ge
 import { assessTextSubmission, newTextExercise, submitRandomTextAnswerExam } from './requests/text.js';
 import { login } from './requests/requests.js';
 import { createUsersIfNeeded } from './requests/user.js';
-import { TEXT_SUBMISSION_WITHOUT_ASSESSMENT, TEXT_EXERCISE } from './requests/endpoints';
+import { TEXT_SUBMISSION_WITHOUT_ASSESSMENT, TEXT_EXERCISE } from './requests/endpoints.js';
 
 export let options = {
     maxRedirects: 0,
@@ -21,6 +21,8 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 let userOffset = parseInt(__ENV.USER_OFFSET);
 const onlyPrepare = __ENV.ONLY_PREPARE === true || __ENV.ONLY_PREPARE === 'true';
+// Use users with ID >= 100 to avoid manual testers entering the wrong password too many times interfering with tests
+const userIdOffset = 99;
 
 export function setup() {
     console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
@@ -50,8 +52,8 @@ export function setup() {
         createUsersIfNeeded(artemisAdmin, baseUsername, basePassword, adminUsername, adminPassword, course, userOffset + iterations, true);
 
         // Create course instructor
-        const instructorUsername = baseUsername.replace('USERID', '1');
-        const instructorPassword = basePassword.replace('USERID', '1');
+        const instructorUsername = baseUsername.replace('USERID', '101');
+        const instructorPassword = basePassword.replace('USERID', '101');
 
         console.log('Assigning ' + instructorUsername + 'to course ' + course.id + ' as the instructor');
         addUserToInstructorsInCourse(artemisAdmin, instructorUsername, course.id);
@@ -80,7 +82,7 @@ export function setup() {
         exercise = getExercise(artemis, exerciseId, TEXT_EXERCISE(exerciseId));
     }
 
-    for (let i = 1; i <= iterations; i++) {
+    for (let i = 1 + userIdOffset; i <= iterations + userIdOffset; i++) {
         console.log(userOffset);
         const userId = parseInt(__VU) + userOffset + i;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -110,7 +112,7 @@ export function setup() {
 export default function (data) {
     // The user id (1, 2, 3) is stored in __VU
     const iterations = parseInt(__ENV.ITERATIONS);
-    const userId = parseInt(__VU) + userOffset + iterations;
+    const userId = parseInt(__VU) + userOffset + iterations + userIdOffset;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
 
