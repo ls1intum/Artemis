@@ -36,15 +36,14 @@ public class PostService extends PostingService {
 
     private final GroupNotificationService groupNotificationService;
 
-    protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
-            UserRepository userRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            GroupNotificationService groupNotificationService1) {
+    protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
+            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
         super(courseRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
-        this.groupNotificationService = groupNotificationService1;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -147,9 +146,9 @@ public class PostService extends PostingService {
 
     /**
      * Add reaction to a post and persist the post
-     * @param post      post that is reacted on
-     * @param reaction  reaction that was added by a user
      *
+     * @param post     post that is reacted on
+     * @param reaction reaction that was added by a user
      */
     public void updateWithReaction(Post post, Reaction reaction) {
         post.addReaction(reaction);
@@ -307,7 +306,8 @@ public class PostService extends PostingService {
 
     /**
      * Retrieve post from database by id
-     * @param postId    id of requested post
+     *
+     * @param postId id of requested post
      * @return retrieved post
      */
     public Post findById(Long postId) {

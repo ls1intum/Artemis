@@ -31,14 +31,14 @@ public class AnswerPostService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
-            UserRepository userRepository, AnswerPostRepository answerPostRepository, PostRepository postRepository, GroupNotificationService groupNotificationService1,
+    protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
+            AnswerPostRepository answerPostRepository, PostRepository postRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService) {
         super(courseRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
-        this.groupNotificationService = groupNotificationService1;
+        this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
 
@@ -118,9 +118,9 @@ public class AnswerPostService extends PostingService {
 
     /**
      * Add reaction to an answer post and persist the post
-     * @param answerPost    answer post that is reacted on
-     * @param reaction      reaction that was added by a user
      *
+     * @param answerPost answer post that is reacted on
+     * @param reaction   reaction that was added by a user
      */
     public void updateWithReaction(AnswerPost answerPost, Reaction reaction) {
         answerPost.addReaction(reaction);
@@ -178,7 +178,8 @@ public class AnswerPostService extends PostingService {
 
     /**
      * Retrieve answer post from database by id
-     * @param answerPostId    id of requested post
+     *
+     * @param answerPostId id of requested post
      * @return retrieved answer post
      */
     public AnswerPost findById(Long answerPostId) {

@@ -22,7 +22,7 @@ public abstract class PostingService {
     }
 
     /**
-     * Helper method to check if the requesting user is authorized in the course context
+     * Checks if the requesting user is authorized in the course context
      *
      * @param posting posting that is requested
      * @param user    requesting user
@@ -34,7 +34,7 @@ public abstract class PostingService {
     }
 
     /**
-     * Helper method to (i) compare id of the course belonging to the post with the path variable courseId,
+     * Method to (i) compare id of the course belonging to the post with the path variable courseId,
      * and (ii) if the possibly associated exercise is not an exam exercise
      *
      * @param post     post that is checked
@@ -52,7 +52,7 @@ public abstract class PostingService {
     }
 
     /**
-     * Helper method to compare id of the course belonging to the associated post with the path variable courseId,
+     * Compares id of the course belonging to the associated post with the path variable courseId,
      *
      * @param answerPost answer post that is checked
      * @param courseId   id of the course that is used as path variable
