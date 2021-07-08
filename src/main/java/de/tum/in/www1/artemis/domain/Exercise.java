@@ -443,7 +443,7 @@ public abstract class Exercise extends DomainObject {
     }
 
     /**
-     * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwiese return null.
+     * Utility method to get the exam. Get the exam over the exerciseGroup, if one was set, otherwise return null.
      *
      * @return exam, to which the exercise belongs
      */
