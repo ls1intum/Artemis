@@ -43,7 +43,6 @@ import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { TutorParticipationViewModel } from 'app/shared/dashboards/tutor-participation-table/tutor-participation-table.component';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -328,20 +327,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 (error: HttpErrorResponse) => this.onError(error.message),
             );
         }
-    }
-
-    get tutorParticipationViewModel(): TutorParticipationViewModel {
-        return new TutorParticipationViewModel(
-            this.exercise,
-            this.tutorParticipationStatus,
-            this.numberOfComplaints,
-            this.numberOfOpenComplaints,
-            this.numberOfMoreFeedbackRequests,
-            this.numberOfOpenMoreFeedbackRequests,
-            this.numberOfAssessmentsOfCorrectionRounds,
-            this.numberOfSubmissions,
-            this.stats,
-        );
     }
 
     language(submission: Submission): string {

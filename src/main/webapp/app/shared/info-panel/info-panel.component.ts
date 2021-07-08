@@ -7,6 +7,7 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class InfoPanelComponent implements OnInit {
     @Input() panelHeader: string;
+    @Input() panelDescriptionHeader: string;
 
     constructor() {}
 

@@ -7,6 +7,7 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class SidePanelComponent implements OnInit {
     @Input() panelHeader: string;
+    @Input() panelDescriptionHeader?: string;
 
     constructor() {}
 

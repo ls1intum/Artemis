@@ -10,6 +10,20 @@
             "pageHeader": "Bewertungs-Dashboard für die Übung",
             "testRunPageHeader": "Testlaufübungs-Dashboard für die Übung:",
             "yourStatus": "Dein Status",
+            "tutorParticipationStatus": {
+                "title": {
+                    "NOT_PARTICIPATED": "Not participated",
+                    "REVIEWED_INSTRUCTIONS": "Reviewed the instructions",
+                    "TRAINED": "Trained on example submissions",
+                    "COMPLETED": "Completed students assessment"
+                },
+                "description": {
+                    "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood it",
+                    "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and review the assessment",
+                    "TRAINED": "The assessment training is finished, now you can start assessing student submissions",
+                    "COMPLETED": ""
+                }
+            },
             "toggleSecondCorrectionOn": "Zweitkorrektur erlauben",
             "toggleSecondCorrectionOff": "Zweitkorrektur verbieten",
             "youAssessedSoFar": "Du hast bisher {{numberOfTutorAssessments}} Abgaben bewertet.",
@@ -36,6 +50,7 @@
             "studentsSubmissions": "Abgaben der Studierenden",
             "testRunSubmissions": "Testlaufabgaben",
             "submissionDate": "Abgabedatum",
+            "pleaseContactIfUnclear": "In case something is unclear, please contact an instructor before you start assessing.",
             "result": "Ergebnis",
             "status": "Status",
             "score": "Ergebnis",
@@ -62,6 +77,7 @@
             "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
             "exerciseInformation": "Übungsinformationen",
+            "totalYours": "total / yours",
             "stats": {
                 "intime": "Zeitgerecht",
                 "late": "Verspätet"

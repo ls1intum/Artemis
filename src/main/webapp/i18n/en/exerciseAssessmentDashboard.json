@@ -10,13 +10,27 @@
             "pageHeader": "Exercise Assessment Dashboard for:",
             "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
             "yourStatus": "Your status",
+            "tutorParticipationStatus": {
+                "title": {
+                    "NOT_PARTICIPATED": "Not participated",
+                    "REVIEWED_INSTRUCTIONS": "Read the instructions",
+                    "TRAINED": "Trained on example submissions",
+                    "COMPLETED": "Completed assessing students submissions"
+                },
+                "description": {
+                    "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood them",
+                    "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and start training",
+                    "TRAINED": "The assessment training is finished, now you can start assessing students submissions",
+                    "COMPLETED": ""
+                }
+            },
             "toggleSecondCorrectionOn": "Enable second correction",
             "toggleSecondCorrectionOff": "Disable second correction",
             "youAssessedSoFar": "You have assessed {{numberOfTutorAssessments}} submissions so far",
-            "needToReadGradingInstructions": "You need to read the grading instructions before starting assessing",
-            "readGradingInstructions": "Read grading instructions",
+            "needToReadGradingInstructions": "You need to read the assessment instructions before starting assessing",
+            "readGradingInstructions": "Read assessment instructions",
             "startYourParticipation": "Start participating in the exercise",
-            "gradingInstructions": "Grading instructions",
+            "gradingInstructions": "Assessment instructions",
             "problemStatement": "Problem statement",
             "exampleSolution": "Example solution",
             "exampleSolutionExplanation": "Example solution explanation",
@@ -36,6 +50,7 @@
             "studentsSubmissions": "Students' submissions",
             "testRunSubmissions": "Test Run submissions",
             "submissionDate": "Submission date",
+            "pleaseContactIfUnclear": "In case something is unclear, please contact an instructor before you start assessing.",
             "result": "Result",
             "status": "Status",
             "score": "Score",
@@ -62,6 +77,7 @@
             "showMoreFeedbackRequests": "Show the request",
             "numberOfUnassessedSubmissions": "Unassessed submissions",
             "exerciseInformation": "Exercise information",
+            "totalYours": "total / yours",
             "stats": {
                 "intime": "On time",
                 "late": "Late"
