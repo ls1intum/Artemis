@@ -9,14 +9,11 @@ import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-tran
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
 import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-//=======
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-//>>>>>>> develop
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -31,11 +28,12 @@ describe('Exam Navigation Bar Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-            providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
-//=======
-            providers: [ExamParticipationService, { provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }],
-//>>>>>>> develop
+            providers: [
+                ExamParticipationService,
+                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamNavigationBarComponent);
@@ -82,11 +80,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 1;
         const force = false;
 
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-        comp.changeExerciseByIndex(exerciseIndex, force);
-//=======
         comp.changePage(false, exerciseIndex, force);
-//>>>>>>> develop
 
         expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onPageChanged.emit).toHaveBeenCalled();
@@ -102,11 +96,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 5;
         const force = false;
 
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-        comp.changeExerciseByIndex(exerciseIndex, force);
-//=======
         comp.changePage(false, exerciseIndex, force);
-//>>>>>>> develop
 
         expect(comp.exerciseIndex).toEqual(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
@@ -132,37 +122,21 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('save the exercise with changeExercise', () => {
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-        spyOn(comp, 'changeExerciseByIndex');
-//=======
         spyOn(comp, 'changePage');
-//>>>>>>> develop
         const changeExercise = true;
 
         comp.saveExercise(changeExercise);
 
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-        expect(comp.changeExerciseByIndex).toHaveBeenCalled();
-    });
-
-    it('save the exercise without changeExercise', () => {
-        spyOn(comp, 'changeExerciseByIndex');
-//=======
         expect(comp.changePage).toHaveBeenCalled();
     });
 
     it('save the exercise without changeExercise', () => {
         spyOn(comp, 'changePage');
-//>>>>>>> develop
         const changeExercise = false;
 
         comp.saveExercise(changeExercise);
 
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-        expect(comp.changeExerciseByIndex).not.toHaveBeenCalled();
-//=======
         expect(comp.changePage).not.toHaveBeenCalled();
-//>>>>>>> develop
     });
 
     it('should hand in the exam early', () => {
