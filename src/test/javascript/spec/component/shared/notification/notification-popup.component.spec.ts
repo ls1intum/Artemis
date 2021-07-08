@@ -135,7 +135,7 @@ describe('Notification Popup Component', () => {
         });
     });
 
-    describe('Webscoket receive', () => {
+    describe('Websocket receive', () => {
         const replaceSubscribeToNotificationUpdatesUsingQuizNotification = () => {
             const fake = sinon.fake.returns(new BehaviorSubject(quizNotification));
             sinon.replace(notificationService, 'subscribeToNotificationUpdates', fake);
