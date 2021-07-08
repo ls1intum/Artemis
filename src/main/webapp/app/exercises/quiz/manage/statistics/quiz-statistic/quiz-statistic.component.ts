@@ -11,6 +11,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { BaseChartDirective, Color } from 'ng2-charts';
+import { round } from 'app/shared/util/utils';
 
 /**
  * this interface is adapted from chart.js
@@ -94,8 +95,8 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
             dataSetProvider.getDataSets().forEach((dataset: DataSet, datasetIndex: number) => {
                 const meta = chartInstance.getDatasetMeta(datasetIndex);
                 meta.data.forEach((bar: any, dataIndex: number) => {
-                    const data = (Math.round(dataset.data[dataIndex] * 100) / 100).toString();
-                    const dataPercentage = Math.round((dataset.data[dataIndex] / participants) * 1000) / 10 || 0;
+                    const data = round(dataset.data[dataIndex], 2).toString();
+                    const dataPercentage = round(dataset.data[dataIndex] / participants, 3) * 100 || 0;
                     ctx.fillText(data, bar._model.x, bar._model.y - 20);
                     ctx.fillText(`(${dataPercentage}%)`, bar._model.x, bar._model.y - 5);
                 });

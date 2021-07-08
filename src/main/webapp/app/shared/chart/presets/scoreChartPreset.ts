@@ -1,5 +1,6 @@
 import { ChartComponent, ChartPreset } from 'app/shared/chart/chart.component';
 import { ChartDataSets, ChartLegendLabelItem } from 'chart.js';
+import { round } from 'app/shared/util/utils';
 
 export class ScoreChartPreset implements ChartPreset {
     private chart: ChartComponent;
@@ -93,7 +94,7 @@ export class ScoreChartPreset implements ChartPreset {
 
     private roundToDecimals(i: number, n: number) {
         const f = 10 ** n;
-        return Math.round(i * f) / f;
+        return round(i, f);
     }
 
     /**

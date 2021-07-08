@@ -20,6 +20,9 @@ import {
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { round } from 'app/shared/util/utils';
 import { ChartType } from 'chart.js';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeDTO } from 'app/entities/grade-step.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -159,11 +162,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         },
     };
 
+    gradingScaleExists = false;
+    isBonus = false;
+    gradeDTO?: GradeDTO;
+
     constructor(
         private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
+        private gradingSystemService: GradingSystemService,
     ) {}
 
     ngOnInit() {
@@ -205,12 +213,24 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             };
             this.groupExercisesByType();
         });
+
+        this.calculateCourseGrade();
     }
 
     ngOnDestroy() {
         this.translateSubscription.unsubscribe();
         this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
+    }
+
+    calculateCourseGrade() {
+        this.gradingSystemService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
+            if (gradeDTO) {
+                this.gradingScaleExists = true;
+                this.gradeDTO = gradeDTO;
+                this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
+            }
+        });
     }
 
     private onCourseLoad() {
