@@ -110,7 +110,7 @@ public class ComplaintService {
     }
 
     public Optional<Complaint> getByResultId(long resultId) {
-        return complaintRepository.findByResult_Id(resultId);
+        return complaintRepository.findByResultId(resultId);
     }
 
     /**
