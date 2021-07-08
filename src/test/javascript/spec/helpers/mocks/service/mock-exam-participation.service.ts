@@ -3,9 +3,9 @@ import { Exercise } from 'app/entities/exercise.model';
 import { BehaviorSubject } from 'rxjs';
 import { Observable } from 'rxjs';
 
-let studentExam = new StudentExam();
-let exercise = { id: 7 };
-let exercises = [exercise];
+const studentExam = new StudentExam();
+const exercise = { id: 7 };
+const exercises = [exercise];
 studentExam.exercises = exercises as Exercise[];
 
 const examParticipationSubjectMock = new BehaviorSubject<StudentExam>(studentExam);

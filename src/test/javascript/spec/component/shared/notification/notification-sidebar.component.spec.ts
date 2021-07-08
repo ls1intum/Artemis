@@ -1,271 +1,240 @@
-import * as chai from 'chai';
-import * as sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import * as moment from 'moment';
-import { BehaviorSubject, of } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { NotificationService } from 'app/shared/notification/notification.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import * as moment from 'moment';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
+import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
+import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { Submission } from 'app/entities/submission.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { BehaviorSubject } from 'rxjs';
+import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { Notification } from 'app/entities/notification.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
-import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
-import { UserService } from 'app/core/user/user.service';
-import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-chai.use(sinonChai);
-const expect = chai.expect;
+describe('Exam Navigation Bar Component', () => {
+    let fixture: ComponentFixture<ExamNavigationBarComponent>;
+    let comp: ExamNavigationBarComponent;
 
-describe('Notification Sidebar Component', () => {
-    let notificationSidebarComponent: NotificationSidebarComponent;
-    let notificationSidebarComponentFixture: ComponentFixture<NotificationSidebarComponent>;
-    let notificationService: NotificationService;
-    let accountService: AccountService;
-    let userService: UserService;
-
-    const notificationNow = { id: 1, notificationDate: moment() } as Notification;
-    const notificationPast = { id: 2, notificationDate: moment().subtract(2, 'day') } as Notification;
-    const notifications = [notificationNow, notificationPast] as Notification[];
-
-    const generateQueryResponse = (ns: Notification[]) => {
-        return {
-            body: ns,
-            headers: new HttpHeaders({
-                'X-Total-Count': ns.length.toString(),
-            }),
-        } as HttpResponse<Notification[]>;
+    const examExerciseIdAndProblemStatementSubjectMock = new BehaviorSubject<ExamExerciseUpdate>({ exerciseId: -1, problemStatement: '' });
+    const mockExamExerciseUpdateService = {
+        currentExerciseIdAndProblemStatement: examExerciseIdAndProblemStatementSubjectMock.asObservable(),
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
-            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, TranslateTestingModule],
+            declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
             providers: [
+                ExamParticipationService,
+                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: NotificationService, useClass: MockNotificationService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: UserService, useClass: MockUserService },
             ],
-        })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-            .compileComponents()
-            .then(() => {
-                notificationSidebarComponentFixture = TestBed.createComponent(NotificationSidebarComponent);
-                notificationSidebarComponent = notificationSidebarComponentFixture.componentInstance;
-                notificationService = TestBed.inject(NotificationService);
-                accountService = TestBed.inject(AccountService);
-                userService = TestBed.inject(UserService);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExamNavigationBarComponent);
+        comp = fixture.componentInstance;
+        TestBed.inject(ExamParticipationService);
+
+        comp.endDate = moment();
+        comp.exercises = [
+            {
+                id: 0,
+                type: ExerciseType.PROGRAMMING,
+                studentParticipations: [
+                    {
+                        submissions: [{ id: 3 } as Submission],
+                    } as StudentParticipation,
+                ],
+            } as Exercise,
+            { id: 1, type: ExerciseType.TEXT } as Exercise,
+            { id: 2, type: ExerciseType.MODELING } as Exercise,
+        ];
     });
 
-    describe('Initialization', () => {
-        it('should set last notification read', () => {
-            const lastNotificationRead = moment();
-            const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
-            sinon.replace(accountService, 'getAuthenticationState', fake);
-            notificationSidebarComponent.ngOnInit();
-            expect(accountService.getAuthenticationState).to.have.been.calledOnce;
-            expect(notificationSidebarComponent.lastNotificationRead).to.equal(lastNotificationRead);
-        });
+    beforeEach(fakeAsync(() => {
+        fixture.detectChanges();
+        tick();
+    }));
 
-        it('should query notifications', () => {
-            sinon.spy(notificationService, 'query');
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.have.been.calledOnce;
-        });
+    it('trigger when the exam is about to end', () => {
+        spyOn(comp, 'saveExercise');
+        spyOn(comp.examAboutToEnd, 'emit');
 
-        it('should subscribe to notification updates for user', () => {
-            sinon.spy(notificationService, 'subscribeToNotificationUpdates');
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.subscribeToNotificationUpdates).to.have.been.calledOnce;
-        });
+        comp.triggerExamAboutToEnd();
+
+        expect(comp.saveExercise).toHaveBeenCalled();
+        expect(comp.examAboutToEnd.emit).toHaveBeenCalled();
     });
 
-    describe('Sidebar visibility', () => {
-        it('should open sidebar when user clicks on notification bell', () => {
-            sinon.spy(notificationSidebarComponent, 'toggleSidebar');
-            const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
-            bell.click();
-            expect(notificationSidebarComponent.toggleSidebar).to.have.been.calledOnce;
-            expect(notificationSidebarComponent.showSidebar).to.be.true;
-        });
+    it('should change the exercise', () => {
+        spyOn(comp.onPageChanged, 'emit');
+        spyOn(comp, 'setExerciseButtonStatus');
 
-        it('should close sidebar when user clicks on notification overlay', () => {
-            notificationSidebarComponent.showSidebar = true;
-            sinon.spy(notificationSidebarComponent, 'toggleSidebar');
-            const overlay = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-overlay');
-            overlay.click();
-            expect(notificationSidebarComponent.toggleSidebar).to.have.been.calledOnce;
-            expect(notificationSidebarComponent.showSidebar).to.be.false;
-        });
+        expect(comp.exerciseIndex).toEqual(0);
 
-        it('should close sidebar when user clicks on close button', () => {
-            notificationSidebarComponent.showSidebar = true;
-            sinon.spy(notificationSidebarComponent, 'toggleSidebar');
-            const close = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.close');
-            close.click();
-            expect(notificationSidebarComponent.toggleSidebar).to.have.been.calledOnce;
-            expect(notificationSidebarComponent.showSidebar).to.be.false;
-        });
+        const exerciseIndex = 1;
+        const force = false;
 
-        it('should close sidebar when user clicks on a notification', () => {
-            notificationSidebarComponent.sortedNotifications = notifications;
-            notificationSidebarComponentFixture.detectChanges();
-            notificationSidebarComponent.showSidebar = true;
-            const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
-            notification.click();
-            expect(notificationSidebarComponent.showSidebar).to.be.false;
-        });
+        comp.changePage(false, exerciseIndex, force);
+
+        expect(comp.exerciseIndex).toEqual(exerciseIndex);
+        expect(comp.onPageChanged.emit).toHaveBeenCalled();
+        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
-    describe('Notification click', () => {
-        it('should interpret notification target when user clicks notification', () => {
-            sinon.spy(notificationService, 'interpretNotification');
-            notificationSidebarComponent.sortedNotifications = notifications;
-            notificationSidebarComponentFixture.detectChanges();
-            const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
-            notification.click();
-            expect(notificationService.interpretNotification).to.be.calledOnce;
-        });
+    it('should not change the exercise with invalid index', () => {
+        spyOn(comp.onPageChanged, 'emit');
+        spyOn(comp, 'setExerciseButtonStatus');
+
+        expect(comp.exerciseIndex).toEqual(0);
+
+        const exerciseIndex = 5;
+        const force = false;
+
+        comp.changePage(false, exerciseIndex, force);
+
+        expect(comp.exerciseIndex).toEqual(0);
+        expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
+        expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
-    describe('Last notification read', () => {
-        it('should update users last notification read when user opens sidebar', fakeAsync(() => {
-            sinon.spy(notificationSidebarComponent, 'updateLastNotificationRead');
-            sinon.spy(userService, 'updateLastNotificationRead');
-            const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
-            bell.click();
-            tick(2000);
-            expect(notificationSidebarComponent.updateLastNotificationRead).to.have.been.calledOnce;
-            expect(userService.updateLastNotificationRead).to.have.been.calledOnce;
-        }));
+    it('should tell the type of the selected programming exercise', () => {
+        comp.exerciseIndex = 0;
 
-        it('should update components last notification read two seconds after the user opened the sidebar', fakeAsync(() => {
-            notificationSidebarComponent.lastNotificationRead = undefined;
-            const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
-            const lastNotificationReadNow = moment();
-            bell.click();
-            tick(2000);
-            expect(notificationSidebarComponent.lastNotificationRead).to.be.eql(lastNotificationReadNow);
-        }));
+        expect(comp.isProgrammingExercise()).toBe(true);
     });
 
-    describe('Load notifications', () => {
-        const replaceSubscribeToNotificationUpdates = () => {
-            const fake = sinon.fake.returns(new BehaviorSubject(notificationNow));
-            sinon.replace(notificationService, 'subscribeToNotificationUpdates', fake);
-        };
+    it('should tell the type of the selected text exercise', () => {
+        comp.exerciseIndex = 1;
 
-        it('should not add already existing notifications', () => {
-            notificationSidebarComponent.notifications = [notificationNow];
-            const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'query', fake);
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).to.be.equal(notifications.length);
-        });
-
-        it('should update sorted notifications array after new notifications were loaded', () => {
-            const fake = sinon.fake.returns(of(generateQueryResponse([notificationPast, notificationNow])));
-            sinon.replace(notificationService, 'query', fake);
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.have.been.calledOnce;
-            expect(notificationSidebarComponent.sortedNotifications[0]).to.be.equal(notificationNow);
-            expect(notificationSidebarComponent.sortedNotifications[1]).to.be.equal(notificationPast);
-        });
-
-        it('should set total notification count to received X-Total-Count header', () => {
-            const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'query', fake);
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.have.been.calledOnce;
-            expect(notificationSidebarComponent.totalNotifications).to.be.equal(notifications.length);
-        });
-
-        it('should increase total notification count if a new notification is received via websocket', () => {
-            replaceSubscribeToNotificationUpdates();
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
-            expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
-        });
-
-        it('should not add already existing notification received via websocket', () => {
-            notificationSidebarComponent.notifications = [notificationNow];
-            notificationSidebarComponent.totalNotifications = 1;
-            replaceSubscribeToNotificationUpdates();
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
-            expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
-        });
-
-        it('should load more notifications only if not all are already loaded', () => {
-            notificationSidebarComponent.notifications = notifications;
-            notificationSidebarComponent.totalNotifications = 2;
-            sinon.spy(notificationService, 'query');
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).not.to.be.called;
-        });
+        expect(comp.isProgrammingExercise()).toBe(false);
     });
 
-    describe('Recent notifications', () => {
-        it('should evaluate recent notifications correctly', () => {
-            notificationSidebarComponent.lastNotificationRead = moment().subtract(1, 'day');
-            const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
-            sinon.replace(notificationService, 'query', fake);
-            notificationSidebarComponent.ngOnInit();
-            expect(notificationService.query).to.be.called;
-            expect(notificationSidebarComponent.recentNotificationCount).to.be.equal(1);
-        });
+    it('should tell the type of the selected modeling exercise', () => {
+        comp.exerciseIndex = 2;
 
-        it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {
-            notificationSidebarComponent.notifications = notifications;
-            notificationSidebarComponent.recentNotificationCount = 2;
-            notificationSidebarComponentFixture.detectChanges();
-            const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.bg-danger > span'));
-            expect(plus).to.be.not.null;
-        });
+        expect(comp.isProgrammingExercise()).toBe(false);
     });
 
-    describe('UI', () => {
-        it('should show no notifications message', () => {
-            notificationSidebarComponent.notifications = [];
-            notificationSidebarComponentFixture.detectChanges();
-            const noNotificationsMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.no-notifications');
-            expect(noNotificationsMessage).to.be.not.null;
+    it('save the exercise with changeExercise', () => {
+        spyOn(comp, 'changePage');
+        const changeExercise = true;
+
+        comp.saveExercise(changeExercise);
+
+        expect(comp.changePage).toHaveBeenCalled();
+    });
+
+    it('save the exercise without changeExercise', () => {
+        spyOn(comp, 'changePage');
+        const changeExercise = false;
+
+        comp.saveExercise(changeExercise);
+
+        expect(comp.changePage).not.toHaveBeenCalled();
+    });
+
+    it('should hand in the exam early', () => {
+        spyOn(comp, 'saveExercise');
+        spyOn(comp.onExamHandInEarly, 'emit');
+
+        comp.handInEarly();
+
+        expect(comp.saveExercise).toHaveBeenCalled();
+        expect(comp.onExamHandInEarly.emit).toHaveBeenCalled();
+    });
+
+    it('should set the exercise button status for undefined submission', () => {
+        const result = comp.setExerciseButtonStatus(1);
+
+        expect(result).toEqual('synced');
+    });
+
+    it('should set the exercise button status for submitted submission', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
+
+        const result = comp.setExerciseButtonStatus(0);
+
+        expect(comp.icon).toEqual('edit');
+        expect(result).toEqual('notSynced');
+    });
+
+    it('should set the exercise button status for submitted and synced submission active', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+
+        const result = comp.setExerciseButtonStatus(0);
+
+        expect(result).toEqual('synced active');
+    });
+
+    it('should set the exercise button status for submitted and synced submission not active', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+
+        const result = comp.setExerciseButtonStatus(1);
+
+        expect(result).toEqual('synced');
+    });
+
+    it('should get the exercise button tooltip without submission', () => {
+        const result = comp.getExerciseButtonTooltip(comp.exercises[1]);
+
+        expect(result).toEqual('synced');
+    });
+
+    it('should get the exercise button tooltip with submitted and synced submission', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+
+        expect(result).toEqual('submitted');
+    });
+
+    it('should get the exercise button tooltip with submitted submission', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
+
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+
+        expect(result).toEqual('notSavedOrSubmitted');
+    });
+
+    it('should get the exercise button tooltip with submission', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = {};
+
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+
+        expect(result).toEqual('notSavedOrSubmitted');
+    });
+
+    it('should get the exercise button tooltip with synced submission', () => {
+        comp.exercises[0].studentParticipations![0].submissions![0] = { isSynced: true };
+
+        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+
+        expect(result).toEqual('notSubmitted');
+    });
+
+    describe('Exam Exercise Update', () => {
+        const updatedExerciseId = 2;
+        const updatedProblemStatement = 'Updated Problem Statement';
+        const update = { exerciseId: updatedExerciseId, problemStatement: updatedProblemStatement };
+        const navigation = { exerciseId: updatedExerciseId, problemStatement: '' };
+
+        it('should update Exercise Problem Statement', () => {
+            examExerciseIdAndProblemStatementSubjectMock.next(update);
+            const foundIndex = comp.exercises.findIndex((ex) => ex.id === updatedExerciseId);
+            const result = comp.exercises[foundIndex].problemStatement;
+            expect(result).toEqual(updatedProblemStatement);
         });
 
-        it('should show loading spinner when more notifications are loaded', () => {
-            notificationSidebarComponent.loading = true;
-            notificationSidebarComponentFixture.detectChanges();
-            const loadingSpinner = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.loading-spinner');
-            expect(loadingSpinner).to.be.not.null;
-        });
-
-        it('should show all notifications loaded message when all notifications are loaded', () => {
-            notificationSidebarComponent.notifications = notifications;
-            notificationSidebarComponent.totalNotifications = 1;
-            notificationSidebarComponentFixture.detectChanges();
-            const allLoadedMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.all-loaded');
-            expect(allLoadedMessage).to.be.not.null;
-        });
-
-        it('should show error message when loading of notifications failed', () => {
-            notificationSidebarComponent.error = 'error';
-            notificationSidebarComponentFixture.detectChanges();
-            const errorMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.alert-danger');
-            expect(errorMessage).to.be.not.null;
+        it('should navigate to other Exercise', () => {
+            spyOn(comp, 'changeExerciseById');
+            examExerciseIdAndProblemStatementSubjectMock.next(navigation);
+            expect(comp.changeExerciseById).toHaveBeenCalled();
         });
     });
 });

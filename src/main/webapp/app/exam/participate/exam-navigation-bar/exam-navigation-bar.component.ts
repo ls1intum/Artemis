@@ -5,12 +5,9 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
-//=======
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-//>>>>>>> develop
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -35,13 +32,9 @@ export class ExamNavigationBarComponent implements OnInit {
     icon: IconProp;
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
-    constructor(private layoutService: LayoutService, private examExerciseUpdateService: ExamExerciseUpdateService) {}
-//=======
-    constructor(private layoutService: LayoutService, private examParticipationService: ExamParticipationService) {}
-//>>>>>>> develop
+    constructor(private layoutService: LayoutService, private examExerciseUpdateService: ExamExerciseUpdateService, private examParticipationService: ExamParticipationService) {}
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
@@ -72,17 +65,6 @@ export class ExamNavigationBarComponent implements OnInit {
         this.examAboutToEnd.emit();
     }
 
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-    /**
-     * Changes the currently visible exercise
-     * @param exerciseIndex of the student exam to navigate to / to display
-     * @param forceSave whether to save the exercise before displaying another or not
-     */
-//    changeExerciseByIndex(exerciseIndex: number, forceSave: boolean) {
-        // out of index -> do nothing
-        if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
-            return;
-//=======
     /*
         @param exerciseIndex: exercise to switch to
         @param overviewPage: user wants to switch to the overview page
@@ -102,7 +84,6 @@ export class ExamNavigationBarComponent implements OnInit {
             this.exerciseIndex = -1;
             // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
-//>>>>>>> develop
         }
         this.setExerciseButtonStatus(this.exerciseIndex);
     }
@@ -113,7 +94,7 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     changeExerciseById(exerciseId: number) {
         const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
-        this.changeExerciseByIndex(foundIndex, true);
+        this.changePage(false, foundIndex, true);
     }
 
     /**
@@ -143,15 +124,9 @@ export class ExamNavigationBarComponent implements OnInit {
         if (changeExercise) {
             if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-//<<<<<<< feature/notification-system/live-exam-text-exercise-update-pop-up
-                this.changeExerciseByIndex(this.exerciseIndex, true);
-            } else {
-                this.changeExerciseByIndex(newIndex, true);
-//=======
                 this.changePage(false, this.exerciseIndex, true);
             } else {
                 this.changePage(false, newIndex, true);
-//>>>>>>> develop
             }
         }
     }
