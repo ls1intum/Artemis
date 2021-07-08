@@ -16,31 +16,9 @@ public abstract class PostingService {
 
     final AuthorizationCheckService authorizationCheckService;
 
-    private final GroupNotificationService groupNotificationService;
-
     protected PostingService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.groupNotificationService = groupNotificationService;
-    }
-
-    /**
-     * Helper method to send notification to affected groups
-     *
-     * @param post post that triggered the notification
-     */
-    void sendNotification(Post post) {
-        // notify via exercise
-        if (post.getExercise() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
-
-            // protect Sample Solution, Grading Instructions, etc.
-            post.getExercise().filterSensitiveInformation();
-        }
-        // notify via lecture
-        if (post.getLecture() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
-        }
     }
 
     /**
@@ -49,13 +27,31 @@ public abstract class PostingService {
      * @param posting posting that is requested
      * @param user    requesting user
      */
-    void mayUpdateOrDeletePostElseThrow(Posting posting, User user) {
+    void mayUpdateOrDeletePostingElseThrow(Posting posting, User user) {
         if (!user.getId().equals(posting.getAuthor().getId())) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, posting.getCourse(), user);
         }
     }
 
-    void preCheckUserAndCourse(User user, Long courseId) {
+    /**
+     * Helper method to (i) compare id of the course belonging to the post with the path variable courseId,
+     * and (ii) if the possibly associated exercise is not an exam exercise
+     *
+     * @param post     post that is checked
+     * @param courseId id of the course that is used as path variable
+     */
+    void preCheckPostValidity(Post post, Long courseId) {
+        if (!post.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Post sent in body", getEntityName(), "400");
+        }
+
+        // do not allow postings for exam exercises
+        if (post.getExercise() != null && post.getExercise().isExamExercise()) {
+            throw new BadRequestAlertException("Postings are not allowed on exam exercises", getEntityName(), "400");
+        }
+    }
+
+    Course preCheckUserAndCourse(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
@@ -63,6 +59,8 @@ public abstract class PostingService {
         if (!course.getPostsEnabled()) {
             throw new BadRequestAlertException("Course with this Id does not have Posts enabled", getEntityName(), "400");
         }
+
+        return course;
     }
 
     abstract String getEntityName();

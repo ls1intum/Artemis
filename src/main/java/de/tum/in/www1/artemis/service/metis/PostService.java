@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
@@ -32,13 +33,17 @@ public class PostService extends PostingService {
 
     private final LectureRepository lectureRepository;
 
+    private final GroupNotificationService groupNotificationService;
+
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
-            UserRepository userRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository) {
+            UserRepository userRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+            GroupNotificationService groupNotificationService1) {
         super(courseRepository, authorizationCheckService, groupNotificationService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
+        this.groupNotificationService = groupNotificationService1;
     }
 
     /**
@@ -54,9 +59,10 @@ public class PostService extends PostingService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         // check
-        preCheckPostValidity(user, post, courseId);
+        preCheckUserAndCourse(user, courseId);
+        preCheckPostValidity(post, courseId);
         if (post.getId() != null) {
-            throw new BadRequestAlertException("A new Post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
 
         // set author to current user
@@ -70,7 +76,7 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * updates non-restricted field of the post, persists the posts,
+     * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
      * @param courseId id of the course the post belongs to
@@ -84,28 +90,29 @@ public class PostService extends PostingService {
         if (post.getId() == null) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
+        preCheckUserAndCourse(user, courseId);
         Post existingPost = postRepository.findByIdElseThrow(post.getId());
-        preCheckPostValidity(user, existingPost, courseId);
-        mayUpdateOrDeletePostElseThrow(existingPost, user);
+        preCheckPostValidity(existingPost, courseId);
+        mayUpdateOrDeletePostingElseThrow(existingPost, user);
 
-        // update
+        // update: allow overwriting of values only for depicted fields
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
         existingPost.setVisibleForStudents(post.isVisibleForStudents());
         existingPost.setTags(post.getTags());
-        Post savedPost = postRepository.save(existingPost);
+        Post updatedPost = postRepository.save(existingPost);
 
-        if (savedPost.getExercise() != null) {
+        if (updatedPost.getExercise() != null) {
             // protect Sample Solution, Grading Instructions, etc.
-            savedPost.getExercise().filterSensitiveInformation();
+            updatedPost.getExercise().filterSensitiveInformation();
         }
 
-        return savedPost;
+        return updatedPost;
     }
 
     /**
      * Checks course, user and post validity,
-     * updates the votes, persists the posts,
+     * updates the votes, persists the post,
      * and ensures that sensitive information is filtered out
      *
      * @param courseId   id of the course the post belongs to
@@ -117,23 +124,24 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
+        preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(user, post, courseId);
+        preCheckPostValidity(post, courseId);
         if (voteChange < -2 || voteChange > 2) {
             throw new BadRequestAlertException("VoteChange can only be changed by one", METIS_POST_ENTITY_NAME, "voteChange", true);
         }
 
-        // update
+        // update votes
         Integer newVotes = post.getVotes() + voteChange;
         post.setVotes(newVotes);
-        Post savedPost = postRepository.save(post);
+        Post updatedPost = postRepository.save(post);
 
-        if (savedPost.getExercise() != null) {
-            // protect Sample Solution, Grading Instructions, etc.
-            savedPost.getExercise().filterSensitiveInformation();
+        if (updatedPost.getExercise() != null) {
+            // protect sample solution, grading instructions, etc.
+            updatedPost.getExercise().filterSensitiveInformation();
         }
 
-        return savedPost;
+        return updatedPost;
     }
 
     /**
@@ -196,8 +204,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
+        Course course = preCheckUserAndCourse(user, courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         // retrieve posts
@@ -219,33 +226,13 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
+        preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(postId);
-        preCheckPostValidity(user, post, courseId);
-        mayUpdateOrDeletePostElseThrow(post, user);
+        preCheckPostValidity(post, courseId);
+        mayUpdateOrDeletePostingElseThrow(post, user);
 
         // delete
         postRepository.deleteById(postId);
-    }
-
-    /**
-     * Helper method to (i) compare id of the course belonging to the post with the path variable courseId,
-     * and (ii) if the possibly associated exercise is not an exam exercise
-     *
-     * @param user     requesting user
-     * @param post     post that is checked
-     * @param courseId id of the course that is used as path variable
-     */
-    private void preCheckPostValidity(User user, Post post, Long courseId) {
-        preCheckUserAndCourse(user, courseId);
-
-        if (!post.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Post sent in body", METIS_POST_ENTITY_NAME, "400");
-        }
-
-        // do not allow postings for exam exercises
-        if (post.getExercise() != null && post.getExercise().isExamExercise()) {
-            throw new BadRequestAlertException("Postings are not allowed on exam exercises", METIS_POST_ENTITY_NAME, "400");
-        }
     }
 
     /**
@@ -277,6 +264,24 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
         if (!lecture.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "400");
+        }
+    }
+
+    /**
+     * Helper method to send notification to affected groups
+     *
+     * @param post post that triggered the notification
+     */
+    void sendNotification(Post post) {
+        // notify via exercise
+        if (post.getExercise() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForExercise(post);
+            // protect sample solution, grading instructions, etc.
+            post.getExercise().filterSensitiveInformation();
+        }
+        // notify via lecture
+        if (post.getLecture() != null) {
+            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewPostForLecture(post);
         }
     }
 
