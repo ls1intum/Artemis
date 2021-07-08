@@ -34,6 +34,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import * as Sentry from '@sentry/browser';
 import { round } from 'app/shared/util/utils';
+import { onError } from 'app/shared/util/global.utils';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 
 @Component({
@@ -231,12 +232,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**
@@ -251,7 +248,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -263,7 +260,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body!);
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -274,7 +271,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (res: HttpErrorResponse) => this.onError(res),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -721,13 +718,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // this.jhiWebsocketService.disableReconnect();
 
             // assign user score (limit decimal places to 2)
-            this.userScore = this.submission.scoreInPoints ? Math.round(this.submission.scoreInPoints * 100) / 100 : 0;
+            this.userScore = this.submission.scoreInPoints ? round(this.submission.scoreInPoints, 2) : 0;
 
             // create dictionary with scores for each question
             this.questionScores = {};
             this.submission.submittedAnswers!.forEach((submittedAnswer) => {
                 // limit decimal places to 2
-                this.questionScores[submittedAnswer.quizQuestion!.id!] = Math.round(submittedAnswer.scoreInPoints! * 100) / 100;
+                this.questionScores[submittedAnswer.quizQuestion!.id!] = round(submittedAnswer.scoreInPoints!, 2);
             }, this);
         }
     }

@@ -31,6 +31,7 @@ import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exe
 import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
 import { RouterModule } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
+import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -51,6 +52,7 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statisti
         OrganizationSelectorComponent,
         CustomMinDirective,
         CustomMaxDirective,
+        CustomPatternValidatorDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,
@@ -83,6 +85,7 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statisti
         ChartComponent,
         CustomMinDirective,
         CustomMaxDirective,
+        CustomPatternValidatorDirective,
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         StatisticsGraphComponent,

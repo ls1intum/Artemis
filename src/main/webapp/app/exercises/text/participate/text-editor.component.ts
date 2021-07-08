@@ -26,6 +26,7 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getUnreferencedFeedback } from 'app/exercises/shared/result/result-utils';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -83,7 +84,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         this.textService.get(participationId).subscribe(
             (data: StudentParticipation) => this.updateParticipation(data),
-            (error: HttpErrorResponse) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
     }
 
@@ -281,9 +282,5 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     onTextEditorInput(event: Event) {
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 }

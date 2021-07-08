@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -74,9 +73,9 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
-        request.getList("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStep.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
 
     /**
@@ -85,7 +84,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllGradeStepsForCourse() throws Exception {
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();
@@ -98,13 +97,20 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         gradeStep2.setUpperBoundInclusive(true);
         gradeStep1.setGradingScale(courseGradingScale);
         gradeStep2.setGradingScale(courseGradingScale);
+        courseGradingScale.setGradeType(GradeType.GRADE);
         gradeSteps = Set.of(gradeStep1, gradeStep2);
         courseGradingScale.setGradeSteps(gradeSteps);
         gradingScaleRepository.save(courseGradingScale);
 
-        List<GradeStep> foundGradeSteps = request.getList("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStep.class);
+        GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
 
-        assertThat(foundGradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(List.of(gradeStep1, gradeStep2));
+        assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.GRADE);
+        assertThat(gradeStepsDTO.title).isEqualTo(course.getTitle());
+
+        GradeStep[] gradeStepArray = new GradeStep[gradeSteps.size()];
+        gradeSteps.toArray(gradeStepArray);
+
+        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeStepArray);
     }
 
     /**
@@ -161,7 +167,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
         GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
 
         assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.BONUS);
-        assertThat(gradeStepsDTO.examTitle).isEqualTo(exam.getTitle());
+        assertThat(gradeStepsDTO.title).isEqualTo(exam.getTitle());
 
         GradeStep[] gradeStepArray = new GradeStep[gradeSteps.size()];
         gradeSteps.toArray(gradeStepArray);
@@ -246,7 +252,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeDTO.class);
+        request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
     /**
@@ -283,7 +289,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.NOT_FOUND, GradeDTO.class);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
     /**

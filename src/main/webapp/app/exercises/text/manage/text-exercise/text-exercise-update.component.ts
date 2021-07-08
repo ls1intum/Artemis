@@ -5,7 +5,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -14,11 +13,12 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
-import { navigateBackFromExerciseUpdate, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
@@ -49,8 +49,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
 
-    saveCommand: SaveExerciseCommand<TextExercise>;
-
     constructor(
         private jhiAlertService: JhiAlertService,
         private textExerciseService: TextExerciseService,
@@ -60,9 +58,9 @@ export class TextExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private courseService: CourseManagementService,
         private eventManager: JhiEventManager,
-        private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     get editType(): EditType {
@@ -88,8 +86,6 @@ export class TextExerciseUpdateComponent implements OnInit {
             this.textExercise = textExercise;
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
-
-            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType);
         });
 
         this.activatedRoute.url
@@ -107,7 +103,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                                 (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
-                                (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
+                                (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                             );
                         }
                     } else {
@@ -145,8 +141,11 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
     }
 
+    /**
+     * Return to the previous page or a default if no previous page exists
+     */
     previousState() {
-        navigateBackFromExerciseUpdate(this.router, this.textExercise);
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.textExercise);
     }
 
     /**
@@ -167,13 +166,15 @@ export class TextExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.textExercise, this.notificationText).subscribe(
-            (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
-            (res: HttpErrorResponse) => this.onSaveError(res),
-            () => {
-                this.isSaving = false;
-            },
-        );
+        new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType)
+            .save(this.textExercise, this.notificationText)
+            .subscribe(
+                (exercise: TextExercise) => this.onSaveSuccess(exercise.id!),
+                (error: HttpErrorResponse) => this.onSaveError(error),
+                () => {
+                    this.isSaving = false;
+                },
+            );
     }
 
     private onSaveSuccess(exerciseId: number) {
@@ -193,12 +194,8 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        onError(this.jhiAlertService, error);
         this.isSaving = false;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 
     /**

@@ -6,21 +6,12 @@
         border-style: solid;
         border-color: lightgray;
         height: auto;
-
-        .re-evaluate-order-button {
-            display: inline-block;
-            padding: 4px;
-            cursor: move;
-
-            &:hover {
-                color: blue;
-            }
-        }
     }
 
     .re-evaluate-button {
         display: inline-block;
         padding: 4px;
+        cursor: pointer;
 
         &:hover {
             color: blue;

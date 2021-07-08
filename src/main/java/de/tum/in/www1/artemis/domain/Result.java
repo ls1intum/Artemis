@@ -453,8 +453,7 @@ public class Result extends DomainObject {
      * Updates the attributes "score" and "successful" by evaluating its submission
      */
     public void evaluateSubmission() {
-        if (submission instanceof QuizSubmission) {
-            QuizSubmission quizSubmission = (QuizSubmission) submission;
+        if (submission instanceof QuizSubmission quizSubmission) {
             // get the exercise this result belongs to
             StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
             QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
