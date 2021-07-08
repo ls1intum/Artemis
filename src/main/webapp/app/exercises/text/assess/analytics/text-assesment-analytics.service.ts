@@ -5,14 +5,9 @@ import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { tap } from 'rxjs/operators';
-
-type FeatureToggleState = {
-    index: number;
-    name: FeatureToggle;
-    isActive: boolean;
-};
+import { tap, filter } from 'rxjs/operators';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Injectable({ providedIn: 'root' })
 export class TextAssessmentAnalytics {
@@ -24,35 +19,29 @@ export class TextAssessmentAnalytics {
     private eventToSend: TextAssessmentEvent = new TextAssessmentEvent();
     private INVALID_VALUE = -1;
     private route: ActivatedRoute;
-    public availableToggles: FeatureToggleState[] = [];
+    private analyticsEnabled: boolean;
 
-    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private featureToggleService: FeatureToggleService) {
-        this.featureToggleService
-            .getFeatureToggles()
+    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService) {
+        this.profileService
+            .getProfileInfo()
             .pipe(
-                tap((activeToggles) => {
-                    this.availableToggles = Object.values(FeatureToggle).map((name, index) => ({ name, index, isActive: activeToggles.includes(name) }));
+                filter(Boolean),
+                tap((info: ProfileInfo) => {
+                    this.analyticsEnabled = Boolean(info.textAssessmentAnalyticsEnabled);
                 }),
             )
             .subscribe();
     }
 
-    isArtemisAnalyticsFeatureEnabled(): boolean {
-        if (Array.isArray(this.availableToggles) && this.availableToggles.length > 0) {
-            return this.availableToggles.find((toggle) => toggle.name === FeatureToggle.ARTEMIS_ANALYTICS && toggle.isActive) !== undefined;
-        }
-        return false;
-    }
-
     setComponentRoute(route: ActivatedRoute) {
-        if (this.isArtemisAnalyticsFeatureEnabled()) {
+        if (this.analyticsEnabled) {
             this.route = route;
             this.subscribeToRouteParameters();
         }
     }
 
     sendAssessmentEvent(eventType: TextAssessmentEventType, feedbackType: FeedbackType | undefined = undefined, textBlockType: TextBlockType | undefined = undefined) {
-        if (this.isArtemisAnalyticsFeatureEnabled()) {
+        if (this.analyticsEnabled) {
             this.eventToSend.setEventType(eventType).setFeedbackType(feedbackType).setSegmentType(textBlockType);
             this.assessmentsService.submitAssessmentEvent(this.eventToSend);
         }

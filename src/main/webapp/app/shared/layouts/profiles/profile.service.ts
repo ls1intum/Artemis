@@ -8,6 +8,7 @@ import { filter, map } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
+import { profile } from 'console';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -64,7 +65,7 @@ export class ProfileService {
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
-
+                        profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
                         return profileInfo;
                     }),
                 )
