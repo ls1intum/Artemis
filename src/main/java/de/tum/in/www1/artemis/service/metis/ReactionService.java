@@ -9,10 +9,7 @@ import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -31,8 +28,8 @@ public class ReactionService {
 
     private final AnswerPostService answerPostService;
 
-    public ReactionService(UserRepository userRepository, ReactionRepository reactionRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            CourseRepository courseRepository, PostService postService, AnswerPostService answerPostService, AuthorizationCheckService authorizationCheckService) {
+    public ReactionService(UserRepository userRepository, ReactionRepository reactionRepository, CourseRepository courseRepository, PostService postService,
+            AnswerPostService answerPostService) {
         this.userRepository = userRepository;
         this.reactionRepository = reactionRepository;
         this.courseRepository = courseRepository;

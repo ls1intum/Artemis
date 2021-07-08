@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 public abstract class PostingService<T extends Posting> {
@@ -17,7 +16,7 @@ public abstract class PostingService<T extends Posting> {
 
     final AuthorizationCheckService authorizationCheckService;
 
-    protected PostingService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService) {
+    protected PostingService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -55,8 +54,8 @@ public abstract class PostingService<T extends Posting> {
     /**
      * Helper method to compare id of the course belonging to the associated post with the path variable courseId,
      *
-     * @param answerPost     answer post that is checked
-     * @param courseId id of the course that is used as path variable
+     * @param answerPost answer post that is checked
+     * @param courseId   id of the course that is used as path variable
      */
     void preCheckAnswerPostValidity(AnswerPost answerPost, Long courseId) {
         if (!answerPost.getPost().getCourse().getId().equals(courseId)) {
