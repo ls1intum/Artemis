@@ -1,8 +1,7 @@
 import { Moment } from 'moment';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { User } from 'app/core/user/user.model';
-import { TextBlockType } from 'app/entities/text-block.model';
 import { FeedbackType } from 'app/entities/feedback.model';
+import { TextBlockType } from 'app/entities/text-block.model';
 
 export enum TextAssessmentEventType {
     ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK = 'ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK',
@@ -10,7 +9,7 @@ export enum TextAssessmentEventType {
     CLICK_TO_RESOLVE_CONFLICT = 'CLICK_TO_RESOLVE_CONFLICT',
     HOVER_OVER_IMPACT_WARNING = 'HOVER_OVER_IMPACT_WARNING',
     VIEW_AUTOMATIC_SUGGESTION_ORIGIN = 'VIEW_AUTOMATIC_SUGGESTION_ORIGIN',
-    DELETE_AUTOMATIC_FEEDBACK = 'DELETE_AUTOMATIC_FEEDBACK',
+    DELETE_FEEDBACK = 'DELETE_FEEDBACK',
     EDIT_AUTOMATIC_FEEDBACK = 'EDIT_AUTOMATIC_FEEDBACK',
 }
 
@@ -23,7 +22,33 @@ export class TextAssessmentEvent implements BaseEntity {
     public segmentType?: TextBlockType;
     public courseId?: number;
     public textExerciseId?: number;
+    public participationId?: number;
     public submissionId?: number;
 
-    protected constructor() {}
+    constructor(userId: number, courseId: number, textExerciseId: number, participationId: number, submissionId: number) {
+        this.userId = userId;
+        this.courseId = courseId;
+        this.textExerciseId = textExerciseId;
+        this.participationId = participationId;
+        this.submissionId = submissionId;
+    }
+
+    setEventType(type: TextAssessmentEventType) {
+        this.eventType = type;
+        return this;
+    }
+
+    setFeedbackType(type: FeedbackType | undefined) {
+        if (type) {
+            this.feedbackType = type;
+        }
+        return this;
+    }
+
+    setSegmentType(type: TextBlockType | undefined) {
+        if (type) {
+            this.segmentType = type;
+        }
+        return this;
+    }
 }

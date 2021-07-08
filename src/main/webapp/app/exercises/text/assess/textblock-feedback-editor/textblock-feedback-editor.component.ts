@@ -7,9 +7,9 @@ import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ActivatedRoute } from '@angular/router';
 import { lastValueFrom } from 'rxjs';
-import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
-import { TextBlockType } from 'app/entities/text-block.model';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
 
 @Component({
@@ -65,8 +65,11 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         public structuredGradingCriterionService: StructuredGradingCriterionService,
         protected modalService: NgbModal,
         protected assessmentsService: TextAssessmentService,
+        protected route: ActivatedRoute,
         protected assessmentAnalytics: TextAssessmentAnalytics,
-    ) {}
+    ) {
+        assessmentAnalytics.setComponentRoute(route);
+    }
 
     /**
      * Life cycle hook to indicate component initialization is done
@@ -109,7 +112,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     dismiss(): void {
         this.close.emit();
-        this.assessmentAnalytics.sendAssessmentEventDelete();
+        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, this.feedback.type, this.textBlock.type);
     }
 
     /**
@@ -147,7 +150,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         const feedbackTypeBefore = this.feedback.type;
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
-        feedbackTypeBefore !== this.feedback.type ? this.assessmentAnalytics.sendAssessmentEventEditFeedback() : '';
+        if (feedbackTypeBefore !== this.feedback.type) {
+            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, this.feedback.type, this.textBlock.type);
+        }
     }
 
     connectFeedbackWithInstruction(event: Event) {
@@ -162,14 +167,14 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
     onConflictClicked(feedbackId: number | undefined) {
         !feedbackId && this.onConflictsClicked.emit(feedbackId);
-        this.assessmentAnalytics.sendAssessmentEventOnConflictClicked();
+        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, this.feedback.type, this.textBlock.type);
     }
 
     // this method fires the modal service and shows a modal after connecting feedback with its respective blocks
     async openOriginOfFeedbackModal(content: any) {
         await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
         this.modalService.open(content, { size: 'lg' });
-        this.assessmentAnalytics.sendAssessmentEvent();
+        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, this.feedback.type, this.textBlock.type);
     }
 
     /**
@@ -207,6 +212,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     mouseEnteredWarningLabel() {
-        this.assessmentAnalytics.sendAssessmentEventOnHoverWarning();
+        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, this.feedback.type, this.textBlock.type);
     }
 }

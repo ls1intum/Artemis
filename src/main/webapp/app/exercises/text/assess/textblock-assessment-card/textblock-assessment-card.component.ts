@@ -2,12 +2,11 @@ import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { TextBlockType } from 'app/entities/text-block.model';
 import { FeedbackConflictType } from 'app/entities/feedback-conflict';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { lastValueFrom } from 'rxjs';
-import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
+import { TextBlockType } from 'app/entities/text-block.model';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -37,7 +36,7 @@ export class TextblockAssessmentCardComponent {
         return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, protected assessmentsService: TextAssessmentService) {}
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, protected assessmentAnalytics: TextAssessmentAnalytics) {}
 
     /**
      * Select a text block
@@ -59,7 +58,7 @@ export class TextblockAssessmentCardComponent {
 
         if (autofocus) {
             setTimeout(() => this.feedbackEditor.focus());
-            this.sendAssessmentEventSelectTextBlockAutomatically();
+            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
         }
     }
 
@@ -97,18 +96,5 @@ export class TextblockAssessmentCardComponent {
             }
         }
         this.feedbackDidChange();
-    }
-
-    sendAssessmentEventSelectTextBlockAutomatically() {
-        const assessmentEventToSend: TextAssessmentEvent = {
-            userId: 1,
-            eventType: TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK,
-            feedbackType: FeedbackType.AUTOMATIC,
-            segmentType: TextBlockType.AUTOMATIC,
-            courseId: 2,
-            textExerciseId: 3,
-            submissionId: 4,
-        };
-        lastValueFrom(this.assessmentsService.submitAssessmentEvent(assessmentEventToSend));
     }
 }
