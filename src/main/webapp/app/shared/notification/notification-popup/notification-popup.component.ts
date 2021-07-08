@@ -8,6 +8,8 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE } from 'app/shared/notification/notification.constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { JhiAlertService } from 'ng-jhipster';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -25,6 +27,7 @@ export class NotificationPopupComponent implements OnInit {
         private router: Router,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private jhiAlertService: JhiAlertService,
+        private examParticipationService: ExamParticipationService,
     ) {}
 
     /**
@@ -87,8 +90,7 @@ export class NotificationPopupComponent implements OnInit {
                 this.setRemovalTimeout(notification);
             }
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
-                this.addExamUpdateNotification(notification);
-                this.setRemovalTimeout(notification);
+                this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
         }
     }
@@ -123,11 +125,8 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     private addExamUpdateNotification(notification: Notification): void {
-        if (!notification.target) {
-            return;
-        }
         try {
-            const target = JSON.parse(notification.target);
+            const target = JSON.parse(notification.target!);
             this.examExerciseUpdateService.updateLiveExamExercise(target.exercise, target.problemStatement);
         } catch (error) {
             this.jhiAlertService.error(error);
@@ -136,6 +135,28 @@ export class NotificationPopupComponent implements OnInit {
         if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), true)) {
             this.notifications.unshift(notification);
         }
+    }
+
+    /**
+     * checks if the updated exercise, which notification is based on, is part of the student exam of this client
+     * this might not be the case due to different/optional exerciseGroups
+     * @param notification that hold information about the exercise like problemStatement or different ids
+     */
+    private checkIfNotificationAffectsCurrentStudentExamExercises(notification: Notification): void {
+        if (!notification.target) {
+            return;
+        }
+        const target = JSON.parse(notification.target);
+        const courseId = target.course;
+        const examId = target.exam;
+        const exerciseId = target.exercise;
+        this.examParticipationService.loadStudentExamWithExercisesForSummary(courseId, examId).subscribe((studentExamWithExercises: StudentExam) => {
+            const updatedExerciseIsPartOfStudentExam = studentExamWithExercises?.exercises?.find((studentExamExercise) => studentExamExercise.id === exerciseId);
+            if (updatedExerciseIsPartOfStudentExam != undefined) {
+                this.addExamUpdateNotification(notification);
+                this.setRemovalTimeout(notification);
+            }
+        });
     }
 
     private setRemovalTimeout(notification: Notification): void {
