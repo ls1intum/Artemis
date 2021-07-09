@@ -1,15 +1,25 @@
 /// <reference types="cypress" />
 
 import { generateUUID } from '../support/utils';
+// https://day.js.org/docs is a tool for date/time
+import * as dayjs from 'dayjs';
 
 // environmental variables
-const username = Cypress.env('username');
-const password = Cypress.env('password');
+let studentUsername = Cypress.env('username');
+let studentPassword = Cypress.env('password');
 let instructorUsername = Cypress.env('instructorUsername');
 let instructorPassword = Cypress.env('instructorPassword');
+const adminUsername = Cypress.env('adminUsername');
+const adminPassword = Cypress.env('adminPassword');
+
+// in case we are running the tests in a CI plan we need to get our usernames/passwords like this
 if (Cypress.env('isCi')) {
-    instructorUsername = username.replace('USERID', '11');
-    instructorPassword = password.replace('USERID', '11');
+    const baseUsername = Cypress.env('username');
+    const basePassword = Cypress.env('password');
+    studentUsername = baseUsername.replace('USERID', '100');
+    studentPassword = baseUsername.replace('USERID', '100');
+    instructorUsername = baseUsername.replace('USERID', '101');
+    instructorPassword = basePassword.replace('USERID', '101');
 }
 
 let testCourse: any;
@@ -20,28 +30,44 @@ const courseName = 'Cypress course' + uid;
 const courseShortName = 'cy' + uid;
 
 describe('Modeling Exercise Spec', () => {
-    before('Log in as instructor and create a course', () => {
+    before('Log in as admin and create a course', () => {
         cy.intercept('POST', '/api/modeling-exercises').as('createModelingExercise');
-        cy.login(instructorUsername, instructorPassword);
+        cy.login(adminUsername, adminPassword);
         cy.fixture('course.json').then((course) => {
             course.title = courseName;
             course.shortName = courseShortName;
-            cy.createCourse(course).then((response) => {
-                testCourse = response.body;
-                cy.visit('/course-management').get('.card-body').should('contain', testCourse.title);
+            cy.createCourse(course).then((courseResp) => {
+                testCourse = courseResp.body;
+                cy.visit(`/course-management/${testCourse.id}`).get('.row-md > :nth-child(2)').should('contain.text', testCourse.title);
+                // set instructor group
+                cy.get('.row-md > :nth-child(5) > :nth-child(8) >').click();
+                cy.get('#typeahead-basic ').type(instructorUsername).type('{enter}');
+                cy.get('#ngb-typeahead-0-0 >').contains(instructorUsername).click();
+                cy.get('.breadcrumb > :nth-child(2)').click();
+                // set student group
+                cy.get('.row-md > :nth-child(5) > :nth-child(2) >').click();
+                cy.get('#typeahead-basic ').type(studentUsername).type('{enter}');
+                cy.get('#ngb-typeahead-1-0 >').contains(studentUsername).click();
+                cy.get('.breadcrumb > :nth-child(2)').click();
             });
         });
     });
 
-    beforeEach('login as instructor', () => {
-        cy.login(instructorUsername, instructorPassword);
-    });
-
     after('Delete the test course', () => {
+        cy.login(adminUsername, adminPassword);
         cy.deleteCourse(testCourse.id);
     });
 
     describe('Create/Edit Modeling Exercise', () => {
+        beforeEach('login as instructor', () => {
+            cy.login(instructorUsername, instructorPassword);
+        });
+
+        after('delete Modeling Exercise', () => {
+            cy.login(adminUsername, adminPassword);
+            cy.deleteModelingExercise(modelingExercise.id);
+        });
+
         it('Create a new modeling exercise', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.get('#modeling-exercise-create-button').click();
@@ -114,6 +140,29 @@ describe('Modeling Exercise Spec', () => {
             cy.get('tbody > tr > :nth-child(2)').should('contain.text', 'Cypress EDITED ME');
             cy.get('tbody > tr > :nth-child(3)').should('contain.text', 'Jan 1, 2030');
             cy.get('tbody > tr > :nth-child(6)').should('contain.text', '100');
+        });
+    });
+
+    describe('Modeling Exercise Flow', () => {
+        before('create Modeling Exercise with future release date', () => {
+            cy.fixture('modeling-exercise.json').then((exercise) => {
+                exercise.course = testCourse;
+                exercise.releaseDate = dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+                exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+                exercise.assessmentDueDate = dayjs().add(3, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+                cy.createModelingExercise(exercise).then((resp) => {
+                    modelingExercise = resp.body;
+                });
+            });
+        });
+
+        it('Does not show unreleased Modeling Exercise', () => {
+            cy.login(studentUsername, studentPassword, '/courses');
+            cy.get('.card-body').contains(testCourse.title).click({ force: true });
+        });
+
+        it('Release a Modeling Exercise', () => {
+            cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
         });
     });
 });
