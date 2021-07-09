@@ -57,14 +57,11 @@ export class TextAssessmentService {
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
-    public submitAssessmentEvent(assessmentEvent: TextAssessmentEvent) {
+    public submitAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
         const body = Object.assign({}, assessmentEvent);
-        this.http
+        return this.http
             .post<TextAssessmentEvent>(`${this.resourceUrl}/text-assessment-event/add-event`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)))
-            .subscribe({
-                error: (e) => console.error('Error sending statistics' + e.message),
-            });
+            .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
     /**
