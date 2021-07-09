@@ -1,10 +1,19 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 
 @Pipe({ name: 'artemisDurationFromSeconds' })
-export class ArtemisDurationFromSecondsPipe implements PipeTransform {
+export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy {
     private readonly secondsInDay = 60 * 60 * 24;
     private readonly secondsInHour = 60 * 60;
     private readonly secondsInMinute = 60;
+
+    private seconds: number;
+    private locale: string;
+    private localizedDuration: string;
+    private onLangChange?: Subscription;
+
+    constructor(private translateService: TranslateService) {}
 
     /**
      * Convert seconds to a human-readable duration format "d day(s) hh:mm::ss".
@@ -12,6 +21,8 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @param seconds {number}
      */
     transform(seconds: number): string {
+        this.seconds = seconds;
+
         const days = Math.floor(seconds / this.secondsInDay);
         const hours = Math.floor((seconds % this.secondsInDay) / this.secondsInHour);
         const minutes = Math.floor((seconds % this.secondsInHour) / this.secondsInMinute);
@@ -23,20 +34,16 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
             timeString += this.addLeadingZero(hours) + ':';
         }
 
-        timeString += this.addLeadingZero(minutes);
+        timeString += this.addLeadingZero(minutes) + ':';
         timeString += this.addLeadingZero(seconds);
 
-        return timeString;
-    }
-
-    private transformDays(days: number): string {
-        if (days > 1) {
-            return days + ' days ';
-        } else if (days === 1) {
-            return days + ' day ';
-        } else {
-            return '';
+        // Clean up existing subscription to onLangChange and subscribe to onLangChange event, in case the language changes.
+        this.cleanUpSubscription();
+        if (!this.onLangChange) {
+            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => this.updateLocale(event.lang));
         }
+
+        return timeString;
     }
 
     private addLeadingZero(number: number): string {
@@ -45,5 +52,55 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
             numberOut = '0' + numberOut;
         }
         return numberOut;
+    }
+
+    private transformDays(days: number): string {
+        if (days === 0) {
+            return '';
+        }
+        // Set locale to current language.
+        this.updateLocale(this.translateService.currentLang);
+
+        return days + this.getDayString(days);
+    }
+
+    private getDayString(days: number): string {
+        if (this.locale === 'de') {
+            if (days > 1) {
+                return ' days ';
+            } else {
+                return ' day ';
+            }
+        } else {
+            if (days > 1) {
+                return ' Tage ';
+            } else {
+                return ' Tag ';
+            }
+        }
+    }
+
+    private updateLocale(lang: string): void {
+        if (this.locale === undefined && lang === undefined) {
+            this.locale = 'en';
+        }
+        if (lang !== this.locale) {
+            this.locale = lang;
+            this.localizedDuration = this.transform(this.seconds);
+        }
+    }
+
+    private cleanUpSubscription(): void {
+        if (this.onLangChange != undefined) {
+            this.onLangChange.unsubscribe();
+            this.onLangChange = undefined;
+        }
+    }
+
+    /**
+     * Unsubscribe from onLangChange event of translation service on pipe destruction.
+     */
+    ngOnDestroy(): void {
+        this.cleanUpSubscription();
     }
 }
