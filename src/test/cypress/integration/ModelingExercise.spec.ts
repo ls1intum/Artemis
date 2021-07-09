@@ -7,6 +7,8 @@ import * as dayjs from 'dayjs';
 // environmental variables
 let studentUsername = Cypress.env('username');
 let studentPassword = Cypress.env('password');
+let tutorUsername = Cypress.env('taUsername');
+let tutorPassword = Cypress.env('taPassword');
 let instructorUsername = Cypress.env('instructorUsername');
 let instructorPassword = Cypress.env('instructorPassword');
 const adminUsername = Cypress.env('adminUsername');
@@ -18,8 +20,10 @@ if (Cypress.env('isCi')) {
     const basePassword = Cypress.env('password');
     studentUsername = baseUsername.replace('USERID', '100');
     studentPassword = baseUsername.replace('USERID', '100');
-    instructorUsername = baseUsername.replace('USERID', '101');
-    instructorPassword = basePassword.replace('USERID', '101');
+    tutorUsername = baseUsername.replace('USERID', '101');
+    tutorPassword = basePassword.replace('USERID', '101');
+    instructorUsername = baseUsername.replace('USERID', '103');
+    instructorPassword = basePassword.replace('USERID', '103');
 }
 
 let testCourse: any;
@@ -44,10 +48,15 @@ describe('Modeling Exercise Spec', () => {
                 cy.get('#typeahead-basic ').type(instructorUsername).type('{enter}');
                 cy.get('#ngb-typeahead-0-0 >').contains(instructorUsername).click();
                 cy.get('.breadcrumb > :nth-child(2)').click();
+                // set tutor group
+                cy.get('.row-md > :nth-child(5) > :nth-child(6) >').click();
+                cy.get('#typeahead-basic ').type(tutorUsername).type('{enter}');
+                cy.get('#ngb-typeahead-1-0 >').contains(tutorUsername).click();
+                cy.get('.breadcrumb > :nth-child(2)').click();
                 // set student group
                 cy.get('.row-md > :nth-child(5) > :nth-child(2) >').click();
                 cy.get('#typeahead-basic ').type(studentUsername).type('{enter}');
-                cy.get('#ngb-typeahead-1-0 >').contains(studentUsername).click();
+                cy.get('#ngb-typeahead-2-0 >').contains(studentUsername).click();
                 cy.get('.breadcrumb > :nth-child(2)').click();
             });
         });
@@ -58,7 +67,7 @@ describe('Modeling Exercise Spec', () => {
         cy.deleteCourse(testCourse.id);
     });
 
-    describe('Create/Edit Modeling Exercise', () => {
+    describe.skip('Create/Edit Modeling Exercise', () => {
         beforeEach('login as instructor', () => {
             cy.login(instructorUsername, instructorPassword);
         });
@@ -146,6 +155,7 @@ describe('Modeling Exercise Spec', () => {
     describe('Modeling Exercise Flow', () => {
         before('create Modeling Exercise with future release date', () => {
             cy.fixture('modeling-exercise.json').then((exercise) => {
+                exercise.title = 'Cypress Modeling Exercise ' + uid;
                 exercise.course = testCourse;
                 exercise.releaseDate = dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
                 exercise.dueDate = dayjs().add(2, 'day').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
@@ -159,10 +169,32 @@ describe('Modeling Exercise Spec', () => {
         it('Does not show unreleased Modeling Exercise', () => {
             cy.login(studentUsername, studentPassword, '/courses');
             cy.get('.card-body').contains(testCourse.title).click({ force: true });
+            cy.get('.col-lg-8').should('contain.text', 'No exercises available for the course.');
         });
 
         it('Release a Modeling Exercise', () => {
             cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            cy.get(':nth-child(1) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().subtract(1, 'hour').toString(), { force: true });
+            cy.get(':nth-child(3) > .btn-primary').click();
         });
+
+        it('Student can see and start released exercise', () => {
+            cy.intercept('/api/courses/*/exercises/*/participations').as('createModelingParticipation');
+            cy.login(studentUsername, studentPassword, `/courses/${testCourse.id}`);
+            cy.get('.col-lg-8').contains(`Cypress Modeling Exercise ${uid}`).click();
+            cy.get('jhi-exercise-details-student-actions.col > >').contains('Start exercise').click();
+            cy.wait('@createModelingParticipation');
+            cy.get('.btn').should('contain.text', 'Open modeling editor');
+            cy.get('.btn').click();
+            cy.wait(10000);
+            cy.get('.sc-kstrdz > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.sc-kstrdz > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
+            cy.get('.jhi-btn').click();
+            cy.get('.alerts').should('contain.text', 'Your submission was successful! You can change your submission or wait for your feedback.');
+            cy.get('.col-auto').should('contain.text', 'No graded result');
+        });
+
+        it('Tutor can assess the submission', () => {});
     });
 });
