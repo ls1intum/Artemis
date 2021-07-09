@@ -45,6 +45,10 @@ public class TextAssessmentEventResource {
         this.courseRepository = courseRepository;
     }
 
+    /**
+     * This function retrieves all of the events from the 'text_assessment_event' table
+     * @return returns a List of TextAssessmentEvent's
+     */
     @GetMapping("/get-events")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<TextAssessmentEvent>> findAllEvents() {
@@ -52,6 +56,12 @@ public class TextAssessmentEventResource {
         return ResponseEntity.ok().body(events);
     }
 
+    /**
+     * This function adds an assessment event into the text_assessment_event table.
+     * @param event to be added
+     * @return the status of the finished request
+     * @throws URISyntaxException
+     */
     @PostMapping("/add-event")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) throws URISyntaxException {
