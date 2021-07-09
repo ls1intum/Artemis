@@ -24,17 +24,20 @@ const user = { id: 1, name: 'Test User' } as User;
 const startDate = moment().subtract(5, 'hours');
 const endDate = moment().subtract(4, 'hours');
 
-const exam = {
+let exam = {
     id: 1,
     title: 'Test Exam',
     startDate,
     endDate,
 } as Exam;
 
-const studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
+let studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
 
 describe('ExamInformationComponent', function () {
     beforeEach(() => {
+        exam = { id: 1, title: 'Test Exam', startDate, endDate } as Exam;
+        studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
+
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
             declarations: [ExamInformationComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],
@@ -70,5 +73,34 @@ describe('ExamInformationComponent', function () {
         fixture.detectChanges();
         expect(fixture).to.be.ok;
         expect(component.endTime()?.isSame(moment(exam.startDate).add(studentExam.workingTime, 'seconds'))).to.equal(true);
+    });
+
+    it('should detect if the end date is on another day', function () {
+        component.exam = exam;
+        exam.endDate = moment(exam.startDate).add(2, 'days');
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.true;
+    });
+
+    it('should detect if the working time extends to another day', function () {
+        component.exam = exam;
+        component.studentExam = studentExam;
+        studentExam.workingTime = 24 * 60 * 60;
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.true;
+    });
+
+    it('should return false for exams that only last one day', function () {
+        component.exam = exam;
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.false;
+
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(fixture).to.be.ok;
+        expect(component.examOverMultipleDays()).to.be.false;
     });
 });
