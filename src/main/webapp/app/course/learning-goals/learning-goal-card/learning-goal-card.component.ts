@@ -7,6 +7,7 @@ import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/lear
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-learning-goal-card',
@@ -44,7 +45,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
             }
 
             const progress = (pointsAchieved / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100;
-            this.progressInPercent = Math.round(progress * 10) / 10;
+            this.progressInPercent = round(progress, 1);
         }
     }
 
