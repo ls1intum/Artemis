@@ -19,15 +19,15 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.1.1"
+    id "com.google.cloud.tools.jib" version "3.1.2"
     id "com.github.node-gradle.node" version "3.1.0"
-    id "com.diffplug.spotless" version "5.14.0"
+    id "com.diffplug.spotless" version "5.14.1"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.39.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.0.3"
+version = "5.0.4"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -156,7 +156,7 @@ repositories {
 
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
-    implementation "org.gitlab4j:gitlab4j-api:4.16.0"
+    implementation "org.gitlab4j:gitlab4j-api:4.17.0"
 
     implementation files("libs/jplag-3.0.0.jar")
     implementation files("libs/athene-protobuf-client-0.0.1.jar")
@@ -269,8 +269,8 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.20.2"
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
-    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.19.0"
-    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.19.0"
+    testImplementation "com.tngtech.archunit:archunit-junit5-api:0.20.0"
+    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:0.20.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-inline:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
