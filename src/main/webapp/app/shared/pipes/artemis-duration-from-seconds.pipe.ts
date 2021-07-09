@@ -69,17 +69,9 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
 
     private getDayString(days: number): string {
         if (this.locale === 'de') {
-            if (days > 1) {
-                return ' Tage ';
-            } else {
-                return ' Tag ';
-            }
+            return days > 1 ? ' Tage ' : ' Tag ';
         } else {
-            if (days > 1) {
-                return ' days ';
-            } else {
-                return ' day ';
-            }
+            return days > 1 ? ' days ' : ' day ';
         }
     }
 
