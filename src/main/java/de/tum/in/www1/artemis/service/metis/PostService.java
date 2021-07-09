@@ -59,11 +59,11 @@ public class PostService extends PostingService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         // check
-        preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(post, courseId);
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
+        preCheckUserAndCourse(user, courseId);
+        preCheckPostValidity(post, courseId);
 
         // set author to current user
         post.setAuthor(user);
@@ -197,7 +197,7 @@ public class PostService extends PostingService {
 
         // retrieve posts
         List<Post> lecturePosts = postRepository.findPostsByLectureId(lectureId);
-        // protect Sample Solution, Grading Instructions, etc.
+        // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
         return lecturePosts;
@@ -220,7 +220,7 @@ public class PostService extends PostingService {
 
         // retrieve posts
         List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
-        // Protect Sample Solution, Grading Instructions, etc.
+        // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
         return coursePosts;
@@ -247,7 +247,7 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Helper method to (i) check if the exercise exists, (ii) check if requesting user is authorized in the exercise context,
+     * Method to (i) check if the exercise exists, (ii) check if requesting user is authorized in the exercise context,
      * and (iii) compare the id of the course belonging to the exercise with the path variable courseId,
      *
      * @param user       requesting user
@@ -263,7 +263,7 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Helper method to (i) check if the lecture exists, (ii) check if requesting user is authorized in the lecture context,
+     * Method to (i) check if the lecture exists, (ii) check if requesting user is authorized in the lecture context,
      * and (iii) compare the id of the course belonging to the lecture with the path variable courseId,
      *
      * @param user      requesting user
@@ -279,7 +279,7 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Helper method to send notification to affected groups
+     * Sends notification to affected groups
      *
      * @param post post that triggered the notification
      */

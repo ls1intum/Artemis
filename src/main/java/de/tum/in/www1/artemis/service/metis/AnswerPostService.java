@@ -45,11 +45,10 @@ public class AnswerPostService extends PostingService {
     /**
      * Checks course, user and answer post and associated post validity,
      * determines the associated post, the answer post's author,
-     * and sets to approved if author is at least a tutor
-     * persists the post,
-     * and sends a notification to affected user groups
+     * sets to approved if author is at least a tutor,
+     * persists the answer post, and sends a notification to affected user groups
      *
-     * @param courseId   id of the course the post belongs to
+     * @param courseId   id of the course the answer post belongs to
      * @param answerPost answer post to create
      * @return created answer post that was persisted
      */
@@ -57,12 +56,12 @@ public class AnswerPostService extends PostingService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         // check
-        Course course = preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(answerPost.getPost(), courseId);
-        preCheckAnswerPostValidity(answerPost, courseId);
         if (answerPost.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
+        Course course = preCheckUserAndCourse(user, courseId);
+        preCheckPostValidity(answerPost.getPost(), courseId);
+        preCheckAnswerPostValidity(answerPost, courseId);
 
         // answer post is automatically approved if written by an instructor
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
@@ -83,7 +82,7 @@ public class AnswerPostService extends PostingService {
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId   id of the course the post belongs to
+     * @param courseId   id of the course the answer post belongs to
      * @param answerPost answer post to update
      * @return updated answer post that was persisted
      */
@@ -131,8 +130,8 @@ public class AnswerPostService extends PostingService {
      * Checks course and user validity,
      * determines authority to delete post and deletes the post
      *
-     * @param courseId     id of the course the post belongs to
-     * @param answerPostId id of the answer post to delete
+     * @param courseId      id of the course the answer post belongs to
+     * @param answerPostId  id of the answer post to delete
      */
     public void deleteAnswerPostById(Long courseId, Long answerPostId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -148,7 +147,7 @@ public class AnswerPostService extends PostingService {
     }
 
     /**
-     * Helper method to send notification to affected groups
+     * Sends notification to affected groups
      *
      * @param answerPost answer post that triggered the notification
      */
@@ -179,7 +178,7 @@ public class AnswerPostService extends PostingService {
     /**
      * Retrieve answer post from database by id
      *
-     * @param answerPostId id of requested post
+     * @param answerPostId id of requested answer post
      * @return retrieved answer post
      */
     public AnswerPost findById(Long answerPostId) {
