@@ -19,7 +19,6 @@ describe('GradeKeyOverviewComponent', () => {
     let comp: GradingKeyOverviewComponent;
 
     let gradingSystemService: GradingSystemService;
-    let router: Router;
 
     const gradeStep1: GradeStep = {
         gradeName: 'Fail',
@@ -59,7 +58,6 @@ describe('GradeKeyOverviewComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(GradingKeyOverviewComponent);
                 comp = fixture.componentInstance;
-                router = fixture.debugElement.injector.get(Router);
                 gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
             });
     });
