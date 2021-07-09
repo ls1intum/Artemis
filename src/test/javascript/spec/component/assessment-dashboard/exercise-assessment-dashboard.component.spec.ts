@@ -64,6 +64,7 @@ import { OrionModule } from 'app/shared/orion/orion.module';
 import { MockOrionConnectorService } from '../../helpers/mocks/service/mock-orion-connector.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
+import { InfoPanelComponent } from 'app/shared/info-panel/info-panel.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -207,6 +208,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(HeaderParticipationPageComponent),
                 MockComponent(SidePanelComponent),
+                MockComponent(InfoPanelComponent),
                 MockComponent(ModelingEditorComponent),
                 MockComponent(SecondCorrectionEnableButtonComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),
