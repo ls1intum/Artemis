@@ -36,6 +36,8 @@ declare global {
             loginWithGUI(username: String, password: String): any;
             createCourse(course: String): Chainable<Cypress.Response>;
             deleteCourse(courseID: number): Chainable<Cypress.Response>;
+            deleteModelingExercise(courseID: number): Chainable<Cypress.Response>;
+            createModelingExercise(modelingExercise: String): Chainable<Cypress.Response>;
         }
     }
 }
@@ -113,6 +115,39 @@ Cypress.Commands.add('createCourse', (course: string) => {
 Cypress.Commands.add('deleteCourse', (courseID: number) => {
     cy.request({
         url: `/api/courses/${courseID}`,
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
+    }).then((response) => {
+        return response;
+    });
+});
+
+/**
+ * Creates a modelingExercise with API request
+ * @param modelingExercise is a modeling exercise object in json format
+ * @return Chainable<Cypress.Response> the http response of the POST request
+ * */
+Cypress.Commands.add('createModelingExercise', (modelingExercise: string) => {
+    cy.request({
+        url: '/api/modeling-exercises',
+        method: 'POST',
+        body: modelingExercise,
+        headers: {
+            Authorization: 'Bearer ' + Cypress.env(authTokenKey),
+        },
+    }).then((response) => {
+        return response;
+    });
+});
+
+/**
+ * Deletes modeling exercise with exerciseID
+ * @param exerciseID id of the exercise that is to be deleted
+ * @return Chainable<Cypress.Response> the http response of the DELETE request
+ * */
+Cypress.Commands.add('deleteModelingExercise', (exerciseID: number) => {
+    cy.request({
+        url: `/api/modeling-exercises/${exerciseID}`,
         method: 'DELETE',
         headers: { Authorization: `Bearer ${Cypress.env(authTokenKey)}` },
     }).then((response) => {
