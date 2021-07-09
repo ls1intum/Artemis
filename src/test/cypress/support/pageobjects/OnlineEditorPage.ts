@@ -3,7 +3,7 @@
  */
 export class OnlineEditorPage {
     constructor() {
-        cy.intercept('POST', '/api/repository/*/commit').as('submit');
+        cy.intercept('PUT', '/api/repository/*/files?commit=yes').as('submit');
         cy.intercept('POST', '/api/repository/*/**').as('createFile');
         cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
     }
@@ -45,9 +45,6 @@ export class OnlineEditorPage {
                 this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName) + '{shift}{pagedown}{backspace}');
             });
         }
-        // We wait until the editor autosaves because the test has issues with the saving of files on submit.
-        // Unfortunately this increases the time of the test drastically, but there seems to be no other stable way...
-        cy.wait(35000);
     }
 
     /**

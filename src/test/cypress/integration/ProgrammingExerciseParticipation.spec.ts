@@ -10,12 +10,14 @@ import { ArtemisRequests } from './../support/requests/ArtemisRequests';
 // Environmental variables
 const adminUsername = Cypress.env('adminUsername');
 const adminPassword = Cypress.env('adminPassword');
-let username = Cypress.env('username');
-let password = Cypress.env('password');
-if (Cypress.env('isCi')) {
-    username = username.replace('USERID', '5');
-    password = password.replace('USERID', '5');
-}
+let usernameTemplate = Cypress.env('username');
+let passwordTemplate = Cypress.env('password');
+let student1 = usernameTemplate.replace('USERID', '3');
+let passwordStudent1 = passwordTemplate.replace('USERID', '3');
+let student2 = usernameTemplate.replace('USERID', '4');
+let passwordStudent2 = passwordTemplate.replace('USERID', '4');
+let student3 = usernameTemplate.replace('USERID', '5');
+let passwordStudent3 = passwordTemplate.replace('USERID', '5');
 
 // Requests
 let artemisRequests: ArtemisRequests;
@@ -40,19 +42,29 @@ const packageName = 'de.test';
 const exerciseRow = '.course-exercise-row';
 const buildingAndTesting = 'Building and testing...';
 
-describe('Programming exercise', () => {
+describe('Programming exercise participations', () => {
     before(() => {
-        editorPage = new OnlineEditorPage();
-        registerQueries();
         artemisRequests = new ArtemisRequests();
         setupCourseAndProgrammingExercise();
     });
 
-    it('Creates a new course, participates in it and deletes it afterwards', function () {
-        cy.login(username, password, '/');
-        startParticipationInProgrammingExercise();
+    beforeEach(() => {
+        editorPage = new OnlineEditorPage();
+        registerQueries();
+    });
+
+    it('Makes a failing submission', function () {
+        startParticipationInProgrammingExercise(student1, passwordStudent1);
         makeFailingSubmission();
+    });
+
+    it('Makes a partially successful submission', function () {
+        startParticipationInProgrammingExercise(student2, passwordStudent2);
         makePartiallySuccessfulSubmission();
+    });
+
+    it('Makes a successful submission', function () {
+        startParticipationInProgrammingExercise(student3, passwordStudent3);
         makeSuccessfulSubmission();
     });
 
@@ -78,8 +90,10 @@ function setupCourseAndProgrammingExercise() {
     cy.login(adminUsername, adminPassword, '/');
     artemisRequests.courseManagement.createCourse(courseName, courseShortName).then((response) => {
         course = response.body;
-        artemisRequests.courseManagement.addStudentToCourse(course.id, username);
-        //  We sleep for 80 seconds to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
+        artemisRequests.courseManagement.addStudentToCourse(course.id, student1);
+        artemisRequests.courseManagement.addStudentToCourse(course.id, student2);
+        artemisRequests.courseManagement.addStudentToCourse(course.id, student3);
+        //  We sleep to allow bamboo/bitbucket to synchronize the group rights, because the programming exercise creation fails otherwise
         cy.log('Created course. Sleeping before adding a programming exercise...');
         cy.wait(65000);
         artemisRequests.courseManagement.createProgrammingExercise(course, programmingExerciseName, programmingExerciseShortName, packageName);
@@ -124,6 +138,7 @@ function makePartiallySuccessfulSubmission() {
  * Makes a submission, which passes all tests, and asserts the outcome in the UI.
  */
 function makeSuccessfulSubmission() {
+    editorPage.createFileInRootPackage('SortStrategy.java');
     editorPage.createFileInRootPackage('Context.java');
     editorPage.createFileInRootPackage('Policy.java');
     makeSubmissionAndVerifyResults(allSuccessful, () => {
@@ -151,7 +166,8 @@ function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmissio
 /**
  * Starts the participation in the test programming exercise.
  */
-function startParticipationInProgrammingExercise() {
+function startParticipationInProgrammingExercise(username: string, password: string) {
+    cy.login(username, password, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
     cy.contains(courseName).parents('.card-header').click();
