@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -210,9 +209,12 @@ public class ExamResource {
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ProgrammingExercise)
                     .map(Exercise::getId).forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
-            // for all modeling exercises in the exam, send their ids for scheduling
-            examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise)
-                    .map(Exercise::getId).forEach(instanceMessageSendService::sendModelingExerciseSchedule);
+        }
+
+        if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
+            // get all exercises
+            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
+            examService.scheduleModelingExercises(examWithExercises);
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);

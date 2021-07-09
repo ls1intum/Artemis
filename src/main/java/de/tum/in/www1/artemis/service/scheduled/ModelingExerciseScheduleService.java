@@ -70,17 +70,17 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
             List<ModelingExercise> exercisesToBeScheduled = modelingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
-            log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
+            log.info("Scheduled {} modeling exercises.", exercisesToBeScheduled.size());
         }
         catch (Exception e) {
-            log.error("Failed to start ProgrammingExerciseScheduleService", e);
+            log.error("Failed to start ModelingExerciseScheduleService", e);
         }
     }
 
     @Override
     public void updateScheduling(ModelingExercise exercise) {
         if (!needsToBeScheduled(exercise)) {
-            // If a programming exercise got changed so that any scheduling becomes unnecessary, we need to cancel all scheduled tasks
+            // If a modeling exercise got changed so that any scheduling becomes unnecessary, we need to cancel all scheduled tasks
             cancelAllScheduledTasks(exercise);
             return;
         }
@@ -136,6 +136,8 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
     }
 
     private void scheduleExamExercise(ModelingExercise exercise) {
+        // TODO cancel already scheduled task for this exercise
+        // create, update, delete exercise, edit, delete exam, update working time of individual exam
         var exam = exercise.getExerciseGroup().getExam();
         var endDate = examDateService.getLatestIndividualExamEndDate(exam);
         if (endDate == null) {
@@ -149,7 +151,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
                 buildModelingClusters(exercise).run();
             });
         }
-        log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Scheduled Exam Modeling Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
     /**
@@ -205,5 +207,6 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.DUE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.ASSESSMENT_DUE);
+        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM);
     }
 }

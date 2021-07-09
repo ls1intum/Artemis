@@ -752,4 +752,16 @@ public class ExamService {
             }
         }));
     }
+
+    /**
+     * Schedules all modeling exercises
+     * This is executed when exam is updated or individual working times are updated
+     *
+     * @param exam - the exam whose modeling exercises will be scheduled
+     */
+    public void scheduleModelingExercises(Exam exam) {
+        // for all modeling exercises in the exam, send their ids for scheduling
+        exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
+                .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
+    }
 }
