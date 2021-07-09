@@ -37,11 +37,7 @@ export class TextblockAssessmentCardComponent {
         return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
     }
 
-    constructor(
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        protected assessmentAnalytics: TextAssessmentAnalytics,
-        protected route: ActivatedRoute,
-    ) {
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, public assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
         assessmentAnalytics.setComponentRoute(route);
     }
 

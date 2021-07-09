@@ -66,7 +66,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         protected modalService: NgbModal,
         protected assessmentsService: TextAssessmentService,
         protected route: ActivatedRoute,
-        protected assessmentAnalytics: TextAssessmentAnalytics,
+        public assessmentAnalytics: TextAssessmentAnalytics,
     ) {
         assessmentAnalytics.setComponentRoute(route);
     }

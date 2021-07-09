@@ -20,7 +20,7 @@ export class ManualTextSelectionComponent {
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
 
-    constructor(protected assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+    constructor(public assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
         assessmentAnalytics.setComponentRoute(route);
     }
 

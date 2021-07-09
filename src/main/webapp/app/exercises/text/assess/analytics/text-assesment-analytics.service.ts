@@ -19,7 +19,7 @@ export class TextAssessmentAnalytics {
     private eventToSend: TextAssessmentEvent = new TextAssessmentEvent();
     private INVALID_VALUE = -1;
     private route: ActivatedRoute;
-    private analyticsEnabled: boolean;
+    public analyticsEnabled: boolean;
 
     constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService) {
         this.profileService

@@ -9,7 +9,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
-import { HttpResponse } from '@angular/common/http';
 
 describe('TextAssessment Service', () => {
     let injector: TestBed;

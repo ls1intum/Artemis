@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ActivatedRoute } from '@angular/router';
@@ -53,7 +53,7 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
-    constructor(protected assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+    constructor(public assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
         assessmentAnalytics.setComponentRoute(route);
     }
 
@@ -71,10 +71,14 @@ export class AssessmentHeaderComponent {
     }
 
     sendSubmitAssessmentEventToAnalytics() {
-        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
+        if (this.exercise?.type === ExerciseType.TEXT) {
+            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
+        }
     }
 
     sendAssessNextEventToAnalytics() {
-        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
+        if (this.exercise?.type === ExerciseType.TEXT) {
+            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
+        }
     }
 }
