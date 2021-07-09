@@ -37,7 +37,7 @@ export class TextAssessmentService {
     public save(participationId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/assessment`, body, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
@@ -104,7 +104,6 @@ export class TextAssessmentService {
     }
 
     /**
-     * Get all feedback items for a submission.
      * @param participationId id of the participation the submission belongs to
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      * @param correctionRound

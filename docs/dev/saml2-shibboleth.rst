@@ -34,7 +34,7 @@ The new (and old) security filter chain is presented in the following figure:
 The feature is configured by the application-saml2.yml file.
 You can configure multiple identity providers.
 In addition, the SAML2 feature allows to decide whether a user can obtain a password (see "info.saml2.enable-password").
-This app password allows to use the connected servies as VCS and CI as usual with the local user credentials.
+This app password allows to use the connected services as VCS and CI as usual with the local user credentials.
 
 You can see the structure of the saml2 configuration in the following:
 
@@ -70,4 +70,4 @@ You can see the structure of the saml2 configuration in the following:
 	# services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
 	# Enabled the password reset function in Artemis.
 	info.saml2.enable-password: true
-	
+
