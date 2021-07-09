@@ -3,7 +3,7 @@
         "exam": {
             "overview": {
                 "start": "Beginn: {{start}}",
-                "duration": "Dauer: {{duration}} min",
+                "duration": "Dauer: ",
                 "maxPoints": "Punkte: {{points}}"
             },
             "examSummary": {
@@ -37,7 +37,7 @@
             "endExam": "Beenden",
             "date": "Datum",
             "time": "Zeit",
-            "durationWithFormat": "Dauer (mm:ss)",
+            "durationWithFormat": "Dauer",
             "course": "Kurs",
             "exercises": "Aufgaben",
             "points": "Punkte",
