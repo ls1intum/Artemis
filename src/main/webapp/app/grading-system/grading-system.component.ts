@@ -203,7 +203,7 @@ export class GradingSystemComponent implements OnInit {
                 }
             }
         } else {
-            // ensures that all updated have taken place before grade key can be saved, not really an error, therefore no message is necessary
+            // ensures that all updated have taken place before the grading key can be saved, not really an error, therefore no message is necessary
             for (const gradeStep of this.gradingScale.gradeSteps) {
                 if (gradeStep.lowerBoundPoints != undefined || gradeStep.upperBoundPoints != undefined) {
                     return false;
