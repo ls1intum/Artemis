@@ -2,7 +2,10 @@ import { OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
-@Pipe({ name: 'artemisDurationFromSeconds' })
+@Pipe({
+    name: 'artemisDurationFromSeconds',
+    pure: false,
+})
 export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy {
     private readonly secondsInDay = 60 * 60 * 24;
     private readonly secondsInHour = 60 * 60;
@@ -67,15 +70,15 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
     private getDayString(days: number): string {
         if (this.locale === 'de') {
             if (days > 1) {
-                return ' days ';
-            } else {
-                return ' day ';
-            }
-        } else {
-            if (days > 1) {
                 return ' Tage ';
             } else {
                 return ' Tag ';
+            }
+        } else {
+            if (days > 1) {
+                return ' days ';
+            } else {
+                return ' day ';
             }
         }
     }
