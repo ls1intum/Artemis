@@ -38,7 +38,7 @@
             "clusters": "Clusters",
             "checkClusters": {
                 "text": "Number of Clusters:",
-                "error": "Laden der Anzahl von Clustern fehlgeschlagen."
+                "error": "Retrieving Number of Clusters failed"
             },
             "buildClusters": {
                 "action": "Build Clusters",
