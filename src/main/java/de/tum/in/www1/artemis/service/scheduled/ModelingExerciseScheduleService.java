@@ -70,7 +70,11 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
             List<ModelingExercise> exercisesToBeScheduled = modelingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
+            List<ModelingExercise> modelingExercisesWithExam = modelingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
+            modelingExercisesWithExam.forEach(this::scheduleExamExercise);
+
             log.info("Scheduled {} modeling exercises.", exercisesToBeScheduled.size());
+            log.info("Scheduled {} exam programming exercises.", modelingExercisesWithExam.size());
         }
         catch (Exception e) {
             log.error("Failed to start ModelingExerciseScheduleService", e);
@@ -136,8 +140,6 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
     }
 
     private void scheduleExamExercise(ModelingExercise exercise) {
-        // TODO cancel already scheduled task for this exercise
-        // create, update, delete exercise, edit, delete exam, update working time of individual exam
         var exam = exercise.getExerciseGroup().getExam();
         var endDate = examDateService.getLatestIndividualExamEndDate(exam);
         if (endDate == null) {

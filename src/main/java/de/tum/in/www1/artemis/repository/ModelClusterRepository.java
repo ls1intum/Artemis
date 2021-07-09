@@ -19,6 +19,13 @@ import de.tum.in.www1.artemis.domain.modeling.ModelCluster;
 public interface ModelClusterRepository extends JpaRepository<ModelCluster, Long> {
 
     @Query("""
+            SELECT COUNT (DISTINCT cluster)
+            FROM ModelCluster cluster
+            WHERE
+            cluster.exercise.id = :#{#exerciseId}""")
+    Integer countByExerciseIdWithEagerElements(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
             SELECT DISTINCT cluster
             FROM ModelCluster cluster
             LEFT JOIN FETCH cluster.modelElements element

@@ -128,7 +128,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = undefined;
                         this.modelingExercise.teamMode = false;
-                        this.modelingExercise.assessmentType = AssessmentType.MANUAL;
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
