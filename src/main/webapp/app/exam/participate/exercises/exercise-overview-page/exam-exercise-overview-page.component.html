@@ -23,6 +23,11 @@
                         {{ 'artemisApp.examParticipation.exerciseName' | artemisTranslate }}
                     </span>
                 </th>
+                <th>
+                    <span>
+                        {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}
+                    </span>
+                </th>
                 <th style="max-width: 50px">
                     <span>
                         {{ 'artemisApp.examParticipation.examStatus' | artemisTranslate }}
@@ -44,6 +49,9 @@
                     <a class="w-100" (click)="openExercise(item.exercise!)">
                         {{ item.exercise!.title }}
                     </a>
+                </td>
+                <td style="max-width: 30px">
+                    {{ item.exercise!.maxPoints }}
                 </td>
                 <td style="max-width: 50px; font-weight: bold">
                     <div

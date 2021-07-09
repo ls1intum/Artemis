@@ -69,9 +69,9 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(gradingScale);
+        return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
@@ -86,9 +86,9 @@ public class GradingScaleResource {
     public ResponseEntity<GradingScale> getGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return ResponseEntity.ok(gradingScale);
+        return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**

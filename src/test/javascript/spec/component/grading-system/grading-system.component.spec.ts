@@ -24,6 +24,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,6 +35,7 @@ describe('Grading System Component', () => {
     let gradingSystemService: GradingSystemService;
     let translateService: TranslateService;
     let translateStub: SinonStub;
+    let examService: ExamManagementService;
 
     const route = { params: of({ courseId: 1, examId: 1 }) } as any as ActivatedRoute;
 
@@ -90,6 +92,7 @@ describe('Grading System Component', () => {
         comp = fixture.componentInstance;
 
         gradingSystemService = TestBed.inject(GradingSystemService);
+        examService = TestBed.inject(ExamManagementService);
         translateService = TestBed.inject(TranslateService);
     });
 
@@ -108,11 +111,16 @@ describe('Grading System Component', () => {
 
     it('should handle find response for exam', () => {
         const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(new HttpResponse<GradingScale>({ body: comp.gradingScale })));
+        const findExamStub = sinon.stub(examService, 'find').returns(of(new HttpResponse<Exam>({ body: exam })));
 
         fixture.detectChanges();
 
         expect(comp).to.be.ok;
+        expect(comp.isExam).to.be.true;
         expect(findGradingScaleForExamStub).to.have.been.calledOnceWithExactly(1, 1);
+        expect(findExamStub).to.have.been.calledOnceWithExactly(1, 1);
+        expect(comp.exam).to.equal(exam);
+        expect(comp.maxPoints).to.equal(exam.maxPoints);
     });
 
     it('should handle find response for exam and not find a grading scale', () => {

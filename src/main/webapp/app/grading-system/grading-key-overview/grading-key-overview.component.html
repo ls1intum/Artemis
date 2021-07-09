@@ -1,7 +1,10 @@
 <div class="row justify-content-center">
     <div class="col-6">
-        <h1 style="text-align: center">{{ 'artemisApp.gradingSystem.titleExam' | artemisTranslate }} {{ examTitle }}</h1>
-        <div style="margin-top: 2em; font-size: 1.1em">
+        <h1 class="text-center mb-3">
+            {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }} {{ title }}
+        </h1>
+        <h6 *ngIf="!isExam">{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
+        <div style="font-size: 1.1em">
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -14,7 +17,7 @@
                     <tr *ngFor="let gradeStep of gradeSteps; let i = index" [class.highlighted]="gradeStep.gradeName == studentGrade">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
-                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ gradeStep.lowerBoundPercentage }} - {{ gradeStep.upperBoundPercentage
+                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ round(gradeStep.lowerBoundPercentage) }} - {{ round(gradeStep.upperBoundPercentage)
                             }}{{ gradeStep.upperBoundInclusive ? ']' : ')' }}
                         </td>
                         <td *ngIf="hasPointsSet()">
@@ -24,6 +27,14 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <div>
+            <h5>{{ 'artemisApp.gradingSystem.overview.intervals.title' | artemisTranslate }}</h5>
+            <ul>
+                <li><span style="font-weight: bold">[a, b)</span>: {{ 'artemisApp.gradingSystem.overview.intervals.leftInclusiveRightExclusive' | artemisTranslate }}</li>
+                <li><span style="font-weight: bold">(a, b]</span>: {{ 'artemisApp.gradingSystem.overview.intervals.leftExclusiveRightInclusive' | artemisTranslate }}</li>
+                <li><span style="font-weight: bold">[a, b]</span>: {{ 'artemisApp.gradingSystem.overview.intervals.bothInclusive' | artemisTranslate }}</li>
+            </ul>
         </div>
         <div>
             <button type="button" class="btn btn-secondary" (click)="previousState()">

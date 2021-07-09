@@ -1,6 +1,6 @@
 import * as sinon from 'sinon';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeKeyOverviewComponent } from 'app/exam/participate/summary/points-summary/grade-key-overview/grade-key-overview.component';
+import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -9,17 +9,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiTranslateDirective } from 'ng-jhipster';
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouter } from '../../../../../../helpers/mocks/service/mock-route.service';
+import { MockRouter } from '../../helpers/mocks/service/mock-route.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { HttpResponse } from '@angular/common/http';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('GradeKeyOverviewComponent', () => {
-    let fixture: ComponentFixture<GradeKeyOverviewComponent>;
-    let comp: GradeKeyOverviewComponent;
+    let fixture: ComponentFixture<GradingKeyOverviewComponent>;
+    let comp: GradingKeyOverviewComponent;
 
     let gradingSystemService: GradingSystemService;
-    let router: Router;
 
     const gradeStep1: GradeStep = {
         gradeName: 'Fail',
@@ -38,26 +37,27 @@ describe('GradeKeyOverviewComponent', () => {
         isPassingGrade: true,
     };
     const gradeStepsDto: GradeStepsDTO = {
-        examTitle: 'Title',
+        title: 'Title',
         gradeType: GradeType.BONUS,
         gradeSteps: [gradeStep1, gradeStep2],
+        maxPoints: 100,
     };
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbModule)],
-            declarations: [GradeKeyOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective)],
+            declarations: [GradingKeyOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(JhiTranslateDirective)],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
+                MockProvider(ArtemisNavigationUtilService),
             ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(GradeKeyOverviewComponent);
+                fixture = TestBed.createComponent(GradingKeyOverviewComponent);
                 comp = fixture.componentInstance;
-                router = fixture.debugElement.injector.get(Router);
                 gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
             });
     });
@@ -67,8 +67,9 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should initialize', () => {
-        spyOn(gradingSystemService, 'findGradeStepsForExam').and.returnValue(of(new HttpResponse<GradeStepsDTO>({ body: gradeStepsDto })));
+        spyOn(gradingSystemService, 'findGradeSteps').and.returnValue(of(gradeStepsDto));
         spyOn(gradingSystemService, 'sortGradeSteps').and.returnValue([gradeStep1, gradeStep2]);
+        const gradePointsSpy = spyOn(gradingSystemService, 'setGradePoints').and.stub();
 
         fixture.detectChanges();
 
@@ -77,19 +78,11 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.examId).toEqual(123);
         expect(comp.courseId).toEqual(345);
         expect(comp.studentGrade).toEqual('2.0');
-        expect(comp.examTitle).toEqual('Title');
+        expect(comp.title).toEqual('Title');
         expect(comp.isBonus).toEqual(true);
+        expect(comp.isExam).toEqual(true);
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
-    });
-
-    it('should navigate to previous state', () => {
-        const routerSpy = spyOn(router, 'navigate').and.callFake(() => {});
-        comp.courseId = 345;
-        comp.examId = 123;
-
-        comp.previousState();
-
-        expect(routerSpy).toHaveBeenCalledWith(['courses', '345', 'exams', '123']);
+        expect(gradePointsSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], 100);
     });
 
     it('should print PDF', fakeAsync(() => {

@@ -32,12 +32,37 @@
                     ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | artemisTranslate }}"
                 ></fa-icon>
             </h4>
-            <h4 class="text-center mb-5" id="max-course-score">
+            <h4 class="text-center mb-4" id="max-course-score">
                 <span>
                     {{ 'artemisApp.courseOverview.statistics.totalPoints' | artemisTranslate: { number: overallMaxPoints, relative: totalRelativeScore } }}
                 </span>
                 <fa-icon id="total-help" class="me-1" [icon]="'question-circle'" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | artemisTranslate }}"></fa-icon>
             </h4>
+            <div *ngIf="gradingScaleExists" class="mb-5">
+                <h4 *ngIf="!isBonus" class="text-center">{{ 'artemisApp.courseOverview.statistics.grade' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h4>
+                <h4 *ngIf="isBonus" class="text-center">{{ 'artemisApp.courseOverview.statistics.bonus' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h4>
+                <h6 class="text-center">
+                    {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
+                    <fa-icon
+                        id="reachable-help"
+                        class="me-1"
+                        [icon]="'question-circle'"
+                        ngbTooltip="{{
+                            isBonus ? ('artemisApp.courseOverview.statistics.bonusHelp' | artemisTranslate) : ('artemisApp.courseOverview.statistics.gradeHelp' | artemisTranslate)
+                        }}"
+                    ></fa-icon>
+                </h6>
+                <div class="text-center mt-3">
+                    <a class="btn btn-primary" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO?.gradeName }">
+                        <fa-icon [icon]="'clipboard'"></fa-icon>
+                        <span
+                            >&nbsp;{{
+                                isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
+                            }}</span
+                        >
+                    </a>
+                </div>
+            </div>
             <div *ngIf="course.presentationScore !== 0">
                 <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate: { number: overallPresentationScore } }}</h2>
                 <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate: { number: course.presentationScore } }}</h2>
