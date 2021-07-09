@@ -25,7 +25,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,7 +36,6 @@ describe('Grading System Component', () => {
     let translateService: TranslateService;
     let translateStub: SinonStub;
     let examService: ExamManagementService;
-    let courseService: CourseManagementService;
 
     const route = { params: of({ courseId: 1, examId: 1 }) } as any as ActivatedRoute;
 
@@ -95,7 +93,6 @@ describe('Grading System Component', () => {
 
         gradingSystemService = TestBed.inject(GradingSystemService);
         examService = TestBed.inject(ExamManagementService);
-        courseService = TestBed.inject(CourseManagementService);
         translateService = TestBed.inject(TranslateService);
     });
 

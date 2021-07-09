@@ -523,7 +523,7 @@ public class FileResource {
 
             HttpHeaders headers = new HttpHeaders();
 
-            if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg")) {
+            if (filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz")) {
                 // attachment will force the user to download the file
                 ContentDisposition contentDisposition = ContentDisposition.builder("attachment").filename(filename).build();
                 headers.setContentDisposition(contentDisposition);
