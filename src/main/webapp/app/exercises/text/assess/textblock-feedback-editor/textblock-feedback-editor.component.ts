@@ -66,9 +66,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         protected modalService: NgbModal,
         protected assessmentsService: TextAssessmentService,
         protected route: ActivatedRoute,
-        public assessmentAnalytics: TextAssessmentAnalytics,
+        public textAssessmentAnalytics: TextAssessmentAnalytics,
     ) {
-        assessmentAnalytics.setComponentRoute(route);
+        textAssessmentAnalytics.setComponentRoute(route);
     }
 
     /**
@@ -112,7 +112,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     dismiss(): void {
         this.close.emit();
-        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, this.feedback.type, this.textBlock.type);
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, this.feedback.type, this.textBlock.type);
     }
 
     /**
@@ -150,8 +150,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         const feedbackTypeBefore = this.feedback.type;
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
+        // send event to analytics if the feedback type changed
         if (feedbackTypeBefore !== this.feedback.type) {
-            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, this.feedback.type, this.textBlock.type);
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, this.feedback.type, this.textBlock.type);
         }
     }
 
@@ -165,18 +166,22 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         this.didChange();
     }
 
+    /**
+     * Handles click event on the conflict label and sends an assessment event to save the click.
+     * @param feedbackId the id of the feedback
+     */
     onConflictClicked(feedbackId: number | undefined) {
         if (feedbackId) {
             this.onConflictsClicked.emit(feedbackId);
         }
-        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, this.feedback.type, this.textBlock.type);
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, this.feedback.type, this.textBlock.type);
     }
 
     // this method fires the modal service and shows a modal after connecting feedback with its respective blocks
     async openOriginOfFeedbackModal(content: any) {
         await this.connectAutomaticFeedbackOriginBlocksWithFeedback();
         this.modalService.open(content, { size: 'lg' });
-        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, this.feedback.type, this.textBlock.type);
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, this.feedback.type, this.textBlock.type);
     }
 
     /**
@@ -213,7 +218,10 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         }
     }
 
+    /**
+     * Triggers an assessment event call to the analytics service when user enters the impact warning label.
+     */
     mouseEnteredWarningLabel() {
-        this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, this.feedback.type, this.textBlock.type);
+        this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, this.feedback.type, this.textBlock.type);
     }
 }

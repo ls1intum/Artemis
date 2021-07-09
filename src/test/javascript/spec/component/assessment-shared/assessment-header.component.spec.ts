@@ -252,7 +252,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.TEXT,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendAssessNextEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
@@ -262,7 +262,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.FILE_UPLOAD,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendAssessNextEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
@@ -272,7 +272,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.TEXT,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendSubmitAssessmentEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.SUBMIT_ASSESSMENT);
@@ -282,7 +282,7 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             type: ExerciseType.FILE_UPLOAD,
         } as Exercise;
-        const sendAssessmentEvent = spyOn<any>(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendSubmitAssessmentEventToAnalytics();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);

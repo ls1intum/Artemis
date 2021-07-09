@@ -20,8 +20,8 @@ export class ManualTextSelectionComponent {
     public hostRectangle: SelectionRectangle | undefined;
     public selectedText: string | undefined;
 
-    constructor(public assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
-        assessmentAnalytics.setComponentRoute(route);
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+        textAssessmentAnalytics.setComponentRoute(route);
     }
 
     /**
@@ -57,7 +57,7 @@ export class ManualTextSelectionComponent {
         if (this.selectedText) {
             this.assess.emit(this.selectedText);
             this.deselectText();
-            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
         }
     }
 }

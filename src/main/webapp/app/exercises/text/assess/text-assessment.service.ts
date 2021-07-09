@@ -57,7 +57,11 @@ export class TextAssessmentService {
             .pipe(map((res: EntityResponseType) => TextAssessmentService.convertResponse(res)));
     }
 
-    public submitAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
+    /**
+     * Submits an assessment event to the artemis analytics for text exercises.
+     * @param assessmentEvent an event of type {TextAssessmentEvent}
+     */
+    public submitTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
         const body = Object.assign({}, assessmentEvent);
         return this.http
             .post<TextAssessmentEvent>(`${this.resourceUrl}/text-assessment-event/add-event`, body, { observe: 'response' })

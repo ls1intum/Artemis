@@ -53,8 +53,8 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
-    constructor(public assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
-        assessmentAnalytics.setComponentRoute(route);
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+        textAssessmentAnalytics.setComponentRoute(route);
     }
 
     get highlightDifferences() {
@@ -70,15 +70,21 @@ export class AssessmentHeaderComponent {
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
+    /**
+     * Sends and assessment event for the submit button using the analytics service in case the exercise type is TEXT
+     */
     sendSubmitAssessmentEventToAnalytics() {
         if (this.exercise?.type === ExerciseType.TEXT) {
-            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT);
         }
     }
 
+    /**
+     * Sends and assessment event for the assess next button using the analytics service in case the exercise type is TEXT
+     */
     sendAssessNextEventToAnalytics() {
         if (this.exercise?.type === ExerciseType.TEXT) {
-            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
         }
     }
 }

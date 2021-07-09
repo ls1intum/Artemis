@@ -82,7 +82,7 @@ describe('ManualTextSelectionComponent', () => {
 
     it('should send assessment event when selecting text block manually', () => {
         component.selectedText = 'sample text';
-        const sendAssessmentEvent = sinon.spy(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = sinon.spy(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.assessAction();
         fixture.detectChanges();
         expect(sendAssessmentEvent).to.have.been.calledWith(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);

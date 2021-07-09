@@ -216,7 +216,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should send assessment event on conflict button click', () => {
         component.feedback.type = FeedbackType.AUTOMATIC;
         component.textBlock.type = TextBlockType.AUTOMATIC;
-        const sendAssessmentEvent = spyOn<any>(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.onConflictClicked(1);
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
@@ -225,7 +225,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should send assessment event on dismiss button click', () => {
         component.feedback.type = FeedbackType.MANUAL;
         component.textBlock.type = TextBlockType.MANUAL;
-        const sendAssessmentEvent = spyOn<any>(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.dismiss();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
@@ -234,7 +234,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should send assessment event on hovering over warning', () => {
         component.feedback.type = FeedbackType.MANUAL;
         component.textBlock.type = TextBlockType.AUTOMATIC;
-        const sendAssessmentEvent = spyOn<any>(component.assessmentAnalytics, 'sendAssessmentEvent');
+        const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.mouseEnteredWarningLabel();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);

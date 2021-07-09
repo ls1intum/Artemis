@@ -1,4 +1,4 @@
-import { getTestBed, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { getTestBed, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';

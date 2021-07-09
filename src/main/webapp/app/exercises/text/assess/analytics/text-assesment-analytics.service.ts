@@ -9,6 +9,9 @@ import { tap, filter } from 'rxjs/operators';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
+/**
+ * A service used to manage sending TextAssessmentEvent's to the server
+ */
 @Injectable({ providedIn: 'root' })
 export class TextAssessmentAnalytics {
     private userId: number;
@@ -22,6 +25,7 @@ export class TextAssessmentAnalytics {
     public analyticsEnabled: boolean;
 
     constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService) {
+        // retrieve the analytics enabled status from the profile info and set to current property
         this.profileService
             .getProfileInfo()
             .pipe(
@@ -33,6 +37,11 @@ export class TextAssessmentAnalytics {
             .subscribe();
     }
 
+    /**
+     * Angular services cannot inject route listeners automatically. The route needs to be injected manually, and then
+     * it can be listened upon.
+     * @param route the route instance of the component using the service
+     */
     setComponentRoute(route: ActivatedRoute) {
         if (this.analyticsEnabled) {
             this.route = route;
@@ -40,15 +49,26 @@ export class TextAssessmentAnalytics {
         }
     }
 
+    /**
+     * Checks if artemis analytics is enabled, and then submits the prepared event to the server through the TextAssessmentService.
+     * @param eventType type of the event to be sent
+     * @param feedbackType type of the feedback to be sent. It is undefined by default to support simple events too.
+     * @param textBlockType type of the text block to be sent. It is undefined by default to support simple events too.
+     */
     sendAssessmentEvent(eventType: TextAssessmentEventType, feedbackType: FeedbackType | undefined = undefined, textBlockType: TextBlockType | undefined = undefined) {
         if (this.analyticsEnabled) {
             this.eventToSend.setEventType(eventType).setFeedbackType(feedbackType).setSegmentType(textBlockType);
-            this.assessmentsService.submitAssessmentEvent(this.eventToSend).subscribe({
-                error: (e) => console.error('Error sending statistics' + e.message),
+            this.assessmentsService.submitTextAssessmentEvent(this.eventToSend).subscribe({
+                error: (e) => console.error('Error sending statistics: ' + e.message),
             });
         }
     }
 
+    /**
+     * Subscribes to the route parameters and updates the respective id's accordingly.
+     * Avoids having to set the id on the component's side.
+     * @private
+     */
     private subscribeToRouteParameters() {
         this.route.params.subscribe((params) => {
             this.userId = this.accountService.userIdentity ? Number(this.accountService.userIdentity.id) : this.INVALID_VALUE;

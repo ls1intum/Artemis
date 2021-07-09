@@ -37,8 +37,12 @@ export class TextblockAssessmentCardComponent {
         return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
     }
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService, public assessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
-        assessmentAnalytics.setComponentRoute(route);
+    constructor(
+        public structuredGradingCriterionService: StructuredGradingCriterionService,
+        public textAssessmentAnalytics: TextAssessmentAnalytics,
+        protected route: ActivatedRoute,
+    ) {
+        textAssessmentAnalytics.setComponentRoute(route);
     }
 
     /**
@@ -61,7 +65,7 @@ export class TextblockAssessmentCardComponent {
 
         if (autofocus) {
             setTimeout(() => this.feedbackEditor.focus());
-            this.assessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
         }
     }
 

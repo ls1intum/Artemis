@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentEventType;
 
 /**
  * A TextAssessmentEvent.
+ * This entity is used to save snapshots of the user interactions with the assessment system in Text exercises.
  */
 @Entity
 @Table(name = "text_assessment_event")

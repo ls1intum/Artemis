@@ -84,8 +84,8 @@ describe('TextAssessment Service', () => {
 
     it('should send assessment event to analytics', fakeAsync(() => {
         const assessmentEvent: TextAssessmentEvent = new TextAssessmentEvent();
-        service.submitAssessmentEvent(assessmentEvent).subscribe((val) => {
-            expect(val.status).toBe(200);
+        service.submitTextAssessmentEvent(assessmentEvent).subscribe((response) => {
+            expect(response.status).toBe(200);
         });
         const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}api/text-assessment-event/add-event`, method: 'POST' });
         mockRequest.flush(mockResponse);
