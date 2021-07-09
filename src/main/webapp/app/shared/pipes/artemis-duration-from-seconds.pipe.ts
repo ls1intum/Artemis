@@ -2,23 +2,48 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'artemisDurationFromSeconds' })
 export class ArtemisDurationFromSecondsPipe implements PipeTransform {
+    private readonly secondsInDay = 60 * 60 * 24;
+    private readonly secondsInHour = 60 * 60;
+    private readonly secondsInMinute = 60;
+
     /**
-     * Convert seconds to a human-readable duration format (mm:ss).
+     * Convert seconds to a human-readable duration format "d day(s) hh:mm::ss".
+     * The days and hours are left out if their value is zero
      * @param seconds {number}
      */
     transform(seconds: number): string {
-        const minutes = Math.floor(seconds / 60);
-        seconds = seconds - minutes * 60;
+        const days = Math.floor(seconds / this.secondsInDay);
+        const hours = Math.floor((seconds % this.secondsInDay) / this.secondsInHour);
+        const minutes = Math.floor((seconds % this.secondsInHour) / this.secondsInMinute);
+        seconds = seconds % this.secondsInMinute;
 
-        let minutesOut = minutes.toString();
-        if (minutes < 10) {
-            minutesOut = '0' + minutes.toString();
-        }
-        let secondsOut = seconds.toString();
-        if (seconds < 10) {
-            secondsOut = '0' + seconds.toString();
+        let timeString = this.transformDays(days);
+
+        if (days > 0 || hours > 0) {
+            timeString += this.addLeadingZero(hours) + ':';
         }
 
-        return minutesOut + ':' + secondsOut;
+        timeString += this.addLeadingZero(minutes);
+        timeString += this.addLeadingZero(seconds);
+
+        return timeString;
+    }
+
+    private transformDays(days: number): string {
+        if (days > 1) {
+            return days + ' days ';
+        } else if (days === 1) {
+            return days + ' day ';
+        } else {
+            return '';
+        }
+    }
+
+    private addLeadingZero(number: number): string {
+        let numberOut = number.toString();
+        if (number < 10) {
+            numberOut = '0' + numberOut;
+        }
+        return numberOut;
     }
 }
