@@ -27,6 +27,8 @@ class ParticipantScoresAverageTableStubComponent {
     participantAverageScores: ParticipantScoreAverageDTO[] = [];
     @Input()
     isLoading = false;
+    @Input()
+    isBonus = false;
 }
 
 describe('ParticipantScoresTablesContainer', () => {
