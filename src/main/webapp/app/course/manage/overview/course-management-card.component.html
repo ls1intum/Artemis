@@ -262,5 +262,14 @@
             <fa-icon [icon]="'chart-bar'"></fa-icon>
             <span class="d-none d-xl-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
         </a>
+        <a
+            *ngIf="course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'grading-system']"
+            class="btn btn-info me-1 mb-1"
+            [ngbTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
+        >
+            <fa-icon [icon]="'clipboard'"></fa-icon>
+            <span class="d-none d-xl-inline">{{ 'artemisApp.course.gradingSystem' | artemisTranslate }}</span>
+        </a>
     </div>
 </div>

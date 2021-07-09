@@ -12,6 +12,8 @@ import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresServi
 import * as chai from 'chai';
 import { HttpResponse } from '@angular/common/http';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,6 +30,12 @@ class ParticipantScoresTableContainerStubComponent {
     avgScore = 0;
     @Input()
     avgRatedScore = 0;
+    @Input()
+    avgGrade?: String;
+    @Input()
+    avgRatedGrade?: String;
+    @Input()
+    isBonus = false;
     @Output()
     reload = new EventEmitter<void>();
 }
@@ -42,6 +50,7 @@ describe('CourseParticipantScores', () => {
             providers: [
                 MockProvider(ParticipantScoresService),
                 MockProvider(JhiAlertService),
+                MockProvider(GradingSystemService),
                 {
                     provide: ActivatedRoute,
                     useValue: { params: of({ courseId: 1 }) },
@@ -66,6 +75,7 @@ describe('CourseParticipantScores', () => {
 
     it('should load date when initialized', () => {
         const participantScoreService = TestBed.inject(ParticipantScoresService);
+        const gradingSystemService = TestBed.inject(GradingSystemService);
 
         // stub find all of course
         const participantScoreDTO = new ParticipantScoreDTO();
@@ -94,6 +104,12 @@ describe('CourseParticipantScores', () => {
         });
         const findAverageOfCourseStub = sinon.stub(participantScoreService, 'findAverageOfCourse').returns(of(findAverageOfCourseResponse));
 
+        const gradingScaleResponseForCourse: HttpResponse<GradingScale> = new HttpResponse({
+            body: new GradingScale(),
+            status: 200,
+        });
+        const findGradingScaleForCourseStub = sinon.stub(gradingSystemService, 'findGradingScaleForCourse').returns(of(gradingScaleResponseForCourse));
+
         fixture.detectChanges();
 
         expect(component.participantScores).to.deep.equal([participantScoreDTO]);
@@ -103,5 +119,6 @@ describe('CourseParticipantScores', () => {
         expect(findAllOfCourseStub).to.have.been.called;
         expect(findAverageOfCoursePerParticipantStub).to.have.been.called;
         expect(findAverageOfCourseStub).to.have.been.called;
+        expect(findGradingScaleForCourseStub).to.have.been.called;
     });
 });

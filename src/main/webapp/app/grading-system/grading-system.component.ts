@@ -56,18 +56,8 @@ export class GradingSystemComponent implements OnInit {
             }
             if (this.isExam) {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
-                this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
-                    this.exam = examResponse.body!;
-                    this.maxPoints = this.exam?.maxPoints;
-                    this.onChangeMaxPoints(this.exam?.maxPoints);
-                });
             } else {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
-                this.courseService.find(this.courseId!).subscribe((courseResponse) => {
-                    this.course = courseResponse.body!;
-                    this.maxPoints = this.course?.maxPoints;
-                    this.onChangeMaxPoints(this.course?.maxPoints);
-                });
             }
         });
     }
@@ -82,6 +72,19 @@ export class GradingSystemComponent implements OnInit {
             .subscribe((gradingSystemResponse) => {
                 if (gradingSystemResponse.body) {
                     this.handleFindResponse(gradingSystemResponse.body);
+                    if (this.isExam) {
+                        this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
+                            this.exam = examResponse.body!;
+                            this.maxPoints = this.exam?.maxPoints;
+                            this.onChangeMaxPoints(this.exam?.maxPoints);
+                        });
+                    } else {
+                        this.courseService.find(this.courseId!).subscribe((courseResponse) => {
+                            this.course = courseResponse.body!;
+                            this.maxPoints = this.course?.maxPoints;
+                            this.onChangeMaxPoints(this.course?.maxPoints);
+                        });
+                    }
                 }
             }, this.handleErrorResponse());
     }

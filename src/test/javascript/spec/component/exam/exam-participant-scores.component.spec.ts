@@ -12,6 +12,8 @@ import * as chai from 'chai';
 import { HttpResponse } from '@angular/common/http';
 import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -28,6 +30,12 @@ class ParticipantScoresTableContainerStubComponent {
     avgScore = 0;
     @Input()
     avgRatedScore = 0;
+    @Input()
+    avgGrade?: String;
+    @Input()
+    avgRatedGrade?: String;
+    @Input()
+    isBonus = false;
     @Output()
     reload = new EventEmitter<void>();
 }
@@ -40,11 +48,12 @@ describe('ExamParticipantScores', () => {
         TestBed.configureTestingModule({
             declarations: [ExamParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AlertComponent)],
             providers: [
+                MockProvider(GradingSystemService),
                 MockProvider(ParticipantScoresService),
                 MockProvider(JhiAlertService),
                 {
                     provide: ActivatedRoute,
-                    useValue: { params: of({ examId: 1 }) },
+                    useValue: { params: of({ courseId: 1, examId: 1 }) },
                 },
             ],
         })
@@ -66,6 +75,7 @@ describe('ExamParticipantScores', () => {
 
     it('should load date when initialized', () => {
         const participantScoreService = TestBed.inject(ParticipantScoresService);
+        const gradingSystemService = TestBed.inject(GradingSystemService);
 
         // stub find all of exam
         const participantScoreDTO = new ParticipantScoreDTO();
@@ -92,6 +102,12 @@ describe('ExamParticipantScores', () => {
         });
         const findAverageOfExamStub = sinon.stub(participantScoreService, 'findAverageOfExam').returns(of(findAverageOfExamResponse));
 
+        const gradingScaleResponseForExam: HttpResponse<GradingScale> = new HttpResponse({
+            body: new GradingScale(),
+            status: 200,
+        });
+        const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(gradingScaleResponseForExam));
+
         fixture.detectChanges();
 
         expect(component.participantScores).to.deep.equal([participantScoreDTO]);
@@ -101,5 +117,6 @@ describe('ExamParticipantScores', () => {
         expect(findAllOfExamStub).to.have.been.called;
         expect(findAverageOfExamPerParticipantStub).to.have.been.called;
         expect(findAverageOfExamStub).to.have.been.called;
+        expect(findGradingScaleForExamStub).to.have.been.called;
     });
 });
