@@ -34,7 +34,7 @@ export class AnswerPostComponent implements OnInit {
 
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'strong', 'i', 'em', 'mark', 'small', 'del', 'ins', 'sub', 'sup', 'p', 'blockquote', 'pre', 'code', 'span', 'li', 'ul', 'ol'];
-    allowedHtmlAttributes: string[] = ['href', 'class'];
+    allowedHtmlAttributes: string[] = ['href'];
 
     constructor(private answerPostService: AnswerPostService, private route: ActivatedRoute) {}
 
