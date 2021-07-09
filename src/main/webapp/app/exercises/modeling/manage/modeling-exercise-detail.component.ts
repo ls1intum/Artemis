@@ -29,6 +29,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
+    isExamExercise: boolean;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -49,6 +50,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     load(id: number) {
         this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
             this.modelingExercise = modelingExerciseResponse.body!;
+            this.isExamExercise = this.modelingExercise.exerciseGroup !== undefined;
             this.problemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.problemStatement);
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.gradingInstructions);
             this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
