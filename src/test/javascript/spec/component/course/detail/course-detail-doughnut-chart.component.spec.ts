@@ -39,7 +39,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
     });
 
     beforeEach(() => {
-        component.courseId = 1;
+        component.course.id = 1;
         component.contentType = DoughnutChartType.ASSESSMENT;
         component.currentPercentage = absolute;
         component.currentAbsolute = percentage;
