@@ -8,6 +8,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { DiffMatchPatch } from 'diff-match-patch-typescript';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -33,6 +34,8 @@ export class ExamNavigationBarComponent implements OnInit {
     getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
+
+    alreadyUpdatedProblemStatement: string;
 
     constructor(private layoutService: LayoutService, private examExerciseUpdateService: ExamExerciseUpdateService, private examParticipationService: ExamParticipationService) {}
 
@@ -65,7 +68,7 @@ export class ExamNavigationBarComponent implements OnInit {
         this.examAboutToEnd.emit();
     }
 
-    /*
+    /**
         @param exerciseIndex: exercise to switch to
         @param overviewPage: user wants to switch to the overview page
         @param forceSave: true if forceSave shall be used.
@@ -101,13 +104,41 @@ export class ExamNavigationBarComponent implements OnInit {
      * Updates the problem statement of an exam exercise during an ongoing exam in real time,
      * i.e. the student will see the change immediately without the need to reload the page
      * @param exerciseId the unique exercise that needs to be updated
-     * @param problemStatement the updated problem statement
+     * @param updatedProblemStatement the updated problem statement
      */
-    updateExerciseProblemStatementById(exerciseId: number, problemStatement: string) {
-        if (exerciseId !== -1 && problemStatement != undefined) {
+    updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
+        if (exerciseId !== -1 && updatedProblemStatement != undefined) {
             const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
-            this.exercises[foundIndex].problemStatement = problemStatement;
+            this.exercises[foundIndex].problemStatement = this.highlightProblemStatementDifferences(foundIndex, updatedProblemStatement);
         }
+    }
+
+    /**
+     * Returns a combination of the outdated and updated problem statement with HTML & CSS elements to highlight their differences
+     *
+     * @param exerciseIndex indicates what exercise's problem statement inside exercises should be highlighted
+     * @param updatedProblemStatement
+     */
+    highlightProblemStatementDifferences(exerciseIndex: number, updatedProblemStatement: string) {
+        //creates the diffMatchPatch library object to be able to modify strings
+        const dmp = new DiffMatchPatch();
+        let outdatedProblemStatement: string;
+
+        //checks if first update
+        if (!this.alreadyUpdatedProblemStatement) {
+            outdatedProblemStatement = this.exercises[exerciseIndex].problemStatement!;
+            this.alreadyUpdatedProblemStatement = updatedProblemStatement;
+            // else use last updatedProblemStatement as new outdatedProblemStatement to avoid inserted HTML elements
+        } else {
+            outdatedProblemStatement = this.alreadyUpdatedProblemStatement;
+        }
+
+        //finds the initial difference then cleans the text with added html & css elements
+        const diff = dmp.diff_main(outdatedProblemStatement!, updatedProblemStatement);
+        dmp.diff_cleanupEfficiency(diff);
+        //remove ¶; (= &para;) symbols
+        return dmp.diff_prettyHtml(diff).replace(/&para;/g, ''); // [warten was @Stephan sagt ]+ ' (Please reload the page if you want to remove the red old problem statement.)';
+        //TODO : 2) vll einen "Kommentar"(Notiz) ans Ende anfügen in Klammer, bsp: ("To remove the old red difference please reload the page")(ArtemisTranslate nicht vergessen!!)
     }
 
     /**
