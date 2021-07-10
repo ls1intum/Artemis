@@ -120,7 +120,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExerciseGroup_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
-        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(course1.getId(), exam1.getId(), exerciseGroup1);
+        verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccess(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(textExerciseRepository.findById(textExercise1.getId()).isEmpty()).isTrue();
     }
 

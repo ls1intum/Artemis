@@ -239,7 +239,7 @@ public class ExamAccessService {
         if (courseAndExamAccessFailure.isPresent()) {
             return courseAndExamAccessFailure;
         }
-        if (!exerciseGroup.getExam().getId().equals(examId) || !exerciseGroup.getExam().getCourse().getId().equals(courseId)) {
+        if (exerciseGroup.getExam() == null || !exerciseGroup.getExam().getId().equals(examId) || !exerciseGroup.getExam().getCourse().getId().equals(courseId)) {
             return Optional.of(badRequest());
         }
         return Optional.empty();
