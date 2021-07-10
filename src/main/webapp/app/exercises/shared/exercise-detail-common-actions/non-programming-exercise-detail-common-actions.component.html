@@ -12,29 +12,19 @@
         </a>
 
         <!-- Participations  -->
-        <a
-            *ngIf="exercise.course || exercise.exerciseGroup?.exam?.course"
-            [routerLink]="baseResource + 'participations'"
-            class="btn btn-primary btn-sm me-1"
-            style="margin-bottom: 10px"
-        >
+        <a *ngIf="course" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
             <fa-icon [icon]="'list-alt'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
         </a>
 
         <!--Submissions -->
-        <a
-            *ngIf="exercise.isAtLeastInstructor && (exercise.course || exercise.exerciseGroup?.exam?.course)"
-            [routerLink]="baseResource + 'submissions'"
-            class="btn btn-primary btn-sm me-1"
-            style="margin-bottom: 10px"
-        >
+        <a *ngIf="exercise.isAtLeastInstructor && course" [routerLink]="baseResource + 'submissions'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
             <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
         </a>
 
         <!-- Scores -->
-        <a *ngIf="exercise.course || exercise.exerciseGroup?.exam?.course" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
+        <a *ngIf="course" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
             <fa-icon [icon]="'table'"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
         </a>
@@ -77,11 +67,7 @@
             <jhi-exercise-submission-export *ngIf="exercise.isAtLeastInstructor" [exerciseId]="exercise.id!" [exerciseType]="exercise.type!"> </jhi-exercise-submission-export>
         </span>
         <span style="margin-right: 5px">
-            <a
-                *ngIf="exercise.isAtLeastTutor && (exercise.course || exercise.exerciseGroup?.exam?.course)"
-                [routerLink]="baseResource + 'exercise-statistics'"
-                class="btn btn-info btn-sm me-1"
-            >
+            <a *ngIf="exercise.isAtLeastTutor && course" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1">
                 <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
             </a>
         </span>

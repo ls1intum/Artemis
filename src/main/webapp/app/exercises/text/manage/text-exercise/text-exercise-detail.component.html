@@ -6,22 +6,12 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
-                <div *ngIf="!isExamExercise">
-                    <jhi-non-programming-exercise-detail-common-actions
-                        *ngIf="textExercise.course"
-                        [isExamExercise]="isExamExercise"
-                        [courseId]="textExercise.course.id!"
-                        [exercise]="textExercise"
-                    ></jhi-non-programming-exercise-detail-common-actions>
-                </div>
-                <div *ngIf="isExamExercise">
-                    <jhi-non-programming-exercise-detail-common-actions
-                        *ngIf="textExercise.exerciseGroup?.exam?.course"
-                        [isExamExercise]="isExamExercise"
-                        [courseId]="textExercise.exerciseGroup!.exam!.course!.id!"
-                        [exercise]="textExercise"
-                    ></jhi-non-programming-exercise-detail-common-actions>
-                </div>
+                <jhi-non-programming-exercise-detail-common-actions
+                    *ngIf="course"
+                    [isExamExercise]="isExamExercise"
+                    [course]="course"
+                    [exercise]="textExercise"
+                ></jhi-non-programming-exercise-detail-common-actions>
                 <!-- Check Plagiarism -->
                 <a *ngIf="textExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
