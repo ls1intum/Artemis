@@ -46,7 +46,7 @@ public abstract class ExerciseImportService {
         newExercise.validateDates();
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
-        newExercise.setGradingCriteria(copyGradingCriteria(importedExercise));
+        newExercise.setGradingCriteria(importedExercise.copyGradingCriteria());
         if (newExercise.getExerciseGroup() != null) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
         }
@@ -54,7 +54,7 @@ public abstract class ExerciseImportService {
             newExercise.setCategories(importedExercise.getCategories());
             newExercise.setMode(importedExercise.getMode());
             if (newExercise.getMode() == ExerciseMode.TEAM) {
-                newExercise.setTeamAssignmentConfig(copyTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig()));
+                newExercise.setTeamAssignmentConfig(importedExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
             }
         }
     }
@@ -112,59 +112,5 @@ public abstract class ExerciseImportService {
             newFeedbacks.add(newFeedback);
         }
         return newFeedbacks;
-    }
-
-    /** Helper method which does a hard copy of the Team Assignment Configurations.
-     *
-     * @param originalConfig the original team assignment configuration to be copied.
-     * @return The cloned configuration
-     */
-    private TeamAssignmentConfig copyTeamAssignmentConfig(TeamAssignmentConfig originalConfig) {
-        TeamAssignmentConfig newConfig = new TeamAssignmentConfig();
-        newConfig.setMinTeamSize(originalConfig.getMinTeamSize());
-        newConfig.setMaxTeamSize(originalConfig.getMaxTeamSize());
-        return newConfig;
-    }
-
-    /** Helper method which does a hard copy of the Grading Criteria
-     *
-     * @param originalTextExercise The original exercise which contains the grading criteria to be imported
-     * @return A clone of the grading criteria list
-     */
-    private List<GradingCriterion> copyGradingCriteria(Exercise originalTextExercise) {
-        List<GradingCriterion> newGradingCriteria = new ArrayList<>();
-        for (GradingCriterion originalGradingCriterion : originalTextExercise.getGradingCriteria()) {
-            GradingCriterion newGradingCriterion = new GradingCriterion();
-
-            newGradingCriterion.setExercise(originalTextExercise);
-            newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
-
-            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion));
-
-            newGradingCriteria.add(newGradingCriterion);
-        }
-        return newGradingCriteria;
-    }
-
-    /** Helper method which does a hard copy of the Grading Instructions
-     *
-     * @param originalGradingCriterion The original grading criterion which contains the grading instructions
-     * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
-     * @return A clone of the grading instruction list of the grading criterion
-     */
-    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion) {
-        List<GradingInstruction> newGradingInstructions = new ArrayList<>();
-        for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
-            GradingInstruction newGradingInstruction = new GradingInstruction();
-            newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
-            newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
-            newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
-            newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
-            newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
-            newGradingInstruction.setGradingCriterion(newGradingCriterion);
-
-            newGradingInstructions.add(newGradingInstruction);
-        }
-        return newGradingInstructions;
     }
 }
