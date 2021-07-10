@@ -6,9 +6,9 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
@@ -17,12 +17,11 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTestModule } from '../../test.module';
-import { MockOrionConnectorService } from '../../helpers/mocks/service/mock-orion-connector.service';
 import { ArtemisOrionConnector, OrionState } from 'app/shared/orion/orion';
 import { OrionModule } from 'app/shared/orion/orion.module';
-import { MockIdeBuildAndTestService } from '../../helpers/mocks/service/mock-ide-build-and-test.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { ActivatedRoute } from '@angular/router';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -31,7 +30,6 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     let comp: OrionExerciseDetailsStudentActionsComponent;
     let fixture: ComponentFixture<OrionExerciseDetailsStudentActionsComponent>;
     let orionConnector: ArtemisOrionConnector;
-    let ideBuildService: OrionBuildAndTestService;
 
     let ideStateStub: SinonStub;
     let cloneSpy: SinonSpy;
@@ -46,9 +44,10 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
             imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, OrionModule, ArtemisSharedModule, FeatureToggleModule],
             declarations: [OrionExerciseDetailsStudentActionsComponent, MockComponent(ExerciseActionButtonComponent), MockComponent(ExerciseDetailsStudentActionsComponent)],
             providers: [
-                { provide: OrionBuildAndTestService, useClass: MockIdeBuildAndTestService },
-                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
+                MockProvider(OrionBuildAndTestService),
+                MockProvider(OrionConnectorService),
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: ActivatedRoute, useValue: { queryParams: of({ withIdeSubmit: true }) } },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -57,8 +56,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
                 fixture = TestBed.createComponent(OrionExerciseDetailsStudentActionsComponent);
                 comp = fixture.componentInstance;
                 orionConnector = TestBed.inject(OrionConnectorService);
-                ideBuildService = TestBed.inject(OrionBuildAndTestService);
-                forwardBuildSpy = spy(ideBuildService, 'listenOnBuildOutputAndForwardChanges');
+                forwardBuildSpy = spy(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
                 cloneSpy = spy(orionConnector, 'importParticipation');
                 submitSpy = spy(orionConnector, 'submit');
                 ideStateStub = stub(orionConnector, 'state');
@@ -118,4 +116,20 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         expect(forwardBuildSpy).to.have.been.calledOnce;
         expect(forwardBuildSpy).to.have.been.calledImmediatelyAfter(submitSpy);
     });
+    it('isOfflineIdeAllowed should work', () => {
+        comp.exercise = { allowOfflineIde: true } as any;
+
+        expect(comp.isOfflineIdeAllowed).to.be.true;
+    });
+    it('should submit if stated in route', fakeAsync(() => {
+        const stateObservable = new BehaviorSubject(ideState);
+        comp.exercise = exercise;
+        ideStateStub.returns(stateObservable);
+        const submitChangesSpy = spy(comp, 'submitChanges');
+
+        comp.ngOnInit();
+        tick();
+
+        expect(submitChangesSpy).to.have.been.calledOnceWith();
+    }));
 });
