@@ -67,7 +67,7 @@ describe('Modeling Exercise Spec', () => {
         cy.deleteCourse(testCourse.id);
     });
 
-    describe.skip('Create/Edit Modeling Exercise', () => {
+    describe('Create/Edit Modeling Exercise', () => {
         beforeEach('login as instructor', () => {
             cy.login(instructorUsername, instructorPassword);
         });
@@ -166,7 +166,7 @@ describe('Modeling Exercise Spec', () => {
             });
         });
 
-        it('Does not show unreleased Modeling Exercise', () => {
+        it('Student can not see unreleased Modeling Exercise', () => {
             cy.login(studentUsername, studentPassword, '/courses');
             cy.get('.card-body').contains(testCourse.title).click({ force: true });
             cy.get('.col-lg-8').should('contain.text', 'No exercises available for the course.');
@@ -178,7 +178,7 @@ describe('Modeling Exercise Spec', () => {
             cy.get(':nth-child(3) > .btn-primary').click();
         });
 
-        it('Student can see and start released exercise', () => {
+        it('Student can start and submit their model', () => {
             cy.intercept('/api/courses/*/exercises/*/participations').as('createModelingParticipation');
             cy.login(studentUsername, studentPassword, `/courses/${testCourse.id}`);
             cy.get('.col-lg-8').contains(`Cypress Modeling Exercise ${uid}`).click();
@@ -195,6 +195,66 @@ describe('Modeling Exercise Spec', () => {
             cy.get('.col-auto').should('contain.text', 'No graded result');
         });
 
-        it('Tutor can assess the submission', () => {});
+        it('Close exercise for submissions', () => {
+            cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            cy.get(':nth-child(2) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
+            cy.get(':nth-child(3) > .btn-primary').click();
+        });
+
+        it('Tutor can assess the submission', () => {
+            cy.login(tutorUsername, tutorPassword, '/course-management');
+            cy.get(`[ng-reflect-router-link="/course-management,${testCourse.id},assessm"]`).click();
+            cy.get('#field_showFinishedExercise').click();
+            cy.get('tbody > tr > :nth-child(6) >').click();
+            cy.get('.btn').click();
+            cy.get('.btn').click();
+            cy.get('.alerts').should(
+                'contain.text',
+                'You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.',
+            );
+            cy.get('#assessmentLockedCurrentUser').should('contain.text', 'You have the lock for this assessment');
+            cy.get('jhi-unreferenced-feedback > .btn').click();
+            cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(1) > :nth-child(2)').clear().type('1');
+            cy.get('jhi-assessment-detail > .card > .card-body > :nth-child(2) > :nth-child(2)').clear().type('thanks, i hate it');
+            cy.get('.sc-fubCfw >> :nth-child(1)').dblclick('top');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('-1');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) > ').type('Wrong', { force: true });
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(13) >').click('right', { force: true });
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('1');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) >').type('Good', { force: true });
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(5)').click();
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(2) > :nth-child(1) > :nth-child(2)').type('0');
+            cy.get('.sc-iBaPrD > :nth-child(1) > :nth-child(3) >').type('Unnecessary', { force: true });
+            cy.get('.top-container > :nth-child(3) > :nth-child(4)').click();
+            cy.get('.alerts').should('contain.text', 'Your assessment was submitted successfully!');
+        });
+
+        it('Close assessment period', () => {
+            cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/modeling-exercises/${modelingExercise.id}/edit`);
+            cy.get(':nth-child(9) > jhi-date-time-picker.ng-untouched > .d-flex > .form-control').clear().type(dayjs().toString(), { force: true });
+            cy.get(':nth-child(3) > .btn-primary').click();
+        });
+
+        it('Student can view the assessment and complain', () => {
+            cy.intercept('POST', '/api/complaints').as('complaintCreated');
+            cy.login(studentUsername, studentPassword, `/courses/${testCourse.id}/exercises/${modelingExercise.id}`);
+            cy.get('jhi-submission-result-status > .col-auto').should('contain.text', 'Score').and('contain.text', '1 of 100 points');
+            cy.get('jhi-exercise-details-student-actions.col > > :nth-child(2)').click();
+            cy.url().should('contain', `/courses/${testCourse.id}/modeling-exercises/${modelingExercise.id}/participate/`);
+            cy.get('.col-xl-8').should('contain.text', 'thanks, i hate it');
+            cy.get('jhi-complaint-interactions > :nth-child(1) > .mt-4 > :nth-child(1)').click();
+            cy.get('#complainTextArea').type('Thanks i hate you :^)');
+            cy.get('.col-6 > .btn').click();
+            cy.wait('@complaintCreated');
+        });
+
+        it('Instructor can see complaint and reject it', () => {
+            cy.login(instructorUsername, instructorPassword, `/course-management/${testCourse.id}/assessment-dashboard`);
+            cy.get('.col-md-4 > .card > .card-body').contains('Total complaints: 1').click();
+            cy.get('tr > .text-center >').click();
+            cy.get('#responseTextArea').type('lorem ipsum...');
+            cy.get('#rejectComplaintButton').click();
+            cy.get('.alerts').should('contain.text', 'Response to complaint has been submitted');
+        });
     });
 });
