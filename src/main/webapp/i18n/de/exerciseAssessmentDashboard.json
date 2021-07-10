@@ -12,15 +12,15 @@
             "yourStatus": "Dein Status",
             "tutorParticipationStatus": {
                 "title": {
-                    "NOT_PARTICIPATED": "Not participated",
-                    "REVIEWED_INSTRUCTIONS": "Reviewed the instructions",
-                    "TRAINED": "Trained on example submissions",
-                    "COMPLETED": "Completed students assessment"
+                    "NOT_PARTICIPATED": "Nicht teilgenommen",
+                    "REVIEWED_INSTRUCTIONS": "Anweisungen geprüft",
+                    "TRAINED": "An Beispielabgaben trainiert",
+                    "COMPLETED": "Studenten Abgaben bewertet"
                 },
                 "description": {
-                    "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood it",
-                    "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and review the assessment",
-                    "TRAINED": "The assessment training is finished, now you can start assessing student submissions",
+                    "NOT_PARTICIPATED": "Bitte lies die Bewertungsrichtlinien vorsichtig und bestätige, dass du sie verstanden hast",
+                    "REVIEWED_INSTRUCTIONS": "Bitte öffne die Beispielabgaben und beginn das Training",
+                    "TRAINED": "Das Bewertungs-Training ist beendet. Du kannst nun beginnen Studentenabgaben zu bewerten.",
                     "COMPLETED": ""
                 }
             },
@@ -45,12 +45,12 @@
             "reviewingExampleSubmissions": "Beispielabgaben ansehen",
             "reviewExampleSubmission": "Geprüfte Beispielabgabe",
             "tutorialSubmissions": "Bewertung von Beispielabgaben",
-            "assessingExampleSubmission": "Beispielabgabe bewerten",
+            "assessingExampleSubmission": "Beispielabgaben bewerten",
             "assessExampleSubmission": "Bewertete Beispielabgabe",
             "studentsSubmissions": "Abgaben der Studierenden",
             "testRunSubmissions": "Testlaufabgaben",
             "submissionDate": "Abgabedatum",
-            "pleaseContactIfUnclear": "In case something is unclear, please contact an instructor before you start assessing.",
+            "pleaseContactIfUnclear": "Falls etwas unklar ist, kontaktiere bitte einen Lehrenden bevor du mit dem Bewerten beginnst.",
             "result": "Ergebnis",
             "status": "Status",
             "score": "Ergebnis",
@@ -77,7 +77,7 @@
             "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
             "exerciseInformation": "Übungsinformationen",
-            "totalYours": "total / yours",
+            "totalYours": "Gesamt / Deine",
             "stats": {
                 "intime": "Zeitgerecht",
                 "late": "Verspätet"

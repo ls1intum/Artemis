@@ -7,7 +7,7 @@
 
 <div *ngIf="exercise">
     <div class="row my-3 d-flex justify-content-between">
-        <div class="col-lg-5 col-md-6 col-sm-6" *ngIf="!isTestRun">
+        <div class="col-lg-5 col-sm-6" *ngIf="!isTestRun">
             <p class="h3" style="text-align: left">
                 {{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:
                 {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.' + tutorParticipation.status!.toString() | artemisTranslate }}
@@ -155,21 +155,28 @@
             </a>
         </div>
 
-        <div class="col-12 mt-4" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
-            <h4>{{ 'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | artemisTranslate }}</h4>
+        <jhi-info-panel
+            *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0"
+            [panelHeader]="'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | artemisTranslate"
+        >
+            <div>
+                {{ formattedGradingInstructions }}
+            </div>
+        </jhi-info-panel>
 
-            <p [innerHTML]="formattedGradingInstructions"></p>
+        <div class="col-12 mt-4">
+            <h4>Structured {{ 'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | artemisTranslate }}</h4>
+            <jhi-structured-grading-instructions-assessment-layout
+                [readonly]="true"
+                [criteria]="exercise.gradingCriteria || []"
+            ></jhi-structured-grading-instructions-assessment-layout>
         </div>
-        <jhi-structured-grading-instructions-assessment-layout
-            [readonly]="true"
-            [criteria]="exercise.gradingCriteria || []"
-        ></jhi-structured-grading-instructions-assessment-layout>
     </div>
 
-    <div class="col-12 text-center" style="margin-top: 20px; margin-bottom: 40px" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
+    <div class="col-12 text-center mt-2 mb-4" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun">
         <p>{{ 'artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear' | artemisTranslate }}</p>
 
-        <button class="btn btn-primary guided-tour-instructions-button" (click)="readInstruction()" style="font-size: 17px; padding: 10px">
+        <button class="btn btn-primary guided-tour-instructions-button p-1" (click)="readInstruction()" style="font-size: 17px">
             <span *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0">
                 {{ 'artemisApp.exerciseAssessmentDashboard.readAndUnderstood' | artemisTranslate }}
             </span>
@@ -203,10 +210,9 @@
 
                     <button
                         *ngIf="stats.toReview.done < stats.toReview.total"
-                        class="btn btn-primary review-example-submission"
+                        class="btn btn-primary review-example-submission mb-4"
                         [class.guided-tour]="exercise === exerciseForGuidedTour"
                         (click)="openExampleSubmission(nextExampleSubmissionId, true, false)"
-                        style="margin-bottom: 25px"
                     >
                         <span *ngIf="stats.toReview.done <= 0; else elseBlockSubmissionSForTutorialButton">
                             {{ 'artemisApp.exerciseAssessmentDashboard.start' | artemisTranslate }}
@@ -235,7 +241,7 @@
                     <p class="h3">{{ 'artemisApp.exerciseAssessmentDashboard.tutorialSubmissions' | artemisTranslate }} ({{ stats.toAssess.done }} / {{ stats.toAssess.total }})</p>
                     <button
                         *ngIf="stats.toAssess.done < stats.toAssess.total"
-                        class="btn btn-primary assess-example-submission"
+                        class="btn btn-primary assess-example-submission mb-4"
                         [class.guided-tour]="exercise === exerciseForGuidedTour"
                         (click)="openExampleSubmission(nextExampleSubmissionId, false, true)"
                     >
