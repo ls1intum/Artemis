@@ -667,40 +667,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission() throws Exception {
-        ModelingSubmission submission1 = ModelFactory.generateModelingSubmission(validModel, true);
-        submission1 = database.addModelingSubmission(classExercise, submission1, "student1");
-        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds).as("optimal submission was found").containsExactly(submission1.getId());
-
-        // test with an exercise that does not support semi-automatic assessment (i.e. Compass), the REST call should still find the submission
-        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(validModel, true);
-        submission2 = database.addModelingSubmission(useCaseExercise, submission2, "student1");
-        List<Long> optimalSubmissionIds2 = request.getList("/api/exercises/" + useCaseExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds2).as("optimal submission was found").containsExactly(submission2.getId());
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission_noSubmissions() throws Exception {
-        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
-        optimalSubmissionIds = request.getList("/api/exercises/" + objectExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission_lockLimitReached() throws Exception {
-        createTenLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(useCaseExercise, submission, "student2");
-
-        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
-    }
-
-    @Test
     @WithMockUser(value = "student1")
     public void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");

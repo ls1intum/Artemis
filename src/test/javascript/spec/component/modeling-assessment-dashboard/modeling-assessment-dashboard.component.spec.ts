@@ -105,8 +105,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(component.reverse).toEqual(false);
         expect(component.predicate).toEqual('id');
         expect(component.filteredSubmissions).toEqual([]);
-        expect(component.optimalSubmissions).toEqual([]);
-        expect(component.otherSubmissions).toEqual([]);
 
         // call
         component.ngOnInit();
@@ -138,170 +136,12 @@ describe('ModelingAssessmentDashboardComponent', () => {
     });
 
     it('should update filtered submissions', () => {
-        // test updateFilteredSubmissions
-        const applyFilter = spyOn(component, 'applyFilter');
-
         // setup
         component.ngOnInit();
         component.updateFilteredSubmissions([modelingSubmission]);
 
         // check
         expect(component.filteredSubmissions).toEqual([modelingSubmission]);
-        expect(applyFilter).toHaveBeenCalled();
-    });
-
-    it('should refresh', () => {
-        // test refresh
-        const getSubmissionsSpy = spyOn(component, 'getSubmissions');
-
-        component.refresh();
-
-        expect(getSubmissionsSpy).toHaveBeenCalledWith(true);
-    });
-
-    describe('filter Submissions', () => {
-        it('should filter Submissions', () => {
-            // test filterSubmissions
-            // setup
-            const applyFilter = spyOn(component, 'applyFilter');
-            const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
-            component.exercise = modelingExercise;
-            component.nextOptimalSubmissionIds = [];
-
-            // call
-            component.filterSubmissions(true);
-
-            // check
-            expect(getOptimalSubmissionsSpy).toHaveBeenCalled();
-            expect(component.nextOptimalSubmissionIds).toEqual([1]);
-            expect(applyFilter).toHaveBeenCalled();
-        });
-        it('should not filter Submissions', () => {
-            // test filterSubmissions
-            // setup
-            const applyFilter = spyOn(component, 'applyFilter');
-            const getOptimalSubmissionsSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
-
-            component.exercise = modelingExercise;
-            component.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            component.nextOptimalSubmissionIds = [];
-
-            // call
-            component.filterSubmissions(true);
-
-            // check
-            expect(getOptimalSubmissionsSpy).not.toHaveBeenCalled();
-            expect(component.nextOptimalSubmissionIds).toEqual([]);
-            expect(applyFilter).toHaveBeenCalled();
-        });
-    });
-
-    it('should apply filters ', () => {
-        // test applyFilters
-        // setup
-        component.submissions = [modelingSubmission, modelingSubmission2];
-        component.userId = userId;
-        component.nextOptimalSubmissionIds = [1, 2];
-        component.filteredSubmissions = component.submissions;
-        // call
-        component.applyFilter();
-
-        // check
-        expect(component.otherSubmissions.length).toBe(1);
-        expect(component.optimalSubmissions.length).toBe(1);
-        expect(component.optimalSubmissions[0].id).toEqual(modelingSubmission2.id);
-        expect(component.otherSubmissions[0].id).toEqual(modelingSubmission.id);
-    });
-    describe('reset optimality', () => {
-        it('should reset optimality', fakeAsync(() => {
-            component.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            component.exercise = modelingExercise;
-            const serviceResetOptSpy = spyOn(modelingAssessmentService, 'resetOptimality').and.returnValue(of(1));
-            const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
-
-            // call
-            component.resetOptimality();
-
-            tick();
-
-            expect(serviceResetOptSpy).toHaveBeenCalledWith(modelingExercise.id);
-            expect(filterSubmissionsSpy).toHaveBeenCalledWith(true);
-        }));
-
-        it('should not reset optimality', () => {
-            // setup
-            component.exercise.assessmentType = AssessmentType.AUTOMATIC;
-            const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
-
-            // call
-            component.resetOptimality();
-
-            // check
-            expect(filterSubmissionsSpy).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('makeAllSubmissionsVisible', () => {
-        it('should make all submissions visible ', () => {
-            // setup
-            component.busy = false;
-            component.allSubmissionsVisible = false;
-            // call
-            component.makeAllSubmissionsVisible();
-            // check
-            expect(component.allSubmissionsVisible).toBe(true);
-        });
-
-        it('should not make all submissions visible ', () => {
-            // setup
-            component.busy = true;
-            component.allSubmissionsVisible = false;
-            // call
-            component.makeAllSubmissionsVisible();
-            // check
-            expect(component.allSubmissionsVisible).toBe(false);
-        });
-    });
-
-    describe('assessNextOptimal', () => {
-        it('should assess next optimal submission', () => {
-            // setup
-            component.nextOptimalSubmissionIds = [];
-            component.busy = true;
-            component.courseId = 1;
-            component.exerciseId = 2;
-            const routerNavigateSpy = spyOn(router, 'navigate');
-            const serviceResetOptSpy = spyOn(modelingAssessmentService, 'getOptimalSubmissions').and.returnValue(of([1]));
-            const navigateToNextSpy = spyOn<any>(component, 'navigateToNextRandomOptimalSubmission').and.callThrough(); // <any> bc of private method
-            component.exercise = modelingExercise;
-
-            // call
-            component.assessNextOptimal();
-
-            // check
-            expect(serviceResetOptSpy).toHaveBeenCalledWith(modelingExercise.id);
-            expect(component.busy).toBe(false);
-            expect(navigateToNextSpy).toHaveBeenCalled();
-            expect(routerNavigateSpy).toHaveBeenCalled();
-        });
-
-        it('should navigate to next random optimal submission', () => {
-            // setup
-            component.nextOptimalSubmissionIds = [1];
-            component.busy = false;
-            component.courseId = 1;
-            component.exerciseId = 2;
-            const routerNavigateSpy = spyOn(router, 'navigate');
-            const navigateToNextSpy = spyOn<any>(component, 'navigateToNextRandomOptimalSubmission').and.callThrough(); // <any> bc of private method
-
-            // call
-            component.assessNextOptimal();
-
-            // check
-            expect(component.busy).toBe(true);
-            expect(navigateToNextSpy).toHaveBeenCalled();
-            expect(routerNavigateSpy).toHaveBeenCalled();
-        });
     });
 
     it('should cancelAssessment', fakeAsync(() => {
@@ -324,7 +164,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
     it('should sortRows', () => {
         // test cancelAssessment
         const sortServiceSpy = spyOn(sortService, 'sortByProperty');
-        component.otherSubmissions = [modelingSubmission];
+        component.filteredSubmissions = [modelingSubmission];
         component.predicate = 'predicate';
         component.reverse = false;
 
