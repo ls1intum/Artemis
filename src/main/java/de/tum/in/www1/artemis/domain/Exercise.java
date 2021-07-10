@@ -944,7 +944,7 @@ public abstract class Exercise extends DomainObject {
 
     /**
      * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
-     * @throws BadRequestException if the dates are not valid
+     * @throws BadRequestAlertException if the dates are not valid
      */
     public void validateDates() {
         // All fields are optional, so there is no error if none of them is set

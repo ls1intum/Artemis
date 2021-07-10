@@ -68,7 +68,10 @@ public class TextSubmissionService extends SubmissionService {
             }
         }
 
-        // NOTE: from now on we always set submitted to true to prevent problems here!
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (textExercise.isExamExercise() || !textExercise.isEnded()) {
+            textSubmission.setSubmitted(true);
+        }
         textSubmission.setSubmitted(true);
         textSubmission = save(textSubmission, participation, textExercise, principal);
         return textSubmission;
