@@ -639,7 +639,7 @@ export class CourseExerciseService {
     }
 
     /**
-     * handle the given student participaon by adding in the participationWebsocketService
+     * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
      */
     handleParticipation(participation: StudentParticipation) {

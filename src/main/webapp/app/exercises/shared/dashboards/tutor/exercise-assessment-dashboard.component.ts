@@ -37,7 +37,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseView, isOrion, OrionState } from 'app/shared/orion/orion';
 import { onError } from 'app/shared/util/global.utils';
 import { round } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
