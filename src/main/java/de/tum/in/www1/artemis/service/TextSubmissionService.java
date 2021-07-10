@@ -72,7 +72,6 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isExamExercise() || !textExercise.isEnded()) {
             textSubmission.setSubmitted(true);
         }
-        textSubmission.setSubmitted(true);
         textSubmission = save(textSubmission, participation, textExercise, principal);
         return textSubmission;
     }
