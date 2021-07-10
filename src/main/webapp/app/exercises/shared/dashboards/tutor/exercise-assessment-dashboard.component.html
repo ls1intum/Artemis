@@ -45,17 +45,17 @@
             </ng-container>
         </div>
 
-        <div class="col-sm-3">
+        <div class="col-sm-4" style="min-width: 400px">
             <jhi-side-panel
                 *ngIf="!isExamMode"
                 [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate"
                 [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
             >
                 <div class="row mb-1">
-                    <div class="col-8">
+                    <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.submissions' | artemisTranslate }}
                     </div>
-                    <div class="col-4">
+                    <div class="col-5">
                         {{ numberOfSubmissions.inTime }}
                         <span *ngIf="numberOfSubmissions.late > 0" class="ms-1 result--late text-nowrap">| {{ numberOfSubmissions.late }}</span>
                         /
@@ -69,10 +69,10 @@
                 </div>
 
                 <div class="row mb-1" *ngIf="complaintsEnabled">
-                    <div class="col-8">
+                    <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
                     </div>
-                    <div class="col-4">
+                    <div class="col-5">
                         {{ numberOfComplaints }} /
                         <a
                             [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'complaints']"
@@ -84,10 +84,10 @@
                 </div>
 
                 <div class="row mb-1">
-                    <div class="col-8">
+                    <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.moreFeedbackRequests' | artemisTranslate }}
                     </div>
-                    <div class="col-4">
+                    <div class="col-5">
                         {{ numberOfMoreFeedbackRequests }} /
                         <a
                             [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'more-feedback-requests']"
