@@ -141,12 +141,12 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
     private void scheduleExamExercise(ModelingExercise exercise) {
         var exam = exercise.getExerciseGroup().getExam();
-        var endDate = examDateService.getLatestIndividualExamEndDate(exam);
+        var endDate = examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam);
         if (endDate == null) {
-            log.error("Modeling exercise {} for exam {} cannot be scheduled properly, end date is {}", exercise.getId(), exam.getId(), endDate);
+            log.error("Modeling exercise {} for exam {} cannot be scheduled properly, end date is not set", exercise.getId(), exam.getId());
             return;
         }
-        if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
+        if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam))) {
             var buildDate = endDate.plusMinutes(EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES);
             exercise.setClusterBuildDate(buildDate);
             scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> {
