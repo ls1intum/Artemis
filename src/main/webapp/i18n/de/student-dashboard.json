@@ -105,7 +105,12 @@
                 "reachableHelpExerciseGroup": "Die erreichbare Punktzahl ist die Summe der maximalen Punktzahlen aller Aufgaben dieses Aufgabentyps, die bewertet wurden, unabhängig von deiner Teilnahme.",
                 "totalHelpExerciseGroup": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben von diesem Aufgabentyp.",
                 "reachableHelp": "Die erreichbare Punktzahl ist die Summe der maximalen Punktzahlen aller Aufgaben, die bewertet wurden, unabhängig von deiner Teilnahme.",
-                "totalHelp": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben."
+                "totalHelp": "Die maximale Punktzahl ist Summe der maximalen Punktzahlen aller Aufgaben.",
+                "grade": "Aktuelle Note",
+                "bonus": "Aktuelle Bonuspunkte",
+                "gradeInfo": "(basierend auf der erreichbaren Punktzahl)",
+                "gradeHelp": "Die Note basiert auf der von dir erreichbaren Punktzahl. Sie kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
+                "bonusHelp": "Die Bonuspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

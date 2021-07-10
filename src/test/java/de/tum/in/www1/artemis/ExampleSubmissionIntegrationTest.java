@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -205,4 +206,41 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
     }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createExampleTextAssessmentNotExistentId() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
+        database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
+                HttpStatus.OK, Result.class);
+        final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
+        assertThat(blocks).hasSize(2);
+        List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
+        var dto = new TextAssessmentDTO();
+        dto.setFeedbacks(feedbacks);
+        long randomId = 1233;
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + randomId + "/example-text-assessment", dto, Result.class,
+                HttpStatus.NOT_FOUND);
+        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createExampleTextAssessment_wrongExerciseId() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
+        database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
+                HttpStatus.OK, Result.class);
+        final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
+        assertThat(blocks).hasSize(2);
+        List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
+        var dto = new TextAssessmentDTO();
+        dto.setFeedbacks(feedbacks);
+        long randomId = 1233;
+        request.putWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-text-assessment", dto,
+                Result.class, HttpStatus.BAD_REQUEST);
+        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
+    }
+
 }

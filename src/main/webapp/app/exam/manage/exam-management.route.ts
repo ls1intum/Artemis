@@ -53,6 +53,7 @@ import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exer
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
+import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -301,6 +302,15 @@ export const examManagementRoute: Routes = [
         resolve: {
             studentExam: StudentExamResolve,
         },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
+        component: GradingKeyOverviewComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',

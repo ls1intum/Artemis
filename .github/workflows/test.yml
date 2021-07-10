@@ -96,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v2.1.5
+          uses: actions/setup-node@v2.2.0
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Setup Node.js
-          uses: actions/setup-node@v2.1.5
+          uses: actions/setup-node@v2.2.0
           with:
               node-version: '${{ env.node }}'
         - uses: actions/checkout@v2
@@ -156,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v2.1.5
+      uses: actions/setup-node@v2.2.0
       with:
         node-version: '${{ env.node }}'
     - uses: actions/checkout@v2

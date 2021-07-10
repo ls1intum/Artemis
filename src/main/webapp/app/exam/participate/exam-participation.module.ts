@@ -30,7 +30,6 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
-import { GradeKeyOverviewComponent } from 'app/exam/participate/summary/points-summary/grade-key-overview/grade-key-overview.component';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -67,7 +66,6 @@ const ENTITY_STATES = [...examParticipationState];
         ExamNavigationBarComponent,
         ExamTimerComponent,
         ExamExerciseOverviewPageComponent,
-        GradeKeyOverviewComponent,
     ],
 })
 export class ArtemisExamParticipationModule {}

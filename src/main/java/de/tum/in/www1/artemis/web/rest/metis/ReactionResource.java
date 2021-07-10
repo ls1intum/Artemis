@@ -97,6 +97,9 @@ public class ReactionResource {
             savedReaction = reactionRepository.save(reaction);
             post.addReaction(reaction);
             postRepository.save(post);
+
+            // Protect Sample Solution, Grading Instructions, etc.
+            post.getExercise().filterSensitiveInformation();
         }
         else {
             AnswerPost answerPost = answerPostRepository.findByIdElseThrow(posting.getId());
@@ -104,6 +107,9 @@ public class ReactionResource {
             savedReaction = reactionRepository.save(reaction);
             answerPost.addReaction(reaction);
             answerPostRepository.save(answerPost);
+
+            // Protect Sample Solution, Grading Instructions, etc.
+            answerPost.getPost().getExercise().filterSensitiveInformation();
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/postings/reactions/" + savedReaction.getId())).body(savedReaction);

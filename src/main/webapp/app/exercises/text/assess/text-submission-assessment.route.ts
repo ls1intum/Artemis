@@ -101,7 +101,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/assessment',
+        path: 'participations/:participationId/submissions/:submissionId/assessment',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -114,7 +114,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/assessments/:resultId',
+        path: 'participations/:participationId/submissions/:submissionId/assessments/:resultId',
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
@@ -127,7 +127,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'submissions/:submissionId/text-feedback-conflict/:feedbackId',
+        path: 'participations/:participationId/submissions/:submissionId/text-feedback-conflict/:feedbackId',
         component: TextFeedbackConflictsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

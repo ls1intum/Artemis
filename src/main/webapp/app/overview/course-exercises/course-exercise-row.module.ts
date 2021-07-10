@@ -9,6 +9,7 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
+import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overview/grading-key-overview.module';
 
 @NgModule({
     imports: [
@@ -21,6 +22,7 @@ import { OrionModule } from 'app/shared/orion/orion.module';
         ArtemisResultModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         OrionModule,
+        GradingKeyOverviewModule,
     ],
     declarations: [CourseExerciseRowComponent],
     exports: [CourseExerciseRowComponent],

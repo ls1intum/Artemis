@@ -26,6 +26,7 @@ import { HttpResponse } from '@angular/common/http';
 import * as sinon from 'sinon';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -52,6 +53,7 @@ describe('Exercise detail common actions Component', () => {
     });
 
     it('Should be ok', () => {
+        comp.exercise = { type: ExerciseType.TEXT, id: 1 } as TextExercise;
         fixture.detectChanges();
         expect(comp).to.be.ok;
     });
@@ -63,19 +65,22 @@ describe('Exercise detail common actions Component', () => {
 
         comp.exercise = textExercise;
         comp.courseId = course.id!;
-        expect(comp.getEditRoute().join('/')).to.equal('/course-management/123/text-exercises/123/edit');
+        comp.ngOnInit();
+        expect(comp.baseResource).to.equal('/course-management/123/text-exercises/123/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, undefined);
         fileUploadExercise.id = 123;
 
         comp.exercise = fileUploadExercise;
-        expect(comp.getEditRoute().join('/')).to.equal('/course-management/123/file-upload-exercises/123/edit');
+        comp.ngOnInit();
+        expect(comp.baseResource).to.equal('/course-management/123/file-upload-exercises/123/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         modelingExercise.id = 123;
 
         comp.exercise = modelingExercise;
-        expect(comp.getEditRoute().join('/')).to.equal('/course-management/123/modeling-exercises/123/edit');
+        comp.ngOnInit();
+        expect(comp.baseResource).to.equal('/course-management/123/modeling-exercises/123/');
     });
 
     it('should get the correct edit routes for exam exercise', () => {
@@ -88,19 +93,22 @@ describe('Exercise detail common actions Component', () => {
         comp.isExamExercise = true;
         comp.exercise = textExercise;
         comp.courseId = course.id!;
-        expect(comp.getEditRoute().join('/')).to.equal('/course-management/1/exams/2/exercise-groups/3/text-exercises/4/edit');
+        comp.ngOnInit();
+        expect(comp.baseResource).to.equal('/course-management/1/exams/2/exercise-groups/3/text-exercises/4/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, exerciseGroup);
         fileUploadExercise.id = 5;
 
         comp.exercise = fileUploadExercise;
-        expect(comp.getEditRoute().join('/')).to.equal('/course-management/1/exams/2/exercise-groups/3/file-upload-exercises/5/edit');
+        comp.ngOnInit();
+        expect(comp.baseResource).to.equal('/course-management/1/exams/2/exercise-groups/3/file-upload-exercises/5/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, exerciseGroup);
         modelingExercise.id = 6;
 
         comp.exercise = modelingExercise;
-        expect(comp.getEditRoute().join('/')).to.equal('/course-management/1/exams/2/exercise-groups/3/modeling-exercises/6/edit');
+        comp.ngOnInit();
+        expect(comp.baseResource).to.equal('/course-management/1/exams/2/exercise-groups/3/modeling-exercises/6/');
     });
 
     it('should call event manager on delete exercises', function () {

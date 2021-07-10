@@ -16,7 +16,7 @@ There are variables for several paths:
   This e.g. affects repositories from students which use the online code editor or the template/solution repositories of new exercises, as they are pushed to the VCS after modification.
 
   Files in this directory are usually not critical, as the latest pushed version of these repositories are also stored at the VCS.
-  However, changed that are saved in the online code editor but not yet commited will be lost when this folder is deleted.
+  However, changed that are saved in the online code editor but not yet committed will be lost when this folder is deleted.
 
 - ``artemis.repo-download-clone-path``
 
