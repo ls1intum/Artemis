@@ -54,6 +54,7 @@ import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/pl
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -632,6 +633,17 @@ export const examManagementRoute: Routes = [
             data: {
                 authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                 pageTitle: 'artemisApp.participation.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/exercise-statistics',
+            component: ExerciseStatisticsComponent,
+            data: {
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                pageTitle: 'exercise-statistics.title',
             },
             canActivate: [UserRouteAccessService],
         };
