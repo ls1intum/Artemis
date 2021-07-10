@@ -925,8 +925,7 @@ public abstract class Exercise extends DomainObject {
 
     /** Helper method which does a hard copy of the Grading Criteria
      *
-     *
-     * @param exerciseImportService@return A clone of the grading criteria list
+     * @return A clone of the grading criteria list
      */
     public List<GradingCriterion> copyGradingCriteria() {
         List<GradingCriterion> newGradingCriteria = new ArrayList<>();
