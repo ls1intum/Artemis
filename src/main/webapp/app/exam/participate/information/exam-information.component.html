@@ -1,15 +1,27 @@
 <div class="mt-3 mb-4 text-center">
-    <div class="mb-2">
-        <span class="mx-2" *ngIf="exam && exam.startDate">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | artemisTranslate }}:</strong>
-            {{ exam.startDate | artemisDate: 'long-date' }}
-        </span>
-        <span class="mx-2" *ngIf="exam">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
-            {{ exam.startDate | artemisDate: 'time' }}
-            -
-            {{ endTime() | artemisDate: 'time' }}
-        </span>
+    <div class="mb-2" *ngIf="exam">
+        <ng-container *ngIf="exam.startDate">
+            <div *ngIf="examOverMultipleDays(); else examSingleDay">
+                <span class="mx-2">
+                    <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
+                    {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }}
+                    -
+                    {{ endTime() | artemisDate: 'long-date' }} {{ endTime() | artemisDate: 'time' }}
+                </span>
+            </div>
+            <ng-template #examSingleDay>
+                <span class="mx-2">
+                    <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | artemisTranslate }}:</strong>
+                    {{ exam.startDate | artemisDate: 'long-date' }}
+                </span>
+                <span class="mx-2">
+                    <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
+                    {{ exam.startDate | artemisDate: 'time' }}
+                    -
+                    {{ endTime() | artemisDate: 'time' }}
+                </span>
+            </ng-template>
+        </ng-container>
         <span class="mx-2" *ngIf="exam && exam.startDate && exam.endDate">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.durationWithFormat' | artemisTranslate }}:</strong>
             {{ normalWorkingTime() | artemisDurationFromSeconds }}

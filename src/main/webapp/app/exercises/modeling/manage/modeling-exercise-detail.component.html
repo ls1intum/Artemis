@@ -7,10 +7,10 @@
             <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="modelingExercise.course"
+                    *ngIf="course"
+                    [isExamExercise]="isExamExercise"
+                    [course]="course"
                     [exercise]="modelingExercise"
-                    [courseId]="modelingExercise.course.id!"
-                    [isExamExercise]="false"
                 ></jhi-non-programming-exercise-detail-common-actions>
                 <a *ngIf="modelingExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
