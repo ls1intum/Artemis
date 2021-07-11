@@ -81,7 +81,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/complaints") // TODO: should be participations/{participationId}/results/{resultId}/complaints
+    @PostMapping("complaints") // TODO: should be participations/{participationId}/results/{resultId}/complaints
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
@@ -112,7 +112,7 @@ public class ComplaintResource {
     }
 
     /**
-     * POST /complaint/exam/examId: create a new complaint for an exam exercise
+     * POST /complaints/exam/examId: create a new complaint for an exam exercise
      *
      * @param complaint the complaint to create
      * @param principal that wants to complain
@@ -120,7 +120,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/complaints/exam/{examId}") // TODO: should be exams/{examId}/(participations/{participationId}/)complaints
+    @PostMapping("complaints/exam/{examId}") // TODO: should be exams/{examId}/(participations/{participationId}/)complaints
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
@@ -153,12 +153,12 @@ public class ComplaintResource {
     }
 
     /**
-     * Get /complaints/result/:id get a complaint associated with the result "id"
+     * Get /complaints/result/:resultId get a complaint associated with the result "id"
      *
      * @param resultId the id of the result for which we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
      */
-    @GetMapping("/complaints/result/{resultId}")
+    @GetMapping("complaints/results/{resultId}")
     @PreAuthorize("hasRole('USER')")
     // TODO: the URL should rather be "participations/{participationId}/results/{resultId}/complaints"
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
@@ -202,7 +202,7 @@ public class ComplaintResource {
      * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
-    @GetMapping("/courses/{courseId}/allowed-complaints")
+    @GetMapping("courses/{courseId}/allowed-complaints")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
@@ -229,7 +229,7 @@ public class ComplaintResource {
      * @param principal that wants to get complaints
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/exercises/{exerciseId}/complaints-for-test-run-dashboard")
+    @GetMapping("exercises/{exerciseId}/complaints-for-test-run-dashboard")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -247,7 +247,7 @@ public class ComplaintResource {
      * @param principal that wants to get more feedback requests
      * @return the ResponseEntity with status 200 (OK) and a list of more feedback requests. The list can be empty
      */
-    @GetMapping("/exercises/{exerciseId}/more-feedback-for-assessment-dashboard")
+    @GetMapping("exercises/{exerciseId}/more-feedback-for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getMoreFeedbackRequestsForAssessmentDashboard(@PathVariable Long exerciseId, Principal principal) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -264,7 +264,7 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/complaints") // TODO: should be "courses/{courseId}/tutors/{tutorId}/complaints"
+    @GetMapping("complaints") // TODO: should be "courses/{courseId}/tutors/{tutorId}/complaints"
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
@@ -286,7 +286,7 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/courses/{courseId}/complaints")
+    @GetMapping("courses/{courseId}/complaints")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@PathVariable Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
@@ -323,7 +323,7 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/exercises/{exerciseId}/complaints")
+    @GetMapping("exercises/{exerciseId}/complaints")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
@@ -361,7 +361,7 @@ public class ComplaintResource {
      * @param courseId the id of the course we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/complaints")
+    @GetMapping("courses/{courseId}/exams/{examId}/complaints")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@PathVariable Long courseId, @PathVariable Long examId) {
         // Filtering by courseId
