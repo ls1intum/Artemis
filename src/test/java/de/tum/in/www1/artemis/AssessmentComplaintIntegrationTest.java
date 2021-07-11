@@ -239,7 +239,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaintRepo.save(complaint);
         complaintRepo.save(complaint);
 
-        Complaint receivedComplaint = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        Complaint receivedComplaint = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(receivedComplaint.getResult().getAssessor()).as("assessor is not set").isNull();
     }
@@ -250,7 +250,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
-        request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
+        request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     @Test
@@ -258,7 +258,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getComplaintByResultid_instructor_sensitiveDataHidden() throws Exception {
         complaintRepo.save(complaint);
 
-        final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        final var received = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getParticipation()).as("Complaint should not contain participation").isNull();
     }
@@ -269,7 +269,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
 
-        final var received = request.get("/api/complaints/result/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
+        final var received = request.get("/api/complaints/results/" + complaint.getResult().getId(), HttpStatus.OK, Complaint.class);
 
         assertThat(received.getResult().getAssessor()).as("Tutors should not see the assessor of a complaint").isNull();
         assertThat(received.getParticipant()).as("Tutors should not see the student of a complaint").isNull();

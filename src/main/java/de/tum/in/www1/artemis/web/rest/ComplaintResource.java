@@ -324,7 +324,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("exercises/{exerciseId}/complaints")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
@@ -362,7 +362,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/complaints")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@PathVariable Long courseId, @PathVariable Long examId) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
