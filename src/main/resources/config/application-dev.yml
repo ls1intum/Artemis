@@ -59,6 +59,7 @@ spring:
         cache: false
     hazelcast:
         localInstances: true
+
 server:
     port: 8080
     url: https://artemislocal.ase.in.tum.de

@@ -152,6 +152,14 @@ spring:
         interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
         port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
         localInstances: false # Whether the other instances are expected locally (in dev mode) or external
+        phone:
+            home:
+                enabled: false
+
+hazelcast:
+    phone:
+        home:
+            enabled: false
 
 springdoc:
     api-docs:
