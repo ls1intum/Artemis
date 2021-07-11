@@ -19,7 +19,7 @@ export class ExamInformationComponent {
             return undefined;
         }
         if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
-            return moment(this.exam.startDate).add(this.studentExam.workingTime, 'minutes');
+            return moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
         }
         return this.exam.endDate;
     }
@@ -36,14 +36,14 @@ export class ExamInformationComponent {
             return undefined;
         }
         if (this.studentExam && this.studentExam.workingTime) {
-            const personalEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'minutes');
+            const personalEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
             return personalEndDate.isAfter(this.exam.endDate);
         }
         return false;
     }
 
     getAdditionalWorkingTime(): number {
-        const personalEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'minutes');
+        const personalEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
         return personalEndDate.diff(this.exam.endDate, 'seconds');
     }
 
@@ -53,7 +53,7 @@ export class ExamInformationComponent {
         }
         let endDate;
         if (this.studentExam && this.studentExam.workingTime && this.exam.startDate) {
-            endDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'minutes');
+            endDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
         } else {
             endDate = this.exam.endDate;
         }
