@@ -44,8 +44,6 @@ const modelingExerciseOfExam = {
     secondCorrectionEnabled: true,
 };
 const modelingSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }] };
-const modelingSubmission2 = { id: 2, submitted: true, results: [{ id: 20, assessor: { id: 30, guidedTourSettings: [] } }] };
-const userId = 30;
 
 describe('ModelingAssessmentDashboardComponent', () => {
     let component: ModelingAssessmentDashboardComponent;
@@ -55,7 +53,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
     let modelingSubmissionService: ModelingSubmissionService;
     let modelingAssessmentService: ModelingAssessmentService;
     let sortService: SortService;
-    let router: Router;
     let exerciseFindSpy: jasmine.Spy;
     let courseFindSpy: jasmine.Spy;
 
@@ -78,7 +75,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ModelingAssessmentDashboardComponent);
                 component = fixture.componentInstance;
-                router = fixture.debugElement.injector.get(Router);
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
                 modelingSubmissionService = fixture.debugElement.injector.get(ModelingSubmissionService);
