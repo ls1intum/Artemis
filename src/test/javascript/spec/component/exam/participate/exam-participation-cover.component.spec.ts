@@ -110,7 +110,6 @@ describe('ExamParticipationCoverComponent', () => {
         component.startView = true;
         component.exam.startDate = now;
         component.ngOnInit();
-        expect(component.formattedStartDate).to.deep.equal(now.format('LT'));
 
         now = moment();
         component.studentExam.workingTime = 1;
