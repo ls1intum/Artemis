@@ -13,6 +13,25 @@ export const quizManagementRoute: Routes = [
         redirectTo: ':courseId/exercises',
     },
     {
+        path: ':courseId/quiz-exercises/new',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: ':courseId/quiz-exercises/export',
+        component: QuizExerciseExportComponent,
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':courseId/quiz-exercises/:exerciseId',
         component: QuizExerciseDetailComponent,
         data: {
@@ -40,25 +59,6 @@ export const quizManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
-    },
-    {
-        path: ':courseId/quiz-exercises/new',
-        component: QuizExerciseDetailComponent,
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
-    },
-    {
-        path: ':courseId/quiz-exercises/export',
-        component: QuizExerciseExportComponent,
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/preview',
