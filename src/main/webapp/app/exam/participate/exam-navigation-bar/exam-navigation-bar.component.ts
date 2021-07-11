@@ -52,19 +52,19 @@ export class ExamNavigationBarComponent implements OnInit {
         this.examAboutToEnd.emit();
     }
 
-    /*
-        @param exerciseIndex: exercise to switch to
-        @param overviewPage: user wants to switch to the overview page
-        @param forceSave: true if forceSave shall be used.
+    /**
+     * @param overviewPage: user wants to switch to the overview page
+     * @param exerciseIndex: exercise to switch to (might be undefined)
+     * @param forceSave: true if forceSave shall be used.
      */
-    changePage(overviewPage: boolean, exerciseIndex?: number, forceSave?: boolean) {
+    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean) {
         if (!overviewPage) {
             // out of index -> do nothing
-            if (exerciseIndex! > this.exercises.length - 1 || exerciseIndex! < 0) {
+            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
                 return;
             }
             // set index and emit event
-            this.exerciseIndex = exerciseIndex!;
+            this.exerciseIndex = exerciseIndex;
             this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
         } else if (overviewPage) {
             // set index and emit event

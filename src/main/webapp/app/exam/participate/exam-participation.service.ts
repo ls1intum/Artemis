@@ -248,17 +248,11 @@ export class ExamParticipationService {
     }
 
     public static getSubmissionForExercise(exercise: Exercise) {
-        if (
-            exercise &&
-            exercise.studentParticipations &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].submissions &&
-            exercise.studentParticipations[0].submissions.length > 0
-        ) {
-            return exercise.studentParticipations[0].submissions[0];
-        } else {
-            return undefined;
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].submissions) {
+            // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
+            return exercise.studentParticipations[0].submissions.last();
         }
+        // implicitly return undefined
     }
 
     getExerciseButtonTooltip(exercise: Exercise): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {

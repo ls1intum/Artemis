@@ -202,9 +202,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         // clear submitted file so that it is not displayed in the input (this might be confusing)
         this.submissionFile = undefined;
         const filePath = this.submission!.filePath!.split('/');
-        this.submittedFileName = filePath[filePath.length - 1];
+        this.submittedFileName = filePath.last()!;
         const fileName = this.submittedFileName.split('.');
-        this.submittedFileExtension = fileName[fileName.length - 1];
+        this.submittedFileExtension = fileName.last()!;
     }
 
     downloadFile(filePath: string) {
