@@ -177,10 +177,11 @@ public class ProgrammingExerciseParticipationService {
         if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
             log.warn("canAccessParticipation: reload participation, because programming exercise is null or a proxy object");
             T participationFromDatabase = repository.findById(participation.getId()).get();
-            participation.setProgrammingExercise(participationFromDatabase.getProgrammingExercise());
-            if (participation.getProgrammingExercise() == null || !Hibernate.isInitialized(participation.getProgrammingExercise())) {
-                log.warn("canAccessParticipation: reload participation with an uninitialized programming exercise");
+            log.warn("canAccessParticipation: reloaded participation: {}", participationFromDatabase);
+            if (participationFromDatabase.getProgrammingExercise() == null || !Hibernate.isInitialized(participationFromDatabase.getProgrammingExercise())) {
+                log.error("canAccessParticipation: tried to reload participation, but received it again with an uninitialized programming exercise");
             }
+            participation.setProgrammingExercise(participationFromDatabase.getProgrammingExercise());
         }
         // TODO: I think we should higher the following permissions to editor
         log.info("canAccessParticipation (after reload): {}, progExercise: {}, exercise: {}", participation, participation.getProgrammingExercise(), participation.getExercise());
