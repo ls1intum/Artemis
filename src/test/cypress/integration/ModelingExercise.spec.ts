@@ -18,8 +18,8 @@ const adminPassword = Cypress.env('adminPassword');
 if (Cypress.env('isCi')) {
     const baseUsername = Cypress.env('username');
     const basePassword = Cypress.env('password');
-    studentUsername = baseUsername.replace('USERID', '100');
-    studentPassword = basePassword.replace('USERID', '100');
+    studentUsername = baseUsername.replace('USERID', '105');
+    studentPassword = basePassword.replace('USERID', '105');
     tutorUsername = baseUsername.replace('USERID', '101');
     tutorPassword = basePassword.replace('USERID', '101');
     instructorUsername = baseUsername.replace('USERID', '103');
@@ -94,7 +94,7 @@ describe('Modeling Exercise Spec', () => {
             cy.visit(`/course-management/${testCourse.id}/exercises`);
             cy.contains('Cypress Modeling Exercise').click();
             cy.get('.card-body').contains('Edit').click();
-            cy.get('.card-body').contains('Create Example Solution').click();
+            cy.contains('Create Example Solution').click();
             cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
             cy.get('.card-body').contains('Save Example Solution').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
@@ -108,7 +108,7 @@ describe('Modeling Exercise Spec', () => {
             cy.get('.sc-kstrdz > :nth-child(2) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
             cy.get('.sc-kstrdz > :nth-child(1) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
             cy.get('.sc-kstrdz > :nth-child(3) > :nth-child(1) > :nth-child(1)').drag('.sc-fubCfw', { position: 'bottomLeft', force: true });
-            cy.get('.card-body').contains('Create new Example Submission').click();
+            cy.contains('Create new Example Submission').click();
             cy.get('.alerts').should('contain', 'Your diagram was saved successfully');
             cy.get('.col-lg-1 > .btn').click();
             cy.get(':nth-child(2) > :nth-child(18)').should('contain.text', 'Example Submission 1');
