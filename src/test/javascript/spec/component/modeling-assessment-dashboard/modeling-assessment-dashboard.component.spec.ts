@@ -110,7 +110,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         component.ngOnInit();
 
         // check
-        expect(getSubmissionsSpy).toHaveBeenCalledWith(true);
+        expect(getSubmissionsSpy).toHaveBeenCalled();
         expect(registerChangeInResultsSpy).toHaveBeenCalled();
         expect(courseFindSpy).toHaveBeenCalled();
         expect(exerciseFindSpy).toHaveBeenCalled();
@@ -120,7 +120,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
     it('should get Submissions', () => {
         // test getSubmissions
-        const filterSubmissionsSpy = spyOn(component, 'filterSubmissions');
         const modelingSubmissionServiceSpy = spyOn(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound').and.returnValue(
             of(new HttpResponse({ body: [modelingSubmission] })),
         );
@@ -132,7 +131,6 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(modelingSubmissionServiceSpy).toHaveBeenCalledWith(modelingExercise.id, { submittedOnly: true });
         expect(component.submissions).toEqual([modelingSubmission]);
         expect(component.filteredSubmissions).toEqual([modelingSubmission]);
-        expect(filterSubmissionsSpy).toHaveBeenCalled();
     });
 
     it('should update filtered submissions', () => {
@@ -147,7 +145,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
     it('should cancelAssessment', fakeAsync(() => {
         // test cancelAssessment
         const windowSpy = spyOn(window, 'confirm').and.returnValue(true);
-        const refreshSpy = spyOn(component, 'refresh');
+        const getSubmissionsSpy = spyOn(component, 'getSubmissions');
 
         const modelAssServiceCancelAssSpy = spyOn(modelingAssessmentService, 'cancelAssessment').and.returnValue(of(1));
 
@@ -158,7 +156,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         // check
         expect(modelAssServiceCancelAssSpy).toHaveBeenCalledWith(modelingSubmission.id);
         expect(windowSpy).toHaveBeenCalled();
-        expect(refreshSpy).toHaveBeenCalled();
+        expect(getSubmissionsSpy).toHaveBeenCalled();
     }));
 
     it('should sortRows', () => {
