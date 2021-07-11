@@ -12,6 +12,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import * as moment from 'moment';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -19,6 +20,7 @@ import * as moment from 'moment';
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
+    course: Course | undefined;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
     problemStatement: SafeHtml;
@@ -29,6 +31,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly moment = moment;
     doughnutStats: ExerciseManagementStatisticsDto;
+    isExamExercise: boolean;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -49,6 +52,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     load(id: number) {
         this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
             this.modelingExercise = modelingExerciseResponse.body!;
+            this.isExamExercise = this.modelingExercise.exerciseGroup !== undefined;
+            this.course = this.isExamExercise ? this.modelingExercise.exerciseGroup?.exam?.course : this.modelingExercise.course;
             this.problemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.problemStatement);
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.gradingInstructions);
             this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);

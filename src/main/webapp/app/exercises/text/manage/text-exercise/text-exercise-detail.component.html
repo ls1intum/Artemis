@@ -7,9 +7,9 @@
             <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="textExercise.course"
+                    *ngIf="course"
                     [isExamExercise]="isExamExercise"
-                    [courseId]="textExercise.course.id!"
+                    [course]="course"
                     [exercise]="textExercise"
                 ></jhi-non-programming-exercise-detail-common-actions>
                 <!-- Check Plagiarism -->

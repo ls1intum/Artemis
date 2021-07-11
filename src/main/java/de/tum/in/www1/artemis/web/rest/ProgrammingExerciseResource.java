@@ -516,7 +516,6 @@ public class ProgrammingExerciseResource {
         }
 
         final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
-        HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
 
         // Update the template files
@@ -525,6 +524,7 @@ public class ProgrammingExerciseResource {
             upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 
+        HttpHeaders responseHeaders;
         // Copy or recreate the build plans
         try {
             if (recreateBuildPlans) {
