@@ -83,7 +83,7 @@ describe('Modeling Exercise Spec', () => {
             cy.get('#field_title').type('Cypress Modeling Exercise');
             cy.get('#field_categories').type('e2e-testing');
             cy.get('#field_points').type('10');
-            cy.get(':nth-child(3) > .btn-primary').click();
+            cy.contains('Save').click();
             cy.wait('@createModelingExercise').then((interception) => {
                 modelingExercise = interception?.response?.body;
             });
