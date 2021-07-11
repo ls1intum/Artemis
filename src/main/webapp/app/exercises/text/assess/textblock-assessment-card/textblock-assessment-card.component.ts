@@ -65,7 +65,9 @@ export class TextblockAssessmentCardComponent {
 
         if (autofocus) {
             setTimeout(() => this.feedbackEditor.focus());
-            this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+            if (!this.selected && this.textBlockRef.feedback?.type === FeedbackType.MANUAL) {
+                this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+            }
         }
     }
 

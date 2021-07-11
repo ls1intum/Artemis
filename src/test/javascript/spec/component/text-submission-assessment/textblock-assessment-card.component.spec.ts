@@ -92,6 +92,10 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('should send assessment event when selecting automatic text block', () => {
+        component.selected = false;
+        component.textBlockRef.feedback = {
+            type: FeedbackType.MANUAL,
+        };
         const sendAssessmentEvent = spyOn<any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.detectChanges();
