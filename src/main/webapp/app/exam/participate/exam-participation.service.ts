@@ -261,11 +261,9 @@ export class ExamParticipationService {
         }
     }
 
-    getExerciseButtonTooltip(
-        exercise: Exercise,
-        submission = ExamParticipationService.getSubmissionForExercise(exercise),
-    ): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
-        // submission does not yet exist for this exercise.
+    getExerciseButtonTooltip(exercise: Exercise): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
+        const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+        // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.
         // Until then show, that the exercise is synced
         if (!submission) {

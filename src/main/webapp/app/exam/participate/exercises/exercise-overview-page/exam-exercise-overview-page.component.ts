@@ -43,9 +43,19 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
     }
 
+    /**
+     * calculate the exercise status (also see exam-navigation-bar.component.ts --> make sure the logic is consistent)
+     * also determines the used icon and its color
+     *
+     * @param item the item for which the exercise status should be calculated
+     * @return whether the status of the exercise
+     */
     setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'notSynced' {
+        // start with a yellow status (edit icon)
+        item.icon = 'edit';
         const submission = ExamParticipationService.getSubmissionForExercise(item.exercise);
         if (!submission) {
+            // in case no participation/submission yet exists -> display synced
             return 'synced';
         }
         if (submission.submitted) {

@@ -108,29 +108,36 @@ export class ExamNavigationBarComponent implements OnInit {
         return this.overviewPageOpen ? 'active' : '';
     }
 
+    /**
+     * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
+     * also determines the used icon and its color
+     *
+     * @param exerciseIndex index of the exercise
+     * @return whether the status of the exercise
+     */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
+        // start with a yellow status (edit icon)
         this.icon = 'edit';
         const exercise = this.exercises[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
-        if (submission) {
-            if (submission.submitted) {
-                this.icon = 'check';
-            }
-            if (submission.isSynced) {
-                // make button blue
-                if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
-                    return 'synced active';
-                } else {
-                    return 'synced';
-                }
+        if (!submission) {
+            // in case no participation/submission yet exists -> display synced
+            return 'synced';
+        }
+        if (submission.submitted) {
+            this.icon = 'check';
+        }
+        if (submission.isSynced) {
+            // make button blue (except for the current page)
+            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
+                return 'synced active';
             } else {
-                // make button yellow
-                this.icon = 'edit';
-                return 'notSynced';
+                return 'synced';
             }
         } else {
-            // in case no participation yet exists -> display synced
-            return 'synced';
+            // make button yellow
+            this.icon = 'edit';
+            return 'notSynced';
         }
     }
 
