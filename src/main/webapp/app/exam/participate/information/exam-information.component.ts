@@ -24,14 +24,14 @@ export class ExamInformationComponent {
         return this.exam.endDate;
     }
 
-    normalWorkingTime() {
+    normalWorkingTime(): number | undefined {
         if (!this.exam || !this.exam.endDate || !this.exam.startDate) {
             return undefined;
         }
         return this.exam.startDate.diff(this.exam.startDate, 'seconds');
     }
 
-    hasAdditionalWorkingTime() {
+    hasAdditionalWorkingTime(): boolean | undefined {
         if (!this.exam || !this.exam.endDate || !this.exam.startDate) {
             return undefined;
         }
@@ -42,12 +42,12 @@ export class ExamInformationComponent {
         return false;
     }
 
-    getAdditionalWorkingTime() {
+    getAdditionalWorkingTime(): number {
         const personalEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
         return personalEndDate.diff(this.exam.endDate, 'seconds');
     }
 
-    examOverMultipleDays() {
+    examOverMultipleDays(): boolean {
         if (!this.exam || !this.exam.startDate || !this.exam.endDate) {
             return false;
         }
