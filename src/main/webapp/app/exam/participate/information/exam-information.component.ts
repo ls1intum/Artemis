@@ -23,4 +23,27 @@ export class ExamInformationComponent {
         }
         return this.exam.endDate;
     }
+
+    normalWorkingTime() {
+        if (!this.exam || !this.exam.endDate || !this.exam.startDate) {
+            return undefined;
+        }
+        return this.exam.startDate.diff(this.exam.startDate, 'seconds');
+    }
+
+    hasAdditionalWorkingTime() {
+        if (!this.exam || !this.exam.endDate || !this.exam.startDate) {
+            return undefined;
+        }
+        if (this.studentExam && this.studentExam.workingTime) {
+            const personalEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+            return personalEndDate.isAfter(this.exam.endDate);
+        }
+        return false;
+    }
+
+    getAdditionalWorkingTime() {
+        const personalEndDate = moment(this.exam.startDate).add(this.studentExam.workingTime, 'seconds');
+        return personalEndDate.diff(this.exam.endDate, 'seconds');
+    }
 }
