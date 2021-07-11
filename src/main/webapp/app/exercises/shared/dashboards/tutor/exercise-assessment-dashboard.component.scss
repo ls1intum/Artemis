@@ -1,0 +1,30 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+jhi-collapsable-assessment-instructions {
+    max-height: 100vh;
+}
+
+.square {
+    width: 10px;
+    height: 10px;
+}
+
+.success-background {
+    background-color: $success;
+}
+
+.danger-background {
+    background-color: $danger;
+}
+
+.primary {
+    color: $primary;
+}
+
+.success {
+    color: $success;
+}
+
+.danger {
+    color: $danger;
+}

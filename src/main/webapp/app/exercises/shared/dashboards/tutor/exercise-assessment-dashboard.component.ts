@@ -53,7 +53,7 @@ export interface ExampleSubmissionQueryParams {
 @Component({
     selector: 'jhi-courses',
     templateUrl: './exercise-assessment-dashboard.component.html',
-    styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
+    styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
