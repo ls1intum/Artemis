@@ -157,7 +157,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         };
         readerStub.returns(mockReader);
 
-        comp.downloadSubmissionInOrion(programmingSubmission, 0);
+        comp.downloadSubmissionInOrion(programmingSubmission);
 
         expect(isCloningSpy).to.have.been.calledOnceWithExactly(true);
         expect(lockAndGetStub).to.have.been.calledOnceWith(11, 0);
