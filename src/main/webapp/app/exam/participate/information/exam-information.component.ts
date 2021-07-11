@@ -28,7 +28,7 @@ export class ExamInformationComponent {
         if (!this.exam || !this.exam.endDate || !this.exam.startDate) {
             return undefined;
         }
-        return this.exam.startDate.diff(this.exam.startDate, 'seconds');
+        return this.exam.endDate.diff(this.exam.startDate, 'seconds');
     }
 
     hasAdditionalWorkingTime(): boolean | undefined {
