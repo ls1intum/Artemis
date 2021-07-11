@@ -75,9 +75,22 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
                 // TODO: the feedback would be missing here, is that a problem?
                 this.programmingExercise = updatedProgrammingExercise.body!;
+                // get the latest results for further processing
+                if (this.programmingExercise.templateParticipation) {
+                    const templateSubmissions = this.programmingExercise.templateParticipation.submissions;
+                    if (templateSubmissions && templateSubmissions.length > 0) {
+                        this.programmingExercise.templateParticipation.results = templateSubmissions[templateSubmissions.length - 1].results;
+                    }
+                }
+                if (this.programmingExercise.solutionParticipation) {
+                    const solutionSubmissions = this.programmingExercise.solutionParticipation.submissions;
+                    if (solutionSubmissions && solutionSubmissions.length > 0) {
+                        this.programmingExercise.solutionParticipation.results = solutionSubmissions[solutionSubmissions.length - 1].results;
+                    }
+                }
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
             });
