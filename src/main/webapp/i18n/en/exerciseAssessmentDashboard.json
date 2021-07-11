@@ -83,14 +83,7 @@
             "moreFeedbackRequestHint": "Shows more feedback requests for your assessments.",
             "noSubmissionsInfo": "You may not assess any submissions this round. {{notYetAssessed}} submissions have yet to be assessed, of which {{lockedSubmissionsByOtherTutor}} are currently locked by other tutors ",
             "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round.",
-            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round.",
-            "orion": {
-                "startYourParticipation": "Assess exercise in Orion",
-                "startAssessment": "Start new assessment in Orion",
-                "continueAssessment": "Continue assessment in Orion",
-                "openAssessment": "Open assessment in Orion",
-                "downloadFailed": "Could not download submission. The file might be too large. Try downloading it manually."
-            }
+            "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round."
         }
     }
 }

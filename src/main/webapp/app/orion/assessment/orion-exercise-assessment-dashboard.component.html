@@ -7,7 +7,7 @@
         <ng-template #overrideAssessmentTable>
             <jhi-ide-button
                 [buttonLoading]="orionState.cloning"
-                buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startYourParticipation' | artemisTranslate }}"
+                buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}"
                 (clickHandler)="openAssessmentInOrion()"
             >
             </jhi-ide-button>
@@ -23,8 +23,8 @@
                     [buttonLoading]="orionState.cloning"
                     buttonLabel="{{
                         (submission && calculateSubmissionStatus(submission, correctionRound) === 'DRAFT'
-                            ? 'artemisApp.exerciseAssessmentDashboard.orion.continueAssessment'
-                            : 'artemisApp.exerciseAssessmentDashboard.orion.openAssessment'
+                            ? 'artemisApp.orionExerciseAssessmentDashboard.continueAssessment'
+                            : 'artemisApp.orionExerciseAssessmentDashboard.openAssessment'
                         ) | artemisTranslate
                     }}"
                     (clickHandler)="downloadSubmissionInOrion(submission, correctionRound)"
@@ -35,7 +35,7 @@
                 <jhi-ide-button
                     class="btn btn-sm"
                     [buttonLoading]="orionState.cloning"
-                    buttonLabel="{{ 'artemisApp.exerciseAssessmentDashboard.orion.startAssessment' | artemisTranslate }}"
+                    buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startAssessment' | artemisTranslate }}"
                     (clickHandler)="downloadSubmissionInOrion('new', correctionRound)"
                 >
                 </jhi-ide-button>
