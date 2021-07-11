@@ -81,10 +81,10 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testFindAllEvents() throws Exception {
         User user = new User();
-        user.setLogin("instructor1");
+        user.setLogin("admin");
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(user);
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId());

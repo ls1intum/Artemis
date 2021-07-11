@@ -50,7 +50,7 @@ public class TextAssessmentEventResource {
      * @return returns a List of TextAssessmentEvent's
      */
     @GetMapping("/get-events")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TextAssessmentEvent>> findAllEvents() {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAll();
         return ResponseEntity.ok().body(events);

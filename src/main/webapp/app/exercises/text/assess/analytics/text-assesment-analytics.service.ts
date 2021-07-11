@@ -22,7 +22,7 @@ export class TextAssessmentAnalytics {
     private eventToSend: TextAssessmentEvent = new TextAssessmentEvent();
     private INVALID_VALUE = -1;
     private route: ActivatedRoute;
-    public analyticsEnabled: boolean;
+    public analyticsEnabled = false;
 
     constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService) {
         // retrieve the analytics enabled status from the profile info and set to current property
