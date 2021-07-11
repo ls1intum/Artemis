@@ -37,7 +37,7 @@ export class LearningGoalCourseDetailModalComponent implements OnInit {
             const progress =
                 (this.learningGoalCourseProgress.averagePointsAchievedByStudentInLearningGoal / this.learningGoalCourseProgress.totalPointsAchievableByStudentsInLearningGoal) *
                 100;
-            this.progressInPercent = Math.round(progress * 10) / 10;
+            this.progressInPercent = round(progress, 1);
         }
     }
 
