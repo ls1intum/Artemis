@@ -119,7 +119,7 @@ export class ExerciseService {
      * @param { number } exerciseId - Id of exercise that should be resetted
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/participations`, { observe: 'response' });
     }
 
     /**
@@ -436,7 +436,7 @@ export class ExerciseService {
     }
 
     toggleSecondCorrection(exerciseId: number): Observable<Boolean> {
-        return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
+        return this.http.post<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
     }
 }
 

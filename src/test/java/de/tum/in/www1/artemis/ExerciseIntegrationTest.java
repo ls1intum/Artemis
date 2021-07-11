@@ -550,7 +550,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
+                request.delete("/api/exercises/" + exercise.getId() + "/participations", HttpStatus.OK);
                 assertThat(exercise.getStudentParticipations().size()).as("Student participations have been deleted").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participations have been deleted").isZero();
             }
@@ -562,7 +562,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
     public void testResetExercise_forbidden() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
-        request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/reset", HttpStatus.FORBIDDEN);
+        request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/participations", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -603,7 +603,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
 
-        Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
+        Boolean bool = request.postWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
         assertThat(bool).isEqualTo(true);
     }
 
@@ -614,7 +614,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setSecondCorrectionEnabled(true);
         exerciseRepository.save(exercise);
-        Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
+        Boolean bool = request.postWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
         assertThat(bool).isEqualTo(false);
     }
 
@@ -623,7 +623,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void testSetSecondCorrectionEnabledFlagForbidden() throws Exception {
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
-        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

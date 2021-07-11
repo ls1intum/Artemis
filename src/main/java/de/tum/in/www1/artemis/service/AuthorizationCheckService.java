@@ -503,6 +503,19 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Wrapper for @link{isAllowedToSeeExercise} that throws forbidden if false
+     *
+     * @param exercise the exercise that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @throws AccessForbiddenException
+     */
+    public void isAllowedToSeeExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
+        if (!isAllowedToSeeExercise(exercise, user)) {
+            throw new AccessForbiddenException("Exercise", exercise.getId());
+        }
+    }
+
+    /**
      * checks if the passed user is allowed to see the given exercise, i.e. if the passed user is at least a student in the course
      *
      * @param exercise the exercise that needs to be checked
