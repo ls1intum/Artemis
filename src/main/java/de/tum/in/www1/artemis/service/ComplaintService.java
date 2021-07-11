@@ -109,10 +109,6 @@ public class ComplaintService {
         return complaintRepository.save(complaint);
     }
 
-    public Optional<Complaint> getByResultId(long resultId) {
-        return complaintRepository.findByResultId(resultId);
-    }
-
     /**
      * Count the number of unaccepted complaints of a student or team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the
      * number of complaints for a student or team in a course. Requests for more feedback are not counted here.

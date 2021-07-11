@@ -93,7 +93,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
         }
 
-        if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
+        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
@@ -132,7 +132,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
         }
 
-        if (complaintService.getByResultId(complaint.getResult().getId()).isPresent()) {
+        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
@@ -264,7 +264,7 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we are interested in
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
-    @GetMapping("/complaints") // TODO: should be "courses/{courseId}/complaints"
+    @GetMapping("/complaints") // TODO: should be "courses/{courseId}/tutors/{tutorId}/complaints"
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsForTutor(@RequestParam ComplaintType complaintType) {
         // Only tutors can retrieve all their own complaints without filter by course or exerciseId. Instructors need
@@ -324,7 +324,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("/exercises/{exerciseId}/complaints")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@PathVariable Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
