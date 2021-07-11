@@ -28,7 +28,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         this.studentExam.exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
-            item.submission = this.getSubmissionForExercise(exercise);
             item.icon = 'edit';
             this.examExerciseOverviewItems.push(item);
         });
@@ -45,13 +44,14 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'notSynced' {
-        if (!item?.submission) {
+        const submission = ExamParticipationService.getSubmissionForExercise(item.exercise);
+        if (!submission) {
             return 'synced';
         }
-        if (item.submission.submitted) {
+        if (submission.submitted) {
             item.icon = 'check';
         }
-        if (item.submission.isSynced) {
+        if (submission.isSynced) {
             // make status blue
             return 'synced';
         } else {
