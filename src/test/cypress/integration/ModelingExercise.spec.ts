@@ -19,7 +19,7 @@ if (Cypress.env('isCi')) {
     const baseUsername = Cypress.env('username');
     const basePassword = Cypress.env('password');
     studentUsername = baseUsername.replace('USERID', '100');
-    studentPassword = baseUsername.replace('USERID', '100');
+    studentPassword = basePassword.replace('USERID', '100');
     tutorUsername = baseUsername.replace('USERID', '101');
     tutorPassword = basePassword.replace('USERID', '101');
     instructorUsername = baseUsername.replace('USERID', '103');
