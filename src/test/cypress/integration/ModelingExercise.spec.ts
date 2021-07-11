@@ -207,6 +207,7 @@ describe('Modeling Exercise Spec', () => {
             cy.get('#field_showFinishedExercise').click();
             cy.get('tbody > tr > :nth-child(6) >').click();
             cy.get('.btn').click();
+            cy.wait(10000);
             cy.get('.btn').click();
             cy.get('.alerts').should(
                 'contain.text',
