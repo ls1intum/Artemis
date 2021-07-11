@@ -51,7 +51,7 @@
                 <span jhiTranslate="entity.action.scores">Scores</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="'clipboard'"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grade Key</span>
+                <fa-icon [icon]="'clipboard'"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'participant-scores']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="'eye'"></fa-icon>
@@ -99,7 +99,7 @@
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.ASSESSMENT"
                         [currentPercentage]="courseDTO?.currentPercentageAssessments"
                         [currentAbsolute]="courseDTO?.currentAbsoluteAssessments"
@@ -107,7 +107,7 @@
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.COMPLAINTS"
                         [currentPercentage]="courseDTO?.currentPercentageComplaints"
                         [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
@@ -117,7 +117,7 @@
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.FEEDBACK"
                         [currentPercentage]="courseDTO?.currentPercentageMoreFeedbacks"
                         [currentAbsolute]="courseDTO?.currentAbsoluteMoreFeedbacks"
@@ -125,7 +125,7 @@
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
-                        [courseId]="course.id!"
+                        [course]="course"
                         [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
                         [currentPercentage]="courseDTO?.currentPercentageAverageScore"
                         [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"

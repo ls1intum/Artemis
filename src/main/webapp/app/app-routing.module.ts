@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -91,4 +92,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
     ],
     exports: [RouterModule],
 })
-export class ArtemisAppRoutingModule {}
+export class ArtemisAppRoutingModule {
+    // Ensure the service is initialized before any routing happens
+    constructor(private _: ArtemisNavigationUtilService) {}
+}

@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { navigateBack } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-system-notification-management-update',
@@ -18,7 +18,12 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         { name: 'WARNING', value: SystemNotificationType.WARNING },
     ];
 
-    constructor(private userService: UserService, private systemNotificationService: SystemNotificationService, private route: ActivatedRoute, private router: Router) {}
+    constructor(
+        private userService: UserService,
+        private systemNotificationService: SystemNotificationService,
+        private route: ActivatedRoute,
+        private navigationUtilService: ArtemisNavigationUtilService,
+    ) {}
 
     /**
      * Loads notification from route data
@@ -41,11 +46,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
      */
     previousState() {
         // Newly created notifications don't have an id yet
-        if (!this.notification.id) {
-            navigateBack(this.router, ['admin', 'system-notification-management']);
-        } else {
-            navigateBack(this.router, ['admin', 'system-notification-management', this.notification.id!.toString()]);
-        }
+        this.navigationUtilService.navigateBackWithOptional(['admin', 'system-notification-management'], this.notification.id?.toString());
     }
 
     /**

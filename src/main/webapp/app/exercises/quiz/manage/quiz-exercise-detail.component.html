@@ -209,21 +209,7 @@
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
-                        <div class="input-group flex-fill ms-1" *ngIf="!isExamMode && quizExercise.id">
-                            <div class="form-group flex-fill">
-                                <input
-                                    minlength="3"
-                                    type="text"
-                                    placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
-                                    class="form-control flex-fill"
-                                    name="notificationtText"
-                                    id="field_notification_text"
-                                    [(ngModel)]="notificationText"
-                                />
-                            </div>
-                        </div>
-
-                        <div class="input-group" *ngIf="!isExamMode" style="width: max-content !important">
+                        <div class="form-group" *ngIf="!isExamMode" style="width: max-content !important">
                             <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix me-1" style="align-self: center"></span>
                             <select
                                 *ngIf="showDropdown === 'isOpenForPractice'"
@@ -254,6 +240,20 @@
                                     {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}
                                 </option>
                             </select>
+                        </div>
+
+                        <div class="form-group flex-fill ms-3" *ngIf="!isExamMode && quizExercise.id">
+                            <div class="form-group flex-fill">
+                                <input
+                                    minlength="3"
+                                    type="text"
+                                    placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
+                                    class="form-control flex-fill"
+                                    name="notificationtText"
+                                    id="field_notification_text"
+                                    [(ngModel)]="notificationText"
+                                />
+                            </div>
                         </div>
 
                         <div class="form-group">

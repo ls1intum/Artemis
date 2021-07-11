@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { navigateBack } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/entities/organization.model';
@@ -25,7 +25,7 @@ export class UserManagementUpdateComponent implements OnInit {
         private route: ActivatedRoute,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -64,9 +64,9 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     previousState() {
         if (this.user.id) {
-            navigateBack(this.router, ['admin', 'user-management', this.user.login!.toString()]);
+            this.navigationUtilService.navigateBack(['admin', 'user-management', this.user.login!.toString()]);
         } else {
-            navigateBack(this.router, ['admin', 'user-management']);
+            this.navigationUtilService.navigateBack(['admin', 'user-management']);
         }
     }
 

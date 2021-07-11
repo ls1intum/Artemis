@@ -18,6 +18,7 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-student-exams',
@@ -139,7 +140,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.error);
+                onError(this.jhiAlertService, err);
                 this.isLoading = false;
             },
         );
@@ -165,7 +166,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.error);
+                onError(this.jhiAlertService, err);
                 this.isLoading = false;
             },
         );
@@ -190,7 +191,7 @@ export class StudentExamsComponent implements OnInit {
                 this.loadAll();
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.error);
+                onError(this.jhiAlertService, err);
                 this.isLoading = false;
             },
         );
@@ -216,7 +217,7 @@ export class StudentExamsComponent implements OnInit {
             },
             (err: HttpErrorResponse) => {
                 this.isLoading = false;
-                this.onError(err.error);
+                onError(this.jhiAlertService, err);
             },
         );
     }
@@ -274,7 +275,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.error);
+                onError(this.jhiAlertService, err);
                 this.isLoading = false;
             },
         );
@@ -311,7 +312,7 @@ export class StudentExamsComponent implements OnInit {
                 this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
-                this.onError(err.error);
+                onError(this.jhiAlertService, err);
                 this.isLoading = false;
             },
         );
@@ -353,10 +354,6 @@ export class StudentExamsComponent implements OnInit {
         if (studentExams) {
             this.studentExams = studentExams;
         }
-    }
-
-    private onError(error: any) {
-        this.jhiAlertService.error(error.errorKey);
     }
 
     formatDate(date: Moment | Date | undefined) {

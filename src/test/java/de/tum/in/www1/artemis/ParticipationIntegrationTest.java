@@ -377,8 +377,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getDifficulty()).isNull();
             assertThat(exercise.getMode()).isNull();
-            if (exercise instanceof ProgrammingExercise) {
-                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 assertThat(programmingExercise.getSolutionParticipation()).isNull();
                 assertThat(programmingExercise.getTemplateParticipation()).isNull();
                 assertThat(programmingExercise.getTestRepositoryUrl()).isNull();
@@ -388,16 +387,13 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
                 assertThat(programmingExercise.getPackageName()).isNull();
                 assertThat(programmingExercise.isAllowOnlineEditor()).isNull();
             }
-            else if (exercise instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) exercise;
+            else if (exercise instanceof QuizExercise quizExercise) {
                 assertThat(quizExercise.getQuizQuestions()).isEmpty();
             }
-            else if (exercise instanceof TextExercise) {
-                TextExercise textExercise = (TextExercise) exercise;
+            else if (exercise instanceof TextExercise textExercise) {
                 assertThat(textExercise.getSampleSolution()).isNull();
             }
-            else if (exercise instanceof ModelingExercise) {
-                ModelingExercise modelingExercise = (ModelingExercise) exercise;
+            else if (exercise instanceof ModelingExercise modelingExercise) {
                 assertThat(modelingExercise.getSampleSolutionModel()).isNull();
                 assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
             }
@@ -417,7 +413,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         participation.setPresentationScore(1);
         participation = participationRepo.save(participation);
         participation.setPresentationScore(null);
-        var actualParticipation = request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.OK);
+        var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
+                HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
         assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 0").isEqualTo(0);
     }
@@ -426,7 +423,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "tutor1", roles = "TA")
     public void updateParticipation_notStored() throws Exception {
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
-        request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -435,7 +432,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
         participation = participationRepo.save(participation);
         participation.setPresentationScore(2);
-        var actualParticipation = request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.OK);
+        var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
+                HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
         assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 1").isEqualTo(1);
     }
@@ -444,7 +442,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "tutor3", roles = "TA")
     public void updateParticipation_notTutorInCourse() throws Exception {
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
-        request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        participation = participationRepo.save(participation);
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

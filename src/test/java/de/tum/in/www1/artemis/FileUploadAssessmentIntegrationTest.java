@@ -622,7 +622,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(submission.getResults().size()).isEqualTo(3);
         Result firstResult = submission.getResults().get(0);
         Result lastResult = submission.getLatestResult();
-        request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/delete/" + firstResult.getId(),
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(2);
@@ -646,7 +646,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         Result resultOfOtherSubmission = submission2.getLatestResult();
         Result lastResult = submission1.getLatestResult();
         request.delete(
-                "/api/participations/" + submission1.getParticipation().getId() + "/file-upload-submissions/" + submission1.getId() + "/delete/" + resultOfOtherSubmission.getId(),
+                "/api/participations/" + submission1.getParticipation().getId() + "/file-upload-submissions/" + submission1.getId() + "/results/" + resultOfOtherSubmission.getId(),
                 HttpStatus.BAD_REQUEST);
         submission1 = submissionRepository.findOneWithEagerResultAndFeedback(submission1.getId());
         assertThat(submission1.getResults().size()).isEqualTo(3);
@@ -667,7 +667,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         database.addComplaintToSubmission(submission, "student1");
         assertThat(submission.getResults().size()).isEqualTo(2);
         Result lastResult = submission.getLatestResult();
-        request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/delete/" + lastResult.getId(),
+        request.delete("/api/participations/" + submission.getParticipation().getId() + "/file-upload-submissions/" + submission.getId() + "/results/" + lastResult.getId(),
                 HttpStatus.BAD_REQUEST);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults().size()).isEqualTo(2);

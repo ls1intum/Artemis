@@ -33,11 +33,11 @@
         <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse" [extendedLink]="true"></jhi-course-exercise-row>
     </div>
 </div>
-<div class="row mb-3 align-items-center">
-    <div class="col-12 col-sm">
+<div class="row mb-3 justify-content-between">
+    <div class="col-sm-8">
         <h3 jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
     </div>
-    <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-12 col-sm-auto d-flex"></jhi-course-registration-selector>
+    <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-sm-auto d-flex"></jhi-course-registration-selector>
 </div>
 <div class="row">
     <jhi-overview-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-2" [course]="course" [hasGuidedTour]="course === courseForGuidedTour">

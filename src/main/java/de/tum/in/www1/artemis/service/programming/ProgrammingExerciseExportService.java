@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.service.util.XmlFileUtils.getDocumentBuilderFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,7 +15,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -206,7 +207,8 @@ public class ProgrammingExerciseExportService {
         List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).collect(Collectors.toList());
 
         String cleanProjectName = fileService.removeIllegalCharacters(exercise.getProjectName());
-        reportData.add(new ArchivalReportEntry(exercise.getId(), cleanProjectName, pathsToBeZipped.size(), includedFilePathsNotNull.size()));
+        // Add report entry, programming repositories cannot be skipped
+        reportData.add(new ArchivalReportEntry(exercise, cleanProjectName, pathsToBeZipped.size(), includedFilePathsNotNull.size(), 0));
 
         try {
             // Only create zip file if there's files to zip
@@ -649,7 +651,7 @@ public class ProgrammingExerciseExportService {
             }
 
             // 1- Build the doc from the XML file
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(pomFile.getPath()));
+            Document doc = getDocumentBuilderFactory().newDocumentBuilder().parse(new InputSource(pomFile.getPath()));
             doc.setXmlStandalone(true);
 
             // 2- Find the relevant nodes with xpath
@@ -685,7 +687,7 @@ public class ProgrammingExerciseExportService {
             }
 
             // 1- Build the doc from the XML file
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(eclipseProjectFile.getPath()));
+            Document doc = getDocumentBuilderFactory().newDocumentBuilder().parse(new InputSource(eclipseProjectFile.getPath()));
             doc.setXmlStandalone(true);
 
             // 2- Find the node with xpath

@@ -29,7 +29,8 @@
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
-                "gradeKeyButton": "View Grade Key"
+                "gradeKeyButton": "View Grading Key",
+                "gradeKeyButtonBonus": "View Bonus Rules"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -133,6 +134,12 @@
             "finishExam": "Finish",
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
+            "exerciseType": "Type",
+            "examOverview": "Exam Overview",
+            "examStatus": "Status",
+            "examExercises": "Exam Exercises:",
+            "exercisePoints": "Points",
+            "exerciseName": "Name",
             "noStudentExam": "You are not registered for the exam {{ examTitle }}. Please contact your instructor.",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
@@ -258,7 +265,7 @@
             "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
-            "gradingSystem": "Grade Key",
+            "gradingSystem": "Grading Key",
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",

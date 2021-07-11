@@ -12,6 +12,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -49,13 +50,13 @@ export class TestRunManagementComponent implements OnInit {
                 this.course = this.exam.course!;
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
                 this.examManagementService.findAllTestRunsForExam(this.course.id!, this.exam.id!).subscribe(
-                    (res) => {
+                    (res: HttpResponse<StudentExam[]>) => {
                         this.testRuns = res.body!;
                     },
-                    (err) => this.onError(err),
+                    (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
                 );
             },
-            (error) => this.onError(error),
+            (error: HttpErrorResponse) => onError(this.jhiAlertService, error),
         );
         this.accountService.fetch().subscribe((res) => {
             if (res.body != undefined) {
@@ -73,13 +74,13 @@ export class TestRunManagementComponent implements OnInit {
         modalRef.result
             .then((testRunConfiguration: StudentExam) => {
                 this.examManagementService.createTestRun(this.course.id!, this.exam.id!, testRunConfiguration).subscribe(
-                    (res) => {
-                        if (res.body != undefined) {
-                            this.testRuns.push(res.body!);
+                    (response: HttpResponse<StudentExam>) => {
+                        if (response.body != undefined) {
+                            this.testRuns.push(response.body!);
                         }
                     },
-                    (error) => {
-                        this.onError(error);
+                    (error: HttpErrorResponse) => {
+                        onError(this.jhiAlertService, error);
                     },
                 );
             })
@@ -133,9 +134,5 @@ export class TestRunManagementComponent implements OnInit {
      */
     get examContainsExercises(): boolean {
         return !!this.exam?.exerciseGroups && this.exam.exerciseGroups.some((exerciseGroup) => exerciseGroup.exercises && exerciseGroup.exercises.length > 0);
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
     }
 }
