@@ -5,6 +5,7 @@ export class ExerciseGroupVariantColumn {
 
     indexExercise: number;
     exerciseTitle?: string;
+    exerciseType?: string;
     exerciseMaxPoints?: number;
     exerciseNumberOfParticipations?: number;
     noExercises = false;

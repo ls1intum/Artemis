@@ -58,7 +58,10 @@
                 <span *ngIf="column.noExercises">-</span>
             </td>
             <td>
-                <span *ngIf="column.exerciseTitle">{{ column.exerciseTitle }}</span>
+                <div *ngIf="column.exerciseTitle" [ngbTooltip]="getIconTooltip(column!.exerciseType) | artemisTranslate">
+                    <fa-icon [icon]="getIcon(column!.exerciseType)" placement="right" container="body"></fa-icon>
+                    <span>{{ column.exerciseTitle }}</span>
+                </div>
                 <span *ngIf="!column.exerciseTitle">-</span>
             </td>
             <td>
