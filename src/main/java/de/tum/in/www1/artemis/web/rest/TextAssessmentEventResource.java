@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -15,7 +17,6 @@ import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -75,7 +76,9 @@ public class TextAssessmentEventResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         try {
             Course course = courseRepository.findByIdElseThrow(event.getCourseId());
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+            if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                return forbidden();
+            }
             textAssessmentEventRepository.save(event);
             return ResponseEntity.ok().build();
         }
