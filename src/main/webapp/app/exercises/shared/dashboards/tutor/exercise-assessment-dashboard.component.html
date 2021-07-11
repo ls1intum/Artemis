@@ -106,9 +106,7 @@
             *ngIf="exercise.problemStatement && exercise.problemStatement.length > 0"
             [panelHeader]="'artemisApp.exerciseAssessmentDashboard.problemStatement' | artemisTranslate"
         >
-            <div *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingInstructions">
-                {{ this.exercise.problemStatement }}
-            </div>
+            <div *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingInstructions" [innerHTML]="formattedProblemStatement" style="margin-bottom: -15px"></div>
             <div>
                 <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
                 <ng-template #programmingInstructions>
@@ -122,12 +120,10 @@
         </jhi-info-panel>
 
         <jhi-info-panel
-            *ngIf="exercise.type === ExerciseType.TEXT && formattedSampleSolution"
+            *ngIf="(exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) && formattedSampleSolution"
             [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate"
         >
-            <div>
-                {{ formattedSampleSolution }}
-            </div>
+            <div [innerHTML]="formattedSampleSolution" style="margin-bottom: -15px"></div>
         </jhi-info-panel>
 
         <jhi-info-panel
@@ -143,9 +139,7 @@
             *ngIf="exercise.type === ExerciseType.MODELING && exampleSolutionModel"
             [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolutionExplanation' | artemisTranslate"
         >
-            <div>
-                {{ formattedSampleSolution }}
-            </div>
+            <div [innerHTML]="formattedSampleSolution" style="margin-bottom: -15px"></div>
         </jhi-info-panel>
 
         <div class="col-12" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
@@ -159,12 +153,10 @@
             *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0"
             [panelHeader]="'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | artemisTranslate"
         >
-            <div>
-                {{ formattedGradingInstructions }}
-            </div>
+            <div [innerHTML]="formattedGradingInstructions" style="margin-bottom: -15px"></div>
         </jhi-info-panel>
 
-        <div class="col-12 mt-4">
+        <div *ngIf="exercise.gradingCriteria && exercise.gradingCriteria.length > 0" class="col-12 mt-4">
             <h4>Structured {{ 'artemisApp.exerciseAssessmentDashboard.gradingInstructions' | artemisTranslate }}</h4>
             <jhi-structured-grading-instructions-assessment-layout
                 [readonly]="true"
