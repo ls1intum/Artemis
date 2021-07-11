@@ -1,3 +1,5 @@
+import { ExerciseType } from 'app/entities/exercise.model';
+
 export class ExerciseGroupVariantColumn {
     indexExerciseGroup: number;
     exerciseGroupTitle?: string;
@@ -5,7 +7,7 @@ export class ExerciseGroupVariantColumn {
 
     indexExercise: number;
     exerciseTitle?: string;
-    exerciseType?: string;
+    exerciseType?: ExerciseType;
     exerciseMaxPoints?: number;
     exerciseNumberOfParticipations?: number;
     noExercises = false;
