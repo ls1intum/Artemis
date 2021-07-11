@@ -3,7 +3,6 @@
  */
 export class OnlineEditorPage {
     constructor() {
-        cy.intercept('PUT', '/api/repository/*/files?commit=yes').as('submit');
         cy.intercept('POST', '/api/repository/*/**').as('createFile');
         cy.intercept('GET', '/api/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks').as('initialQuery');
     }
@@ -44,6 +43,7 @@ export class OnlineEditorPage {
             cy.fixture(newFile.path).then(($fileContent) => {
                 this.focusCodeEditor().type(this.sanitizeInput($fileContent, packageName) + '{shift}{pagedown}{backspace}');
             });
+            this.submit(false);
         }
     }
 
@@ -58,18 +58,24 @@ export class OnlineEditorPage {
 
     /**
      * Opens a file in the file browser by clicking on it.
-     * @param name the name of the file in the file browser
      */
     openFileWithName(name: string) {
-        return this.findFileBrowser().contains(name).click();
+        this.findFileBrowser().contains(name).click();
     }
 
     /**
      * Submits the currently saved files by clicking on the submit button.
      */
-    submit() {
+    submit(waitForQuery: boolean) {
+        if (waitForQuery) {
+            // Wait until previous submission have finished
+            this.getResultPanel().contains('GRADED', { timeout: 80000 }).should('be.visible');
+            cy.intercept({ method: 'POST', path: '/api/repository/*/commit' }).as('submit');
+        }
         cy.get('#submit_button').click();
-        cy.wait('@submit');
+        if (waitForQuery) {
+            cy.wait('@submit');
+        }
     }
 
     /**

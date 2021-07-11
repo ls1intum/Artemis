@@ -156,7 +156,9 @@ function makeSuccessfulSubmission() {
  */
 function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
     editorPage.typeSubmission(submission, packageName);
-    editorPage.submit();
+    editorPage.openFileWithName('BubbleSort.java');
+    cy.wait(35000);
+    editorPage.submit(true);
     editorPage.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should(beVisible);
     editorPage.getBuildOutput().contains(buildingAndTesting).should(beVisible);
     editorPage.getResultPanel().contains('GRADED', { timeout: longTimeout }).should(beVisible);
