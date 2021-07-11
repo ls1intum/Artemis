@@ -45,9 +45,6 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 tap((plantUmlSvg: string) => {
                     const plantUmlHtmlContainer = document.getElementById(`plantUml-${index}`);
                     if (plantUmlHtmlContainer) {
-                        // We add a max-width: 100% style attribute to the svg element
-                        // to prevent overflowing the enclosing container
-                        plantUmlSvg = plantUmlSvg.replace(`style="width`, `style="max-width:100%;width`);
                         // We need to sanitize the received svg as it could contain malicious code in a script tag.
                         plantUmlHtmlContainer.innerHTML = DOMPurify.sanitize(plantUmlSvg);
                     }
@@ -74,7 +71,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
                 const plantUmlRegex = /@startuml([^@]*)@enduml/g;
                 // E.g. Implement BubbleSort, testBubbleSort
-                const plantUmlContainer = `<div class="mb-4" id="plantUml-${idPlaceholder}" style="min-width: max-content;"></div>`;
+                const plantUmlContainer = `<div class="mb-4" id="plantUml-${idPlaceholder}"></div>`;
                 // Replace test status markers.
                 const plantUmls = text.match(plantUmlRegex) || [];
                 // Assign unique ids to uml data structure at the beginning.
