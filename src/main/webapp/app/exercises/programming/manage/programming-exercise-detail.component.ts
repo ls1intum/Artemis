@@ -75,22 +75,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.isAtLeastEditor = this.accountService.isAtLeastEditorForExercise(this.programmingExercise);
             this.programmingExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.programmingExercise);
 
-            if (this.programmingExercise.templateParticipation) {
-                this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
-                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.templateParticipation.id!).subscribe((results) => {
-                    this.programmingExercise.templateParticipation!.results = results;
-                    this.loadingTemplateParticipationResults = false;
-                });
-            }
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
+                // TODO: the feedback would be missing here, is that a problem?
+                this.programmingExercise = updatedProgrammingExercise.body!;
+                this.loadingTemplateParticipationResults = false;
+                this.loadingSolutionParticipationResults = false;
+            });
 
-            if (this.programmingExercise.solutionParticipation) {
-                this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
-
-                this.loadLatestResultWithFeedbackAndSubmission(this.programmingExercise.solutionParticipation.id!).subscribe((results) => {
-                    this.programmingExercise.solutionParticipation!.results = results;
-                    this.loadingSolutionParticipationResults = false;
-                });
-            }
             this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
@@ -114,20 +105,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-    }
-
-    /**
-     * Load the latest result for the given participation. Will return [result] if there is a result, [] if not.
-     * @param participationId of the given participation.
-     * @return an empty array if there is no result or an array with the single latest result.
-     */
-    private loadLatestResultWithFeedbackAndSubmission(participationId: number): Observable<Result[]> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(participationId, true).pipe(
-            catchError(() => of(null)),
-            map((result: Result | null) => {
-                return result ? [result] : [];
-            }),
-        );
     }
 
     combineTemplateCommits() {
