@@ -37,7 +37,6 @@
             "endExam": "Finish",
             "date": "Date",
             "time": "Time",
-            "durationWithFormat": "Duration",
             "course": "Course",
             "exercises": "Exercises",
             "points": "Points",

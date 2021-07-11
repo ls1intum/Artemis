@@ -19,7 +19,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
     constructor(private translateService: TranslateService) {}
 
     /**
-     * Convert seconds to a human-readable duration format "d day(s) hh:mm::ss".
+     * Convert seconds to a human-readable duration format "d day(s) hh:mm:ss".
      * The days and hours are left out if their value is zero
      * @param seconds {number}
      */
@@ -40,12 +40,6 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
         timeString += this.addLeadingZero(minutes) + ':';
         timeString += this.addLeadingZero(seconds);
 
-        // Clean up existing subscription to onLangChange and subscribe to onLangChange event, in case the language changes.
-        this.cleanUpSubscription();
-        if (!this.onLangChange) {
-            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => this.updateLocale(event.lang));
-        }
-
         return timeString;
     }
 
@@ -63,6 +57,12 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
         }
         // Set locale to current language.
         this.updateLocale(this.translateService.currentLang);
+
+        // Clean up existing subscription to onLangChange and subscribe to onLangChange event, in case the language changes.
+        this.cleanUpSubscription();
+        if (!this.onLangChange) {
+            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => this.updateLocale(event.lang));
+        }
 
         return days + this.getDayString(days);
     }
@@ -86,7 +86,7 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
     }
 
     private cleanUpSubscription(): void {
-        if (this.onLangChange != undefined) {
+        if (this.onLangChange !== undefined) {
             this.onLangChange.unsubscribe();
             this.onLangChange = undefined;
         }

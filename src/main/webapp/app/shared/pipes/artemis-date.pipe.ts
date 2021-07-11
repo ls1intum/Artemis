@@ -144,7 +144,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     }
 
     private cleanUpSubscription(): void {
-        if (this.onLangChange != undefined) {
+        if (this.onLangChange !== undefined) {
             this.onLangChange.unsubscribe();
             this.onLangChange = undefined;
         }
