@@ -260,6 +260,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     ExerciseType.FILE_UPLOAD,
                     this.courseId,
                     this.exerciseId,
+                    this.unassessedSubmission.participation!.id!,
                     this.unassessedSubmission.id!,
                     this.examId,
                     this.exerciseGroupId,

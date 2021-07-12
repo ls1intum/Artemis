@@ -53,6 +53,8 @@ import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exer
 import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
+import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -301,6 +303,15 @@ export const examManagementRoute: Routes = [
         resolve: {
             studentExam: StudentExamResolve,
         },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
+        component: GradingKeyOverviewComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
@@ -622,6 +633,17 @@ export const examManagementRoute: Routes = [
             data: {
                 authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                 pageTitle: 'artemisApp.participation.home.title',
+            },
+            canActivate: [UserRouteAccessService],
+        };
+    }),
+    ...exerciseTypes.map((exerciseType) => {
+        return {
+            path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/exercise-statistics',
+            component: ExerciseStatisticsComponent,
+            data: {
+                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                pageTitle: 'exercise-statistics.title',
             },
             canActivate: [UserRouteAccessService],
         };

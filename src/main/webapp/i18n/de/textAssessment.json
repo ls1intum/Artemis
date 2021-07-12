@@ -51,7 +51,14 @@
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
                 "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein ...",
                 "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
-                "impactWarningTooltip": "Die Anzahl, wie oft deine Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen."
+                "impactWarningTooltip": "Die Anzahl, wie oft dein Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
+                "automaticFeedbackInformationModal": {
+                    "heading": "Automatische Feedbackverfolgung",
+                    "introduction": "Dieser automatische Vorschlag stammt von einer zuvor bewerteten Vorlage, die unten gezeigt wird. <br/> Das  <span style='background-color: #d8e8f5'>hervorgehobene Feedback</span> wurde wiederverwendet:<br/><br/>",
+                    "trace": "Herkunft des automatischen Feedbacks verfolgen",
+                    "points": "Punkte",
+                    "reused": "{{reusedCount}} mal wiederverwendet"
+                }
             },
             "assessmentInstruction": "Bitte hovern Sie mit der Maus über den zu bewertenden Textblock und klicken Sie diesen an um ihn zu bewerten.<br>Drücke <code>alt</code>/<code>option</code> und wähle gleichzeitig Text aus, um eigene Textblöcke zu bewerten.",
             "conflict": {
