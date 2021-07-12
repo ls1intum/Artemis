@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -11,7 +11,12 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 export class ExampleSubmissionsComponent implements OnInit {
     exercise: Exercise;
 
-    constructor(private jhiAlertService: JhiAlertService, private exampleSubmissionService: ExampleSubmissionService, private activatedRoute: ActivatedRoute) {}
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private exampleSubmissionService: ExampleSubmissionService,
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+    ) {}
 
     /**
      * Initializes all relevant data for the exercise
@@ -38,5 +43,13 @@ export class ExampleSubmissionsComponent implements OnInit {
                 this.jhiAlertService.error(error.message);
             },
         );
+    }
+
+    /**
+     * Navigates to the detail view of the example submission
+     * @param id id of the submission or new for a new submission
+     */
+    navigateToExampleSubmission(id: number | 'new') {
+        this.router.navigate([id], { relativeTo: this.activatedRoute });
     }
 }

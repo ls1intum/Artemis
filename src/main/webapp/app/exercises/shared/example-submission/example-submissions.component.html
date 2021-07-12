@@ -8,13 +8,12 @@
             </h4>
         </div>
         <div class="col-12 col-sm-auto d-flex">
-            <a
+            <button
                 *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
                 class="btn btn-primary"
-                [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', 'new']"
+                (click)="navigateToExampleSubmission('new')"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
-            >
-            </a>
+            ></button>
         </div>
     </div>
     <jhi-alert></jhi-alert>
@@ -33,22 +32,22 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let exampleSubmission of exercise.exampleSubmissions; let i = index">
                     <td>
-                        <a
+                        <button
                             *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmission.id]"
+                            (click)="navigateToExampleSubmission(exampleSubmission.id)"
                             class="btn-link"
                         >
-                            {{ exampleSubmission.id }}</a
-                        >
+                            {{ exampleSubmission.id }}
+                        </button>
                     </td>
                     <td>
-                        <a
+                        <button
                             *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            [routerLink]="['/course-management', exercise.course.id, exercise.type + '-exercises', exercise.id, 'example-submissions', exampleSubmission.id]"
+                            (click)="navigateToExampleSubmission(exampleSubmission.id)"
                             class="btn-link"
                         >
-                            {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}</a
-                        >
+                            {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
+                        </button>
                     </td>
                     <td>{{ exampleSubmission.usedForTutorial ? 'Yes' : 'No' }}</td>
                     <td>

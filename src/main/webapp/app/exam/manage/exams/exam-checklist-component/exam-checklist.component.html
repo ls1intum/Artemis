@@ -47,9 +47,15 @@
                             <span>
                                 <!-- assert amount mandatory exercises <= number in settings <= amount total exercises -->
                                 <jhi-exam-checklist-check
-                                    [checkAttribute]="exam.exerciseGroups && countMandatoryExercises <= exam.numberOfExercisesInExam && exam.numberOfExercisesInExam <= exam.exerciseGroups.length"
+                                    [checkAttribute]="
+                                        exam.exerciseGroups && countMandatoryExercises <= exam.numberOfExercisesInExam && exam.numberOfExercisesInExam <= exam.exerciseGroups.length
+                                    "
                                 ></jhi-exam-checklist-check>
-                                <span>{{ !hasOptionalExercises ? 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal' : 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsinbetween' | artemisTranslate }}</span>
+                                <span>{{
+                                    !hasOptionalExercises
+                                        ? 'artemisApp.examManagement.checklist.textitems.numberofexercisegroupsequal'
+                                        : ('artemisApp.examManagement.checklist.textitems.numberofexercisegroupsinbetween' | artemisTranslate)
+                                }}</span>
                             </span>
                         </li>
                         <li class="list-group-item border-1">

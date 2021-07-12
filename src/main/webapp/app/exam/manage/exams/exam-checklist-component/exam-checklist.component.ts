@@ -31,7 +31,7 @@ export class ExamChecklistComponent implements OnInit {
         this.checkPointsExercisesEqual();
         this.checkTotalPointsMandatory();
         this.checkAllGroupContainsExercise();
-        this.countMandatoryExercises = this.exam.exerciseGroups?.filter(group => group.isMandatory)?.length ?? 0;
+        this.countMandatoryExercises = this.exam.exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
         this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
         this.examService
             .getExamStatistics(this.exam.course!.id!, this.exam.id!)
