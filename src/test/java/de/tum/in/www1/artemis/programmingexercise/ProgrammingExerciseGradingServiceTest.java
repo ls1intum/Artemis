@@ -1159,5 +1159,4 @@ public class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegra
 
         resultRepository.save(result);
     }
-
 }
