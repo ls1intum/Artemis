@@ -2,12 +2,8 @@ import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { FeedbackConflictType } from 'app/entities/feedback-conflict';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
-import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { ActivatedRoute } from '@angular/router';
+import { FeedbackConflictType } from 'app/entities/feedback-conflict';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -37,13 +33,7 @@ export class TextblockAssessmentCardComponent {
         return this.conflictMode && this.isConflictingFeedback && !this.isLeftConflictingFeedback;
     }
 
-    constructor(
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-        protected route: ActivatedRoute,
-    ) {
-        textAssessmentAnalytics.setComponentRoute(route);
-    }
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
      * Select a text block
@@ -65,9 +55,6 @@ export class TextblockAssessmentCardComponent {
 
         if (autofocus) {
             setTimeout(() => this.feedbackEditor.focus());
-            if (!this.selected && this.textBlockRef.feedback?.type === FeedbackType.MANUAL) {
-                this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
-            }
         }
     }
 

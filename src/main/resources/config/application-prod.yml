@@ -132,4 +132,3 @@ info:
             - tutor_assessment_tour: 'Patterns in Software Engineering'
     contact: artemis.in@tum.de                                                                  #default value, can be overridden on the server
     test-server: false  # false --> production, true --> test server, --> empty == local
-    text-assessment-analytics-enabled: true
