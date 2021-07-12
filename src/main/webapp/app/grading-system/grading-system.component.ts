@@ -253,7 +253,7 @@ export class GradingSystemComponent implements OnInit {
             }
         }
         // check if first and last grade step are valid
-        if (sortedGradeSteps[0].lowerBoundPercentage !== 0 || sortedGradeSteps[sortedGradeSteps.length - 1].upperBoundPercentage !== 100) {
+        if (sortedGradeSteps[0].lowerBoundPercentage !== 0 || sortedGradeSteps.last().upperBoundPercentage !== 100) {
             this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
             return false;
         }
@@ -461,7 +461,7 @@ export class GradingSystemComponent implements OnInit {
             this.gradingScale.gradeSteps = [];
         }
         const gradeStepsArrayLength = this.gradingScale.gradeSteps.length;
-        const lowerBound = gradeStepsArrayLength === 0 ? 0 : this.gradingScale.gradeSteps[gradeStepsArrayLength - 1].upperBoundPercentage;
+        const lowerBound = gradeStepsArrayLength === 0 ? 0 : this.gradingScale.gradeSteps.last().upperBoundPercentage;
         const gradeStep: GradeStep = {
             gradeName: '',
             lowerBoundPercentage: lowerBound,

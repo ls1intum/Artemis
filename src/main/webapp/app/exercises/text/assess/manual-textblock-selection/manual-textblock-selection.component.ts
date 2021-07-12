@@ -87,7 +87,7 @@ class TextBlockRefGroup {
         return this.refs[0].block!.startIndex!;
     }
     private get endIndex(): number {
-        return this.refs[this.refs.length - 1].block!.endIndex!;
+        return this.refs.last().block!.endIndex!;
     }
 
     getText(submission: TextSubmission): string {
@@ -105,7 +105,7 @@ class TextBlockRefGroup {
 
     static fromTextBlockRefs = (textBlockRefs: TextBlockRef[]): TextBlockRefGroup[] =>
         textBlockRefs.reduce((groups: TextBlockRefGroup[], elem: TextBlockRef) => {
-            const lastGroup = groups[groups.length - 1];
+            const lastGroup = groups.last();
             if (lastGroup && !lastGroup.hasFeedback && !elem.feedback) {
                 lastGroup.addRef(elem);
             } else {
