@@ -252,7 +252,6 @@ export class ExamParticipationService {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
             return exercise.studentParticipations[0].submissions.last();
         }
-        // implicitly return undefined
     }
 
     getExerciseButtonTooltip(exercise: Exercise): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {

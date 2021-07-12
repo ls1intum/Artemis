@@ -54,7 +54,7 @@ export class ExamNavigationBarComponent implements OnInit {
 
     /**
      * @param overviewPage: user wants to switch to the overview page
-     * @param exerciseIndex: exercise to switch to (might be undefined)
+     * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
      * @param forceSave: true if forceSave shall be used.
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean) {
@@ -113,7 +113,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * also determines the used icon and its color
      *
      * @param exerciseIndex index of the exercise
-     * @return whether the status of the exercise
+     * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
         // start with a yellow status (edit icon)

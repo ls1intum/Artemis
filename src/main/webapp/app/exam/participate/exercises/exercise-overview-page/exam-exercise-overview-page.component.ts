@@ -48,7 +48,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
      * also determines the used icon and its color
      *
      * @param item the item for which the exercise status should be calculated
-     * @return whether the status of the exercise
+     * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
     setExerciseIconStatus(item: ExamExerciseOverviewItem): 'synced' | 'notSynced' {
         // start with a yellow status (edit icon)
