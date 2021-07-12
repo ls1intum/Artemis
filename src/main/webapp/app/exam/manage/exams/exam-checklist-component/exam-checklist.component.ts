@@ -22,6 +22,8 @@ export class ExamChecklistComponent implements OnInit {
     allGroupsContainExercise = false;
     totalPointsMandatory = false;
     totalPointsMandatoryOptional = false;
+    hasOptionalExercises = false;
+    countMandatoryExercises = 0;
 
     constructor(private accountService: AccountService, private examService: ExamManagementService) {}
 
@@ -29,6 +31,8 @@ export class ExamChecklistComponent implements OnInit {
         this.checkPointsExercisesEqual();
         this.checkTotalPointsMandatory();
         this.checkAllGroupContainsExercise();
+        this.countMandatoryExercises = this.exam.exerciseGroups?.filter(group => group.isMandatory)?.length ?? 0;
+        this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
         this.examService
             .getExamStatistics(this.exam.course!.id!, this.exam.id!)
             .pipe(
