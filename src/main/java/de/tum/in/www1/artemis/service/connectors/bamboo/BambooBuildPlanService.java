@@ -83,7 +83,7 @@ public class BambooBuildPlanService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final String CUSTOM_FEEDBACK_DIRECTORY = "customFeedbacks";
+    private final static String CUSTOM_FEEDBACK_DIRECTORY = "customFeedbacks";
 
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService) {
         this.resourceLoaderService = resourceLoaderService;
