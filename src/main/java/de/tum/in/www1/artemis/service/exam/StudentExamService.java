@@ -310,12 +310,9 @@ public class StudentExamService {
      * @return a map of the User as key, and a list of the users exercises as value
      */
     public Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
-        return studentExams.stream()
-                .collect(
-                        Collectors
-                                .toMap(StudentExam::getUser,
-                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
-                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
+        return studentExams.stream().collect(Collectors.toMap(StudentExam::getUser,
+            studentExam -> studentExam.getExercises().stream().filter(
+                exercise -> exercise instanceof ModelingExercise || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                                 .collect(Collectors.toList())));
     }
 
