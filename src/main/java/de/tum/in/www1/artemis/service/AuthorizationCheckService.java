@@ -507,7 +507,7 @@ public class AuthorizationCheckService {
      *
      * @param exercise the exercise that needs to be checked
      * @param user the user whose permissions should be checked
-     * @throws AccessForbiddenException
+     * @throws AccessForbiddenException if active user isn't allowed to see the exercise
      */
     public void isAllowedToSeeExerciseElseThrow(@NotNull Exercise exercise, @Nullable User user) {
         if (!isAllowedToSeeExercise(exercise, user)) {
