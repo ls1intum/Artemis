@@ -52,6 +52,7 @@ public class Lecture extends DomainObject {
     private Set<Post> posts = new HashSet<>();
 
     @ManyToOne
+    @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
 
     public String getTitle() {
@@ -130,7 +131,6 @@ public class Lecture extends DomainObject {
         this.posts = posts;
     }
 
-    @JsonInclude
     public Course getCourse() {
         return course;
     }

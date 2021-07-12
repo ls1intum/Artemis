@@ -73,7 +73,6 @@ public class ReactionService {
         }
         else {
             answerPostService.preCheckUserAndCourse(user, courseId);
-            answerPostService.preCheckAnswerPostValidity((AnswerPost) posting, courseId);
             AnswerPost answerPost = answerPostService.findById(posting.getId());
             reaction.setAnswerPost(answerPost);
             // save reaction

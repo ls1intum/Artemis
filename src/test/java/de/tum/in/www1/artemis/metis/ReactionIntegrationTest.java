@@ -146,7 +146,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreatePostWithWrongCourseIdReaction() throws Exception {
+    public void testCreatePostWithWrongCourseIdReaction_badRequest() throws Exception {
         Course dummyCourse = database.createCourse();
         Post postToReactOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
@@ -159,7 +159,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateExistingReaction() throws Exception {
+    public void testCreateExistingReaction_badRequest() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -172,7 +172,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testValidateReactionConstraint() throws Exception {
+    public void testValidateReactionConstraintViolation() throws Exception {
         Reaction invalidReaction = createInvalidReaction();
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", invalidReaction, Reaction.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Reaction>> constraintViolations = validator.validate(invalidReaction);
@@ -215,7 +215,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeletePostReactionOfOthers() throws Exception {
+    public void testDeletePostReactionOfOthers_forbidden() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn, "student2");
@@ -228,7 +228,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testDeletePostReactionWithWrongCourseId() throws Exception {
+    public void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
         Course dummyCourse = database.createCourse();
         Post postToReactOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);

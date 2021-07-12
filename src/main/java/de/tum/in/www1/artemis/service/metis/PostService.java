@@ -36,7 +36,7 @@ public class PostService extends PostingService {
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
-        super(courseRepository, exerciseRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.lectureRepository = lectureRepository;

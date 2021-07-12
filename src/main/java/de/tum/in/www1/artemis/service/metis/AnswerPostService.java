@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -32,9 +33,9 @@ public class AnswerPostService extends PostingService {
     private final SingleUserNotificationService singleUserNotificationService;
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, PostRepository postRepository, GroupNotificationService groupNotificationService,
+            AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, GroupNotificationService groupNotificationService,
             SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, postRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
@@ -60,13 +61,12 @@ public class AnswerPostService extends PostingService {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
         Course course = preCheckUserAndCourse(user, courseId);
+        Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
         preCheckPostValidity(answerPost.getPost(), courseId);
-        preCheckAnswerPostValidity(answerPost, courseId);
 
         // answer post is automatically approved if written by an instructor
         answerPost.setTutorApproved(this.authorizationCheckService.isAtLeastInstructorInCourse(course, user));
         // use post from database rather than user input
-        Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);
@@ -95,8 +95,7 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPost.getId());
         Course course = preCheckUserAndCourse(user, courseId);
-        preCheckPostValidity(existingAnswerPost.getPost(), courseId);
-        preCheckAnswerPostValidity(answerPost, courseId);
+        preCheckPostValidity(answerPost.getPost(), courseId);
         mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user);
 
         // update: allow overwriting of values only for depicted fields
@@ -116,7 +115,7 @@ public class AnswerPostService extends PostingService {
     }
 
     /**
-     * Add reaction to an answer post and persist the post
+     * Add reaction to an answer post and persist the answer post
      *
      * @param answerPost answer post that is reacted on
      * @param reaction   reaction that was added by a user
@@ -139,7 +138,7 @@ public class AnswerPostService extends PostingService {
         // checks
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         preCheckUserAndCourse(user, courseId);
-        preCheckAnswerPostValidity(answerPost, courseId);
+        preCheckPostValidity(answerPost.getPost(), courseId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user);
 
         // delete

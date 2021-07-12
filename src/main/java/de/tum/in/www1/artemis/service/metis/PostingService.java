@@ -3,11 +3,11 @@ package de.tum.in.www1.artemis.service.metis;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -18,11 +18,15 @@ public abstract class PostingService {
 
     final ExerciseRepository exerciseRepository;
 
+    final PostRepository postRepository;
+
     final AuthorizationCheckService authorizationCheckService;
 
-    protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, AuthorizationCheckService authorizationCheckService) {
+    protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, PostRepository postRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
+        this.postRepository = postRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -57,18 +61,6 @@ public abstract class PostingService {
             if (exercise.isExamExercise()) {
                 throw new BadRequestAlertException("Postings are not allowed for exam exercises", getEntityName(), "400", true);
             }
-        }
-    }
-
-    /**
-     * Compares id of the course belonging to the associated post with the path variable courseId,
-     *
-     * @param answerPost answer post that is checked
-     * @param courseId   id of the course that is used as path variable
-     */
-    void preCheckAnswerPostValidity(AnswerPost answerPost, Long courseId) {
-        if (!answerPost.getPost().getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the associated Post sent in body", getEntityName(), "idnull");
         }
     }
 
