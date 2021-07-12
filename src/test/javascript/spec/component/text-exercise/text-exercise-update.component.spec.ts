@@ -109,8 +109,8 @@ describe('TextExercise Management Update Component', () => {
 
             it('Should call import service on save for new entity', fakeAsync(() => {
                 // GIVEN
-                comp.isImport = true;
                 comp.ngOnInit();
+                comp.isImport = true;
 
                 const entity = { ...textExercise };
                 spyOn(service, 'import').and.returnValue(of(new HttpResponse({ body: entity })));

@@ -54,6 +54,10 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 * Classes, methods or functions should be open for extension and closed for modification (open closed design principle).
 * Program for the interface and not for implementation, you should use interface type on variables, return types of a method or argument type of methods. Just like using SuperClass type to store object rather using SubClass.
 * The use of interface is to facilitate polymorphism, a client should not implement an interface method if its not needed.
+* Type inference of variables - var vs. actual type:
+    * Variables with primitive types like int, long, or also String should be defined with the actual type by default.
+    * Types which share similar functionality but require different handling should also be explicitly stated, e.g. Lists and Sets.
+    * Variable types which are untypically long and would decrease readability when writing can be shortened with ``var`` (e.g. custom DTOs).
 
 6. Structure your code correctly
 ================================
@@ -298,9 +302,9 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
     }
 
 Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
-Each of the roles has the all the access rights of the roles following it, e.g. ANONOYMOUS has almost no rights, while ADMIN users can access every page.
+Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
 
-If a user passess the ``PreAuthorize`` check, the access to individual resources like courses and exercises still has to be checked. (A user can be a teaching assistant in one course, but only a student in another, for example.)
+If a user passes the ``PreAuthorize`` check, the access to individual resources like courses and exercises still has to be checked. (A user can be a teaching assistant in one course, but only a student in another, for example.)
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
 
 .. code-block:: java

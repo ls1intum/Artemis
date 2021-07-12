@@ -322,12 +322,12 @@ or
 11. Defining Routes and Breadcrumbs
 ===================================
 
-The ideal schema for routes is that every variable in a path is preceeded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``  
+The ideal schema for routes is that every variable in a path is preceded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``
 
 For example, ``\courses\:courseId\:exerciseId`` is not a good path and should be written as ``\courses\:courseId\exercises\:exerciseId``.
 Doubling textual segments like ``\lectures\statistics\:lectureId`` should be avoided and instead formulated as ``\lectures\:lectureId\statistics``.
 
-When creating a completely new route you will have to register the new paths in ``navbar.ts``. A static/textual url segment gets a translation string assigned in the ``mapping`` table. Due to our code-style guidelines any ``-`` in the segment has to be replaced by a ``_``. If your path includes a variable, you will have to add the preceeding path segment to the ``switch`` statement inside the ``addBreadcrumbForNumberSegment`` method.
+When creating a completely new route you will have to register the new paths in ``navbar.ts``. A static/textual url segment gets a translation string assigned in the ``mapping`` table. Due to our code-style guidelines any ``-`` in the segment has to be replaced by a ``_``. If your path includes a variable, you will have to add the preceding path segment to the ``switch`` statement inside the ``addBreadcrumbForNumberSegment`` method.
 
 .. code-block:: ts
 
@@ -349,7 +349,7 @@ When creating a completely new route you will have to register the new paths in 
 				// handles :lectureId
 				break;
 			case 'your-case':
-				// add a case here for your :variable which is preceeded in the path by 'your-case'
+				// add a case here for your :variable which is preceded in the path by 'your-case'
 				break;
 		}
 	}
