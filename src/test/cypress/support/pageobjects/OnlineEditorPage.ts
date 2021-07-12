@@ -1,3 +1,7 @@
+import { beVisible } from '../constants';
+
+const buildingAndTesting = 'Building and testing...';
+
 /**
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
@@ -68,6 +72,9 @@ export class OnlineEditorPage {
      */
     submit() {
         cy.get('#submit_button').click();
+        this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should(beVisible);
+        this.getBuildOutput().contains(buildingAndTesting).should(beVisible);
+        this.getResultPanel().contains('GRADED', { timeout: 80000 }).should(beVisible);
     }
 
     /**

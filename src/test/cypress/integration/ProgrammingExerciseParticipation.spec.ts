@@ -35,12 +35,10 @@ const courseShortName = 'cypress' + uid;
 const programmingExerciseName = 'Cypress programming exercise ' + uid;
 const programmingExerciseShortName = courseShortName;
 const exercisePath = '/exercises';
-const longTimeout = 80000;
 const packageName = 'de.test';
 
 // Selectors
 const exerciseRow = '.course-exercise-row';
-const buildingAndTesting = 'Building and testing...';
 
 describe('Programming exercise participations', () => {
     before(() => {
@@ -157,9 +155,6 @@ function makeSuccessfulSubmission() {
 function makeSubmissionAndVerifyResults(submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
     editorPage.typeSubmission(submission, packageName);
     editorPage.submit();
-    editorPage.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should(beVisible);
-    editorPage.getBuildOutput().contains(buildingAndTesting).should(beVisible);
-    editorPage.getResultPanel().contains('GRADED', { timeout: longTimeout }).should(beVisible);
     verifyOutput();
 }
 
