@@ -461,3 +461,28 @@ HTTP. We need to extend the configuration in the file
 
 .. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
 
+Configure Text Assessment Analytics Service:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process.
+Certain assessment events are tracked:
+ - Adding a new Feedback on a manually selected block
+ - Adding a new Feedback on an automatically selected block
+ - Deleting a Feedback
+ - Clicking to text assessment submission Conflicts
+ - Clicking to view origin of submission
+ - Hovering over the text assessment impact warning
+ - Editing/Discarding an automatically generated feedback
+These events are tracked by attaching a POST call to the respective DOM elements in the client side.
+The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table.
+This feature is disabled by default. We can enable it:
+``src/main/resources/config/application-artemis.yml`` like so:
+
+.. code:: yaml
+
+   info:
+      text-assessment-analytics-enabled: true
+
+
+..
+
