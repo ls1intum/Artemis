@@ -27,7 +27,6 @@ import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 
 /**
  * Filter properties for a result
