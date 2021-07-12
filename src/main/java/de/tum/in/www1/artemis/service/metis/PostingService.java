@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -14,10 +16,13 @@ public abstract class PostingService {
 
     final CourseRepository courseRepository;
 
+    final ExerciseRepository exerciseRepository;
+
     final AuthorizationCheckService authorizationCheckService;
 
-    protected PostingService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
+    protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
+        this.exerciseRepository = exerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -42,12 +47,16 @@ public abstract class PostingService {
      */
     void preCheckPostValidity(Post post, Long courseId) {
         if (!post.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Post sent in body", getEntityName(), "400");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Post sent in body", getEntityName(), "idnull");
         }
 
         // do not allow postings for exam exercises
-        if (post.getExercise() != null && post.getExercise().isExamExercise()) {
-            throw new BadRequestAlertException("Postings are not allowed on exam exercises", getEntityName(), "400");
+        if (post.getExercise() != null) {
+            Long exerciseId = post.getExercise().getId();
+            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            if (exercise.isExamExercise()) {
+                throw new BadRequestAlertException("Postings are not allowed for exam exercises", getEntityName(), "400", true);
+            }
         }
     }
 
@@ -59,7 +68,7 @@ public abstract class PostingService {
      */
     void preCheckAnswerPostValidity(AnswerPost answerPost, Long courseId) {
         if (!answerPost.getPost().getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the associated Post sent in body", getEntityName(), "400");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the associated Post sent in body", getEntityName(), "idnull");
         }
     }
 
@@ -69,7 +78,7 @@ public abstract class PostingService {
 
         // check if course has posts enabled
         if (!course.getPostsEnabled()) {
-            throw new BadRequestAlertException("Course with this Id does not have Posts enabled", getEntityName(), "400");
+            throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
         }
 
         return course;

@@ -30,18 +30,15 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final LectureRepository lectureRepository;
 
     private final GroupNotificationService groupNotificationService;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService) {
-        super(courseRepository, authorizationCheckService);
+        super(courseRepository, exerciseRepository, authorizationCheckService);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
-        this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
         this.groupNotificationService = groupNotificationService;
     }
@@ -128,7 +125,7 @@ public class PostService extends PostingService {
         Post post = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(post, courseId);
         if (voteChange < -2 || voteChange > 2) {
-            throw new BadRequestAlertException("VoteChange can only be changed by one", METIS_POST_ENTITY_NAME, "voteChange", true);
+            throw new BadRequestAlertException("VoteChange can only be changed +1 or -1", METIS_POST_ENTITY_NAME, "400", true);
         }
 
         // update votes
@@ -258,7 +255,7 @@ public class PostService extends PostingService {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "400");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idnull");
         }
     }
 
@@ -274,7 +271,7 @@ public class PostService extends PostingService {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
         if (!lecture.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "400");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idnull");
         }
     }
 
