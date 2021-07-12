@@ -124,7 +124,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET exercises/:exerciseId : get the "exerciseId" exercise with data useful for tutors.
+     * GET exercises/:exerciseId/for-assessment-dashboard : get the "exerciseId" exercise with data useful for tutors.
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -167,11 +167,7 @@ public class ExerciseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
         log.debug("REST request to get all upcoming exercises");
-
-        if (!authCheckService.isAdmin()) {
-            return forbidden();
-        }
-
+        authCheckService.checkIsAdminElseThrow(null);
         Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }
@@ -227,7 +223,7 @@ public class ExerciseResource {
     }
 
     /**
-     * exercises/:exerciseId/reset
+     * DELETE exercises/:exerciseId/participations
      *
      * Reset the exercise by deleting all its participations
      * This can be used by all exercise types, however they can also provide custom implementations
@@ -321,7 +317,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @PostMapping("/exercises/{exerciseId}/toggle-second-correction")// TODO: should be POST courses/{courseId}/exercises/{exerciseId}/stats-for-assessment-dashboard
+    @PostMapping("/exercises/{exerciseId}/toggle-second-correction")// TODO: should be courses/{courseId}/exercises/{exerciseId}/stats-for-assessment-dashboard
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
