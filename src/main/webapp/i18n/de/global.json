@@ -323,5 +323,9 @@
         "disconnected": "Verbindung getrennt"
     },
     "loading": "Lädt...",
-    "completed": "abgeschlossen"
+    "completed": "abgeschlossen",
+    "timeFormat": {
+        "day": "Tag",
+        "days": "Tage"
+    }
 }

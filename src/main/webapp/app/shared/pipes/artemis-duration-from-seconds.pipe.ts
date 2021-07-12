@@ -1,5 +1,5 @@
 import { OnDestroy, Pipe, PipeTransform } from '@angular/core';
-import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
 @Pipe({
@@ -12,8 +12,6 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
     private readonly secondsInMinute = 60;
 
     private seconds: number;
-    private locale: string;
-    private localizedDuration: string;
     private onLangChange?: Subscription;
 
     constructor(private translateService: TranslateService) {}
@@ -55,38 +53,20 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform, OnDestroy 
         if (days === 0) {
             return '';
         }
-        // Set locale to current language.
-        this.updateLocale(this.translateService.currentLang);
 
-        // Clean up existing subscription to onLangChange and subscribe to onLangChange event, in case the language changes.
-        this.cleanUpSubscription();
         if (!this.onLangChange) {
-            this.onLangChange = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => this.updateLocale(event.lang));
+            this.onLangChange = this.translateService.onLangChange.subscribe(() => this.transform(this.seconds));
         }
 
         return days + this.getDayString(days);
     }
 
     private getDayString(days: number): string {
-        if (this.locale === 'de') {
-            return days > 1 ? ' Tage ' : ' Tag ';
-        } else {
-            return days > 1 ? ' days ' : ' day ';
-        }
-    }
-
-    private updateLocale(lang: string): void {
-        if (this.locale === undefined && lang === undefined) {
-            this.locale = 'en';
-        }
-        if (lang !== this.locale) {
-            this.locale = lang;
-            this.localizedDuration = this.transform(this.seconds);
-        }
+        return days > 1 ? this.translateService.instant('global.timeFormat.days') : this.translateService.instant('global.timeFormat.day');
     }
 
     private cleanUpSubscription(): void {
-        if (this.onLangChange !== undefined) {
+        if (this.onLangChange != undefined) {
             this.onLangChange.unsubscribe();
             this.onLangChange = undefined;
         }
