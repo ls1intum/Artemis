@@ -34,7 +34,7 @@
                     <td>
                         <button
                             *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            (click)="navigateToExampleSubmission(exampleSubmission.id)"
+                            (click)="navigateToExampleSubmission(exampleSubmission.id!)"
                             class="btn-link"
                         >
                             {{ exampleSubmission.id }}
@@ -43,7 +43,7 @@
                     <td>
                         <button
                             *ngIf="exercise && exercise.id && exercise.course && exercise.course.id"
-                            (click)="navigateToExampleSubmission(exampleSubmission.id)"
+                            (click)="navigateToExampleSubmission(exampleSubmission.id!)"
                             class="btn-link"
                         >
                             {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
