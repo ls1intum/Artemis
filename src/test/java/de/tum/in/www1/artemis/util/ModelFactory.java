@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -498,6 +499,35 @@ public class ModelFactory {
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
         return course;
+    }
+
+    public static TextAssessmentEvent generateTextAssessmentEvent(TextAssessmentEventType eventType, FeedbackType feedbackType, TextBlockType segmentType, Long courseId) {
+        TextAssessmentEvent event = new TextAssessmentEvent();
+        event.setId(null);
+        event.setEventType(eventType);
+        event.setFeedbackType(feedbackType);
+        event.setSegmentType(segmentType);
+        event.setCourseId(courseId);
+        event.setTextExerciseId(1L);
+        event.setParticipationId(1L);
+        event.setSubmissionId(1L);
+        event.setUserId(1L);
+        return event;
+    }
+
+    public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId) {
+        List<TextAssessmentEvent> events = new ArrayList<>();
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.HOVER_OVER_IMPACT_WARNING, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.SUBMIT_ASSESSMENT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.CLICK_TO_RESOLVE_CONFLICT, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId));
+        events.add(generateTextAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION, FeedbackType.MANUAL, TextBlockType.MANUAL, courseId));
+        return events;
     }
 
     public static Exam generateExamWithStudentReviewDates(Course course) {
