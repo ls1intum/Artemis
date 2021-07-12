@@ -452,6 +452,18 @@ public class AuthorizationCheckService {
      * checks if the currently logged in user is owner of the given participation
      *
      * @param participation the participation that needs to be checked
+     * @return true, if user is student is owner of this participation, otherwise false
+     */
+    public void isOwnerOfParticipationElseThrow(@NotNull StudentParticipation participation) throws AccessForbiddenException {
+        if (!isOwnerOfParticipation(participation)) {
+            throw new AccessForbiddenException("participation", participation.getId());
+        }
+    }
+
+    /**
+     * checks if the currently logged in user is owner of the given participation
+     *
+     * @param participation the participation that needs to be checked
      * @param user the user whose permissions should be checked
      * @return true, if user is student is owner of this participation, otherwise false
      */

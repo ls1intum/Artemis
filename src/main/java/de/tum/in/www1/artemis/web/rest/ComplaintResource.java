@@ -137,10 +137,7 @@ public class ComplaintResource {
         }
 
         Result result = resultRepository.findOneElseThrow(complaint.getResult().getId());
-        if (!authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation())) {
-            return forbidden();
-        }
-
+        authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
         Complaint savedComplaint = complaintService.createComplaint(complaint, OptionalLong.of(examId), principal);
