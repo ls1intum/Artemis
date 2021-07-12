@@ -18,6 +18,7 @@ export class ExamExerciseUpdateService {
     }
 
     updateLiveExamExercise(exerciseId: number, problemStatement: string) {
+        debugger;
         this.examExerciseIdAndProblemStatementSource.next({ exerciseId, problemStatement });
     }
 }

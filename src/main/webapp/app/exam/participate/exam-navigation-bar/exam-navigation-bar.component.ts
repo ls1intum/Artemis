@@ -41,12 +41,14 @@ export class ExamNavigationBarComponent implements OnInit {
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
+            debugger;
             if (update.problemStatement === '') {
                 // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
                 this.changeExerciseById(update.exerciseId);
-            } else {
-                this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
             }
+            //  else {
+            //      this.updateExerciseProblemStatementById(update.exerciseId, update.problemStatement);
+            //  }
         });
 
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
@@ -106,12 +108,14 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param exerciseId the unique exercise that needs to be updated
      * @param updatedProblemStatement the updated problem statement
      */
+    /*
     updateExerciseProblemStatementById(exerciseId: number, updatedProblemStatement: string) {
         if (exerciseId !== -1 && updatedProblemStatement != undefined) {
             const foundIndex = this.exercises.findIndex((ex) => ex.id === exerciseId);
             this.exercises[foundIndex].problemStatement = this.highlightProblemStatementDifferences(foundIndex, updatedProblemStatement);
         }
     }
+     */
 
     /**
      * Returns a combination of the outdated and updated problem statement with HTML & CSS elements to highlight their differences
@@ -119,6 +123,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param exerciseIndex indicates what exercise's problem statement inside exercises should be highlighted
      * @param updatedProblemStatement
      */
+    /*
     highlightProblemStatementDifferences(exerciseIndex: number, updatedProblemStatement: string) {
         //creates the diffMatchPatch library object to be able to modify strings
         const dmp = new DiffMatchPatch();
@@ -138,8 +143,8 @@ export class ExamNavigationBarComponent implements OnInit {
         dmp.diff_cleanupEfficiency(diff);
         //remove ¶; (= &para;) symbols
         return dmp.diff_prettyHtml(diff).replace(/&para;/g, ''); // [warten was @Stephan sagt ]+ ' (Please reload the page if you want to remove the red old problem statement.)';
-        //TODO : 2) vll einen "Kommentar"(Notiz) ans Ende anfügen in Klammer, bsp: ("To remove the old red difference please reload the page")(ArtemisTranslate nicht vergessen!!)
     }
+     */
 
     /**
      * Save the currently active exercise and go to the next exercise.
