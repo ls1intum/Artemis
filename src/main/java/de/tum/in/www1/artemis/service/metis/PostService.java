@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class PostService extends PostingService {
 
-    private static final String METIS_POST_ENTITY_NAME = "post";
+    private static final String METIS_POST_ENTITY_NAME = "metis.post";
 
     private final UserRepository userRepository;
 
