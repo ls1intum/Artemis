@@ -252,13 +252,7 @@ public class StudentExamService {
 
             for (final var studentParticipation : studentParticipations) {
                 var latestSubmission = studentParticipation.findLatestSubmission();
-                if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                        && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
-                    // when it is the participation of a programming exercise and manual assessment is enabled, but there is no submission,
-                    // a new submission for the programming participation needs to be created
-                    submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
-                    latestSubmission = studentParticipation.findLatestSubmission();
-                }
+                latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
                 if (latestSubmission.isPresent()) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
@@ -296,13 +290,7 @@ public class StudentExamService {
                     studentParticipationRepository.save(studentParticipation);
                 }
                 var latestSubmission = studentParticipation.findLatestSubmission();
-                if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                        && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
-                    // when it is the participation of a programming exercise and manual assessment is enabled, but there is no submission,
-                    // a new submission for the programming participation needs to be created
-                    submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
-                    latestSubmission = studentParticipation.findLatestSubmission();
-                }
+                latestSubmission = prepareProgrammingSubmission(latestSubmission, studentParticipation);
                 if (latestSubmission.isPresent() && (latestSubmission.get().isEmpty() || studentParticipation.getExercise() instanceof ProgrammingExercise)) {
                     for (int correctionRound = 0; correctionRound < exam.getNumberOfCorrectionRoundsInExam(); correctionRound++) {
                         // required so that the submission is counted in the assessment dashboard
@@ -329,6 +317,24 @@ public class StudentExamService {
                                         studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
                                                 || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
                                                 .collect(Collectors.toList())));
+    }
+
+    /**
+     * Prepares the submission for programming participations.
+     * When it is the participation of a programming exercise and the manual assessment is enabled, but there is no submission,
+     * a new submission for the programming participation needs to be created.
+     *
+     * @param latestSubmission the optional latest submission of the participation
+     * @param studentParticipation the provided ProgrammingStudentParticipation
+     * @return
+     */
+    public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
+            && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+            submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
+            return studentParticipation.findLatestSubmission();
+        }
+        return latestSubmission;
     }
 
     private void lockStudentRepositories(User currentUser, StudentExam existingStudentExam) {
