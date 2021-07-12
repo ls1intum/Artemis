@@ -353,7 +353,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a
                             *ngIf="exercise.course"
-                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment'])"
+                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm me-1"
                         >
